@@ -120,6 +120,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  get_it:
+    dependency: "direct main"
+    description:
+      name: get_it
+      sha256: "1d648d2dd2047d7f7450d5727ca24ee435f240385753d90b49650e3cdff32e56"
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.2.0"
   glob:
     dependency: transitive
     description:
@@ -136,14 +144,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "17.1.0"
-  hive:
+  hive_ce:
     dependency: "direct main"
     description:
-      name: hive
-      sha256: "8dcf6db979d7933da8217edcec84e9df1bdb4e4edc7fc77dbd5aa74356d6d941"
+      name: hive_ce
+      sha256: "8e9980e68643afb1e765d3af32b47996552a64e190d03faf622cea07c1294418"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.3"
+    version: "2.19.3"
+  hive_ce_flutter:
+    dependency: "direct main"
+    description:
+      name: hive_ce_flutter
+      sha256: "2677e95a333ff15af43ccd06af7eb7abbf1a4f154ea071997f3de4346cae913a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.4"
   hooks:
     dependency: transitive
     description:
@@ -160,6 +176,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.20.2"
+  isolate_channel:
+    dependency: transitive
+    description:
+      name: isolate_channel
+      sha256: a9d3d620695bc984244dafae00b95e4319d6974b2d77f4b9e1eb4f2efe099094
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.1"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      sha256: "805fa86df56383000f640384b282ce0cb8431f1a7a2396de92fb66186d8c57df"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.10.0"
   leak_tracker:
     dependency: transitive
     description:
@@ -413,6 +445,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "15.0.2"
+  web:
+    dependency: transitive
+    description:
+      name: web
+      sha256: "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   xdg_directories:
     dependency: transitive
     description:

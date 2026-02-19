@@ -1,10 +1,10 @@
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'model.dart';
 import '../../core/encryption_service.dart';
 import '../../core/filter_isolate.dart';
 
-class TransactionRepository {
-  static const String boxName = 'TransactionModels_box';
+class TransactionsRepository {
+  static const String boxName = 'transactions_box';
 
   final EncryptionService _encryption = EncryptionService.instance;
   final FilterIsolate _filter = FilterIsolate();
@@ -14,15 +14,15 @@ class TransactionRepository {
     await Hive.openBox<String>(boxName);
   }
 
-  Future<void> add(TransactionModel tx) async {
+  Future<void> add(TransactionsModel tx) async {
     final box = Hive.box<String>(boxName);
     final encrypted = await _encryption.encrypt(tx.toMap().toString());
     await box.put(tx.tid, encrypted);
   }
 
-  Future<List<TransactionModel>> getAll() async {
+  Future<List<TransactionsModel>> getAll() async {
     final box = Hive.box<String>(boxName);
-    final List<TransactionModel> list = [];
+    final List<TransactionsModel> list = [];
 
     for (final key in box.keys) {
       final encrypted = box.get(key);
@@ -30,18 +30,18 @@ class TransactionRepository {
 
       final decrypted = await _encryption.decrypt(encrypted);
       final map = _parseMap(decrypted);
-      list.add(TransactionModel.fromMap(map));
+      list.add(TransactionsModel.fromMap(map));
     }
 
     return list;
   }
 
-  Future<List<TransactionModel>> filter(String query) async {
+  Future<List<TransactionsModel>> filter(String query) async {
     final all = await getAll();
     final maps = all.map((e) => e.toMap()).toList();
 
     final filteredMaps = await _filter.filter(maps, query);
-    return filteredMaps.map(TransactionModel.fromMap).toList();
+    return filteredMaps.map(TransactionsModel.fromMap).toList();
   }
 
   /// Very small map parser (safe for simple key:value maps)

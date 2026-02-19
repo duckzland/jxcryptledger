@@ -3,10 +3,10 @@ import 'model.dart';
 import 'repository.dart';
 
 class TransactionsController extends ChangeNotifier {
-  final TransactionRepository repo;
+  final TransactionsRepository repo;
 
-  List<TransactionModel> _items = [];
-  List<TransactionModel> get items => _items;
+  List<TransactionsModel> _items = [];
+  List<TransactionsModel> get items => _items;
 
   TransactionsController(this.repo);
 
@@ -25,7 +25,7 @@ class TransactionsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> add(TransactionModel tx) async {
+  Future<void> add(TransactionsModel tx) async {
     await repo.add(tx);
     await load();
   }

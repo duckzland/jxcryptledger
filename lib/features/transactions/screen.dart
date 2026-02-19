@@ -33,9 +33,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   List<PlutoColumn> _buildColumns() {
     return [
-      PlutoColumn(title: 'TID', field: 'tid', type: PlutoColumnType.text()),
-      PlutoColumn(title: 'RID', field: 'rid', type: PlutoColumnType.text()),
-      PlutoColumn(title: 'PID', field: 'pid', type: PlutoColumnType.text()),
+      //   PlutoColumn(title: 'TID', field: 'tid', type: PlutoColumnType.text()),
+      //   PlutoColumn(title: 'RID', field: 'rid', type: PlutoColumnType.text()),
+      //   PlutoColumn(title: 'PID', field: 'pid', type: PlutoColumnType.text()),
       PlutoColumn(
         title: 'SR Amount',
         field: 'srAmount',
@@ -56,26 +56,26 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         field: 'rrId',
         type: PlutoColumnType.number(),
       ),
-      PlutoColumn(
-        title: 'Timestamp',
-        field: 'timestamp',
-        type: PlutoColumnType.number(),
-      ),
+      //   PlutoColumn(
+      //     title: 'Timestamp',
+      //     field: 'timestamp',
+      //     type: PlutoColumnType.number(),
+      //   ),
     ];
   }
 
-  List<PlutoRow> _buildRows(List<TransactionModel> items) {
+  List<PlutoRow> _buildRows(List<TransactionsModel> items) {
     return items.map((tx) {
       return PlutoRow(
         cells: {
-          'tid': PlutoCell(value: tx.tid),
-          'rid': PlutoCell(value: tx.rid),
-          'pid': PlutoCell(value: tx.pid),
+          //   'tid': PlutoCell(value: tx.tid),
+          //   'rid': PlutoCell(value: tx.rid),
+          //   'pid': PlutoCell(value: tx.pid),
           'srAmount': PlutoCell(value: tx.srAmount),
           'srId': PlutoCell(value: tx.srId),
           'rrAmount': PlutoCell(value: tx.rrAmount),
           'rrId': PlutoCell(value: tx.rrId),
-          'timestamp': PlutoCell(value: tx.timestamp),
+          //   'timestamp': PlutoCell(value: tx.timestamp),
         },
       );
     }).toList();

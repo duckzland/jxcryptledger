@@ -37,7 +37,11 @@ class AppLayout extends StatelessWidget {
           ),
         ],
       ),
-      body: child,
+      // Inside AppLayout build method:
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: child,
+      ),
     );
   }
 }

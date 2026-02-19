@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 
 class EncryptionService {
@@ -79,7 +80,7 @@ class EncryptionService {
   }
 
   /// Derive AES-256 key from a password (PBKDF2)
-  Future<void> loadPasswordKey(String password) async {
+  Future<Uint8List> loadPasswordKey(String password) async {
     final pbkdf2 = Pbkdf2(
       macAlgorithm: Hmac.sha256(),
       iterations: 100000,
@@ -92,5 +93,9 @@ class EncryptionService {
     );
 
     _secretKey = secretKey;
+
+    // IMPORTANT: You must extract the bytes to return Uint8List
+    final bytes = await secretKey.extractBytes();
+    return Uint8List.fromList(bytes);
   }
 }

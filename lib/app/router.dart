@@ -24,7 +24,7 @@ class AppRouter {
         path: "/transaction_detail",
         builder: (context, state) {
           final data = state.extra as Map<String, dynamic>;
-          return TransactionPageSingle(data: data);
+          return TransactionsPageSingle(data: data);
         },
       ),
       GoRoute(

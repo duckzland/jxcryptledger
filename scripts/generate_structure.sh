@@ -1,5 +1,43 @@
 #!/bin/bash
 
+###
+# lib/
+# ├── app
+# │   ├── exceptions.dart
+# │   ├── layout.dart
+# │   ├── root.dart
+# │   ├── router.dart
+# │   ├── storage.dart
+# │   └── theme.dart
+# ├── core
+# │   ├── encryption_service.dart
+# │   ├── filter_isolate.dart
+# │   └── utils.dart
+# ├── features
+# │   ├── settings
+# │   │   ├── adapter.dart
+# │   │   ├── controller.dart
+# │   │   ├── model.dart
+# │   │   ├── page.dart
+# │   │   ├── repository.dart
+# │   │   └── screen.dart
+# │   ├── transactions
+# │   │   ├── adapter.dart
+# │   │   ├── controller.dart
+# │   │   ├── filter_service.dart
+# │   │   ├── model.dart
+# │   │   ├── page.dart
+# │   │   ├── page_single.dart
+# │   │   ├── repository.dart
+# │   │   └── screen.dart
+# │   └── unlock
+# │       ├── controller.dart
+# │       └── page.dart
+# ├── main.dart
+# └── widgets
+#     └── button.dart
+# ###
+
 # Create base directories
 mkdir -p lib/{app,core,data,features,services,widgets}
 

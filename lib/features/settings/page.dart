@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../app/layout.dart';
+import '../../core/locator.dart'; // Import your locator
+import 'screen.dart';
+import 'controller.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Grab the global instance of the controller
+    final controller = locator<SettingsController>();
+
     return AppLayout(
       title: "Settings",
       showBack: true,
-      child: const Center(child: Text("Settings Form Placeholder")),
+      // Inject the actual grid screen
+      child: SettingsScreen(controller: controller),
     );
   }
 }

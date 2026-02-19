@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../app/layout.dart';
 
-class TransactionPageSingle extends StatelessWidget {
+class TransactionsPageSingle extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  const TransactionPageSingle({super.key, required this.data});
+  const TransactionsPageSingle({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
