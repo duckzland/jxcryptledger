@@ -1,5 +1,6 @@
 import 'package:hive_ce/hive_ce.dart';
-import '../../core/encryption_service.dart';
+
+import '../encryption/service.dart';
 
 typedef Validator = String? Function(String value);
 
@@ -10,8 +11,7 @@ enum SettingKey {
     type: SettingType.string,
     isUserEditable: true,
     label: 'Cryptos Endpoint',
-    defaultValue:
-        "https://s3.coinmarketcap.com/generated/core/crypto/cryptos.json",
+    defaultValue: "https://s3.coinmarketcap.com/generated/core/crypto/cryptos.json",
     validator: _validateUrl,
     hintText: "https://example.com/cryptos.json",
   ),
@@ -20,8 +20,7 @@ enum SettingKey {
     type: SettingType.string,
     isUserEditable: true,
     label: 'Exchange Endpoint',
-    defaultValue:
-        "https://api.coinmarketcap.com/data-api/v3/tools/price-conversion",
+    defaultValue: "https://api.coinmarketcap.com/data-api/v3/tools/price-conversion",
     validator: _validateUrl,
     hintText: "https://example.com/exchange",
   ),
@@ -83,10 +82,7 @@ class SettingsRepository {
   }
 
   T? get<T>(SettingKey key, {T? defaultValue}) {
-    final value = _box.get(
-      key.id,
-      defaultValue: defaultValue ?? key.defaultValue,
-    );
+    final value = _box.get(key.id, defaultValue: defaultValue ?? key.defaultValue);
     return value as T?;
   }
 

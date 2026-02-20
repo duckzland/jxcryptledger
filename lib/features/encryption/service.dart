@@ -9,23 +9,17 @@ class EncryptionService {
 
   static final EncryptionService instance = EncryptionService._();
 
-  // AES-GCM (256-bit)
   final AesGcm _cipher = AesGcm.with256bits();
-
-  // In-memory key (you can later store it securely)
   SecretKey? _secretKey;
 
-  /// Generates a new AES-256 key
   Future<void> generateKey() async {
     _secretKey = await _cipher.newSecretKey();
   }
 
-  /// Loads an existing key from raw bytes
   Future<void> loadKey(List<int> keyBytes) async {
     _secretKey = SecretKey(keyBytes);
   }
 
-  /// Returns the raw key bytes (for saving)
   Future<List<int>> exportKey() async {
     if (_secretKey == null) {
       throw Exception('Encryption key not initialized');
@@ -33,30 +27,19 @@ class EncryptionService {
     return await _secretKey!.extractBytes();
   }
 
-  /// Encrypts a string and returns base64 output
   Future<String> encrypt(String plainText) async {
     if (_secretKey == null) {
       throw Exception('Encryption key not initialized');
     }
 
     final nonce = _cipher.newNonce();
-    final secretBox = await _cipher.encrypt(
-      utf8.encode(plainText),
-      secretKey: _secretKey!,
-      nonce: nonce,
-    );
+    final secretBox = await _cipher.encrypt(utf8.encode(plainText), secretKey: _secretKey!, nonce: nonce);
 
-    // Combine nonce + ciphertext + MAC
-    final combined = <int>[
-      ...nonce,
-      ...secretBox.cipherText,
-      ...secretBox.mac.bytes,
-    ];
+    final combined = <int>[...nonce, ...secretBox.cipherText, ...secretBox.mac.bytes];
 
     return base64Encode(combined);
   }
 
-  /// Decrypts a base64 string
   Future<String> decrypt(String encryptedBase64) async {
     if (_secretKey == null) {
       throw Exception('Encryption key not initialized');
@@ -86,15 +69,10 @@ class EncryptionService {
     // Pull from .env file loaded at startup
     final String saltValue = dotenv.get(
       'APP_SALT',
-      fallback:
-          '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a',
+      fallback: '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a',
     );
 
-    final pbkdf2 = Pbkdf2(
-      macAlgorithm: Hmac.sha256(),
-      iterations: 100000,
-      bits: 256,
-    );
+    final pbkdf2 = Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: 100000, bits: 256);
 
     final secretKey = await pbkdf2.deriveKey(
       secretKey: SecretKey(utf8.encode(password)),

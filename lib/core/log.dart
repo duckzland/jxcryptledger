@@ -3,9 +3,9 @@ import 'package:intl/intl.dart';
 
 final DateFormat _fmt = DateFormat('HH:mm:ss.SSSSSS');
 
-void Logln(String message) {
+void logln(String message) {
   if (!kDebugMode) return;
 
   final ts = _fmt.format(DateTime.now());
-  print('[JX] $ts - $message');
+  debugPrint('[JX] $ts - $message');
 }

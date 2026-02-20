@@ -1,24 +1,16 @@
 import 'dart:io';
+
+import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
 
+final env = DotEnv()..load();
+
 String getAppDocumentsDir() {
-  final home =
-      Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-
-  if (Platform.isMacOS) {
-    return '$home/Library/Application Support/jxcryptledger';
+  final dir = env['APP_DATA_DIR'];
+  if (dir == null || dir.isEmpty) {
+    throw Exception('APP_DATA_DIR not set in .env');
   }
-
-  if (Platform.isLinux) {
-    return '$home/.local/share/jxcryptledger';
-  }
-
-  if (Platform.isWindows) {
-    final appData = Platform.environment['APPDATA']!;
-    return '$appData\\jxcryptledger';
-  }
-
-  throw UnsupportedError("Unsupported platform for standalone script");
+  return dir;
 }
 
 Future<void> main() async {
@@ -27,12 +19,7 @@ Future<void> main() async {
   final dir = getAppDocumentsDir();
   Hive.init(dir);
 
-  final boxes = [
-    'settings_box',
-    'transactions_box',
-    'cryptos_box',
-    'rates_box',
-  ];
+  final boxes = ['settings_box', 'transactions_box', 'cryptos_box', 'rates_box'];
 
   for (final boxName in boxes) {
     try {

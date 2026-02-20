@@ -1,18 +1,18 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+import 'package:jxcryptledger/core/log.dart';
 import 'package:path_provider/path_provider.dart';
-
-import '../features/transactions/adapter.dart';
-import '../features/transactions/model.dart';
 
 import '../features/cryptos/adapter.dart';
 import '../features/cryptos/model.dart';
-
 import '../features/rates/adapter.dart';
 import '../features/rates/model.dart';
+import '../features/transactions/adapter.dart';
+import '../features/transactions/model.dart';
 
 class AppStorage {
   AppStorage._();
@@ -25,6 +25,7 @@ class AppStorage {
 
     if (!kIsWeb) {
       Directory dir = await getApplicationDocumentsDirectory();
+      logln("Initializing Hive at ${dir.path}");
       Hive.init(dir.path);
     }
 
@@ -35,22 +36,14 @@ class AppStorage {
     _initialized = true;
   }
 
-  Future<Box<T>> openBox<T>(
-    String name, {
-    HiveCipher? encryptionCipher,
-    bool crashRecovery = true,
-  }) async {
+  Future<Box<T>> openBox<T>(String name, {HiveCipher? encryptionCipher, bool crashRecovery = true}) async {
     await init();
 
     if (Hive.isBoxOpen(name)) {
       return Hive.box<T>(name);
     }
 
-    return await Hive.openBox<T>(
-      name,
-      encryptionCipher: encryptionCipher,
-      crashRecovery: crashRecovery,
-    );
+    return await Hive.openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
   }
 
   Future<void> closeAll() async {

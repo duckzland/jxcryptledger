@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:jxcryptledger/app/snackbar.dart';
+
+import '../../app/button.dart';
+import '../../app/theme.dart';
 import 'controller.dart';
 import 'repository.dart';
 
@@ -18,7 +22,6 @@ class _SettingsFormState extends State<SettingsForm> {
   @override
   void initState() {
     super.initState();
-    // 1. Get ONLY the keys the user is allowed to see/edit
     final userKeys = SettingKey.values.where((k) => k.isUserEditable);
 
     for (var key in userKeys) {
@@ -28,60 +31,56 @@ class _SettingsFormState extends State<SettingsForm> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter keys allowed for user editing
-    final editableKeys = SettingKey.values
-        .where((k) => k.isUserEditable)
-        .toList();
+    final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
 
     return Form(
       key: _formKey,
       child: ListView.separated(
-        // Padding is now handled by AppLayout, so we keep this 0 or minimal
         padding: EdgeInsets.zero,
         itemCount: editableKeys.length + 1,
         separatorBuilder: (_, __) => const SizedBox(height: 24),
         itemBuilder: (context, index) {
-          if (index == editableKeys.length) {
-            return Padding(
-              padding: const EdgeInsets.only(top: 16.0, bottom: 32.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [_buildResetButton(editableKeys), _buildSaveButton()],
-              ),
-            );
-          }
-
-          final key = editableKeys[index];
-          return _buildSettingField(key);
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1024),
+              child: _buildItem(index, editableKeys),
+            ),
+          );
         },
       ),
     );
+  }
+
+  Widget _buildItem(int index, List<SettingKey> editableKeys) {
+    if (index == editableKeys.length) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16.0, bottom: 32.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [_buildResetButton(editableKeys), const SizedBox(width: 12), _buildSaveButton()],
+        ),
+      );
+    }
+
+    final key = editableKeys[index];
+    return _buildSettingField(key);
   }
 
   Widget _buildSettingField(SettingKey key) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          key.label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-        ),
+        Text(key.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
         const SizedBox(height: 10),
         TextFormField(
           initialValue: _buffer[key]?.toString(),
           decoration: InputDecoration(
-            hintText: key.hintText.isNotEmpty
-                ? key.hintText
-                : "Enter ${key.label}...",
+            hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          keyboardType: key.type == SettingType.integer
-              ? TextInputType.number
-              : TextInputType.text,
+          keyboardType: key.type == SettingType.integer ? TextInputType.number : TextInputType.text,
           validator: (value) {
             if (value == null || value.isEmpty) return "This field is required";
 
@@ -90,17 +89,14 @@ class _SettingsFormState extends State<SettingsForm> {
               if (err != null) return err;
             }
 
-            if (key.type == SettingType.integer &&
-                int.tryParse(value) == null) {
+            if (key.type == SettingType.integer && int.tryParse(value) == null) {
               return "Must be a valid number";
             }
 
             return null;
           },
           onChanged: (val) {
-            _buffer[key] = key.type == SettingType.integer
-                ? int.tryParse(val)
-                : val;
+            _buffer[key] = key.type == SettingType.integer ? int.tryParse(val) : val;
           },
         ),
       ],
@@ -108,66 +104,37 @@ class _SettingsFormState extends State<SettingsForm> {
   }
 
   Widget _buildSaveButton() {
-    return Center(
-      // Center the button horizontally
-      child: Padding(
-        padding: const EdgeInsets.only(top: 16.0, bottom: 32.0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            elevation: 2,
-          ),
-          onPressed: () async {
-            if (_formKey.currentState!.validate()) {
-              // 2. Loop only over what is actually in our form buffer
-              for (var key in _buffer.keys) {
-                final newValue = _buffer[key];
-                await widget.controller.update(key, newValue);
-              }
+    return appButton(
+      label: "Save Changes",
+      onPressed: () async {
+        if (_formKey.currentState!.validate()) {
+          for (var key in _buffer.keys) {
+            final newValue = _buffer[key];
+            await widget.controller.update(key, newValue);
+          }
 
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Securely saved to vault")),
-                );
-              }
-            }
-          },
-          child: const Text("Save Changes"),
-        ),
-      ),
+          if (!mounted) return;
+          appShowSuccess(context, "Securely saved to vault");
+        }
+      },
     );
   }
 
   Widget _buildResetButton(List<SettingKey> editableKeys) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.red,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        elevation: 2,
-      ),
+    return appButton(
+      label: "Reset to Default",
+      background: AppTheme.error,
+      foreground: AppTheme.text,
       onPressed: () async {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) {
             return AlertDialog(
               title: const Text("Reset Settings"),
-              content: const Text(
-                "Are you sure you want to reset all settings to default values?",
-              ),
+              content: const Text("Are you sure you want to reset all settings to default values?"),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text("Cancel"),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text("Reset"),
-                ),
+                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+                TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Reset")),
               ],
             );
           },
@@ -183,13 +150,9 @@ class _SettingsFormState extends State<SettingsForm> {
 
         setState(() {});
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Settings reset to default")),
-          );
-        }
+        if (!mounted) return;
+        appShowSuccess(context, "Settings reset to default");
       },
-      child: const Text("Reset to Default"),
     );
   }
 }

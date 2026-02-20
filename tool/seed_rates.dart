@@ -1,25 +1,20 @@
 import 'dart:io';
-import 'package:hive_ce/hive_ce.dart';
-import 'package:decimal/decimal.dart';
 
+import 'package:decimal/decimal.dart';
+import 'package:dotenv/dotenv.dart';
+import 'package:hive_ce/hive_ce.dart';
+import 'package:jxcryptledger/features/rates/adapter.dart';
 import 'package:jxcryptledger/features/rates/model.dart';
 import 'package:jxcryptledger/features/rates/repository.dart';
-import 'package:jxcryptledger/features/rates/adapter.dart';
+
+final env = DotEnv()..load();
 
 String getAppDocumentsDir() {
-  // 1. Try XDG_DOCUMENTS_DIR (Linux standard)
-  final xdgDocs = Platform.environment['XDG_DOCUMENTS_DIR'];
-  if (xdgDocs != null && xdgDocs.isNotEmpty) {
-    return xdgDocs;
+  final dir = env['APP_DATA_DIR'];
+  if (dir == null || dir.isEmpty) {
+    throw Exception('APP_DATA_DIR not set in .env');
   }
-
-  // 2. Fallback: $HOME/Documents (Flutter's fallback)
-  final home = Platform.environment['HOME'];
-  if (home != null && home.isNotEmpty) {
-    return '$home/Documents';
-  }
-
-  throw Exception('Cannot determine application documents directory');
+  return dir;
 }
 
 Future<void> main() async {
@@ -57,9 +52,7 @@ Future<void> main() async {
           sourceAmount: Decimal.parse("1"),
           targetSymbol: tgt["symbol"] as String,
           targetId: tgt["id"] as int,
-          targetAmount: Decimal.parse(
-            "12345.${src["id"]}${tgt["id"]}987654321",
-          ),
+          targetAmount: Decimal.parse("12345.${src["id"]}${tgt["id"]}987654321"),
         ),
       );
     }

@@ -2,19 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:jxcryptledger/features/settings/repository.dart';
 
-import '../../core/locator.dart';
 import '../../core/log.dart';
 import 'model.dart';
-import 'repository.dart';
 import 'parser.dart';
+import 'repository.dart';
 
 class CryptosService extends ChangeNotifier {
-  final CryptosRepository repo;
+  final CryptosRepository cryptosRepo;
+  final SettingsRepository settingsRepo;
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
 
-  CryptosService(this.repo);
+  CryptosService(this.cryptosRepo, this.settingsRepo);
 
   Future<bool> fetch() async {
     if (_isFetching) return false;
@@ -23,43 +23,34 @@ class CryptosService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse(
-        locator<SettingsRepository>().get<String>(SettingKey.dataEndpoint) ??
-            SettingKey.dataEndpoint.defaultValue,
-      );
+      final url = Uri.parse(settingsRepo.get<String>(SettingKey.dataEndpoint) ?? SettingKey.dataEndpoint.defaultValue);
 
       final resp = await http.get(url);
 
       if (resp.statusCode != 200) {
-        Logln("Failed to fetch cryptos: HTTP ${resp.statusCode}");
+        logln("Failed to fetch cryptos: HTTP ${resp.statusCode}");
         return false;
       }
 
       final parsed = await compute(cryptosParser, {"body": resp.body});
 
       if (parsed.isEmpty) {
-        Logln("Failed to fetch cryptos: empty parsed list");
+        logln("Failed to fetch cryptos: empty parsed list");
         return false;
       }
 
-      await repo.clear();
+      await cryptosRepo.clear();
 
       for (final m in parsed) {
-        await repo.add(
-          CryptosModel(
-            id: m["id"],
-            name: m["name"],
-            symbol: m["symbol"],
-            status: m["status"],
-            active: m["active"],
-          ),
+        await cryptosRepo.add(
+          CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]),
         );
       }
 
-      Logln("Fetching cryptos completed");
+      logln("Fetching cryptos completed");
       return true;
     } catch (e) {
-      Logln("Failed to fetch cryptos: $e");
+      logln("Failed to fetch cryptos: $e");
       return false;
     } finally {
       _isFetching = false;

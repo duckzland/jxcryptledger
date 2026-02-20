@@ -1,7 +1,8 @@
 import 'package:hive_ce/hive_ce.dart';
+
+import '../../core/filtering.dart';
+import '../encryption/service.dart';
 import 'model.dart';
-import '../../core/encryption_service.dart';
-import '../../core/filter_isolate.dart';
 
 class TransactionsRepository {
   static const String boxName = 'transactions_box';
