@@ -26,7 +26,7 @@ class _UnlockPageState extends State<UnlockPage> {
             children: [
               const Text(
                 "Please enter password to unlock",
-                style: TextStyle(fontSize: 20),
+                style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 20),
               TextField(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../app/layout.dart';
 import '../../core/locator.dart'; // Import your locator
-import 'screen.dart';
+import 'form.dart';
 import 'controller.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -16,7 +16,7 @@ class SettingsPage extends StatelessWidget {
       title: "Settings",
       showBack: true,
       // Inject the actual grid screen
-      child: SettingsScreen(controller: controller),
+      child: SettingsForm(controller: controller),
     );
   }
 }

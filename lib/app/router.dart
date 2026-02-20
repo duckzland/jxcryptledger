@@ -1,11 +1,8 @@
 import 'package:go_router/go_router.dart';
-
 import '../features/unlock/page.dart';
 import '../features/unlock/controller.dart';
-
 import '../features/transactions/page.dart';
 import '../features/transactions/page_single.dart';
-
 import '../features/settings/page.dart';
 
 class AppRouter {

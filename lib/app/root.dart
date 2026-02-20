@@ -9,11 +9,11 @@ class AppRoot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Flutter App',
+      title: 'JXLedger',
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      routerConfig: AppRouter.router, // ← go_router takes over here
+      routerConfig: AppRouter.router,
     );
   }
 }

@@ -41,6 +41,11 @@ dependencies:
   pluto_grid: ^8.1.0
   path_provider: ^2.1.5
   get_it: ^9.2.0
+  flutter_dotenv: ^6.0.0
+  pinyin: ^3.3.0
+  http: ^1.6.0
+  decimal: ^3.2.4
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +63,15 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  fonts:
+      - family: Inter
+        fonts:
+          - asset: assets/fonts/Inter-Medium-Subset.ttf
+            weight: 500
+          - asset: assets/fonts/Inter-Bold-Subset.ttf
+            weight: 700
+  assets:
+    - .env 
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -94,3 +108,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+  

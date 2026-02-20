@@ -44,7 +44,6 @@ class TransactionsRepository {
     return filteredMaps.map(TransactionsModel.fromMap).toList();
   }
 
-  /// Very small map parser (safe for simple key:value maps)
   Map<String, dynamic> _parseMap(String s) {
     try {
       final cleaned = s.trim();

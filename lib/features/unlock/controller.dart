@@ -1,32 +1,32 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxcryptledger/features/rates/model.dart';
 import 'package:jxcryptledger/features/transactions/model.dart';
+
 import '../../core/encryption_service.dart';
+import '../../core/locator.dart';
+import '../../core/log.dart';
 import '../../app/storage.dart';
-import '../settings/repository.dart'; // Import your repository and enum
+
+import '../settings/repository.dart';
+
+import '../cryptos/model.dart';
+import '../cryptos/service.dart';
 
 class UnlockController extends ChangeNotifier {
   bool _unlocked = false;
   bool get unlocked => _unlocked;
 
-  // Use the repository for setting operations
   final _settingsRepo = SettingsRepository();
+  final CryptosService _cryptosService = locator<CryptosService>();
 
   Future<bool> unlock(String password) async {
-    // DEBUG: Simulating fresh install
-    // await Hive.deleteBoxFromDisk('settings_box');
-    // await Hive.deleteBoxFromDisk('transactions_box');
-
     try {
-      // 1. Check if DB exists
       final bool isFirstRun = !(await AppStorage.instance.exists());
-
-      // 2. Derive key
       final Uint8List encryptionKey = await EncryptionService.instance
           .loadPasswordKey(password);
       final cipher = HiveAesCipher(encryptionKey);
 
-      // 3. Open boxes
       try {
         await AppStorage.instance.openBox<dynamic>(
           SettingsRepository.boxName,
@@ -40,36 +40,53 @@ class UnlockController extends ChangeNotifier {
           crashRecovery: false,
         );
       } catch (e) {
-        // Wrong password: Hive cannot decrypt existing files
+        Logln("Failed to decrypt boxes (wrong password)");
         return false;
       }
 
-      if (isFirstRun) {
-        // 4. SETUP: Use Repo to save marker (it handles the encryption internally)
-        await _settingsRepo.save(SettingKey.vaultInitialized, "initialized");
+      await AppStorage.instance.openBox<CryptosModel>(
+        'cryptos_box',
+        encryptionCipher: null,
+        crashRecovery: true,
+      );
 
-        // Add defaults using the type-safe enum
-        await _settingsRepo.save(SettingKey.themeMode, 'system');
-        await _settingsRepo.save(SettingKey.currency, 'USD');
+      await AppStorage.instance.openBox<RatesModel>(
+        'rates_box',
+        encryptionCipher: null,
+        crashRecovery: true,
+      );
+
+      if (isFirstRun) {
+        Logln("First run detected, initializing vault");
+
+        await _settingsRepo.save(SettingKey.vaultInitialized, "initialized");
 
         _unlocked = true;
         notifyListeners();
-        return true;
-      } else {
-        // 5. VERIFY: Use Repo's specialized decryption method
-        final decrypted = await _settingsRepo.getDecryptedMarker();
 
-        if (decrypted == "initialized") {
-          _unlocked = true;
-          notifyListeners();
-          return true;
-        } else {
-          // Wrong password - Decryption failed or marker missing
-          await AppStorage.instance.closeAll();
-          return false;
-        }
+        Future.microtask(() async {
+          final ok = await _cryptosService.fetch();
+          if (!ok) Logln("Failed to fetch cryptos on first run");
+        });
+
+        return true;
       }
-    } catch (_) {
+
+      final decrypted = await _settingsRepo.getDecryptedMarker();
+
+      if (decrypted == "initialized") {
+        Logln("Password correct, vault unlocked");
+        _unlocked = true;
+        notifyListeners();
+        return true;
+      }
+
+      Logln("Marker mismatch, wrong password");
+      await AppStorage.instance.closeAll();
+      return false;
+    } catch (e, st) {
+      Logln("Unexpected error: $e");
+      Logln("$st");
       return false;
     }
   }

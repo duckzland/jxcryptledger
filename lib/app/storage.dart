@@ -8,6 +8,12 @@ import 'package:path_provider/path_provider.dart';
 import '../features/transactions/adapter.dart';
 import '../features/transactions/model.dart';
 
+import '../features/cryptos/adapter.dart';
+import '../features/cryptos/model.dart';
+
+import '../features/rates/adapter.dart';
+import '../features/rates/model.dart';
+
 class AppStorage {
   AppStorage._();
   static final AppStorage instance = AppStorage._();
@@ -22,8 +28,9 @@ class AppStorage {
       Hive.init(dir.path);
     }
 
-    // Register ONLY the adapter for complex models
     Hive.registerAdapter<TransactionsModel>(TransactionsAdapter());
+    Hive.registerAdapter<CryptosModel>(CryptosAdapter());
+    Hive.registerAdapter<RatesModel>(RatesAdapter());
 
     _initialized = true;
   }
@@ -39,8 +46,6 @@ class AppStorage {
       return Hive.box<T>(name);
     }
 
-    // Ensure this await is direct. Do not wrap in a
-    // try-catch here unless you 'rethrow'!
     return await Hive.openBox<T>(
       name,
       encryptionCipher: encryptionCipher,
@@ -53,16 +58,14 @@ class AppStorage {
     _initialized = false;
   }
 
-  /// Check if the database files already exist on disk
   Future<bool> exists() async {
     if (kIsWeb) return false;
 
     final dir = await getApplicationDocumentsDirectory();
-    // Use join or raw path to check for the .hive files
+
     final settingsFile = File('${dir.path}/settings_box.hive');
     final transactionsFile = File('${dir.path}/transactions_box.hive');
 
-    // Return true if EITHER exists (usually they are created together)
     return await settingsFile.exists() || await transactionsFile.exists();
   }
 }

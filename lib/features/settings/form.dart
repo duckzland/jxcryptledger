@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'controller.dart';
 import 'repository.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsForm extends StatefulWidget {
   final SettingsController controller;
 
-  const SettingsScreen({super.key, required this.controller});
+  const SettingsForm({super.key, required this.controller});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<SettingsForm> createState() => _SettingsFormState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsFormState extends State<SettingsForm> {
   final _formKey = GlobalKey<FormState>();
   final Map<SettingKey, dynamic> _buffer = {};
 
@@ -42,7 +42,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 24),
         itemBuilder: (context, index) {
           if (index == editableKeys.length) {
-            return _buildSaveButton();
+            return Padding(
+              padding: const EdgeInsets.only(top: 16.0, bottom: 32.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [_buildResetButton(editableKeys), _buildSaveButton()],
+              ),
+            );
           }
 
           final key = editableKeys[index];
@@ -64,7 +70,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextFormField(
           initialValue: _buffer[key]?.toString(),
           decoration: InputDecoration(
-            hintText: "Enter ${key.label}...",
+            hintText: key.hintText.isNotEmpty
+                ? key.hintText
+                : "Enter ${key.label}...",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -76,10 +84,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               : TextInputType.text,
           validator: (value) {
             if (value == null || value.isEmpty) return "This field is required";
+
+            if (key.validator != null) {
+              final err = key.validator!(value);
+              if (err != null) return err;
+            }
+
             if (key.type == SettingType.integer &&
                 int.tryParse(value) == null) {
               return "Must be a valid number";
             }
+
             return null;
           },
           onChanged: (val) {
@@ -123,6 +138,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: const Text("Save Changes"),
         ),
       ),
+    );
+  }
+
+  Widget _buildResetButton(List<SettingKey> editableKeys) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.red,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        elevation: 2,
+      ),
+      onPressed: () async {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Reset Settings"),
+              content: const Text(
+                "Are you sure you want to reset all settings to default values?",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Reset"),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (confirmed != true) return;
+
+        for (var key in editableKeys) {
+          final def = key.defaultValue;
+          await widget.controller.update(key, def);
+          _buffer[key] = def;
+        }
+
+        setState(() {});
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Settings reset to default")),
+          );
+        }
+      },
+      child: const Text("Reset to Default"),
     );
   }
 }
