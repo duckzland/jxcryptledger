@@ -1,17 +1,246 @@
 import 'package:flutter/material.dart';
 
-class TransactionsPage extends StatelessWidget {
+import '../../app/button.dart';
+import '../../core/locator.dart';
+import '../cryptos/repository.dart';
+import 'controller.dart';
+import 'form.dart';
+import 'model.dart';
+import 'screen_active.dart';
+import 'screen_overview.dart';
+
+enum TransactionsViewMode { balanceOverview, activeTrading }
+
+class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
 
   @override
+  State<TransactionsPage> createState() => _TransactionsPageState();
+}
+
+class _TransactionsPageState extends State<TransactionsPage> {
+  late TransactionsController _controller;
+  final CryptosRepository _cryptosRepo = CryptosRepository();
+
+  TransactionsViewMode _viewMode = TransactionsViewMode.balanceOverview;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = locator<TransactionsController>();
+    _controller.load();
+    _controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    setState(() {});
+  }
+
+  void _showAddTransactionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => TransactionForm(
+        onSave: (transaction) async {
+          await _controller.add(transaction);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction saved')));
+        },
+      ),
+    );
+  }
+
+  Map<int, List<TransactionsModel>> _getBalanceOverviewTransactions() {
+    final filtered = _controller.items.where((t) => t.status == 1 || t.status == 2).toList();
+
+    final grouped = <int, List<TransactionsModel>>{};
+
+    for (final tx in filtered) {
+      grouped.putIfAbsent(tx.rrId, () => <TransactionsModel>[]);
+      grouped[tx.rrId]!.add(tx);
+    }
+
+    final sortedGroups = Map<int, List<TransactionsModel>>.fromEntries(
+      grouped.entries.toList()..sort((a, b) {
+        final symbolA = _cryptosRepo.getSymbol(a.key) ?? a.key.toString();
+        final symbolB = _cryptosRepo.getSymbol(b.key) ?? b.key.toString();
+        return symbolA.compareTo(symbolB);
+      }),
+    );
+
+    return sortedGroups;
+  }
+
+  Map<String, List<TransactionsModel>> _getActiveTransactions() {
+    final filtered = _controller.items.where((t) => t.status == 1 || t.status == 2).toList();
+
+    final grouped = <String, List<TransactionsModel>>{};
+
+    for (final tx in filtered) {
+      final pairKey = "${tx.srId}-${tx.rrId}";
+
+      grouped.putIfAbsent(pairKey, () => []);
+      grouped[pairKey]!.add(tx);
+    }
+
+    final sorted = Map<String, List<TransactionsModel>>.fromEntries(
+      grouped.entries.toList()..sort((a, b) {
+        final aSr = int.parse(a.key.split('-')[0]);
+        final bSr = int.parse(b.key.split('-')[0]);
+        return aSr.compareTo(bSr);
+      }),
+    );
+
+    return sorted;
+  }
+
+  @override
+  @override
   Widget build(BuildContext context) {
+    if (_controller.items.isEmpty) {
+      return Column(
+        children: [
+          _buildActionBar(),
+          Expanded(child: _buildEmptyState()),
+        ],
+      );
+    }
+
     return Column(
       children: [
-        const SizedBox(height: 20),
-        const Text("Filter Placeholder"),
-        const SizedBox(height: 20),
-        const Text("Transactions Table Placeholder"),
+        _buildActionBar(),
+        const SizedBox(height: 16),
+
+        // 3. Switch view mode
+        Expanded(child: _buildListForViewMode()),
       ],
+    );
+  }
+
+  Widget _buildListForViewMode() {
+    switch (_viewMode) {
+      case TransactionsViewMode.balanceOverview:
+        final grouped = _getBalanceOverviewTransactions();
+        return _buildOverviewList(grouped);
+
+      case TransactionsViewMode.activeTrading:
+        final grouped = _getActiveTransactions();
+        return _buildActiveTradingList(grouped);
+    }
+  }
+
+  Widget _buildActionBar() {
+    return Wrap(
+      spacing: 4,
+      children: [
+        // Balance Overview
+        AppButton(
+          icon: Icons.account_balance_wallet_outlined,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Balance Overview",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.balanceOverview) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.balanceOverview;
+            });
+          },
+        ),
+
+        // Active Trading
+        AppButton(
+          icon: Icons.show_chart,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Active Trading",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.activeTrading) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.activeTrading;
+            });
+          },
+        ),
+
+        // Add Transaction
+        AppButton(
+          icon: Icons.add,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Add Transaction",
+          onPressed: (_) => _showAddTransactionDialog(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.add_circle_outline, size: 60, color: Colors.white30),
+          const SizedBox(height: 16),
+          const Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 24),
+          AppButton(
+            icon: Icons.add,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            onPressed: (_) => _showAddTransactionDialog(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverviewList(Map<int, List<TransactionsModel>> grouped) {
+    return ListView.separated(
+      itemCount: grouped.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 24),
+      itemBuilder: (context, idx) {
+        final rrId = grouped.keys.elementAt(idx);
+        final txs = grouped[rrId]!;
+
+        return TransactionsOverview(id: rrId, transactions: txs, onStatusChanged: () => setState(() {}));
+      },
+    );
+  }
+
+  Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
+    return ListView.separated(
+      itemCount: grouped.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 24),
+      itemBuilder: (context, idx) {
+        final key = grouped.keys.elementAt(idx);
+        final txs = grouped[key]!;
+
+        // ⭐ Correct: srId and rrId come from the FIRST transaction
+        final srId = txs.first.srId;
+        final rrId = txs.first.rrId;
+
+        return TransactionsActive(srid: srId, rrid: rrId, transactions: txs, onStatusChanged: () => setState(() {}));
+      },
     );
   }
 }

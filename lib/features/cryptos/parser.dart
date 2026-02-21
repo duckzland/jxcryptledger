@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:pinyin/pinyin.dart';
 
 List<Map<String, dynamic>> cryptosParser(Map args) {
@@ -12,25 +13,27 @@ List<Map<String, dynamic>> cryptosParser(Map args) {
   for (final item in values) {
     try {
       final id = item[0] as int;
-      final name = item[1] as String;
       final symbol = item[2] as String;
       final isActive = item[4] as int;
       final status = item[5] as int;
+
+      String name = item[1] as String;
 
       if (id == 0 || isActive == 0 || status == 0) {
         continue;
       }
 
-      final cleanedName = name.trim().replaceAll(
-        RegExp(r'[^a-zA-Z0-9\u4e00-\u9fff]'),
-        "",
-      );
+      final hasChinese = RegExp(r'[\u4e00-\u9fff]').hasMatch(name);
 
-      final pinyin = PinyinHelper.getPinyin(cleanedName, separator: "");
+      if (hasChinese) {
+        final cleanedName = name.trim().replaceAll(RegExp(r'[^a-zA-Z0-9\u4e00-\u9fff]'), "");
+        final pinyin = PinyinHelper.getPinyin(cleanedName, separator: "");
+        name = pinyin.toLowerCase();
+      }
 
       result.add({
         "id": id,
-        "name": pinyin.toLowerCase(),
+        "name": name.trim(),
         "symbol": symbol.trim().toUpperCase(),
         "status": status,
         "active": isActive,

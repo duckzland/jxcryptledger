@@ -22,6 +22,7 @@ class _UnlockPageState extends State<UnlockPage> {
     super.initState();
     _password.addListener(() => setState(() {}));
     _confirm.addListener(() => setState(() {}));
+    widget.controller.init();
   }
 
   @override

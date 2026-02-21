@@ -6,7 +6,9 @@ class RatesRepository {
   static const String boxName = 'rates_box';
 
   Future<void> init() async {
-    await Hive.openBox<RatesModel>(boxName);
+    if (!Hive.isBoxOpen(boxName)) {
+      await Hive.openBox<RatesModel>(boxName);
+    }
   }
 
   Future<void> add(RatesModel rate) async {

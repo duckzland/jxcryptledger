@@ -9,6 +9,7 @@ import '../../core/log.dart';
 import '../cryptos/model.dart';
 import '../cryptos/service.dart';
 import '../encryption/service.dart';
+import '../rates/service.dart';
 import '../settings/repository.dart';
 
 class UnlockController extends ChangeNotifier {
@@ -18,6 +19,7 @@ class UnlockController extends ChangeNotifier {
 
   final _settingsRepo = SettingsRepository();
   final CryptosService _cryptosService = locator<CryptosService>();
+  final RatesService _ratesService = locator<RatesService>();
 
   Future<void> init() async {
     isFirstRun = !(await AppStorage.instance.exists());
@@ -70,6 +72,7 @@ class UnlockController extends ChangeNotifier {
 
       if (decrypted == "initialized") {
         logln("Password correct, vault unlocked");
+        await _ratesService.init();
         _unlocked = true;
         notifyListeners();
         return true;

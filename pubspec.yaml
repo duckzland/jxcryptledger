@@ -46,6 +46,8 @@ dependencies:
   http: ^1.6.0
   decimal: ^3.2.4
   intl: ^0.20.2
+  flutter_typeahead: ^4.8.0
+  uuid: ^4.0.0
 
 dev_dependencies:
   dotenv: ^4.2.0

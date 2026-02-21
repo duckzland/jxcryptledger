@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pluto_grid/pluto_grid.dart';
 
 class AppTheme {
   AppTheme._();
@@ -63,6 +64,8 @@ class AppTheme {
         enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white54)),
 
         focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: primary)),
+
+        hintStyle: TextStyle(color: textMuted),
       ),
 
       cardTheme: CardThemeData(
@@ -99,6 +102,42 @@ class AppTheme {
         decoration: BoxDecoration(color: Color(0xFF323546), borderRadius: BorderRadius.all(Radius.circular(4))),
         textStyle: TextStyle(color: Color(0xFFE0E0E0), fontSize: 14, fontWeight: FontWeight.w500),
       ),
+    );
+  }
+}
+
+class AppPlutoTheme {
+  static PlutoGridConfiguration get config {
+    return PlutoGridConfiguration(
+      style: PlutoGridStyleConfig(
+        gridBackgroundColor: AppTheme.headerBg,
+        rowColor: AppTheme.separator,
+
+        // Darker border
+        gridBorderColor: AppTheme.separator,
+
+        // Darker icons
+        iconColor: AppTheme.separator,
+
+        cellTextStyle: const TextStyle(color: AppTheme.text, fontSize: 14),
+
+        columnTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w600, fontSize: 13),
+
+        columnHeight: 38,
+        rowHeight: 32,
+
+        // activatedColor: AppTheme.panelBg,
+        // activatedBorderColor: AppTheme.primary,
+        activatedBorderColor: Colors.transparent,
+        activatedColor: Colors.transparent,
+
+        menuBackgroundColor: AppTheme.panelBg,
+
+        borderColor: Colors.transparent,
+        enableCellBorderVertical: false,
+        enableColumnBorderVertical: false,
+      ),
+      columnSize: const PlutoGridColumnSizeConfig(autoSizeMode: PlutoAutoSizeMode.scale),
     );
   }
 }

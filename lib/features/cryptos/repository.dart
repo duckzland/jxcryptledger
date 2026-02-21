@@ -1,42 +1,70 @@
 import 'package:hive_ce/hive_ce.dart';
+
 import 'model.dart';
 
 class CryptosRepository {
   static const String boxName = 'cryptos_box';
 
-  Future<void> init() async {
-    await Hive.openBox<CryptosModel>(boxName);
+  Box<CryptosModel>? _box;
+  Map<int, String>? _symbolCache;
+
+  void _ensureBox() {
+    if (_box != null) return;
+
+    if (Hive.isBoxOpen(boxName)) {
+      _box = Hive.box<CryptosModel>(boxName);
+      return;
+    }
+
+    Hive.openBox<CryptosModel>(boxName);
+    _box = Hive.box<CryptosModel>(boxName);
   }
 
-  Future<void> add(CryptosModel crypto) async {
-    final box = Hive.box<CryptosModel>(boxName);
-    await box.put(crypto.id, crypto); // id is unique
+  void add(CryptosModel crypto) {
+    _ensureBox();
+    _box!.put(crypto.id, crypto);
+    _symbolCache = null;
   }
 
-  Future<List<CryptosModel>> getAll() async {
-    final box = Hive.box<CryptosModel>(boxName);
-    return box.values.toList();
+  List<CryptosModel> getAll() {
+    _ensureBox();
+    return _box!.values.toList();
   }
 
-  Future<List<CryptosModel>> filter(String query) async {
+  List<CryptosModel> filter(String query) {
+    _ensureBox();
     final q = query.toLowerCase();
-    final box = Hive.box<CryptosModel>(boxName);
-
-    return box.values.where((c) => c.searchKey.contains(q)).toList();
+    return _box!.values.where((c) => c.searchKey.contains(q)).toList();
   }
 
-  Future<void> delete(int id) async {
-    final box = Hive.box<CryptosModel>(boxName);
-    await box.delete(id);
+  void delete(int id) {
+    _ensureBox();
+    _box!.delete(id);
+    _symbolCache = null;
   }
 
-  Future<void> clear() async {
-    final box = Hive.box<CryptosModel>(boxName);
-    await box.clear();
+  void clear() {
+    _ensureBox();
+    _box!.clear();
+    _symbolCache = null;
   }
 
   bool hasAny() {
-    final box = Hive.box<CryptosModel>(boxName);
-    return box.isNotEmpty;
+    _ensureBox();
+    return _box!.isNotEmpty;
+  }
+
+  Map<int, String> getSymbolMap() {
+    if (_symbolCache != null) return _symbolCache!;
+
+    _ensureBox();
+    final all = _box!.values;
+
+    _symbolCache = {for (var c in all) c.id: c.symbol};
+    return _symbolCache!;
+  }
+
+  String? getSymbol(int id) {
+    return getSymbolMap()[id];
   }
 }

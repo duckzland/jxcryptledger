@@ -39,10 +39,10 @@ class CryptosService extends ChangeNotifier {
         return false;
       }
 
-      await cryptosRepo.clear();
+      cryptosRepo.clear();
 
       for (final m in parsed) {
-        await cryptosRepo.add(
+        cryptosRepo.add(
           CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]),
         );
       }

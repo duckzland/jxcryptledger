@@ -1,3 +1,7 @@
+import 'package:jxcryptledger/core/utils.dart';
+
+enum TransactionStatus { active, partial, closed, unknown }
+
 class TransactionsModel {
   /// Transaction ID (UUID)
   final String tid;
@@ -108,4 +112,46 @@ class TransactionsModel {
       meta: meta ?? Map<String, dynamic>.from(this.meta),
     );
   }
+
+  TransactionStatus get statusEnum {
+    switch (status) {
+      case 1:
+        return TransactionStatus.active;
+      case 2:
+        return TransactionStatus.partial;
+      case 3:
+        return TransactionStatus.closed;
+      default:
+        return TransactionStatus.unknown;
+    }
+  }
+
+  String get statusText {
+    switch (statusEnum) {
+      case TransactionStatus.active:
+        return 'Active';
+      case TransactionStatus.partial:
+        return 'Partial';
+      case TransactionStatus.closed:
+        return 'Closed';
+      case TransactionStatus.unknown:
+        return 'Unknown';
+    }
+  }
+
+  String get timestampAsDate {
+    final isMilliseconds = timestamp > 2000000000; // ~2033 in seconds
+
+    final date = isMilliseconds
+        ? DateTime.fromMillisecondsSinceEpoch(timestamp)
+        : DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
+
+  String get srAmountText => Utils.formatSmartDouble(srAmount);
+  String get rrAmountText => Utils.formatSmartDouble(rrAmount);
+  String get balanceText => Utils.formatSmartDouble(balance);
 }
