@@ -1,5 +1,5 @@
-import 'package:hive_ce/hive_ce.dart';
 import 'package:decimal/decimal.dart';
+import 'package:hive_ce/hive_ce.dart';
 
 import 'model.dart';
 
@@ -16,6 +16,7 @@ class RatesAdapter extends TypeAdapter<RatesModel> {
       targetSymbol: reader.readString(),
       targetId: reader.readInt(),
       targetAmount: Decimal.parse(reader.readString()),
+      timestamp: reader.readInt(),
     );
   }
 
@@ -27,5 +28,6 @@ class RatesAdapter extends TypeAdapter<RatesModel> {
     writer.writeString(obj.targetSymbol);
     writer.writeInt(obj.targetId);
     writer.writeString(obj.targetAmount.toString());
+    writer.writeInt(obj.timestamp);
   }
 }

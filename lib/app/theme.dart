@@ -15,6 +15,20 @@ class AppTheme {
   static const text = Colors.white;
   static const textMuted = Colors.white70;
 
+  static const buttonFg = Color(0xFFE0E0E0);
+
+  static const buttonBgDisabled = Color(0xFF1A1B1F);
+  static const buttonFgDisabled = Color(0xFF777777);
+
+  static const buttonBgActive = Color(0xFF1976D2);
+  static const buttonFgActive = Colors.white;
+
+  static const buttonBgProgress = Color(0xFF1976D2);
+  static const buttonFgProgress = Colors.white;
+
+  static const buttonBgError = Color(0xFFD32F2F);
+  static const buttonFgError = Colors.white;
+
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,
@@ -80,6 +94,10 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         elevation: 6,
         contentTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w500),
+      ),
+      tooltipTheme: const TooltipThemeData(
+        decoration: BoxDecoration(color: Color(0xFF323546), borderRadius: BorderRadius.all(Radius.circular(4))),
+        textStyle: TextStyle(color: Color(0xFFE0E0E0), fontSize: 14, fontWeight: FontWeight.w500),
       ),
     );
   }

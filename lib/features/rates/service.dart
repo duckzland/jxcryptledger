@@ -20,6 +20,10 @@ class RatesService extends ChangeNotifier {
 
   RatesService(this.ratesRepo, this.cryptosRepo, this.settingsRepo);
 
+  Future<void> init() async {
+    await ratesRepo.cleanupOldRates();
+  }
+
   String _buildConvertIdParam(List<int> targetIds) {
     final seen = <int>{};
     final result = <int>[];

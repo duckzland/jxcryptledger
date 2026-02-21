@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/button.dart';
-import '../../core/log.dart';
 import 'controller.dart';
 
 class UnlockPage extends StatefulWidget {
@@ -18,14 +17,26 @@ class _UnlockPageState extends State<UnlockPage> {
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _password.addListener(() => setState(() {}));
+    _confirm.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _password.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
   bool showPassword = false;
   String? error;
 
   @override
   Widget build(BuildContext context) {
     final isFirstRun = widget.controller.isFirstRun;
-
-    logln("First run detected, initializing vault $isFirstRun");
 
     return Scaffold(
       body: Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
@@ -68,20 +79,38 @@ class _UnlockPageState extends State<UnlockPage> {
 
         const SizedBox(height: 20),
 
-        appButton(
+        AppButton(
           label: "Create Vault",
-          onPressed: () async {
+          evaluator: (s) {
+            if (_password.text.isEmpty || _confirm.text.isEmpty || _password.text != _confirm.text) {
+              s.disable();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (s) async {
             if (_password.text.isEmpty) {
               setState(() => error = "Password cannot be empty");
               return;
             }
+
             if (_password.text != _confirm.text) {
               setState(() => error = "Passwords do not match");
               return;
             }
 
+            s.progress();
+
             final ok = await widget.controller.unlock(_password.text);
-            if (ok && mounted) context.go("/transactions");
+
+            if (!mounted) return;
+
+            if (ok) {
+              s.active();
+              context.go("/transactions");
+            } else {
+              s.error();
+            }
           },
         ),
       ],
@@ -103,9 +132,16 @@ class _UnlockPageState extends State<UnlockPage> {
 
         const SizedBox(height: 20),
 
-        appButton(
+        AppButton(
           label: "Unlock",
-          onPressed: () async {
+          evaluator: (s) {
+            if (_password.text.isEmpty) {
+              s.disable();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (s) async {
             final ok = await widget.controller.unlock(_password.text);
             if (ok) {
               if (!mounted) return;

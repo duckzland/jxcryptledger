@@ -1,4 +1,5 @@
 import 'package:hive_ce/hive_ce.dart';
+
 import 'model.dart';
 
 class RatesRepository {
@@ -11,8 +12,8 @@ class RatesRepository {
   Future<void> add(RatesModel rate) async {
     final box = Hive.box<RatesModel>(boxName);
     final key = '${rate.sourceId}-${rate.targetId}';
-
-    await box.put(key, rate);
+    final rateWithTimestamp = rate.copyWith(timestamp: DateTime.now().millisecondsSinceEpoch);
+    await box.put(key, rateWithTimestamp);
   }
 
   Future<List<RatesModel>> getAll() async {
@@ -35,6 +36,26 @@ class RatesRepository {
   Future<void> clear() async {
     final box = Hive.box<RatesModel>(boxName);
     await box.clear();
+  }
+
+  Future<void> cleanupOldRates({Duration olderThan = const Duration(days: 1)}) async {
+    final box = Hive.box<RatesModel>(boxName);
+    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+    final keysToDelete = <dynamic>[];
+
+    for (int i = 0; i < box.length; i++) {
+      final rate = box.getAt(i);
+      if (rate != null) {
+        final ageMs = nowEpoch - rate.timestamp;
+        if (ageMs > olderThan.inMilliseconds) {
+          keysToDelete.add(box.keyAt(i));
+        }
+      }
+    }
+
+    for (final key in keysToDelete) {
+      await box.delete(key);
+    }
   }
 
   bool hasAny() {

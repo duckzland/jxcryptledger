@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:decimal/decimal.dart';
 
 import 'model.dart';
@@ -56,6 +57,7 @@ RatesParserResult parseRatesJson(String body) {
         targetSymbol: targetSymbol,
         targetId: targetId,
         targetAmount: targetAmount,
+        timestamp: DateTime.now().millisecondsSinceEpoch,
       ),
     );
   }

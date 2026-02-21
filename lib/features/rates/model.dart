@@ -9,6 +9,8 @@ class RatesModel {
   final int targetId;
   final Decimal targetAmount;
 
+  final int timestamp; // Unix epoch milliseconds
+
   const RatesModel({
     required this.sourceSymbol,
     required this.sourceId,
@@ -16,6 +18,7 @@ class RatesModel {
     required this.targetSymbol,
     required this.targetId,
     required this.targetAmount,
+    required this.timestamp,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +29,7 @@ class RatesModel {
       'targetSymbol': targetSymbol,
       'targetId': targetId,
       'targetAmount': targetAmount.toString(),
+      'timestamp': timestamp,
     };
   }
 
@@ -37,6 +41,7 @@ class RatesModel {
       targetSymbol: map['targetSymbol'] as String,
       targetId: map['targetId'] as int,
       targetAmount: Decimal.parse(map['targetAmount'] as String),
+      timestamp: map['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch,
     );
   }
 
@@ -47,6 +52,7 @@ class RatesModel {
     String? targetSymbol,
     int? targetId,
     Decimal? targetAmount,
+    int? timestamp,
   }) {
     return RatesModel(
       sourceSymbol: sourceSymbol ?? this.sourceSymbol,
@@ -55,6 +61,7 @@ class RatesModel {
       targetSymbol: targetSymbol ?? this.targetSymbol,
       targetId: targetId ?? this.targetId,
       targetAmount: targetAmount ?? this.targetAmount,
+      timestamp: timestamp ?? this.timestamp,
     );
   }
 }
