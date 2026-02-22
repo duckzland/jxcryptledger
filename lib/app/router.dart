@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../app/layout.dart';
 import '../features/settings/page.dart';
-import '../features/transactions/page.dart';
-import '../features/transactions/page_single.dart';
+import '../features/transactions/pages/index.dart';
+import '../features/transactions/pages/single.dart';
 import '../features/unlock/controller.dart';
 import '../features/unlock/page.dart';
 
@@ -42,13 +42,13 @@ class AppRouter {
           return AppLayout(title: _titleFor(location), showBack: _showBackFor(location), child: child);
         },
         routes: [
-          GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPage()),
+          GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPagesIndex()),
 
           GoRoute(
             path: "/transaction_detail",
             builder: (context, state) {
               final data = state.extra as Map<String, dynamic>;
-              return TransactionsPageSingle(data: data);
+              return TransactionsPagesSingle(data: data);
             },
           ),
 

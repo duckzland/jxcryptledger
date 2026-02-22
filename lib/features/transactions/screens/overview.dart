@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:jxcryptledger/core/utils.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 
-import '../../app/theme.dart';
-import '../../core/locator.dart';
-import '../cryptos/repository.dart';
-import 'controller.dart';
-import 'form.dart';
-import 'model.dart';
+import '../../../app/theme.dart';
+import '../../../core/locator.dart';
+import '../../cryptos/repository.dart';
+import '../buttons.dart';
+import '../calculations.dart';
+import '../model.dart';
 
 class TransactionsOverview extends StatefulWidget {
   final int id;
@@ -21,17 +21,18 @@ class TransactionsOverview extends StatefulWidget {
 }
 
 class _TransactionsOverviewState extends State<TransactionsOverview> {
-  late final TransactionsController _transactionsController;
   late final CryptosRepository _cryptosRepo;
 
   final List<PlutoColumn> _columns = [];
   final List<PlutoRow> _rows = [];
 
+  final _calc = TransactionCalculation();
+
   @override
   void initState() {
     super.initState();
-    _transactionsController = locator<TransactionsController>();
-    _cryptosRepo = CryptosRepository();
+
+    _cryptosRepo = locator<CryptosRepository>();
     _buildTableData();
   }
 
@@ -96,10 +97,21 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
         title: 'Actions',
         field: 'actions',
         type: PlutoColumnType.text(),
-        width: 120,
+        width: 140,
         enableContextMenu: false,
         enableDropToResize: false,
         enableSorting: false,
+        renderer: (ctx) {
+          final tx = ctx.row.cells['actions']!.value as TransactionsModel;
+
+          return TransactionsButtons(
+            tx: tx,
+            onAction: (mode, updatedTx) {
+              widget.onStatusChanged();
+              _buildTableData();
+            },
+          );
+        },
       ),
     ]);
 
@@ -117,7 +129,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
         'exchangedRate': PlutoCell(value: Utils.formatSmartDouble(exchangedRate)),
         'status': PlutoCell(value: statusText),
         'date': PlutoCell(value: dateText),
-        'actions': PlutoCell(value: tx.tid),
+        'actions': PlutoCell(value: tx),
       };
 
       _rows.add(PlutoRow(cells: cells));
@@ -128,14 +140,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
     }
   }
 
-  // Calculate total balance
-  double _calculateTotalBalance() {
-    return widget.transactions.fold<double>(0, (sum, tx) => sum + tx.balance);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final cumulativeSourceValue = _calculateTotalBalance();
+    final cumulativeSourceValue = _calc.totalBalance(widget.transactions);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -179,83 +186,11 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
               noRowsWidget: const Center(child: Text('No transactions')),
               configuration: AppPlutoTheme.config,
               mode: PlutoGridMode.readOnly,
-              onRowSecondaryTap: (event) {
-                // // Handle row actions
-                // final txId = event.row.cells['actions']?.value as String?;
-                // if (txId != null) {
-                //   final tx = widget.transactions.firstWhere((t) => t.tid == txId);
-                //   final hasChildren = _transactionsController.items.any((c) => c.pid == tx.tid);
-
-                //   showMenu(
-                //     context: context,
-                //     position: RelativeRect.fromLTRB(event.offset.dx, event.offset.dy, 0, 0),
-                //     items: [
-                //       if (!hasChildren) PopupMenuItem(onTap: () => _showEditDialog(tx), child: const Text('Edit')),
-                //       if (tx.balance > 0) PopupMenuItem(onTap: () => _showTradeDialog(tx), child: const Text('Trade')),
-                //       if (tx.pid == '0') PopupMenuItem(onTap: () => _showCloseDialog(tx), child: const Text('Close')),
-                //     ],
-                //   );
-                // }
-              },
+              onRowSecondaryTap: (event) {},
             ),
           ),
         ],
       ),
-    );
-  }
-
-  void _showEditDialog(TransactionsModel transaction) {
-    showDialog(
-      context: context,
-      builder: (context) => TransactionForm(
-        initialData: transaction,
-        onSave: (tx) async {
-          await _transactionsController.add(tx);
-          if (!mounted) return;
-          widget.onStatusChanged();
-          _buildTableData();
-        },
-      ),
-    );
-  }
-
-  void _showTradeDialog(TransactionsModel transaction) {
-    showDialog(
-      context: context,
-      builder: (context) => TransactionForm(
-        parent: transaction,
-        isTrade: true,
-        onSave: (tx) async {
-          await _transactionsController.add(tx);
-          if (!mounted) return;
-          widget.onStatusChanged();
-          _buildTableData();
-        },
-      ),
-    );
-  }
-
-  void _showCloseDialog(TransactionsModel transaction) {
-    showDialog(
-      context: context,
-      builder: (dctx) {
-        return AlertDialog(
-          title: const Text('Close Transaction'),
-          content: const Text('Closing this transaction will delete its history. Continue?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancel')),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dctx);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Close/delete not implemented')));
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

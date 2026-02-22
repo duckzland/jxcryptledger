@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../../app/button.dart';
-import '../../core/locator.dart';
-import '../cryptos/repository.dart';
-import 'controller.dart';
-import 'form.dart';
-import 'model.dart';
-import 'screen_active.dart';
-import 'screen_overview.dart';
+import '../../../app/button.dart';
+import '../../../core/locator.dart';
+import '../../cryptos/repository.dart';
+import '../controller.dart';
+import '../form.dart';
+import '../model.dart';
+import '../screens/active.dart';
+import '../screens/overview.dart';
 
 enum TransactionsViewMode { balanceOverview, activeTrading }
 
-class TransactionsPage extends StatefulWidget {
-  const TransactionsPage({super.key});
+class TransactionsPagesIndex extends StatefulWidget {
+  const TransactionsPagesIndex({super.key});
 
   @override
-  State<TransactionsPage> createState() => _TransactionsPageState();
+  State<TransactionsPagesIndex> createState() => _TransactionsPagesIndexState();
 }
 
-class _TransactionsPageState extends State<TransactionsPage> {
+class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   late TransactionsController _controller;
   final CryptosRepository _cryptosRepo = CryptosRepository();
 

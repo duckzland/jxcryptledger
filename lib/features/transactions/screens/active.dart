@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:jxcryptledger/core/utils.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 
-import '../../app/theme.dart';
-import '../../core/locator.dart';
-import '../cryptos/repository.dart';
-import 'controller.dart';
-import 'form.dart';
-import 'model.dart';
+import '../../../app/theme.dart';
+import '../../../core/locator.dart';
+import '../../cryptos/repository.dart';
+import '../buttons.dart';
+import '../calculations.dart';
+import '../model.dart';
 
 class TransactionsActive extends StatefulWidget {
   final int srid;
   final int rrid;
+
   final List<TransactionsModel> transactions;
   final VoidCallback onStatusChanged;
 
@@ -28,21 +29,20 @@ class TransactionsActive extends StatefulWidget {
 }
 
 class _TransactionsActiveState extends State<TransactionsActive> {
-  late final TransactionsController _transactionsController;
   late final CryptosRepository _cryptosRepo;
-
   late TextEditingController _customRateController;
 
   double? _customRate;
 
-  final List<PlutoColumn> _columns = [];
-  final List<PlutoRow> _rows = [];
+  List<PlutoColumn> _columns = [];
+  List<PlutoRow> _rows = [];
+
+  final _calc = TransactionCalculation();
 
   @override
   void initState() {
     super.initState();
-    _transactionsController = locator<TransactionsController>();
-    _cryptosRepo = CryptosRepository();
+    _cryptosRepo = locator<CryptosRepository>();
     _customRateController = TextEditingController();
     _buildTableData();
   }
@@ -59,12 +59,15 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     _columns.clear();
     _rows.clear();
 
+    final newColumns = <PlutoColumn>[];
+    final newRows = <PlutoRow>[];
+
     // Sort transactions by timestamp descending
     final sortedTxs = List<TransactionsModel>.from(widget.transactions)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     // Build columns
-    _columns.addAll([
+    newColumns.addAll([
       PlutoColumn(
         title: 'From',
         field: 'source',
@@ -95,7 +98,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
     // Only add these if currentRate != 0
     if (currentRate != 0) {
-      _columns.addAll([
+      newColumns.addAll([
         PlutoColumn(
           title: 'Current Rate',
           field: 'currentRate',
@@ -124,7 +127,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     }
 
     // Always add these
-    _columns.addAll([
+    newColumns.addAll([
       PlutoColumn(
         title: 'Status',
         field: 'status',
@@ -145,10 +148,21 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         title: 'Actions',
         field: 'actions',
         type: PlutoColumnType.text(),
-        width: 120,
+        width: 140,
         enableContextMenu: false,
         enableDropToResize: false,
         enableSorting: false,
+        renderer: (ctx) {
+          final tx = ctx.row.cells['actions']!.value as TransactionsModel;
+
+          return TransactionsButtons(
+            tx: tx,
+            onAction: (mode, updatedTx) {
+              widget.onStatusChanged();
+              _buildTableData();
+            },
+          );
+        },
       ),
     ]);
 
@@ -181,108 +195,30 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       cells.addAll({
         'status': PlutoCell(value: statusText),
         'date': PlutoCell(value: dateText),
-        'actions': PlutoCell(value: tx.tid),
+        'actions': PlutoCell(value: tx),
       });
 
-      _rows.add(PlutoRow(cells: cells));
+      newRows.add(PlutoRow(cells: cells));
     }
 
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _columns = newColumns;
+        _rows = newRows;
+      });
     }
-  }
-
-  // Calculate cumulative source value
-  double _calculateCumulativeSourceValue() {
-    double total = 0;
-    for (final tx in widget.transactions) {
-      // Calculate source_value = (balance / rrAmount) * srAmount
-      if (tx.rrAmount > 0) {
-        final percentageLeft = tx.balance / tx.rrAmount;
-        total += percentageLeft * tx.srAmount;
-      }
-    }
-    return total;
-  }
-
-  // Calculate average exchanged rate
-  double _calculateAverageExchangedRate() {
-    if (widget.transactions.isEmpty) return 0.0;
-    double totalRate = 0;
-    int count = 0;
-    for (final tx in widget.transactions) {
-      if (tx.rrAmount > 0) {
-        totalRate += tx.srAmount / tx.rrAmount;
-        count++;
-      }
-    }
-    return count > 0 ? totalRate / count : 0.0;
-  }
-
-  // Calculate total balance
-  double _calculateTotalBalance() {
-    return widget.transactions.fold<double>(0, (sum, tx) => sum + tx.balance);
-  }
-
-  // Calculate average profit/loss
-  double _calculateAverageProfitLoss() {
-    if (widget.transactions.isEmpty) return 0.0;
-    final currentRate = _customRate ?? 0.0;
-    double totalPL = 0;
-    for (final tx in widget.transactions) {
-      final currentValue = tx.balance * currentRate;
-      totalPL += currentValue - tx.balance;
-    }
-    return totalPL / widget.transactions.length;
-  }
-
-  // Calculate profit/loss percentage
-  double _calculateProfitLossPercentage() {
-    final avgRate = _calculateAverageExchangedRate();
-    if (avgRate == 0) return 0.0;
-    final avgPL = _calculateAverageProfitLoss();
-    return (avgPL / avgRate) * 100;
-  }
-
-  void _showEditDialog(TransactionsModel transaction) {
-    showDialog(
-      context: context,
-      builder: (context) => TransactionForm(
-        initialData: transaction,
-        onSave: (tx) async {
-          await _transactionsController.add(tx);
-          if (!mounted) return;
-          widget.onStatusChanged();
-          _buildTableData();
-        },
-      ),
-    );
-  }
-
-  void _showTradeDialog(TransactionsModel transaction) {
-    showDialog(
-      context: context,
-      builder: (context) => TransactionForm(
-        parent: transaction,
-        isTrade: true,
-        onSave: (tx) async {
-          await _transactionsController.add(tx);
-          if (!mounted) return;
-          widget.onStatusChanged();
-          _buildTableData();
-        },
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final txs = widget.transactions;
     final currentRate = _customRate ?? 0.0;
-    final cumulativeSourceValue = _calculateCumulativeSourceValue();
-    final averageRate = _calculateAverageExchangedRate();
-    final totalBalance = _calculateTotalBalance();
-    final avgPL = _calculateAverageProfitLoss();
-    final plPercentage = _calculateProfitLossPercentage();
+
+    final cumulativeSourceValue = _calc.cumulativeSourceValue(txs);
+    final averageRate = _calc.averageExchangedRate(txs);
+    final totalBalance = _calc.totalBalance(txs);
+    final avgPL = _calc.averageProfitLoss(txs, currentRate);
+    final plPercentage = _calc.profitLossPercentage(txs, currentRate);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -325,8 +261,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
                   onChanged: (value) {
                     setState(() {
                       _customRate = double.tryParse(value);
+                      _buildTableData();
                     });
-                    _buildTableData();
                   },
                 ),
               ),
@@ -339,29 +275,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           SizedBox(
             height: (_rows.length * 34.0) + 40,
             child: PlutoGrid(
+              key: ValueKey('${_columns.length}-${_rows.length}-${_customRate ?? 0}'),
               columns: _columns,
               rows: _rows,
               noRowsWidget: const Center(child: Text('No transactions')),
               configuration: AppPlutoTheme.config,
               mode: PlutoGridMode.readOnly,
-              onRowSecondaryTap: (event) {
-                // Handle row actions
-                // final txId = event.row.cells['actions']?.value as String?;
-                // if (txId != null) {
-                //   final tx = widget.transactions.firstWhere((t) => t.tid == txId);
-                //   final hasChildren = _transactionsController.items.any((c) => c.pid == tx.tid);
-
-                //   showMenu(
-                //     context: context,
-                //     position: RelativeRect.fromLTRB(event.offset.dx, event.offset.dy, 0, 0),
-                //     items: [
-                //       if (!hasChildren) PopupMenuItem(onTap: () => _showEditDialog(tx), child: const Text('Edit')),
-                //       if (tx.balance > 0) PopupMenuItem(onTap: () => _showTradeDialog(tx), child: const Text('Trade')),
-                //       if (tx.pid == '0') PopupMenuItem(onTap: () => _showCloseDialog(tx), child: const Text('Close')),
-                //     ],
-                //   );
-                // }
-              },
+              onRowSecondaryTap: (event) {},
             ),
           ),
 
@@ -401,30 +321,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
       ],
-    );
-  }
-
-  void _showCloseDialog(TransactionsModel transaction) {
-    showDialog(
-      context: context,
-      builder: (dctx) {
-        return AlertDialog(
-          title: const Text('Close Transaction'),
-          content: const Text('Closing this transaction will delete its history. Continue?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancel')),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dctx);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Close/delete not implemented')));
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

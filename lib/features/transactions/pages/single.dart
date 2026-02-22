@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class TransactionsPageSingle extends StatelessWidget {
+class TransactionsPagesSingle extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  const TransactionsPageSingle({super.key, required this.data});
+  const TransactionsPagesSingle({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
