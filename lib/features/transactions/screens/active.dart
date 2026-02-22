@@ -84,11 +84,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     final newColumns = <PlutoColumn>[];
     final newRows = <PlutoRow>[];
 
-    // Sort transactions by timestamp descending
     final sortedTxs = List<TransactionsModel>.from(widget.transactions)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-    // Build columns
     newColumns.addAll([
       PlutoColumn(
         title: 'From',
@@ -98,6 +96,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         enableContextMenu: false,
         enableDropToResize: false,
         enableSorting: false,
+        backgroundColor: AppTheme.columnHeaderBg,
       ),
       PlutoColumn(
         title: 'To',
@@ -118,7 +117,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       ),
     ]);
 
-    // Only add these if currentRate != 0
     if (currentRate != 0) {
       newColumns.addAll([
         PlutoColumn(
@@ -128,6 +126,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           width: 120,
           enableContextMenu: false,
           enableDropToResize: false,
+          renderer: _profitStyledRenderer,
         ),
         PlutoColumn(
           title: 'Current Value',
@@ -136,6 +135,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           width: 120,
           enableContextMenu: false,
           enableDropToResize: false,
+          renderer: _profitStyledRenderer,
         ),
         PlutoColumn(
           title: 'Profit/Loss',
@@ -144,11 +144,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           width: 120,
           enableContextMenu: false,
           enableDropToResize: false,
+          renderer: _profitStyledRenderer,
         ),
       ]);
     }
 
-    // Always add these
     newColumns.addAll([
       PlutoColumn(
         title: 'Status',
@@ -188,7 +188,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       ),
     ]);
 
-    // Build rows
     for (final tx in sortedTxs) {
       // This must be inverted, because we are displaying SRID
       final currentValue = tx.balance / currentRate;
@@ -202,15 +201,25 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       final cells = {
         'source': PlutoCell(value: '${tx.srAmountText} $sourceCoinSymbol'),
         'balance': PlutoCell(value: '${tx.balanceText} $resultCoinSymbol'),
-        'exchangedRate': PlutoCell(value: tx.rate),
+        'exchangedRate': PlutoCell(value: tx.rateText),
       };
 
-      // Only include these if currentRate != 0
       if (currentRate != 0) {
+        int profitLevel = 0;
+        String marker = '';
+        if (profitLoss > 0) {
+          profitLevel = 1;
+          marker = '+';
+        } else if (profitLoss < 0) {
+          profitLevel = -1;
+          marker = '-';
+        }
+
         cells.addAll({
           'currentRate': PlutoCell(value: Utils.formatSmartDouble(currentRate)),
           'currentValue': PlutoCell(value: '${Utils.formatSmartDouble(currentValue)} $sourceCoinSymbol'),
-          'profitLoss': PlutoCell(value: '${Utils.formatSmartDouble(profitLoss)} $sourceCoinSymbol'),
+          'profitLoss': PlutoCell(value: '$marker${Utils.formatSmartDouble(profitLoss)} $sourceCoinSymbol'),
+          'isProfit': PlutoCell(value: profitLevel),
         });
       }
 
@@ -302,10 +311,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               rows: _rows,
               noRowsWidget: const Center(child: Text('No transactions')),
               configuration: AppPlutoTheme.config,
-              mode: PlutoGridMode.select,
+              mode: PlutoGridMode.readOnly,
               onRowSecondaryTap: (event) {},
               onLoaded: (PlutoGridOnLoadedEvent event) {
-                event.stateManager.setSelectingMode(PlutoGridSelectingMode.none);
                 event.stateManager.activateColumnsAutoSize();
               },
             ),
@@ -350,6 +358,27 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
       ],
+    );
+  }
+
+  Widget _profitStyledRenderer(PlutoColumnRendererContext rendererContext) {
+    int isProfit = rendererContext.row.cells['isProfit']!.value;
+
+    Color textColor;
+    switch (isProfit) {
+      case 1:
+        textColor = AppTheme.success;
+        break;
+      case -1:
+        textColor = AppTheme.error;
+        break;
+      default:
+        textColor = AppTheme.text;
+    }
+
+    return Text(
+      rendererContext.cell.value.toString(),
+      style: TextStyle(color: textColor, fontSize: AppPlutoTheme.config.style.cellTextStyle.fontSize),
     );
   }
 }
