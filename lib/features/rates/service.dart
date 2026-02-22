@@ -146,4 +146,21 @@ class RatesService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<double> getRate(int sourceId, int targetId) async {
+    final existing = await ratesRepo.get(sourceId, targetId);
+    if (existing != null) {
+      return existing.rate.toDouble();
+    }
+
+    final ok = await fetch(sourceId, [targetId]);
+    if (!ok) return 0.0;
+
+    final updated = await ratesRepo.get(sourceId, targetId);
+    if (updated == null) return 0.0;
+
+    logln('Rate for $sourceId->$targetId updated: ${updated.rate}');
+
+    return updated.rate.toDouble();
+  }
 }

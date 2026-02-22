@@ -25,32 +25,29 @@ class Utils {
     return '$y-$m-$d $h:$min:$s';
   }
 
-  static String formatSmartDouble(double value) {
-    // Convert double → Decimal (removes floating‑point noise)
-    final dec = Decimal.parse(value.toString());
+  static String formatSmartDouble(double value, {int maxDecimals = 6, int minDecimals = 0}) {
+    Decimal dec = Decimal.parse(value.toString());
+    dec = dec.round(scale: maxDecimals);
 
-    // Convert Decimal → exact string
     String s = dec.toString();
 
-    // If there's no decimal point, just add commas and return
     if (!s.contains('.')) {
       final reg = RegExp(r'\B(?=(\d{3})+(?!\d))');
       return s.replaceAllMapped(reg, (m) => ',');
     }
 
-    // Split integer + fractional parts
     final parts = s.split('.');
     String intPart = parts[0];
     String fracPart = parts[1];
 
-    // Trim trailing zeros in fractional part
     fracPart = fracPart.replaceFirst(RegExp(r'0+$'), '');
+    if (fracPart.length < minDecimals) {
+      fracPart = fracPart.padRight(minDecimals, '0');
+    }
 
-    // Add comma separators to integer part
     final reg = RegExp(r'\B(?=(\d{3})+(?!\d))');
     intPart = intPart.replaceAllMapped(reg, (m) => ',');
 
-    // Recombine
     return fracPart.isEmpty ? intPart : '$intPart.$fracPart';
   }
 

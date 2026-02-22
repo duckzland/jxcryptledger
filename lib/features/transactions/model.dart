@@ -1,39 +1,19 @@
+import 'package:decimal/decimal.dart';
 import 'package:jxcryptledger/core/utils.dart';
 
 enum TransactionStatus { active, partial, closed, unknown }
 
 class TransactionsModel {
-  /// Transaction ID (UUID)
   final String tid;
-
-  /// Root ID (UUID or "0" if this is the root)
   final String rid;
-
-  /// Parent ID (UUID or "0" if this is the root)
   final String pid;
-
-  /// Source amount (float, can be negative)
   final double srAmount;
-
-  /// Source coin ID (CMC ID, numeric > 0)
   final int srId;
-
-  /// Result amount (float, can be negative)
   final double rrAmount;
-
-  /// Result coin ID (CMC ID, numeric > 0)
   final int rrId;
-
-  /// Balance amount (float, can be negative)
   final double balance;
-
-  /// Transaction status (status id, numeric > 0)
   final int status;
-
-  /// Timestamp (Unix epoch)
   final int timestamp;
-
-  /// Generic metadata (JSON-like map)
   final Map<String, dynamic> meta;
 
   const TransactionsModel({
@@ -50,7 +30,6 @@ class TransactionsModel {
     required this.meta,
   });
 
-  /// Convert to Map for storage or encryption
   Map<String, dynamic> toMap() {
     return {
       'tid': tid,
@@ -67,7 +46,6 @@ class TransactionsModel {
     };
   }
 
-  /// Create from Map
   factory TransactionsModel.fromMap(Map<String, dynamic> map) {
     return TransactionsModel(
       tid: map['tid'] as String,
@@ -84,7 +62,6 @@ class TransactionsModel {
     );
   }
 
-  /// Copy with modifications
   TransactionsModel copyWith({
     String? tid,
     String? rid,
@@ -140,7 +117,7 @@ class TransactionsModel {
   }
 
   String get timestampAsDate {
-    final isMilliseconds = timestamp > 2000000000; // ~2033 in seconds
+    final isMilliseconds = timestamp > 2000000000;
 
     final date = isMilliseconds
         ? DateTime.fromMillisecondsSinceEpoch(timestamp)
@@ -154,4 +131,8 @@ class TransactionsModel {
   String get srAmountText => Utils.formatSmartDouble(srAmount);
   String get rrAmountText => Utils.formatSmartDouble(rrAmount);
   String get balanceText => Utils.formatSmartDouble(balance);
+  String get rateText => Utils.formatSmartDouble(rateDouble);
+
+  Decimal get rate => Decimal.parse((rrAmount / srAmount).toDouble().toString());
+  double get rateDouble => (rrAmount / srAmount).toDouble();
 }

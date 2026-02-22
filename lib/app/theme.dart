@@ -123,8 +123,8 @@ class AppPlutoTheme {
 
         columnTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w600, fontSize: 13),
 
-        columnHeight: 38,
-        rowHeight: 32,
+        columnHeight: 50,
+        rowHeight: 42,
 
         // activatedColor: AppTheme.panelBg,
         // activatedBorderColor: AppTheme.primary,
@@ -136,6 +136,15 @@ class AppPlutoTheme {
         borderColor: Colors.transparent,
         enableCellBorderVertical: false,
         enableColumnBorderVertical: false,
+        enableColumnBorderHorizontal: false,
+        enableRowColorAnimation: false,
+        enableGridBorderShadow: false,
+      ),
+      scrollbar: PlutoGridScrollbarConfig(
+        dragDevices: {}, // Disables drag-to-scroll for all devices
+        scrollbarThickness: 0, // Hides the bar thumb
+        scrollbarThicknessWhileDragging: 0,
+        isAlwaysShown: false, // Ensures it doesn't force space
       ),
       columnSize: const PlutoGridColumnSizeConfig(autoSizeMode: PlutoAutoSizeMode.scale),
     );

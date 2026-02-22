@@ -22,7 +22,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   late TransactionsController _controller;
   final CryptosRepository _cryptosRepo = CryptosRepository();
 
-  TransactionsViewMode _viewMode = TransactionsViewMode.balanceOverview;
+  TransactionsViewMode _viewMode = TransactionsViewMode.activeTrading;
 
   @override
   void initState() {
@@ -233,11 +233,12 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       separatorBuilder: (_, __) => const SizedBox(height: 24),
       itemBuilder: (context, idx) {
         final key = grouped.keys.elementAt(idx);
-        final txs = grouped[key]!;
+        final parts = key.split('-');
 
-        // ⭐ Correct: srId and rrId come from the FIRST transaction
-        final srId = txs.first.srId;
-        final rrId = txs.first.rrId;
+        final srId = int.parse(parts[0]);
+        final rrId = int.parse(parts[1]);
+
+        final txs = grouped[key]!;
 
         return TransactionsActive(srid: srId, rrid: rrId, transactions: txs, onStatusChanged: () => setState(() {}));
       },

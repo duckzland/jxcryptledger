@@ -5,6 +5,7 @@ import 'package:pluto_grid/pluto_grid.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../cryptos/repository.dart';
+import '../../rates/service.dart';
 import '../buttons.dart';
 import '../calculations.dart';
 import '../model.dart';
@@ -30,9 +31,12 @@ class TransactionsActive extends StatefulWidget {
 
 class _TransactionsActiveState extends State<TransactionsActive> {
   late final CryptosRepository _cryptosRepo;
+  late final RatesService _ratesService;
+
   late TextEditingController _customRateController;
 
   double? _customRate;
+  double? _marketRate;
 
   List<PlutoColumn> _columns = [];
   List<PlutoRow> _rows = [];
@@ -43,18 +47,36 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   void initState() {
     super.initState();
     _cryptosRepo = locator<CryptosRepository>();
+    _ratesService = locator<RatesService>();
     _customRateController = TextEditingController();
-    _buildTableData();
+    _loadMarketRate();
+
+    _ratesService.addListener(_onRatesUpdated);
   }
 
   @override
   void dispose() {
     _customRateController.dispose();
+    _ratesService.removeListener(_onRatesUpdated);
     super.dispose();
   }
 
+  void _onRatesUpdated() {
+    _loadMarketRate();
+  }
+
+  Future<void> _loadMarketRate() async {
+    final rate = await _ratesService.getRate(widget.srid, widget.rrid);
+
+    setState(() {
+      _marketRate = rate;
+    });
+
+    _buildTableData();
+  }
+
   void _buildTableData() {
-    final currentRate = _customRate ?? 0.0;
+    final currentRate = _customRate ?? _marketRate ?? 0.0;
 
     _columns.clear();
     _rows.clear();
@@ -81,7 +103,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         title: 'To',
         field: 'balance',
         type: PlutoColumnType.text(),
-        width: 100,
+        width: 120,
         enableContextMenu: false,
         enableDropToResize: false,
         enableSorting: false,
@@ -148,7 +170,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         title: 'Actions',
         field: 'actions',
         type: PlutoColumnType.text(),
-        width: 140,
+        width: 120,
         enableContextMenu: false,
         enableDropToResize: false,
         enableSorting: false,
@@ -168,8 +190,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
     // Build rows
     for (final tx in sortedTxs) {
-      final exchangedRate = tx.srAmount > 0 ? tx.srAmount / tx.rrAmount : 0.0;
-      final currentValue = tx.balance * currentRate;
+      // This must be inverted, because we are displaying SRID
+      final currentValue = tx.balance / currentRate;
       final profitLoss = currentValue - tx.balance;
 
       final statusText = tx.statusText;
@@ -180,15 +202,15 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       final cells = {
         'source': PlutoCell(value: '${tx.srAmountText} $sourceCoinSymbol'),
         'balance': PlutoCell(value: '${tx.balanceText} $resultCoinSymbol'),
-        'exchangedRate': PlutoCell(value: Utils.formatSmartDouble(exchangedRate)),
+        'exchangedRate': PlutoCell(value: tx.rate),
       };
 
       // Only include these if currentRate != 0
       if (currentRate != 0) {
         cells.addAll({
           'currentRate': PlutoCell(value: Utils.formatSmartDouble(currentRate)),
-          'currentValue': PlutoCell(value: Utils.formatSmartDouble(currentValue)),
-          'profitLoss': PlutoCell(value: Utils.formatSmartDouble(profitLoss)),
+          'currentValue': PlutoCell(value: '${Utils.formatSmartDouble(currentValue)} $sourceCoinSymbol'),
+          'profitLoss': PlutoCell(value: '${Utils.formatSmartDouble(profitLoss)} $sourceCoinSymbol'),
         });
       }
 
@@ -212,10 +234,10 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   @override
   Widget build(BuildContext context) {
     final txs = widget.transactions;
-    final currentRate = _customRate ?? 0.0;
+    final currentRate = _customRate ?? _marketRate ?? 0.0;
 
-    final cumulativeSourceValue = _calc.cumulativeSourceValue(txs);
     final averageRate = _calc.averageExchangedRate(txs);
+    final totalSourceBalance = _calc.totalSourceBalance(txs);
     final totalBalance = _calc.totalBalance(txs);
     final avgPL = _calc.averageProfitLoss(txs, currentRate);
     final plPercentage = _calc.profitLossPercentage(txs, currentRate);
@@ -245,7 +267,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Total Balance: ${Utils.formatSmartDouble(cumulativeSourceValue)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}",
+                      "Total Balance: ${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}",
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -273,15 +295,19 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
           // Table
           SizedBox(
-            height: (_rows.length * 34.0) + 40,
+            height: (_rows.length * 46.0) + 62,
             child: PlutoGrid(
               key: ValueKey('${_columns.length}-${_rows.length}-${_customRate ?? 0}'),
               columns: _columns,
               rows: _rows,
               noRowsWidget: const Center(child: Text('No transactions')),
               configuration: AppPlutoTheme.config,
-              mode: PlutoGridMode.readOnly,
+              mode: PlutoGridMode.select,
               onRowSecondaryTap: (event) {},
+              onLoaded: (PlutoGridOnLoadedEvent event) {
+                event.stateManager.setSelectingMode(PlutoGridSelectingMode.none);
+                event.stateManager.activateColumnsAutoSize();
+              },
             ),
           ),
 
@@ -294,16 +320,19 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               _buildFooterItem(
                 label: 'Total Balance',
                 value:
-                    '${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
+                    '${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
               ),
               _buildFooterItem(label: 'Avg Rate', value: Utils.formatSmartDouble(averageRate)),
 
-              // ⭐ Only show these when currentRate != 0
               if (currentRate != 0) ...[
-                _buildFooterItem(label: 'P/L', value: Utils.formatSmartDouble(avgPL)),
+                _buildFooterItem(
+                  label: 'P/L',
+                  value:
+                      "${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(avgPL)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}",
+                ),
                 _buildFooterItem(
                   label: 'P/L %',
-                  value: '${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(plPercentage)}%',
+                  value: '${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
                 ),
               ],
             ],

@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 
+import '../../core/utils.dart';
+
 class RatesModel {
   final String sourceSymbol;
   final int sourceId;
@@ -9,7 +11,7 @@ class RatesModel {
   final int targetId;
   final Decimal targetAmount;
 
-  final int timestamp; // Unix epoch milliseconds
+  final int timestamp;
 
   const RatesModel({
     required this.sourceSymbol,
@@ -64,4 +66,9 @@ class RatesModel {
       timestamp: timestamp ?? this.timestamp,
     );
   }
+
+  String get rateText => Utils.formatSmartDouble(rateDouble);
+
+  Decimal get rate => Decimal.parse((targetAmount / sourceAmount).toDouble().toString());
+  double get rateDouble => (targetAmount / sourceAmount).toDouble();
 }

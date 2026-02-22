@@ -22,12 +22,16 @@ class TransactionCalculation {
 
     for (final tx in txs) {
       if (tx.rrAmount > 0) {
-        totalRate += tx.srAmount / tx.rrAmount;
+        totalRate += tx.rateDouble;
         count++;
       }
     }
 
     return count > 0 ? totalRate / count : 0.0;
+  }
+
+  double totalSourceBalance(List<TransactionsModel> txs) {
+    return txs.fold<double>(0, (sum, tx) => sum + tx.srAmount);
   }
 
   double totalBalance(List<TransactionsModel> txs) {
@@ -39,7 +43,7 @@ class TransactionCalculation {
 
     double totalPL = 0;
     for (final tx in txs) {
-      final currentValue = tx.balance * currentRate;
+      final currentValue = tx.balance / currentRate;
       totalPL += currentValue - tx.balance;
     }
 
