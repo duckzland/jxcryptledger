@@ -13,8 +13,8 @@ class AppTheme {
   static const success = Color(0xFF43F436);
   // static const headerBg = Color(0xFF1B1B1B);
   // static const separator = Color(0xFF404040);
-  // static const text = Colors.white;
-  // static const textMuted = Colors.white70;
+  static const text = Colors.white;
+  static const textMuted = Colors.white70;
   // static const columnHeaderBg = Color(0xFF000000);
   // static const rowHeaderBg = Color(0xFF000000);
 
@@ -24,8 +24,6 @@ class AppTheme {
   static const rowHeaderBg = Color(0xFF0D1421); // Matches background for seamless look
   static const separator = Color(0xFF232A37); // Subtle Navy-Grey (Better than #404040)
   static const panelBg = Color(0xFF1B2230);
-  static const text = Color(0xFFFFFFFF);
-  static const textMuted = Color(0xFF94A3B8);
 
   static const buttonFg = Color(0xFFE0E0E0);
 
@@ -40,6 +38,9 @@ class AppTheme {
 
   static const buttonBgError = Color(0xFFD32F2F);
   static const buttonFgError = Colors.white;
+
+  static const double tableHeadingRowHeight = 50;
+  static const double tableDataRowMinHeight = 42;
 
   static ThemeData get dark {
     return ThemeData(
@@ -67,17 +68,14 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: inputBg,
-
         labelStyle: const TextStyle(fontSize: 16, color: textMuted),
-
         floatingLabelStyle: const TextStyle(fontSize: 13, color: text),
-
         enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white54)),
-
         focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: primary)),
-
         hintStyle: TextStyle(color: textMuted),
       ),
+
+      dividerTheme: const DividerThemeData(color: AppTheme.separator, thickness: 1),
 
       cardTheme: CardThemeData(
         color: panelBg,
@@ -109,13 +107,21 @@ class AppTheme {
         elevation: 6,
         contentTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w500),
       ),
+
       tooltipTheme: const TooltipThemeData(
         decoration: BoxDecoration(color: Color(0xFF323546), borderRadius: BorderRadius.all(Radius.circular(4))),
         textStyle: TextStyle(color: Color(0xFFE0E0E0), fontSize: 14, fontWeight: FontWeight.w500),
       ),
-      focusColor: Colors.transparent, // Kills the default focus overlay color
-      highlightColor: Colors.transparent, // Kills the "on-tap" splash
-      splashColor: Colors.transparent, // Kills the ripple effect
+
+      dataTableTheme: DataTableThemeData(
+        headingRowColor: WidgetStateProperty.all(AppTheme.columnHeaderBg),
+        headingTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w600, fontSize: 16),
+        dataRowColor: WidgetStateProperty.all(AppTheme.rowHeaderBg),
+        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 14),
+        dividerThickness: 1,
+        headingRowHeight: AppTheme.tableHeadingRowHeight,
+        dataRowMinHeight: AppTheme.tableDataRowMinHeight,
+      ),
     );
   }
 }

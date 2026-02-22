@@ -1,6 +1,6 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:jxcryptledger/core/utils.dart';
-import 'package:pluto_grid/pluto_grid.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
@@ -38,8 +38,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   double? _customRate;
   double? _marketRate;
 
-  List<PlutoColumn> _columns = [];
-  List<PlutoRow> _rows = [];
+  List<Map<String, dynamic>> _tableRows = [];
 
   final _calc = TransactionCalculation();
 
@@ -78,164 +77,49 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   void _buildTableData() {
     final currentRate = _customRate ?? _marketRate ?? 0.0;
 
-    _columns.clear();
-    _rows.clear();
-
-    final newColumns = <PlutoColumn>[];
-    final newRows = <PlutoRow>[];
-
     final sortedTxs = List<TransactionsModel>.from(widget.transactions)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-    newColumns.addAll([
-      PlutoColumn(
-        title: 'From',
-        field: 'source',
-        type: PlutoColumnType.text(),
-        width: 120,
-        enableContextMenu: false,
-        enableDropToResize: false,
-        enableSorting: false,
-        backgroundColor: AppTheme.columnHeaderBg,
-      ),
-      PlutoColumn(
-        title: 'To',
-        field: 'balance',
-        type: PlutoColumnType.text(),
-        width: 120,
-        enableContextMenu: false,
-        enableDropToResize: false,
-        enableSorting: false,
-      ),
-      PlutoColumn(
-        title: 'Exchanged Rate',
-        field: 'exchangedRate',
-        type: PlutoColumnType.text(),
-        width: 120,
-        enableContextMenu: false,
-        enableDropToResize: false,
-      ),
-    ]);
-
-    if (currentRate != 0) {
-      newColumns.addAll([
-        PlutoColumn(
-          title: 'Current Rate',
-          field: 'currentRate',
-          type: PlutoColumnType.text(),
-          width: 120,
-          enableContextMenu: false,
-          enableDropToResize: false,
-          renderer: _profitStyledRenderer,
-        ),
-        PlutoColumn(
-          title: 'Current Value',
-          field: 'currentValue',
-          type: PlutoColumnType.text(),
-          width: 120,
-          enableContextMenu: false,
-          enableDropToResize: false,
-          renderer: _profitStyledRenderer,
-        ),
-        PlutoColumn(
-          title: 'Profit/Loss',
-          field: 'profitLoss',
-          type: PlutoColumnType.text(),
-          width: 120,
-          enableContextMenu: false,
-          enableDropToResize: false,
-          renderer: _profitStyledRenderer,
-        ),
-      ]);
-    }
-
-    newColumns.addAll([
-      PlutoColumn(
-        title: 'Status',
-        field: 'status',
-        type: PlutoColumnType.text(),
-        width: 80,
-        enableContextMenu: false,
-        enableDropToResize: false,
-      ),
-      PlutoColumn(
-        title: 'Date',
-        field: 'date',
-        type: PlutoColumnType.text(),
-        width: 100,
-        enableContextMenu: false,
-        enableDropToResize: false,
-      ),
-      PlutoColumn(
-        title: 'Actions',
-        field: 'actions',
-        type: PlutoColumnType.text(),
-        width: 120,
-        enableContextMenu: false,
-        enableDropToResize: false,
-        enableSorting: false,
-        renderer: (ctx) {
-          final tx = ctx.row.cells['actions']!.value as TransactionsModel;
-
-          return TransactionsButtons(
-            tx: tx,
-            onAction: (mode, updatedTx) {
-              widget.onStatusChanged();
-              _buildTableData();
-            },
-          );
-        },
-      ),
-    ]);
+    final newRows = <Map<String, dynamic>>[];
 
     for (final tx in sortedTxs) {
-      // This must be inverted, because we are displaying SRID
-      final currentValue = tx.balance / currentRate;
-      final profitLoss = currentValue - tx.balance;
+      final sourceSymbol = _cryptosRepo.getSymbol(tx.srId);
+      final resultSymbol = _cryptosRepo.getSymbol(tx.rrId);
 
-      final statusText = tx.statusText;
-      final dateText = tx.timestampAsDate;
-      final resultCoinSymbol = _cryptosRepo.getSymbol(tx.rrId);
-      final sourceCoinSymbol = _cryptosRepo.getSymbol(tx.srId);
-
-      final cells = {
-        'source': PlutoCell(value: '${tx.srAmountText} $sourceCoinSymbol'),
-        'balance': PlutoCell(value: '${tx.balanceText} $resultCoinSymbol'),
-        'exchangedRate': PlutoCell(value: tx.rateText),
-      };
+      double? currentValue;
+      double? profitLoss;
+      int profitLevel = 0;
 
       if (currentRate != 0) {
-        int profitLevel = 0;
-        String marker = '';
+        currentValue = tx.balance / currentRate;
+        profitLoss = currentValue - tx.balance;
+
         if (profitLoss > 0) {
           profitLevel = 1;
-          marker = '+';
         } else if (profitLoss < 0) {
           profitLevel = -1;
-          marker = '-';
         }
-
-        cells.addAll({
-          'currentRate': PlutoCell(value: Utils.formatSmartDouble(currentRate)),
-          'currentValue': PlutoCell(value: '${Utils.formatSmartDouble(currentValue)} $sourceCoinSymbol'),
-          'profitLoss': PlutoCell(value: '$marker${Utils.formatSmartDouble(profitLoss)} $sourceCoinSymbol'),
-          'isProfit': PlutoCell(value: profitLevel),
-        });
       }
 
-      cells.addAll({
-        'status': PlutoCell(value: statusText),
-        'date': PlutoCell(value: dateText),
-        'actions': PlutoCell(value: tx),
+      newRows.add({
+        'from': '${tx.srAmountText} $sourceSymbol',
+        'to': '${tx.balanceText} $resultSymbol',
+        'exchangedRate': tx.rateText,
+        'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(currentRate),
+        'currentValue': currentRate == 0 ? null : '${Utils.formatSmartDouble(currentValue!)} $sourceSymbol',
+        'profitLoss': currentRate == 0
+            ? null
+            : '${profitLoss! > 0 ? '+' : ''}${Utils.formatSmartDouble(profitLoss)} $sourceSymbol',
+        'profitLevel': profitLevel,
+        'status': tx.statusText,
+        'date': tx.timestampAsDate,
+        'tx': tx,
       });
-
-      newRows.add(PlutoRow(cells: cells));
     }
 
     if (mounted) {
       setState(() {
-        _columns = newColumns;
-        _rows = newRows;
+        _tableRows = newRows;
       });
     }
   }
@@ -251,134 +135,193 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     final avgPL = _calc.averageProfitLoss(txs, currentRate);
     final plPercentage = _calc.profitLossPercentage(txs, currentRate);
 
+    final color = plPercentage > 0
+        ? AppTheme.success
+        : plPercentage == 0
+        ? AppTheme.error
+        : AppTheme.text;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.separator),
         borderRadius: BorderRadius.circular(8),
+        color: AppTheme.panelBg,
       ),
       child: Column(
         children: [
-          // Header
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} to ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      'Coin ID: ${widget.srid} - ${widget.rrid}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Total Balance: ${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(
-                width: 150,
-                child: TextField(
-                  controller: _customRateController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(labelText: "Custom Rates", hintText: averageRate.toStringAsFixed(8)),
-                  onChanged: (value) {
-                    setState(() {
-                      _customRate = double.tryParse(value);
-                      _buildTableData();
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
+          _buildHeader(averageRate: averageRate, totalSourceBalance: totalSourceBalance, totalBalance: totalBalance),
 
           const SizedBox(height: 20),
 
-          // Table
-          SizedBox(
-            height: (_rows.length * 46.0) + 62,
-            child: PlutoGrid(
-              key: ValueKey('${_columns.length}-${_rows.length}-${_customRate ?? 0}'),
-              columns: _columns,
-              rows: _rows,
-              noRowsWidget: const Center(child: Text('No transactions')),
-              configuration: AppPlutoTheme.config,
-              mode: PlutoGridMode.readOnly,
-              onRowSecondaryTap: (event) {},
-              onLoaded: (PlutoGridOnLoadedEvent event) {
-                event.stateManager.activateColumnsAutoSize();
-              },
-            ),
-          ),
+          _buildTable(currentRate),
 
           const SizedBox(height: 20),
 
-          // Footer
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildFooterItem(
-                label: 'Total Balance',
-                value:
-                    '${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
-              ),
-              _buildFooterItem(label: 'Avg Rate', value: Utils.formatSmartDouble(averageRate)),
-
-              if (currentRate != 0) ...[
-                _buildFooterItem(
-                  label: 'P/L',
-                  value:
-                      "${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(avgPL)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}",
-                ),
-                _buildFooterItem(
-                  label: 'P/L %',
-                  value: '${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
-                ),
-              ],
-            ],
+          _buildFooter(
+            averageRate: averageRate,
+            totalSourceBalance: totalSourceBalance,
+            totalBalance: totalBalance,
+            avgPL: avgPL,
+            plPercentage: plPercentage,
+            color: color,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFooterItem({required String label, required String value}) {
+  Widget _buildHeader({required double averageRate, required double totalSourceBalance, required double totalBalance}) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} to ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              const SizedBox(height: 8),
+              Text(
+                "Total Balance: ${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(
+          width: 150,
+          child: TextField(
+            controller: _customRateController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: "Custom Rates", hintText: averageRate.toStringAsFixed(8)),
+            onChanged: (value) {
+              setState(() {
+                _customRate = double.tryParse(value);
+                _buildTableData();
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTable(double currentRate) {
+    return SizedBox(
+      width: double.infinity,
+      height: (_tableRows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      child: DataTable2(
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: AppTheme.tableHeadingRowHeight,
+        dataRowHeight: AppTheme.tableDataRowMinHeight,
+        minWidth: 900,
+        showCheckboxColumn: false,
+
+        columns: [
+          DataColumn2(label: Text('From'), size: ColumnSize.S),
+          DataColumn2(label: Text('To'), size: ColumnSize.S),
+          DataColumn2(label: Text('Exchanged Rate'), size: ColumnSize.S),
+
+          if (currentRate != 0) ...[
+            DataColumn2(label: Text('Current Rate'), size: ColumnSize.S),
+            DataColumn2(label: Text('Current Value'), size: ColumnSize.S),
+            DataColumn2(label: Text('Profit/Loss'), size: ColumnSize.S),
+          ],
+
+          DataColumn2(label: Text('Status'), size: ColumnSize.S),
+          DataColumn2(label: Text('Date'), size: ColumnSize.S),
+          DataColumn2(label: Text('Actions'), size: ColumnSize.S),
+        ],
+
+        rows: _tableRows.map((r) {
+          final color = r['profitLevel'] == 1
+              ? AppTheme.success
+              : r['profitLevel'] == -1
+              ? AppTheme.error
+              : AppTheme.text;
+
+          return DataRow(
+            cells: [
+              DataCell(Text(r['from'])),
+              DataCell(Text(r['to'])),
+              DataCell(Text(r['exchangedRate'])),
+
+              if (currentRate != 0) ...[
+                DataCell(Text(r['currentRate'], style: TextStyle(color: color))),
+                DataCell(Text(r['currentValue'], style: TextStyle(color: color))),
+                DataCell(Text(r['profitLoss'], style: TextStyle(color: color))),
+              ],
+
+              DataCell(Text(r['status'])),
+              DataCell(Text(r['date'])),
+              DataCell(
+                TransactionsButtons(
+                  tx: r['tx'],
+                  onAction: (mode, updatedTx) {
+                    widget.onStatusChanged();
+                    _buildTableData();
+                  },
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildFooter({
+    required double averageRate,
+    required double totalSourceBalance,
+    required double totalBalance,
+    required double avgPL,
+    required double plPercentage,
+    required Color color,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildFooterItem(
+          label: 'Total Balance',
+          value:
+              '${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
+        ),
+
+        _buildFooterItem(label: 'Avg Rate', value: Utils.formatSmartDouble(averageRate)),
+
+        if (plPercentage != 0) ...[
+          _buildFooterItem(
+            label: 'P/L',
+            value:
+                "${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(avgPL)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}",
+            color: color,
+          ),
+          _buildFooterItem(
+            label: 'P/L %',
+            value: '${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
+            color: color,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFooterItem({required String label, required String value, Color color = AppTheme.text}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w600),
+        ),
       ],
-    );
-  }
-
-  Widget _profitStyledRenderer(PlutoColumnRendererContext rendererContext) {
-    int isProfit = rendererContext.row.cells['isProfit']!.value;
-
-    Color textColor;
-    switch (isProfit) {
-      case 1:
-        textColor = AppTheme.success;
-        break;
-      case -1:
-        textColor = AppTheme.error;
-        break;
-      default:
-        textColor = AppTheme.text;
-    }
-
-    return Text(
-      rendererContext.cell.value.toString(),
-      style: TextStyle(color: textColor, fontSize: AppPlutoTheme.config.style.cellTextStyle.fontSize),
     );
   }
 }
