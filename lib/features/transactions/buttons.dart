@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/button.dart';
+import '../../widgets/button.dart';
 import '../../core/locator.dart';
 import 'form.dart';
 import 'model.dart';
@@ -117,7 +117,7 @@ class TransactionsButtons extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (_checkVisibility(TransactionsButtonsMode.edit))
-          AppButton(
+          WidgetButton(
             icon: Icons.edit,
             tooltip: "Edit",
             padding: const EdgeInsets.all(8),
@@ -127,7 +127,7 @@ class TransactionsButtons extends StatelessWidget {
           ),
 
         if (_checkVisibility(TransactionsButtonsMode.close))
-          AppButton(
+          WidgetButton(
             icon: Icons.close,
             tooltip: "Close",
             padding: const EdgeInsets.all(8),
@@ -137,7 +137,7 @@ class TransactionsButtons extends StatelessWidget {
           ),
 
         if (_checkVisibility(TransactionsButtonsMode.trade))
-          AppButton(
+          WidgetButton(
             icon: Icons.swap_horiz,
             tooltip: "Trade",
             padding: const EdgeInsets.all(8),

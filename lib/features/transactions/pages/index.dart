@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/button.dart';
+import '../../../widgets/button.dart';
 import '../../../core/locator.dart';
 import '../../cryptos/repository.dart';
 import '../controller.dart';
@@ -140,7 +140,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       spacing: 4,
       children: [
         // Balance Overview
-        AppButton(
+        WidgetButton(
           icon: Icons.account_balance_wallet_outlined,
           padding: const EdgeInsets.all(8),
           iconSize: 20,
@@ -161,7 +161,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         ),
 
         // Active Trading
-        AppButton(
+        WidgetButton(
           icon: Icons.show_chart,
           padding: const EdgeInsets.all(8),
           iconSize: 20,
@@ -182,7 +182,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         ),
 
         // Add Transaction
-        AppButton(
+        WidgetButton(
           icon: Icons.add,
           padding: const EdgeInsets.all(8),
           iconSize: 20,
@@ -204,7 +204,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
           const SizedBox(height: 16),
           const Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
-          AppButton(
+          WidgetButton(
             icon: Icons.add,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             onPressed: (_) => _showAddTransactionDialog(),

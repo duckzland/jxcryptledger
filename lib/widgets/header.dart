@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
+import '../app/theme.dart';
 
-class TransactionsTableHeader extends StatelessWidget {
+class WidgetsTitle extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const TransactionsTableHeader({super.key, required this.title, required this.subtitle});
+  const WidgetsTitle({super.key, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {

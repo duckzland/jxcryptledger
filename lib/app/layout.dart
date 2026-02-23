@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/rates/service.dart';
 import '../core/locator.dart';
-import 'button.dart';
+import '../widgets/button.dart';
 
 class AppLayout extends StatefulWidget {
   final String title;
@@ -52,7 +52,7 @@ class _AppLayoutState extends State<AppLayout> {
                 spacing: 4,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  AppButton(
+                  WidgetButton(
                     icon: Icons.refresh,
                     padding: const EdgeInsets.all(8),
                     iconSize: 20,
@@ -66,7 +66,7 @@ class _AppLayoutState extends State<AppLayout> {
                   ),
 
                   if (hasRates)
-                    AppButton(
+                    WidgetButton(
                       icon: Icons.autorenew,
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
@@ -79,7 +79,7 @@ class _AppLayoutState extends State<AppLayout> {
                       },
                     ),
 
-                  AppButton(
+                  WidgetButton(
                     icon: Icons.settings,
                     padding: const EdgeInsets.all(8),
                     iconSize: 20,

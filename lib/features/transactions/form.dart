@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../app/button.dart';
+import '../../widgets/button.dart';
 import '../cryptos/search_field.dart';
 import 'model.dart';
 
@@ -229,14 +229,14 @@ class _TransactionFormState extends State<TransactionForm> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    AppButton(
+                    WidgetButton(
                       label: 'Cancel',
                       onPressed: (_) {
                         Navigator.pop(context);
                       },
                     ),
                     const SizedBox(width: 12),
-                    AppButton(
+                    WidgetButton(
                       label: widget.initialData != null ? 'Update' : 'Save',
                       onPressed: (_) {
                         _handleSave();

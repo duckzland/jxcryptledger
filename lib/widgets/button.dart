@@ -2,22 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'theme.dart';
+import '../app/theme.dart';
 
-enum AppActionState { allowActions, disallowActions, disabled, inProgress, active, error, normal }
+enum WidgetButtonActionState { allowActions, disallowActions, disabled, inProgress, active, error, normal }
 
-class AppButton extends StatefulWidget {
+class WidgetButton extends StatefulWidget {
   final String? label;
   final IconData? icon;
-  final FutureOr<void> Function(AppButtonState state)? onPressed;
+  final FutureOr<void> Function(WidgetButtonState state)? onPressed;
   final String? tooltip;
   final EdgeInsetsGeometry? padding;
-  final FutureOr<void> Function(AppButtonState state)? evaluator;
-  final AppActionState initialState;
+  final FutureOr<void> Function(WidgetButtonState state)? evaluator;
+  final WidgetButtonActionState initialState;
   final double? iconSize;
   final Size? minimumSize;
 
-  const AppButton({
+  const WidgetButton({
     super.key,
     this.label,
     this.icon,
@@ -25,17 +25,17 @@ class AppButton extends StatefulWidget {
     this.tooltip,
     this.padding,
     this.evaluator,
-    this.initialState = AppActionState.normal,
+    this.initialState = WidgetButtonActionState.normal,
     this.iconSize,
     this.minimumSize,
   });
 
   @override
-  State<AppButton> createState() => AppButtonState();
+  State<WidgetButton> createState() => WidgetButtonState();
 }
 
-class AppButtonState extends State<AppButton> {
-  AppActionState _state = AppActionState.normal;
+class WidgetButtonState extends State<WidgetButton> {
+  WidgetButtonActionState _state = WidgetButtonActionState.normal;
 
   @override
   void initState() {
@@ -61,16 +61,16 @@ class AppButtonState extends State<AppButton> {
   }
 
   @override
-  void didUpdateWidget(covariant AppButton oldWidget) {
+  void didUpdateWidget(covariant WidgetButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     _runEvaluator();
   }
 
-  bool get _disabled => _state == AppActionState.disabled || _state == AppActionState.disallowActions;
+  bool get _disabled => _state == WidgetButtonActionState.disabled || _state == WidgetButtonActionState.disallowActions;
 
-  bool get _inProgress => _state == AppActionState.inProgress;
+  bool get _inProgress => _state == WidgetButtonActionState.inProgress;
 
-  bool get _isActive => _state == AppActionState.active;
+  bool get _isActive => _state == WidgetButtonActionState.active;
 
   @override
   Widget build(BuildContext context) {
@@ -145,59 +145,59 @@ class AppButtonState extends State<AppButton> {
 
   Color _backgroundColor() {
     switch (_state) {
-      case AppActionState.disabled:
-      case AppActionState.disallowActions:
+      case WidgetButtonActionState.disabled:
+      case WidgetButtonActionState.disallowActions:
         return AppTheme.buttonBgDisabled;
 
-      case AppActionState.inProgress:
+      case WidgetButtonActionState.inProgress:
         return AppTheme.buttonBgProgress;
 
-      case AppActionState.active:
+      case WidgetButtonActionState.active:
         return AppTheme.buttonBgActive;
 
-      case AppActionState.error:
+      case WidgetButtonActionState.error:
         return AppTheme.buttonBgError;
 
-      case AppActionState.allowActions:
-      case AppActionState.normal:
+      case WidgetButtonActionState.allowActions:
+      case WidgetButtonActionState.normal:
         return AppTheme.buttonBg;
     }
   }
 
   Color _foregroundColor() {
     switch (_state) {
-      case AppActionState.disabled:
-      case AppActionState.disallowActions:
+      case WidgetButtonActionState.disabled:
+      case WidgetButtonActionState.disallowActions:
         return AppTheme.buttonFgDisabled;
 
-      case AppActionState.inProgress:
+      case WidgetButtonActionState.inProgress:
         return AppTheme.buttonFgProgress;
 
-      case AppActionState.active:
+      case WidgetButtonActionState.active:
         return AppTheme.buttonFgActive;
 
-      case AppActionState.error:
+      case WidgetButtonActionState.error:
         return AppTheme.buttonFgError;
 
-      case AppActionState.allowActions:
-      case AppActionState.normal:
+      case WidgetButtonActionState.allowActions:
+      case WidgetButtonActionState.normal:
         return AppTheme.buttonFg;
     }
   }
 
   // Helper methods previously provided by AppActionController
-  AppActionState setAppState(AppActionState s) {
+  WidgetButtonActionState setAppState(WidgetButtonActionState s) {
     if (mounted) setState(() => _state = s);
     return s;
   }
 
-  AppActionState allowActions() => setAppState(AppActionState.allowActions);
-  AppActionState disallowActions() => setAppState(AppActionState.disallowActions);
-  AppActionState disable() => setAppState(AppActionState.disabled);
-  AppActionState enable() => setAppState(AppActionState.normal);
-  AppActionState normal() => setAppState(AppActionState.normal);
-  AppActionState progress() => setAppState(AppActionState.inProgress);
-  AppActionState active() => setAppState(AppActionState.active);
-  AppActionState error() => setAppState(AppActionState.error);
-  AppActionState reset() => setAppState(AppActionState.normal);
+  WidgetButtonActionState allowActions() => setAppState(WidgetButtonActionState.allowActions);
+  WidgetButtonActionState disallowActions() => setAppState(WidgetButtonActionState.disallowActions);
+  WidgetButtonActionState disable() => setAppState(WidgetButtonActionState.disabled);
+  WidgetButtonActionState enable() => setAppState(WidgetButtonActionState.normal);
+  WidgetButtonActionState normal() => setAppState(WidgetButtonActionState.normal);
+  WidgetButtonActionState progress() => setAppState(WidgetButtonActionState.inProgress);
+  WidgetButtonActionState active() => setAppState(WidgetButtonActionState.active);
+  WidgetButtonActionState error() => setAppState(WidgetButtonActionState.error);
+  WidgetButtonActionState reset() => setAppState(WidgetButtonActionState.normal);
 }

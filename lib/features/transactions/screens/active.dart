@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:jxcryptledger/core/utils.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../widgets/balance_text.dart';
+import '../../../widgets/header.dart';
 import '../../cryptos/repository.dart';
 import '../../rates/service.dart';
 import '../buttons.dart';
 import '../calculations.dart';
-import '../header.dart';
 import '../model.dart';
 
 class TransactionsActive extends StatefulWidget {
@@ -36,8 +39,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
   late TextEditingController _customRateController;
 
+  late final String _sourceSymbol;
+  late final String _resultSymbol;
+
   double? _customRate;
   double? _marketRate;
+
+  Timer? _debounce;
 
   List<Map<String, dynamic>> _tableRows = [];
 
@@ -47,17 +55,22 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   void initState() {
     super.initState();
     _cryptosRepo = locator<CryptosRepository>();
+    _sourceSymbol = _cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin';
+    _resultSymbol = _cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin';
+
     _ratesService = locator<RatesService>();
-    _customRateController = TextEditingController();
+    _ratesService.addListener(_onRatesUpdated);
     _loadMarketRate();
 
-    _ratesService.addListener(_onRatesUpdated);
+    _customRateController = TextEditingController();
   }
 
   @override
   void dispose() {
     _customRateController.dispose();
     _ratesService.removeListener(_onRatesUpdated);
+    _debounce?.cancel();
+
     super.dispose();
   }
 
@@ -84,12 +97,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     final newRows = <Map<String, dynamic>>[];
 
     for (final tx in sortedTxs) {
-      final sourceSymbol = _cryptosRepo.getSymbol(tx.srId);
-      final resultSymbol = _cryptosRepo.getSymbol(tx.rrId);
-
-      double? currentValue;
-      double? profitLoss;
-      int profitLevel = 0;
+      double currentValue = 0;
+      double profitLoss = 0;
+      double profitLevel = 0;
 
       if (currentRate != 0) {
         currentValue = tx.balance / currentRate;
@@ -103,14 +113,12 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       }
 
       newRows.add({
-        'from': '${tx.srAmountText} $sourceSymbol',
-        'to': '${tx.balanceText} $resultSymbol',
+        'from': '${tx.srAmountText} $_sourceSymbol',
+        'to': '${tx.balanceText} $_resultSymbol',
         'exchangedRate': tx.rateText,
         'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(currentRate),
-        'currentValue': currentRate == 0 ? null : '${Utils.formatSmartDouble(currentValue!)} $sourceSymbol',
-        'profitLoss': currentRate == 0
-            ? null
-            : '${profitLoss! > 0 ? '+' : ''}${Utils.formatSmartDouble(profitLoss)} $sourceSymbol',
+        'currentValue': currentRate == 0 ? null : '${Utils.formatSmartDouble(currentValue)} $_sourceSymbol',
+        'profitLoss': currentRate == 0 ? null : '${Utils.formatSmartDouble(profitLoss)} $_sourceSymbol',
         'profitLevel': profitLevel,
         'status': tx.statusText,
         'date': tx.timestampAsDate,
@@ -136,12 +144,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     final avgPL = _calc.averageProfitLoss(txs, currentRate);
     final plPercentage = _calc.profitLossPercentage(txs, currentRate);
 
-    final color = plPercentage > 0
-        ? AppTheme.success
-        : plPercentage == 0
-        ? AppTheme.error
-        : AppTheme.text;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -165,7 +167,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
             totalBalance: totalBalance,
             avgPL: avgPL,
             plPercentage: plPercentage,
-            color: color,
           ),
         ],
       ),
@@ -180,13 +181,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} to ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
+                '$_sourceSymbol to $_resultSymbol Trades',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
               const SizedBox(height: 8),
               Text(
-                "Total Balance: ${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}",
+                "Total Balance: ${Utils.formatSmartDouble(totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(totalBalance)} $_resultSymbol",
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
             ],
@@ -200,9 +201,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(labelText: "Custom Rates", hintText: averageRate.toStringAsFixed(8)),
             onChanged: (value) {
-              setState(() {
-                _customRate = double.tryParse(value);
-                _buildTableData();
+              if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+              _debounce = Timer(const Duration(milliseconds: 64), () {
+                setState(() {
+                  _customRate = double.tryParse(value);
+                  _buildTableData();
+                });
               });
             },
           ),
@@ -227,29 +232,21 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           DataColumn2(label: Text('Date'), size: ColumnSize.S),
           DataColumn2(
             size: ColumnSize.S,
-            label: TransactionsTableHeader(title: 'Amount Out', subtitle: 'Sent'),
+            label: WidgetsTitle(title: 'Amount Out', subtitle: 'Sent'),
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: TransactionsTableHeader(title: 'Amount In', subtitle: 'Received'),
+            label: WidgetsTitle(title: 'Amount In', subtitle: 'Received'),
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: TransactionsTableHeader(
-              title: 'Exchanged Rate',
-              subtitle:
-                  '${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'} / ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}',
-            ),
+            label: WidgetsTitle(title: 'Exchanged Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
           ),
 
           if (currentRate != 0) ...[
             DataColumn2(
               size: ColumnSize.S,
-              label: TransactionsTableHeader(
-                title: 'Current Rate',
-                subtitle:
-                    '${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'} / ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}',
-              ),
+              label: WidgetsTitle(title: 'Current Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
             ),
             DataColumn2(label: Text('Current Value'), size: ColumnSize.S),
             DataColumn2(label: Text('Profit/Loss'), size: ColumnSize.S),
@@ -260,12 +257,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         ],
 
         rows: _tableRows.map((r) {
-          final color = r['profitLevel'] == 1
-              ? AppTheme.success
-              : r['profitLevel'] == -1
-              ? AppTheme.error
-              : AppTheme.text;
-
           return DataRow(
             cells: [
               DataCell(Text(r['date'])),
@@ -274,9 +265,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               DataCell(Text(r['exchangedRate'])),
 
               if (currentRate != 0) ...[
-                DataCell(Text(r['currentRate'], style: TextStyle(color: color))),
-                DataCell(Text(r['currentValue'], style: TextStyle(color: color))),
-                DataCell(Text(r['profitLoss'], style: TextStyle(color: color))),
+                DataCell(
+                  WidgetsBalanceText(text: r['currentRate'], value: r['profitLevel'], comparator: 0, hidePrefix: true),
+                ),
+                DataCell(
+                  WidgetsBalanceText(text: r['currentValue'], value: r['profitLevel'], comparator: 0, hidePrefix: true),
+                ),
+                DataCell(WidgetsBalanceText(text: r['profitLoss'], value: r['profitLevel'], comparator: 0)),
               ],
 
               DataCell(Text(r['status'])),
@@ -302,46 +297,50 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     required double totalBalance,
     required double avgPL,
     required double plPercentage,
-    required Color color,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildFooterItem(
-          label: 'Total Balance',
-          value:
-              '${Utils.formatSmartDouble(totalSourceBalance)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'} - ${Utils.formatSmartDouble(totalBalance)} ${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'}',
+          title: 'Total Balance',
+          subtitle:
+              '${Utils.formatSmartDouble(totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(totalBalance)} $_resultSymbol',
+          value: 0,
+          comparator: 0,
         ),
 
-        _buildFooterItem(label: 'Avg Rate', value: Utils.formatSmartDouble(averageRate)),
+        _buildFooterItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(averageRate), value: 0, comparator: 0),
 
         if (plPercentage != 0) ...[
           _buildFooterItem(
-            label: 'P/L',
-            value:
-                "${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(avgPL)} ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}",
-            color: color,
+            title: 'P/L',
+            subtitle: "${Utils.formatSmartDouble(avgPL)} $_sourceSymbol",
+            value: plPercentage,
+            comparator: 0,
           ),
           _buildFooterItem(
-            label: 'P/L %',
-            value: '${plPercentage > 0 ? '+' : ''}${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
-            color: color,
+            title: 'P/L %',
+            subtitle: '${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
+            value: plPercentage,
+            comparator: 0,
           ),
         ],
       ],
     );
   }
 
-  Widget _buildFooterItem({required String label, required String value, Color color = AppTheme.text}) {
+  Widget _buildFooterItem({
+    required String title,
+    required String subtitle,
+    required double value,
+    required double comparator,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+        Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w600),
-        ),
+        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 14),
       ],
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/button.dart';
+import '../../widgets/button.dart';
 import 'controller.dart';
 
 class UnlockPage extends StatefulWidget {
@@ -80,7 +80,7 @@ class _UnlockPageState extends State<UnlockPage> {
 
         const SizedBox(height: 20),
 
-        AppButton(
+        WidgetButton(
           label: "Create Vault",
           evaluator: (s) {
             if (_password.text.isEmpty || _confirm.text.isEmpty || _password.text != _confirm.text) {
@@ -133,7 +133,7 @@ class _UnlockPageState extends State<UnlockPage> {
 
         const SizedBox(height: 20),
 
-        AppButton(
+        WidgetButton(
           label: "Unlock",
           evaluator: (s) {
             if (_password.text.isEmpty) {

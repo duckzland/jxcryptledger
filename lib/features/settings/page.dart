@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:jxcryptledger/app/snackbar.dart';
 
-import '../../app/button.dart';
 import '../../core/locator.dart';
+import '../../widgets/button.dart';
 import 'controller.dart';
 import 'repository.dart';
 
@@ -17,7 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
   final Map<SettingKey, dynamic> _buffer = {};
   late final SettingsController _controller;
-  
+
   bool _isDirty() {
     final userKeys = SettingKey.values.where((k) => k.isUserEditable);
     for (var key in userKeys) {
@@ -27,7 +27,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     return false;
   }
-  
 
   @override
   void initState() {
@@ -117,7 +116,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSaveButton() {
-    return AppButton(
+    return WidgetButton(
       label: "Save Changes",
       evaluator: (s) {
         if (!_isDirty()) {
@@ -145,8 +144,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildResetButton(List<SettingKey> editableKeys) {
-    return AppButton(
-      initialState: AppActionState.error,
+    return WidgetButton(
+      initialState: WidgetButtonActionState.error,
       label: "Reset to Default",
       onPressed: (s) async {
         final confirmed = await showDialog<bool>(
@@ -156,14 +155,14 @@ class _SettingsPageState extends State<SettingsPage> {
               title: const Text("Reset Settings"),
               content: const Text("Are you sure you want to reset all settings to default values?"),
               actions: [
-                AppButton(
+                WidgetButton(
                   label: "Cancel",
                   onPressed: (s) {
                     Navigator.pop(context, false);
                   },
                 ),
-                AppButton(
-                  initialState: AppActionState.error,
+                WidgetButton(
+                  initialState: WidgetButtonActionState.error,
                   label: "Reset",
                   onPressed: (s) => Navigator.pop(context, true),
                 ),
