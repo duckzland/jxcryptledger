@@ -8,6 +8,7 @@ import '../../cryptos/repository.dart';
 import '../../rates/service.dart';
 import '../buttons.dart';
 import '../calculations.dart';
+import '../header.dart';
 import '../model.dart';
 
 class TransactionsActive extends StatefulWidget {
@@ -223,18 +224,38 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         showCheckboxColumn: false,
 
         columns: [
-          DataColumn2(label: Text('From'), size: ColumnSize.S),
-          DataColumn2(label: Text('To'), size: ColumnSize.S),
-          DataColumn2(label: Text('Exchanged Rate'), size: ColumnSize.S),
+          DataColumn2(label: Text('Date'), size: ColumnSize.S),
+          DataColumn2(
+            size: ColumnSize.S,
+            label: TransactionsTableHeader(title: 'Amount Out', subtitle: 'Sent'),
+          ),
+          DataColumn2(
+            size: ColumnSize.S,
+            label: TransactionsTableHeader(title: 'Amount In', subtitle: 'Received'),
+          ),
+          DataColumn2(
+            size: ColumnSize.S,
+            label: TransactionsTableHeader(
+              title: 'Exchanged Rate',
+              subtitle:
+                  '${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'} / ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}',
+            ),
+          ),
 
           if (currentRate != 0) ...[
-            DataColumn2(label: Text('Current Rate'), size: ColumnSize.S),
+            DataColumn2(
+              size: ColumnSize.S,
+              label: TransactionsTableHeader(
+                title: 'Current Rate',
+                subtitle:
+                    '${_cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin'} / ${_cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin'}',
+              ),
+            ),
             DataColumn2(label: Text('Current Value'), size: ColumnSize.S),
             DataColumn2(label: Text('Profit/Loss'), size: ColumnSize.S),
           ],
 
           DataColumn2(label: Text('Status'), size: ColumnSize.S),
-          DataColumn2(label: Text('Date'), size: ColumnSize.S),
           DataColumn2(label: Text('Actions'), size: ColumnSize.S),
         ],
 
@@ -247,6 +268,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
           return DataRow(
             cells: [
+              DataCell(Text(r['date'])),
               DataCell(Text(r['from'])),
               DataCell(Text(r['to'])),
               DataCell(Text(r['exchangedRate'])),
@@ -258,7 +280,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               ],
 
               DataCell(Text(r['status'])),
-              DataCell(Text(r['date'])),
               DataCell(
                 TransactionsButtons(
                   tx: r['tx'],

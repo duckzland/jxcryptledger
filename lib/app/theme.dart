@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pluto_grid/pluto_grid.dart';
 
 class AppTheme {
   AppTheme._();
@@ -122,50 +121,6 @@ class AppTheme {
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowMinHeight: AppTheme.tableDataRowMinHeight,
       ),
-    );
-  }
-}
-
-class AppPlutoTheme {
-  static PlutoGridConfiguration get config {
-    return PlutoGridConfiguration(
-      style: PlutoGridStyleConfig(
-        gridBackgroundColor: AppTheme.rowHeaderBg,
-        rowColor: AppTheme.rowHeaderBg,
-
-        // Darker border
-        gridBorderColor: AppTheme.separator,
-
-        // Darker icons
-        iconColor: AppTheme.separator,
-
-        cellTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.normal, fontSize: 14),
-
-        columnTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.bold, fontSize: 16),
-
-        columnHeight: 50,
-        rowHeight: 42,
-
-        activatedBorderColor: Colors.transparent,
-        activatedColor: Colors.transparent,
-
-        menuBackgroundColor: AppTheme.panelBg,
-
-        borderColor: Colors.transparent,
-        enableCellBorderVertical: false,
-        enableColumnBorderVertical: false,
-        enableColumnBorderHorizontal: false,
-        enableRowColorAnimation: false,
-        enableGridBorderShadow: false,
-      ),
-      scrollbar: PlutoGridScrollbarConfig(
-        dragDevices: {}, // Disables drag-to-scroll for all devices
-        scrollbarThickness: 0, // Hides the bar thumb
-        scrollbarThicknessWhileDragging: 0,
-        isAlwaysShown: false, // Ensures it doesn't force space
-      ),
-      columnSize: const PlutoGridColumnSizeConfig(autoSizeMode: PlutoAutoSizeMode.scale),
-      enterKeyAction: PlutoGridEnterKeyAction.none,
     );
   }
 }

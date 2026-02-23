@@ -55,8 +55,8 @@ class TransactionsModel {
       srId: map['srId'] as int,
       rrAmount: (map['rrAmount'] as num).toDouble(),
       rrId: map['rrId'] as int,
-      balance: (map['rrAmount'] as num).toDouble(),
-      status: map['rrId'] as int,
+      balance: (map['balance'] as num).toDouble(),
+      status: map['status'] as int,
       timestamp: map['timestamp'] as int,
       meta: Map<String, dynamic>.from(map['meta'] ?? {}),
     );
@@ -133,6 +133,15 @@ class TransactionsModel {
   String get balanceText => Utils.formatSmartDouble(balance);
   String get rateText => Utils.formatSmartDouble(rateDouble);
 
-  Decimal get rate => Decimal.parse((rrAmount / srAmount).toDouble().toString());
-  double get rateDouble => (rrAmount / srAmount).toDouble();
+  Decimal get rate {
+    if (srAmount <= 0 || rrAmount <= 0) return Decimal.zero;
+    final r = rrAmount / srAmount;
+    return Decimal.parse(r.toString());
+  }
+
+  double get rateDouble {
+    if (srAmount <= 0 || rrAmount <= 0) return 0.0;
+    final r = rrAmount / srAmount;
+    return r.isFinite ? r : 0.0;
+  }
 }

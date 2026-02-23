@@ -69,6 +69,22 @@ class RatesModel {
 
   String get rateText => Utils.formatSmartDouble(rateDouble);
 
-  Decimal get rate => Decimal.parse((targetAmount / sourceAmount).toDouble().toString());
-  double get rateDouble => (targetAmount / sourceAmount).toDouble();
+  Decimal get rate {
+    if (sourceAmount <= Decimal.zero || targetAmount <= Decimal.zero) {
+      return Decimal.zero;
+    }
+
+    return (targetAmount / sourceAmount).toDecimal(scaleOnInfinitePrecision: 8);
+  }
+
+  double get rateDouble {
+    final double s = sourceAmount.toDouble();
+    final double t = targetAmount.toDouble();
+
+    if (s <= 0 || t <= 0) return 0.0;
+
+    final double r = s / t;
+
+    return r.isFinite ? r : 0.0;
+  }
 }
