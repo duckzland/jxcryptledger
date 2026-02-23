@@ -113,12 +113,12 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       }
 
       newRows.add({
-        'from': '${tx.srAmountText} $_sourceSymbol',
-        'to': '${tx.balanceText} $_resultSymbol',
+        'from': tx.srAmountText,
+        'to': tx.balanceText,
         'exchangedRate': tx.rateText,
         'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(currentRate),
-        'currentValue': currentRate == 0 ? null : '${Utils.formatSmartDouble(currentValue)} $_sourceSymbol',
-        'profitLoss': currentRate == 0 ? null : '${Utils.formatSmartDouble(profitLoss)} $_sourceSymbol',
+        'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
+        'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
         'profitLevel': profitLevel,
         'status': tx.statusText,
         'date': tx.timestampAsDate,
@@ -232,11 +232,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           DataColumn2(label: Text('Date'), size: ColumnSize.S),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsTitle(title: 'Amount Out', subtitle: 'Sent'),
+            label: WidgetsTitle(title: 'From', subtitle: _sourceSymbol),
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsTitle(title: 'Amount In', subtitle: 'Received'),
+            label: WidgetsTitle(title: 'To', subtitle: _resultSymbol),
           ),
           DataColumn2(
             size: ColumnSize.S,
@@ -248,8 +248,14 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               size: ColumnSize.S,
               label: WidgetsTitle(title: 'Current Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
             ),
-            DataColumn2(label: Text('Current Value'), size: ColumnSize.S),
-            DataColumn2(label: Text('Profit/Loss'), size: ColumnSize.S),
+            DataColumn2(
+              size: ColumnSize.S,
+              label: WidgetsTitle(title: 'Current Value', subtitle: _sourceSymbol),
+            ),
+            DataColumn2(
+              size: ColumnSize.S,
+              label: WidgetsTitle(title: 'Profit/Loss', subtitle: _sourceSymbol),
+            ),
           ],
 
           DataColumn2(label: Text('Status'), size: ColumnSize.S),
@@ -313,13 +319,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
         if (plPercentage != 0) ...[
           _buildFooterItem(
-            title: 'P/L',
+            title: 'Profit/Loss',
             subtitle: "${Utils.formatSmartDouble(avgPL)} $_sourceSymbol",
             value: plPercentage,
             comparator: 0,
           ),
           _buildFooterItem(
-            title: 'P/L %',
+            title: 'Profit/Loss %',
             subtitle: '${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
             value: plPercentage,
             comparator: 0,

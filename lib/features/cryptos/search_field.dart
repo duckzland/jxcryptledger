@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
+import '../../core/locator.dart';
 import 'model.dart';
 import 'repository.dart';
 
 class CryptoSearchField extends StatefulWidget {
   final Function(int cryptoId) onSelected;
-  final String? initialValue;
+  final int? initialValue;
   final String labelText;
   final String hintText;
 
@@ -30,9 +31,16 @@ class _CryptoSearchFieldState extends State<CryptoSearchField> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
-    _cryptosRepo = CryptosRepository();
-    _loadCryptos();
+    _controller = TextEditingController();
+    _cryptosRepo = locator<CryptosRepository>();
+    _loadCryptos().then((_) {
+      if (widget.initialValue != null) {
+        final crypto = _cryptosRepo.getById(widget.initialValue!);
+        if (crypto != null) {
+          _controller.text = '${crypto.id}|${crypto.symbol} - ${crypto.name}';
+        }
+      }
+    });
   }
 
   Future<void> _loadCryptos() async {

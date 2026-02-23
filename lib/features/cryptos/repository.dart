@@ -67,4 +67,9 @@ class CryptosRepository {
   String? getSymbol(int id) {
     return getSymbolMap()[id];
   }
+
+  CryptosModel? getById(int id) {
+    _ensureBox();
+    return _box!.get(id);
+  }
 }
