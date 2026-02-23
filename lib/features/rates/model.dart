@@ -38,10 +38,10 @@ class RatesModel {
   factory RatesModel.fromMap(Map<String, dynamic> map) {
     return RatesModel(
       sourceSymbol: map['sourceSymbol'] as String,
-      sourceId: map['sourceId'] as int,
+      sourceId: map['sourceId'] is int ? map['sourceId'] as int : 0,
       sourceAmount: Decimal.parse(map['sourceAmount'] as String),
       targetSymbol: map['targetSymbol'] as String,
-      targetId: map['targetId'] as int,
+      targetId: map['sourceId'] is int ? map['sourceId'] as int : 0,
       targetAmount: Decimal.parse(map['targetAmount'] as String),
       timestamp: map['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch,
     );

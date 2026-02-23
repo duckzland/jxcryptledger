@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:jxcryptledger/core/utils.dart';
 
-enum TransactionStatus { active, partial, closed, unknown }
+enum TransactionStatus { inactive, active, partial, closed, unknown }
 
 class TransactionsModel {
   final String tid;
@@ -92,11 +92,13 @@ class TransactionsModel {
 
   TransactionStatus get statusEnum {
     switch (status) {
+      case 0:
+        return TransactionStatus.inactive;
       case 1:
         return TransactionStatus.active;
       case 2:
         return TransactionStatus.partial;
-      case 3:
+      case 4:
         return TransactionStatus.closed;
       default:
         return TransactionStatus.unknown;
@@ -107,6 +109,8 @@ class TransactionsModel {
     switch (statusEnum) {
       case TransactionStatus.active:
         return 'Active';
+      case TransactionStatus.inactive:
+        return 'Inactive';
       case TransactionStatus.partial:
         return 'Partial';
       case TransactionStatus.closed:

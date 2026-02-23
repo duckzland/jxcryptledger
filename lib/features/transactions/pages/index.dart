@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../widgets/button.dart';
 import '../../../core/locator.dart';
+import '../../../widgets/button.dart';
 import '../../cryptos/repository.dart';
 import '../controller.dart';
 import '../form.dart';
@@ -47,9 +47,10 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     showDialog(
       context: context,
       builder: (context) => TransactionForm(
-        onSave: (transaction) async {
-          await _controller.add(transaction);
+        mode: TransactionsFormActionMode.addNew,
+        onSave: (mode, transaction, parent) async {
           if (!mounted) return;
+
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction saved')));
         },
       ),
@@ -78,7 +79,9 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   }
 
   Map<String, List<TransactionsModel>> _getActiveTransactions() {
-    final filtered = _controller.items.where((t) => t.status == 1 || t.status == 2).toList();
+    final filtered = _controller.items
+        .where((t) => t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index)
+        .toList();
 
     final grouped = <String, List<TransactionsModel>>{};
 

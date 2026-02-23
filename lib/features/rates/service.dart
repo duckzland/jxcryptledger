@@ -44,6 +44,11 @@ class RatesService extends ChangeNotifier {
       final allCryptos = await cryptosRepo.getAll();
       final cryptoIds = allCryptos.map((c) => c.id).toSet();
 
+      if (sourceId == 0) {
+        logln('Skipping fetch: sourceId is 0');
+        return false;
+      }
+
       if (!cryptoIds.contains(sourceId)) {
         logln('Failed to fetch rates: sourceId $sourceId not in cryptos_box');
         return false;
@@ -89,6 +94,11 @@ class RatesService extends ChangeNotifier {
   }
 
   Future<bool> fetch(int sourceId, List<int> targetIds) async {
+    if (sourceId == 0 || targetIds.isEmpty) {
+      logln('Invalid fetch parameters: sourceId=$sourceId, targetIds=$targetIds');
+      return false;
+    }
+
     if (_isFetching) return false;
 
     _isFetching = true;
@@ -113,6 +123,12 @@ class RatesService extends ChangeNotifier {
       final Map<int, Set<int>> grouped = {};
 
       for (final r in all) {
+        logln('[CORRUPT] $r');
+        if (r.sourceId == 0 || r.targetId == 0) {
+          logln('[CORRUPT] $r');
+
+          continue;
+        }
         grouped.putIfAbsent(r.sourceId, () => <int>{});
         grouped[r.sourceId]!.add(r.targetId);
       }

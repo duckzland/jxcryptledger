@@ -5,25 +5,50 @@ import '../../core/locator.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class CryptoSearchField extends StatefulWidget {
-  final Function(int cryptoId) onSelected;
+class CryptoSearchField extends FormField<int> {
+  CryptoSearchField({
+    super.key,
+    super.initialValue,
+    required Function(int cryptoId) onSelected,
+    super.validator,
+    String labelText = "Crypto",
+    String hintText = "Search by name, symbol, or ID...",
+  }) : super(
+         builder: (FormFieldState<int> state) {
+           return _CryptoSearchFieldBody(
+             initialValue: initialValue,
+             labelText: labelText,
+             hintText: hintText,
+             onSelected: (id) {
+               state.didChange(id);
+               onSelected(id);
+             },
+             errorText: state.errorText,
+           );
+         },
+       );
+}
+
+class _CryptoSearchFieldBody extends StatefulWidget {
+  final Function(int) onSelected;
   final int? initialValue;
   final String labelText;
   final String hintText;
+  final String? errorText;
 
-  const CryptoSearchField({
-    super.key,
+  const _CryptoSearchFieldBody({
     required this.onSelected,
-    this.initialValue,
-    this.labelText = "Crypto",
-    this.hintText = "Search by name, symbol, or ID...",
+    required this.initialValue,
+    required this.labelText,
+    required this.hintText,
+    required this.errorText,
   });
 
   @override
-  State<CryptoSearchField> createState() => _CryptoSearchFieldState();
+  State<_CryptoSearchFieldBody> createState() => _CryptoSearchFieldBodyState();
 }
 
-class _CryptoSearchFieldState extends State<CryptoSearchField> {
+class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
   late TextEditingController _controller;
   late CryptosRepository _cryptosRepo;
   List<CryptosModel> _allCryptos = [];
@@ -44,7 +69,7 @@ class _CryptoSearchFieldState extends State<CryptoSearchField> {
   }
 
   Future<void> _loadCryptos() async {
-    final cryptos = await _cryptosRepo.getAll();
+    final cryptos = _cryptosRepo.getAll();
     setState(() {
       _allCryptos = cryptos;
     });
@@ -52,7 +77,6 @@ class _CryptoSearchFieldState extends State<CryptoSearchField> {
 
   Future<List<CryptosModel>> _getSearchSuggestions(String query) async {
     if (query.isEmpty) return [];
-
     final lowerQuery = query.toLowerCase();
     return _allCryptos.where((crypto) => crypto.searchKey.contains(lowerQuery)).toList();
   }
@@ -65,42 +89,50 @@ class _CryptoSearchFieldState extends State<CryptoSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return TypeAheadField<CryptosModel>(
-      textFieldConfiguration: TextFieldConfiguration(
-        controller: _controller,
-        decoration: InputDecoration(
-          labelText: widget.labelText,
-          hintText: widget.hintText,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TypeAheadField<CryptosModel>(
+          textFieldConfiguration: TextFieldConfiguration(
+            controller: _controller,
+            decoration: InputDecoration(
+              labelText: widget.labelText,
+              hintText: widget.hintText,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+          suggestionsCallback: (pattern) async {
+            return await _getSearchSuggestions(pattern);
+          },
+          itemBuilder: (context, CryptosModel suggestion) {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('${suggestion.id}|${suggestion.symbol} - ${suggestion.name}'),
+            );
+          },
+          onSuggestionSelected: (CryptosModel suggestion) {
+            _controller.text = '${suggestion.id}|${suggestion.symbol} - ${suggestion.name}';
+            widget.onSelected(suggestion.id);
+          },
+          noItemsFoundBuilder: (context) {
+            return const Padding(padding: EdgeInsets.all(8.0), child: Text('No cryptos found'));
+          },
+          loadingBuilder: (context) {
+            return const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator());
+          },
+          debounceDuration: const Duration(milliseconds: 50),
+          hideOnEmpty: true,
+          hideOnLoading: false,
+          autoFlipDirection: true,
         ),
-        onChanged: (value) {
-          // Triggers search automatically with debounce
-        },
-      ),
-      suggestionsCallback: (pattern) async {
-        return await _getSearchSuggestions(pattern);
-      },
-      itemBuilder: (context, CryptosModel suggestion) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text('${suggestion.id}|${suggestion.symbol} - ${suggestion.name}'),
-        );
-      },
-      onSuggestionSelected: (CryptosModel suggestion) {
-        _controller.text = '${suggestion.id}|${suggestion.symbol} - ${suggestion.name}';
-        widget.onSelected(suggestion.id);
-      },
-      noItemsFoundBuilder: (context) {
-        return Padding(padding: const EdgeInsets.all(8.0), child: Text('No cryptos found'));
-      },
-      loadingBuilder: (context) {
-        return Padding(padding: const EdgeInsets.all(8.0), child: CircularProgressIndicator());
-      },
-      debounceDuration: const Duration(milliseconds: 50),
-      hideOnEmpty: true,
-      hideOnLoading: false,
-      autoFlipDirection: true,
+
+        if (widget.errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(widget.errorText!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+          ),
+      ],
     );
   }
 }

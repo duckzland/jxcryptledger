@@ -139,7 +139,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
               DataCell(
                 TransactionsButtons(
                   tx: r['tx'],
-                  onAction: (mode, updatedTx) {
+                  onAction: (mode, updatedTx, parentTx) {
                     widget.onStatusChanged();
                     _buildTableData();
                   },

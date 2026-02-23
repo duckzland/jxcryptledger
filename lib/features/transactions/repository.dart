@@ -1,6 +1,7 @@
 import 'package:hive_ce/hive_ce.dart';
 
 import '../../core/filtering.dart';
+import '../../core/log.dart';
 import 'model.dart';
 
 class TransactionsRepository {
@@ -18,7 +19,38 @@ class TransactionsRepository {
   }
 
   Future<void> add(TransactionsModel tx) async {
+    logln(
+      '[ADD] tid=${tx.tid} pid=${tx.pid} rid=${tx.rid} '
+      'srId=${tx.srId} srAmount=${tx.srAmount} '
+      'rrId=${tx.rrId} rrAmount=${tx.rrAmount} '
+      'balance=${tx.balance} status=${tx.status} '
+      'timestamp=${tx.timestamp}',
+    );
+    if (tx.srId == 0 || tx.rrId == 0) {
+      logln('Invalid tx: srId=${tx.srId}, rrId=${tx.rrId}');
+      return;
+    }
+
     await _box.put(tx.tid, tx);
+  }
+
+  Future<void> update(TransactionsModel tx) async {
+    logln(
+      '[UPDATE] tid=${tx.tid} pid=${tx.pid} rid=${tx.rid} '
+      'srId=${tx.srId} srAmount=${tx.srAmount} '
+      'rrId=${tx.rrId} rrAmount=${tx.rrAmount} '
+      'balance=${tx.balance} status=${tx.status} '
+      'timestamp=${tx.timestamp}',
+    );
+    if (tx.srId == 0 || tx.rrId == 0) {
+      logln('Invalid tx: srId=${tx.srId}, rrId=${tx.rrId}');
+      return;
+    }
+    await _box.put(tx.tid, tx);
+  }
+
+  Future<void> delete(String tid) async {
+    await _box.delete(tid);
   }
 
   Future<List<TransactionsModel>> getAll() async {
