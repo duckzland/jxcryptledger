@@ -20,7 +20,6 @@ class CryptosService extends ChangeNotifier {
     if (_isFetching) return false;
 
     _isFetching = true;
-    notifyListeners();
 
     try {
       final url = Uri.parse(settingsRepo.get<String>(SettingKey.dataEndpoint) ?? SettingKey.dataEndpoint.defaultValue);
@@ -48,6 +47,7 @@ class CryptosService extends ChangeNotifier {
       }
 
       logln("Fetching cryptos completed");
+      notifyListeners();
       return true;
     } catch (e) {
       logln("Failed to fetch cryptos: $e");

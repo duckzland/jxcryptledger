@@ -11,18 +11,18 @@ class CryptosRepository extends ChangeNotifier {
   Box<CryptosModel> get _box => Hive.box<CryptosModel>(boxName);
 
   Map<int, String>? _symbolCache;
-  Timer? _debounce;
 
   Future<void> init() async {
     if (!Hive.isBoxOpen(boxName)) {
       await Hive.openBox<CryptosModel>(boxName);
     }
+    notifyListeners();
   }
 
   void add(CryptosModel crypto) {
     _box.put(crypto.id, crypto);
     _symbolCache = null;
-    _scheduleNotify();
+    notifyListeners();
   }
 
   List<CryptosModel> getAll() {
@@ -37,20 +37,13 @@ class CryptosRepository extends ChangeNotifier {
   void delete(int id) {
     _box.delete(id);
     _symbolCache = null;
-    _scheduleNotify();
+    notifyListeners();
   }
 
   void clear() {
     _box.clear();
     _symbolCache = null;
-    _scheduleNotify();
-  }
-
-  void _scheduleNotify() {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 100), () {
-      notifyListeners();
-    });
+    notifyListeners();
   }
 
   bool hasAny() {

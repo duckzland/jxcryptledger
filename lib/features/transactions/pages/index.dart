@@ -4,6 +4,7 @@ import 'package:jxcryptledger/widgets/notify.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
 import '../../cryptos/repository.dart';
+import '../../cryptos/service.dart';
 import '../controller.dart';
 import '../form.dart';
 import '../model.dart';
@@ -21,6 +22,8 @@ class TransactionsPagesIndex extends StatefulWidget {
 
 class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   late TransactionsController _controller;
+  late CryptosService _cryptosService;
+
   final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
 
   TransactionsViewMode _viewMode = TransactionsViewMode.activeTrading;
@@ -32,11 +35,19 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     _controller = locator<TransactionsController>();
     _controller.load();
     _controller.addListener(_onControllerChanged);
+
+    _cryptosService = locator<CryptosService>();
+    _cryptosService.addListener(_onControllerChanged);
+
+    _cryptosRepo.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
     _controller.removeListener(_onControllerChanged);
+    _cryptosRepo.removeListener(_onControllerChanged);
+    _cryptosService.removeListener(_onControllerChanged);
+
     super.dispose();
   }
 
@@ -109,7 +120,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       return Column(
         children: [
           _buildActionBar(),
-          Expanded(child: _buildEmptyState()),
+          Expanded(child: !_cryptosRepo.hasAny() ? _buildFetchCryptosState() : _buildEmptyState()),
         ],
       );
     }
@@ -217,6 +228,50 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
                 s.disable();
               } else {
                 s.action();
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFetchCryptosState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.cloud_download_outlined, size: 60, color: Colors.white30),
+          const SizedBox(height: 16),
+          const Text('Cryptocurrency data not available', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          const Text(
+            'You need to fetch the latest crypto list before adding transactions.',
+            style: TextStyle(fontSize: 14, color: Colors.white54),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          WidgetButton(
+            icon: Icons.refresh,
+            initialState: WidgetButtonActionState.action,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            onPressed: (s) async {
+              s.progress();
+
+              final success = await _cryptosService.fetch();
+
+              if (!success) {
+                s.error();
+                if (mounted) {
+                  notifyError(context, "Failed to fetch cryptocurrency data.");
+                }
+              } else {
+                s.action();
+                if (mounted) {
+                  notifySuccess(context, "Cryptocurrency list successfully retrieved.");
+                  setState(() {});
+                }
               }
             },
           ),

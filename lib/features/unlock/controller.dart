@@ -60,11 +60,6 @@ class UnlockController extends ChangeNotifier {
         _unlocked = true;
         notifyListeners();
 
-        Future.microtask(() async {
-          final ok = await _cryptosService.fetch();
-          if (!ok) logln("Failed to fetch cryptos on first run");
-        });
-
         return true;
       }
 

@@ -50,31 +50,35 @@ class TransactionsController extends ChangeNotifier {
     try {
       tx = _items.firstWhere((t) => t.tid == tid);
     } catch (_) {
-      return; // no match
+      return;
     }
 
-    if (tx.pid == '0' && tx.rid == '0') {
-      // Refused to close a root transaction
+    if (tx.isRoot) {
       await load();
       return;
     }
 
     TransactionsModel? parent = getCloseTargetParent(tid);
 
-    // Refused to close a transaction that has no destination to close to
     if (parent == null) {
       await load();
       return;
     }
 
-    final leaves = _items.where(
-      (t) =>
-          t.rid == parent.tid &&
-          t.tid != tx.tid &&
-          (t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index),
-    );
+    // Close the leaf itself
+    final closedTx = tx.copyWith(balance: 0, status: TransactionStatus.closed.index);
+    await repo.update(closedTx);
 
-    final newStatus = leaves.isEmpty ? TransactionStatus.active.index : TransactionStatus.partial.index;
+    // Recalculate parent status based on its terminal leaves
+    final leaves = _collectTerminalLeaves(parent);
+
+    final allClosed = leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final newStatus = allClosed
+        ? TransactionStatus
+              .active
+              .index // parent can now be active
+        : TransactionStatus.partial.index; // still has open leaves
+
     final updatedParent = parent.copyWith(balance: parent.balance + tx.balance, status: newStatus);
 
     logln(
@@ -83,9 +87,7 @@ class TransactionsController extends ChangeNotifier {
       "parentStatus=${TransactionStatus.values[newStatus].name}",
     );
 
-    await repo.update(tx.copyWith(balance: 0, status: TransactionStatus.closed.index));
     await repo.update(updatedParent);
-
     await load();
   }
 
@@ -172,5 +174,21 @@ class TransactionsController extends ChangeNotifier {
       final updated = tx.copyWith(closable: closable);
       await repo.update(updated);
     }
+  }
+
+  List<TransactionsModel> _collectTerminalLeaves(TransactionsModel parent) {
+    List<TransactionsModel> collect(TransactionsModel node) {
+      final children = _items.where((t) => t.pid == node.tid).toList();
+      if (children.isEmpty) {
+        return [node]; // terminal leaf
+      }
+      final leaves = <TransactionsModel>[];
+      for (final child in children) {
+        leaves.addAll(collect(child));
+      }
+      return leaves;
+    }
+
+    return collect(parent);
   }
 }
