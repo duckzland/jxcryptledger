@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/locator.dart';
+import '../../core/log.dart';
 import '../../widgets/button.dart';
 import '../cryptos/repository.dart';
 import '../cryptos/search_field.dart';
+import 'controller.dart';
 import 'model.dart';
-import 'repository.dart';
 
 enum TransactionsFormActionMode { addNew, edit, trade }
 
 class TransactionForm extends StatefulWidget {
-  final void Function(TransactionsFormActionMode mode, TransactionsModel child, TransactionsModel? parent) onSave;
+  final void Function() onSave;
   final TransactionsFormActionMode mode;
 
   final TransactionsModel? initialData;
@@ -25,7 +26,8 @@ class TransactionForm extends StatefulWidget {
 
 class _TransactionFormState extends State<TransactionForm> {
   late CryptosRepository _cryptosRepo;
-  TransactionsRepository get _transactionsRepo => locator<TransactionsRepository>();
+
+  TransactionsController get _txController => locator<TransactionsController>();
 
   late TextEditingController _srAmountController;
   late TextEditingController _rrAmountController;
@@ -37,8 +39,12 @@ class _TransactionFormState extends State<TransactionForm> {
 
   final _formKey = GlobalKey<FormState>();
 
-  bool get isRoot => widget.parent == null;
-  bool get isLeaf => widget.parent != null;
+  bool get isRoot {
+    final tx = widget.initialData;
+    return tx != null && tx.rid == 0 && tx.pid == 0;
+  }
+
+  bool get isLeaf => !isRoot;
   bool get isActive => widget.initialData?.statusEnum == TransactionStatus.active;
 
   final _uuid = Uuid();
@@ -148,12 +154,9 @@ class _TransactionFormState extends State<TransactionForm> {
       meta: _saveNotesField(),
     );
 
-    await _transactionsRepo.add(tx);
+    await _txController.add(tx);
 
-    widget.onSave(TransactionsFormActionMode.addNew, tx, null);
-
-    if (!mounted) return;
-    Navigator.pop(context);
+    widget.onSave();
   }
 
   void _saveTrade() async {
@@ -173,7 +176,9 @@ class _TransactionFormState extends State<TransactionForm> {
       meta: _saveNotesField(),
     );
 
-    final newParentBalance = parent.balance - child.balance;
+    final newParentBalance = parent.balance - child.srAmount;
+
+    logln('Calculated new parent balance: $newParentBalance (old: ${parent.balance} - child: ${child.srAmount})');
 
     TransactionStatus newStatus;
     if (newParentBalance <= 0) {
@@ -184,13 +189,10 @@ class _TransactionFormState extends State<TransactionForm> {
 
     final updatedParent = parent.copyWith(balance: newParentBalance, status: newStatus.index);
 
-    await _transactionsRepo.add(child);
-    await _transactionsRepo.update(updatedParent);
+    await _txController.add(child);
+    await _txController.update(updatedParent);
 
-    widget.onSave(TransactionsFormActionMode.trade, child, updatedParent);
-
-    if (!mounted) return;
-    Navigator.pop(context);
+    widget.onSave();
   }
 
   void _saveEdit() async {
@@ -206,12 +208,9 @@ class _TransactionFormState extends State<TransactionForm> {
       meta: _saveNotesField(),
     );
 
-    await _transactionsRepo.add(tx);
+    await _txController.update(tx);
 
-    widget.onSave(TransactionsFormActionMode.edit, tx, null);
-
-    if (!mounted) return;
-    Navigator.pop(context);
+    widget.onSave();
   }
 
   String _saveRidField() {
@@ -303,7 +302,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
       case TransactionsFormActionMode.trade:
         final data = widget.initialData!;
-        return data.srId;
+        return data.rrId;
     }
   }
 
@@ -337,8 +336,7 @@ class _TransactionFormState extends State<TransactionForm> {
         return data.rrId;
 
       case TransactionsFormActionMode.trade:
-        final data = widget.initialData!;
-        return data.rrId;
+        return _selectedRrId ?? 0;
     }
   }
 
@@ -506,7 +504,8 @@ class _TransactionFormState extends State<TransactionForm> {
         }
 
       case TransactionsFormActionMode.trade:
-        return _buildReadOnlyCryptoDisplay(_selectedSrId);
+        final data = widget.initialData!;
+        return _buildReadOnlyCryptoDisplay(data.rrId);
     }
   }
 
@@ -591,7 +590,16 @@ class _TransactionFormState extends State<TransactionForm> {
         }
 
       case TransactionsFormActionMode.trade:
-        return _buildReadOnlyCryptoDisplay(_selectedRrId);
+        return CryptoSearchField(
+          labelText: 'Result Crypto',
+          initialValue: _selectedRrId,
+          validator: (value) {
+            if (value == null || value == 0) return 'Crypto is required';
+            if (_cryptosRepo.getSymbol(value) == null) return 'Invalid crypto';
+            return null;
+          },
+          onSelected: (id) => setState(() => _selectedRrId = id),
+        );
     }
   }
 
@@ -652,15 +660,25 @@ class _TransactionFormState extends State<TransactionForm> {
   }
 
   Widget _buildButtons() {
+    String mode = "Save";
+
+    switch (widget.mode) {
+      case TransactionsFormActionMode.edit:
+        mode = "Update";
+        break;
+      case TransactionsFormActionMode.addNew:
+        mode = "Create New";
+        break;
+      case TransactionsFormActionMode.trade:
+        mode = "Trade";
+        break;
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
         const SizedBox(width: 12),
-        WidgetButton(
-          label: widget.mode == TransactionsFormActionMode.edit ? 'Update' : 'Save',
-          onPressed: (_) => _handleSave(),
-        ),
+        WidgetButton(label: mode, initialState: WidgetButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
   }

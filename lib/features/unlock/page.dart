@@ -82,11 +82,12 @@ class _UnlockPageState extends State<UnlockPage> {
 
         WidgetButton(
           label: "Create Vault",
+          initialState: WidgetButtonActionState.action,
           evaluator: (s) {
             if (_password.text.isEmpty || _confirm.text.isEmpty || _password.text != _confirm.text) {
               s.disable();
             } else {
-              s.normal();
+              s.action();
             }
           },
           onPressed: (s) async {
@@ -135,11 +136,12 @@ class _UnlockPageState extends State<UnlockPage> {
 
         WidgetButton(
           label: "Unlock",
+          initialState: WidgetButtonActionState.action,
           evaluator: (s) {
             if (_password.text.isEmpty) {
               s.disable();
             } else {
-              s.normal();
+              s.action();
             }
           },
           onPressed: (s) async {

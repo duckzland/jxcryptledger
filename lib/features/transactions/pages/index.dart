@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jxcryptledger/app/snackbar.dart';
 
 import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
@@ -48,10 +49,9 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       context: context,
       builder: (context) => TransactionForm(
         mode: TransactionsFormActionMode.addNew,
-        onSave: (mode, transaction, parent) async {
-          if (!mounted) return;
-
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction saved')));
+        onSave: () async {
+          Navigator.pop(context);
+          appShowSuccess(context, 'Transaction saved');
         },
       ),
     );

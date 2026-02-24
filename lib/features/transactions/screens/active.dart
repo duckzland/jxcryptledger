@@ -46,9 +46,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   double? _marketRate;
 
   Timer? _debounce;
-
-  List<Map<String, dynamic>> _tableRows = [];
-
   final _calc = TransactionCalculation();
 
   @override
@@ -78,25 +75,30 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     _loadMarketRate();
   }
 
+  @override
+  void didUpdateWidget(covariant TransactionsActive oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.transactions != widget.transactions) {
+      setState(() {});
+    }
+  }
+
   Future<void> _loadMarketRate() async {
     final rate = await _ratesService.getRate(widget.srid, widget.rrid);
 
     setState(() {
       _marketRate = rate;
     });
-
-    _buildTableData();
   }
 
-  void _buildTableData() {
+  List<Map<String, dynamic>> get _tableRows {
     final currentRate = _customRate ?? _marketRate ?? 0.0;
 
     final sortedTxs = List<TransactionsModel>.from(widget.transactions)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-    final newRows = <Map<String, dynamic>>[];
-
-    for (final tx in sortedTxs) {
+    return sortedTxs.map((tx) {
       double currentValue = 0;
       double profitLoss = 0;
       double profitLevel = 0;
@@ -112,7 +114,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         }
       }
 
-      newRows.add({
+      return {
         'from': tx.srAmountText,
         'to': tx.balanceText,
         'exchangedRate': tx.rateText,
@@ -123,14 +125,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         'status': tx.statusText,
         'date': tx.timestampAsDate,
         'tx': tx,
-      });
-    }
-
-    if (mounted) {
-      setState(() {
-        _tableRows = newRows;
-      });
-    }
+      };
+    }).toList();
   }
 
   @override
@@ -206,7 +202,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               _debounce = Timer(const Duration(milliseconds: 64), () {
                 setState(() {
                   _customRate = double.tryParse(value);
-                  _buildTableData();
                 });
               });
             },
@@ -217,9 +212,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   }
 
   Widget _buildTable(double currentRate) {
+    List<Map<String, dynamic>> table = _tableRows;
+
     return SizedBox(
       width: double.infinity,
-      height: (_tableRows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: (table.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
         columnSpacing: 12,
         horizontalMargin: 12,
@@ -262,7 +259,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           DataColumn2(label: Text('Actions'), size: ColumnSize.S),
         ],
 
-        rows: _tableRows.map((r) {
+        rows: table.map((r) {
           return DataRow(
             cells: [
               DataCell(Text(r['date'])),
@@ -284,9 +281,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               DataCell(
                 TransactionsButtons(
                   tx: r['tx'],
-                  onAction: (mode, updatedTx, parentTx) {
+                  onAction: () {
                     widget.onStatusChanged();
-                    _buildTableData();
+                    setState(() {});
                   },
                 ),
               ),

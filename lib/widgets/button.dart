@@ -4,7 +4,17 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-enum WidgetButtonActionState { allowActions, disallowActions, disabled, inProgress, active, error, normal }
+enum WidgetButtonActionState {
+  allowActions,
+  disallowActions,
+  disabled,
+  inProgress,
+  active,
+  error,
+  normal,
+  primary,
+  action,
+}
 
 class WidgetButton extends StatefulWidget {
   final String? label;
@@ -158,6 +168,12 @@ class WidgetButtonState extends State<WidgetButton> {
       case WidgetButtonActionState.error:
         return AppTheme.buttonBgError;
 
+      case WidgetButtonActionState.primary:
+        return AppTheme.buttonBgPrimary;
+
+      case WidgetButtonActionState.action:
+        return AppTheme.buttonBgAction;
+
       case WidgetButtonActionState.allowActions:
       case WidgetButtonActionState.normal:
         return AppTheme.buttonBg;
@@ -175,6 +191,12 @@ class WidgetButtonState extends State<WidgetButton> {
 
       case WidgetButtonActionState.active:
         return AppTheme.buttonFgActive;
+
+      case WidgetButtonActionState.primary:
+        return AppTheme.buttonFgPrimary;
+
+      case WidgetButtonActionState.action:
+        return AppTheme.buttonFgAction;
 
       case WidgetButtonActionState.error:
         return AppTheme.buttonFgError;
@@ -196,8 +218,10 @@ class WidgetButtonState extends State<WidgetButton> {
   WidgetButtonActionState disable() => setAppState(WidgetButtonActionState.disabled);
   WidgetButtonActionState enable() => setAppState(WidgetButtonActionState.normal);
   WidgetButtonActionState normal() => setAppState(WidgetButtonActionState.normal);
+  WidgetButtonActionState primary() => setAppState(WidgetButtonActionState.primary);
   WidgetButtonActionState progress() => setAppState(WidgetButtonActionState.inProgress);
   WidgetButtonActionState active() => setAppState(WidgetButtonActionState.active);
   WidgetButtonActionState error() => setAppState(WidgetButtonActionState.error);
   WidgetButtonActionState reset() => setAppState(WidgetButtonActionState.normal);
+  WidgetButtonActionState action() => setAppState(WidgetButtonActionState.action);
 }

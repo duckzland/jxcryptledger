@@ -32,11 +32,17 @@ class AppTheme {
   static const buttonBgActive = Color(0xFF1976D2);
   static const buttonFgActive = Colors.white;
 
+  static const buttonBgPrimary = Color(0xFF1976D2);
+  static const buttonFgPrimary = Colors.white;
+
   static const buttonBgProgress = Color(0xFF1976D2);
   static const buttonFgProgress = Colors.white;
 
   static const buttonBgError = Color(0xFFD32F2F);
   static const buttonFgError = Colors.white;
+
+  static const buttonBgAction = Color(0xFF43A047);
+  static const buttonFgAction = Colors.white;
 
   static const double tableHeadingRowHeight = 50;
   static const double tableDataRowMinHeight = 42;

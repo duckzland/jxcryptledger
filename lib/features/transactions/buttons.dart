@@ -1,67 +1,63 @@
 import 'package:flutter/material.dart';
 
+import '../../app/snackbar.dart';
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
+import 'controller.dart';
 import 'form.dart';
 import 'model.dart';
-import 'repository.dart';
 
 enum TransactionsButtonActionMode { edit, trade, close, delete }
 
 class TransactionsButtons extends StatelessWidget {
   final TransactionsModel tx;
+  final void Function() onAction;
 
-  final void Function(TransactionsFormActionMode mode, TransactionsModel child, TransactionsModel? parent) onAction;
-
-  TransactionsRepository get repo => locator<TransactionsRepository>();
+  TransactionsController get controller => locator<TransactionsController>();
 
   const TransactionsButtons({super.key, required this.tx, required this.onAction});
 
   bool _checkVisibility(TransactionsButtonActionMode mode) {
     switch (mode) {
       case TransactionsButtonActionMode.edit:
-        return true; // always editable
-
+        return true;
       case TransactionsButtonActionMode.close:
-        return tx.pid == '0'; // example rule: only root can close
-
+        return tx.pid != '0' && tx.statusEnum == TransactionStatus.active;
       case TransactionsButtonActionMode.trade:
         return tx.balance > 0;
-
       case TransactionsButtonActionMode.delete:
         return tx.rid == '0' && tx.pid == '0' && tx.statusEnum == TransactionStatus.active;
     }
   }
 
-  Future<void> _actionEdit(TransactionsModel newTx) async {
-    // Example: repo.update(newTx);
-    onAction(TransactionsFormActionMode.edit, newTx, null);
+  Future<void> _actionEdit() async {
+    onAction();
   }
 
   Future<void> _actionClose() async {
-    // Example: repo.close(tx);
-    // onAction(TransactionsFormActionMode.close, tx, null);
+    await controller.close(tx.tid);
+    onAction();
   }
 
-  Future<void> _actionTrade(TransactionsModel child, TransactionsModel parent) async {
-    // Example: repo.trade(parent, child);
-    onAction(TransactionsFormActionMode.trade, child, parent);
+  Future<void> _actionTrade() async {
+    onAction();
   }
 
   Future<void> _actionDelete(TransactionsModel tx) async {
-    // Example: repo.trade(parent, child);
-    repo.delete(tx.tid);
-    onAction(TransactionsFormActionMode.edit, tx, null);
+    await controller.removeRoot(tx.tid);
+    onAction();
   }
 
   Future<void> _showEditDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (_) => TransactionForm(
+      builder: (dialogContext) => TransactionForm(
         mode: TransactionsFormActionMode.edit,
         initialData: tx,
-        onSave: (mode, child, parent) async {
-          await _actionEdit(child);
+        onSave: () async {
+          Navigator.pop(dialogContext);
+          await _actionEdit();
+          appShowSuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction updated.");
         },
       ),
     );
@@ -70,22 +66,23 @@ class TransactionsButtons extends StatelessWidget {
   Future<void> _showDeleteDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text("Delete Transaction"),
         content: const Text(
-          "Are you sure you want to delete this transaction? This action cannot be undone. Other transactions that are linked to this transaction may be affected.",
+          "This will delete this transaction and all of its history.\n"
+          "This action cannot be undone.",
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          TextButton(
-            onPressed: () async {
+          WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+          const SizedBox(width: 12),
+          WidgetButton(
+            label: 'Delete',
+            initialState: WidgetButtonActionState.error,
+            onPressed: (_) async {
+              Navigator.pop(dialogContext);
               await _actionDelete(tx);
-              //   if (context.mounted) {
-              //     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction deleted')));
-              //     Navigator.pop(context);
-              //   }
+              appShowSuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
             },
-            child: const Text("Delete"),
           ),
         ],
       ),
@@ -95,20 +92,20 @@ class TransactionsButtons extends StatelessWidget {
   Future<void> _showCloseDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text("Close Transaction"),
         content: const Text("Are you sure you want to close this transaction?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          TextButton(
-            onPressed: () async {
+          WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+          const SizedBox(width: 12),
+          WidgetButton(
+            label: 'Close',
+            initialState: WidgetButtonActionState.action,
+            onPressed: (_) async {
+              Navigator.pop(dialogContext);
               await _actionClose();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction closed')));
-                Navigator.pop(context);
-              }
+              appShowSuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction closed.");
             },
-            child: const Text("Close"),
           ),
         ],
       ),
@@ -118,12 +115,14 @@ class TransactionsButtons extends StatelessWidget {
   Future<void> _showTradeDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (_) => TransactionForm(
+      builder: (dialogContext) => TransactionForm(
         mode: TransactionsFormActionMode.trade,
         initialData: tx,
         parent: tx,
-        onSave: (mode, child, parentTx) async {
-          await _actionTrade(child, parentTx!);
+        onSave: () async {
+          Navigator.pop(dialogContext);
+          await _actionTrade();
+          appShowSuccess(context, "New trading transaction created.");
         },
       ),
     );

@@ -118,11 +118,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSaveButton() {
     return WidgetButton(
       label: "Save Changes",
+      initialState: WidgetButtonActionState.action,
       evaluator: (s) {
         if (!_isDirty()) {
           s.disable();
         } else {
-          s.normal();
+          s.action();
         }
       },
       onPressed: (s) async {
