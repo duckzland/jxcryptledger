@@ -18,6 +18,10 @@ class TransactionsRepository {
     }
   }
 
+  Future<TransactionsModel?> get(String tid) async {
+    return _box.get(tid);
+  }
+
   Future<void> add(TransactionsModel tx) async {
     logln(
       '[ADD] tid=${tx.tid} pid=${tx.pid} rid=${tx.rid} '

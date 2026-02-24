@@ -14,6 +14,7 @@ enum WidgetButtonActionState {
   normal,
   primary,
   action,
+  warning,
 }
 
 class WidgetButton extends StatefulWidget {
@@ -174,6 +175,9 @@ class WidgetButtonState extends State<WidgetButton> {
       case WidgetButtonActionState.action:
         return AppTheme.buttonBgAction;
 
+      case WidgetButtonActionState.warning:
+        return AppTheme.buttonBgWarning;
+
       case WidgetButtonActionState.allowActions:
       case WidgetButtonActionState.normal:
         return AppTheme.buttonBg;
@@ -197,6 +201,9 @@ class WidgetButtonState extends State<WidgetButton> {
 
       case WidgetButtonActionState.action:
         return AppTheme.buttonFgAction;
+
+      case WidgetButtonActionState.warning:
+        return AppTheme.buttonFgWarning;
 
       case WidgetButtonActionState.error:
         return AppTheme.buttonFgError;

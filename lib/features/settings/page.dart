@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/app/snackbar.dart';
+import 'package:jxcryptledger/widgets/notify.dart';
 
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
@@ -136,7 +136,7 @@ class _SettingsPageState extends State<SettingsPage> {
           }
 
           if (!mounted) return;
-          appShowSuccess(context, "Securely saved to vault");
+          notifySuccess(context, "Securely saved to vault");
         }
 
         s.reset();
@@ -185,7 +185,7 @@ class _SettingsPageState extends State<SettingsPage> {
         setState(() {});
 
         if (!mounted) return;
-        appShowSuccess(context, "Settings reset to default");
+        notifySuccess(context, "Settings reset to default");
 
         s.error(); // return to error theme
       },

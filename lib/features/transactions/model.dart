@@ -13,6 +13,7 @@ class TransactionsModel {
   final int rrId;
   final double balance;
   final int status;
+  final bool closable;
   final int timestamp;
   final Map<String, dynamic> meta;
 
@@ -26,6 +27,7 @@ class TransactionsModel {
     required this.rrId,
     required this.balance,
     required this.status,
+    required this.closable,
     required this.timestamp,
     required this.meta,
   });
@@ -41,6 +43,7 @@ class TransactionsModel {
       'rrId': rrId,
       'balance': balance,
       'status': status,
+      'closable': closable,
       'timestamp': timestamp,
       'meta': meta,
     };
@@ -57,6 +60,7 @@ class TransactionsModel {
       rrId: map['rrId'] as int,
       balance: (map['balance'] as num).toDouble(),
       status: map['status'] as int,
+      closable: map['closable'] as bool,
       timestamp: map['timestamp'] as int,
       meta: Map<String, dynamic>.from(map['meta'] ?? {}),
     );
@@ -73,6 +77,7 @@ class TransactionsModel {
     int? timestamp,
     double? balance,
     int? status,
+    bool? closable,
     Map<String, dynamic>? meta,
   }) {
     return TransactionsModel(
@@ -85,6 +90,7 @@ class TransactionsModel {
       rrId: rrId ?? this.rrId,
       balance: balance ?? this.balance,
       status: status ?? this.status,
+      closable: closable ?? this.closable,
       timestamp: timestamp ?? this.timestamp,
       meta: meta ?? Map<String, dynamic>.from(this.meta),
     );
@@ -147,5 +153,53 @@ class TransactionsModel {
     if (srAmount <= 0 || rrAmount <= 0) return 0.0;
     final r = rrAmount / srAmount;
     return r.isFinite ? r : 0.0;
+  }
+
+  bool get isActive {
+    return statusEnum == TransactionStatus.active;
+  }
+
+  bool get isPartial {
+    return statusEnum == TransactionStatus.partial;
+  }
+
+  bool get isRoot {
+    return pid == '0' && rid == '0';
+  }
+
+  bool get isLeaf {
+    return !isRoot;
+  }
+
+  bool get isClosable {
+    if (isRoot || !isActive) {
+      return false;
+    }
+
+    return closable;
+  }
+
+  bool get isTradable {
+    return (isActive || isPartial) && hasBalance;
+  }
+
+  bool get isDeletable {
+    return isRoot && isActive;
+  }
+
+  bool get isEditable {
+    return isActive;
+  }
+
+  bool get hasParent {
+    return pid != '0';
+  }
+
+  bool get hasRoot {
+    return rid != '0';
+  }
+
+  bool get hasBalance {
+    return balance > 0;
   }
 }

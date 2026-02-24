@@ -58,6 +58,8 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
     super.initState();
     _controller = TextEditingController();
     _cryptosRepo = locator<CryptosRepository>();
+    _cryptosRepo.addListener(_loadCryptos);
+
     _loadCryptos().then((_) {
       if (widget.initialValue != null) {
         final crypto = _cryptosRepo.getById(widget.initialValue!);
@@ -84,6 +86,7 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
   @override
   void dispose() {
     _controller.dispose();
+    _cryptosRepo.removeListener(_loadCryptos);
     super.dispose();
   }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/app/snackbar.dart';
+import 'package:jxcryptledger/widgets/notify.dart';
 
 import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
@@ -21,7 +21,7 @@ class TransactionsPagesIndex extends StatefulWidget {
 
 class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   late TransactionsController _controller;
-  final CryptosRepository _cryptosRepo = CryptosRepository();
+  final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
 
   TransactionsViewMode _viewMode = TransactionsViewMode.activeTrading;
 
@@ -51,7 +51,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         mode: TransactionsFormActionMode.addNew,
         onSave: () async {
           Navigator.pop(context);
-          appShowSuccess(context, 'Transaction saved');
+          notifySuccess(context, 'Transaction saved');
         },
       ),
     );
@@ -104,7 +104,6 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     if (_controller.items.isEmpty) {
       return Column(
@@ -119,8 +118,6 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       children: [
         _buildActionBar(),
         const SizedBox(height: 16),
-
-        // 3. Switch view mode
         Expanded(child: _buildListForViewMode()),
       ],
     );
@@ -142,7 +139,6 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     return Wrap(
       spacing: 4,
       children: [
-        // Balance Overview
         WidgetButton(
           icon: Icons.account_balance_wallet_outlined,
           padding: const EdgeInsets.all(8),
@@ -162,8 +158,6 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             });
           },
         ),
-
-        // Active Trading
         WidgetButton(
           icon: Icons.show_chart,
           padding: const EdgeInsets.all(8),
@@ -183,15 +177,21 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             });
           },
         ),
-
-        // Add Transaction
         WidgetButton(
           icon: Icons.add,
           padding: const EdgeInsets.all(8),
+          initialState: WidgetButtonActionState.action,
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "Add Transaction",
           onPressed: (_) => _showAddTransactionDialog(),
+          evaluator: (s) {
+            if (!_cryptosRepo.hasAny()) {
+              s.disable();
+            } else {
+              s.action();
+            }
+          },
         ),
       ],
     );
@@ -209,8 +209,16 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
           const SizedBox(height: 24),
           WidgetButton(
             icon: Icons.add,
+            initialState: WidgetButtonActionState.action,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             onPressed: (_) => _showAddTransactionDialog(),
+            evaluator: (s) {
+              if (!_cryptosRepo.hasAny()) {
+                s.disable();
+              } else {
+                s.action();
+              }
+            },
           ),
         ],
       ),

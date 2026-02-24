@@ -1,64 +1,68 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:hive_ce/hive_ce.dart';
 
 import 'model.dart';
 
-class CryptosRepository {
+class CryptosRepository extends ChangeNotifier {
   static const String boxName = 'cryptos_box';
 
-  Box<CryptosModel>? _box;
+  Box<CryptosModel> get _box => Hive.box<CryptosModel>(boxName);
+
   Map<int, String>? _symbolCache;
+  Timer? _debounce;
 
-  void _ensureBox() {
-    if (_box != null) return;
-
-    if (Hive.isBoxOpen(boxName)) {
-      _box = Hive.box<CryptosModel>(boxName);
-      return;
+  Future<void> init() async {
+    if (!Hive.isBoxOpen(boxName)) {
+      await Hive.openBox<CryptosModel>(boxName);
     }
-
-    Hive.openBox<CryptosModel>(boxName);
-    _box = Hive.box<CryptosModel>(boxName);
   }
 
   void add(CryptosModel crypto) {
-    _ensureBox();
-    _box!.put(crypto.id, crypto);
+    _box.put(crypto.id, crypto);
     _symbolCache = null;
+    _scheduleNotify();
   }
 
   List<CryptosModel> getAll() {
-    _ensureBox();
-    return _box!.values.toList();
+    return _box.values.toList();
   }
 
   List<CryptosModel> filter(String query) {
-    _ensureBox();
     final q = query.toLowerCase();
-    return _box!.values.where((c) => c.searchKey.contains(q)).toList();
+    return _box.values.where((c) => c.searchKey.contains(q)).toList();
   }
 
   void delete(int id) {
-    _ensureBox();
-    _box!.delete(id);
+    _box.delete(id);
     _symbolCache = null;
+    _scheduleNotify();
   }
 
   void clear() {
-    _ensureBox();
-    _box!.clear();
+    _box.clear();
     _symbolCache = null;
+    _scheduleNotify();
+  }
+
+  void _scheduleNotify() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 100), () {
+      notifyListeners();
+    });
   }
 
   bool hasAny() {
-    _ensureBox();
-    return _box!.isNotEmpty;
+    return _box.isNotEmpty;
   }
 
   Map<int, String> getSymbolMap() {
-    if (_symbolCache != null) return _symbolCache!;
+    if (_symbolCache != null) {
+      return _symbolCache!;
+    }
 
-    _ensureBox();
-    final all = _box!.values;
+    final all = _box.values;
 
     _symbolCache = {for (var c in all) c.id: c.symbol};
     return _symbolCache!;
@@ -69,7 +73,6 @@ class CryptosRepository {
   }
 
   CryptosModel? getById(int id) {
-    _ensureBox();
-    return _box!.get(id);
+    return _box.get(id);
   }
 }

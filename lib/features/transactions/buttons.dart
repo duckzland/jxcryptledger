@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../app/snackbar.dart';
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
+import '../../widgets/notify.dart';
+import '../cryptos/repository.dart';
 import 'controller.dart';
 import 'form.dart';
 import 'model.dart';
@@ -12,41 +13,11 @@ enum TransactionsButtonActionMode { edit, trade, close, delete }
 class TransactionsButtons extends StatelessWidget {
   final TransactionsModel tx;
   final void Function() onAction;
+  final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
 
-  TransactionsController get controller => locator<TransactionsController>();
+  TransactionsController get _txController => locator<TransactionsController>();
 
-  const TransactionsButtons({super.key, required this.tx, required this.onAction});
-
-  bool _checkVisibility(TransactionsButtonActionMode mode) {
-    switch (mode) {
-      case TransactionsButtonActionMode.edit:
-        return true;
-      case TransactionsButtonActionMode.close:
-        return tx.pid != '0' && tx.statusEnum == TransactionStatus.active;
-      case TransactionsButtonActionMode.trade:
-        return tx.balance > 0;
-      case TransactionsButtonActionMode.delete:
-        return tx.rid == '0' && tx.pid == '0' && tx.statusEnum == TransactionStatus.active;
-    }
-  }
-
-  Future<void> _actionEdit() async {
-    onAction();
-  }
-
-  Future<void> _actionClose() async {
-    await controller.close(tx.tid);
-    onAction();
-  }
-
-  Future<void> _actionTrade() async {
-    onAction();
-  }
-
-  Future<void> _actionDelete(TransactionsModel tx) async {
-    await controller.removeRoot(tx.tid);
-    onAction();
-  }
+  TransactionsButtons({super.key, required this.tx, required this.onAction});
 
   Future<void> _showEditDialog(BuildContext context) async {
     await showDialog(
@@ -56,8 +27,8 @@ class TransactionsButtons extends StatelessWidget {
         initialData: tx,
         onSave: () async {
           Navigator.pop(dialogContext);
-          await _actionEdit();
-          appShowSuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction updated.");
+          onAction();
+          notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction updated.");
         },
       ),
     );
@@ -80,8 +51,9 @@ class TransactionsButtons extends StatelessWidget {
             initialState: WidgetButtonActionState.error,
             onPressed: (_) async {
               Navigator.pop(dialogContext);
-              await _actionDelete(tx);
-              appShowSuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
+              await _txController.removeRoot(tx.tid);
+              onAction();
+              notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
             },
           ),
         ],
@@ -103,8 +75,9 @@ class TransactionsButtons extends StatelessWidget {
             initialState: WidgetButtonActionState.action,
             onPressed: (_) async {
               Navigator.pop(dialogContext);
-              await _actionClose();
-              appShowSuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction closed.");
+              await _txController.closeLeaf(tx.tid);
+              onAction();
+              notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction closed.");
             },
           ),
         ],
@@ -121,8 +94,8 @@ class TransactionsButtons extends StatelessWidget {
         parent: tx,
         onSave: () async {
           Navigator.pop(dialogContext);
-          await _actionTrade();
-          appShowSuccess(context, "New trading transaction created.");
+          onAction();
+          notifySuccess(context, "New trading transaction created.");
         },
       ),
     );
@@ -134,7 +107,7 @@ class TransactionsButtons extends StatelessWidget {
       spacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (_checkVisibility(TransactionsButtonActionMode.edit))
+        if (tx.isEditable)
           WidgetButton(
             icon: Icons.edit,
             tooltip: "Edit",
@@ -142,36 +115,45 @@ class TransactionsButtons extends StatelessWidget {
             iconSize: 18,
             minimumSize: const Size(36, 36),
             onPressed: (_) => _showEditDialog(context),
+            evaluator: (s) {
+              _cryptosRepo.hasAny() ? s.normal() : s.disable();
+            },
           ),
 
-        if (_checkVisibility(TransactionsButtonActionMode.close))
-          WidgetButton(
-            icon: Icons.close,
-            tooltip: "Close",
-            padding: const EdgeInsets.all(8),
-            iconSize: 18,
-            minimumSize: const Size(36, 36),
-            onPressed: (_) => _showCloseDialog(context),
-          ),
-
-        if (_checkVisibility(TransactionsButtonActionMode.trade))
+        if (tx.isTradable)
           WidgetButton(
             icon: Icons.swap_horiz,
+            initialState: WidgetButtonActionState.action,
             tooltip: "Trade",
             padding: const EdgeInsets.all(8),
             iconSize: 18,
             minimumSize: const Size(36, 36),
             onPressed: (_) => _showTradeDialog(context),
+            evaluator: (s) {
+              _cryptosRepo.hasAny() ? s.action() : s.disable();
+            },
           ),
 
-        if (_checkVisibility(TransactionsButtonActionMode.delete))
+        if (tx.isDeletable)
           WidgetButton(
             icon: Icons.delete,
+            initialState: WidgetButtonActionState.error,
             tooltip: "Delete",
             padding: const EdgeInsets.all(8),
             iconSize: 18,
             minimumSize: const Size(36, 36),
             onPressed: (_) => _showDeleteDialog(context),
+          ),
+
+        if (tx.isClosable)
+          WidgetButton(
+            icon: Icons.close,
+            initialState: WidgetButtonActionState.warning,
+            tooltip: "Close",
+            padding: const EdgeInsets.all(8),
+            iconSize: 18,
+            minimumSize: const Size(36, 36),
+            onPressed: (_) => _showCloseDialog(context),
           ),
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:hive_ce/hive_ce.dart';
+
 import 'model.dart';
 
 class TransactionsAdapter extends TypeAdapter<TransactionsModel> {
@@ -17,6 +18,7 @@ class TransactionsAdapter extends TypeAdapter<TransactionsModel> {
       rrId: reader.readInt(),
       balance: reader.readDouble(),
       status: reader.readInt(),
+      closable: reader.readBool(),
       timestamp: reader.readInt(),
       meta: Map<String, dynamic>.from(reader.readMap()),
     );
@@ -33,6 +35,7 @@ class TransactionsAdapter extends TypeAdapter<TransactionsModel> {
     writer.writeInt(obj.rrId);
     writer.writeDouble(obj.balance);
     writer.writeInt(obj.status);
+    writer.writeBool(obj.closable);
     writer.writeInt(obj.timestamp);
     writer.writeMap(obj.meta);
   }

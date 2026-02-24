@@ -151,6 +151,7 @@ class _TransactionFormState extends State<TransactionForm> {
       balance: _saveBalanceField(),
       status: _saveStatusField(),
       timestamp: _saveTimestampField(),
+      closable: false,
       meta: _saveNotesField(),
     );
 
@@ -173,6 +174,7 @@ class _TransactionFormState extends State<TransactionForm> {
       balance: _saveBalanceField(),
       status: _saveStatusField(),
       timestamp: _saveTimestampField(),
+      closable: false,
       meta: _saveNotesField(),
     );
 

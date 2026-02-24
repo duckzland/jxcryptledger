@@ -41,7 +41,7 @@ class RatesService extends ChangeNotifier {
   Future<bool> _fetchInternal(int sourceId, List<int> targetIds) async {
     try {
       // Validate IDs exist in cryptos_box
-      final allCryptos = await cryptosRepo.getAll();
+      final allCryptos = cryptosRepo.getAll();
       final cryptoIds = allCryptos.map((c) => c.id).toSet();
 
       if (sourceId == 0) {

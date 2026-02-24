@@ -10,6 +10,8 @@ class AppTheme {
   static const buttonBg = Color(0xFF28292E);
   static const error = Color(0xFFC62828);
   static const success = Color(0xFF43F436);
+  static const warning = Color.fromARGB(255, 213, 161, 20);
+  static const action = Color(0xFF43A047);
   // static const headerBg = Color(0xFF1B1B1B);
   // static const separator = Color(0xFF404040);
   static const text = Colors.white;
@@ -43,6 +45,9 @@ class AppTheme {
 
   static const buttonBgAction = Color(0xFF43A047);
   static const buttonFgAction = Colors.white;
+
+  static const buttonBgWarning = Color.fromARGB(255, 213, 161, 20);
+  static const buttonFgWarning = Colors.white;
 
   static const double tableHeadingRowHeight = 50;
   static const double tableDataRowMinHeight = 42;

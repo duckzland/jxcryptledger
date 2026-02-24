@@ -39,8 +39,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
   late TextEditingController _customRateController;
 
-  late final String _sourceSymbol;
-  late final String _resultSymbol;
+  late String _sourceSymbol;
+  late String _resultSymbol;
 
   double? _customRate;
   double? _marketRate;
@@ -79,7 +79,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   void didUpdateWidget(covariant TransactionsActive oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.transactions != widget.transactions) {
+    if (oldWidget.transactions != widget.transactions && mounted) {
+      _sourceSymbol = _cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin';
+      _resultSymbol = _cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin';
       setState(() {});
     }
   }
@@ -87,9 +89,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   Future<void> _loadMarketRate() async {
     final rate = await _ratesService.getRate(widget.srid, widget.rrid);
 
-    setState(() {
-      _marketRate = rate;
-    });
+    if (mounted) {
+      setState(() {
+        _marketRate = rate;
+      });
+    }
   }
 
   List<Map<String, dynamic>> get _tableRows {
@@ -149,47 +153,57 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       ),
       child: Column(
         children: [
-          _buildHeader(averageRate: averageRate, totalSourceBalance: totalSourceBalance, totalBalance: totalBalance),
-
-          const SizedBox(height: 20),
-
-          _buildTable(currentRate),
-
-          const SizedBox(height: 20),
-
-          _buildFooter(
+          _buildHeader(
+            txs: txs,
+            currentRate: currentRate,
             averageRate: averageRate,
             totalSourceBalance: totalSourceBalance,
             totalBalance: totalBalance,
             avgPL: avgPL,
             plPercentage: plPercentage,
           ),
+
+          const SizedBox(height: 20),
+
+          _buildTable(currentRate),
         ],
       ),
     );
   }
 
-  Widget _buildHeader({required double averageRate, required double totalSourceBalance, required double totalBalance}) {
+  Widget _buildHeader({
+    required List<TransactionsModel> txs,
+    required double currentRate,
+    required double averageRate,
+    required double totalSourceBalance,
+    required double totalBalance,
+    required double avgPL,
+    required double plPercentage,
+  }) {
     return Row(
       children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 5),
+            Text(
+              '$_sourceSymbol to $_resultSymbol Trades',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+          ],
+        ),
+        const SizedBox(width: 20),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$_sourceSymbol to $_resultSymbol Trades',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-              const SizedBox(height: 8),
-              Text(
-                "Total Balance: ${Utils.formatSmartDouble(totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(totalBalance)} $_resultSymbol",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-            ],
+          child: _buildPanels(
+            averageRate: averageRate,
+            totalSourceBalance: totalSourceBalance,
+            totalBalance: totalBalance,
+            avgPL: avgPL,
+            plPercentage: plPercentage,
           ),
         ),
-
+        const SizedBox(width: 20),
         SizedBox(
           width: 150,
           child: TextField(
@@ -199,7 +213,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
             onChanged: (value) {
               if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-              _debounce = Timer(const Duration(milliseconds: 64), () {
+              _debounce = Timer(const Duration(milliseconds: 100), () {
                 setState(() {
                   _customRate = double.tryParse(value);
                 });
@@ -294,7 +308,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     );
   }
 
-  Widget _buildFooter({
+  Widget _buildPanels({
     required double averageRate,
     required double totalSourceBalance,
     required double totalBalance,
@@ -304,7 +318,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildFooterItem(
+        _buildPanelItem(
           title: 'Total Balance',
           subtitle:
               '${Utils.formatSmartDouble(totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(totalBalance)} $_resultSymbol',
@@ -312,16 +326,16 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           comparator: 0,
         ),
 
-        _buildFooterItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(averageRate), value: 0, comparator: 0),
+        _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(averageRate), value: 0, comparator: 0),
 
-        if (plPercentage != 0) ...[
-          _buildFooterItem(
+        if (plPercentage != 0 && plPercentage.isFinite) ...[
+          _buildPanelItem(
             title: 'Profit/Loss',
             subtitle: "${Utils.formatSmartDouble(avgPL)} $_sourceSymbol",
             value: plPercentage,
             comparator: 0,
           ),
-          _buildFooterItem(
+          _buildPanelItem(
             title: 'Profit/Loss %',
             subtitle: '${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
             value: plPercentage,
@@ -332,7 +346,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     );
   }
 
-  Widget _buildFooterItem({
+  Widget _buildPanelItem({
     required String title,
     required String subtitle,
     required double value,
@@ -341,9 +355,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+        Text(title, style: TextStyle(fontSize: 13, color: Colors.grey[500])),
         const SizedBox(height: 4),
-        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 14),
+        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 16),
       ],
     );
   }
