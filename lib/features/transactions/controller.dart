@@ -34,9 +34,8 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<void> update(TransactionsModel tx) async {
-    final ctx = _items.firstWhere((t) => t.tid == tx.tid);
     await repo.update(tx);
-    await markClosable(tx, ctx: ctx);
+    await markClosable(tx);
     await load();
   }
 
@@ -46,7 +45,13 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<void> closeLeaf(String tid) async {
-    final tx = _items.firstWhere((t) => t.tid == tid);
+    TransactionsModel tx;
+
+    try {
+      tx = _items.firstWhere((t) => t.tid == tid);
+    } catch (_) {
+      return; // no match
+    }
 
     if (tx.pid == '0' && tx.rid == '0') {
       // Refused to close a root transaction
@@ -85,7 +90,14 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<void> removeRoot(String tid) async {
-    final tx = _items.firstWhere((t) => t.tid == tid);
+    TransactionsModel tx;
+
+    try {
+      tx = _items.firstWhere((t) => t.tid == tid);
+    } catch (_) {
+      return; // no match
+    }
+
     if (tx.pid != '0' || tx.rid != '0') {
       // Refused to delete a non-root transaction
       await load();
@@ -103,7 +115,13 @@ class TransactionsController extends ChangeNotifier {
   }
 
   TransactionsModel? getCloseTargetParent(String tid) {
-    final tx = _items.firstWhere((t) => t.tid == tid);
+    TransactionsModel tx;
+
+    try {
+      tx = _items.firstWhere((t) => t.tid == tid);
+    } catch (_) {
+      return null; // no match
+    }
 
     if (tx.pid == '0' && tx.rid == '0') {
       return null;
@@ -141,16 +159,12 @@ class TransactionsController extends ChangeNotifier {
     return parent;
   }
 
-  Future<void> markClosable(TransactionsModel tx, {TransactionsModel? ctx}) async {
+  Future<void> markClosable(TransactionsModel tx) async {
     bool closable = false;
-
-    if (!tx.isRoot && tx.statusEnum == TransactionStatus.active) {
-      // For update, honor rrId change
-      if (ctx == null || ctx.rrId != tx.rrId) {
-        final cp = getCloseTargetParent(tx.tid);
-        if (cp != null) {
-          closable = true;
-        }
+    if (!tx.isRoot && tx.isActive) {
+      final cp = getCloseTargetParent(tx.tid);
+      if (cp != null) {
+        closable = true;
       }
     }
 

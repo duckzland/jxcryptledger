@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
+import '../../app/theme.dart';
 import '../../core/locator.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -64,7 +65,7 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
       if (widget.initialValue != null) {
         final crypto = _cryptosRepo.getById(widget.initialValue!);
         if (crypto != null) {
-          _controller.text = '${crypto.id}|${crypto.symbol} - ${crypto.name}';
+          _controller.text = '${crypto.symbol} (#${crypto.id})';
         }
       }
     });
@@ -111,11 +112,25 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
           itemBuilder: (context, CryptosModel suggestion) {
             return Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text('${suggestion.id}|${suggestion.symbol} - ${suggestion.name}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${suggestion.symbol} (#${suggestion.id})',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    suggestion.name,
+                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             );
           },
           onSuggestionSelected: (CryptosModel suggestion) {
-            _controller.text = '${suggestion.id}|${suggestion.symbol} - ${suggestion.name}';
+            _controller.text = '${suggestion.symbol} (#${suggestion.id})';
             widget.onSelected(suggestion.id);
           },
           noItemsFoundBuilder: (context) {
@@ -133,7 +148,7 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
         if (widget.errorText != null)
           Padding(
             padding: const EdgeInsets.only(top: 6, left: 4),
-            child: Text(widget.errorText!, style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+            child: Text(widget.errorText!, style: TextStyle(color: AppTheme.error, fontSize: 12)),
           ),
       ],
     );

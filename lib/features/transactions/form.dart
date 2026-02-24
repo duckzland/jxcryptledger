@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../../widgets/button.dart';
@@ -386,8 +387,8 @@ class _TransactionFormState extends State<TransactionForm> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // @override
+  Widget build1(BuildContext context) {
     return Dialog(
       child: SingleChildScrollView(
         child: Padding(
@@ -426,6 +427,115 @@ class _TransactionFormState extends State<TransactionForm> {
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTitle(),
+                    const SizedBox(height: 24),
+
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.separator),
+                              borderRadius: BorderRadius.circular(8),
+                              color: AppTheme.panelBg,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Flexible(flex: 3, child: _buildSourceAmountField()),
+                                    const SizedBox(width: 12),
+                                    Flexible(flex: 2, child: _buildSourceCryptoField()),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.separator),
+                              borderRadius: BorderRadius.circular(8),
+                              color: AppTheme.panelBg,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("To:", style: TextStyle(fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Flexible(flex: 3, child: _buildResultAmountField()),
+                                    const SizedBox(width: 12),
+                                    Flexible(flex: 2, child: _buildResultCryptoField()),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.separator),
+                        borderRadius: BorderRadius.circular(8),
+                        color: AppTheme.panelBg,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Notes:", style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 24),
+                          _buildNotesField(),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    _buildButtons(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTitle() {
     final title = switch (widget.mode) {
       TransactionsFormActionMode.edit => 'Edit Transaction',
@@ -441,7 +551,7 @@ class _TransactionFormState extends State<TransactionForm> {
       case TransactionsFormActionMode.addNew:
         return TextFormField(
           controller: _srAmountController,
-          decoration: _input('Source Amount', 'e.g., 1.5'),
+          decoration: _input('Amount', 'e.g., 1.5'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
           validator: _validateAmount,
         );
@@ -450,7 +560,7 @@ class _TransactionFormState extends State<TransactionForm> {
         if (isRoot) {
           return TextFormField(
             controller: _srAmountController,
-            decoration: _input('Source Amount', 'e.g., 1.5'),
+            decoration: _input('Amount', 'e.g., 1.5'),
             keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
             validator: _validateAmount,
           );
@@ -460,7 +570,7 @@ class _TransactionFormState extends State<TransactionForm> {
           } else {
             return TextFormField(
               controller: _srAmountController,
-              decoration: _input('Source Amount', 'e.g., 1.5'),
+              decoration: _input('Amount', 'e.g., 1.5'),
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
               validator: _validateAmount,
             );
@@ -472,7 +582,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
         return TextFormField(
           controller: _srAmountController,
-          decoration: _input('Source Amount', 'Max: $balance'),
+          decoration: _input('Amount', 'Max: $balance'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
           validator: (value) => _validateAmountWithMax(value, balance),
         );
@@ -483,7 +593,7 @@ class _TransactionFormState extends State<TransactionForm> {
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
         return CryptoSearchField(
-          labelText: 'Source Crypto',
+          labelText: 'Coin',
           initialValue: null,
           validator: _validateCrypto,
           onSelected: (id) => setState(() => _selectedSrId = id),
@@ -492,7 +602,7 @@ class _TransactionFormState extends State<TransactionForm> {
       case TransactionsFormActionMode.edit:
         if (isRoot) {
           return CryptoSearchField(
-            labelText: 'Source Crypto',
+            labelText: 'Coin',
             initialValue: _selectedSrId,
             validator: (value) {
               if (value == null || value == 0) return 'Crypto is required';
@@ -516,7 +626,7 @@ class _TransactionFormState extends State<TransactionForm> {
       case TransactionsFormActionMode.addNew:
         return TextFormField(
           controller: _rrAmountController,
-          decoration: _input('Result Amount', 'e.g., 10.5'),
+          decoration: _input('Amount', 'e.g., 10.5'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
           validator: _validateAmount,
         );
@@ -525,7 +635,7 @@ class _TransactionFormState extends State<TransactionForm> {
         if (isRoot) {
           return TextFormField(
             controller: _rrAmountController,
-            decoration: _input('Result Amount', 'e.g., 10.5'),
+            decoration: _input('Amount', 'e.g., 10.5'),
             keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
             validator: _validateAmount,
           );
@@ -535,7 +645,7 @@ class _TransactionFormState extends State<TransactionForm> {
           } else {
             return TextFormField(
               controller: _rrAmountController,
-              decoration: _input('Result Amount', 'e.g., 10.5'),
+              decoration: _input('Amount', 'e.g., 10.5'),
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
               validator: _validateAmount,
             );
@@ -545,7 +655,7 @@ class _TransactionFormState extends State<TransactionForm> {
       case TransactionsFormActionMode.trade:
         return TextFormField(
           controller: _rrAmountController,
-          decoration: _input('Result Amount', 'e.g., 10.5'),
+          decoration: _input('Amount', 'e.g., 10.5'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
           validator: _validateAmount,
         );
@@ -556,7 +666,7 @@ class _TransactionFormState extends State<TransactionForm> {
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
         return CryptoSearchField(
-          labelText: 'Result Crypto',
+          labelText: 'Coin',
           initialValue: null,
           validator: _validateCrypto,
           onSelected: (id) => setState(() => _selectedRrId = id),
@@ -565,7 +675,7 @@ class _TransactionFormState extends State<TransactionForm> {
       case TransactionsFormActionMode.edit:
         if (isRoot) {
           return CryptoSearchField(
-            labelText: 'Result Crypto',
+            labelText: 'Coin',
             initialValue: _selectedRrId,
             validator: (value) {
               if (value == null || value == 0) return 'Crypto is required';
@@ -579,7 +689,7 @@ class _TransactionFormState extends State<TransactionForm> {
             return _buildReadOnlyCryptoDisplay(_selectedRrId);
           } else {
             return CryptoSearchField(
-              labelText: 'Result Crypto',
+              labelText: 'Coin',
               initialValue: _selectedRrId,
               validator: (value) {
                 if (value == null || value == 0) return 'Crypto is required';
@@ -593,7 +703,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
       case TransactionsFormActionMode.trade:
         return CryptoSearchField(
-          labelText: 'Result Crypto',
+          labelText: 'Coin',
           initialValue: _selectedRrId,
           validator: (value) {
             if (value == null || value == 0) return 'Crypto is required';
@@ -608,7 +718,6 @@ class _TransactionFormState extends State<TransactionForm> {
   Widget _buildNotesField() {
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
-        // Root add → purchase_notes only
         return TextFormField(
           controller: _purchaseNotesController,
           decoration: _input('Purchase Notes', 'Add notes...'),
@@ -617,14 +726,12 @@ class _TransactionFormState extends State<TransactionForm> {
 
       case TransactionsFormActionMode.edit:
         if (isRoot) {
-          // Edit root → purchase_notes editable
           return TextFormField(
             controller: _purchaseNotesController,
             decoration: _input('Purchase Notes', 'Edit notes...'),
             maxLines: 4,
           );
         } else {
-          // Edit leaf → trading_notes editable, purchase_notes not editable here
           return TextFormField(
             controller: _tradingNotesController,
             decoration: _input('Trading Notes', 'Edit trading notes...'),
@@ -633,27 +740,16 @@ class _TransactionFormState extends State<TransactionForm> {
         }
 
       case TransactionsFormActionMode.trade:
-        // Trade (leaf) → purchase_notes read-only + trading_notes editable
         final existingNotes = _purchaseNotesController.text;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Original Purchase Notes', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey),
-              ),
-              child: Text(existingNotes.isEmpty ? 'No notes' : existingNotes),
-            ),
-            const SizedBox(height: 16),
+            if (existingNotes.isNotEmpty) Text(existingNotes),
+            if (existingNotes.isNotEmpty) const SizedBox(height: 24),
             TextFormField(
               controller: _tradingNotesController,
-              decoration: _input('Trading Notes', 'Add trade-specific notes...'),
+              decoration: _input('New Trading Notes', 'Add trade-specific notes...'),
               maxLines: 4,
             ),
           ],
@@ -686,29 +782,34 @@ class _TransactionFormState extends State<TransactionForm> {
   }
 
   Widget _buildReadOnlyCryptoDisplay(int? id) {
+    final String text;
     if (id == null) {
-      return const Text('Unknown Crypto');
+      text = 'Unknown Crypto';
+    } else {
+      final crypto = _cryptosRepo.getById(id);
+      text = crypto == null ? '$id' : '${crypto.symbol} (#${crypto.id})';
     }
 
-    final crypto = _cryptosRepo.getById(id);
-    final text = crypto == null ? '$id' : '${crypto.id} - ${crypto.symbol}';
-
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppTheme.separator),
+        color: AppTheme.inputBg,
       ),
-      child: Text(text),
+      child: Text(text, textAlign: TextAlign.start),
     );
   }
 
   Widget _buildReadOnlyAmount(String value) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppTheme.separator),
+        color: AppTheme.inputBg,
       ),
       child: Text(value.isEmpty ? '0' : value),
     );
@@ -718,7 +819,7 @@ class _TransactionFormState extends State<TransactionForm> {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
     );
   }
 
@@ -748,9 +849,9 @@ class _TransactionFormState extends State<TransactionForm> {
       return 'Amount must be greater than zero';
     }
 
-    if (parsed > 1e12) {
-      return 'Amount is unrealistically large';
-    }
+    // if (parsed > 1e12) {
+    //   return 'Amount is unrealistically large';
+    // }
 
     return null;
   }

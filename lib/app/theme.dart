@@ -19,11 +19,11 @@ class AppTheme {
   // static const columnHeaderBg = Color(0xFF000000);
   // static const rowHeaderBg = Color(0xFF000000);
 
-  static const background = Color(0xFF0D1421); // Your Deep Navy
-  static const headerBg = Color(0xFF161C27); // Slightly lighter than background for depth
-  static const columnHeaderBg = Color(0xFF000000); // Pure Black (As requested)
-  static const rowHeaderBg = Color(0xFF0D1421); // Matches background for seamless look
-  static const separator = Color(0xFF232A37); // Subtle Navy-Grey (Better than #404040)
+  static const background = Color(0xFF0D1421);
+  static const headerBg = Color(0xFF161C27);
+  static const columnHeaderBg = Color(0xFF000000);
+  static const rowHeaderBg = Color(0xFF0D1421);
+  static const separator = Color.fromARGB(255, 44, 53, 68);
   static const panelBg = Color(0xFF1B2230);
 
   static const buttonFg = Color(0xFFE0E0E0);
@@ -80,7 +80,7 @@ class AppTheme {
         fillColor: inputBg,
         labelStyle: const TextStyle(fontSize: 16, color: textMuted),
         floatingLabelStyle: const TextStyle(fontSize: 13, color: text),
-        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white54)),
+        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: separator)),
         focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: primary)),
         hintStyle: TextStyle(color: textMuted),
       ),
