@@ -104,7 +104,7 @@ class TransactionsModel {
         return TransactionStatus.active;
       case 2:
         return TransactionStatus.partial;
-      case 4:
+      case 3:
         return TransactionStatus.closed;
       default:
         return TransactionStatus.unknown;

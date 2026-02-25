@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core/log.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -39,93 +38,57 @@ class TransactionsController extends ChangeNotifier {
     await load();
   }
 
-  Future<void> delete(String tid) async {
-    await repo.delete(tid);
+  Future<void> delete(TransactionsModel tx) async {
+    await repo.delete(tx);
     await load();
   }
 
-  Future<void> closeLeaf(String tid) async {
-    TransactionsModel tx;
-
-    try {
-      tx = _items.firstWhere((t) => t.tid == tid);
-    } catch (_) {
-      return;
-    }
-
+  Future<void> closeLeaf(TransactionsModel tx) async {
     if (tx.isRoot) {
-      await load();
       return;
     }
 
-    TransactionsModel? parent = getCloseTargetParent(tid);
+    TransactionsModel? parent = getCloseTargetParent(tx);
 
     if (parent == null) {
-      await load();
       return;
     }
 
-    // Close the leaf itself
-    final closedTx = tx.copyWith(balance: 0, status: TransactionStatus.closed.index);
-    await repo.update(closedTx);
+    final leaves = collectTerminalLeaves(parent);
+    final allClosed =
+        leaves.isNotEmpty &&
+        leaves
+            // Current tx hasn't mutate status yet thus ignore it!
+            .where((leaf) => leaf.tid != tx.tid)
+            .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
-    // Recalculate parent status based on its terminal leaves
-    final leaves = _collectTerminalLeaves(parent);
-
-    final allClosed = leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-    final newStatus = allClosed
-        ? TransactionStatus
-              .active
-              .index // parent can now be active
-        : TransactionStatus.partial.index; // still has open leaves
-
+    final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
     final updatedParent = parent.copyWith(balance: parent.balance + tx.balance, status: newStatus);
 
-    logln(
-      "[CLOSE] tid=${tx.tid} -> parent=${parent.tid} "
-      "origBal=${tx.balance} newParentBal=${updatedParent.balance} "
-      "parentStatus=${TransactionStatus.values[newStatus].name}",
-    );
+    final closedTx = tx.copyWith(balance: 0, status: TransactionStatus.closed.index);
 
+    await repo.update(closedTx);
     await repo.update(updatedParent);
     await load();
   }
 
-  Future<void> removeRoot(String tid) async {
-    TransactionsModel tx;
-
-    try {
-      tx = _items.firstWhere((t) => t.tid == tid);
-    } catch (_) {
-      return; // no match
-    }
-
-    if (tx.pid != '0' || tx.rid != '0') {
-      // Refused to delete a non-root transaction
-      await load();
+  Future<void> removeRoot(TransactionsModel tx) async {
+    if (tx.isLeaf) {
       return;
     }
 
-    await repo.delete(tid);
+    await repo.delete(tx);
 
-    final related = _items.where((t) => t.rid == tid).toList();
+    final related = _items.where((t) => t.rid == tx.tid).toList();
     for (final tx in related) {
-      await repo.delete(tx.tid);
+      await repo.delete(tx);
     }
 
     await load();
   }
 
-  TransactionsModel? getCloseTargetParent(String tid) {
-    TransactionsModel tx;
-
-    try {
-      tx = _items.firstWhere((t) => t.tid == tid);
-    } catch (_) {
-      return null; // no match
-    }
-
-    if (tx.pid == '0' && tx.rid == '0') {
+  TransactionsModel? getCloseTargetParent(TransactionsModel tx) {
+    if (tx.isRoot) {
       return null;
     }
 
@@ -138,18 +101,15 @@ class TransactionsController extends ChangeNotifier {
 
       final p = matches.first;
       if (p.rrId == tx.rrId) {
-        // logln("Checking: pid: $pid, ${p.rrId} - ${tx.rrId}");
         parent = p;
         break;
       }
-
-      //   logln("Checking: pid: $pid, ${p.rrId} - ${tx.rrId}");
 
       pid = p.pid;
     }
 
     if (parent == null) {
-      final roots = _items.where((t) => t.pid == "0" && t.rid == "0" && t.tid == tx.rid);
+      final roots = _items.where((t) => t.isRoot && t.tid == tx.rid);
       if (roots.isNotEmpty) {
         final root = roots.first;
         if (root.rrId == tx.rrId) {
@@ -162,9 +122,20 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<void> markClosable(TransactionsModel tx) async {
+    if (tx.isRoot) {
+      final leaves = collectTerminalLeaves(tx);
+      final allClosed = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+      final updated = tx.copyWith(closable: allClosed ? true : false);
+
+      if (updated.closable != tx.closable) {
+        await repo.update(updated);
+      }
+      return;
+    }
+
     bool closable = false;
-    if (!tx.isRoot && tx.isActive) {
-      final cp = getCloseTargetParent(tx.tid);
+    if (tx.isActive) {
+      final cp = getCloseTargetParent(tx);
       if (cp != null) {
         closable = true;
       }
@@ -176,19 +147,31 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
-  List<TransactionsModel> _collectTerminalLeaves(TransactionsModel parent) {
+  List<TransactionsModel> collectTerminalLeaves(TransactionsModel parent) {
     List<TransactionsModel> collect(TransactionsModel node) {
       final children = _items.where((t) => t.pid == node.tid).toList();
+
       if (children.isEmpty) {
-        return [node]; // terminal leaf
+        if (node.tid == parent.tid) {
+          return [];
+        }
+
+        if (node.isRoot) {
+          return [];
+        }
+
+        return [node];
       }
+
       final leaves = <TransactionsModel>[];
       for (final child in children) {
         leaves.addAll(collect(child));
       }
+
       return leaves;
     }
 
-    return collect(parent);
+    final result = collect(parent);
+    return result;
   }
 }

@@ -152,7 +152,7 @@ class _TransactionFormState extends State<TransactionForm> {
       balance: _saveBalanceField(),
       status: _saveStatusField(),
       timestamp: _saveTimestampField(),
-      closable: false,
+      closable: _saveClosableField(),
       meta: _saveNotesField(),
     );
 
@@ -175,7 +175,7 @@ class _TransactionFormState extends State<TransactionForm> {
       balance: _saveBalanceField(),
       status: _saveStatusField(),
       timestamp: _saveTimestampField(),
-      closable: false,
+      closable: _saveClosableField(),
       meta: _saveNotesField(),
     );
 
@@ -208,6 +208,7 @@ class _TransactionFormState extends State<TransactionForm> {
       rrAmount: _saveResultAmountField(),
       balance: _saveBalanceField(),
       status: _saveStatusField(),
+      closable: _saveClosableField(),
       meta: _saveNotesField(),
     );
 
@@ -223,11 +224,17 @@ class _TransactionFormState extends State<TransactionForm> {
 
       case TransactionsFormActionMode.edit:
         final data = widget.initialData!;
+        if (data.isRoot) {
+          return '0';
+        }
         return data.rid;
 
       case TransactionsFormActionMode.trade:
         final data = widget.initialData!;
-        return data.pid;
+        if (data.isRoot) {
+          return data.tid;
+        }
+        return data.rid;
     }
   }
 
@@ -290,6 +297,21 @@ class _TransactionFormState extends State<TransactionForm> {
 
       case TransactionsFormActionMode.trade:
         return TransactionStatus.active.index;
+    }
+  }
+
+  bool _saveClosableField() {
+    switch (widget.mode) {
+      case TransactionsFormActionMode.addNew:
+        return true;
+
+      case TransactionsFormActionMode.edit:
+        final data = widget.initialData!;
+        return data.closable;
+
+      case TransactionsFormActionMode.trade:
+        // We must drill up to check!
+        return false;
     }
   }
 

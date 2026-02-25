@@ -51,7 +51,7 @@ class TransactionsButtons extends StatelessWidget {
             initialState: WidgetButtonActionState.error,
             onPressed: (_) async {
               Navigator.pop(dialogContext);
-              await _txController.removeRoot(tx.tid);
+              await _txController.removeRoot(tx);
               onAction();
               notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
             },
@@ -75,7 +75,7 @@ class TransactionsButtons extends StatelessWidget {
             initialState: WidgetButtonActionState.action,
             onPressed: (_) async {
               Navigator.pop(dialogContext);
-              await _txController.closeLeaf(tx.tid);
+              await _txController.closeLeaf(tx);
               onAction();
               notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction closed.");
             },
