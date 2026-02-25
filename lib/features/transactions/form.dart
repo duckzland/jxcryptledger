@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
+import '../../core/utils.dart';
 import '../../widgets/button.dart';
 import '../cryptos/repository.dart';
 import '../cryptos/search_field.dart';
@@ -42,7 +43,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
   bool get isRoot {
     final tx = widget.initialData;
-    return tx != null && tx.rid == 0 && tx.pid == 0;
+    return tx != null && tx.isRoot;
   }
 
   bool get isLeaf => !isRoot;
@@ -99,8 +100,8 @@ class _TransactionFormState extends State<TransactionForm> {
   void _initEdit() {
     final data = widget.initialData!;
 
-    _srAmountController = TextEditingController(text: data.srAmount.toString());
-    _rrAmountController = TextEditingController(text: data.rrAmount.toString());
+    _srAmountController = TextEditingController(text: Utils.formatSmartDouble(data.srAmount));
+    _rrAmountController = TextEditingController(text: Utils.formatSmartDouble(data.rrAmount));
 
     if (isRoot) {
       _purchaseNotesController = TextEditingController(text: data.meta['purchase_notes'] ?? '');
@@ -604,7 +605,15 @@ class _TransactionFormState extends State<TransactionForm> {
 
         return TextFormField(
           controller: _srAmountController,
-          decoration: _input('Amount', 'Max: $balance'),
+          decoration: _input('Amount', 'Max: ${Utils.formatSmartDouble(balance)}').copyWith(
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.keyboard_double_arrow_up),
+              tooltip: 'Use max',
+              onPressed: () {
+                _srAmountController.text = Utils.formatSmartDouble(balance);
+              },
+            ),
+          ),
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
           validator: (value) => _validateAmountWithMax(value, balance),
         );

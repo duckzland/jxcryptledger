@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxcryptledger/features/cryptos/repository.dart';
 import 'package:jxcryptledger/features/rates/model.dart';
 import 'package:jxcryptledger/features/transactions/model.dart';
 
@@ -17,8 +18,9 @@ class UnlockController extends ChangeNotifier {
   bool _unlocked = false;
   bool get unlocked => _unlocked;
 
-  final _settingsRepo = SettingsRepository();
+  final SettingsRepository _settingsRepo = locator<SettingsRepository>();
   final CryptosService _cryptosService = locator<CryptosService>();
+  final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
   final RatesService _ratesService = locator<RatesService>();
 
   Future<void> init() async {
@@ -48,9 +50,10 @@ class UnlockController extends ChangeNotifier {
         return false;
       }
 
-      await AppStorage.instance.openBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: true);
+      await AppStorage.instance.openBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
+      await _cryptosRepo.init();
 
-      await AppStorage.instance.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: true);
+      await AppStorage.instance.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
 
       if (isFirstRun) {
         logln("First run detected, initializing vault");

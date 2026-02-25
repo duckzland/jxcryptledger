@@ -38,13 +38,16 @@ class CryptosService extends ChangeNotifier {
         return false;
       }
 
-      cryptosRepo.clear();
+      await cryptosRepo.clear();
 
       for (final m in parsed) {
-        cryptosRepo.add(
+        await cryptosRepo.add(
           CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]),
         );
       }
+
+      // Ensure to write to disk!
+      await cryptosRepo.flush();
 
       logln("Fetching cryptos completed");
       notifyListeners();

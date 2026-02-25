@@ -10,39 +10,47 @@ class CryptosRepository extends ChangeNotifier {
 
   Box<CryptosModel> get _box => Hive.box<CryptosModel>(boxName);
 
+  List<CryptosModel> get items => _box.values.cast<CryptosModel>().toList();
+
   Map<int, String>? _symbolCache;
 
   Future<void> init() async {
     if (!Hive.isBoxOpen(boxName)) {
       await Hive.openBox<CryptosModel>(boxName);
     }
+    _symbolCache = null;
     notifyListeners();
   }
 
-  void add(CryptosModel crypto) {
-    _box.put(crypto.id, crypto);
+  Future<void> add(CryptosModel crypto) async {
+    await _box.put(crypto.id, crypto);
     _symbolCache = null;
     notifyListeners();
   }
 
   List<CryptosModel> getAll() {
-    return _box.values.toList();
+    return _box.values.cast<CryptosModel>().toList();
   }
 
   List<CryptosModel> filter(String query) {
     final q = query.toLowerCase();
-    return _box.values.where((c) => c.searchKey.contains(q)).toList();
+    return _box.values.cast<CryptosModel>().where((c) => c.searchKey.contains(q)).toList();
   }
 
-  void delete(int id) {
-    _box.delete(id);
+  Future<void> delete(int id) async {
+    await _box.delete(id);
     _symbolCache = null;
     notifyListeners();
   }
 
-  void clear() {
-    _box.clear();
+  Future<void> clear() async {
+    await _box.clear();
     _symbolCache = null;
+    notifyListeners();
+  }
+
+  Future<void> flush() async {
+    await _box.flush();
     notifyListeners();
   }
 
@@ -54,9 +62,7 @@ class CryptosRepository extends ChangeNotifier {
     if (_symbolCache != null) {
       return _symbolCache!;
     }
-
-    final all = _box.values;
-
+    final all = _box.values.cast<CryptosModel>();
     _symbolCache = {for (var c in all) c.id: c.symbol};
     return _symbolCache!;
   }

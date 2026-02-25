@@ -49,6 +49,7 @@ dependencies:
   flutter_typeahead: ^4.8.0
   uuid: ^4.0.0
   data_table_2: ^2.7.2
+  animated_tree_view: ^2.3.0
 
 dev_dependencies:
   dotenv: ^4.2.0

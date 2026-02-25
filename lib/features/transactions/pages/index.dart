@@ -9,9 +9,11 @@ import '../controller.dart';
 import '../form.dart';
 import '../model.dart';
 import '../screens/active.dart';
+import '../screens/history.dart';
+import '../screens/journal.dart';
 import '../screens/overview.dart';
 
-enum TransactionsViewMode { balanceOverview, activeTrading }
+enum TransactionsViewMode { balanceOverview, activeTrading, journalView, historyView }
 
 class TransactionsPagesIndex extends StatefulWidget {
   const TransactionsPagesIndex({super.key});
@@ -116,13 +118,12 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_cryptosRepo.hasAny() && _controller.items.isEmpty) {
+      return Column(children: [Expanded(child: _buildFetchCryptosState())]);
+    }
+
     if (_controller.items.isEmpty) {
-      return Column(
-        children: [
-          _buildActionBar(),
-          Expanded(child: !_cryptosRepo.hasAny() ? _buildFetchCryptosState() : _buildEmptyState()),
-        ],
-      );
+      return Column(children: [Expanded(child: _buildEmptyState())]);
     }
 
     return Column(
@@ -143,6 +144,11 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       case TransactionsViewMode.activeTrading:
         final grouped = _getActiveTransactions();
         return _buildActiveTradingList(grouped);
+
+      case TransactionsViewMode.journalView:
+        return _buildJournalList(_controller.items);
+      case TransactionsViewMode.historyView:
+        return _buildHistoryTree(_controller.items);
     }
   }
 
@@ -185,6 +191,44 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
           onPressed: (_) {
             setState(() {
               _viewMode = TransactionsViewMode.activeTrading;
+            });
+          },
+        ),
+        WidgetButton(
+          icon: Icons.article_outlined,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Journal View",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.journalView) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.journalView;
+            });
+          },
+        ),
+        WidgetButton(
+          icon: Icons.history,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "History View",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.historyView) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.historyView;
             });
           },
         ),
@@ -267,6 +311,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
                   notifyError(context, "Failed to fetch cryptocurrency data.");
                 }
               } else {
+                _cryptosRepo.getSymbolMap();
                 s.action();
                 if (mounted) {
                   notifySuccess(context, "Cryptocurrency list successfully retrieved.");
@@ -309,5 +354,22 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         return TransactionsActive(srid: srId, rrid: rrId, transactions: txs, onStatusChanged: () => setState(() {}));
       },
     );
+  }
+
+  Widget _buildJournalList(List<TransactionsModel> txs) {
+    final sortedTxs = List<TransactionsModel>.from(txs)..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    return ListView.separated(
+      itemCount: sortedTxs.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, idx) {
+        final tx = sortedTxs[idx];
+        return TransactionsJournalView(transactions: [tx], onStatusChanged: () => setState(() {}));
+      },
+    );
+  }
+
+  Widget _buildHistoryTree(List<TransactionsModel> txs) {
+    return TransactionHistory(transactions: txs);
   }
 }
