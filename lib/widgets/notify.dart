@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-void notifySuccess(BuildContext context, String msg) {
+void widgetsNotifySuccess(BuildContext context, String msg) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.primary,
@@ -11,7 +11,7 @@ void notifySuccess(BuildContext context, String msg) {
   );
 }
 
-void notifyError(BuildContext context, String msg) {
+void widgetsNotifyError(BuildContext context, String msg) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.error,
@@ -20,7 +20,7 @@ void notifyError(BuildContext context, String msg) {
   );
 }
 
-void notifyWarning(BuildContext context, String msg) {
+void widgetsNotifyWarning(BuildContext context, String msg) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.warning,

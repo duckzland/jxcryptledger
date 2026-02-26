@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
-import 'package:jxcryptledger/features/cryptos/repository.dart';
 import 'package:jxcryptledger/features/rates/model.dart';
 import 'package:jxcryptledger/features/transactions/model.dart';
 
@@ -8,7 +7,6 @@ import '../../app/storage.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../cryptos/model.dart';
-import '../cryptos/service.dart';
 import '../encryption/service.dart';
 import '../rates/service.dart';
 import '../settings/repository.dart';
@@ -19,8 +17,6 @@ class UnlockController extends ChangeNotifier {
   bool get unlocked => _unlocked;
 
   final SettingsRepository _settingsRepo = locator<SettingsRepository>();
-  final CryptosService _cryptosService = locator<CryptosService>();
-  final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
   final RatesService _ratesService = locator<RatesService>();
 
   Future<void> init() async {
@@ -33,28 +29,37 @@ class UnlockController extends ChangeNotifier {
       final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
       final cipher = HiveAesCipher(encryptionKey);
 
-      try {
-        await AppStorage.instance.openBox<dynamic>(
-          SettingsRepository.boxName,
-          encryptionCipher: cipher,
-          crashRecovery: false,
-        );
+      await AppStorage.instance.openBox<dynamic>(
+        SettingsRepository.boxName,
+        encryptionCipher: cipher,
+        crashRecovery: false,
+      );
 
-        await AppStorage.instance.openBox<TransactionsModel>(
-          'transactions_box',
-          encryptionCipher: cipher,
-          crashRecovery: false,
-        );
-      } catch (e) {
-        logln("Failed to decrypt boxes (wrong password)");
-        return false;
-      }
+      await AppStorage.instance.openBox<TransactionsModel>(
+        'transactions_box',
+        encryptionCipher: cipher,
+        crashRecovery: false,
+      );
+    } catch (e) {
+      logln("Failed to decrypt boxes (wrong password)");
+      return false;
+    }
 
+    try {
       await AppStorage.instance.openBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
-      await _cryptosRepo.init();
+    } catch (e) {
+      logln("Failed to open cryptos box");
+      return false;
+    }
 
+    try {
       await AppStorage.instance.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
+    } catch (e) {
+      logln("Failed to open rates box");
+      return false;
+    }
 
+    try {
       if (isFirstRun) {
         logln("First run detected, initializing vault");
 
@@ -65,23 +70,27 @@ class UnlockController extends ChangeNotifier {
 
         return true;
       }
+    } catch (e) {
+      logln("Failed to initialize vault");
+      return false;
+    }
 
+    try {
       final decrypted = await _settingsRepo.getDecryptedMarker();
 
-      if (decrypted == "initialized") {
-        logln("Password correct, vault unlocked");
-        await _ratesService.init();
-        _unlocked = true;
-        notifyListeners();
-        return true;
+      if (decrypted != 'initialized') {
+        await AppStorage.instance.closeAll();
+        throw Exception("Failed to unlock vault due to marker mismatch");
       }
 
-      logln("Marker mismatch, wrong password");
-      await AppStorage.instance.closeAll();
-      return false;
-    } catch (e, st) {
-      logln("Unexpected error: $e");
-      logln("$st");
+      logln("Password correct, vault unlocked");
+      await Future.delayed(Duration.zero, () => _ratesService.init());
+      _unlocked = true;
+      notifyListeners();
+
+      return true;
+    } catch (e) {
+      logln("Failed to unlock vault due to marker mismatch");
       return false;
     }
   }

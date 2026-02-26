@@ -6,6 +6,7 @@ import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../../core/utils.dart';
 import '../../widgets/button.dart';
+import '../../widgets/panel.dart';
 import '../cryptos/repository.dart';
 import '../cryptos/search_field.dart';
 import 'controller.dart';
@@ -410,46 +411,6 @@ class _TransactionFormState extends State<TransactionForm> {
     }
   }
 
-  // @override
-  Widget build1(BuildContext context) {
-    return Dialog(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildTitle(),
-
-                const SizedBox(height: 24),
-
-                _buildSourceAmountField(),
-                const SizedBox(height: 16),
-
-                _buildSourceCryptoField(),
-                const SizedBox(height: 16),
-
-                _buildResultAmountField(),
-                const SizedBox(height: 16),
-
-                _buildResultCryptoField(),
-                const SizedBox(height: 16),
-
-                _buildNotesField(),
-
-                const SizedBox(height: 24),
-
-                _buildButtons(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -471,13 +432,8 @@ class _TransactionFormState extends State<TransactionForm> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Container(
+                          child: WidgetsPanel(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppTheme.separator),
-                              borderRadius: BorderRadius.circular(8),
-                              color: AppTheme.panelBg,
-                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -499,13 +455,8 @@ class _TransactionFormState extends State<TransactionForm> {
                         Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Container(
+                          child: WidgetsPanel(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppTheme.separator),
-                              borderRadius: BorderRadius.circular(8),
-                              color: AppTheme.panelBg,
-                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -528,13 +479,8 @@ class _TransactionFormState extends State<TransactionForm> {
 
                     const SizedBox(height: 24),
 
-                    Container(
+                    WidgetsPanel(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.separator),
-                        borderRadius: BorderRadius.circular(8),
-                        color: AppTheme.panelBg,
-                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -547,8 +493,7 @@ class _TransactionFormState extends State<TransactionForm> {
                     ),
 
                     const SizedBox(height: 24),
-
-                    _buildButtons(),
+                    WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons()),
                   ],
                 ),
               ),
@@ -803,11 +748,11 @@ class _TransactionFormState extends State<TransactionForm> {
         break;
     }
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
         const SizedBox(width: 12),
-        WidgetButton(label: mode, initialState: WidgetButtonActionState.action, onPressed: (_) => _handleSave()),
+        WidgetButton(label: mode, initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
   }

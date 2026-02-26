@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-class WidgetsTitle extends StatelessWidget {
+class WidgetsHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const WidgetsTitle({super.key, required this.title, required this.subtitle});
+  const WidgetsHeader({super.key, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {

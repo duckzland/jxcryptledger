@@ -82,7 +82,7 @@ class _UnlockPageState extends State<UnlockPage> {
 
         WidgetButton(
           label: "Create Vault",
-          initialState: WidgetButtonActionState.action,
+          initialState: WidgetsButtonActionState.action,
           evaluator: (s) {
             if (_password.text.isEmpty || _confirm.text.isEmpty || _password.text != _confirm.text) {
               s.disable();
@@ -136,7 +136,7 @@ class _UnlockPageState extends State<UnlockPage> {
 
         WidgetButton(
           label: "Unlock",
-          initialState: WidgetButtonActionState.action,
+          initialState: WidgetsButtonActionState.action,
           evaluator: (s) {
             if (_password.text.isEmpty) {
               s.disable();

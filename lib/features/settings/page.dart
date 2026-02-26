@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jxcryptledger/widgets/notify.dart';
 
+import '../../app/layout.dart';
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
+import '../../widgets/panel.dart';
 import 'controller.dart';
 import 'repository.dart';
 
@@ -37,26 +40,33 @@ class _SettingsPageState extends State<SettingsPage> {
     for (var key in userKeys) {
       _buffer[key] = _controller.get<dynamic>(key);
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setTitle?.call("Settings");
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
 
-    return Form(
-      key: _formKey,
-      child: ListView.separated(
-        padding: EdgeInsets.zero,
-        itemCount: editableKeys.length + 1,
-        separatorBuilder: (context, index) => const SizedBox(height: 24),
-        itemBuilder: (context, index) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1024),
-              child: _buildItem(index, editableKeys),
-            ),
-          );
-        },
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Form(
+        key: _formKey,
+        child: ListView.separated(
+          padding: EdgeInsets.zero,
+          itemCount: editableKeys.length + 1,
+          separatorBuilder: (context, index) => const SizedBox(height: 24),
+          itemBuilder: (context, index) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1024),
+                child: WidgetsPanel(child: _buildItem(index, editableKeys)),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -64,11 +74,17 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildItem(int index, List<SettingKey> editableKeys) {
     if (index == editableKeys.length) {
       return Padding(
-        padding: const EdgeInsets.only(top: 16.0, bottom: 32.0),
+        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [_buildResetButton(editableKeys), const SizedBox(width: 12), _buildSaveButton()],
+          children: [
+            _buildCancelButton(),
+            const SizedBox(width: 12),
+            _buildResetButton(editableKeys),
+            const SizedBox(width: 12),
+            _buildSaveButton(),
+          ],
         ),
       );
     }
@@ -118,7 +134,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSaveButton() {
     return WidgetButton(
       label: "Save Changes",
-      initialState: WidgetButtonActionState.action,
+      initialState: WidgetsButtonActionState.action,
       evaluator: (s) {
         if (!_isDirty()) {
           s.disable();
@@ -136,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
           }
 
           if (!mounted) return;
-          notifySuccess(context, "Securely saved to vault");
+          widgetsNotifySuccess(context, "Securely saved to vault");
         }
 
         s.reset();
@@ -146,7 +162,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildResetButton(List<SettingKey> editableKeys) {
     return WidgetButton(
-      initialState: WidgetButtonActionState.error,
+      initialState: WidgetsButtonActionState.error,
       label: "Reset to Default",
       onPressed: (s) async {
         final confirmed = await showDialog<bool>(
@@ -163,7 +179,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 WidgetButton(
-                  initialState: WidgetButtonActionState.error,
+                  initialState: WidgetsButtonActionState.error,
                   label: "Reset",
                   onPressed: (s) => Navigator.pop(context, true),
                 ),
@@ -185,9 +201,25 @@ class _SettingsPageState extends State<SettingsPage> {
         setState(() {});
 
         if (!mounted) return;
-        notifySuccess(context, "Settings reset to default");
+        widgetsNotifySuccess(context, "Settings reset to default");
 
         s.error(); // return to error theme
+      },
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return WidgetButton(
+      label: "Cancel",
+      initialState: WidgetsButtonActionState.action,
+      onPressed: (s) {
+        if (!mounted) return;
+
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go("/transactions");
+        }
       },
     );
   }

@@ -8,6 +8,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/header.dart';
+import '../../../widgets/panel.dart';
 import '../../cryptos/repository.dart';
 import '../../rates/service.dart';
 import '../buttons.dart';
@@ -87,12 +88,19 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   }
 
   Future<void> _loadMarketRate() async {
-    final rate = await _ratesService.getRate(widget.srid, widget.rrid);
-
-    if (mounted) {
-      setState(() {
-        _marketRate = rate;
-      });
+    try {
+      final rate = await _ratesService.getStoredRate(widget.srid, widget.rrid);
+      if (rate == -9999) {
+        _ratesService.addQueue(widget.srid, widget.rrid);
+        return;
+      }
+      if (mounted) {
+        setState(() {
+          _marketRate = rate;
+        });
+      }
+    } catch (e) {
+      // Do something to process the error message?
     }
   }
 
@@ -144,13 +152,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     final avgPL = _calc.averageProfitLoss(txs, currentRate);
     final plPercentage = _calc.profitLossPercentage(txs, currentRate);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.separator),
-        borderRadius: BorderRadius.circular(8),
-        color: AppTheme.panelBg,
-      ),
+    return WidgetsPanel(
       child: Column(
         children: [
           _buildHeader(
@@ -190,7 +192,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               '$_sourceSymbol to $_resultSymbol Trades',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-            Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+            Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
           ],
         ),
         const SizedBox(width: 20),
@@ -228,7 +230,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   Widget _buildTable(double currentRate) {
     List<Map<String, dynamic>> table = _tableRows;
 
-    return SizedBox(
+    return
+    // @TODO: Why this will only work on SizedBox, while the github docs specified to use Flexible or Expanded?
+    SizedBox(
       width: double.infinity,
       height: (table.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
@@ -236,41 +240,40 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         horizontalMargin: 12,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowHeight: AppTheme.tableDataRowMinHeight,
-        minWidth: 900,
         showCheckboxColumn: false,
-
+        isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: Text('Date'), size: ColumnSize.S),
+          DataColumn2(label: Text('Date'), fixedWidth: 100),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsTitle(title: 'From', subtitle: _sourceSymbol),
+            label: WidgetsHeader(title: 'From', subtitle: _sourceSymbol),
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsTitle(title: 'To', subtitle: _resultSymbol),
+            label: WidgetsHeader(title: 'To', subtitle: _resultSymbol),
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsTitle(title: 'Exchanged Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
+            label: WidgetsHeader(title: 'Exchanged Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
           ),
 
           if (currentRate != 0) ...[
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsTitle(title: 'Current Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
+              label: WidgetsHeader(title: 'Current Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
             ),
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsTitle(title: 'Current Value', subtitle: _sourceSymbol),
+              label: WidgetsHeader(title: 'Current Value', subtitle: _sourceSymbol),
             ),
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsTitle(title: 'Profit/Loss', subtitle: _sourceSymbol),
+              label: WidgetsHeader(title: 'Profit/Loss', subtitle: _sourceSymbol),
             ),
           ],
 
-          DataColumn2(label: Text('Status'), size: ColumnSize.S),
-          DataColumn2(label: Text('Actions'), size: ColumnSize.S),
+          DataColumn2(label: Text('Status'), fixedWidth: 100),
+          DataColumn2(label: Text('Actions'), fixedWidth: 140),
         ],
 
         rows: table.map((r) {

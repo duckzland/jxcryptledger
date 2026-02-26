@@ -25,6 +25,7 @@ class AppTheme {
   static const rowHeaderBg = Color(0xFF0D1421);
   static const separator = Color.fromARGB(255, 44, 53, 68);
   static const panelBg = Color(0xFF1B2230);
+  static const scrollbarBg = Color.fromARGB(255, 42, 53, 74);
 
   static const buttonFg = Color(0xFFE0E0E0);
 
@@ -107,7 +108,7 @@ class AppTheme {
         thumbVisibility: WidgetStateProperty.all(true),
         thickness: WidgetStateProperty.all(12),
         radius: const Radius.circular(3),
-        thumbColor: WidgetStateProperty.all(panelBg),
+        thumbColor: WidgetStateProperty.all(scrollbarBg),
       ),
 
       snackBarTheme: SnackBarThemeData(
@@ -125,9 +126,9 @@ class AppTheme {
 
       dataTableTheme: DataTableThemeData(
         headingRowColor: WidgetStateProperty.all(AppTheme.columnHeaderBg),
-        headingTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w600, fontSize: 16),
+        headingTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500, fontSize: 17),
         dataRowColor: WidgetStateProperty.all(AppTheme.rowHeaderBg),
-        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 14),
+        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 15),
         dividerThickness: 1,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowMinHeight: AppTheme.tableDataRowMinHeight,

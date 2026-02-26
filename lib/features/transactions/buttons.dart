@@ -28,7 +28,7 @@ class TransactionsButtons extends StatelessWidget {
         onSave: () async {
           Navigator.pop(dialogContext);
           onAction();
-          notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction updated.");
+          widgetsNotifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction updated.");
         },
       ),
     );
@@ -48,12 +48,12 @@ class TransactionsButtons extends StatelessWidget {
           const SizedBox(width: 12),
           WidgetButton(
             label: 'Delete',
-            initialState: WidgetButtonActionState.error,
+            initialState: WidgetsButtonActionState.error,
             onPressed: (_) async {
               Navigator.pop(dialogContext);
               await _txController.removeRoot(tx);
               onAction();
-              notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
+              widgetsNotifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
             },
           ),
         ],
@@ -72,12 +72,12 @@ class TransactionsButtons extends StatelessWidget {
           const SizedBox(width: 12),
           WidgetButton(
             label: 'Close',
-            initialState: WidgetButtonActionState.action,
+            initialState: WidgetsButtonActionState.action,
             onPressed: (_) async {
               Navigator.pop(dialogContext);
               await _txController.closeLeaf(tx);
               onAction();
-              notifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction closed.");
+              widgetsNotifySuccess(context, "${tx.srAmountText} - ${tx.balanceText} transaction closed.");
             },
           ),
         ],
@@ -95,7 +95,7 @@ class TransactionsButtons extends StatelessWidget {
         onSave: () async {
           Navigator.pop(dialogContext);
           onAction();
-          notifySuccess(context, "New trading transaction created.");
+          widgetsNotifySuccess(context, "New trading transaction created.");
         },
       ),
     );
@@ -123,7 +123,7 @@ class TransactionsButtons extends StatelessWidget {
         if (tx.isTradable)
           WidgetButton(
             icon: Icons.swap_horiz,
-            initialState: WidgetButtonActionState.action,
+            initialState: WidgetsButtonActionState.action,
             tooltip: "Trade",
             padding: const EdgeInsets.all(8),
             iconSize: 18,
@@ -137,7 +137,7 @@ class TransactionsButtons extends StatelessWidget {
         if (tx.isDeletable)
           WidgetButton(
             icon: Icons.delete,
-            initialState: WidgetButtonActionState.error,
+            initialState: WidgetsButtonActionState.error,
             tooltip: "Delete",
             padding: const EdgeInsets.all(8),
             iconSize: 18,
@@ -148,7 +148,7 @@ class TransactionsButtons extends StatelessWidget {
         if (tx.isClosable)
           WidgetButton(
             icon: Icons.close,
-            initialState: WidgetButtonActionState.warning,
+            initialState: WidgetsButtonActionState.warning,
             tooltip: "Close",
             padding: const EdgeInsets.all(8),
             iconSize: 18,

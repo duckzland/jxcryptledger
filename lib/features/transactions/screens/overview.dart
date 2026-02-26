@@ -5,6 +5,7 @@ import 'package:jxcryptledger/core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/balance_text.dart';
+import '../../../widgets/panel.dart';
 import '../../cryptos/repository.dart';
 import '../buttons.dart';
 import '../calculations.dart';
@@ -77,13 +78,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
   Widget build(BuildContext context) {
     final cumulativeSourceValue = _calc.totalBalance(widget.transactions);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.separator),
-        borderRadius: BorderRadius.circular(8),
-        color: AppTheme.panelBg,
-      ),
+    return WidgetsPanel(
       child: Column(children: [_buildHeader(cumulativeSourceValue), const SizedBox(height: 20), _buildTable()]),
     );
   }
@@ -132,7 +127,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
   Widget _buildTable() {
     List<Map<String, dynamic>> table = _tableRows;
 
-    return SizedBox(
+    return
+    // @TODO: Why this will only work on SizedBox, while the github docs specified to use Flexible or Expanded?
+    SizedBox(
       width: double.infinity,
       height: (table.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
@@ -140,16 +137,15 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
         horizontalMargin: 12,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowHeight: AppTheme.tableDataRowMinHeight,
-        minWidth: 700,
         showCheckboxColumn: false,
-
+        isHorizontalScrollBarVisible: false,
         columns: const [
-          DataColumn2(label: Text('Date'), size: ColumnSize.S),
+          DataColumn2(label: Text('Date'), fixedWidth: 100),
           DataColumn2(label: Text('Balance'), size: ColumnSize.S),
           DataColumn2(label: Text('From'), size: ColumnSize.S),
           DataColumn2(label: Text('Exchanged Rate'), size: ColumnSize.S),
-          DataColumn2(label: Text('Status'), size: ColumnSize.S),
-          DataColumn2(label: Text('Actions'), size: ColumnSize.S),
+          DataColumn2(label: Text('Status'), fixedWidth: 100),
+          DataColumn2(label: Text('Actions'), fixedWidth: 140),
         ],
 
         rows: table.map((r) {

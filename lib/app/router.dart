@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../app/layout.dart';
 import '../features/settings/page.dart';
 import '../features/transactions/pages/index.dart';
-import '../features/transactions/pages/single.dart';
 import '../features/unlock/controller.dart';
 import '../features/unlock/page.dart';
 
@@ -43,14 +42,6 @@ class AppRouter {
         },
         routes: [
           GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPagesIndex()),
-
-          GoRoute(
-            path: "/transaction_detail",
-            builder: (context, state) {
-              final data = state.extra as Map<String, dynamic>;
-              return TransactionsPagesSingle(data: data);
-            },
-          ),
 
           GoRoute(path: "/settings", builder: (context, state) => const SettingsPage()),
         ],

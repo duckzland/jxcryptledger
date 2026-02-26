@@ -47,9 +47,6 @@ class EncryptionService {
 
     final data = base64Decode(encryptedBase64);
 
-    // AES-GCM uses:
-    // - 12 bytes nonce
-    // - last 16 bytes MAC
     const nonceLength = 12;
     const macLength = 16;
 
@@ -64,9 +61,7 @@ class EncryptionService {
     return utf8.decode(decrypted);
   }
 
-  /// Derive AES-256 key from a password (PBKDF2)
   Future<Uint8List> loadPasswordKey(String password) async {
-    // Pull from .env file loaded at startup
     final String saltValue = dotenv.get(
       'APP_SALT',
       fallback: '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a',
@@ -81,7 +76,6 @@ class EncryptionService {
 
     _secretKey = secretKey;
 
-    // IMPORTANT: You must extract the bytes to return Uint8List
     final bytes = await secretKey.extractBytes();
     return Uint8List.fromList(bytes);
   }

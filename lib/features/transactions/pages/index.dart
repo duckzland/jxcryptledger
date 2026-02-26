@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jxcryptledger/widgets/notify.dart';
 
+import '../../../app/layout.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
+import '../../../widgets/panel.dart';
 import '../../cryptos/repository.dart';
 import '../../cryptos/service.dart';
 import '../controller.dart';
@@ -64,10 +66,16 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         mode: TransactionsFormActionMode.addNew,
         onSave: () async {
           Navigator.pop(context);
-          notifySuccess(context, 'Transaction saved');
+          widgetsNotifySuccess(context, 'Transaction saved');
         },
       ),
     );
+  }
+
+  void _changePageTitle(String title) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setTitle?.call(title);
+    });
   }
 
   Map<int, List<TransactionsModel>> _getBalanceOverviewTransactions() {
@@ -126,130 +134,150 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       return Column(children: [Expanded(child: _buildEmptyState())]);
     }
 
-    return Column(
-      children: [
-        _buildActionBar(),
-        const SizedBox(height: 16),
-        Expanded(child: _buildListForViewMode()),
-      ],
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1600),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            _buildActionBar(),
+            const SizedBox(height: 16),
+            Expanded(child: _buildListForViewMode()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionBar() {
+    return WidgetsPanel(
+      child: Wrap(
+        spacing: 4,
+        children: [
+          WidgetButton(
+            icon: Icons.show_chart,
+            padding: const EdgeInsets.all(8),
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Active Trading",
+            evaluator: (s) {
+              if (_viewMode == TransactionsViewMode.activeTrading) {
+                s.active();
+              } else {
+                s.normal();
+              }
+            },
+            onPressed: (_) {
+              setState(() {
+                _viewMode = TransactionsViewMode.activeTrading;
+              });
+            },
+          ),
+
+          WidgetButton(
+            icon: Icons.account_balance_wallet_outlined,
+            padding: const EdgeInsets.all(8),
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Balance Overview",
+            evaluator: (s) {
+              if (_viewMode == TransactionsViewMode.balanceOverview) {
+                s.active();
+              } else {
+                s.normal();
+              }
+            },
+            onPressed: (_) {
+              setState(() {
+                _viewMode = TransactionsViewMode.balanceOverview;
+              });
+            },
+          ),
+          WidgetButton(
+            icon: Icons.article_outlined,
+            padding: const EdgeInsets.all(8),
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Journal View",
+            evaluator: (s) {
+              if (_viewMode == TransactionsViewMode.journalView) {
+                s.active();
+              } else {
+                s.normal();
+              }
+            },
+            onPressed: (_) {
+              setState(() {
+                _viewMode = TransactionsViewMode.journalView;
+              });
+            },
+          ),
+          WidgetButton(
+            icon: Icons.history,
+            padding: const EdgeInsets.all(8),
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "History View",
+            evaluator: (s) {
+              if (_viewMode == TransactionsViewMode.historyView) {
+                s.active();
+              } else {
+                s.normal();
+              }
+            },
+            onPressed: (_) {
+              setState(() {
+                _viewMode = TransactionsViewMode.historyView;
+              });
+            },
+          ),
+          WidgetButton(
+            icon: Icons.add,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.action,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Add Transaction",
+            onPressed: (_) => _showAddTransactionDialog(),
+            evaluator: (s) {
+              if (!_cryptosRepo.hasAny()) {
+                s.disable();
+              } else {
+                s.action();
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildListForViewMode() {
     switch (_viewMode) {
       case TransactionsViewMode.balanceOverview:
-        final grouped = _getBalanceOverviewTransactions();
-        return _buildOverviewList(grouped);
+        _changePageTitle("Transaction Balance");
+
+        return _buildOverviewList(_getBalanceOverviewTransactions());
 
       case TransactionsViewMode.activeTrading:
-        final grouped = _getActiveTransactions();
-        return _buildActiveTradingList(grouped);
+        _changePageTitle("Trading View");
+
+        return _buildActiveTradingList(_getActiveTransactions());
 
       case TransactionsViewMode.journalView:
-        return _buildJournalList(_controller.items);
-      case TransactionsViewMode.historyView:
-        return _buildHistoryTree(_controller.items);
-    }
-  }
+        _changePageTitle("Transaction Overview");
 
-  Widget _buildActionBar() {
-    return Wrap(
-      spacing: 4,
-      children: [
-        WidgetButton(
-          icon: Icons.account_balance_wallet_outlined,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Balance Overview",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.balanceOverview) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.balanceOverview;
-            });
-          },
-        ),
-        WidgetButton(
-          icon: Icons.show_chart,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Active Trading",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.activeTrading) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.activeTrading;
-            });
-          },
-        ),
-        WidgetButton(
-          icon: Icons.article_outlined,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Journal View",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.journalView) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.journalView;
-            });
-          },
-        ),
-        WidgetButton(
-          icon: Icons.history,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "History View",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.historyView) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.historyView;
-            });
-          },
-        ),
-        WidgetButton(
-          icon: Icons.add,
-          padding: const EdgeInsets.all(8),
-          initialState: WidgetButtonActionState.action,
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Add Transaction",
-          onPressed: (_) => _showAddTransactionDialog(),
-          evaluator: (s) {
-            if (!_cryptosRepo.hasAny()) {
-              s.disable();
-            } else {
-              s.action();
-            }
-          },
-        ),
-      ],
-    );
+        return TransactionsJournalView(
+          transactions: List<TransactionsModel>.from(_controller.items)
+            ..sort((a, b) => a.timestamp.compareTo(b.timestamp)),
+          onStatusChanged: () => setState(() {}),
+        );
+
+      case TransactionsViewMode.historyView:
+        _changePageTitle("Transaction History");
+
+        return TransactionHistory(transactions: _controller.items);
+    }
   }
 
   Widget _buildEmptyState() {
@@ -264,7 +292,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
           const SizedBox(height: 24),
           WidgetButton(
             icon: Icons.add,
-            initialState: WidgetButtonActionState.action,
+            initialState: WidgetsButtonActionState.action,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             onPressed: (_) => _showAddTransactionDialog(),
             evaluator: (s) {
@@ -298,7 +326,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
           const SizedBox(height: 24),
           WidgetButton(
             icon: Icons.refresh,
-            initialState: WidgetButtonActionState.action,
+            initialState: WidgetsButtonActionState.action,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             onPressed: (s) async {
               s.progress();
@@ -308,13 +336,13 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
               if (!success) {
                 s.error();
                 if (mounted) {
-                  notifyError(context, "Failed to fetch cryptocurrency data.");
+                  widgetsNotifyError(context, "Failed to fetch cryptocurrency data.");
                 }
               } else {
                 _cryptosRepo.getSymbolMap();
                 s.action();
                 if (mounted) {
-                  notifySuccess(context, "Cryptocurrency list successfully retrieved.");
+                  widgetsNotifySuccess(context, "Cryptocurrency list successfully retrieved.");
                   setState(() {});
                 }
               }
@@ -354,22 +382,5 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         return TransactionsActive(srid: srId, rrid: rrId, transactions: txs, onStatusChanged: () => setState(() {}));
       },
     );
-  }
-
-  Widget _buildJournalList(List<TransactionsModel> txs) {
-    final sortedTxs = List<TransactionsModel>.from(txs)..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-    return ListView.separated(
-      itemCount: sortedTxs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, idx) {
-        final tx = sortedTxs[idx];
-        return TransactionsJournalView(transactions: [tx], onStatusChanged: () => setState(() {}));
-      },
-    );
-  }
-
-  Widget _buildHistoryTree(List<TransactionsModel> txs) {
-    return TransactionHistory(transactions: txs);
   }
 }

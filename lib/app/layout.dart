@@ -7,6 +7,8 @@ import '../core/locator.dart';
 import '../widgets/button.dart';
 
 class AppLayout extends StatefulWidget {
+  static void Function(String)? setTitle;
+
   final String title;
   final bool showBack;
   final Widget child;
@@ -18,6 +20,18 @@ class AppLayout extends StatefulWidget {
 }
 
 class _AppLayoutState extends State<AppLayout> {
+  late String _title = widget.title;
+
+  void _setTitle(String newTitle) {
+    setState(() => _title = newTitle);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    AppLayout.setTitle = _setTitle; // ← inject here
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -46,7 +60,7 @@ class _AppLayoutState extends State<AppLayout> {
                     },
                   )
                 : null,
-            title: Text(widget.title),
+            title: Text(_title),
             actions: [
               Wrap(
                 spacing: 4,
