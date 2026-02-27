@@ -27,14 +27,18 @@ class TransactionsRepository {
     final random = Random();
 
     while (true) {
-      final id = String.fromCharCodes(Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+      final now = DateTime.now().microsecondsSinceEpoch;
+      final timePart = now.toRadixString(36).padLeft(4, '0');
+      final timeSuffix = timePart.substring(timePart.length - 4);
+      final randomPart = String.fromCharCodes(
+        Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
+      );
 
-      // Check if the key already exists in the box
+      final id = '$timeSuffix$randomPart';
       if (!_box.containsKey(id)) {
         if (debugLogs) {
           logln('Generated unique ID: $id');
         }
-
         return id;
       }
 
