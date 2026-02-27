@@ -24,8 +24,12 @@ class TransactionsOverview extends StatefulWidget {
 
 class _TransactionsOverviewState extends State<TransactionsOverview> {
   late final CryptosRepository _cryptosRepo;
+  late List<Map<String, dynamic>> _rows;
 
   late String _resultSymbol;
+
+  int? _sortColumnIndex;
+  bool _sortAscending = true;
 
   final _calc = TransactionCalculation();
 
@@ -35,6 +39,12 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
     _cryptosRepo = locator<CryptosRepository>();
     _resultSymbol = _cryptosRepo.getSymbol(widget.id) ?? 'Unknown Coin';
+
+    _rows = _buildRows(widget.transactions);
+
+    _sortColumnIndex = 0;
+    _sortAscending = false;
+    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex!, _sortAscending);
   }
 
   @override
@@ -48,30 +58,60 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
     if (oldWidget.transactions != widget.transactions && mounted) {
       _resultSymbol = _cryptosRepo.getSymbol(widget.id) ?? 'Unknown Coin';
+      _rows = _buildRows(widget.transactions);
+
+      if (_sortColumnIndex != null) {
+        final col = _sortColumnIndex!;
+        final asc = _sortAscending;
+
+        switch (col) {
+          case 0:
+            _onSort((d) => d['_timestamp'] as int, col, asc);
+            break;
+
+          case 1:
+            _onSort((d) => d['_balanceValue'] as double, col, asc);
+            break;
+
+          case 2:
+            _onSort((d) => d['_sourceValue'] as double, col, asc);
+            break;
+
+          case 3:
+            _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+
+          case 4:
+            _onSort((d) => d['status'] as String, col, asc);
+            break;
+        }
+      }
+
       setState(() {});
     }
   }
 
-  List<Map<String, dynamic>> get _tableRows {
-    final sortedTxs = List<TransactionsModel>.from(widget.transactions)
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
+    final rows = <Map<String, dynamic>>[];
 
-    final newRows = <Map<String, dynamic>>[];
-
-    for (final tx in sortedTxs) {
+    for (final tx in txs) {
       final sourceCoinSymbol = _cryptosRepo.getSymbol(tx.srId);
 
-      newRows.add({
+      rows.add({
         'balance': '${tx.balanceText} $_resultSymbol',
         'source': '${tx.srAmountText} $sourceCoinSymbol',
         'exchangedRate': '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
         'status': tx.statusText,
         'date': tx.timestampAsDate,
         'tx': tx,
+
+        '_timestamp': tx.timestampAsMs,
+        '_balanceValue': tx.balance,
+        '_sourceValue': tx.srAmount,
+        '_exchangedRateValue': tx.rateDouble,
       });
     }
 
-    return newRows.toList();
+    return rows;
   }
 
   @override
@@ -125,30 +165,50 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
   }
 
   Widget _buildTable() {
-    List<Map<String, dynamic>> table = _tableRows;
-
     return
     // @TODO: Why this will only work on SizedBox, while the github docs specified to use Flexible or Expanded?
     SizedBox(
       width: double.infinity,
-      height: (table.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: (_rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
         columnSpacing: 12,
         horizontalMargin: 12,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowHeight: AppTheme.tableDataRowMinHeight,
         showCheckboxColumn: false,
+        sortColumnIndex: _sortColumnIndex,
+        sortAscending: _sortAscending,
         isHorizontalScrollBarVisible: false,
-        columns: const [
-          DataColumn2(label: Text('Date'), fixedWidth: 100),
-          DataColumn2(label: Text('Balance'), size: ColumnSize.S),
-          DataColumn2(label: Text('From'), size: ColumnSize.S),
-          DataColumn2(label: Text('Exchanged Rate'), size: ColumnSize.S),
-          DataColumn2(label: Text('Status'), fixedWidth: 100),
+        columns: [
+          DataColumn2(
+            label: Text('Date '),
+            fixedWidth: 100,
+            onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc),
+          ),
+          DataColumn2(
+            label: Text('Balance '),
+            size: ColumnSize.M,
+            onSort: (col, asc) => _onSort((d) => d['_balanceValue'] as double, col, asc),
+          ),
+          DataColumn2(
+            label: Text('From '),
+            size: ColumnSize.M,
+            onSort: (col, asc) => _onSort((d) => d['_sourceValue'] as double, col, asc),
+          ),
+          DataColumn2(
+            label: Text('Exchanged Rate '),
+            size: ColumnSize.S,
+            onSort: (col, asc) => _onSort((d) => d['_exchangedRateValue'] as double, col, asc),
+          ),
+          DataColumn2(
+            label: Text('Status '),
+            fixedWidth: 100,
+            onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc),
+          ),
           DataColumn2(label: Text('Actions'), fixedWidth: 140),
         ],
 
-        rows: table.map((r) {
+        rows: _rows.map((r) {
           return DataRow(
             cells: [
               DataCell(Text(r['date'])),
@@ -170,5 +230,29 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
         }).toList(),
       ),
     );
+  }
+
+  void _onSort<T>(T Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
+    setState(() {
+      _rows.sort((a, b) {
+        final aField = getField(a);
+        final bField = getField(b);
+
+        if (aField is (String, num) && bField is (String, num)) {
+          final c1 = aField.$1.compareTo(bField.$1);
+          if (c1 != 0) return ascending ? c1 : -c1;
+
+          final c2 = aField.$2.compareTo(bField.$2);
+          return ascending ? c2 : -c2;
+        }
+
+        return ascending
+            ? Comparable.compare(aField as Comparable, bField as Comparable)
+            : Comparable.compare(bField as Comparable, aField as Comparable);
+      });
+
+      _sortColumnIndex = columnIndex;
+      _sortAscending = ascending;
+    });
   }
 }

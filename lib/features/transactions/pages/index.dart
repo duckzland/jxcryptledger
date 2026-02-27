@@ -145,13 +145,21 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            _buildActionBar(),
+            Wrap(spacing: 20, children: [_buildSorterBar(), _buildActionBar(), _buildFilterBar()]),
             const SizedBox(height: 16),
             Expanded(child: _buildListForViewMode()),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSorterBar() {
+    return WidgetsPanel(child: Wrap(spacing: 4, children: []));
+  }
+
+  Widget _buildFilterBar() {
+    return WidgetsPanel(child: Wrap(spacing: 4, children: []));
   }
 
   Widget _buildActionBar() {
@@ -273,8 +281,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         _changePageTitle("Transaction Overview");
 
         return TransactionsJournalView(
-          transactions: List<TransactionsModel>.from(_controller.items)
-            ..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs)),
+          transactions: List<TransactionsModel>.from(_controller.items),
           onStatusChanged: () => setState(() {}),
         );
 

@@ -37,11 +37,15 @@ class TransactionsActive extends StatefulWidget {
 class _TransactionsActiveState extends State<TransactionsActive> {
   late final CryptosRepository _cryptosRepo;
   late final RatesService _ratesService;
+  late List<Map<String, dynamic>> _rows;
 
   late TextEditingController _customRateController;
 
   late String _sourceSymbol;
   late String _resultSymbol;
+
+  int? _sortColumnIndex;
+  bool _sortAscending = true;
 
   double? _customRate;
   double? _marketRate;
@@ -61,6 +65,12 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     _loadMarketRate();
 
     _customRateController = TextEditingController();
+
+    _rows = _buildRows(widget.transactions);
+
+    _sortColumnIndex = 0;
+    _sortAscending = false;
+    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex!, _sortAscending);
   }
 
   @override
@@ -83,6 +93,56 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     if (oldWidget.transactions != widget.transactions && mounted) {
       _sourceSymbol = _cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin';
       _resultSymbol = _cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin';
+
+      _rows = _buildRows(widget.transactions);
+
+      if (_sortColumnIndex != null) {
+        final col = _sortColumnIndex!;
+        final asc = _sortAscending;
+        final currentRate = _customRate ?? _marketRate ?? 0.0;
+
+        switch (col) {
+          case 0:
+            _onSort((d) => d['_timestamp'] as int, col, asc);
+            break;
+
+          case 1:
+            _onSort((d) => d['_sourceValue'] as double, col, asc);
+
+            break;
+
+          case 2:
+            _onSort((d) => d['_balanceValue'] as double, col, asc);
+            break;
+
+          case 3:
+            _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+
+          case 4:
+            if (currentRate == 0) {
+              _onSort((d) => d['_status'] as String, col, asc);
+            }
+            break;
+
+          case 5:
+            if (currentRate != 0) {
+              _onSort((d) => d['_currentValue'] as double, col, asc);
+            }
+            break;
+
+          case 6:
+            if (currentRate != 0) {
+              _onSort((d) => d['_profitLossValue'] as double, col, asc);
+            }
+            break;
+          case 7:
+            if (currentRate != 0) {
+              _onSort((d) => d['status'] as String, col, asc);
+            }
+            break;
+        }
+      }
+
       setState(() {});
     }
   }
@@ -97,6 +157,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
       if (mounted) {
         setState(() {
           _marketRate = rate;
+          _rows = _buildRows(widget.transactions);
         });
       }
     } catch (e) {
@@ -104,13 +165,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     }
   }
 
-  List<Map<String, dynamic>> get _tableRows {
+  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
     final currentRate = _customRate ?? _marketRate ?? 0.0;
+    final rows = <Map<String, dynamic>>[];
 
-    final sortedTxs = List<TransactionsModel>.from(widget.transactions)
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-    return sortedTxs.map((tx) {
+    for (final tx in txs) {
       double currentValue = 0;
       double profitLoss = 0;
       double profitLevel = 0;
@@ -126,7 +185,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         }
       }
 
-      return {
+      rows.add({
         'from': tx.srAmountText,
         'to': tx.balanceText,
         'exchangedRate': tx.rateText,
@@ -137,8 +196,17 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         'status': tx.statusText,
         'date': tx.timestampAsDate,
         'tx': tx,
-      };
-    }).toList();
+
+        '_timestamp': tx.timestampAsMs,
+        '_balanceValue': tx.rrAmount,
+        '_sourceValue': tx.srAmount,
+        '_exchangedRateValue': tx.rateDouble,
+        '_currentValue': currentValue,
+        '_profitLossValue': profitLoss,
+      });
+    }
+
+    return rows;
   }
 
   @override
@@ -228,55 +296,68 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   }
 
   Widget _buildTable(double currentRate) {
-    List<Map<String, dynamic>> table = _tableRows;
-
     return
     // @TODO: Why this will only work on SizedBox, while the github docs specified to use Flexible or Expanded?
     SizedBox(
       width: double.infinity,
-      height: (table.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: (_rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
         columnSpacing: 12,
         horizontalMargin: 12,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowHeight: AppTheme.tableDataRowMinHeight,
         showCheckboxColumn: false,
+        sortColumnIndex: _sortColumnIndex,
+        sortAscending: _sortAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: Text('Date'), fixedWidth: 100),
           DataColumn2(
-            size: ColumnSize.S,
-            label: WidgetsHeader(title: 'From', subtitle: _sourceSymbol),
+            label: Text('Date '),
+            fixedWidth: 100,
+            onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc),
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsHeader(title: 'To', subtitle: _resultSymbol),
+            label: WidgetsHeader(title: 'From ', subtitle: _sourceSymbol),
+            onSort: (col, asc) => _onSort((d) => d['_sourceValue'] as double, col, asc),
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsHeader(title: 'Exchanged Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
+            label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
+            onSort: (col, asc) => _onSort((d) => d['_balanceValue'] as double, col, asc),
+          ),
+          DataColumn2(
+            size: ColumnSize.S,
+            label: WidgetsHeader(title: 'Exchanged Rate ', subtitle: '$_resultSymbol / $_sourceSymbol'),
+            onSort: (col, asc) => _onSort((d) => d['_exchangedRateValue'] as double, col, asc),
           ),
 
           if (currentRate != 0) ...[
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsHeader(title: 'Current Rate', subtitle: '$_resultSymbol / $_sourceSymbol'),
+              label: WidgetsHeader(title: 'Current Rate ', subtitle: '$_resultSymbol / $_sourceSymbol'),
             ),
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsHeader(title: 'Current Value', subtitle: _sourceSymbol),
+              label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
+              onSort: (col, asc) => _onSort((d) => d['_currentValue'] as double, col, asc),
             ),
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsHeader(title: 'Profit/Loss', subtitle: _sourceSymbol),
+              label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
+              onSort: (col, asc) => _onSort((d) => d['_profitLossValue'] as double, col, asc),
             ),
           ],
 
-          DataColumn2(label: Text('Status'), fixedWidth: 100),
+          DataColumn2(
+            label: Text('Status '),
+            fixedWidth: 100,
+            onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc),
+          ),
           DataColumn2(label: Text('Actions'), fixedWidth: 140),
         ],
 
-        rows: table.map((r) {
+        rows: _rows.map((r) {
           return DataRow(
             cells: [
               DataCell(Text(r['date'])),
@@ -286,12 +367,22 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
               if (currentRate != 0) ...[
                 DataCell(
-                  WidgetsBalanceText(text: r['currentRate'], value: r['profitLevel'], comparator: 0, hidePrefix: true),
+                  WidgetsBalanceText(
+                    text: r['currentRate'] ?? "-",
+                    value: r['profitLevel'],
+                    comparator: 0,
+                    hidePrefix: true,
+                  ),
                 ),
                 DataCell(
-                  WidgetsBalanceText(text: r['currentValue'], value: r['profitLevel'], comparator: 0, hidePrefix: true),
+                  WidgetsBalanceText(
+                    text: r['currentValue'] ?? "-",
+                    value: r['profitLevel'],
+                    comparator: 0,
+                    hidePrefix: true,
+                  ),
                 ),
-                DataCell(WidgetsBalanceText(text: r['profitLoss'], value: r['profitLevel'], comparator: 0)),
+                DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
               ],
 
               DataCell(Text(r['status'])),
@@ -363,5 +454,29 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 16),
       ],
     );
+  }
+
+  void _onSort<T>(T Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
+    setState(() {
+      _rows.sort((a, b) {
+        final aField = getField(a);
+        final bField = getField(b);
+
+        if (aField is (String, num) && bField is (String, num)) {
+          final c1 = aField.$1.compareTo(bField.$1);
+          if (c1 != 0) return ascending ? c1 : -c1;
+
+          final c2 = aField.$2.compareTo(bField.$2);
+          return ascending ? c2 : -c2;
+        }
+
+        return ascending
+            ? Comparable.compare(aField as Comparable, bField as Comparable)
+            : Comparable.compare(bField as Comparable, aField as Comparable);
+      });
+
+      _sortColumnIndex = columnIndex;
+      _sortAscending = ascending;
+    });
   }
 }

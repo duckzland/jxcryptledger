@@ -29,7 +29,12 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
   void initState() {
     super.initState();
     _cryptosRepo = locator<CryptosRepository>();
+
     _rows = _buildRows(widget.transactions);
+
+    _sortColumnIndex = 0;
+    _sortAscending = false;
+    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex!, _sortAscending);
   }
 
   @override
@@ -45,13 +50,19 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
 
         switch (col) {
           case 0:
-            _rows.sort((a, b) => asc ? a['date'].compareTo(b['date']) : b['date'].compareTo(a['date']));
+            _onSort((d) => d['_timestamp'] as int, col, asc);
             break;
+
           case 1:
-            _rows.sort((a, b) => asc ? a['balance'].compareTo(b['balance']) : b['balance'].compareTo(a['balance']));
+            _onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc);
             break;
+
           case 2:
-            _rows.sort((a, b) => asc ? a['source'].compareTo(b['source']) : b['source'].compareTo(a['source']));
+            _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc);
+            break;
+
+          case 4:
+            _onSort((d) => d['status'] as String, col, asc);
             break;
         }
       }
@@ -103,50 +114,31 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
               isHorizontalScrollBarVisible: false,
               columns: [
                 DataColumn2(
-                  label: Text('Date'),
+                  label: Text('Date '),
                   fixedWidth: 100,
-                  onSort: (i, asc) => _onSort(
-                    (d) {
-                      final ts = d['_timestamp'] as int;
-                      return ts;
-                    },
-                    i,
-                    asc,
-                  ),
+                  onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc),
                 ),
                 DataColumn2(
-                  label: Text('Balance'),
+                  label: Text('Balance '),
                   size: ColumnSize.M,
-                  onSort: (i, asc) => _onSort(
-                    (d) {
-                      return (d['_balanceSymbol'], d['_balanceValue']);
-                    },
-                    i,
-                    asc,
-                  ),
+                  onSort: (col, asc) =>
+                      _onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
                 ),
                 DataColumn2(
-                  label: Text('From'),
+                  label: Text('From '),
                   size: ColumnSize.M,
-                  onSort: (i, asc) => _onSort(
-                    (d) {
-                      return (d['_sourceSymbol'], d['_sourceValue']);
-                    },
-                    i,
-                    asc,
-                  ),
+                  onSort: (col, asc) =>
+                      _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
                 ),
                 const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
                 DataColumn2(
-                  label: const Text('Status'),
+                  label: const Text('Status '),
                   fixedWidth: 100,
-                  onSort: (i, asc) => _onSort((d) => d['status'] as String, i, asc),
+                  onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc),
                 ),
                 const DataColumn2(label: Text('Actions'), fixedWidth: 140),
               ],
               rows: table.map((r) {
-                print("timestamp = ${r['_timestamp']}");
-
                 return DataRow(
                   cells: [
                     DataCell(Text(r['date'] ?? '')),
