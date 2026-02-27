@@ -1,11 +1,17 @@
 #include "my_application.h"
-
+#include <filesystem>
 #include <flutter_linux/flutter_linux.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
+#include <libgen.h>
+#include <unistd.h>
+#include <linux/limits.h>
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
+
+using namespace std;
+using namespace std::filesystem;
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -24,6 +30,14 @@ static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+
+  char result[PATH_MAX];
+  ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+  if (count != -1) {
+    string executable_dir = dirname(result);
+    string icon_path = executable_dir + "/data/flutter_assets/assets/icon.png";
+    gtk_window_set_icon_from_file(window, icon_path.c_str(), NULL);
+  }
 
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu

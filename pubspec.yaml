@@ -1,5 +1,5 @@
 name: jxcryptledger
-description: "A new Flutter project."
+description: "JxCryptLedger Transaction Manager."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -52,6 +52,7 @@ dependencies:
 
 dev_dependencies:
   dotenv: ^4.2.0
+  flutter_launcher_icons: ^0.13.1
   flutter_test:
     sdk: flutter
 
@@ -61,21 +62,23 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  msix: ^3.16.13
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-  fonts:
-      - family: Inter
-        fonts:
-          - asset: assets/fonts/Inter-Medium-Subset.ttf
-            weight: 500
-          - asset: assets/fonts/Inter-Bold-Subset.ttf
-            weight: 700
+#   fonts:
+#       - family: Inter
+#         fonts:
+#           - asset: assets/fonts/Inter-Medium-Subset.ttf
+#             weight: 500
+#           - asset: assets/fonts/Inter-Bold-Subset.ttf
+#             weight: 700
   assets:
     - .env 
+    - assets/icon.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -112,4 +115,19 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-  
+flutter_launcher_icons:
+  image_path: "assets/icon.png"
+  windows:
+    generate: true
+    icon_size: 256
+  linux:
+    generate: true
+    icon_name: "jxledger"
+
+msix_config:
+  display_name: JxLedger
+  publisher_display_name: Jason Xie
+  identity_name: com.duckzland.jxcryptledger
+  msix_version: 1.0.0.0
+  logo_path: assets/icon.png
+  install_certificate: true
