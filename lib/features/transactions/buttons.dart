@@ -24,7 +24,6 @@ class TransactionsButtons extends StatelessWidget {
       context: context,
       builder: (dialogContext) => TransactionForm(
         mode: TransactionsFormActionMode.edit,
-        dialogContext: dialogContext,
         initialData: tx,
         onSave: (e) async {
           if (e == null) {
@@ -107,7 +106,6 @@ class TransactionsButtons extends StatelessWidget {
       context: context,
       builder: (dialogContext) => TransactionForm(
         mode: TransactionsFormActionMode.trade,
-        dialogContext: dialogContext,
         initialData: tx,
         parent: tx,
         onSave: (e) async {

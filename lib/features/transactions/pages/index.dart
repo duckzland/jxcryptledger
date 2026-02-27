@@ -64,7 +64,6 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       context: context,
       builder: (dialogContext) => TransactionForm(
         mode: TransactionsFormActionMode.addNew,
-        dialogContext: dialogContext,
         onSave: (e) async {
           if (e == null) {
             Navigator.pop(dialogContext);

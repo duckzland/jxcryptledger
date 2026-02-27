@@ -15,22 +15,13 @@ import 'model.dart';
 enum TransactionsFormActionMode { addNew, edit, trade }
 
 class TransactionForm extends StatefulWidget {
-  final BuildContext dialogContext;
-
   final void Function(Object? error)? onSave;
   final TransactionsFormActionMode mode;
 
   final TransactionsModel? initialData;
   final TransactionsModel? parent;
 
-  const TransactionForm({
-    super.key,
-    required this.dialogContext,
-    required this.onSave,
-    required this.mode,
-    this.initialData,
-    this.parent,
-  });
+  const TransactionForm({super.key, required this.onSave, required this.mode, this.initialData, this.parent});
 
   @override
   State<TransactionForm> createState() => _TransactionFormState();
