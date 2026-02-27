@@ -65,8 +65,8 @@ jobs:
 
       - name: Create DEB Package
         run: |
-          chmod +x ./build_deb.sh
-          ./build_deb.sh
+          chmod +x ./build-debian.sh
+          ./build-debian.sh
 
       - name: Nuke .env
         if: always()
