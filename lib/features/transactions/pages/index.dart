@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jxcryptledger/widgets/notify.dart';
 
 import '../../../app/layout.dart';
+import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
@@ -15,7 +16,7 @@ import '../screens/history.dart';
 import '../screens/journal.dart';
 import '../screens/overview.dart';
 
-enum TransactionsViewMode { balanceOverview, activeTrading, journalView, historyView }
+enum TransactionsViewMode { overview, active, journal, history }
 
 class TransactionsPagesIndex extends StatefulWidget {
   const TransactionsPagesIndex({super.key});
@@ -30,7 +31,13 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
   final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
 
-  TransactionsViewMode _viewMode = TransactionsViewMode.activeTrading;
+  TransactionsViewMode _viewMode = TransactionsViewMode.active;
+
+  int _sortMode = 0;
+  int _filterMode = 0;
+
+  late Map<int, String> _sortableOptions;
+  late Map<int, String> _filterableOptions;
 
   @override
   void initState() {
@@ -44,6 +51,9 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     _cryptosService.addListener(_onControllerChanged);
 
     _cryptosRepo.addListener(_onControllerChanged);
+
+    _detectFilterAndSortOptions();
+    _setFilterAndSortDefault();
   }
 
   @override
@@ -57,6 +67,56 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
   void _onControllerChanged() {
     setState(() {});
+  }
+
+  void _setFilterAndSortDefault() {
+    switch (_viewMode) {
+      case TransactionsViewMode.active:
+        _sortMode = 2;
+        _filterMode = 0;
+        break;
+
+      case TransactionsViewMode.overview:
+        _sortMode = 2;
+        _filterMode = 0;
+        break;
+      case TransactionsViewMode.journal:
+        _sortMode = 0;
+        _filterMode = 0;
+        break;
+      case TransactionsViewMode.history:
+        _sortMode = 2;
+        _filterMode = 0;
+        break;
+    }
+  }
+
+  void _detectFilterAndSortOptions() {
+    switch (_viewMode) {
+      case TransactionsViewMode.active:
+        _sortableOptions = {0: "Alphabetically", 1: "Oldest Trades", 2: "Latest Trades"};
+        _filterableOptions = {0: "Tradable Only", 1: "All Trades"};
+        break;
+
+      case TransactionsViewMode.overview:
+        _sortableOptions = {0: "Alphabetically", 1: "Oldest Trades", 2: "Latest Trades"};
+        _filterableOptions = {0: "Tradable Only", 1: "All Trades"};
+        break;
+      case TransactionsViewMode.journal:
+        _sortableOptions = {};
+        _filterableOptions = {
+          0: "Show All",
+          1: "Active Trades",
+          2: "Partial Trades",
+          3: "Inactive Trades",
+          4: "Closed Trades",
+        };
+        break;
+      case TransactionsViewMode.history:
+        _sortableOptions = {0: "By Crypto ID", 1: "Oldest Trades", 2: "Latest Trades"};
+        _filterableOptions = {};
+        break;
+    }
   }
 
   void _showAddTransactionDialog() {
@@ -83,50 +143,142 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     });
   }
 
-  Map<int, List<TransactionsModel>> _getBalanceOverviewTransactions() {
-    final filtered = _controller.items.where((t) => t.status == 1 || t.status == 2).toList();
+  Map<int, List<TransactionsModel>> _getOverviewTransactions() {
+    List<TransactionsModel> filtered;
+
+    switch (_filterMode) {
+      case 0:
+        filtered = _controller.items.where((t) => t.status == 1 || t.status == 2).toList();
+        break;
+
+      default:
+        filtered = _controller.items.toList();
+    }
 
     final grouped = <int, List<TransactionsModel>>{};
-
     for (final tx in filtered) {
       grouped.putIfAbsent(tx.rrId, () => <TransactionsModel>[]);
       grouped[tx.rrId]!.add(tx);
     }
 
-    final sortedGroups = Map<int, List<TransactionsModel>>.fromEntries(
-      grouped.entries.toList()..sort((a, b) {
-        final symbolA = _cryptosRepo.getSymbol(a.key) ?? a.key.toString();
-        final symbolB = _cryptosRepo.getSymbol(b.key) ?? b.key.toString();
-        return symbolA.compareTo(symbolB);
-      }),
-    );
+    final entries = grouped.entries.toList();
 
-    return sortedGroups;
+    switch (_sortMode) {
+      case 0:
+        entries.sort((a, b) {
+          final symbolA = _cryptosRepo.getSymbol(a.key) ?? a.key.toString();
+          final symbolB = _cryptosRepo.getSymbol(b.key) ?? b.key.toString();
+          return symbolA.compareTo(symbolB);
+        });
+        break;
+
+      case 1:
+        entries.sort((a, b) {
+          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
+          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
+          return aDate.compareTo(bDate);
+        });
+        break;
+
+      case 2:
+        entries.sort((a, b) {
+          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
+          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
+          return bDate.compareTo(aDate);
+        });
+        break;
+    }
+
+    return Map<int, List<TransactionsModel>>.fromEntries(entries);
   }
 
   Map<String, List<TransactionsModel>> _getActiveTransactions() {
-    final filtered = _controller.items
-        .where((t) => t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index)
-        .toList();
+    List<TransactionsModel> filtered;
+
+    switch (_filterMode) {
+      case 0:
+        filtered = _controller.items
+            .where((t) => t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index)
+            .toList();
+        break;
+
+      default:
+        filtered = _controller.items.toList();
+    }
 
     final grouped = <String, List<TransactionsModel>>{};
-
     for (final tx in filtered) {
       final pairKey = "${tx.srId}-${tx.rrId}";
-
       grouped.putIfAbsent(pairKey, () => []);
       grouped[pairKey]!.add(tx);
     }
 
-    final sorted = Map<String, List<TransactionsModel>>.fromEntries(
-      grouped.entries.toList()..sort((a, b) {
-        final aSr = int.parse(a.key.split('-')[0]);
-        final bSr = int.parse(b.key.split('-')[0]);
-        return aSr.compareTo(bSr);
-      }),
-    );
+    final entries = grouped.entries.toList();
+    switch (_sortMode) {
+      case 0:
+        entries.sort((a, b) => a.key.compareTo(b.key));
+        break;
 
-    return sorted;
+      case 1:
+        entries.sort((a, b) {
+          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
+          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
+          return aDate.compareTo(bDate);
+        });
+        break;
+
+      case 2:
+        entries.sort((a, b) {
+          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
+          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
+          return bDate.compareTo(aDate);
+        });
+        break;
+    }
+
+    return Map<String, List<TransactionsModel>>.fromEntries(entries);
+  }
+
+  List<TransactionsModel> _getJournalTransactions() {
+    List<TransactionsModel> filtered;
+
+    switch (_filterMode) {
+      case 1:
+        filtered = _controller.items.where((t) => t.status == TransactionStatus.active.index).toList();
+        break;
+
+      case 2:
+        filtered = _controller.items.where((t) => t.status == TransactionStatus.partial.index).toList();
+        break;
+
+      case 3:
+        filtered = _controller.items.where((t) => t.status == TransactionStatus.inactive.index).toList();
+        break;
+
+      case 4:
+        filtered = _controller.items.where((t) => t.status == TransactionStatus.closed.index).toList();
+        break;
+
+      default:
+        filtered = _controller.items;
+    }
+
+    return filtered;
+  }
+
+  List<TransactionsModel> _getHistoryTransactions() {
+    switch (_sortMode) {
+      case 0:
+        return List<TransactionsModel>.from(_controller.items)..sort((a, b) => a.srId.compareTo(b.srId));
+
+      case 1:
+        return List<TransactionsModel>.from(_controller.items)
+          ..sort((a, b) => a.timestampAsMs.compareTo(b.timestampAsMs));
+
+      default:
+        return List<TransactionsModel>.from(_controller.items)
+          ..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
+    }
   }
 
   @override
@@ -145,24 +297,87 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Wrap(spacing: 20, children: [_buildSorterBar(), _buildActionBar(), _buildFilterBar()]),
+            Row(
+              children: [
+                Expanded(child: SizedBox()),
+                _buildAction(),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 20,
+                      children: [
+                        if (_sortableOptions.isNotEmpty) _buildSorter(),
+                        if (_filterableOptions.isNotEmpty) _buildFilter(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
-            Expanded(child: _buildListForViewMode()),
+            Expanded(child: _buildScreen()),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSorterBar() {
-    return WidgetsPanel(child: Wrap(spacing: 4, children: []));
+  Widget _buildSorter() {
+    return Container(
+      height: 40,
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.separator, width: 1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _sortMode,
+          isExpanded: false,
+          icon: const Icon(Icons.arrow_drop_down),
+          style: const TextStyle(fontSize: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemHeight: kMinInteractiveDimension,
+          items: _sortableOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _sortMode = value);
+          },
+        ),
+      ),
+    );
   }
 
-  Widget _buildFilterBar() {
-    return WidgetsPanel(child: Wrap(spacing: 4, children: []));
+  Widget _buildFilter() {
+    return Container(
+      height: 40,
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.separator, width: 1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _filterMode,
+          isExpanded: false,
+          icon: const Icon(Icons.arrow_drop_down),
+          style: const TextStyle(fontSize: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemHeight: kMinInteractiveDimension,
+          items: _filterableOptions.entries
+              .map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value)))
+              .toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _filterMode = value);
+          },
+        ),
+      ),
+    );
   }
 
-  Widget _buildActionBar() {
+  Widget _buildAction() {
     return WidgetsPanel(
       child: Wrap(
         spacing: 4,
@@ -174,7 +389,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             minimumSize: const Size(40, 40),
             tooltip: "Active Trading",
             evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.activeTrading) {
+              if (_viewMode == TransactionsViewMode.active) {
                 s.active();
               } else {
                 s.normal();
@@ -182,11 +397,11 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             },
             onPressed: (_) {
               setState(() {
-                _viewMode = TransactionsViewMode.activeTrading;
+                _viewMode = TransactionsViewMode.active;
+                _detectFilterAndSortOptions();
               });
             },
           ),
-
           WidgetButton(
             icon: Icons.account_balance_wallet_outlined,
             padding: const EdgeInsets.all(8),
@@ -194,7 +409,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             minimumSize: const Size(40, 40),
             tooltip: "Balance Overview",
             evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.balanceOverview) {
+              if (_viewMode == TransactionsViewMode.overview) {
                 s.active();
               } else {
                 s.normal();
@@ -202,7 +417,8 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             },
             onPressed: (_) {
               setState(() {
-                _viewMode = TransactionsViewMode.balanceOverview;
+                _viewMode = TransactionsViewMode.overview;
+                _detectFilterAndSortOptions();
               });
             },
           ),
@@ -213,7 +429,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             minimumSize: const Size(40, 40),
             tooltip: "Journal View",
             evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.journalView) {
+              if (_viewMode == TransactionsViewMode.journal) {
                 s.active();
               } else {
                 s.normal();
@@ -221,7 +437,8 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             },
             onPressed: (_) {
               setState(() {
-                _viewMode = TransactionsViewMode.journalView;
+                _viewMode = TransactionsViewMode.journal;
+                _detectFilterAndSortOptions();
               });
             },
           ),
@@ -232,7 +449,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             minimumSize: const Size(40, 40),
             tooltip: "History View",
             evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.historyView) {
+              if (_viewMode == TransactionsViewMode.history) {
                 s.active();
               } else {
                 s.normal();
@@ -240,7 +457,8 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             },
             onPressed: (_) {
               setState(() {
-                _viewMode = TransactionsViewMode.historyView;
+                _viewMode = TransactionsViewMode.history;
+                _detectFilterAndSortOptions();
               });
             },
           ),
@@ -265,32 +483,30 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     );
   }
 
-  Widget _buildListForViewMode() {
+  Widget _buildScreen() {
     switch (_viewMode) {
-      case TransactionsViewMode.balanceOverview:
+      case TransactionsViewMode.overview:
         _changePageTitle("Transaction Balance");
 
-        return _buildOverviewList(_getBalanceOverviewTransactions());
+        return _buildOverviewList(_getOverviewTransactions());
 
-      case TransactionsViewMode.activeTrading:
+      case TransactionsViewMode.active:
         _changePageTitle("Trading View");
 
         return _buildActiveTradingList(_getActiveTransactions());
 
-      case TransactionsViewMode.journalView:
+      case TransactionsViewMode.journal:
         _changePageTitle("Transaction Overview");
 
         return TransactionsJournalView(
-          transactions: List<TransactionsModel>.from(_controller.items),
+          transactions: List<TransactionsModel>.from(_getJournalTransactions()),
           onStatusChanged: () => setState(() {}),
         );
 
-      case TransactionsViewMode.historyView:
+      case TransactionsViewMode.history:
         _changePageTitle("Transaction History");
-        final transactions = List<TransactionsModel>.from(_controller.items)
-          ..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
 
-        return TransactionHistory(transactions: transactions);
+        return TransactionHistory(transactions: _getHistoryTransactions());
     }
   }
 
