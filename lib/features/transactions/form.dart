@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
+import 'package:jxcryptledger/features/transactions/repository.dart';
 
 import '../../app/theme.dart';
 import '../../core/locator.dart';
@@ -31,6 +31,7 @@ class _TransactionFormState extends State<TransactionForm> {
   late CryptosRepository _cryptosRepo;
 
   TransactionsController get _txController => locator<TransactionsController>();
+  TransactionsRepository get _txRepo => locator<TransactionsRepository>();
 
   late TextEditingController _srAmountController;
   late TextEditingController _rrAmountController;
@@ -50,9 +51,7 @@ class _TransactionFormState extends State<TransactionForm> {
   bool get isLeaf => !isRoot;
   bool get isActive => widget.initialData?.statusEnum == TransactionStatus.active;
 
-  final _uuid = Uuid();
-
-  String generateTid() => _uuid.v4();
+  String generateTid() => _txRepo.generateTid();
 
   @override
   void initState() {

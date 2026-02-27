@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:hive_ce/hive_ce.dart';
 
 import '../../app/exceptions.dart';
@@ -17,6 +19,28 @@ class TransactionsRepository {
     await _filter.init();
     if (!Hive.isBoxOpen(boxName)) {
       await Hive.openBox<TransactionsModel>(boxName);
+    }
+  }
+
+  String generateTid() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final random = Random();
+
+    while (true) {
+      final id = String.fromCharCodes(Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+
+      // Check if the key already exists in the box
+      if (!_box.containsKey(id)) {
+        if (debugLogs) {
+          logln('Generated unique ID: $id');
+        }
+
+        return id;
+      }
+
+      if (debugLogs) {
+        logln('Collision detected for $id, retrying...');
+      }
     }
   }
 

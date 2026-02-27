@@ -38,7 +38,6 @@ dependencies:
   cryptography: ^2.9.0
   hive_ce: ^2.19.3
   hive_ce_flutter: ^2.3.4
-  pluto_grid: ^8.1.0
   path_provider: ^2.1.5
   get_it: ^9.2.0
   flutter_dotenv: ^6.0.0

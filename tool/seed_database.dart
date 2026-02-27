@@ -12,11 +12,10 @@ import 'package:jxcryptledger/features/rates/adapter.dart';
 import 'package:jxcryptledger/features/rates/model.dart';
 import 'package:jxcryptledger/features/transactions/adapter.dart';
 import 'package:jxcryptledger/features/transactions/model.dart';
-import 'package:uuid/uuid.dart';
+import 'package:jxcryptledger/features/transactions/repository.dart';
 
 final env = DotEnv()..load();
-final uuid = Uuid();
-
+final txRepo = TransactionsRepository();
 final AesGcm aes = AesGcm.with256bits();
 
 // REAL, VALID CoinMarketCap IDs
@@ -153,7 +152,7 @@ Future<void> main() async {
     crashRecovery: false,
   );
 
-  final rootTid = uuid.v4();
+  final rootTid = txRepo.generateTid();
   final root = TransactionsModel(
     tid: rootTid,
     pid: '0',
@@ -172,8 +171,8 @@ Future<void> main() async {
   await txBox.put(rootTid, root);
 
   for (int i = 0; i < 30; i++) {
-    final tid = uuid.v4();
-    final parentTid = (i % 5 == 0) ? rootTid : uuid.v4();
+    final tid = txRepo.generateTid();
+    final parentTid = (i % 5 == 0) ? rootTid : txRepo.generateTid();
 
     final status = switch (i % 4) {
       0 => TransactionStatus.active.index,
