@@ -834,7 +834,9 @@ class _TransactionFormState extends State<TransactionForm> {
       return 'Amount is required';
     }
 
-    final parsed = double.tryParse(value);
+    String val = value.replaceAll(",", "");
+
+    final parsed = double.tryParse(val);
     if (parsed == null) {
       return 'Enter a valid number';
     }
