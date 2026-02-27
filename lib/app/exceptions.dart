@@ -1,35 +1,22 @@
-/// Base class for all custom application exceptions.
-abstract class AppException implements Exception {
-  final String message;
-  final Object? details;
+import '../core/log.dart';
 
-  AppException(this.message, {this.details});
+abstract class AppException implements Exception {
+  final int code;
+  final String devMessage;
+  final String userMessage;
+  final Object? details;
+  final bool silent;
+
+  AppException(this.code, this.devMessage, this.userMessage, {this.details, this.silent = false}) {
+    if (!silent) {
+      logln(devMessage);
+    }
+  }
 
   @override
-  String toString() => '$runtimeType: $message';
+  String toString() => '$runtimeType(code=$code, devMessage=$devMessage, userMessage=$userMessage)';
 }
 
-/// Thrown when encryption or decryption fails.
-class EncryptionException extends AppException {
-  EncryptionException(super.message, {super.details});
-}
-
-/// Thrown when a required key is missing or invalid.
-class MissingKeyException extends AppException {
-  MissingKeyException(super.message, {super.details});
-}
-
-/// Thrown when reading or writing local storage fails.
-class StorageException extends AppException {
-  StorageException(super.message, {super.details});
-}
-
-/// Thrown when input validation fails.
 class ValidationException extends AppException {
-  ValidationException(super.message, {super.details});
-}
-
-/// Fallback for unexpected errors.
-class UnknownAppException extends AppException {
-  UnknownAppException(super.message, {super.details});
+  ValidationException(super.code, super.devMessage, super.userMessage, {super.details, super.silent});
 }

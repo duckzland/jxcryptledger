@@ -1,11 +1,13 @@
 import 'package:hive_ce/hive_ce.dart';
 
+import '../../app/exceptions.dart';
 import '../../core/filtering.dart';
 import '../../core/log.dart';
 import 'model.dart';
 
 class TransactionsRepository {
   static const String boxName = 'transactions_box';
+  final bool debugLogs = true;
 
   final FilterIsolate _filter = FilterIsolate();
 
@@ -23,65 +25,81 @@ class TransactionsRepository {
   }
 
   Future<void> add(TransactionsModel tx) async {
-    logln(
-      '[ADD] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
-    );
+    if (debugLogs) {
+      logln(
+        '[ADD] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+      );
+    }
+
     TransactionsModel ntx = tx;
-    bool isClosable = await canClose(ntx);
-    logln("[CLOSABLE] isclosable ${isClosable} - ${tx.isClosable}");
+
+    bool isClosable;
+    try {
+      isClosable = await canClose(ntx);
+    } catch (e) {
+      isClosable = false;
+    }
+
     if (tx.isClosable != isClosable) {
       ntx = ntx.copyWith(closable: isClosable);
     }
 
-    await _rulesAdd(ntx);
+    await canAdd(ntx);
 
     await _box.put(ntx.tid, ntx);
     await _box.flush();
   }
 
   Future<void> update(TransactionsModel tx) async {
-    logln(
-      '[UPDATE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
-    );
+    if (debugLogs) {
+      logln(
+        '[UPDATE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+      );
+    }
 
     TransactionsModel ntx = tx;
-    bool isClosable = await canClose(ntx);
-    logln("[CLOSABLE] isclosable ${isClosable} - ${tx.isClosable}");
+    bool isClosable;
+    try {
+      isClosable = await canClose(ntx);
+    } catch (e) {
+      isClosable = false;
+    }
+
     if (tx.isClosable != isClosable) {
       ntx = ntx.copyWith(closable: isClosable);
     }
 
-    await _rulesUpdate(ntx);
+    await canUpdate(ntx);
 
     await _box.put(ntx.tid, ntx);
-    // await _box.flush();
   }
 
   Future<void> delete(TransactionsModel tx) async {
-    await _rulesDelete(tx);
+    await canDelete(tx);
 
-    logln(
-      '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
-    );
+    if (debugLogs) {
+      logln(
+        '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+      );
+    }
 
     // This is to preseve tree sanity!
     _deleteLeaves(tx);
 
     await _box.delete(tx.tid);
-    // await _box.flush();
   }
 
   Future<void> close(TransactionsModel tx) async {
-    await _rulesClose(tx);
+    await canClose(tx);
 
     TransactionsModel? otx = _box.get(tx.tid);
     if (otx == null) {
-      throw Exception("Failed to close transaction");
+      return; // canClose already check and throw
     }
 
     TransactionsModel? target = await getCloseTargetParent(otx);
     if (target == null) {
-      throw Exception("Failed to close transaction");
+      return; // canClose already check and throw
     }
 
     final leaves = await collectTerminalLeaves(target);
@@ -97,15 +115,14 @@ class TransactionsRepository {
 
     final closedTx = tx.copyWith(balance: 0, status: TransactionStatus.closed.index);
 
-    logln(
-      '[CLOSING] ${tx.tid}|${tx.pid}|${tx.rid}|{tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
-    );
+    if (debugLogs) {
+      logln(
+        '[CLOSING] ${tx.tid}|${tx.pid}|${tx.rid}|{tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+      );
+    }
 
     await _box.put(closedTx.tid, closedTx);
-    // await _box.flush();
-
     await _box.put(updatedTarget.tid, updatedTarget);
-    // await _box.flush();
   }
 
   Future<List<TransactionsModel>> getAll() async {
@@ -202,65 +219,89 @@ class TransactionsRepository {
     return parent;
   }
 
-  Future<bool> _rulesDelete(TransactionsModel tx) async {
+  Future<bool> canDelete(TransactionsModel tx) async {
     if (!tx.isRoot) {
-      logln("Transaction: ${tx.tid} can be deleted as it is not root transaction");
-      throw Exception("This transaction cannot be deleted.");
+      throw ValidationException(
+        2001,
+        "[DELETE RULE 1 FAIL] tx.isRoot == false tid=${tx.tid}",
+        "This transaction cannot be deleted.",
+        silent: !debugLogs,
+      );
     }
 
-    List<TransactionsModel> leaves = await collectTerminalLeaves(tx);
-    final allClosed = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final List<TransactionsModel> leaves = await collectTerminalLeaves(tx);
+    final bool allClosed = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (!allClosed) {
-      logln("Transaction: ${tx.tid} can be deleted as it still has active child transaction");
-      throw Exception("This transaction cannot be deleted because related transactions are still in progress.");
+      throw ValidationException(
+        2002,
+        "[DELETE RULE 2 FAIL] active child transactions exist tid=${tx.tid}",
+        "This transaction cannot be deleted because related transactions are still in progress.",
+        silent: !debugLogs,
+      );
     }
 
     return true;
   }
 
-  Future<bool> _rulesUpdate(TransactionsModel tx) async {
-    TransactionsModel? otx = _box.get(tx.tid);
-    TransactionsModel? ptx = _box.get(tx.pid);
-    TransactionsModel? rtx = _box.get(tx.rid);
+  Future<bool> canUpdate(TransactionsModel tx) async {
+    final TransactionsModel? otx = _box.get(tx.tid);
+    final TransactionsModel? ptx = _box.get(tx.pid);
+    final TransactionsModel? rtx = _box.get(tx.rid);
 
     if (otx == null) {
-      logln("[UPDATE RULE 1 FAIL] otx == null for tid=${tx.tid}");
-      throw Exception("This transaction can no longer be found.");
+      throw ValidationException(
+        3001,
+        "[UPDATE RULE 1 FAIL] otx == null tid=${tx.tid}",
+        "This transaction can no longer be found.",
+        silent: !debugLogs,
+      );
     }
 
     if (otx.isRoot && (tx.pid != '0' || tx.rid != '0')) {
-      logln("[UPDATE RULE 2 FAIL] Root tx cannot change pid/rid");
-      throw Exception("This transaction cannot be changed in that way.");
+      throw ValidationException(
+        3002,
+        "[UPDATE RULE 2 FAIL] root cannot change pid/rid tid=${tx.tid}",
+        "This transaction cannot be changed in that way.",
+        silent: !debugLogs,
+      );
     }
 
     if (otx.isLeaf && (ptx == null || rtx == null)) {
-      logln("[UPDATE RULE 3 FAIL] Leaf missing parent or root: ptx=$ptx rtx=$rtx");
-      throw Exception("This transaction is not linked correctly.");
+      throw ValidationException(
+        3003,
+        "[UPDATE RULE 3 FAIL] leaf missing parent or root ptx=$ptx rtx=$rtx tid=${tx.tid}",
+        "This transaction is not linked correctly.",
+        silent: !debugLogs,
+      );
     }
 
     if (tx.rrId <= 0 || tx.srId <= 0 || tx.srAmount <= 0 || tx.rrAmount <= 0 || tx.timestamp <= 0) {
-      logln(
-        "[UPDATE RULE 4 FAIL] Invalid fields: rrId=${tx.rrId}, srId=${tx.srId}, srAmount=${tx.srAmount}, rrAmount=${tx.rrAmount}, timestamp=${tx.timestamp}",
+      throw ValidationException(
+        3004,
+        "[UPDATE RULE 4 FAIL] invalid fields rrId=${tx.rrId} srId=${tx.srId} "
+            "srAmount=${tx.srAmount} rrAmount=${tx.rrAmount} timestamp=${tx.timestamp}",
+        "Some required transaction details are missing or invalid.",
+        silent: !debugLogs,
       );
-      throw Exception("Some required transaction details are missing or invalid.");
     }
 
-    List<TransactionsModel> leaves = await collectTerminalLeaves(tx);
+    final List<TransactionsModel> leaves = await collectTerminalLeaves(tx);
     final targetCloser = await getCloseTargetParent(tx);
     final children = await getLeaf(tx);
 
-    final hasChildren = children.isNotEmpty;
-    final allClosed = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-    final spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
-
-    double balance = otx.rrAmount - spent;
+    final bool hasChildren = children.isNotEmpty;
+    final bool allClosed = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
+    final double balance = otx.rrAmount - spent;
 
     if (tx.rrId != otx.rrId || tx.rrAmount != otx.rrAmount || tx.srId != otx.srId || tx.srAmount != otx.srAmount) {
       if (hasChildren) {
-        logln("[UPDATE RULE 5 FAIL] Cannot change SR/RR fields when hasChildren=true");
-        throw Exception(
+        throw ValidationException(
+          3005,
+          "[UPDATE RULE 5 FAIL] cannot change SR/RR fields when hasChildren=true tid=${tx.tid}",
           "This transaction cannot change its accounts or amounts because related transactions depend on it.",
+          silent: !debugLogs,
         );
       }
     }
@@ -269,47 +310,77 @@ class TransactionsRepository {
       switch (tx.statusEnum) {
         case TransactionStatus.inactive:
           if (!hasChildren) {
-            logln("[UPDATE RULE 6A FAIL] inactive requires hasChildren=true");
-            throw Exception("This transaction cannot be marked inactive.");
+            throw ValidationException(
+              3006,
+              "[UPDATE RULE 6A FAIL] inactive requires hasChildren=true tid=${tx.tid}",
+              "This transaction cannot be marked inactive.",
+              silent: !debugLogs,
+            );
           }
           if (balance > 0) {
-            logln("[UPDATE RULE 6A FAIL] inactive requires balance=0 but balance=$balance");
-            throw Exception("This transaction still has remaining balance and cannot be marked inactive.");
+            throw ValidationException(
+              3007,
+              "[UPDATE RULE 6A FAIL] inactive requires balance=0 balance=$balance tid=${tx.tid}",
+              "This transaction still has remaining balance and cannot be marked inactive.",
+              silent: !debugLogs,
+            );
           }
           break;
 
         case TransactionStatus.active:
           if (!hasChildren && tx.balance <= 0) {
-            logln("[UPDATE RULE 6B FAIL] active requires balance>0 when no children");
-            throw Exception("This transaction must have a positive balance to remain active.");
+            throw ValidationException(
+              3008,
+              "[UPDATE RULE 6B FAIL] active requires balance>0 when no children tid=${tx.tid}",
+              "This transaction must have a positive balance to remain active.",
+              silent: !debugLogs,
+            );
           }
           if (hasChildren && !allClosed) {
-            logln("[UPDATE RULE 6B FAIL] active requires all children closed");
-            throw Exception("All related transactions must be completed before this one can be active.");
+            throw ValidationException(
+              3009,
+              "[UPDATE RULE 6B FAIL] active requires all children closed tid=${tx.tid}",
+              "All related transactions must be completed before this one can be active.",
+              silent: !debugLogs,
+            );
           }
           break;
 
         case TransactionStatus.partial:
           if (!hasChildren) {
-            logln("[UPDATE RULE 6C FAIL] partial requires hasChildren=true");
-            throw Exception("This transaction cannot be marked as partially completed.");
+            throw ValidationException(
+              3010,
+              "[UPDATE RULE 6C FAIL] partial requires hasChildren=true tid=${tx.tid}",
+              "This transaction cannot be marked as partially completed.",
+              silent: !debugLogs,
+            );
           }
           if (hasChildren && allClosed) {
-            logln("[UPDATE RULE 6C FAIL] partial cannot have all children closed");
-            throw Exception(
+            throw ValidationException(
+              3011,
+              "[UPDATE RULE 6C FAIL] partial cannot have all children closed tid=${tx.tid}",
               "This transaction cannot be marked as partial because all related transactions are already completed.",
+              silent: !debugLogs,
             );
           }
           break;
 
         case TransactionStatus.closed:
           if (tx.isRoot) {
-            logln("[UPDATE RULE 6D FAIL] root cannot be closed");
-            throw Exception("This transaction cannot be closed directly.");
+            throw ValidationException(
+              3012,
+              "[UPDATE RULE 6D FAIL] root cannot be closed tid=${tx.tid}",
+              "This transaction cannot be closed directly.",
+              silent: !debugLogs,
+            );
           }
           if (targetCloser == null) {
-            logln("[UPDATE RULE 6D FAIL] closed requires targetCloser != null");
-            throw Exception("This transaction is not ready to be closed yet.");
+            throw ValidationException(
+              3013,
+              "[UPDATE RULE 6D FAIL] closed requires targetCloser!=null tid=${tx.tid}",
+              "This transaction is not ready to be closed yet.",
+              silent: !debugLogs,
+            );
           }
           break;
 
@@ -322,27 +393,47 @@ class TransactionsRepository {
       switch (tx.closable) {
         case true:
           if (tx.isRoot && !allClosed) {
-            logln("[UPDATE RULE 7A FAIL] root closable=true requires allClosed=true");
-            throw Exception("This transaction cannot be marked as closable yet.");
+            throw ValidationException(
+              3014,
+              "[UPDATE RULE 7A FAIL] root closable=true requires allClosed=true tid=${tx.tid}",
+              "This transaction cannot be marked as closable yet.",
+              silent: !debugLogs,
+            );
           }
           if (tx.isLeaf && !otx.isActive) {
-            logln("[UPDATE RULE 7A FAIL] leaf closable=true requires otx.active");
-            throw Exception("This transaction must be active before it can be marked as closable.");
+            throw ValidationException(
+              3015,
+              "[UPDATE RULE 7A FAIL] leaf closable=true requires otx.active tid=${tx.tid}",
+              "This transaction must be active before it can be marked as closable.",
+              silent: !debugLogs,
+            );
           }
           if (tx.isLeaf && targetCloser == null) {
-            logln("[UPDATE RULE 7A FAIL] leaf closable=true requires targetCloser!=null");
-            throw Exception("This transaction cannot be marked as closable yet.");
+            throw ValidationException(
+              3016,
+              "[UPDATE RULE 7A FAIL] leaf closable=true requires targetCloser!=null tid=${tx.tid}",
+              "This transaction cannot be marked as closable yet.",
+              silent: !debugLogs,
+            );
           }
           break;
 
         case false:
           if (tx.isRoot && allClosed) {
-            logln("[UPDATE RULE 7B FAIL] root closable=false cannot have allClosed=true");
-            throw Exception("This transaction must remain closable.");
+            throw ValidationException(
+              3017,
+              "[UPDATE RULE 7B FAIL] root closable=false cannot have allClosed=true tid=${tx.tid}",
+              "This transaction must remain closable.",
+              silent: !debugLogs,
+            );
           }
           if (tx.isLeaf && otx.isActive && targetCloser != null) {
-            logln("[UPDATE RULE 7B FAIL] leaf closable=false cannot have active+targetCloser");
-            throw Exception("This transaction cannot be marked as not closable.");
+            throw ValidationException(
+              3018,
+              "[UPDATE RULE 7B FAIL] leaf closable=false cannot have active+targetCloser tid=${tx.tid}",
+              "This transaction cannot be marked as not closable.",
+              silent: !debugLogs,
+            );
           }
           break;
       }
@@ -351,46 +442,73 @@ class TransactionsRepository {
     return true;
   }
 
-  Future<bool> _rulesAdd(TransactionsModel tx) async {
-    TransactionsModel? ptx = _box.get(tx.pid);
-    TransactionsModel? rtx = _box.get(tx.rid);
+  Future<bool> canAdd(TransactionsModel tx) async {
+    final TransactionsModel? ptx = _box.get(tx.pid);
+    final TransactionsModel? rtx = _box.get(tx.rid);
 
     if (tx.tid == '0') {
-      logln("ADD RULE 1 FAIL tid=0");
-      throw Exception("This transaction is invalid.");
+      throw ValidationException(
+        4001,
+        "[ADD RULE 1 FAIL] tid == '0'",
+        "This transaction is invalid.",
+        silent: !debugLogs,
+      );
     }
 
     if (tx.pid == '0' && tx.rid != '0') {
-      logln("ADD RULE 2 FAIL pid=0 but rid!=0");
-      throw Exception("This transaction is not linked correctly.");
+      throw ValidationException(
+        4002,
+        "[ADD RULE 2 FAIL] pid=0 but rid!=0 pid=${tx.pid} rid=${tx.rid}",
+        "This transaction is not linked correctly.",
+        silent: !debugLogs,
+      );
     }
 
     if (tx.rid == '0' && tx.pid != '0') {
-      logln("ADD RULE 3 FAIL rid=0 but pid!=0");
-      throw Exception("This transaction is not linked correctly.");
+      throw ValidationException(
+        4003,
+        "[ADD RULE 3 FAIL] rid=0 but pid!=0 pid=${tx.pid} rid=${tx.rid}",
+        "This transaction is not linked correctly.",
+        silent: !debugLogs,
+      );
     }
 
     if (tx.rrId <= 0 || tx.srId <= 0 || tx.srAmount <= 0 || tx.rrAmount <= 0 || tx.timestamp <= 0) {
-      logln(
-        "ADD RULE 4 FAIL invalid fields rrId=${tx.rrId} srId=${tx.srId} srAmount=${tx.srAmount} rrAmount=${tx.rrAmount} timestamp=${tx.timestamp}",
+      throw ValidationException(
+        4004,
+        "[ADD RULE 4 FAIL] invalid fields rrId=${tx.rrId} srId=${tx.srId} "
+            "srAmount=${tx.srAmount} rrAmount=${tx.rrAmount} timestamp=${tx.timestamp}",
+        "Some required transaction details are missing or invalid.",
+        silent: !debugLogs,
       );
-      throw Exception("Some required transaction details are missing or invalid.");
     }
 
     if (tx.statusEnum != TransactionStatus.active) {
-      logln("ADD RULE 5 FAIL status must be active");
-      throw Exception("A new transaction must start as active.");
+      throw ValidationException(
+        4005,
+        "[ADD RULE 5 FAIL] status must be active status=${tx.statusEnum}",
+        "A new transaction must start as active.",
+        silent: !debugLogs,
+      );
     }
 
     if (tx.isRoot) {
       if (tx.balance != tx.rrAmount) {
-        logln("ADD RULE 6 FAIL root balance mismatch balance=${tx.balance} rrAmount=${tx.rrAmount}");
-        throw Exception("The transaction balance does not match the expected amount.");
+        throw ValidationException(
+          4006,
+          "[ADD RULE 6 FAIL] root balance mismatch balance=${tx.balance} rrAmount=${tx.rrAmount}",
+          "The transaction balance does not match the expected amount.",
+          silent: !debugLogs,
+        );
       }
 
       if (tx.closable != true) {
-        logln("ADD RULE 7 FAIL root must be closable=true");
-        throw Exception("This transaction must be marked as closable.");
+        throw ValidationException(
+          4007,
+          "[ADD RULE 7 FAIL] root must be closable=true",
+          "This transaction must be marked as closable.",
+          silent: !debugLogs,
+        );
       }
     }
 
@@ -398,57 +516,161 @@ class TransactionsRepository {
       final targetCloser = await getCloseTargetParent(tx);
 
       if (rtx == null) {
-        logln("ADD RULE 8 FAIL rtx=null rid=${tx.rid}");
-        throw Exception("This transaction is not linked correctly.");
+        throw ValidationException(
+          4008,
+          "[ADD RULE 8 FAIL] rtx == null rid=${tx.rid}",
+          "This transaction is not linked correctly.",
+          silent: !debugLogs,
+        );
       }
 
       if (ptx == null) {
-        logln("ADD RULE 9 FAIL ptx=null pid=${tx.pid}");
-        throw Exception("This transaction is not linked correctly.");
+        throw ValidationException(
+          4009,
+          "[ADD RULE 9 FAIL] ptx == null pid=${tx.pid}",
+          "This transaction is not linked correctly.",
+          silent: !debugLogs,
+        );
       }
 
       if (tx.srId != ptx.rrId) {
-        logln("ADD RULE 10 FAIL srId=${tx.srId} != parent.rrId=${ptx.rrId}");
-        throw Exception("This transaction does not match the expected account.");
+        throw ValidationException(
+          4010,
+          "[ADD RULE 10 FAIL] srId=${tx.srId} != parent.rrId=${ptx.rrId}",
+          "This transaction does not match the expected account.",
+          silent: !debugLogs,
+        );
       }
 
       if (tx.srAmount > ptx.balance) {
-        logln("ADD RULE 11 FAIL srAmount=${tx.srAmount} > parent.balance=${ptx.balance}");
-        throw Exception("The transaction amount exceeds the available balance.");
+        throw ValidationException(
+          4011,
+          "[ADD RULE 11 FAIL] srAmount=${tx.srAmount} > parent.balance=${ptx.balance}",
+          "The transaction amount exceeds the available balance.",
+          silent: !debugLogs,
+        );
       }
 
       if (tx.closable == true && targetCloser == null) {
-        logln("ADD RULE 12 FAIL closable=true but no targetCloser");
-        throw Exception("This transaction cannot be marked as closable yet.");
+        throw ValidationException(
+          4012,
+          "[ADD RULE 12 FAIL] closable=true but targetCloser == null",
+          "This transaction cannot be marked as closable yet.",
+          silent: !debugLogs,
+        );
       }
 
       if (tx.closable == false && targetCloser != null) {
-        logln("ADD RULE 13 FAIL closable=false but targetCloser exists");
-        throw Exception("This transaction must be marked as closable.");
+        throw ValidationException(
+          40113,
+          "[ADD RULE 13 FAIL] closable=false but targetCloser exists",
+          "This transaction must be marked as closable.",
+          silent: !debugLogs,
+        );
       }
     }
 
     return true;
   }
 
-  Future<bool> _rulesClose(TransactionsModel tx) async {
-    TransactionsModel? otx = _box.get(tx.tid);
-
-    if (otx == null) {
-      logln("CLOSE RULE 1 FAIL no otx == null");
-      throw Exception("This transaction can no longer be found.");
+  Future<bool> canClose(TransactionsModel tx) async {
+    // Cannot check for existing tx as it will break at add method.
+    if (tx.isRoot) {
+      throw ValidationException(
+        5001,
+        "[CLOSE RULE 1 FAIL] otx.isRoot == true tid=${tx.tid}",
+        "This transaction cannot be closed directly.",
+        silent: !debugLogs,
+      );
     }
 
-    if (otx.isRoot) {
-      logln("CLOSE RULE 2 FAIL no otx.isRoot");
-      throw Exception("This transaction cannot be closed directly.");
+    if (!tx.isActive) {
+      throw ValidationException(
+        5003,
+        "[CLOSE RULE 2 FAIL] otx.isActive == false tid=${tx.tid}",
+        "An inactive transaction cannot be closed.",
+        silent: !debugLogs,
+      );
     }
 
-    final targetCloser = await getCloseTargetParent(otx);
+    final targetCloser = await getCloseTargetParent(tx);
 
     if (targetCloser == null) {
-      logln("CLOSE RULE 3 FAIL targetCloser == null");
-      throw Exception("This transaction is not ready to be closed yet.");
+      throw ValidationException(
+        5004,
+        "[CLOSE RULE 3 FAIL] targetCloser == null tid=${tx.tid}",
+        "This transaction is not ready to be closed yet.",
+        silent: !debugLogs,
+      );
+    }
+
+    return true;
+  }
+
+  Future<bool> canTrade(TransactionsModel tx) async {
+    if (tx.tid == '0') {
+      throw ValidationException(
+        6001,
+        "[TRADE RULE 1 FAIL] tx.tid == '0'",
+        "This trade cannot be processed because its ID is invalid.",
+        silent: !debugLogs,
+      );
+    }
+
+    final TransactionsModel? otx = _box.get(tx.tid);
+
+    if (otx == null) {
+      throw ValidationException(
+        6002,
+        "[TRADE RULE 2 FAIL] otx == null tid=${tx.tid}",
+        "This trade cannot be processed because the original transaction was not found.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (!otx.isRoot) {
+      final TransactionsModel? ptx = _box.get(tx.pid);
+      final TransactionsModel? rtx = _box.get(tx.rid);
+
+      if (ptx == null || rtx == null) {
+        throw ValidationException(
+          6003,
+          "[TRADE RULE 3 FAIL] ptx == null or rtx == null tid=${tx.tid}",
+          "Invalid transaction cannot be traded.",
+          silent: !debugLogs,
+        );
+      }
+    }
+
+    if (!otx.isActive && !otx.isPartial) {
+      throw ValidationException(
+        6004,
+        "[TRADE RULE 4 FAIL] not active or not partial "
+            "isActive=${otx.isActive} isPartial=${otx.isPartial} tid=${tx.tid}",
+        "This trade cannot be processed because the original transaction is not in a valid state.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (otx.rrId <= 0 || otx.srId <= 0 || otx.srAmount <= 0 || otx.rrAmount <= 0 || otx.timestamp <= 0) {
+      throw ValidationException(
+        6005,
+        "[TRADE RULE 5 FAIL] invalid required fields "
+            "rrId=${otx.rrId} srId=${otx.srId} srAmount=${otx.srAmount} "
+            "rrAmount=${otx.rrAmount} timestamp=${otx.timestamp}",
+        "Some required trade details are missing or invalid.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (otx.balance <= 0) {
+      throw ValidationException(
+        6006,
+        "[TRADE RULE 6 FAIL] balance <= 0 balance=${otx.balance} "
+            "rrId=${otx.rrId} srId=${otx.srId}",
+        "This trade cannot be processed because the remaining balance is invalid.",
+        silent: !debugLogs,
+      );
     }
 
     return true;
@@ -458,22 +680,14 @@ class TransactionsRepository {
     final all = await getAll();
     for (final ttx in all) {
       if (tx.tid == ttx.rid || tx.tid == ttx.pid) {
-        logln(
-          '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
-        );
+        if (debugLogs) {
+          logln(
+            '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+          );
+        }
 
         _box.delete(ttx.tid);
       }
     }
-  }
-
-  Future<bool> canClose(TransactionsModel tx) async {
-    if (tx.isRoot) {
-      List<TransactionsModel> leaves = await collectTerminalLeaves(tx);
-      return leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-    }
-
-    final targetCloser = await getCloseTargetParent(tx);
-    return targetCloser != null;
   }
 }

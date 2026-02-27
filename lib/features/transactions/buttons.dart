@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/exceptions.dart';
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
 import '../../widgets/notify.dart';
@@ -22,19 +23,29 @@ class TransactionsButtons extends StatelessWidget {
   Future<void> _showEditDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (dialogContext) => TransactionForm(
-        mode: TransactionsFormActionMode.edit,
-        initialData: tx,
-        onSave: (e) async {
-          if (e == null) {
-            Navigator.pop(dialogContext);
-            onAction();
-            widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction updated.");
-          } else {
-            final msg = e.toString().replaceFirst('Exception: ', '');
-            widgetsNotifyError(msg);
-          }
-        },
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: TransactionForm(
+            mode: TransactionsFormActionMode.edit,
+            initialData: tx,
+            onSave: (e) async {
+              if (e == null) {
+                Navigator.pop(dialogContext);
+                onAction();
+                widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction updated.");
+                return;
+              }
+
+              if (e is ValidationException) {
+                widgetsNotifyError(e.userMessage, ctx: context);
+                return;
+              }
+
+              widgetsNotifyError(e.toString(), ctx: context);
+            },
+          ),
+        ),
       ),
     );
   }
@@ -42,31 +53,39 @@ class TransactionsButtons extends StatelessWidget {
   Future<void> _showDeleteDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text("Delete Transaction"),
-        content: const Text(
-          "This will delete this transaction and all of its history.\n"
-          "This action cannot be undone.",
-        ),
-        actions: [
-          WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-          const SizedBox(width: 12),
-          WidgetButton(
-            label: 'Delete',
-            initialState: WidgetsButtonActionState.error,
-            onPressed: (_) async {
-              try {
-                await _txController.removeRoot(tx);
-                Navigator.pop(dialogContext);
-                onAction();
-                widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
-              } catch (e) {
-                final msg = e.toString().replaceFirst('Exception: ', '');
-                widgetsNotifyError(msg);
-              }
-            },
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            title: const Text("Delete Transaction"),
+            content: const Text(
+              "This will delete this transaction and all of its history.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetButton(
+                label: 'Delete',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _txController.removeRoot(tx);
+
+                    Navigator.pop(dialogContext);
+                    onAction();
+
+                    widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
+                  } on ValidationException catch (e) {
+                    widgetsNotifyError(e.userMessage);
+                  } catch (e) {
+                    widgetsNotifyError(e.toString());
+                  }
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -74,29 +93,38 @@ class TransactionsButtons extends StatelessWidget {
   Future<void> _showCloseDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text("Close Transaction"),
-        content: const Text("Are you sure you want to close this transaction?"),
-        actions: [
-          WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-          const SizedBox(width: 12),
-          WidgetButton(
-            label: 'Close',
-            initialState: WidgetsButtonActionState.action,
-            onPressed: (_) async {
-              try {
-                await _txController.closeLeaf(tx);
-                Navigator.pop(dialogContext);
-                onAction();
-                widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction closed.");
-              } catch (e) {
-                Navigator.pop(dialogContext);
-                final msg = e.toString().replaceFirst('Exception: ', '');
-                widgetsNotifyError(msg);
-              }
-            },
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            title: const Text("Close Transaction"),
+            content: const Text("Are you sure you want to close this transaction?"),
+            actions: [
+              WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetButton(
+                label: 'Close',
+                initialState: WidgetsButtonActionState.action,
+                onPressed: (_) async {
+                  try {
+                    await _txController.closeLeaf(tx);
+
+                    Navigator.pop(dialogContext);
+                    onAction();
+
+                    widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction closed.");
+                  } on ValidationException catch (e) {
+                    Navigator.pop(dialogContext);
+                    widgetsNotifyError(e.userMessage);
+                  } catch (e) {
+                    Navigator.pop(dialogContext);
+                    widgetsNotifyError(e.toString());
+                  }
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -104,20 +132,30 @@ class TransactionsButtons extends StatelessWidget {
   Future<void> _showTradeDialog(BuildContext context) async {
     await showDialog(
       context: context,
-      builder: (dialogContext) => TransactionForm(
-        mode: TransactionsFormActionMode.trade,
-        initialData: tx,
-        parent: tx,
-        onSave: (e) async {
-          if (e == null) {
-            Navigator.pop(dialogContext);
-            onAction();
-            widgetsNotifySuccess("New trading transaction created.");
-          } else {
-            final msg = e.toString().replaceFirst('Exception: ', '');
-            widgetsNotifyError(msg);
-          }
-        },
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: TransactionForm(
+            mode: TransactionsFormActionMode.trade,
+            initialData: tx,
+            parent: tx,
+            onSave: (e) async {
+              if (e == null) {
+                Navigator.pop(dialogContext);
+                onAction();
+                widgetsNotifySuccess("New trading transaction created.");
+                return;
+              }
+
+              if (e is ValidationException) {
+                widgetsNotifyError(e.userMessage, ctx: context);
+                return;
+              }
+
+              widgetsNotifyError(e.toString(), ctx: context);
+            },
+          ),
+        ),
       ),
     );
   }
@@ -125,20 +163,29 @@ class TransactionsButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<bool>>(
-      future: Future.wait([_txController.hasLeaf(tx), _txController.isClosable(tx)]),
+      future: Future.wait([
+        _txController.isTradable(tx),
+        _txController.isClosable(tx),
+        _txController.isDeletable(tx),
+        _txController.isUpdatable(tx),
+      ]),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SizedBox.shrink();
         }
 
-        final hasLeaf = snapshot.data![0];
+        final isTradable = snapshot.data![0];
         final isClosable = snapshot.data![1];
+        final isDeletable = snapshot.data![2];
+        final isUpdatable = snapshot.data![3];
+
         return Wrap(
           spacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (tx.isEditable && !hasLeaf)
+            if (isUpdatable)
               WidgetButton(
+                key: Key("edit-button-${tx.tid}"),
                 icon: Icons.edit,
                 tooltip: "Edit",
                 padding: const EdgeInsets.all(8),
@@ -150,8 +197,9 @@ class TransactionsButtons extends StatelessWidget {
                 },
               ),
 
-            if (tx.isTradable)
+            if (isTradable)
               WidgetButton(
+                key: Key("trade-button-${tx.tid}"),
                 icon: Icons.swap_horiz,
                 initialState: WidgetsButtonActionState.action,
                 tooltip: "Trade",
@@ -164,8 +212,9 @@ class TransactionsButtons extends StatelessWidget {
                 },
               ),
 
-            if (tx.isDeletable && isClosable)
+            if (isDeletable)
               WidgetButton(
+                key: Key("delete-button-${tx.tid}"),
                 icon: Icons.delete,
                 initialState: WidgetsButtonActionState.error,
                 tooltip: "Delete",
@@ -175,8 +224,9 @@ class TransactionsButtons extends StatelessWidget {
                 onPressed: (_) => _showDeleteDialog(context),
               ),
 
-            if (tx.isClosable)
+            if (isClosable)
               WidgetButton(
+                key: Key("close-button-${tx.tid}"),
                 icon: Icons.close,
                 initialState: WidgetsButtonActionState.warning,
                 tooltip: "Close",

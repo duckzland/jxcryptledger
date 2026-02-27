@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jxcryptledger/widgets/notify.dart';
 
+import '../../../app/exceptions.dart';
 import '../../../app/layout.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
@@ -122,17 +123,27 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   void _showAddTransactionDialog() {
     showDialog(
       context: context,
-      builder: (dialogContext) => TransactionForm(
-        mode: TransactionsFormActionMode.addNew,
-        onSave: (e) async {
-          if (e == null) {
-            Navigator.pop(dialogContext);
-            widgetsNotifySuccess('Transaction saved');
-          } else {
-            final msg = e.toString().replaceFirst('Exception: ', '');
-            widgetsNotifyError(msg);
-          }
-        },
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: TransactionForm(
+            mode: TransactionsFormActionMode.addNew,
+            onSave: (e) async {
+              if (e == null) {
+                Navigator.pop(dialogContext);
+                widgetsNotifySuccess('Transaction saved');
+                return;
+              }
+
+              if (e is ValidationException) {
+                widgetsNotifyError(e.userMessage, ctx: context);
+                return;
+              }
+
+              widgetsNotifyError(e.toString(), ctx: context);
+            },
+          ),
+        ),
       ),
     );
   }

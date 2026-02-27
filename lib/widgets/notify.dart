@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import '../app/router.dart';
 import '../app/theme.dart';
 
-void widgetsNotifySuccess(String msg) {
-  ScaffoldMessenger.of(rootNavigatorKey.currentContext!).showSnackBar(
+BuildContext _resolveContext(BuildContext? ctx) {
+  return ctx ?? rootNavigatorKey.currentContext!;
+}
+
+void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
+  final context = _resolveContext(ctx);
+
+  ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.primary,
       content: Text(msg, style: const TextStyle(color: AppTheme.text)),
@@ -12,8 +18,10 @@ void widgetsNotifySuccess(String msg) {
   );
 }
 
-void widgetsNotifyError(String msg) {
-  ScaffoldMessenger.of(rootNavigatorKey.currentContext!).showSnackBar(
+void widgetsNotifyError(String msg, {BuildContext? ctx}) {
+  final context = _resolveContext(ctx);
+
+  ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.error,
       content: Text(msg, style: const TextStyle(color: AppTheme.text)),
@@ -21,8 +29,10 @@ void widgetsNotifyError(String msg) {
   );
 }
 
-void widgetsNotifyWarning(String msg) {
-  ScaffoldMessenger.of(rootNavigatorKey.currentContext!).showSnackBar(
+void widgetsNotifyWarning(String msg, {BuildContext? ctx}) {
+  final context = _resolveContext(ctx);
+
+  ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.warning,
       content: Text(msg, style: const TextStyle(color: AppTheme.text)),

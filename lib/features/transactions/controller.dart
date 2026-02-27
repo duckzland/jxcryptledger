@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../app/exceptions.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -76,15 +77,62 @@ class TransactionsController extends ChangeNotifier {
       final leaf = await repo.getLeaf(tx);
       return leaf.isNotEmpty;
     } catch (e) {
-      rethrow;
+      return false;
+    }
+  }
+
+  Future<bool> isAddable(TransactionsModel tx) async {
+    try {
+      await repo.canAdd(tx);
+      return true;
+    } on ValidationException catch (_) {
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 
   Future<bool> isClosable(TransactionsModel tx) async {
     try {
-      return repo.canClose(tx);
+      await repo.canClose(tx);
+      return true;
+    } on ValidationException catch (_) {
+      return false;
     } catch (e) {
-      rethrow;
+      return false;
+    }
+  }
+
+  Future<bool> isDeletable(TransactionsModel tx) async {
+    try {
+      await repo.canDelete(tx);
+      return true;
+    } on ValidationException catch (_) {
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isUpdatable(TransactionsModel tx) async {
+    try {
+      await repo.canUpdate(tx);
+      return true;
+    } on ValidationException catch (_) {
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isTradable(TransactionsModel tx) async {
+    try {
+      await repo.canTrade(tx);
+      return true;
+    } on ValidationException catch (_) {
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 }
