@@ -138,6 +138,10 @@ class TransactionsModel {
         '${date.year}';
   }
 
+  int get timestampAsMs {
+    return timestamp < 20000000000 ? timestamp * 1000 : timestamp;
+  }
+
   String get srAmountText => Utils.formatSmartDouble(srAmount);
   String get rrAmountText => Utils.formatSmartDouble(rrAmount);
   String get balanceText => Utils.formatSmartDouble(balance);

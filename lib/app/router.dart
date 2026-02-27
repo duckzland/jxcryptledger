@@ -7,6 +7,8 @@ import '../features/transactions/pages/index.dart';
 import '../features/unlock/controller.dart';
 import '../features/unlock/page.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 class AppRouter {
   static bool _showBackFor(String location) {
     if (location == "/transactions") return false;
@@ -16,6 +18,7 @@ class AppRouter {
 
   static final router = GoRouter(
     initialLocation: "/unlock",
+    navigatorKey: rootNavigatorKey,
 
     routes: [
       GoRoute(

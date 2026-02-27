@@ -15,13 +15,22 @@ import 'model.dart';
 enum TransactionsFormActionMode { addNew, edit, trade }
 
 class TransactionForm extends StatefulWidget {
-  final void Function() onSave;
+  final BuildContext dialogContext;
+
+  final void Function(Object? error)? onSave;
   final TransactionsFormActionMode mode;
 
   final TransactionsModel? initialData;
   final TransactionsModel? parent;
 
-  const TransactionForm({super.key, required this.onSave, required this.mode, this.initialData, this.parent});
+  const TransactionForm({
+    super.key,
+    required this.dialogContext,
+    required this.onSave,
+    required this.mode,
+    this.initialData,
+    this.parent,
+  });
 
   @override
   State<TransactionForm> createState() => _TransactionFormState();
@@ -158,9 +167,12 @@ class _TransactionFormState extends State<TransactionForm> {
       meta: _saveNotesField(),
     );
 
-    await _txController.add(tx);
-
-    widget.onSave();
+    try {
+      await _txController.add(tx);
+      widget.onSave?.call(null);
+    } catch (e) {
+      widget.onSave?.call(e);
+    }
   }
 
   void _saveTrade() async {
@@ -194,10 +206,13 @@ class _TransactionFormState extends State<TransactionForm> {
 
     final updatedParent = parent.copyWith(balance: newParentBalance, status: newStatus.index);
 
-    await _txController.add(child);
-    await _txController.update(updatedParent);
-
-    widget.onSave();
+    try {
+      await _txController.add(child);
+      await _txController.update(updatedParent);
+      widget.onSave?.call(null);
+    } catch (e) {
+      widget.onSave?.call(e);
+    }
   }
 
   void _saveEdit() async {
@@ -214,9 +229,12 @@ class _TransactionFormState extends State<TransactionForm> {
       meta: _saveNotesField(),
     );
 
-    await _txController.update(tx);
-
-    widget.onSave();
+    try {
+      await _txController.update(tx);
+      widget.onSave?.call(null);
+    } catch (e) {
+      widget.onSave?.call(e);
+    }
   }
 
   String _saveRidField() {
@@ -414,9 +432,9 @@ class _TransactionFormState extends State<TransactionForm> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+      insetPadding: const EdgeInsets.all(24),
+      child: IntrinsicWidth(
+        child: IntrinsicHeight(
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
@@ -555,7 +573,7 @@ class _TransactionFormState extends State<TransactionForm> {
               icon: const Icon(Icons.keyboard_double_arrow_up),
               tooltip: 'Use max',
               onPressed: () {
-                _srAmountController.text = Utils.formatSmartDouble(balance);
+                _srAmountController.text = Utils.formatSmartDouble(balance).replaceAll(",", "");
               },
             ),
           ),

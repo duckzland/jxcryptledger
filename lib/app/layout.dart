@@ -5,6 +5,7 @@ import '../../features/cryptos/service.dart';
 import '../../features/rates/service.dart';
 import '../core/locator.dart';
 import '../widgets/button.dart';
+import 'theme.dart';
 
 class AppLayout extends StatefulWidget {
   static void Function(String)? setTitle;
@@ -48,6 +49,7 @@ class _AppLayoutState extends State<AppLayout> {
 
         return Scaffold(
           appBar: AppBar(
+            backgroundColor: AppTheme.columnHeaderBg,
             leading: widget.showBack
                 ? IconButton(
                     icon: const Icon(Icons.arrow_back),

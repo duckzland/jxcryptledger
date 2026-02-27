@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../app/router.dart';
 import '../app/theme.dart';
 
-void widgetsNotifySuccess(BuildContext context, String msg) {
-  ScaffoldMessenger.of(context).showSnackBar(
+void widgetsNotifySuccess(String msg) {
+  ScaffoldMessenger.of(rootNavigatorKey.currentContext!).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.primary,
       content: Text(msg, style: const TextStyle(color: AppTheme.text)),
@@ -11,8 +12,8 @@ void widgetsNotifySuccess(BuildContext context, String msg) {
   );
 }
 
-void widgetsNotifyError(BuildContext context, String msg) {
-  ScaffoldMessenger.of(context).showSnackBar(
+void widgetsNotifyError(String msg) {
+  ScaffoldMessenger.of(rootNavigatorKey.currentContext!).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.error,
       content: Text(msg, style: const TextStyle(color: AppTheme.text)),
@@ -20,8 +21,8 @@ void widgetsNotifyError(BuildContext context, String msg) {
   );
 }
 
-void widgetsNotifyWarning(BuildContext context, String msg) {
-  ScaffoldMessenger.of(context).showSnackBar(
+void widgetsNotifyWarning(String msg) {
+  ScaffoldMessenger.of(rootNavigatorKey.currentContext!).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.warning,
       content: Text(msg, style: const TextStyle(color: AppTheme.text)),

@@ -12,6 +12,8 @@ class AppTheme {
   static const success = Color(0xFF43F436);
   static const warning = Color.fromARGB(255, 213, 161, 20);
   static const action = Color(0xFF43A047);
+  static const loss = Color.fromARGB(255, 245, 50, 50);
+  static const profit = Color.fromARGB(255, 62, 220, 51);
   // static const headerBg = Color(0xFF1B1B1B);
   // static const separator = Color(0xFF404040);
   static const text = Colors.white;
@@ -20,12 +22,15 @@ class AppTheme {
   // static const rowHeaderBg = Color(0xFF000000);
 
   static const background = Color(0xFF0D1421);
+  static const scrimBackground = Color.fromARGB(255, 6, 7, 10);
   static const headerBg = Color(0xFF161C27);
   static const columnHeaderBg = Color(0xFF000000);
   static const rowHeaderBg = Color(0xFF0D1421);
   static const separator = Color.fromARGB(255, 44, 53, 68);
   static const panelBg = Color(0xFF1B2230);
   static const scrollbarBg = Color.fromARGB(255, 42, 53, 74);
+  static const mutedBg = Color.fromARGB(255, 31, 36, 46);
+  static const closedBg = Color.fromARGB(255, 36, 49, 61);
 
   static const buttonFg = Color(0xFFE0E0E0);
 
@@ -66,8 +71,6 @@ class AppTheme {
         onSurface: text,
         onPrimary: text,
       ),
-
-      scaffoldBackgroundColor: background,
 
       appBarTheme: const AppBarTheme(
         backgroundColor: headerBg,
@@ -128,7 +131,7 @@ class AppTheme {
         headingRowColor: WidgetStateProperty.all(AppTheme.columnHeaderBg),
         headingTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500, fontSize: 17),
         dataRowColor: WidgetStateProperty.all(AppTheme.rowHeaderBg),
-        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 15),
+        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 16),
         dividerThickness: 1,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowMinHeight: AppTheme.tableDataRowMinHeight,

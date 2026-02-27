@@ -27,9 +27,9 @@ class WidgetsBalanceText extends StatelessWidget {
   Color _colorForMode(int mode) {
     switch (mode) {
       case 1:
-        return AppTheme.success;
+        return const Color.fromARGB(255, 112, 225, 104);
       case -1:
-        return AppTheme.error;
+        return const Color.fromARGB(255, 255, 109, 109);
       default:
         return AppTheme.text;
     }
@@ -43,7 +43,7 @@ class WidgetsBalanceText extends StatelessWidget {
       case 1:
         return "+";
       case -1:
-        return "-";
+        return value > 0 ? "-" : "";
       default:
         return "";
     }

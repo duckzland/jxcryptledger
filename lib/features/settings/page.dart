@@ -152,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
           }
 
           if (!mounted) return;
-          widgetsNotifySuccess(context, "Securely saved to vault");
+          widgetsNotifySuccess("Securely saved to vault");
         }
 
         s.reset();
@@ -201,7 +201,7 @@ class _SettingsPageState extends State<SettingsPage> {
         setState(() {});
 
         if (!mounted) return;
-        widgetsNotifySuccess(context, "Settings reset to default");
+        widgetsNotifySuccess("Settings reset to default");
 
         s.error(); // return to error theme
       },

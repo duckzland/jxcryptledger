@@ -62,11 +62,17 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   void _showAddTransactionDialog() {
     showDialog(
       context: context,
-      builder: (context) => TransactionForm(
+      builder: (dialogContext) => TransactionForm(
         mode: TransactionsFormActionMode.addNew,
-        onSave: () async {
-          Navigator.pop(context);
-          widgetsNotifySuccess(context, 'Transaction saved');
+        dialogContext: dialogContext,
+        onSave: (e) async {
+          if (e == null) {
+            Navigator.pop(dialogContext);
+            widgetsNotifySuccess('Transaction saved');
+          } else {
+            final msg = e.toString().replaceFirst('Exception: ', '');
+            widgetsNotifyError(msg);
+          }
         },
       ),
     );
@@ -269,14 +275,16 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
         return TransactionsJournalView(
           transactions: List<TransactionsModel>.from(_controller.items)
-            ..sort((a, b) => a.timestamp.compareTo(b.timestamp)),
+            ..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs)),
           onStatusChanged: () => setState(() {}),
         );
 
       case TransactionsViewMode.historyView:
         _changePageTitle("Transaction History");
+        final transactions = List<TransactionsModel>.from(_controller.items)
+          ..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
 
-        return TransactionHistory(transactions: _controller.items);
+        return TransactionHistory(transactions: transactions);
     }
   }
 
@@ -336,13 +344,13 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
               if (!success) {
                 s.error();
                 if (mounted) {
-                  widgetsNotifyError(context, "Failed to fetch cryptocurrency data.");
+                  widgetsNotifyError("Failed to fetch cryptocurrency data.");
                 }
               } else {
                 _cryptosRepo.getSymbolMap();
                 s.action();
                 if (mounted) {
-                  widgetsNotifySuccess(context, "Cryptocurrency list successfully retrieved.");
+                  widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
                   setState(() {});
                 }
               }

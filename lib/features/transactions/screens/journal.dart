@@ -73,7 +73,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
         'rate': '${tx.rateText} $resultSymbol/$sourceCoinSymbol',
         'status': tx.statusText,
         'tx': tx,
-        '_timestamp': tx.timestamp,
+        '_timestamp': tx.timestampAsMs,
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
         '_sourceValue': tx.srAmount,
@@ -105,7 +105,14 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
                 DataColumn2(
                   label: Text('Date'),
                   fixedWidth: 100,
-                  onSort: (i, asc) => _onSort((d) => d['_timestamp'], i, asc),
+                  onSort: (i, asc) => _onSort(
+                    (d) {
+                      final ts = d['_timestamp'] as int;
+                      return ts;
+                    },
+                    i,
+                    asc,
+                  ),
                 ),
                 DataColumn2(
                   label: Text('Balance'),
@@ -138,6 +145,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
                 const DataColumn2(label: Text('Actions'), fixedWidth: 140),
               ],
               rows: table.map((r) {
+                print("timestamp = ${r['_timestamp']}");
+
                 return DataRow(
                   cells: [
                     DataCell(Text(r['date'] ?? '')),
@@ -170,18 +179,14 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
         final aField = getField(a);
         final bField = getField(b);
 
-        // Tuple sorting: (symbol, value)
         if (aField is (String, num) && bField is (String, num)) {
-          final symbolCompare = aField.$1.compareTo(bField.$1);
-          if (symbolCompare != 0) {
-            return ascending ? symbolCompare : -symbolCompare;
-          }
+          final c1 = aField.$1.compareTo(bField.$1);
+          if (c1 != 0) return ascending ? c1 : -c1;
 
-          final valueCompare = aField.$2.compareTo(bField.$2);
-          return ascending ? valueCompare : -valueCompare;
+          final c2 = aField.$2.compareTo(bField.$2);
+          return ascending ? c2 : -c2;
         }
 
-        // Fallback for simple Comparable
         return ascending
             ? Comparable.compare(aField as Comparable, bField as Comparable)
             : Comparable.compare(bField as Comparable, aField as Comparable);
@@ -190,15 +195,5 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
       _sortColumnIndex = columnIndex;
       _sortAscending = ascending;
     });
-  }
-
-  (String symbol, double value) _parseValueSymbol(String input) {
-    final parts = input.split(' ');
-    if (parts.length < 2) return ('', 0);
-
-    final value = double.tryParse(parts[0]) ?? 0;
-    final symbol = parts[1];
-
-    return (symbol, value);
   }
 }

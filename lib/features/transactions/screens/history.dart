@@ -53,6 +53,7 @@ class TransactionHistoryState extends State<TransactionHistory> {
         padding: const EdgeInsets.only(bottom: 16),
         child: WidgetsPanel(
           child: TreeView.simple(
+            key: ValueKey(widget.transactions.length),
             tree: _root,
             showRootNode: false,
             indentation: const Indentation(style: IndentStyle.roundJoint),
@@ -63,15 +64,17 @@ class TransactionHistoryState extends State<TransactionHistory> {
               alignment: Alignment.centerRight,
             ),
             onTreeReady: (controller) {
-              for (final level1 in _root.children.values) {
-                controller.expandNode(level1 as TreeNode<TransactionsModel>);
-
-                for (final level2 in level1.children.values) {
-                  controller.expandNode(level2 as TreeNode<TransactionsModel>);
+              void expandAll(TreeNode node) {
+                controller.expandNode(node as TreeNode<TransactionsModel>);
+                for (final child in node.children.values) {
+                  expandAll(child as TreeNode<TransactionsModel>);
                 }
               }
-            },
 
+              for (final child in _root.children.values) {
+                expandAll(child as TreeNode<TransactionsModel>);
+              }
+            },
             builder: (context, node) {
               final tx = node.data;
               if (tx == null) return const SizedBox.shrink();
@@ -87,8 +90,10 @@ class TransactionHistoryState extends State<TransactionHistory> {
     final root = TreeNode<TransactionsModel>.root();
     final nodes = <String, TreeNode<TransactionsModel>>{};
 
+    int i = 0;
     for (final tx in txs) {
-      nodes[tx.tid.toString()] = TreeNode<TransactionsModel>(key: tx.tid.toString(), data: tx);
+      nodes[tx.tid.toString()] = TreeNode<TransactionsModel>(key: "${tx.tid}-${tx.timestamp}-$i", data: tx);
+      i++;
     }
 
     for (final tx in txs) {
@@ -108,12 +113,28 @@ class TransactionHistoryState extends State<TransactionHistory> {
     final sourceSymbol = _cryptosRepo.getSymbol(tx.srId) ?? 'Unknown';
     final resultSymbol = _cryptosRepo.getSymbol(tx.rrId) ?? 'Unknown';
 
+    Color bgColor = AppTheme.rowHeaderBg;
+    if (tx.statusEnum == TransactionStatus.inactive) {
+      bgColor = AppTheme.mutedBg;
+    }
+    if (tx.statusEnum == TransactionStatus.closed) {
+      bgColor = AppTheme.closedBg;
+    }
+
+    Color fgColor = AppTheme.text;
+    if (tx.statusEnum == TransactionStatus.inactive) {
+      fgColor = AppTheme.textMuted;
+    }
+    if (tx.statusEnum == TransactionStatus.closed) {
+      fgColor = AppTheme.textMuted;
+    }
+
     return Card(
       margin: const EdgeInsets.only(top: 4, bottom: 4),
-
-      color: AppTheme.rowHeaderBg,
+      color: bgColor,
       child: ListTile(
         title: WidgetsHeader(
+          titleColor: fgColor,
           title: "${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol",
           subtitle: "${tx.timestampAsDate} - ${tx.statusText}",
         ),
@@ -125,8 +146,13 @@ class TransactionHistoryState extends State<TransactionHistory> {
               TransactionsButtons(
                 tx: tx,
                 onAction: () {
-                  // Update model, then refresh tree
                   refreshTree();
+
+                  if (mounted) {
+                    setState(() {
+                      _root = _buildTreeNodes(widget.transactions);
+                    });
+                  }
                 },
               ),
             ],
