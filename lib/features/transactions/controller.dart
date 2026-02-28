@@ -63,6 +63,15 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
+  Future<TransactionsModel?> getParent(TransactionsModel tx) async {
+    try {
+      TransactionsModel? ptx = await repo.get(tx.pid);
+      return ptx;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> removeRoot(TransactionsModel tx) async {
     try {
       await repo.delete(tx);
