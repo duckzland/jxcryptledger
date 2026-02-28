@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
-import 'package:jxcryptledger/features/rates/repository.dart';
-import 'package:jxcryptledger/features/rates/service.dart';
-
+import '../features/cryptos/controller.dart';
+import '../features/rates/repository.dart';
+import '../features/rates/service.dart';
 import '../features/cryptos/repository.dart';
 import '../features/cryptos/service.dart';
 import '../features/settings/controller.dart';
@@ -18,15 +18,12 @@ void setupLocator() {
 
   // Transactions
   locator.registerLazySingleton<TransactionsRepository>(() => TransactionsRepository());
-  locator.registerLazySingleton<TransactionsController>(
-    () => TransactionsController(locator<TransactionsRepository>()),
-  );
+  locator.registerLazySingleton<TransactionsController>(() => TransactionsController(locator<TransactionsRepository>()));
 
   // Cryptos
   locator.registerLazySingleton<CryptosRepository>(() => CryptosRepository());
-  locator.registerLazySingleton<CryptosService>(
-    () => CryptosService(locator<CryptosRepository>(), locator<SettingsRepository>()),
-  );
+  locator.registerLazySingleton<CryptosService>(() => CryptosService(locator<CryptosRepository>(), locator<SettingsRepository>()));
+  locator.registerLazySingleton<CryptosController>(() => CryptosController(locator<CryptosRepository>()));
 
   // Rates
   locator.registerLazySingleton<RatesRepository>(() => RatesRepository());

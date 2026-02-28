@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/features/transactions/repository.dart';
 
 import '../../app/theme.dart';
 import '../../core/locator.dart';
@@ -7,7 +6,7 @@ import '../../core/log.dart';
 import '../../core/utils.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
-import '../cryptos/repository.dart';
+import '../cryptos/controller.dart';
 import '../cryptos/search_field.dart';
 import 'controller.dart';
 import 'model.dart';
@@ -28,10 +27,9 @@ class TransactionForm extends StatefulWidget {
 }
 
 class _TransactionFormState extends State<TransactionForm> {
-  late CryptosRepository _cryptosRepo;
+  late CryptosController _cryptosController;
 
   TransactionsController get _txController => locator<TransactionsController>();
-  TransactionsRepository get _txRepo => locator<TransactionsRepository>();
 
   late TextEditingController _srAmountController;
   late TextEditingController _rrAmountController;
@@ -52,12 +50,12 @@ class _TransactionFormState extends State<TransactionForm> {
   bool get isLeaf => !isRoot;
   bool get isActive => widget.initialData?.statusEnum == TransactionStatus.active;
 
-  String generateTid() => _txRepo.generateTid();
+  String generateTid() => _txController.generateTid();
 
   @override
   void initState() {
     super.initState();
-    _cryptosRepo = locator<CryptosRepository>();
+    _cryptosController = locator<CryptosController>();
 
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
@@ -638,7 +636,7 @@ class _TransactionFormState extends State<TransactionForm> {
             initialValue: _selectedSrId,
             validator: (value) {
               if (value == null || value == 0) return 'Crypto is required';
-              if (_cryptosRepo.getSymbol(value) == null) return 'Invalid crypto';
+              if (_cryptosController.getSymbol(value) == null) return 'Invalid crypto';
               return null;
             },
             onSelected: (id) => setState(() => _selectedSrId = id),
@@ -711,7 +709,7 @@ class _TransactionFormState extends State<TransactionForm> {
             initialValue: _selectedRrId,
             validator: (value) {
               if (value == null || value == 0) return 'Crypto is required';
-              if (_cryptosRepo.getSymbol(value) == null) return 'Invalid crypto';
+              if (_cryptosController.getSymbol(value) == null) return 'Invalid crypto';
               return null;
             },
             onSelected: (id) => setState(() => _selectedRrId = id),
@@ -725,7 +723,7 @@ class _TransactionFormState extends State<TransactionForm> {
               initialValue: _selectedRrId,
               validator: (value) {
                 if (value == null || value == 0) return 'Crypto is required';
-                if (_cryptosRepo.getSymbol(value) == null) return 'Invalid crypto';
+                if (_cryptosController.getSymbol(value) == null) return 'Invalid crypto';
                 return null;
               },
               onSelected: (id) => setState(() => _selectedRrId = id),
@@ -739,7 +737,7 @@ class _TransactionFormState extends State<TransactionForm> {
           initialValue: _selectedRrId,
           validator: (value) {
             if (value == null || value == 0) return 'Crypto is required';
-            if (_cryptosRepo.getSymbol(value) == null) return 'Invalid crypto';
+            if (_cryptosController.getSymbol(value) == null) return 'Invalid crypto';
             return null;
           },
           onSelected: (id) => setState(() => _selectedRrId = id),
@@ -919,7 +917,7 @@ class _TransactionFormState extends State<TransactionForm> {
     if (id == null) {
       text = 'Unknown Crypto';
     } else {
-      final crypto = _cryptosRepo.getById(id);
+      final crypto = _cryptosController.getById(id);
       text = crypto == null ? '$id' : '${crypto.symbol} (#${crypto.id})';
     }
 
@@ -996,7 +994,7 @@ class _TransactionFormState extends State<TransactionForm> {
       return 'Crypto is required';
     }
 
-    if (_cryptosRepo.getSymbol(value) == null) {
+    if (_cryptosController.getSymbol(value) == null) {
       return 'Invalid crypto';
     }
 

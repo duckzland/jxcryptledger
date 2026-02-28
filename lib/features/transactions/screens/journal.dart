@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/panel.dart';
-import '../../cryptos/repository.dart';
+import '../../cryptos/controller.dart';
 import '../buttons.dart';
 import '../model.dart';
 
@@ -19,7 +19,7 @@ class TransactionsJournalView extends StatefulWidget {
 }
 
 class _TransactionsJournalViewState extends State<TransactionsJournalView> {
-  late final CryptosRepository _cryptosRepo;
+  late final CryptosController _cryptosController;
   late List<Map<String, dynamic>> _rows;
 
   int? _sortColumnIndex;
@@ -28,7 +28,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
   @override
   void initState() {
     super.initState();
-    _cryptosRepo = locator<CryptosRepository>();
+    _cryptosController = locator<CryptosController>();
 
     _rows = _buildRows(widget.transactions);
 
@@ -74,8 +74,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
   List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
     final rows = <Map<String, dynamic>>[];
     for (final tx in txs) {
-      final sourceCoinSymbol = _cryptosRepo.getSymbol(tx.srId) ?? 'Unknown Coin';
-      final resultSymbol = _cryptosRepo.getSymbol(tx.rrId) ?? 'Unknown Coin';
+      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
+      final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
       rows.add({
         'date': tx.timestampAsDate,
@@ -113,22 +113,16 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
               sortAscending: _sortAscending,
               isHorizontalScrollBarVisible: false,
               columns: [
-                DataColumn2(
-                  label: Text('Date '),
-                  fixedWidth: 100,
-                  onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc),
-                ),
+                DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc)),
                 DataColumn2(
                   label: Text('Balance '),
                   size: ColumnSize.M,
-                  onSort: (col, asc) =>
-                      _onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
+                  onSort: (col, asc) => _onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
                 ),
                 DataColumn2(
                   label: Text('From '),
                   size: ColumnSize.M,
-                  onSort: (col, asc) =>
-                      _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
+                  onSort: (col, asc) => _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
                 ),
                 const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
                 DataColumn2(

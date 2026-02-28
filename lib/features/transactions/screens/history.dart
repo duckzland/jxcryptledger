@@ -6,7 +6,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
-import '../../cryptos/repository.dart';
+import '../../cryptos/controller.dart';
 import '../model.dart';
 
 class TransactionHistory extends StatefulWidget {
@@ -19,7 +19,7 @@ class TransactionHistory extends StatefulWidget {
 }
 
 class TransactionHistoryState extends State<TransactionHistory> {
-  final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
+  final CryptosController _cryptosController = locator<CryptosController>();
 
   late TreeNode<TransactionsModel> _root;
 
@@ -110,8 +110,8 @@ class TransactionHistoryState extends State<TransactionHistory> {
   }
 
   Widget _buildTransactionPanel(TransactionsModel tx, TreeNode<TransactionsModel> node) {
-    final sourceSymbol = _cryptosRepo.getSymbol(tx.srId) ?? 'Unknown';
-    final resultSymbol = _cryptosRepo.getSymbol(tx.rrId) ?? 'Unknown';
+    final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown';
+    final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown';
 
     Color bgColor = AppTheme.rowHeaderBg;
     if (tx.statusEnum == TransactionStatus.inactive) {

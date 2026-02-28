@@ -9,7 +9,7 @@ import '../../../core/locator.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
-import '../../cryptos/repository.dart';
+import '../../cryptos/controller.dart';
 import '../../rates/service.dart';
 import '../buttons.dart';
 import '../calculations.dart';
@@ -22,20 +22,14 @@ class TransactionsActive extends StatefulWidget {
   final List<TransactionsModel> transactions;
   final VoidCallback onStatusChanged;
 
-  const TransactionsActive({
-    super.key,
-    required this.srid,
-    required this.rrid,
-    required this.transactions,
-    required this.onStatusChanged,
-  });
+  const TransactionsActive({super.key, required this.srid, required this.rrid, required this.transactions, required this.onStatusChanged});
 
   @override
   State<TransactionsActive> createState() => _TransactionsActiveState();
 }
 
 class _TransactionsActiveState extends State<TransactionsActive> {
-  late final CryptosRepository _cryptosRepo;
+  late final CryptosController _cryptosController;
   late final RatesService _ratesService;
   late List<Map<String, dynamic>> _rows;
 
@@ -56,9 +50,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   @override
   void initState() {
     super.initState();
-    _cryptosRepo = locator<CryptosRepository>();
-    _sourceSymbol = _cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin';
-    _resultSymbol = _cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin';
+    _cryptosController = locator<CryptosController>();
+    _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
+    _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
     _ratesService = locator<RatesService>();
     _ratesService.addListener(_onRatesUpdated);
@@ -91,8 +85,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.transactions != widget.transactions && mounted) {
-      _sourceSymbol = _cryptosRepo.getSymbol(widget.srid) ?? 'Unknown Coin';
-      _resultSymbol = _cryptosRepo.getSymbol(widget.rrid) ?? 'Unknown Coin';
+      _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
+      _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
       _rows = _buildRows(widget.transactions);
 
@@ -256,10 +250,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 5),
-            Text(
-              '$_sourceSymbol to $_resultSymbol Trades',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            Text('$_sourceSymbol to $_resultSymbol Trades', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
           ],
         ),
@@ -311,11 +302,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         sortAscending: _sortAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(
-            label: Text('Date '),
-            fixedWidth: 100,
-            onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc),
-          ),
+          DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc)),
           DataColumn2(
             size: ColumnSize.S,
             label: WidgetsHeader(title: 'From ', subtitle: _sourceSymbol),
@@ -349,11 +336,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
             ),
           ],
 
-          DataColumn2(
-            label: Text('Status '),
-            fixedWidth: 100,
-            onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc),
-          ),
+          DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc)),
           DataColumn2(label: Text('Actions'), fixedWidth: 140),
         ],
 
@@ -366,22 +349,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               DataCell(Text(r['exchangedRate'])),
 
               if (currentRate != 0) ...[
-                DataCell(
-                  WidgetsBalanceText(
-                    text: r['currentRate'] ?? "-",
-                    value: r['profitLevel'],
-                    comparator: 0,
-                    hidePrefix: true,
-                  ),
-                ),
-                DataCell(
-                  WidgetsBalanceText(
-                    text: r['currentValue'] ?? "-",
-                    value: r['profitLevel'],
-                    comparator: 0,
-                    hidePrefix: true,
-                  ),
-                ),
+                DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
+                DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
                 DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
               ],
 
@@ -440,12 +409,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     );
   }
 
-  Widget _buildPanelItem({
-    required String title,
-    required String subtitle,
-    required double value,
-    required double comparator,
-  }) {
+  Widget _buildPanelItem({required String title, required String subtitle, required double value, required double comparator}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [

@@ -6,7 +6,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/panel.dart';
-import '../../cryptos/repository.dart';
+import '../../cryptos/controller.dart';
 import '../buttons.dart';
 import '../calculations.dart';
 import '../model.dart';
@@ -23,7 +23,7 @@ class TransactionsOverview extends StatefulWidget {
 }
 
 class _TransactionsOverviewState extends State<TransactionsOverview> {
-  late final CryptosRepository _cryptosRepo;
+  late final CryptosController _cryptosController;
   late List<Map<String, dynamic>> _rows;
 
   late String _resultSymbol;
@@ -37,8 +37,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
   void initState() {
     super.initState();
 
-    _cryptosRepo = locator<CryptosRepository>();
-    _resultSymbol = _cryptosRepo.getSymbol(widget.id) ?? 'Unknown Coin';
+    _cryptosController = locator<CryptosController>();
+    _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
     _rows = _buildRows(widget.transactions);
 
@@ -57,7 +57,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.transactions != widget.transactions && mounted) {
-      _resultSymbol = _cryptosRepo.getSymbol(widget.id) ?? 'Unknown Coin';
+      _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
       _rows = _buildRows(widget.transactions);
 
       if (_sortColumnIndex != null) {
@@ -94,7 +94,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
     final rows = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      final sourceCoinSymbol = _cryptosRepo.getSymbol(tx.srId);
+      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
 
       rows.add({
         'balance': '${tx.balanceText} $_resultSymbol',
@@ -118,9 +118,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
   Widget build(BuildContext context) {
     final cumulativeSourceValue = _calc.totalBalance(widget.transactions);
 
-    return WidgetsPanel(
-      child: Column(children: [_buildHeader(cumulativeSourceValue), const SizedBox(height: 20), _buildTable()]),
-    );
+    return WidgetsPanel(child: Column(children: [_buildHeader(cumulativeSourceValue), const SizedBox(height: 20), _buildTable()]));
   }
 
   Widget _buildHeader(double cumulativeSourceValue) {
@@ -131,7 +129,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
           children: [
             const SizedBox(height: 5),
             Text(
-              _cryptosRepo.getSymbol(widget.id) ?? 'Unknown Coin',
+              _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             Text('Coin ID: ${widget.id}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
@@ -148,8 +146,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
                   Text("Total Balance", style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
                   const SizedBox(height: 1),
                   WidgetsBalanceText(
-                    text:
-                        "${Utils.formatSmartDouble(cumulativeSourceValue)} ${_cryptosRepo.getSymbol(widget.id) ?? 'Unknown Coin'}",
+                    text: "${Utils.formatSmartDouble(cumulativeSourceValue)} ${_cryptosController.getSymbol(widget.id) ?? 'Unknown Coin'}",
                     value: 0,
                     comparator: 0,
                     fontSize: 13,
@@ -180,11 +177,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
         sortAscending: _sortAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(
-            label: Text('Date '),
-            fixedWidth: 100,
-            onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc),
-          ),
+          DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc)),
           DataColumn2(
             label: Text('Balance '),
             size: ColumnSize.M,
@@ -200,11 +193,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
             size: ColumnSize.S,
             onSort: (col, asc) => _onSort((d) => d['_exchangedRateValue'] as double, col, asc),
           ),
-          DataColumn2(
-            label: Text('Status '),
-            fixedWidth: 100,
-            onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc),
-          ),
+          DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc)),
           DataColumn2(label: Text('Actions'), fixedWidth: 140),
         ],
 

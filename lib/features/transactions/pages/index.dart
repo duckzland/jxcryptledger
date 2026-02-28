@@ -7,8 +7,8 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
-import '../../cryptos/repository.dart';
 import '../../cryptos/service.dart';
+import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../form.dart';
 import '../model.dart';
@@ -30,7 +30,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   late TransactionsController _controller;
   late CryptosService _cryptosService;
 
-  final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
+  final CryptosController _cryptosController = locator<CryptosController>();
 
   TransactionsViewMode _viewMode = TransactionsViewMode.active;
 
@@ -51,7 +51,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     _cryptosService = locator<CryptosService>();
     _cryptosService.addListener(_onControllerChanged);
 
-    _cryptosRepo.addListener(_onControllerChanged);
+    _cryptosController.addListener(_onControllerChanged);
 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
@@ -60,7 +60,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   @override
   void dispose() {
     _controller.removeListener(_onControllerChanged);
-    _cryptosRepo.removeListener(_onControllerChanged);
+    _cryptosController.removeListener(_onControllerChanged);
     _cryptosService.removeListener(_onControllerChanged);
 
     super.dispose();
@@ -105,13 +105,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         break;
       case TransactionsViewMode.journal:
         _sortableOptions = {};
-        _filterableOptions = {
-          0: "Show All",
-          1: "Active Trades",
-          2: "Partial Trades",
-          3: "Inactive Trades",
-          4: "Closed Trades",
-        };
+        _filterableOptions = {0: "Show All", 1: "Active Trades", 2: "Partial Trades", 3: "Inactive Trades", 4: "Closed Trades"};
         break;
       case TransactionsViewMode.history:
         _sortableOptions = {0: "By Crypto ID", 1: "Oldest Trades", 2: "Latest Trades"};
@@ -177,8 +171,8 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
     switch (_sortMode) {
       case 0:
         entries.sort((a, b) {
-          final symbolA = _cryptosRepo.getSymbol(a.key) ?? a.key.toString();
-          final symbolB = _cryptosRepo.getSymbol(b.key) ?? b.key.toString();
+          final symbolA = _cryptosController.getSymbol(a.key) ?? a.key.toString();
+          final symbolB = _cryptosController.getSymbol(b.key) ?? b.key.toString();
           return symbolA.compareTo(symbolB);
         });
         break;
@@ -283,18 +277,16 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         return List<TransactionsModel>.from(_controller.items)..sort((a, b) => a.srId.compareTo(b.srId));
 
       case 1:
-        return List<TransactionsModel>.from(_controller.items)
-          ..sort((a, b) => a.timestampAsMs.compareTo(b.timestampAsMs));
+        return List<TransactionsModel>.from(_controller.items)..sort((a, b) => a.timestampAsMs.compareTo(b.timestampAsMs));
 
       default:
-        return List<TransactionsModel>.from(_controller.items)
-          ..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
+        return List<TransactionsModel>.from(_controller.items)..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosRepo.hasAny() && _controller.items.isEmpty) {
+    if (!_cryptosController.hasAny() && _controller.items.isEmpty) {
       return Column(children: [Expanded(child: _buildFetchCryptosState())]);
     }
 
@@ -317,10 +309,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
                     alignment: Alignment.centerRight,
                     child: Wrap(
                       spacing: 20,
-                      children: [
-                        if (_sortableOptions.isNotEmpty) _buildSorter(),
-                        if (_filterableOptions.isNotEmpty) _buildFilter(),
-                      ],
+                      children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()],
                     ),
                   ),
                 ),
@@ -376,9 +365,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
           style: const TextStyle(fontSize: 14),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           itemHeight: kMinInteractiveDimension,
-          items: _filterableOptions.entries
-              .map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value)))
-              .toList(),
+          items: _filterableOptions.entries.map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value))).toList(),
           onChanged: (value) {
             if (value == null) return;
             setState(() => _filterMode = value);
@@ -482,7 +469,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             tooltip: "Add Transaction",
             onPressed: (_) => _showAddTransactionDialog(),
             evaluator: (s) {
-              if (!_cryptosRepo.hasAny()) {
+              if (!_cryptosController.hasAny()) {
                 s.disable();
               } else {
                 s.action();
@@ -537,7 +524,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             onPressed: (_) => _showAddTransactionDialog(),
             evaluator: (s) {
-              if (!_cryptosRepo.hasAny()) {
+              if (!_cryptosController.hasAny()) {
                 s.disable();
               } else {
                 s.action();
@@ -580,7 +567,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
                   widgetsNotifyError("Failed to fetch cryptocurrency data.");
                 }
               } else {
-                _cryptosRepo.getSymbolMap();
+                _cryptosController.getSymbolMap();
                 s.action();
                 if (mounted) {
                   widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
