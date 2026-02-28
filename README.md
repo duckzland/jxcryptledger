@@ -1,4 +1,4 @@
-# jxcryptledger
+# JXCryptLedger
 
 A lightweight, local‑first crypto transaction ledger built with Flutter and Hive.  
 It tracks balances, trades, and transaction trees.
