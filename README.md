@@ -15,7 +15,7 @@ It tracks balances, trades, and transaction trees.
 2. Run `flutter pub get`
 3. Launch the app with `flutter run`
 
-Roadmap
+## Roadmap
 - Export and import your data so you can back up your ledger or move it to another device.
 - Stronger accuracy checks for transactions to make sure every calculation and update behaves exactly as expected.
 - A smarter test database that can generate complex example data for easier testing and development.
