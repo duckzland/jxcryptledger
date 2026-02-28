@@ -10,7 +10,7 @@ import '../../../widgets/balance_text.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../../rates/service.dart';
+import '../../rates/controller.dart';
 import '../buttons.dart';
 import '../calculations.dart';
 import '../model.dart';
@@ -30,7 +30,7 @@ class TransactionsActive extends StatefulWidget {
 
 class _TransactionsActiveState extends State<TransactionsActive> {
   late final CryptosController _cryptosController;
-  late final RatesService _ratesService;
+  late final RatesController _ratesController;
   late List<Map<String, dynamic>> _rows;
 
   late TextEditingController _customRateController;
@@ -54,8 +54,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
     _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
-    _ratesService = locator<RatesService>();
-    _ratesService.addListener(_onRatesUpdated);
+    _ratesController = locator<RatesController>();
+    _ratesController.addListener(_onRatesUpdated);
     _loadMarketRate();
 
     _customRateController = TextEditingController();
@@ -70,7 +70,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   @override
   void dispose() {
     _customRateController.dispose();
-    _ratesService.removeListener(_onRatesUpdated);
+    _ratesController.removeListener(_onRatesUpdated);
     _debounce?.cancel();
 
     super.dispose();
@@ -143,9 +143,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
   Future<void> _loadMarketRate() async {
     try {
-      final rate = await _ratesService.getStoredRate(widget.srid, widget.rrid);
+      final rate = await _ratesController.getStoredRate(widget.srid, widget.rrid);
       if (rate == -9999) {
-        _ratesService.addQueue(widget.srid, widget.rrid);
+        _ratesController.addQueue(widget.srid, widget.rrid);
         return;
       }
       if (mounted) {
