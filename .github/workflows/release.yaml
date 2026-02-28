@@ -26,8 +26,7 @@ jobs:
         run: flutter build windows --release
 
       - name: Create Signed MSIX
-        # install_certificate: true in pubspec handles self-signing on the runner
-        run: dart run msix:create 
+        run: dart run msix:create --build-windows false --install-certificate false
 
       - name: Nuke .env
         if: always()
