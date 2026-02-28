@@ -24,8 +24,12 @@ class RatesController extends ChangeNotifier {
   }
 
   Future<void> refreshRates() async {
-    final before = service.isFetching;
-    await service.refreshRates();
-    if (before != service.isFetching) notifyListeners();
+    try {
+      final before = service.isFetching;
+      await service.refreshRates();
+      if (before != service.isFetching) notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
   }
 }

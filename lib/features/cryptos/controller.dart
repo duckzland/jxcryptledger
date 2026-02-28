@@ -1,6 +1,7 @@
 // cryptos_controller.dart
 import 'package:flutter/material.dart';
 
+import '../../app/exceptions.dart';
 import 'model.dart';
 import 'repository.dart';
 import 'service.dart';
@@ -71,10 +72,24 @@ class CryptosController extends ChangeNotifier {
   }
 
   Future<bool> fetch() async {
-    bool success = await service.fetch();
-    if (success) {
-      notifyListeners();
+    try {
+      final success = await service.fetch();
+
+      if (success) {
+        _symbolCache = null;
+        notifyListeners();
+      }
+
+      return success;
+    } on NetworkingException {
+      rethrow;
+    } catch (e) {
+      throw NetworkingException(
+        AppErrorCode.netUnknownFailure,
+        "CryptosController fetch failed unexpectedly: $e",
+        "Unable to update crypto data due to an unexpected error.",
+        details: e,
+      );
     }
-    return success;
   }
 }

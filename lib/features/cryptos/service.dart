@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../../app/exceptions.dart';
 import '../settings/repository.dart';
 import '../../core/log.dart';
 import 'model.dart';
@@ -17,7 +18,7 @@ class CryptosService {
   CryptosService(this.cryptosRepo, this.settingsRepo);
 
   Future<bool> fetch() async {
-    if (_isFetching) return false; // RULE stays
+    if (_isFetching) return false;
 
     _isFetching = true;
 
@@ -28,14 +29,22 @@ class CryptosService {
       final resp = await http.get(url);
 
       if (resp.statusCode != 200) {
-        logln("Failed to fetch cryptos: HTTP ${resp.statusCode}");
-        return false;
+        throw NetworkingException(
+          AppErrorCode.netHttpFailure,
+          "Cryptos fetch failed: HTTP ${resp.statusCode}",
+          "Unable to retrieve crypto data from the server.",
+          details: resp.statusCode,
+        );
       }
 
       final parsed = await compute(cryptosParser, {"body": resp.body});
+
       if (parsed.isEmpty) {
-        logln("Failed to fetch cryptos: empty parsed list");
-        return false;
+        throw NetworkingException(
+          AppErrorCode.netEmptyResponse,
+          "Cryptos fetch failed: parsed list is empty",
+          "The server returned invalid crypto data.",
+        );
       }
 
       await cryptosRepo.clear();
@@ -47,9 +56,15 @@ class CryptosService {
       await cryptosRepo.flush();
       logln("Fetching cryptos completed");
       return true;
-    } catch (e) {
-      logln("Failed to fetch cryptos: $e");
-      return false;
+    } on NetworkingException {
+      rethrow;
+    } catch (e, st) {
+      throw NetworkingException(
+        AppErrorCode.netUnknownFailure,
+        "Cryptos fetch failed with unexpected error: $e",
+        "An unexpected error occurred while fetching crypto data.",
+        details: st,
+      );
     } finally {
       _isFetching = false;
     }

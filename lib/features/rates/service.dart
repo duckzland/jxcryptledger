@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:http/http.dart' as http;
 
+import '../../app/exceptions.dart';
 import '../../core/log.dart';
 import '../cryptos/repository.dart';
 import '../settings/repository.dart';
@@ -60,9 +61,12 @@ class RatesService {
       final jobQueue = grouped.entries.map((e) => MapEntry(e.key, e.value.toList())).toList();
 
       await _runWorkers(jobQueue);
+
       if (onComplete != null) {
         onComplete!();
       }
+    } catch (e) {
+      rethrow;
     } finally {
       _isFetching = false;
     }
@@ -81,7 +85,11 @@ class RatesService {
       }
     }
 
-    await _processQueue();
+    try {
+      await _processQueue();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   bool _isValidPair(int sourceId, int targetId) {
@@ -116,7 +124,11 @@ class RatesService {
     Future<void> worker() async {
       while (jobQueue.isNotEmpty) {
         final job = jobQueue.removeAt(0);
-        await _fetchInternal(job.key, job.value);
+        try {
+          await _fetchInternal(job.key, job.value);
+        } catch (e) {
+          rethrow;
+        }
         await Future.delayed(const Duration(milliseconds: 100));
       }
     }
@@ -143,9 +155,27 @@ class RatesService {
       ).replace(queryParameters: {'amount': '1', 'id': sourceId.toString(), 'convert_id': validTargets.join(',')});
 
       final resp = await http.get(uri);
-      if (resp.statusCode != 200) return false;
+      if (resp.statusCode != 200) {
+        throw NetworkingException(
+          AppErrorCode.netHttpFailure,
+          "Rates fetch failed: HTTP ${resp.statusCode}",
+          "Unable to retrieve rates from the server.",
+          details: resp.statusCode,
+        );
+      }
 
-      final parsed = parseRatesJson(resp.body);
+      RatesParserResult parsed;
+
+      try {
+        parsed = parseRatesJson(resp.body);
+      } catch (e) {
+        throw NetworkingException(
+          AppErrorCode.netParseFailure,
+          "Rates fetch failed: failed to parse with error",
+          "The server returned invalid rates data.",
+          details: e,
+        );
+      }
 
       for (final rate in parsed.rates) {
         if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
