@@ -101,17 +101,13 @@ class _TransactionFormState extends State<TransactionForm> {
     _selectedRrId = null;
 
     _selectedDate = DateTime.now();
-    // _selectedDate =  DateTime.fromMillisecondsSinceEpoch(
-    //   widget.parent!.timestampAsMs,
-    // );
-
   }
 
   void _initEdit() {
     final data = widget.initialData!;
 
-    _srAmountController = TextEditingController(text: Utils.formatSmartDouble(data.srAmount));
-    _rrAmountController = TextEditingController(text: Utils.formatSmartDouble(data.rrAmount));
+    _srAmountController = TextEditingController(text: Utils.formatSmartDouble(data.srAmount).replaceAll(',', ''));
+    _rrAmountController = TextEditingController(text: Utils.formatSmartDouble(data.rrAmount).replaceAll(',', ''));
 
     if (isRoot) {
       _purchaseNotesController = TextEditingController(text: data.meta['purchase_notes'] ?? '');
@@ -123,9 +119,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
     _selectedSrId = data.srId;
     _selectedRrId = data.rrId;
-    _selectedDate = DateTime.fromMillisecondsSinceEpoch(
-      widget.initialData!.timestampAsMs,
-    );
+    _selectedDate = DateTime.fromMillisecondsSinceEpoch(widget.initialData!.timestampAsMs);
   }
 
   @override
@@ -198,7 +192,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
     final newParentBalance = parent.balance - child.srAmount;
 
-    logln('Calculated new parent balance: $newParentBalance (old: ${parent.balance} - child: ${child.srAmount})');
+    logln('[USER TRADE] Calculated new parent balance: $newParentBalance (old: ${parent.balance} - child: ${child.srAmount})');
 
     TransactionStatus newStatus;
     if (newParentBalance <= 0) {
@@ -237,11 +231,10 @@ class _TransactionFormState extends State<TransactionForm> {
     try {
       await _txController.update(tx);
 
-      if (parent != null && data.srAmount != tx.srAmount && parent.rrId == data.srId) {
+      if (tx.isLeaf && parent != null && data.srAmount != tx.srAmount && parent.rrId == data.srId) {
         double newBalance = parent.balance;
         if (data.srAmount > tx.srAmount) {
-           newBalance +=  data.srAmount - tx.srAmount;
-
+          newBalance += data.srAmount - tx.srAmount;
         } else {
           double needToTake = tx.srAmount - data.srAmount;
           if (newBalance >= needToTake) {
@@ -249,7 +242,10 @@ class _TransactionFormState extends State<TransactionForm> {
           }
         }
 
-        final ptx = parent.copyWith(balance: newBalance, status: newBalance > 0 ? TransactionStatus.partial.index : TransactionStatus.inactive.index);
+        final ptx = parent.copyWith(
+          balance: newBalance,
+          status: newBalance > 0 ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
+        );
         await _txController.update(ptx);
       }
 
@@ -280,24 +276,23 @@ class _TransactionFormState extends State<TransactionForm> {
     }
   }
 
-int _saveTimestampField() {
-  final data = widget.initialData;
+  int _saveTimestampField() {
+    final data = widget.initialData;
 
-  switch (widget.mode) {
-    case TransactionsFormActionMode.addNew:
-    case TransactionsFormActionMode.trade:
-      final date = _selectedDate ?? DateTime.now();
-      logln("Selected date $date $_selectedDate");
-      return date.toUtc().millisecondsSinceEpoch;
+    switch (widget.mode) {
+      case TransactionsFormActionMode.addNew:
+      case TransactionsFormActionMode.trade:
+        final date = _selectedDate ?? DateTime.now();
+        return date.toUtc().millisecondsSinceEpoch;
 
-    case TransactionsFormActionMode.edit:
-      if (_selectedDate != null) {
-        return _selectedDate!.toUtc().millisecondsSinceEpoch;
-      }
+      case TransactionsFormActionMode.edit:
+        if (_selectedDate != null) {
+          return _selectedDate!.toUtc().millisecondsSinceEpoch;
+        }
 
-      return data!.timestampAsMs;
+        return data!.timestampAsMs;
+    }
   }
-}
 
   String _savePidField() {
     switch (widget.mode) {
@@ -315,7 +310,7 @@ int _saveTimestampField() {
   }
 
   double _saveBalanceField() {
-    final proposed = double.tryParse(_rrAmountController.text) ?? 0;
+    final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmountController.text)) ?? 0;
 
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
@@ -380,7 +375,7 @@ int _saveTimestampField() {
   }
 
   double _saveSourceAmountField() {
-    final proposed = double.tryParse(_srAmountController.text) ?? 0;
+    final proposed = double.tryParse(Utils.sanitizeNumber(_srAmountController.text)) ?? 0;
 
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
@@ -414,7 +409,7 @@ int _saveTimestampField() {
   }
 
   double _saveResultAmountField() {
-    final proposed = double.tryParse(_rrAmountController.text) ?? 0;
+    final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmountController.text)) ?? 0;
 
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
@@ -477,8 +472,8 @@ int _saveTimestampField() {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                            width: 260,
-                            child: WidgetsPanel(
+                          width: 260,
+                          child: WidgetsPanel(
                             padding: const EdgeInsets.all(12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -569,7 +564,7 @@ int _saveTimestampField() {
     final title = switch (widget.mode) {
       TransactionsFormActionMode.edit => 'Edit Transaction',
       TransactionsFormActionMode.trade => 'Trade Crypto',
-      _ => 'New Transaction',
+      TransactionsFormActionMode.addNew => 'New Transaction',
     };
 
     return Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
@@ -755,19 +750,11 @@ int _saveTimestampField() {
   Widget _buildNotesField() {
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
-        return TextFormField(
-          controller: _purchaseNotesController,
-          decoration: _input('Purchase Notes', 'Add notes...'),
-          maxLines: 4,
-        );
+        return TextFormField(controller: _purchaseNotesController, decoration: _input('Purchase Notes', 'Add notes...'), maxLines: 4);
 
       case TransactionsFormActionMode.edit:
         if (isRoot) {
-          return TextFormField(
-            controller: _purchaseNotesController,
-            decoration: _input('Purchase Notes', 'Edit notes...'),
-            maxLines: 4,
-          );
+          return TextFormField(controller: _purchaseNotesController, decoration: _input('Purchase Notes', 'Edit notes...'), maxLines: 4);
         } else {
           return TextFormField(
             controller: _tradingNotesController,
@@ -819,7 +806,6 @@ int _saveTimestampField() {
             }
             final hasLeaf = snapshot.data!;
             if (!hasLeaf) {
-
               DateTime firstDate = DateTime(2000);
               if (widget.parent != null) {
                 firstDate = DateTime.fromMillisecondsSinceEpoch(widget.parent!.timestampAsMs);
@@ -849,64 +835,60 @@ int _saveTimestampField() {
           onSelected: (date) => setState(() => _selectedDate = date),
         );
     }
-}
+  }
 
-Widget _buildDatePickerField({
-  required String labelText,
-  required DateTime initialDate,
-  required DateTime firstDate,
-  required DateTime lastDate,
-  required ValueChanged<DateTime> onSelected,
-}) {
-  return TextFormField(
-    readOnly: true,
-    decoration: InputDecoration(labelText: labelText),
-    controller: TextEditingController(
-      text: _selectedDate != null
-          ? "${_selectedDate!.day.toString().padLeft(2, '0')}/"
-            "${_selectedDate!.month.toString().padLeft(2, '0')}/"
-            "${_selectedDate!.year}"
-          : "",
-    ),
-    onTap: () async {
-      final picked = await showDatePicker(
-        context: context,
-        initialDate: _selectedDate ?? initialDate,
-        firstDate: firstDate,
-        lastDate: lastDate,
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              textButtonTheme: TextButtonThemeData(
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.text,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+  Widget _buildDatePickerField({
+    required String labelText,
+    required DateTime initialDate,
+    required DateTime firstDate,
+    required DateTime lastDate,
+    required ValueChanged<DateTime> onSelected,
+  }) {
+    return TextFormField(
+      readOnly: true,
+      decoration: InputDecoration(labelText: labelText),
+      controller: TextEditingController(
+        text: _selectedDate != null
+            ? "${_selectedDate!.day.toString().padLeft(2, '0')}/"
+                  "${_selectedDate!.month.toString().padLeft(2, '0')}/"
+                  "${_selectedDate!.year}"
+            : "",
+      ),
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: _selectedDate ?? initialDate,
+          firstDate: firstDate,
+          lastDate: lastDate,
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.text,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
                 ),
               ),
-            ),
-            child: child!,
-          );
-        },
-      );
-      if (picked != null) {
-        setState(() => _selectedDate = picked);
-        onSelected(picked);
-      }
-    },
-  );
-}
+              child: child!,
+            );
+          },
+        );
+        if (picked != null) {
+          setState(() => _selectedDate = picked);
+          onSelected(picked);
+        }
+      },
+    );
+  }
 
-Widget _buildReadOnlyDateDisplay(DateTime date) {
-  return TextFormField(
-    readOnly: true,
-    decoration: const InputDecoration(labelText: 'Date'),
-    controller: TextEditingController(
-      text: "${date.year}-${date.month}-${date.day}",
-    ),
-  );
-}
+  Widget _buildReadOnlyDateDisplay(DateTime date) {
+    return TextFormField(
+      readOnly: true,
+      decoration: const InputDecoration(labelText: 'Date'),
+      controller: TextEditingController(text: "${date.year}-${date.month}-${date.day}"),
+    );
+  }
 
   Widget _buildButtons() {
     String mode = "Save";
@@ -991,7 +973,7 @@ Widget _buildReadOnlyDateDisplay(DateTime date) {
       return 'Amount is required';
     }
 
-    String val = value.replaceAll(",", "");
+    String val = Utils.sanitizeNumber(value);
 
     final parsed = double.tryParse(val);
     if (parsed == null) {

@@ -275,7 +275,7 @@ class TransactionsRepository {
       throw ValidationException(
         2001,
         "[DELETE RULE 1 FAIL] tx.isRoot == false tid=${tx.tid}",
-        "This transaction cannot be deleted.",
+        "[2001] This transaction cannot be deleted.",
         silent: !debugLogs,
       );
     }
@@ -287,7 +287,7 @@ class TransactionsRepository {
       throw ValidationException(
         2002,
         "[DELETE RULE 2 FAIL] active child transactions exist tid=${tx.tid}",
-        "This transaction cannot be deleted because related transactions are still in progress.",
+        "[2002] This transaction cannot be deleted because related transactions are still in progress.",
         silent: !debugLogs,
       );
     }
@@ -298,7 +298,7 @@ class TransactionsRepository {
       throw ValidationException(
         2003,
         "[DELETE RULE 3 FAIL] active child transactions exist tid=${tx.tid}",
-        "This transaction cannot be deleted because related transactions are still in progress.",
+        "[2003] This transaction cannot be deleted because related transactions are still in progress.",
         silent: !debugLogs,
       );
     }
@@ -315,7 +315,7 @@ class TransactionsRepository {
       throw ValidationException(
         3001,
         "[UPDATE RULE 1 FAIL] otx == null tid=${tx.tid}",
-        "This transaction can no longer be found.",
+        "[3001] This transaction can no longer be found.",
         silent: !debugLogs,
       );
     }
@@ -324,7 +324,7 @@ class TransactionsRepository {
       throw ValidationException(
         3002,
         "[UPDATE RULE 2 FAIL] root cannot change pid/rid tid=${tx.tid}",
-        "This transaction cannot be changed in that way.",
+        "[3002] This transaction cannot be changed in that way.",
         silent: !debugLogs,
       );
     }
@@ -333,7 +333,7 @@ class TransactionsRepository {
       throw ValidationException(
         3003,
         "[UPDATE RULE 3 FAIL] leaf missing parent or root ptx=$ptx rtx=$rtx tid=${tx.tid}",
-        "This transaction is not linked correctly.",
+        "[3003] This transaction is not linked correctly.",
         silent: !debugLogs,
       );
     }
@@ -343,7 +343,7 @@ class TransactionsRepository {
         3004,
         "[UPDATE RULE 4 FAIL] invalid fields rrId=${tx.rrId} srId=${tx.srId} "
             "srAmount=${tx.srAmount} rrAmount=${tx.rrAmount} timestamp=${tx.timestamp}",
-        "Some required transaction details are missing or invalid.",
+        "[3004] Some required transaction details are missing or invalid.",
         silent: !debugLogs,
       );
     }
@@ -362,7 +362,7 @@ class TransactionsRepository {
         throw ValidationException(
           3005,
           "[UPDATE RULE 5 FAIL] cannot change SR/RR fields when hasChildren=true tid=${tx.tid}",
-          "This transaction cannot change its accounts or amounts because related transactions depend on it.",
+          "[3005] This transaction cannot change its accounts or amounts because related transactions depend on it.",
           silent: !debugLogs,
         );
       }
@@ -373,7 +373,7 @@ class TransactionsRepository {
         throw ValidationException(
           3006,
           "[UPDATE RULE 5 FAIL] cannot change SR/SR fields when parent has insufficient balance",
-          "This transaction cannot change its source amounts because parent has insufficient balance.",
+          "[3006] This transaction cannot change its source amounts because parent has insufficient balance.",
           silent: !debugLogs,
         );
       }  
@@ -386,7 +386,7 @@ class TransactionsRepository {
             throw ValidationException(
               3007,
               "[UPDATE RULE 7A FAIL] inactive requires hasChildren=true tid=${tx.tid}",
-              "This transaction cannot be marked inactive.",
+              "[3007] This transaction cannot be marked inactive.",
               silent: !debugLogs,
             );
           }
@@ -394,7 +394,7 @@ class TransactionsRepository {
             throw ValidationException(
               3008,
               "[UPDATE RULE 7A FAIL] inactive requires balance=0 balance=$balance tid=${tx.tid}",
-              "This transaction still has remaining balance and cannot be marked inactive.",
+              "[3008] This transaction still has remaining balance and cannot be marked inactive.",
               silent: !debugLogs,
             );
           }
@@ -405,7 +405,7 @@ class TransactionsRepository {
             throw ValidationException(
               3009,
               "[UPDATE RULE 7B FAIL] active requires balance>0 when no children tid=${tx.tid}",
-              "This transaction must have a positive balance to remain active.",
+              "[3009] This transaction must have a positive balance to remain active.",
               silent: !debugLogs,
             );
           }
@@ -413,7 +413,7 @@ class TransactionsRepository {
             throw ValidationException(
               3010,
               "[UPDATE RULE 7B FAIL] active requires all children closed tid=${tx.tid}",
-              "All related transactions must be completed before this one can be active.",
+              "[3010] All related transactions must be completed before this one can be active.",
               silent: !debugLogs,
             );
           }
@@ -424,7 +424,7 @@ class TransactionsRepository {
             throw ValidationException(
               3011,
               "[UPDATE RULE 7C FAIL] partial requires hasChildren=true tid=${tx.tid}",
-              "This transaction cannot be marked as partially completed.",
+              "[3011] This transaction cannot be marked as partially completed.",
               silent: !debugLogs,
             );
           }
@@ -432,7 +432,7 @@ class TransactionsRepository {
             throw ValidationException(
               3012,
               "[UPDATE RULE 7C FAIL] partial cannot have all children closed tid=${tx.tid}",
-              "This transaction cannot be marked as partial because all related transactions are already completed.",
+              "[3012] This transaction cannot be marked as partial because all related transactions are already completed.",
               silent: !debugLogs,
             );
           }
@@ -443,7 +443,7 @@ class TransactionsRepository {
             throw ValidationException(
               3013,
               "[UPDATE RULE 7D FAIL] root cannot be closed tid=${tx.tid}",
-              "This transaction cannot be closed directly.",
+              "[3013] This transaction cannot be closed directly.",
               silent: !debugLogs,
             );
           }
@@ -451,7 +451,7 @@ class TransactionsRepository {
             throw ValidationException(
               3014,
               "[UPDATE RULE 7D FAIL] closed requires targetCloser!=null tid=${tx.tid}",
-              "This transaction is not ready to be closed yet.",
+              "[3014] This transaction is not ready to be closed yet.",
               silent: !debugLogs,
             );
           }
@@ -469,7 +469,7 @@ class TransactionsRepository {
             throw ValidationException(
               3015,
               "[UPDATE RULE 8A FAIL] root closable=true requires allClosed=true tid=${tx.tid}",
-              "This transaction cannot be marked as closable yet.",
+              "[3015] This transaction cannot be marked as closable yet.",
               silent: !debugLogs,
             );
           }
@@ -477,7 +477,7 @@ class TransactionsRepository {
             throw ValidationException(
               3016,
               "[UPDATE RULE 8A FAIL] leaf closable=true requires otx.active tid=${tx.tid}",
-              "This transaction must be active before it can be marked as closable.",
+              "[3016] This transaction must be active before it can be marked as closable.",
               silent: !debugLogs,
             );
           }
@@ -485,7 +485,7 @@ class TransactionsRepository {
             throw ValidationException(
               3017,
               "[UPDATE RULE 8A FAIL] leaf closable=true requires targetCloser!=null tid=${tx.tid}",
-              "This transaction cannot be marked as closable yet.",
+              "[3017] This transaction cannot be marked as closable yet.",
               silent: !debugLogs,
             );
           }
@@ -496,7 +496,7 @@ class TransactionsRepository {
             throw ValidationException(
               3018,
               "[UPDATE RULE 8B FAIL] root closable=false cannot have allClosed=true tid=${tx.tid}",
-              "This transaction must remain closable.",
+              "[3018] This transaction must remain closable.",
               silent: !debugLogs,
             );
           }
@@ -504,7 +504,7 @@ class TransactionsRepository {
             throw ValidationException(
               3019,
               "[UPDATE RULE 8B FAIL] leaf closable=false cannot have active+targetCloser tid=${tx.tid}",
-              "This transaction cannot be marked as not closable.",
+              "[3019] This transaction cannot be marked as not closable.",
               silent: !debugLogs,
             );
           }
@@ -523,7 +523,7 @@ class TransactionsRepository {
       throw ValidationException(
         4001,
         "[ADD RULE 1 FAIL] tid == '0'",
-        "This transaction is invalid.",
+        "[4001] This transaction is invalid.",
         silent: !debugLogs,
       );
     }
@@ -532,7 +532,7 @@ class TransactionsRepository {
       throw ValidationException(
         4002,
         "[ADD RULE 2 FAIL] pid=0 but rid!=0 pid=${tx.pid} rid=${tx.rid}",
-        "This transaction is not linked correctly.",
+        "[4002] This transaction is not linked correctly.",
         silent: !debugLogs,
       );
     }
@@ -541,7 +541,7 @@ class TransactionsRepository {
       throw ValidationException(
         4003,
         "[ADD RULE 3 FAIL] rid=0 but pid!=0 pid=${tx.pid} rid=${tx.rid}",
-        "This transaction is not linked correctly.",
+        "[4003] This transaction is not linked correctly.",
         silent: !debugLogs,
       );
     }
@@ -551,7 +551,7 @@ class TransactionsRepository {
         4004,
         "[ADD RULE 4 FAIL] invalid fields rrId=${tx.rrId} srId=${tx.srId} "
             "srAmount=${tx.srAmount} rrAmount=${tx.rrAmount} timestamp=${tx.timestamp}",
-        "Some required transaction details are missing or invalid.",
+        "[4004] Some required transaction details are missing or invalid.",
         silent: !debugLogs,
       );
     }
@@ -560,7 +560,7 @@ class TransactionsRepository {
       throw ValidationException(
         4005,
         "[ADD RULE 5 FAIL] status must be active status=${tx.statusEnum}",
-        "A new transaction must start as active.",
+        "[4005] A new transaction must start as active.",
         silent: !debugLogs,
       );
     }
@@ -570,7 +570,7 @@ class TransactionsRepository {
         throw ValidationException(
           4006,
           "[ADD RULE 6 FAIL] root balance mismatch balance=${tx.balance} rrAmount=${tx.rrAmount}",
-          "The transaction balance does not match the expected amount.",
+          "[4006] The transaction balance does not match the expected amount.",
           silent: !debugLogs,
         );
       }
@@ -579,7 +579,7 @@ class TransactionsRepository {
         throw ValidationException(
           4007,
           "[ADD RULE 7 FAIL] root must be closable=true",
-          "This transaction must be marked as closable.",
+          "[4007] This transaction must be marked as closable.",
           silent: !debugLogs,
         );
       }
@@ -592,7 +592,7 @@ class TransactionsRepository {
         throw ValidationException(
           4008,
           "[ADD RULE 8 FAIL] rtx == null rid=${tx.rid}",
-          "This transaction is not linked correctly.",
+          "[4008] This transaction is not linked correctly.",
           silent: !debugLogs,
         );
       }
@@ -601,7 +601,7 @@ class TransactionsRepository {
         throw ValidationException(
           4009,
           "[ADD RULE 9 FAIL] ptx == null pid=${tx.pid}",
-          "This transaction is not linked correctly.",
+          "[4009] This transaction is not linked correctly.",
           silent: !debugLogs,
         );
       }
@@ -610,7 +610,7 @@ class TransactionsRepository {
         throw ValidationException(
           4010,
           "[ADD RULE 10 FAIL] srId=${tx.srId} != parent.rrId=${ptx.rrId}",
-          "This transaction does not match the expected account.",
+          "[4010] This transaction does not match the expected account.",
           silent: !debugLogs,
         );
       }
@@ -619,7 +619,7 @@ class TransactionsRepository {
         throw ValidationException(
           4011,
           "[ADD RULE 11 FAIL] srAmount=${tx.srAmount} > parent.balance=${ptx.balance}",
-          "The transaction amount exceeds the available balance.",
+          "[4011] The transaction amount exceeds the available balance.",
           silent: !debugLogs,
         );
       }
@@ -628,16 +628,16 @@ class TransactionsRepository {
         throw ValidationException(
           4012,
           "[ADD RULE 12 FAIL] closable=true but targetCloser == null",
-          "This transaction cannot be marked as closable yet.",
+          "[4012] This transaction cannot be marked as closable yet.",
           silent: !debugLogs,
         );
       }
 
       if (tx.closable == false && targetCloser != null) {
         throw ValidationException(
-          40113,
+          4013,
           "[ADD RULE 13 FAIL] closable=false but targetCloser exists",
-          "This transaction must be marked as closable.",
+          "[4013] This transaction must be marked as closable.",
           silent: !debugLogs,
         );
       }
@@ -652,16 +652,16 @@ class TransactionsRepository {
       throw ValidationException(
         5001,
         "[CLOSE RULE 1 FAIL] otx.isRoot == true tid=${tx.tid}",
-        "This transaction cannot be closed directly.",
+        "[5001] This transaction cannot be closed directly.",
         silent: !debugLogs,
       );
     }
 
     if (!tx.isActive) {
       throw ValidationException(
-        5003,
+        5002,
         "[CLOSE RULE 2 FAIL] otx.isActive == false tid=${tx.tid}",
-        "An inactive transaction cannot be closed.",
+        "[5003] An inactive transaction cannot be closed.",
         silent: !debugLogs,
       );
     }
@@ -670,9 +670,9 @@ class TransactionsRepository {
 
     if (targetCloser == null) {
       throw ValidationException(
-        5004,
+        5003,
         "[CLOSE RULE 3 FAIL] targetCloser == null tid=${tx.tid}",
-        "This transaction is not ready to be closed yet.",
+        "[5003] This transaction is not ready to be closed yet.",
         silent: !debugLogs,
       );
     }
@@ -685,7 +685,7 @@ class TransactionsRepository {
       throw ValidationException(
         6001,
         "[TRADE RULE 1 FAIL] tx.tid == '0'",
-        "This trade cannot be processed because its ID is invalid.",
+        "[6001] This trade cannot be processed because its ID is invalid.",
         silent: !debugLogs,
       );
     }
@@ -696,7 +696,7 @@ class TransactionsRepository {
       throw ValidationException(
         6002,
         "[TRADE RULE 2 FAIL] otx == null tid=${tx.tid}",
-        "This trade cannot be processed because the original transaction was not found.",
+        "[6002] This trade cannot be processed because the original transaction was not found.",
         silent: !debugLogs,
       );
     }
@@ -709,7 +709,7 @@ class TransactionsRepository {
         throw ValidationException(
           6003,
           "[TRADE RULE 3 FAIL] ptx == null or rtx == null tid=${tx.tid}",
-          "Invalid transaction cannot be traded.",
+          "[6003] Invalid transaction cannot be traded.",
           silent: !debugLogs,
         );
       }
@@ -720,7 +720,7 @@ class TransactionsRepository {
         6004,
         "[TRADE RULE 4 FAIL] not active or not partial "
             "isActive=${otx.isActive} isPartial=${otx.isPartial} tid=${tx.tid}",
-        "This trade cannot be processed because the original transaction is not in a valid state.",
+        "[6004] This trade cannot be processed because the original transaction is not in a valid state.",
         silent: !debugLogs,
       );
     }
@@ -731,7 +731,7 @@ class TransactionsRepository {
         "[TRADE RULE 5 FAIL] invalid required fields "
             "rrId=${otx.rrId} srId=${otx.srId} srAmount=${otx.srAmount} "
             "rrAmount=${otx.rrAmount} timestamp=${otx.timestamp}",
-        "Some required trade details are missing or invalid.",
+        "[6005] Some required trade details are missing or invalid.",
         silent: !debugLogs,
       );
     }
@@ -741,7 +741,7 @@ class TransactionsRepository {
         6006,
         "[TRADE RULE 6 FAIL] balance <= 0 balance=${otx.balance} "
             "rrId=${otx.rrId} srId=${otx.srId}",
-        "This trade cannot be processed because the remaining balance is invalid.",
+        "[6006] This trade cannot be processed because the remaining balance is invalid.",
         silent: !debugLogs,
       );
     }
