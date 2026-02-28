@@ -14,12 +14,8 @@ class AppTheme {
   static const action = Color(0xFF43A047);
   static const loss = Color.fromARGB(255, 245, 50, 50);
   static const profit = Color.fromARGB(255, 62, 220, 51);
-  // static const headerBg = Color(0xFF1B1B1B);
-  // static const separator = Color(0xFF404040);
   static const text = Colors.white;
   static const textMuted = Colors.white70;
-  // static const columnHeaderBg = Color(0xFF000000);
-  // static const rowHeaderBg = Color(0xFF000000);
 
   static const background = Color(0xFF0D1421);
   static const scrimBackground = Color.fromARGB(255, 6, 7, 10);
