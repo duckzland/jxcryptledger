@@ -597,7 +597,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   Widget _buildOverviewList(Map<int, List<TransactionsModel>> grouped) {
     return ListView.separated(
       itemCount: grouped.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 24),
+      separatorBuilder: (_, _) => const SizedBox(height: 24),
       itemBuilder: (context, idx) {
         final rrId = grouped.keys.elementAt(idx);
         final txs = grouped[rrId]!;
@@ -610,7 +610,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
     return ListView.separated(
       itemCount: grouped.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 24),
+      separatorBuilder: (_, _) => const SizedBox(height: 24),
       itemBuilder: (context, idx) {
         final key = grouped.keys.elementAt(idx);
         final parts = key.split('-');
