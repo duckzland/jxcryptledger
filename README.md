@@ -1,17 +1,24 @@
 # jxcryptledger
 
-A new Flutter project.
+A lightweight, local‑first crypto transaction ledger built with Flutter and Hive.  
+It tracks balances, trades, and transaction trees.
+
+## Features
+- Your data stays on your device — everything is stored privately and securely.
+- Track all your crypto activity in one place — buys, sells, transfers, and running balances.
+- Switch between simple balance view and detailed trading view depending on what you need.
+- Quickly find any coin with fast, offline search.
+- Clean, easy-to-use interface designed to keep things clear and organized.
 
 ## Getting Started
+1. Install Flutter (stable channel)
+2. Run `flutter pub get`
+3. Launch the app with `flutter run`
 
-This project is a starting point for a Flutter application.
+## License
+MIT
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Disclaimer
+JXCryptLedger is provided “as is,” with no guarantees of accuracy, reliability, or data durability.  
+You are solely responsible for any data you store in the app and for any financial decisions or losses that may result from using it.  
+The author assumes no responsibility for lost data, corrupted storage, or monetary loss of any kind.
