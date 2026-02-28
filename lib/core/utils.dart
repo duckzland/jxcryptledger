@@ -49,4 +49,8 @@ class Utils {
 
     return fracPart.isEmpty ? intPart : '$intPart.$fracPart';
   }
+
+  static String sanitizeNumber(String input) {
+    return input.replaceAll(RegExp(r'[^0-9\.\-]'), '');
+  }
 }
