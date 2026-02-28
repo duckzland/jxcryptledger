@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jxcryptledger/app/exceptions.dart';
 import 'package:jxcryptledger/features/transactions/repository.dart';
 
 import '../../app/theme.dart';
@@ -222,6 +223,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
   void _saveEdit() async {
     final data = widget.initialData!;
+    TransactionsModel? parent = widget.parent;
 
     final tx = data.copyWith(
       srId: _saveSourceCryptoField(),
@@ -231,11 +233,29 @@ class _TransactionFormState extends State<TransactionForm> {
       balance: _saveBalanceField(),
       status: _saveStatusField(),
       closable: _saveClosableField(),
+      timestamp: _saveTimestampField(),
       meta: _saveNotesField(),
     );
 
     try {
       await _txController.update(tx);
+
+      if (parent != null && data.srAmount != tx.srAmount && parent.rrId == data.srId) {
+        double newBalance = parent.balance;
+        if (data.srAmount > tx.srAmount) {
+           newBalance +=  data.srAmount - tx.srAmount;
+
+        } else {
+          double needToTake = tx.srAmount - data.srAmount;
+          if (newBalance >= needToTake) {
+            newBalance -= needToTake;
+          }
+        }
+
+        final ptx = parent.copyWith(balance: newBalance, status: newBalance > 0 ? TransactionStatus.partial.index : TransactionStatus.inactive.index);
+        await _txController.update(ptx);
+      }
+
       widget.onSave?.call(null);
     } catch (e) {
       widget.onSave?.call(e);
@@ -270,6 +290,7 @@ int _saveTimestampField() {
     case TransactionsFormActionMode.addNew:
     case TransactionsFormActionMode.trade:
       final date = _selectedDate ?? DateTime.now();
+      logln("Selected date $date $_selectedDate");
       return date.toUtc().millisecondsSinceEpoch;
 
     case TransactionsFormActionMode.edit:
@@ -791,7 +812,7 @@ int _saveTimestampField() {
 
       case TransactionsFormActionMode.edit:
         TransactionsModel tx = widget.initialData!;
-        final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
+        final initialDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
 
         return FutureBuilder<bool>(
           future: _txController.hasLeaf(tx),
@@ -809,31 +830,25 @@ int _saveTimestampField() {
 
               return _buildDatePickerField(
                 labelText: 'Date',
-                initialDate: currentDate,
+                initialDate: initialDate,
                 firstDate: firstDate,
-                lastDate: currentDate,
+                lastDate: DateTime.now(),
                 onSelected: (date) => setState(() => _selectedDate = date),
               );
             } else {
-              return _buildReadOnlyDateDisplay(currentDate);
+              return _buildReadOnlyDateDisplay(initialDate);
             }
           },
         );
 
       case TransactionsFormActionMode.trade:
         TransactionsModel tx = widget.initialData!;
-        final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
-
-        DateTime firstDate = DateTime(2000);
-        if (widget.parent != null) {
-          firstDate = DateTime.fromMillisecondsSinceEpoch(widget.parent!.timestampAsMs);
-        }
-
+        
         return _buildDatePickerField(
           labelText: 'Date',
           initialDate: DateTime.now(),
-          firstDate: firstDate,
-          lastDate: currentDate,
+          firstDate: DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs),
+          lastDate: DateTime.now(),
           onSelected: (date) => setState(() => _selectedDate = date),
         );
     }

@@ -144,4 +144,12 @@ class TransactionsController extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<double> getCapitalBalance(TransactionsModel tx) async {
+    final children = await repo.getLeaf(tx);
+    final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
+    final double balance = tx.rrAmount - spent;
+
+    return balance;
+  }
 }
