@@ -449,9 +449,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(title, style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-        const SizedBox(height: 4),
-        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 16),
+        Text(title, style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        const SizedBox(height: 1),
+        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
       ],
     );
   }

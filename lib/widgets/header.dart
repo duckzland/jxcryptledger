@@ -25,9 +25,9 @@ class WidgetsHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: titleColor),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: titleColor),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 1),
         Text(
           subtitle,
           style: TextStyle(fontSize: 11, color: subtitleColor),

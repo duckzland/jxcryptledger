@@ -129,9 +129,9 @@ class AppTheme {
 
       dataTableTheme: DataTableThemeData(
         headingRowColor: WidgetStateProperty.all(AppTheme.columnHeaderBg),
-        headingTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500, fontSize: 17),
+        headingTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500, fontSize: 14),
         dataRowColor: WidgetStateProperty.all(AppTheme.rowHeaderBg),
-        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 16),
+        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 14),
         dividerThickness: 1,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowMinHeight: AppTheme.tableDataRowMinHeight,

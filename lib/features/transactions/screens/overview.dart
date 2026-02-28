@@ -145,14 +145,14 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text("Total Balance", style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-                  const SizedBox(height: 4),
+                  Text("Total Balance", style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                  const SizedBox(height: 1),
                   WidgetsBalanceText(
                     text:
                         "${Utils.formatSmartDouble(cumulativeSourceValue)} ${_cryptosRepo.getSymbol(widget.id) ?? 'Unknown Coin'}",
                     value: 0,
                     comparator: 0,
-                    fontSize: 16,
+                    fontSize: 13,
                   ),
                 ],
               ),
