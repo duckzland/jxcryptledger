@@ -1,0 +1,4 @@
+*.dart text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+* text eol=lf
