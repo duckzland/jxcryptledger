@@ -14,6 +14,13 @@ class AppRoot extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
       routerConfig: AppRouter.router,
+      builder: (context, child) {
+        return MediaQuery(
+          // This forces the text scale to 1.0, ignoring Windows system scaling
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+          child: child!,
+        );
+      },
     );
   }
 }
