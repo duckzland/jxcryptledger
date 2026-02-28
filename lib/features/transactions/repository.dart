@@ -190,14 +190,12 @@ class TransactionsRepository {
     List<TransactionsModel> dfs(TransactionsModel node) {
       final children = childrenMap[node.tid] ?? [];
 
-      // No children → terminal leaf candidate
       if (children.isEmpty) {
         if (node.tid == parent.tid) return [];
         if (node.isRoot) return [];
         return [node];
       }
 
-      // Recurse into children
       final leaves = <TransactionsModel>[];
       for (final child in children) {
         leaves.addAll(dfs(child));
@@ -232,7 +230,6 @@ class TransactionsRepository {
       pid = p.pid;
     }
 
-    // Fallback: root with matching rid + rrId
     if (parent == null) {
       final roots = all.where((t) => t.isRoot && t.tid == tx.rid);
 

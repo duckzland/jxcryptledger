@@ -18,7 +18,6 @@ final env = DotEnv()..load();
 final txRepo = TransactionsRepository();
 final AesGcm aes = AesGcm.with256bits();
 
-// REAL, VALID CoinMarketCap IDs
 final List<int> staticCmcIds = [
   1, // BTC
   2, // LTC

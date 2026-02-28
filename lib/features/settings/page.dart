@@ -203,7 +203,7 @@ class _SettingsPageState extends State<SettingsPage> {
         if (!mounted) return;
         widgetsNotifySuccess("Settings reset to default");
 
-        s.error(); // return to error theme
+        s.error();
       },
     );
   }

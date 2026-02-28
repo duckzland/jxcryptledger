@@ -5,7 +5,7 @@ import 'model.dart';
 
 class RatesAdapter extends TypeAdapter<RatesModel> {
   @override
-  final int typeId = 3; // choose a unique ID
+  final int typeId = 3;
 
   @override
   RatesModel read(BinaryReader reader) {
