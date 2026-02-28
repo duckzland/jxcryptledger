@@ -206,6 +206,32 @@ class TransactionsRepository {
     return dfs(parent);
   }
 
+  Future<List<TransactionsModel>> collectAllLeaves(TransactionsModel parent) async {
+    final all = await getAll();
+
+    final Map<String, List<TransactionsModel>> childrenMap = {};
+    for (final tx in all) {
+      childrenMap.putIfAbsent(tx.pid, () => []).add(tx);
+    }
+
+    List<TransactionsModel> dfs(TransactionsModel node) {
+      final children = childrenMap[node.tid] ?? [];
+
+      if (children.isEmpty) {
+        return (node.tid == parent.tid) ? [] : [node];
+      }
+
+      final leaves = <TransactionsModel>[];
+      for (final child in children) {
+        leaves.addAll(dfs(child));
+      }
+
+      return leaves;
+    }
+
+    return dfs(parent);
+  }
+
   Future<TransactionsModel?> getCloseTargetParent(TransactionsModel tx) async {
     if (tx.isRoot) {
       return null;
@@ -254,13 +280,24 @@ class TransactionsRepository {
       );
     }
 
-    final List<TransactionsModel> leaves = await collectTerminalLeaves(tx);
-    final bool allClosed = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final List<TransactionsModel> terminals = await collectTerminalLeaves(tx);
+    final bool allClosed = terminals.isEmpty ? true : terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (!allClosed) {
       throw ValidationException(
         2002,
         "[DELETE RULE 2 FAIL] active child transactions exist tid=${tx.tid}",
+        "This transaction cannot be deleted because related transactions are still in progress.",
+        silent: !debugLogs,
+      );
+    }
+
+    final List<TransactionsModel> leaves = await collectAllLeaves (tx);
+    final bool allInactive = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.inactive);
+    if (!allInactive) {
+      throw ValidationException(
+        2003,
+        "[DELETE RULE 3 FAIL] active child transactions exist tid=${tx.tid}",
         "This transaction cannot be deleted because related transactions are still in progress.",
         silent: !debugLogs,
       );
@@ -331,21 +368,32 @@ class TransactionsRepository {
       }
     }
 
+    if (otx.isLeaf && ptx != null && otx.srAmount != tx.srAmount) {
+      if (otx.srAmount < tx.srAmount && ptx.balance < (tx.srAmount - otx.srAmount)) {
+        throw ValidationException(
+          3006,
+          "[UPDATE RULE 5 FAIL] cannot change SR/SR fields when parent has insufficient balance",
+          "This transaction cannot change its source amounts because parent has insufficient balance.",
+          silent: !debugLogs,
+        );
+      }  
+    }
+
     if (tx.status != otx.status) {
       switch (tx.statusEnum) {
         case TransactionStatus.inactive:
           if (!hasChildren) {
             throw ValidationException(
-              3006,
-              "[UPDATE RULE 6A FAIL] inactive requires hasChildren=true tid=${tx.tid}",
+              3007,
+              "[UPDATE RULE 7A FAIL] inactive requires hasChildren=true tid=${tx.tid}",
               "This transaction cannot be marked inactive.",
               silent: !debugLogs,
             );
           }
           if (balance > 0) {
             throw ValidationException(
-              3007,
-              "[UPDATE RULE 6A FAIL] inactive requires balance=0 balance=$balance tid=${tx.tid}",
+              3008,
+              "[UPDATE RULE 7A FAIL] inactive requires balance=0 balance=$balance tid=${tx.tid}",
               "This transaction still has remaining balance and cannot be marked inactive.",
               silent: !debugLogs,
             );
@@ -355,16 +403,16 @@ class TransactionsRepository {
         case TransactionStatus.active:
           if (!hasChildren && tx.balance <= 0) {
             throw ValidationException(
-              3008,
-              "[UPDATE RULE 6B FAIL] active requires balance>0 when no children tid=${tx.tid}",
+              3009,
+              "[UPDATE RULE 7B FAIL] active requires balance>0 when no children tid=${tx.tid}",
               "This transaction must have a positive balance to remain active.",
               silent: !debugLogs,
             );
           }
           if (hasChildren && !allClosed) {
             throw ValidationException(
-              3009,
-              "[UPDATE RULE 6B FAIL] active requires all children closed tid=${tx.tid}",
+              3010,
+              "[UPDATE RULE 7B FAIL] active requires all children closed tid=${tx.tid}",
               "All related transactions must be completed before this one can be active.",
               silent: !debugLogs,
             );
@@ -374,16 +422,16 @@ class TransactionsRepository {
         case TransactionStatus.partial:
           if (!hasChildren) {
             throw ValidationException(
-              3010,
-              "[UPDATE RULE 6C FAIL] partial requires hasChildren=true tid=${tx.tid}",
+              3011,
+              "[UPDATE RULE 7C FAIL] partial requires hasChildren=true tid=${tx.tid}",
               "This transaction cannot be marked as partially completed.",
               silent: !debugLogs,
             );
           }
           if (hasChildren && allClosed) {
             throw ValidationException(
-              3011,
-              "[UPDATE RULE 6C FAIL] partial cannot have all children closed tid=${tx.tid}",
+              3012,
+              "[UPDATE RULE 7C FAIL] partial cannot have all children closed tid=${tx.tid}",
               "This transaction cannot be marked as partial because all related transactions are already completed.",
               silent: !debugLogs,
             );
@@ -393,16 +441,16 @@ class TransactionsRepository {
         case TransactionStatus.closed:
           if (tx.isRoot) {
             throw ValidationException(
-              3012,
-              "[UPDATE RULE 6D FAIL] root cannot be closed tid=${tx.tid}",
+              3013,
+              "[UPDATE RULE 7D FAIL] root cannot be closed tid=${tx.tid}",
               "This transaction cannot be closed directly.",
               silent: !debugLogs,
             );
           }
           if (targetCloser == null) {
             throw ValidationException(
-              3013,
-              "[UPDATE RULE 6D FAIL] closed requires targetCloser!=null tid=${tx.tid}",
+              3014,
+              "[UPDATE RULE 7D FAIL] closed requires targetCloser!=null tid=${tx.tid}",
               "This transaction is not ready to be closed yet.",
               silent: !debugLogs,
             );
@@ -419,24 +467,24 @@ class TransactionsRepository {
         case true:
           if (tx.isRoot && !allClosed) {
             throw ValidationException(
-              3014,
-              "[UPDATE RULE 7A FAIL] root closable=true requires allClosed=true tid=${tx.tid}",
+              3015,
+              "[UPDATE RULE 8A FAIL] root closable=true requires allClosed=true tid=${tx.tid}",
               "This transaction cannot be marked as closable yet.",
               silent: !debugLogs,
             );
           }
           if (tx.isLeaf && !otx.isActive) {
             throw ValidationException(
-              3015,
-              "[UPDATE RULE 7A FAIL] leaf closable=true requires otx.active tid=${tx.tid}",
+              3016,
+              "[UPDATE RULE 8A FAIL] leaf closable=true requires otx.active tid=${tx.tid}",
               "This transaction must be active before it can be marked as closable.",
               silent: !debugLogs,
             );
           }
           if (tx.isLeaf && targetCloser == null) {
             throw ValidationException(
-              3016,
-              "[UPDATE RULE 7A FAIL] leaf closable=true requires targetCloser!=null tid=${tx.tid}",
+              3017,
+              "[UPDATE RULE 8A FAIL] leaf closable=true requires targetCloser!=null tid=${tx.tid}",
               "This transaction cannot be marked as closable yet.",
               silent: !debugLogs,
             );
@@ -446,16 +494,16 @@ class TransactionsRepository {
         case false:
           if (tx.isRoot && allClosed) {
             throw ValidationException(
-              3017,
-              "[UPDATE RULE 7B FAIL] root closable=false cannot have allClosed=true tid=${tx.tid}",
+              3018,
+              "[UPDATE RULE 8B FAIL] root closable=false cannot have allClosed=true tid=${tx.tid}",
               "This transaction must remain closable.",
               silent: !debugLogs,
             );
           }
           if (tx.isLeaf && otx.isActive && targetCloser != null) {
             throw ValidationException(
-              3018,
-              "[UPDATE RULE 7B FAIL] leaf closable=false cannot have active+targetCloser tid=${tx.tid}",
+              3019,
+              "[UPDATE RULE 8B FAIL] leaf closable=false cannot have active+targetCloser tid=${tx.tid}",
               "This transaction cannot be marked as not closable.",
               silent: !debugLogs,
             );
@@ -699,6 +747,14 @@ class TransactionsRepository {
     }
 
     return true;
+  }
+
+  Future<double> getCapitalBalance(TransactionsModel tx) async {
+    final children = await getLeaf(tx);
+    final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
+    final double balance = tx.rrAmount - spent;
+
+    return balance;
   }
 
   Future<void> _deleteLeaves(TransactionsModel tx) async {
