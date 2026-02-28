@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/cryptos/service.dart';
-import '../../features/rates/service.dart';
+import '../../features/rates/controller.dart';
 import '../core/locator.dart';
+import '../features/cryptos/controller.dart';
 import '../widgets/button.dart';
 import 'theme.dart';
 
@@ -36,12 +36,12 @@ class _AppLayoutState extends State<AppLayout> {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([locator<CryptosService>(), locator<RatesService>()]),
+      animation: Listenable.merge([locator<CryptosController>(), locator<RatesController>()]),
       builder: (context, _) {
-        final cryptosService = locator<CryptosService>();
-        final ratesService = locator<RatesService>();
+        final cryptosController = locator<CryptosController>();
+        final ratesController = locator<RatesController>();
 
-        final hasRates = ratesService.hasRates;
+        final hasRates = ratesController.hasRates;
 
         final location = GoRouterState.of(context).uri.toString();
 
@@ -76,7 +76,7 @@ class _AppLayoutState extends State<AppLayout> {
                     tooltip: "Refresh Cryptos",
                     onPressed: (s) async {
                       s.progress();
-                      await cryptosService.fetch();
+                      await cryptosController.fetch();
                       s.reset();
                     },
                   ),
@@ -90,7 +90,7 @@ class _AppLayoutState extends State<AppLayout> {
                       tooltip: "Refresh Rates",
                       onPressed: (s) async {
                         s.progress();
-                        await ratesService.refreshRates();
+                        await ratesController.refreshRates();
                         s.reset();
                       },
                     ),

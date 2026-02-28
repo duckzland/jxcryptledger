@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 
 import 'model.dart';
 import 'repository.dart';
+import 'service.dart';
 
 class CryptosController extends ChangeNotifier {
   final CryptosRepository repo;
+  final CryptosService service;
 
   Map<int, String>? _symbolCache;
 
-  CryptosController(this.repo);
+  CryptosController(this.repo, this.service);
 
   Future<void> init() async {
     await repo.init();
@@ -66,5 +68,13 @@ class CryptosController extends ChangeNotifier {
 
   CryptosModel? getById(int id) {
     return repo.getById(id);
+  }
+
+  Future<bool> fetch() async {
+    bool success = await service.fetch();
+    if (success) {
+      notifyListeners();
+    }
+    return success;
   }
 }

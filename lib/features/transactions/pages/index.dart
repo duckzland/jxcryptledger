@@ -7,7 +7,6 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
-import '../../cryptos/service.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../form.dart';
@@ -27,9 +26,7 @@ class TransactionsPagesIndex extends StatefulWidget {
 }
 
 class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
-  late TransactionsController _controller;
-  late CryptosService _cryptosService;
-
+  late TransactionsController _txController;
   final CryptosController _cryptosController = locator<CryptosController>();
 
   TransactionsViewMode _viewMode = TransactionsViewMode.active;
@@ -44,13 +41,9 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   void initState() {
     super.initState();
 
-    _controller = locator<TransactionsController>();
-    _controller.load();
-    _controller.addListener(_onControllerChanged);
-
-    _cryptosService = locator<CryptosService>();
-    _cryptosService.addListener(_onControllerChanged);
-
+    _txController = locator<TransactionsController>();
+    _txController.load();
+    _txController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
 
     _detectFilterAndSortOptions();
@@ -59,9 +52,8 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
   @override
   void dispose() {
-    _controller.removeListener(_onControllerChanged);
+    _txController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
-    _cryptosService.removeListener(_onControllerChanged);
 
     super.dispose();
   }
@@ -153,11 +145,11 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
     switch (_filterMode) {
       case 0:
-        filtered = _controller.items.where((t) => t.status == 1 || t.status == 2).toList();
+        filtered = _txController.items.where((t) => t.status == 1 || t.status == 2).toList();
         break;
 
       default:
-        filtered = _controller.items.toList();
+        filtered = _txController.items.toList();
     }
 
     final grouped = <int, List<TransactionsModel>>{};
@@ -202,13 +194,13 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
     switch (_filterMode) {
       case 0:
-        filtered = _controller.items
+        filtered = _txController.items
             .where((t) => t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index)
             .toList();
         break;
 
       default:
-        filtered = _controller.items.toList();
+        filtered = _txController.items.toList();
     }
 
     final grouped = <String, List<TransactionsModel>>{};
@@ -249,23 +241,23 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
     switch (_filterMode) {
       case 1:
-        filtered = _controller.items.where((t) => t.status == TransactionStatus.active.index).toList();
+        filtered = _txController.items.where((t) => t.status == TransactionStatus.active.index).toList();
         break;
 
       case 2:
-        filtered = _controller.items.where((t) => t.status == TransactionStatus.partial.index).toList();
+        filtered = _txController.items.where((t) => t.status == TransactionStatus.partial.index).toList();
         break;
 
       case 3:
-        filtered = _controller.items.where((t) => t.status == TransactionStatus.inactive.index).toList();
+        filtered = _txController.items.where((t) => t.status == TransactionStatus.inactive.index).toList();
         break;
 
       case 4:
-        filtered = _controller.items.where((t) => t.status == TransactionStatus.closed.index).toList();
+        filtered = _txController.items.where((t) => t.status == TransactionStatus.closed.index).toList();
         break;
 
       default:
-        filtered = _controller.items;
+        filtered = _txController.items;
     }
 
     return filtered;
@@ -274,23 +266,23 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
   List<TransactionsModel> _getHistoryTransactions() {
     switch (_sortMode) {
       case 0:
-        return List<TransactionsModel>.from(_controller.items)..sort((a, b) => a.srId.compareTo(b.srId));
+        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => a.srId.compareTo(b.srId));
 
       case 1:
-        return List<TransactionsModel>.from(_controller.items)..sort((a, b) => a.timestampAsMs.compareTo(b.timestampAsMs));
+        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => a.timestampAsMs.compareTo(b.timestampAsMs));
 
       default:
-        return List<TransactionsModel>.from(_controller.items)..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
+        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny() && _controller.items.isEmpty) {
+    if (!_cryptosController.hasAny() && _txController.items.isEmpty) {
       return Column(children: [Expanded(child: _buildFetchCryptosState())]);
     }
 
-    if (_controller.items.isEmpty) {
+    if (_txController.items.isEmpty) {
       return Column(children: [Expanded(child: _buildEmptyState())]);
     }
 
@@ -559,7 +551,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             onPressed: (s) async {
               s.progress();
 
-              final success = await _cryptosService.fetch();
+              final success = await _cryptosController.fetch();
 
               if (!success) {
                 s.error();

@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/log.dart';
@@ -9,10 +7,12 @@ import '../settings/repository.dart';
 import 'parser.dart';
 import 'repository.dart';
 
-class RatesService extends ChangeNotifier {
+class RatesService {
   final RatesRepository ratesRepo;
   final CryptosRepository cryptosRepo;
   final SettingsRepository settingsRepo;
+
+  void Function()? onComplete;
 
   RatesService(this.ratesRepo, this.cryptosRepo, this.settingsRepo);
 
@@ -27,9 +27,12 @@ class RatesService extends ChangeNotifier {
     await ratesRepo.cleanupOldRates();
   }
 
+  void registerOnComplete(void Function() cb) {
+    onComplete = cb;
+  }
+
   Future<double> getStoredRate(int sourceId, int targetId) async {
     _validateIds(sourceId, targetId);
-
     final existing = await ratesRepo.get(sourceId, targetId);
     return existing?.rate.toDouble() ?? -9999;
   }
@@ -40,10 +43,10 @@ class RatesService extends ChangeNotifier {
     _queue.add((sourceId, targetId));
 
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), processQueue);
+    _debounce = Timer(const Duration(milliseconds: 200), _processQueue);
   }
 
-  Future<void> processQueue() async {
+  Future<void> _processQueue() async {
     if (_isFetching || _queue.isEmpty) return;
     if (!cryptosRepo.hasAny()) return;
 
@@ -57,9 +60,11 @@ class RatesService extends ChangeNotifier {
       final jobQueue = grouped.entries.map((e) => MapEntry(e.key, e.value.toList())).toList();
 
       await _runWorkers(jobQueue);
+      if (onComplete != null) {
+        onComplete!();
+      }
     } finally {
       _isFetching = false;
-      notifyListeners();
     }
   }
 
@@ -76,7 +81,7 @@ class RatesService extends ChangeNotifier {
       }
     }
 
-    await processQueue();
+    await _processQueue();
   }
 
   bool _isValidPair(int sourceId, int targetId) {
@@ -131,8 +136,7 @@ class RatesService extends ChangeNotifier {
 
       if (!ids.contains(sourceId) || validTargets.isEmpty) return false;
 
-      final endpoint =
-          settingsRepo.get<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
+      final endpoint = settingsRepo.get<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
 
       final uri = Uri.parse(
         endpoint,
