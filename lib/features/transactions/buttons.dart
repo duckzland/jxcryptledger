@@ -183,7 +183,7 @@ class TransactionsButtons extends StatelessWidget {
           spacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (isUpdatable)
+            if (isUpdatable && tx.isActive)
               WidgetButton(
                 key: Key("edit-button-${tx.tid}"),
                 icon: Icons.edit,

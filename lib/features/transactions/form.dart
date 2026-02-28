@@ -40,6 +40,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
   int? _selectedSrId;
   int? _selectedRrId;
+  DateTime? _selectedDate;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -81,6 +82,7 @@ class _TransactionFormState extends State<TransactionForm> {
 
     _selectedSrId = null;
     _selectedRrId = null;
+    _selectedDate = DateTime.now();
   }
 
   void _initTrade() {
@@ -95,6 +97,11 @@ class _TransactionFormState extends State<TransactionForm> {
 
     _selectedSrId = parent.srId;
     _selectedRrId = null;
+
+    _selectedDate =  DateTime.fromMillisecondsSinceEpoch(
+      widget.parent!.timestampAsMs,
+    );
+
   }
 
   void _initEdit() {
@@ -113,6 +120,9 @@ class _TransactionFormState extends State<TransactionForm> {
 
     _selectedSrId = data.srId;
     _selectedRrId = data.rrId;
+    _selectedDate = DateTime.fromMillisecondsSinceEpoch(
+      widget.initialData!.timestampAsMs,
+    );
   }
 
   @override
@@ -248,18 +258,23 @@ class _TransactionFormState extends State<TransactionForm> {
     }
   }
 
-  int _saveTimestampField() {
-    final data = widget.initialData;
+int _saveTimestampField() {
+  final data = widget.initialData;
 
-    switch (widget.mode) {
-      case TransactionsFormActionMode.addNew:
-      case TransactionsFormActionMode.trade:
-        return DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+  switch (widget.mode) {
+    case TransactionsFormActionMode.addNew:
+    case TransactionsFormActionMode.trade:
+      final date = _selectedDate ?? DateTime.now();
+      return date.toUtc().millisecondsSinceEpoch;
 
-      case TransactionsFormActionMode.edit:
-        return data!.timestamp;
-    }
+    case TransactionsFormActionMode.edit:
+      if (_selectedDate != null) {
+        return _selectedDate!.toUtc().millisecondsSinceEpoch;
+      }
+
+      return data!.timestampAsMs;
   }
+}
 
   String _savePidField() {
     switch (widget.mode) {
@@ -435,10 +450,25 @@ class _TransactionFormState extends State<TransactionForm> {
                   children: [
                     _buildTitle(),
                     const SizedBox(height: 24),
-
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(
+                            width: 260,
+                            child: WidgetsPanel(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("On date:", style: TextStyle(fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 16),
+                                _buildTimestampField(),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: WidgetsPanel(
                             padding: const EdgeInsets.all(12),
@@ -740,6 +770,116 @@ class _TransactionFormState extends State<TransactionForm> {
         );
     }
   }
+
+  Widget _buildTimestampField() {
+  final tx = widget.initialData!;
+
+
+  switch (widget.mode) {
+    case TransactionsFormActionMode.addNew:
+      final currentDate =  DateTime.now();
+
+      return _buildDatePickerField(
+        labelText: 'Date',
+        initialDate: currentDate,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+        onSelected: (date) => setState(() => _selectedDate = date),
+      );
+
+    case TransactionsFormActionMode.edit:
+      final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
+
+      return FutureBuilder<bool>(
+        future: _txController.hasLeaf(tx),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const CircularProgressIndicator();
+          }
+          final hasLeaf = snapshot.data!;
+          if (!hasLeaf && tx.isActive) {
+            return _buildDatePickerField(
+              labelText: 'Date',
+              initialDate: currentDate,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              onSelected: (date) => setState(() => _selectedDate = date),
+            );
+          } else {
+            return _buildReadOnlyDateDisplay(currentDate);
+          }
+        },
+      );
+
+    case TransactionsFormActionMode.trade:
+      final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
+
+      return _buildDatePickerField(
+        labelText: 'Date',
+        initialDate: DateTime.now(),
+        firstDate: currentDate,
+        lastDate: DateTime(2100),
+        onSelected: (date) => setState(() => _selectedDate = date),
+      );
+  }
+}
+
+Widget _buildDatePickerField({
+  required String labelText,
+  required DateTime initialDate,
+  required DateTime firstDate,
+  required DateTime lastDate,
+  required ValueChanged<DateTime> onSelected,
+}) {
+  return TextFormField(
+    readOnly: true,
+    decoration: InputDecoration(labelText: labelText),
+    controller: TextEditingController(
+      text: _selectedDate != null
+          ? "${_selectedDate!.day.toString().padLeft(2, '0')}/"
+            "${_selectedDate!.month.toString().padLeft(2, '0')}/"
+            "${_selectedDate!.year}"
+          : "",
+    ),
+    onTap: () async {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: _selectedDate ?? initialDate,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.text,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+      if (picked != null) {
+        setState(() => _selectedDate = picked);
+        onSelected(picked);
+      }
+    },
+  );
+}
+
+Widget _buildReadOnlyDateDisplay(DateTime date) {
+  return TextFormField(
+    readOnly: true,
+    decoration: const InputDecoration(labelText: 'Date'),
+    controller: TextEditingController(
+      text: "${date.year}-${date.month}-${date.day}",
+    ),
+  );
+}
 
   Widget _buildButtons() {
     String mode = "Save";
