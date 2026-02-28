@@ -41,9 +41,9 @@ class _AppLayoutState extends State<AppLayout> {
       animation: Listenable.merge([locator<CryptosController>(), locator<RatesController>()]),
       builder: (context, _) {
         final _cryptosController = locator<CryptosController>();
-        final ratesController = locator<RatesController>();
+        final _ratesController = locator<RatesController>();
 
-        final hasRates = ratesController.hasRates;
+        final hasRates = _ratesController.hasRates;
 
         final location = GoRouterState.of(context).uri.toString();
 
@@ -100,8 +100,16 @@ class _AppLayoutState extends State<AppLayout> {
                       tooltip: "Refresh Rates",
                       onPressed: (s) async {
                         s.progress();
-                        await ratesController.refreshRates();
-                        s.reset();
+                        try {
+                          await _ratesController.refreshRates();
+                          widgetsNotifySuccess("Refreshed rates from exchange.");
+                        } catch (e) {
+                          if (e is NetworkingException) {
+                            widgetsNotifyError(e.userMessage);
+                          }
+                        } finally {
+                          s.reset();
+                        }
                       },
                     ),
 
