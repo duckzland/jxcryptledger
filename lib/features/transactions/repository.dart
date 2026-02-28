@@ -30,9 +30,7 @@ class TransactionsRepository {
       final now = DateTime.now().microsecondsSinceEpoch;
       final timePart = now.toRadixString(36).padLeft(4, '0');
       final timeSuffix = timePart.substring(timePart.length - 4);
-      final randomPart = String.fromCharCodes(
-        Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
-      );
+      final randomPart = String.fromCharCodes(Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
 
       final id = '$timeSuffix$randomPart';
       if (!_box.containsKey(id)) {
@@ -270,35 +268,172 @@ class TransactionsRepository {
     return parent;
   }
 
+  Future<bool> canAdd(TransactionsModel tx) async {
+    final ptx = _box.get(tx.pid);
+    final rtx = _box.get(tx.rid);
+
+    if (tx.tid == '0') {
+      throw ValidationException(AppErrorCode.txAddInvalidTid, "Add failed: tid == '0'", "This transaction is invalid.", silent: !debugLogs);
+    }
+
+    if (tx.pid == '0' && tx.rid != '0') {
+      throw ValidationException(
+        AppErrorCode.txAddPidZeroRidNotZero,
+        "Add failed: pid=0 but rid!=0 (pid=${tx.pid}, rid=${tx.rid})",
+        "This transaction is not linked correctly.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (tx.rid == '0' && tx.pid != '0') {
+      throw ValidationException(
+        AppErrorCode.txAddRidZeroPidNotZero,
+        "Add failed: rid=0 but pid!=0 (pid=${tx.pid}, rid=${tx.rid})",
+        "This transaction is not linked correctly.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (tx.rrId <= 0 || tx.srId <= 0 || tx.srAmount <= 0 || tx.rrAmount <= 0 || tx.timestamp <= 0) {
+      throw ValidationException(
+        AppErrorCode.txAddInvalidFields,
+        "Add failed: invalid required fields (tid=${tx.tid})",
+        "Some required transaction details are missing or invalid.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (tx.srId == tx.rrId) {
+      throw ValidationException(
+        AppErrorCode.txSourceIdEqualResultId,
+        "Update failed: Source Id cannot be the same as ResultId (tid=${tx.tid}, srId=${tx.srId}, rrId=${tx.rrId})",
+        "Invalid transaction, same source and target coin.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (tx.statusEnum != TransactionStatus.active) {
+      throw ValidationException(
+        AppErrorCode.txAddStatusNotActive,
+        "Add failed: new transaction must be active (status=${tx.statusEnum})",
+        "A new transaction must start as active.",
+        silent: !debugLogs,
+      );
+    }
+
+    if (tx.isRoot) {
+      if (tx.balance != tx.rrAmount) {
+        throw ValidationException(
+          AppErrorCode.txAddRootBalanceMismatch,
+          "Add failed: root balance mismatch (balance=${tx.balance}, rrAmount=${tx.rrAmount})",
+          "The transaction balance does not match the expected amount.",
+          silent: !debugLogs,
+        );
+      }
+
+      if (tx.closable != true) {
+        throw ValidationException(
+          AppErrorCode.txAddRootNotClosable,
+          "Add failed: root must be closable=true (tid=${tx.tid})",
+          "This transaction must be marked as closable.",
+          silent: !debugLogs,
+        );
+      }
+    }
+
+    if (tx.isLeaf) {
+      final targetCloser = await getCloseTargetParent(tx);
+
+      if (rtx == null) {
+        throw ValidationException(
+          AppErrorCode.txAddLeafMissingRoot,
+          "Add failed: missing root (rtx == null, rid=${tx.rid})",
+          "This transaction is not linked correctly.",
+          silent: !debugLogs,
+        );
+      }
+
+      if (ptx == null) {
+        throw ValidationException(
+          AppErrorCode.txAddLeafMissingParent,
+          "Add failed: missing parent (ptx == null, pid=${tx.pid})",
+          "This transaction is not linked correctly.",
+          silent: !debugLogs,
+        );
+      }
+
+      if (tx.srId != ptx.rrId) {
+        throw ValidationException(
+          AppErrorCode.txAddLeafSrIdMismatch,
+          "Add failed: srId=${tx.srId} does not match parent.rrId=${ptx.rrId}",
+          "This transaction does not match the expected account.",
+          silent: !debugLogs,
+        );
+      }
+
+      if (tx.srAmount > ptx.balance) {
+        throw ValidationException(
+          AppErrorCode.txAddLeafAmountExceedsBalance,
+          "Add failed: srAmount=${tx.srAmount} exceeds parent.balance=${ptx.balance}",
+          "The transaction amount exceeds the available balance.",
+          silent: !debugLogs,
+        );
+      }
+
+      if (tx.closable == true && targetCloser == null) {
+        throw ValidationException(
+          AppErrorCode.txAddLeafClosableNoTarget,
+          "Add failed: closable=true but no targetCloser found",
+          "This transaction cannot be marked as closable yet.",
+          silent: !debugLogs,
+        );
+      }
+
+      if (tx.closable == false && targetCloser != null) {
+        throw ValidationException(
+          AppErrorCode.txAddLeafNotClosableHasTarget,
+          "Add failed: closable=false but targetCloser exists",
+          "This transaction must be marked as closable.",
+          silent: !debugLogs,
+        );
+      }
+    }
+
+    return true;
+  }
+
   Future<bool> canDelete(TransactionsModel tx) async {
     if (!tx.isRoot) {
       throw ValidationException(
-        2001,
-        "[DELETE RULE 1 FAIL] tx.isRoot == false tid=${tx.tid}",
-        "[2001] This transaction cannot be deleted.",
+        AppErrorCode.txDeleteNotRoot,
+        "Delete failed: transaction is not root (tid=${tx.tid})",
+        "This transaction cannot be deleted.",
         silent: !debugLogs,
       );
     }
 
-    final List<TransactionsModel> terminals = await collectTerminalLeaves(tx);
-    final bool allClosed = terminals.isEmpty ? true : terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final terminals = await collectTerminalLeaves(tx);
+    final allClosed = terminals.isEmpty || terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (!allClosed) {
       throw ValidationException(
-        2002,
-        "[DELETE RULE 2 FAIL] active child transactions exist tid=${tx.tid}",
-        "[2002] This transaction cannot be deleted because related transactions are still in progress.",
+        AppErrorCode.txDeleteActiveChildren,
+        "Delete failed: active terminal children exist (tid=${tx.tid})",
+        "This transaction cannot be deleted because related transactions are still in progress.",
         silent: !debugLogs,
       );
     }
 
-    final List<TransactionsModel> leaves = await collectAllLeaves (tx);
-    final bool allInactive = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.inactive);
+    final leaves = await collectAllLeaves(tx);
+    final allInactive =
+        leaves.isEmpty ||
+        leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.inactive);
+
     if (!allInactive) {
       throw ValidationException(
-        2003,
-        "[DELETE RULE 3 FAIL] active child transactions exist tid=${tx.tid}",
-        "[2003] This transaction cannot be deleted because related transactions are still in progress.",
+        AppErrorCode.txDeleteInactiveLeaves,
+        "Delete failed: some leaves are still active (tid=${tx.tid})",
+        "This transaction cannot be deleted because related transactions are still in progress.",
         silent: !debugLogs,
       );
     }
@@ -307,76 +442,86 @@ class TransactionsRepository {
   }
 
   Future<bool> canUpdate(TransactionsModel tx) async {
-    final TransactionsModel? otx = _box.get(tx.tid);
-    final TransactionsModel? ptx = _box.get(tx.pid);
-    final TransactionsModel? rtx = _box.get(tx.rid);
+    final otx = _box.get(tx.tid);
+    final ptx = _box.get(tx.pid);
+    final rtx = _box.get(tx.rid);
+
+    if (tx.srId == tx.rrId) {
+      throw ValidationException(
+        AppErrorCode.txSourceIdEqualResultId,
+        "Update failed: Source Id cannot be the same as ResultId (tid=${tx.tid}, srId=${tx.srId}, rrId=${tx.rrId})",
+        "Cannot update, same source and target coin.",
+        silent: !debugLogs,
+      );
+    }
 
     if (otx == null) {
       throw ValidationException(
-        3001,
-        "[UPDATE RULE 1 FAIL] otx == null tid=${tx.tid}",
-        "[3001] This transaction can no longer be found.",
+        AppErrorCode.txUpdateNotFound,
+        "Update failed: original transaction not found (tid=${tx.tid})",
+        "This transaction can no longer be found.",
         silent: !debugLogs,
       );
     }
 
     if (otx.isRoot && (tx.pid != '0' || tx.rid != '0')) {
       throw ValidationException(
-        3002,
-        "[UPDATE RULE 2 FAIL] root cannot change pid/rid tid=${tx.tid}",
-        "[3002] This transaction cannot be changed in that way.",
+        AppErrorCode.txUpdateRootPidRid,
+        "Update failed: root cannot change pid/rid (tid=${tx.tid})",
+        "This transaction cannot be changed in that way.",
         silent: !debugLogs,
       );
     }
 
     if (otx.isLeaf && (ptx == null || rtx == null)) {
       throw ValidationException(
-        3003,
-        "[UPDATE RULE 3 FAIL] leaf missing parent or root ptx=$ptx rtx=$rtx tid=${tx.tid}",
-        "[3003] This transaction is not linked correctly.",
+        AppErrorCode.txUpdateLeafMissingParent,
+        "Update failed: leaf missing parent or root (tid=${tx.tid})",
+        "This transaction is not linked correctly.",
         silent: !debugLogs,
       );
     }
 
     if (tx.rrId <= 0 || tx.srId <= 0 || tx.srAmount <= 0 || tx.rrAmount <= 0 || tx.timestamp <= 0) {
       throw ValidationException(
-        3004,
-        "[UPDATE RULE 4 FAIL] invalid fields rrId=${tx.rrId} srId=${tx.srId} "
-            "srAmount=${tx.srAmount} rrAmount=${tx.rrAmount} timestamp=${tx.timestamp}",
-        "[3004] Some required transaction details are missing or invalid.",
+        AppErrorCode.txUpdateInvalidFields,
+        "Update failed: invalid required fields (tid=${tx.tid})",
+        "Some required transaction details are missing or invalid.",
         silent: !debugLogs,
       );
     }
 
-    final List<TransactionsModel> leaves = await collectTerminalLeaves(tx);
+    final leaves = await collectTerminalLeaves(tx);
     final targetCloser = await getCloseTargetParent(tx);
     final children = await getLeaf(tx);
 
-    final bool hasChildren = children.isNotEmpty;
-    final bool allClosed = leaves.isEmpty ? true : leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-    final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
-    final double balance = otx.rrAmount - spent;
+    final hasChildren = children.isNotEmpty;
+    final allClosed = leaves.isEmpty || leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
+    final balance = otx.rrAmount - spent;
 
     if (tx.rrId != otx.rrId || tx.rrAmount != otx.rrAmount || tx.srId != otx.srId || tx.srAmount != otx.srAmount) {
       if (hasChildren) {
         throw ValidationException(
-          3005,
-          "[UPDATE RULE 5 FAIL] cannot change SR/RR fields when hasChildren=true tid=${tx.tid}",
-          "[3005] This transaction cannot change its accounts or amounts because related transactions depend on it.",
+          AppErrorCode.txUpdateCannotChangeSrRr,
+          "Update failed: cannot change SR/RR fields when children exist (tid=${tx.tid})",
+          "This transaction cannot change its accounts or amounts because related transactions depend on it.",
           silent: !debugLogs,
         );
       }
     }
 
-    if (otx.isLeaf && ptx != null && otx.srAmount != tx.srAmount) {
-      if (otx.srAmount < tx.srAmount && ptx.balance < (tx.srAmount - otx.srAmount)) {
-        throw ValidationException(
-          3006,
-          "[UPDATE RULE 5 FAIL] cannot change SR/SR fields when parent has insufficient balance",
-          "[3006] This transaction cannot change its source amounts because parent has insufficient balance.",
-          silent: !debugLogs,
-        );
-      }  
+    if (otx.isLeaf &&
+        ptx != null &&
+        otx.srAmount != tx.srAmount &&
+        otx.srAmount < tx.srAmount &&
+        ptx.balance < (tx.srAmount - otx.srAmount)) {
+      throw ValidationException(
+        AppErrorCode.txUpdateParentInsufficientBalance,
+        "Update failed: parent has insufficient balance (tid=${tx.tid})",
+        "This transaction cannot change its source amounts because the parent has insufficient balance.",
+        silent: !debugLogs,
+      );
     }
 
     if (tx.status != otx.status) {
@@ -384,17 +529,17 @@ class TransactionsRepository {
         case TransactionStatus.inactive:
           if (!hasChildren) {
             throw ValidationException(
-              3007,
-              "[UPDATE RULE 7A FAIL] inactive requires hasChildren=true tid=${tx.tid}",
-              "[3007] This transaction cannot be marked inactive.",
+              AppErrorCode.txUpdateInactiveRequiresChildren,
+              "Update failed: inactive requires children (tid=${tx.tid})",
+              "This transaction cannot be marked inactive.",
               silent: !debugLogs,
             );
           }
           if (balance > 0) {
             throw ValidationException(
-              3008,
-              "[UPDATE RULE 7A FAIL] inactive requires balance=0 balance=$balance tid=${tx.tid}",
-              "[3008] This transaction still has remaining balance and cannot be marked inactive.",
+              AppErrorCode.txUpdateInactiveRequiresZeroBalance,
+              "Update failed: inactive requires zero balance (tid=${tx.tid})",
+              "This transaction still has remaining balance and cannot be marked inactive.",
               silent: !debugLogs,
             );
           }
@@ -403,17 +548,17 @@ class TransactionsRepository {
         case TransactionStatus.active:
           if (!hasChildren && tx.balance <= 0) {
             throw ValidationException(
-              3009,
-              "[UPDATE RULE 7B FAIL] active requires balance>0 when no children tid=${tx.tid}",
-              "[3009] This transaction must have a positive balance to remain active.",
+              AppErrorCode.txUpdateActiveRequiresBalance,
+              "Update failed: active requires positive balance (tid=${tx.tid})",
+              "This transaction must have a positive balance to remain active.",
               silent: !debugLogs,
             );
           }
           if (hasChildren && !allClosed) {
             throw ValidationException(
-              3010,
-              "[UPDATE RULE 7B FAIL] active requires all children closed tid=${tx.tid}",
-              "[3010] All related transactions must be completed before this one can be active.",
+              AppErrorCode.txUpdateActiveRequiresChildrenClosed,
+              "Update failed: active requires all children closed (tid=${tx.tid})",
+              "All related transactions must be completed before this one can be active.",
               silent: !debugLogs,
             );
           }
@@ -422,17 +567,17 @@ class TransactionsRepository {
         case TransactionStatus.partial:
           if (!hasChildren) {
             throw ValidationException(
-              3011,
-              "[UPDATE RULE 7C FAIL] partial requires hasChildren=true tid=${tx.tid}",
-              "[3011] This transaction cannot be marked as partially completed.",
+              AppErrorCode.txUpdatePartialRequiresChildren,
+              "Update failed: partial requires children (tid=${tx.tid})",
+              "This transaction cannot be marked as partially completed.",
               silent: !debugLogs,
             );
           }
           if (hasChildren && allClosed) {
             throw ValidationException(
-              3012,
-              "[UPDATE RULE 7C FAIL] partial cannot have all children closed tid=${tx.tid}",
-              "[3012] This transaction cannot be marked as partial because all related transactions are already completed.",
+              AppErrorCode.txUpdatePartialCannotAllClosed,
+              "Update failed: partial cannot have all children closed (tid=${tx.tid})",
+              "This transaction cannot be marked as partial because all related transactions are already completed.",
               silent: !debugLogs,
             );
           }
@@ -441,17 +586,17 @@ class TransactionsRepository {
         case TransactionStatus.closed:
           if (tx.isRoot) {
             throw ValidationException(
-              3013,
-              "[UPDATE RULE 7D FAIL] root cannot be closed tid=${tx.tid}",
-              "[3013] This transaction cannot be closed directly.",
+              AppErrorCode.txUpdateClosedRoot,
+              "Update failed: root cannot be closed (tid=${tx.tid})",
+              "This transaction cannot be closed directly.",
               silent: !debugLogs,
             );
           }
           if (targetCloser == null) {
             throw ValidationException(
-              3014,
-              "[UPDATE RULE 7D FAIL] closed requires targetCloser!=null tid=${tx.tid}",
-              "[3014] This transaction is not ready to be closed yet.",
+              AppErrorCode.txUpdateClosedRequiresTarget,
+              "Update failed: closed requires targetCloser (tid=${tx.tid})",
+              "This transaction is not ready to be closed yet.",
               silent: !debugLogs,
             );
           }
@@ -467,25 +612,25 @@ class TransactionsRepository {
         case true:
           if (tx.isRoot && !allClosed) {
             throw ValidationException(
-              3015,
-              "[UPDATE RULE 8A FAIL] root closable=true requires allClosed=true tid=${tx.tid}",
-              "[3015] This transaction cannot be marked as closable yet.",
+              AppErrorCode.txUpdateClosableRootRequiresClosed,
+              "Update failed: root closable requires all children closed (tid=${tx.tid})",
+              "This transaction cannot be marked as closable yet.",
               silent: !debugLogs,
             );
           }
           if (tx.isLeaf && !otx.isActive) {
             throw ValidationException(
-              3016,
-              "[UPDATE RULE 8A FAIL] leaf closable=true requires otx.active tid=${tx.tid}",
-              "[3016] This transaction must be active before it can be marked as closable.",
+              AppErrorCode.txUpdateClosableLeafRequiresActive,
+              "Update failed: leaf closable requires active (tid=${tx.tid})",
+              "This transaction must be active before it can be marked as closable.",
               silent: !debugLogs,
             );
           }
           if (tx.isLeaf && targetCloser == null) {
             throw ValidationException(
-              3017,
-              "[UPDATE RULE 8A FAIL] leaf closable=true requires targetCloser!=null tid=${tx.tid}",
-              "[3017] This transaction cannot be marked as closable yet.",
+              AppErrorCode.txUpdateClosableLeafRequiresTarget,
+              "Update failed: leaf closable requires targetCloser (tid=${tx.tid})",
+              "This transaction cannot be marked as closable yet.",
               silent: !debugLogs,
             );
           }
@@ -494,17 +639,17 @@ class TransactionsRepository {
         case false:
           if (tx.isRoot && allClosed) {
             throw ValidationException(
-              3018,
-              "[UPDATE RULE 8B FAIL] root closable=false cannot have allClosed=true tid=${tx.tid}",
-              "[3018] This transaction must remain closable.",
+              AppErrorCode.txUpdateNotClosableRootAllClosed,
+              "Update failed: root cannot be not-closable when all children closed (tid=${tx.tid})",
+              "This transaction must remain closable.",
               silent: !debugLogs,
             );
           }
           if (tx.isLeaf && otx.isActive && targetCloser != null) {
             throw ValidationException(
-              3019,
-              "[UPDATE RULE 8B FAIL] leaf closable=false cannot have active+targetCloser tid=${tx.tid}",
-              "[3019] This transaction cannot be marked as not closable.",
+              AppErrorCode.txUpdateNotClosableLeafActiveTarget,
+              "Update failed: leaf cannot be not-closable when active with targetCloser (tid=${tx.tid})",
+              "This transaction cannot be marked as not closable.",
               silent: !debugLogs,
             );
           }
@@ -515,153 +660,30 @@ class TransactionsRepository {
     return true;
   }
 
-  Future<bool> canAdd(TransactionsModel tx) async {
-    final TransactionsModel? ptx = _box.get(tx.pid);
-    final TransactionsModel? rtx = _box.get(tx.rid);
-
-    if (tx.tid == '0') {
-      throw ValidationException(
-        4001,
-        "[ADD RULE 1 FAIL] tid == '0'",
-        "[4001] This transaction is invalid.",
-        silent: !debugLogs,
-      );
-    }
-
-    if (tx.pid == '0' && tx.rid != '0') {
-      throw ValidationException(
-        4002,
-        "[ADD RULE 2 FAIL] pid=0 but rid!=0 pid=${tx.pid} rid=${tx.rid}",
-        "[4002] This transaction is not linked correctly.",
-        silent: !debugLogs,
-      );
-    }
-
-    if (tx.rid == '0' && tx.pid != '0') {
-      throw ValidationException(
-        4003,
-        "[ADD RULE 3 FAIL] rid=0 but pid!=0 pid=${tx.pid} rid=${tx.rid}",
-        "[4003] This transaction is not linked correctly.",
-        silent: !debugLogs,
-      );
-    }
-
-    if (tx.rrId <= 0 || tx.srId <= 0 || tx.srAmount <= 0 || tx.rrAmount <= 0 || tx.timestamp <= 0) {
-      throw ValidationException(
-        4004,
-        "[ADD RULE 4 FAIL] invalid fields rrId=${tx.rrId} srId=${tx.srId} "
-            "srAmount=${tx.srAmount} rrAmount=${tx.rrAmount} timestamp=${tx.timestamp}",
-        "[4004] Some required transaction details are missing or invalid.",
-        silent: !debugLogs,
-      );
-    }
-
-    if (tx.statusEnum != TransactionStatus.active) {
-      throw ValidationException(
-        4005,
-        "[ADD RULE 5 FAIL] status must be active status=${tx.statusEnum}",
-        "[4005] A new transaction must start as active.",
-        silent: !debugLogs,
-      );
-    }
-
-    if (tx.isRoot) {
-      if (tx.balance != tx.rrAmount) {
-        throw ValidationException(
-          4006,
-          "[ADD RULE 6 FAIL] root balance mismatch balance=${tx.balance} rrAmount=${tx.rrAmount}",
-          "[4006] The transaction balance does not match the expected amount.",
-          silent: !debugLogs,
-        );
-      }
-
-      if (tx.closable != true) {
-        throw ValidationException(
-          4007,
-          "[ADD RULE 7 FAIL] root must be closable=true",
-          "[4007] This transaction must be marked as closable.",
-          silent: !debugLogs,
-        );
-      }
-    }
-
-    if (tx.isLeaf) {
-      final targetCloser = await getCloseTargetParent(tx);
-
-      if (rtx == null) {
-        throw ValidationException(
-          4008,
-          "[ADD RULE 8 FAIL] rtx == null rid=${tx.rid}",
-          "[4008] This transaction is not linked correctly.",
-          silent: !debugLogs,
-        );
-      }
-
-      if (ptx == null) {
-        throw ValidationException(
-          4009,
-          "[ADD RULE 9 FAIL] ptx == null pid=${tx.pid}",
-          "[4009] This transaction is not linked correctly.",
-          silent: !debugLogs,
-        );
-      }
-
-      if (tx.srId != ptx.rrId) {
-        throw ValidationException(
-          4010,
-          "[ADD RULE 10 FAIL] srId=${tx.srId} != parent.rrId=${ptx.rrId}",
-          "[4010] This transaction does not match the expected account.",
-          silent: !debugLogs,
-        );
-      }
-
-      if (tx.srAmount > ptx.balance) {
-        throw ValidationException(
-          4011,
-          "[ADD RULE 11 FAIL] srAmount=${tx.srAmount} > parent.balance=${ptx.balance}",
-          "[4011] The transaction amount exceeds the available balance.",
-          silent: !debugLogs,
-        );
-      }
-
-      if (tx.closable == true && targetCloser == null) {
-        throw ValidationException(
-          4012,
-          "[ADD RULE 12 FAIL] closable=true but targetCloser == null",
-          "[4012] This transaction cannot be marked as closable yet.",
-          silent: !debugLogs,
-        );
-      }
-
-      if (tx.closable == false && targetCloser != null) {
-        throw ValidationException(
-          4013,
-          "[ADD RULE 13 FAIL] closable=false but targetCloser exists",
-          "[4013] This transaction must be marked as closable.",
-          silent: !debugLogs,
-        );
-      }
-    }
-
-    return true;
-  }
-
   Future<bool> canClose(TransactionsModel tx) async {
-    // Cannot check for existing tx as it will break at add method.
+    if (tx.srId == tx.rrId) {
+      throw ValidationException(
+        AppErrorCode.txSourceIdEqualResultId,
+        "Close failed: Source Id cannot be the same as ResultId (tid=${tx.tid}, srId=${tx.srId}, rrId=${tx.rrId})",
+        "Cannot close, same source and target coin.",
+        silent: !debugLogs,
+      );
+    }
+
     if (tx.isRoot) {
       throw ValidationException(
-        5001,
-        "[CLOSE RULE 1 FAIL] otx.isRoot == true tid=${tx.tid}",
-        "[5001] This transaction cannot be closed directly.",
+        AppErrorCode.txCloseRoot,
+        "Close failed: root cannot be closed (tid=${tx.tid})",
+        "This transaction cannot be closed directly.",
         silent: !debugLogs,
       );
     }
 
     if (!tx.isActive) {
       throw ValidationException(
-        5002,
-        "[CLOSE RULE 2 FAIL] otx.isActive == false tid=${tx.tid}",
-        "[5003] An inactive transaction cannot be closed.",
+        AppErrorCode.txCloseNotActive,
+        "Close failed: transaction is not active (tid=${tx.tid})",
+        "An inactive transaction cannot be closed.",
         silent: !debugLogs,
       );
     }
@@ -670,9 +692,9 @@ class TransactionsRepository {
 
     if (targetCloser == null) {
       throw ValidationException(
-        5003,
-        "[CLOSE RULE 3 FAIL] targetCloser == null tid=${tx.tid}",
-        "[5003] This transaction is not ready to be closed yet.",
+        AppErrorCode.txCloseNoTarget,
+        "Close failed: no targetCloser found (tid=${tx.tid})",
+        "This transaction is not ready to be closed yet.",
         silent: !debugLogs,
       );
     }
@@ -683,33 +705,42 @@ class TransactionsRepository {
   Future<bool> canTrade(TransactionsModel tx) async {
     if (tx.tid == '0') {
       throw ValidationException(
-        6001,
-        "[TRADE RULE 1 FAIL] tx.tid == '0'",
-        "[6001] This trade cannot be processed because its ID is invalid.",
+        AppErrorCode.txTradeInvalidId,
+        "Trade failed: invalid tid='0'",
+        "This trade cannot be processed because its ID is invalid.",
         silent: !debugLogs,
       );
     }
 
-    final TransactionsModel? otx = _box.get(tx.tid);
+    if (tx.srId == tx.rrId) {
+      throw ValidationException(
+        AppErrorCode.txSourceIdEqualResultId,
+        "Trade failed: Source Id cannot be the same as ResultId (tid=${tx.tid}, srId=${tx.srId}, rrId=${tx.rrId})",
+        "Cannot trade for same source and target coin.",
+        silent: !debugLogs,
+      );
+    }
+
+    final otx = _box.get(tx.tid);
 
     if (otx == null) {
       throw ValidationException(
-        6002,
-        "[TRADE RULE 2 FAIL] otx == null tid=${tx.tid}",
-        "[6002] This trade cannot be processed because the original transaction was not found.",
+        AppErrorCode.txTradeNotFound,
+        "Trade failed: original transaction not found (tid=${tx.tid})",
+        "This trade cannot be processed because the original transaction was not found.",
         silent: !debugLogs,
       );
     }
 
     if (!otx.isRoot) {
-      final TransactionsModel? ptx = _box.get(tx.pid);
-      final TransactionsModel? rtx = _box.get(tx.rid);
+      final ptx = _box.get(tx.pid);
+      final rtx = _box.get(tx.rid);
 
       if (ptx == null || rtx == null) {
         throw ValidationException(
-          6003,
-          "[TRADE RULE 3 FAIL] ptx == null or rtx == null tid=${tx.tid}",
-          "[6003] Invalid transaction cannot be traded.",
+          AppErrorCode.txTradeMissingParent,
+          "Trade failed: missing parent or root (tid=${tx.tid})",
+          "Invalid transaction cannot be traded.",
           silent: !debugLogs,
         );
       }
@@ -717,31 +748,27 @@ class TransactionsRepository {
 
     if (!otx.isActive && !otx.isPartial) {
       throw ValidationException(
-        6004,
-        "[TRADE RULE 4 FAIL] not active or not partial "
-            "isActive=${otx.isActive} isPartial=${otx.isPartial} tid=${tx.tid}",
-        "[6004] This trade cannot be processed because the original transaction is not in a valid state.",
+        AppErrorCode.txTradeInvalidState,
+        "Trade failed: transaction not active or partial (tid=${tx.tid})",
+        "This trade cannot be processed because the original transaction is not in a valid state.",
         silent: !debugLogs,
       );
     }
 
     if (otx.rrId <= 0 || otx.srId <= 0 || otx.srAmount <= 0 || otx.rrAmount <= 0 || otx.timestamp <= 0) {
       throw ValidationException(
-        6005,
-        "[TRADE RULE 5 FAIL] invalid required fields "
-            "rrId=${otx.rrId} srId=${otx.srId} srAmount=${otx.srAmount} "
-            "rrAmount=${otx.rrAmount} timestamp=${otx.timestamp}",
-        "[6005] Some required trade details are missing or invalid.",
+        AppErrorCode.txTradeInvalidFields,
+        "Trade failed: invalid required fields (tid=${tx.tid})",
+        "Some required trade details are missing or invalid.",
         silent: !debugLogs,
       );
     }
 
     if (otx.balance <= 0) {
       throw ValidationException(
-        6006,
-        "[TRADE RULE 6 FAIL] balance <= 0 balance=${otx.balance} "
-            "rrId=${otx.rrId} srId=${otx.srId}",
-        "[6006] This trade cannot be processed because the remaining balance is invalid.",
+        AppErrorCode.txTradeInvalidBalance,
+        "Trade failed: balance <= 0 (tid=${tx.tid})",
+        "This trade cannot be processed because the remaining balance is invalid.",
         silent: !debugLogs,
       );
     }

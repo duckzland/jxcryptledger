@@ -5,6 +5,8 @@ import '../../features/rates/controller.dart';
 import '../core/locator.dart';
 import '../features/cryptos/controller.dart';
 import '../widgets/button.dart';
+import '../widgets/notify.dart';
+import 'exceptions.dart';
 import 'theme.dart';
 
 class AppLayout extends StatefulWidget {
@@ -38,7 +40,7 @@ class _AppLayoutState extends State<AppLayout> {
     return AnimatedBuilder(
       animation: Listenable.merge([locator<CryptosController>(), locator<RatesController>()]),
       builder: (context, _) {
-        final cryptosController = locator<CryptosController>();
+        final _cryptosController = locator<CryptosController>();
         final ratesController = locator<RatesController>();
 
         final hasRates = ratesController.hasRates;
@@ -76,8 +78,16 @@ class _AppLayoutState extends State<AppLayout> {
                     tooltip: "Refresh Cryptos",
                     onPressed: (s) async {
                       s.progress();
-                      await cryptosController.fetch();
-                      s.reset();
+                      try {
+                        await _cryptosController.fetch();
+                        widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
+                      } catch (e) {
+                        if (e is NetworkingException) {
+                          widgetsNotifyError(e.userMessage);
+                        }
+                      } finally {
+                        s.reset();
+                      }
                     },
                   ),
 

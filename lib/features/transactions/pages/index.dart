@@ -551,20 +551,18 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
             onPressed: (s) async {
               s.progress();
 
-              final success = await _cryptosController.fetch();
-
-              if (!success) {
-                s.error();
-                if (mounted) {
-                  widgetsNotifyError("Failed to fetch cryptocurrency data.");
-                }
-              } else {
+              try {
+                await _cryptosController.fetch();
+                widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
                 _cryptosController.getSymbolMap();
                 s.action();
-                if (mounted) {
-                  widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-                  setState(() {});
+                setState(() {});
+              } catch (e) {
+                if (e is NetworkingException) {
+                  widgetsNotifyError(e.userMessage);
                 }
+              } finally {
+                s.reset();
               }
             },
           ),
