@@ -4,7 +4,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import 'model.dart';
-import 'repository.dart';
+import 'controller.dart';
 
 class CryptoSearchField extends FormField<int> {
   CryptoSearchField({
@@ -51,19 +51,19 @@ class _CryptoSearchFieldBody extends StatefulWidget {
 
 class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
   late TextEditingController _controller;
-  late CryptosRepository _cryptosRepo;
+  late CryptosController _cryptosController;
   List<CryptosModel> _allCryptos = [];
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _cryptosRepo = locator<CryptosRepository>();
-    _cryptosRepo.addListener(_loadCryptos);
+    _cryptosController = locator<CryptosController>();
+    _cryptosController.addListener(_loadCryptos);
 
     _loadCryptos().then((_) {
       if (widget.initialValue != null) {
-        final crypto = _cryptosRepo.getById(widget.initialValue!);
+        final crypto = _cryptosController.getById(widget.initialValue!);
         if (crypto != null) {
           _controller.text = '${crypto.symbol} (#${crypto.id})';
         }
@@ -72,7 +72,7 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
   }
 
   Future<void> _loadCryptos() async {
-    final cryptos = _cryptosRepo.getAll();
+    final cryptos = _cryptosController.getAll();
     setState(() {
       _allCryptos = cryptos;
     });
@@ -87,7 +87,7 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
   @override
   void dispose() {
     _controller.dispose();
-    _cryptosRepo.removeListener(_loadCryptos);
+    _cryptosController.removeListener(_loadCryptos);
     super.dispose();
   }
 

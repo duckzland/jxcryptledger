@@ -12,6 +12,10 @@ class TransactionsController extends ChangeNotifier {
 
   TransactionsController(this.repo);
 
+  String generateTid() {
+    return repo.generateTid();
+  }
+
   Future<void> load() async {
     _items = await repo.getAll();
     notifyListeners();
