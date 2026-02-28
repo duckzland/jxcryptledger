@@ -21,6 +21,8 @@ class TransactionsButtons extends StatelessWidget {
   TransactionsButtons({super.key, required this.tx, required this.onAction});
 
   Future<void> _showEditDialog(BuildContext context) async {
+    TransactionsModel? ptx = await _txController.getParent(tx);
+
     await showDialog(
       context: context,
       builder: (dialogContext) => Scaffold(
@@ -29,6 +31,7 @@ class TransactionsButtons extends StatelessWidget {
           child: TransactionForm(
             mode: TransactionsFormActionMode.edit,
             initialData: tx,
+            parent: ptx,
             onSave: (e) async {
               if (e == null) {
                 Navigator.pop(dialogContext);
@@ -130,6 +133,7 @@ class TransactionsButtons extends StatelessWidget {
   }
 
   Future<void> _showTradeDialog(BuildContext context) async {
+    TransactionsModel? ptx = await _txController.getParent(tx);
     await showDialog(
       context: context,
       builder: (dialogContext) => Scaffold(
@@ -138,7 +142,7 @@ class TransactionsButtons extends StatelessWidget {
           child: TransactionForm(
             mode: TransactionsFormActionMode.trade,
             initialData: tx,
-            parent: tx,
+            parent: ptx,
             onSave: (e) async {
               if (e == null) {
                 Navigator.pop(dialogContext);

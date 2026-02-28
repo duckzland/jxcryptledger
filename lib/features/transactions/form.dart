@@ -44,6 +44,8 @@ class _TransactionFormState extends State<TransactionForm> {
 
   final _formKey = GlobalKey<FormState>();
 
+  late TransactionsModel? _parent;
+
   bool get isRoot {
     final tx = widget.initialData;
     return tx != null && tx.isRoot;
@@ -57,7 +59,6 @@ class _TransactionFormState extends State<TransactionForm> {
   @override
   void initState() {
     super.initState();
-
     _cryptosRepo = locator<CryptosRepository>();
 
     switch (widget.mode) {
@@ -86,21 +87,25 @@ class _TransactionFormState extends State<TransactionForm> {
   }
 
   void _initTrade() {
-    final parent = widget.parent!;
+    String purchaseNotes = '';
+    if (widget.parent != null && widget.parent!.isRoot) {
+      purchaseNotes = widget.parent!.meta['purchase_notes'];
+    }
 
     _srAmountController = TextEditingController();
     _rrAmountController = TextEditingController();
 
-    _purchaseNotesController = TextEditingController(text: parent.meta['purchase_notes'] ?? '');
+    _purchaseNotesController = TextEditingController(text: purchaseNotes);
 
     _tradingNotesController = TextEditingController();
 
-    _selectedSrId = parent.srId;
+    _selectedSrId = widget.initialData!.srId;
     _selectedRrId = null;
 
-    _selectedDate =  DateTime.fromMillisecondsSinceEpoch(
-      widget.parent!.timestampAsMs,
-    );
+    _selectedDate = DateTime.now();
+    // _selectedDate =  DateTime.fromMillisecondsSinceEpoch(
+    //   widget.parent!.timestampAsMs,
+    // );
 
   }
 
@@ -772,56 +777,66 @@ int _saveTimestampField() {
   }
 
   Widget _buildTimestampField() {
-  final tx = widget.initialData!;
+    switch (widget.mode) {
+      case TransactionsFormActionMode.addNew:
+        final currentDate = DateTime.now();
 
+        return _buildDatePickerField(
+          labelText: 'Date',
+          initialDate: currentDate,
+          firstDate: DateTime(2000),
+          lastDate: currentDate,
+          onSelected: (date) => setState(() => _selectedDate = date),
+        );
 
-  switch (widget.mode) {
-    case TransactionsFormActionMode.addNew:
-      final currentDate =  DateTime.now();
+      case TransactionsFormActionMode.edit:
+        TransactionsModel tx = widget.initialData!;
+        final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
 
-      return _buildDatePickerField(
-        labelText: 'Date',
-        initialDate: currentDate,
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
-        onSelected: (date) => setState(() => _selectedDate = date),
-      );
+        return FutureBuilder<bool>(
+          future: _txController.hasLeaf(tx),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const CircularProgressIndicator();
+            }
+            final hasLeaf = snapshot.data!;
+            if (!hasLeaf) {
 
-    case TransactionsFormActionMode.edit:
-      final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
+              DateTime firstDate = DateTime(2000);
+              if (widget.parent != null) {
+                firstDate = DateTime.fromMillisecondsSinceEpoch(widget.parent!.timestampAsMs);
+              }
 
-      return FutureBuilder<bool>(
-        future: _txController.hasLeaf(tx),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const CircularProgressIndicator();
-          }
-          final hasLeaf = snapshot.data!;
-          if (!hasLeaf && tx.isActive) {
-            return _buildDatePickerField(
-              labelText: 'Date',
-              initialDate: currentDate,
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-              onSelected: (date) => setState(() => _selectedDate = date),
-            );
-          } else {
-            return _buildReadOnlyDateDisplay(currentDate);
-          }
-        },
-      );
+              return _buildDatePickerField(
+                labelText: 'Date',
+                initialDate: currentDate,
+                firstDate: firstDate,
+                lastDate: currentDate,
+                onSelected: (date) => setState(() => _selectedDate = date),
+              );
+            } else {
+              return _buildReadOnlyDateDisplay(currentDate);
+            }
+          },
+        );
 
-    case TransactionsFormActionMode.trade:
-      final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
+      case TransactionsFormActionMode.trade:
+        TransactionsModel tx = widget.initialData!;
+        final currentDate = DateTime.fromMillisecondsSinceEpoch(tx.timestampAsMs);
 
-      return _buildDatePickerField(
-        labelText: 'Date',
-        initialDate: DateTime.now(),
-        firstDate: currentDate,
-        lastDate: DateTime(2100),
-        onSelected: (date) => setState(() => _selectedDate = date),
-      );
-  }
+        DateTime firstDate = DateTime(2000);
+        if (widget.parent != null) {
+          firstDate = DateTime.fromMillisecondsSinceEpoch(widget.parent!.timestampAsMs);
+        }
+
+        return _buildDatePickerField(
+          labelText: 'Date',
+          initialDate: DateTime.now(),
+          firstDate: firstDate,
+          lastDate: currentDate,
+          onSelected: (date) => setState(() => _selectedDate = date),
+        );
+    }
 }
 
 Widget _buildDatePickerField({
