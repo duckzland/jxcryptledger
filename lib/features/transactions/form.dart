@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/app/exceptions.dart';
 import 'package:jxcryptledger/features/transactions/repository.dart';
 
 import '../../app/theme.dart';
@@ -44,8 +43,6 @@ class _TransactionFormState extends State<TransactionForm> {
   DateTime? _selectedDate;
 
   final _formKey = GlobalKey<FormState>();
-
-  late TransactionsModel? _parent;
 
   bool get isRoot {
     final tx = widget.initialData;
@@ -843,7 +840,7 @@ int _saveTimestampField() {
 
       case TransactionsFormActionMode.trade:
         TransactionsModel tx = widget.initialData!;
-        
+
         return _buildDatePickerField(
           labelText: 'Date',
           initialDate: DateTime.now(),
