@@ -30,7 +30,7 @@ class _AppLayoutState extends State<AppLayout> {
   @override
   void initState() {
     super.initState();
-    AppLayout.setTitle = _setTitle; // ← inject here
+    AppLayout.setTitle = _setTitle;
   }
 
   @override
