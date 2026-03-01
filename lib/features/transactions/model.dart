@@ -129,9 +129,7 @@ class TransactionsModel {
   String get timestampAsDate {
     final isMilliseconds = timestamp > 2000000000;
 
-    final date = isMilliseconds
-        ? DateTime.fromMillisecondsSinceEpoch(timestamp)
-        : DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    final date = isMilliseconds ? DateTime.fromMillisecondsSinceEpoch(timestamp) : DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
 
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
@@ -146,6 +144,7 @@ class TransactionsModel {
   String get rrAmountText => Utils.formatSmartDouble(rrAmount);
   String get balanceText => Utils.formatSmartDouble(balance);
   String get rateText => Utils.formatSmartDouble(rateDouble);
+  String get rateReversedText => Utils.formatSmartDouble(1 / rateDouble);
 
   Decimal get rate {
     if (srAmount <= 0 || rrAmount <= 0) return Decimal.zero;

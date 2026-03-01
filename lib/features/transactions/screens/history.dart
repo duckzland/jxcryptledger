@@ -53,7 +53,7 @@ class TransactionHistoryState extends State<TransactionHistory> {
         padding: const EdgeInsets.only(bottom: 16),
         child: WidgetsPanel(
           child: TreeView.simple(
-            key: ValueKey(widget.transactions.length),
+            key: ValueKey(widget.transactions.map((e) => "${e.tid}-${e.timestamp}").join('|')),
             tree: _root,
             showRootNode: false,
             indentation: const Indentation(style: IndentStyle.roundJoint),
