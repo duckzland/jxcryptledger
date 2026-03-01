@@ -281,8 +281,6 @@ class _TransactionFormState extends State<TransactionForm> {
       case TransactionsFormActionMode.addNew:
       case TransactionsFormActionMode.trade:
         final now = DateTime.now().toUtc();
-
-        // If user selected a date, merge it with current time
         final base = _selectedDate ?? now;
 
         final merged = DateTime.utc(base.year, base.month, base.day, now.hour, now.minute, now.second, now.millisecond, now.microsecond);
