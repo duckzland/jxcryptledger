@@ -99,7 +99,6 @@ class _TransactionFormState extends State<TransactionFormTrade> {
 
     final newParentBalance = parent.balance - child.srAmount;
 
-    logln('[USER TRADE] from ${parent.tid} parent: ${parent.rrId} to child: ${child.srId}');
     logln('[USER TRADE] Calculated new parent balance: $newParentBalance (old: ${parent.balance} - child: ${child.srAmount})');
 
     TransactionStatus newStatus;
