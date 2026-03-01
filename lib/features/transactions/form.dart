@@ -280,12 +280,23 @@ class _TransactionFormState extends State<TransactionForm> {
     switch (widget.mode) {
       case TransactionsFormActionMode.addNew:
       case TransactionsFormActionMode.trade:
-        final date = _selectedDate ?? DateTime.now();
-        return date.toUtc().millisecondsSinceEpoch;
+        final now = DateTime.now().toUtc();
+
+        // If user selected a date, merge it with current time
+        final base = _selectedDate ?? now;
+
+        final merged = DateTime.utc(base.year, base.month, base.day, now.hour, now.minute, now.second, now.millisecond, now.microsecond);
+
+        return merged.millisecondsSinceEpoch;
 
       case TransactionsFormActionMode.edit:
         if (_selectedDate != null) {
-          return _selectedDate!.toUtc().millisecondsSinceEpoch;
+          final now = DateTime.now().toUtc();
+          final base = _selectedDate!;
+
+          final merged = DateTime.utc(base.year, base.month, base.day, now.hour, now.minute, now.second, now.millisecond, now.microsecond);
+
+          return merged.millisecondsSinceEpoch;
         }
 
         return data!.timestampAsMs;
