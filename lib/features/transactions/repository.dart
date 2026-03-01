@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:hive_ce/hive_ce.dart';
 
-import '../../app/exceptions.dart';
 import '../../core/filtering.dart';
 import '../../core/log.dart';
 import 'model.dart';
