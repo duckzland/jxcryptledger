@@ -1,5 +1,7 @@
 import 'package:decimal/decimal.dart';
 
+import 'log.dart';
+
 class Utils {
   Utils._();
 
@@ -52,5 +54,34 @@ class Utils {
 
   static String sanitizeNumber(String input) {
     return input.replaceAll(RegExp(r'[^0-9\.\-]'), '');
+  }
+
+  static int dateToTimestamp(DateTime? date) {
+    final now = DateTime.now();
+    final base = date ?? now;
+    final mergedLocal = DateTime(base.year, base.month, base.day, now.hour, now.minute, now.second, now.millisecond, now.microsecond);
+
+    return mergedLocal.toUtc().microsecondsSinceEpoch;
+  }
+
+  static String timestampToFormattedDate(int timestamp) {
+    final date = DateTime.fromMicrosecondsSinceEpoch(sanitizeTimestamp(timestamp), isUtc: true).toLocal();
+
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
+
+  static int sanitizeTimestamp(int timestamp) {
+    logln("Trying to sanitize: $timestamp");
+    if (timestamp < 10000000000) {
+      return timestamp * 1000000;
+    }
+
+    if (timestamp < 100000000000000) {
+      return timestamp * 1000;
+    }
+
+    return timestamp;
   }
 }

@@ -9,7 +9,7 @@ import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
-import '../form.dart';
+import '../forms/create.dart';
 import '../model.dart';
 import '../screens/active.dart';
 import '../screens/history.dart';
@@ -112,8 +112,7 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
       builder: (dialogContext) => Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
-          child: TransactionForm(
-            mode: TransactionsFormActionMode.addNew,
+          child: TransactionFormCreate(
             onSave: (e) async {
               if (e == null) {
                 Navigator.pop(dialogContext);
@@ -171,16 +170,16 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
       case 1:
         entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
-          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
+          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
+          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
           return aDate.compareTo(bDate);
         });
         break;
 
       case 2:
         entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
-          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
+          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
+          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
           return bDate.compareTo(aDate);
         });
         break;
@@ -218,16 +217,16 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
 
       case 1:
         entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
-          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x < y ? x : y);
+          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
+          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
           return aDate.compareTo(bDate);
         });
         break;
 
       case 2:
         entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
-          final bDate = b.value.map((tx) => tx.timestampAsMs).reduce((x, y) => x > y ? x : y);
+          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
+          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
           return bDate.compareTo(aDate);
         });
         break;
@@ -269,10 +268,10 @@ class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
         return List<TransactionsModel>.from(_txController.items)..sort((a, b) => a.srId.compareTo(b.srId));
 
       case 1:
-        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => a.timestampAsMs.compareTo(b.timestampAsMs));
+        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => a.sanitizedTimestamp.compareTo(b.sanitizedTimestamp));
 
       default:
-        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => b.timestampAsMs.compareTo(a.timestampAsMs));
+        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => b.sanitizedTimestamp.compareTo(a.sanitizedTimestamp));
     }
   }
 

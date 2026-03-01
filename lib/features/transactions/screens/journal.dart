@@ -78,13 +78,13 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
       rows.add({
-        'date': tx.timestampAsDate,
+        'date': tx.timestampAsFormattedDate,
         'balance': '${tx.balanceText} $resultSymbol',
         'source': '${tx.srAmountText} $sourceCoinSymbol',
         'rate': '${tx.rateText} $resultSymbol/$sourceCoinSymbol',
         'status': tx.statusText,
         'tx': tx,
-        '_timestamp': tx.timestampAsMs,
+        '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
         '_sourceValue': tx.srAmount,

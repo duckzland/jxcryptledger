@@ -64,9 +64,7 @@ Future<bool> fetchCryptos({required String endpoint, required Box<CryptosModel> 
     await cryptosBox.clear();
 
     for (final m in parsed) {
-      cryptosBox.add(
-        CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]),
-      );
+      cryptosBox.add(CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]));
     }
 
     await cryptosBox.flush();
@@ -145,11 +143,7 @@ Future<void> main() async {
   await fetchCryptos(endpoint: requireEnv('CMC_ENDPOINT'), cryptosBox: cryptosBox);
 
   print("Seeding transactions...");
-  final txBox = await Hive.openBox<TransactionsModel>(
-    'transactions_box',
-    encryptionCipher: cipher,
-    crashRecovery: false,
-  );
+  final txBox = await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
 
   final rootTid = txRepo.generateTid();
   final root = TransactionsModel(
@@ -163,7 +157,7 @@ Future<void> main() async {
     balance: 0,
     status: TransactionStatus.active.index,
     closable: false,
-    timestamp: DateTime.now().millisecondsSinceEpoch,
+    timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
     meta: {},
   );
 
@@ -191,7 +185,7 @@ Future<void> main() async {
       balance: (i + 1) * 100.0,
       status: status,
       closable: status == TransactionStatus.closed.index,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
+      timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
       meta: {"seedIndex": i},
     );
 

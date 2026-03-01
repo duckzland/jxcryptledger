@@ -43,7 +43,9 @@ class RatesModel {
       targetSymbol: map['targetSymbol'] as String,
       targetId: map['sourceId'] is int ? map['sourceId'] as int : 0,
       targetAmount: Decimal.parse(map['targetAmount'] as String),
-      timestamp: map['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+      timestamp: map['timestamp'] != null
+          ? Utils.sanitizeTimestamp((map['timestamp'] as num).toInt())
+          : DateTime.now().toUtc().microsecondsSinceEpoch,
     );
   }
 

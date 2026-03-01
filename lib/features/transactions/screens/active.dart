@@ -398,10 +398,10 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
         'profitLevel': profitLevel,
         'status': tx.statusText,
-        'date': tx.timestampAsDate,
+        'date': tx.timestampAsFormattedDate,
         'tx': tx,
 
-        '_timestamp': tx.timestampAsMs,
+        '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,
         '_sourceValue': tx.srAmount,
         '_exchangedRateValue': tx.rateDouble,

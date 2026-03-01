@@ -53,7 +53,7 @@ Future<void> main() async {
           targetSymbol: tgt["symbol"] as String,
           targetId: tgt["id"] as int,
           targetAmount: Decimal.parse("12345.${src["id"]}${tgt["id"]}987654321"),
-          timestamp: DateTime.now().millisecondsSinceEpoch,
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
         ),
       );
     }

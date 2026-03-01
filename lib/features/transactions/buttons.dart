@@ -7,6 +7,8 @@ import '../../widgets/notify.dart';
 import '../cryptos/repository.dart';
 import 'controller.dart';
 import 'form.dart';
+import 'forms/edit.dart';
+import 'forms/trade.dart';
 import 'model.dart';
 
 enum TransactionsButtonActionMode { edit, trade, close, delete }
@@ -19,39 +21,6 @@ class TransactionsButtons extends StatelessWidget {
   TransactionsController get _txController => locator<TransactionsController>();
 
   TransactionsButtons({super.key, required this.tx, required this.onAction});
-
-  Future<void> _showEditDialog(BuildContext context) async {
-    TransactionsModel? ptx = await _txController.getParent(tx);
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: TransactionForm(
-            mode: TransactionsFormActionMode.edit,
-            initialData: tx,
-            parent: ptx,
-            onSave: (e) async {
-              if (e == null) {
-                Navigator.pop(dialogContext);
-                onAction();
-                widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction updated.");
-                return;
-              }
-
-              if (e is ValidationException) {
-                widgetsNotifyError(e.userMessage, ctx: context);
-                return;
-              }
-
-              widgetsNotifyError(e.toString(), ctx: context);
-            },
-          ),
-        ),
-      ),
-    );
-  }
 
   Future<void> _showDeleteDialog(BuildContext context) async {
     await showDialog(
@@ -132,6 +101,38 @@ class TransactionsButtons extends StatelessWidget {
     );
   }
 
+  Future<void> _showEditDialog(BuildContext context) async {
+    TransactionsModel? ptx = await _txController.getParent(tx);
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: TransactionFormEdit(
+            initialData: tx,
+            parent: ptx,
+            onSave: (e) async {
+              if (e == null) {
+                Navigator.pop(dialogContext);
+                onAction();
+                widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction updated.");
+                return;
+              }
+
+              if (e is ValidationException) {
+                widgetsNotifyError(e.userMessage, ctx: context);
+                return;
+              }
+
+              widgetsNotifyError(e.toString(), ctx: context);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showTradeDialog(BuildContext context) async {
     TransactionsModel? ptx = await _txController.getParent(tx);
     await showDialog(
@@ -139,8 +140,7 @@ class TransactionsButtons extends StatelessWidget {
       builder: (dialogContext) => Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
-          child: TransactionForm(
-            mode: TransactionsFormActionMode.trade,
+          child: TransactionFormTrade(
             initialData: tx,
             parent: ptx,
             onSave: (e) async {

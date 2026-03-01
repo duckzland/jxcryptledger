@@ -136,7 +136,7 @@ class TransactionHistoryState extends State<TransactionHistory> {
         title: WidgetsHeader(
           titleColor: fgColor,
           title: "${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol",
-          subtitle: "${tx.timestampAsDate} - ${tx.statusText}",
+          subtitle: "${tx.timestampAsFormattedDate} - ${tx.statusText}",
         ),
         trailing: Padding(
           padding: !node.isLeaf ? EdgeInsets.only(right: 20) : EdgeInsetsGeometry.zero,
