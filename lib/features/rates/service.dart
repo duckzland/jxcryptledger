@@ -33,7 +33,11 @@ class RatesService {
   }
 
   Future<double> getStoredRate(int sourceId, int targetId) async {
-    _validateIds(sourceId, targetId);
+    try {
+      _validateIds(sourceId, targetId);
+    } catch (e) {
+      rethrow;
+    }
     final existing = await ratesRepo.get(sourceId, targetId);
     return existing?.rate.toDouble() ?? -9999;
   }
@@ -102,7 +106,11 @@ class RatesService {
 
   void _validateIds(int sourceId, int targetId) {
     if (!_isValidPair(sourceId, targetId)) {
-      throw Exception('Invalid rate pair: $sourceId -> $targetId');
+      throw NetworkingException(
+        AppErrorCode.netInvalidRatePayload,
+        'Invalid rate pair: $sourceId -> $targetId',
+        "Unable to retrieve rates from the server.",
+      );
     }
   }
 

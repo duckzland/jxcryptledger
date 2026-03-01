@@ -4,6 +4,7 @@ import 'package:jxcryptledger/features/rates/model.dart';
 import 'package:jxcryptledger/features/transactions/model.dart';
 
 import '../../app/storage.dart';
+import '../../app/worker.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../cryptos/model.dart';
@@ -18,6 +19,7 @@ class UnlockController extends ChangeNotifier {
 
   final SettingsRepository _settingsRepo = locator<SettingsRepository>();
   final RatesService _ratesService = locator<RatesService>();
+  final AppWorker _appWorker = locator<AppWorker>();
 
   Future<void> init() async {
     isFirstRun = !(await AppStorage.instance.exists());
@@ -29,17 +31,9 @@ class UnlockController extends ChangeNotifier {
       final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
       final cipher = HiveAesCipher(encryptionKey);
 
-      await AppStorage.instance.openBox<dynamic>(
-        SettingsRepository.boxName,
-        encryptionCipher: cipher,
-        crashRecovery: false,
-      );
+      await AppStorage.instance.openBox<dynamic>(SettingsRepository.boxName, encryptionCipher: cipher, crashRecovery: false);
 
-      await AppStorage.instance.openBox<TransactionsModel>(
-        'transactions_box',
-        encryptionCipher: cipher,
-        crashRecovery: false,
-      );
+      await AppStorage.instance.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
     } catch (e) {
       logln("Failed to decrypt boxes (wrong password)");
       return false;
@@ -67,6 +61,7 @@ class UnlockController extends ChangeNotifier {
 
         _unlocked = true;
         notifyListeners();
+        _appWorker.start();
 
         return true;
       }
@@ -87,6 +82,7 @@ class UnlockController extends ChangeNotifier {
       await Future.delayed(Duration.zero, () => _ratesService.init());
       _unlocked = true;
       notifyListeners();
+      _appWorker.start();
 
       return true;
     } catch (e) {
