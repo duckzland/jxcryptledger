@@ -14,7 +14,7 @@ class TransactionCalculation {
     return total;
   }
 
-  double averageExchangedRate(List<TransactionsModel> txs) {
+  double averageExchangedRate(List<TransactionsModel> txs, {bool reverse = false}) {
     if (txs.isEmpty) return 0.0;
 
     double totalRate = 0;
@@ -22,7 +22,9 @@ class TransactionCalculation {
 
     for (final tx in txs) {
       if (tx.rrAmount > 0) {
-        totalRate += tx.rateDouble;
+        final rate = reverse && tx.rateDouble != 0 ? 1 / tx.rateDouble : tx.rateDouble;
+
+        totalRate += rate;
         count++;
       }
     }
@@ -38,23 +40,29 @@ class TransactionCalculation {
     return txs.fold<double>(0, (sum, tx) => sum + tx.balance);
   }
 
-  double averageProfitLoss(List<TransactionsModel> txs, double currentRate) {
+  double averageProfitLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
     if (txs.isEmpty) return 0.0;
 
     double totalPL = 0;
+
     for (final tx in txs) {
-      final currentValue = tx.balance / currentRate;
-      totalPL += currentValue - tx.balance;
+      final currentValue = reverse ? tx.balance * currentRate : tx.balance / currentRate;
+
+      totalPL += currentValue - tx.srAmount;
     }
 
     return totalPL / txs.length;
   }
 
-  double profitLossPercentage(List<TransactionsModel> txs, double currentRate) {
-    final avgRate = averageExchangedRate(txs);
-    if (avgRate == 0) return 0.0;
+  double profitLossPercentage(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
+    if (txs.isEmpty) return 0.0;
 
-    final avgPL = averageProfitLoss(txs, currentRate);
-    return (avgPL / avgRate) * 100;
+    final totalBalance = totalSourceBalance(txs);
+    if (totalBalance == 0) return 0.0;
+
+    final avgPL = averageProfitLoss(txs, currentRate, reverse: reverse);
+    final totalPL = avgPL * txs.length;
+
+    return (totalPL / totalBalance) * 100;
   }
 }

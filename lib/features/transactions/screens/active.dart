@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/core/utils.dart';
 
+import '../../../core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/balance_text.dart';
+import '../../../widgets/button.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
@@ -38,6 +39,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   late String _sourceSymbol;
   late String _resultSymbol;
 
+  late bool _isReversed;
+
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
@@ -47,9 +50,21 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   Timer? _debounce;
   final _calc = TransactionCalculation();
 
+  double? get effectiveMarketRate {
+    final m = _marketRate;
+    if (m == null) return null;
+
+    return _isReversed ? (m == 0 ? null : 1 / m) : m;
+  }
+
   @override
   void initState() {
     super.initState();
+
+    _isReversed = false;
+    _sortColumnIndex = 0;
+    _sortAscending = false;
+
     _cryptosController = locator<CryptosController>();
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
     _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
@@ -62,8 +77,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
     _rows = _buildRows(widget.transactions);
 
-    _sortColumnIndex = 0;
-    _sortAscending = false;
     _onSort((d) => d['_timestamp'] as int, _sortColumnIndex!, _sortAscending);
   }
 
@@ -159,60 +172,15 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     }
   }
 
-  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
-    final currentRate = _customRate ?? _marketRate ?? 0.0;
-    final rows = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      double currentValue = 0;
-      double profitLoss = 0;
-      double profitLevel = 0;
-
-      if (currentRate != 0) {
-        currentValue = tx.balance / currentRate;
-        profitLoss = currentValue - tx.balance;
-
-        if (profitLoss > 0) {
-          profitLevel = 1;
-        } else if (profitLoss < 0) {
-          profitLevel = -1;
-        }
-      }
-
-      rows.add({
-        'from': tx.srAmountText,
-        'to': tx.balanceText,
-        'exchangedRate': tx.rateText,
-        'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(currentRate),
-        'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
-        'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
-        'profitLevel': profitLevel,
-        'status': tx.statusText,
-        'date': tx.timestampAsDate,
-        'tx': tx,
-
-        '_timestamp': tx.timestampAsMs,
-        '_balanceValue': tx.rrAmount,
-        '_sourceValue': tx.srAmount,
-        '_exchangedRateValue': tx.rateDouble,
-        '_currentValue': currentValue,
-        '_profitLossValue': profitLoss,
-      });
-    }
-
-    return rows;
-  }
-
   @override
   Widget build(BuildContext context) {
     final txs = widget.transactions;
-    final currentRate = _customRate ?? _marketRate ?? 0.0;
-
-    final averageRate = _calc.averageExchangedRate(txs);
+    final averageRate = _calc.averageExchangedRate(txs, reverse: _isReversed);
+    final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
     final totalSourceBalance = _calc.totalSourceBalance(txs);
     final totalBalance = _calc.totalBalance(txs);
-    final avgPL = _calc.averageProfitLoss(txs, currentRate);
-    final plPercentage = _calc.profitLossPercentage(txs, currentRate);
+    final avgPL = _calc.averageProfitLoss(txs, currentRate, reverse: _isReversed);
+    final plPercentage = _calc.profitLossPercentage(txs, currentRate, reverse: _isReversed);
 
     return WidgetsPanel(
       child: Column(
@@ -267,6 +235,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         const SizedBox(width: 20),
         SizedBox(
           width: 150,
+          height: 40,
           child: TextField(
             controller: _customRateController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -277,10 +246,33 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               _debounce = Timer(const Duration(milliseconds: 100), () {
                 setState(() {
                   _customRate = double.tryParse(value);
+                  _rows = _buildRows(widget.transactions);
                 });
               });
             },
           ),
+        ),
+        const SizedBox(width: 8),
+
+        WidgetButton(
+          icon: Icons.swap_horiz,
+          tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
+          padding: const EdgeInsets.all(0),
+          iconSize: 20,
+          minimumSize: const Size(48, 48),
+          evaluator: (s) {
+            if (_isReversed) {
+              s.action();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _isReversed = !_isReversed;
+              _rows = _buildRows(widget.transactions);
+            });
+          },
         ),
       ],
     );
@@ -315,14 +307,20 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           ),
           DataColumn2(
             size: ColumnSize.S,
-            label: WidgetsHeader(title: 'Exchanged Rate ', subtitle: '$_resultSymbol / $_sourceSymbol'),
+            label: WidgetsHeader(
+              title: 'Exchanged Rate ',
+              subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+            ),
             onSort: (col, asc) => _onSort((d) => d['_exchangedRateValue'] as double, col, asc),
           ),
 
           if (currentRate != 0) ...[
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsHeader(title: 'Current Rate ', subtitle: '$_resultSymbol / $_sourceSymbol'),
+              label: WidgetsHeader(
+                title: 'Current Rate ',
+                subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+              ),
             ),
             DataColumn2(
               size: ColumnSize.S,
@@ -343,10 +341,10 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         rows: _rows.map((r) {
           return DataRow(
             cells: [
-              DataCell(Text(r['date'])),
-              DataCell(Text(r['from'])),
-              DataCell(Text(r['to'])),
-              DataCell(Text(r['exchangedRate'])),
+              DataCell(Text(r['date'] ?? '0.0')),
+              DataCell(Text(r['from'] ?? '0.0')),
+              DataCell(Text(r['to'] ?? '0.0')),
+              DataCell(Text(r['exchangedRate'] ?? '0.0')),
 
               if (currentRate != 0) ...[
                 DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
@@ -369,6 +367,50 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         }).toList(),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
+    final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    final rows = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      double currentValue = 0;
+      double profitLoss = 0;
+      double profitLevel = 0;
+
+      if (currentRate != 0) {
+        currentValue = _isReversed ? tx.balance * currentRate : tx.balance / currentRate;
+        profitLoss = currentValue - tx.srAmount;
+
+        if (profitLoss > 0) {
+          profitLevel = 1;
+        } else if (profitLoss < 0) {
+          profitLevel = -1;
+        }
+      }
+
+      rows.add({
+        'from': tx.srAmountText,
+        'to': tx.balanceText,
+        'exchangedRate': _isReversed ? tx.rateReversedText : tx.rateText,
+        'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(currentRate),
+        'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
+        'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
+        'profitLevel': profitLevel,
+        'status': tx.statusText,
+        'date': tx.timestampAsDate,
+        'tx': tx,
+
+        '_timestamp': tx.timestampAsMs,
+        '_balanceValue': tx.rrAmount,
+        '_sourceValue': tx.srAmount,
+        '_exchangedRateValue': tx.rateDouble,
+        '_currentValue': currentValue,
+        '_profitLossValue': profitLoss,
+      });
+    }
+
+    return rows;
   }
 
   Widget _buildPanels({
