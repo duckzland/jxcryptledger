@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
-import '../../../core/log.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
@@ -85,7 +84,6 @@ class _TransactionFormState extends State<TransactionFormEdit> {
 
   void detectLeaf(TransactionsModel tx) async {
     final leaf = await _txController.hasLeaf(tx);
-    logln("We got leaf 1 or not $leaf");
     setState(() {
       _hasLeaf = leaf;
     });
