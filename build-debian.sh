@@ -5,7 +5,15 @@ flutter build linux --release
 
 # 2. Setup Variables
 APP_NAME="jxcryptledger"
-VERSION="1.0.0"
+
+# Read version from version.txt and remove any trailing whitespace/newlines
+if [ -f version.txt ]; then
+    VERSION=$(cat version.txt | xargs)
+else
+    echo "Error: version.txt not found!"
+    exit 1
+fi
+
 DEB_DIR="build/debian_tmp"
 BUNDLE_DIR="build/linux/x64/release/bundle"
 
