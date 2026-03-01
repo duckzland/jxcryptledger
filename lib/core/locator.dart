@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import '../app/worker.dart';
 import '../features/rates/repository.dart';
 import '../features/rates/service.dart';
 import '../features/rates/controller.dart';
@@ -33,4 +34,7 @@ void setupLocator() {
     () => RatesService(locator<RatesRepository>(), locator<CryptosRepository>(), locator<SettingsRepository>()),
   );
   locator.registerLazySingleton<RatesController>(() => RatesController(locator<RatesService>()));
+
+  // Workers
+  locator.registerLazySingleton<AppWorker>(() => AppWorker());
 }

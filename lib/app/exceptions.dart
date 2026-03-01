@@ -61,6 +61,7 @@ class AppErrorCode {
   static const int netEmptyResponse = 2002;
   static const int netParseFailure = 2003;
   static const int netUnknownFailure = 2004;
+  static const int netInvalidRatePayload = 2100;
 }
 
 class AppExceptionConfig {
