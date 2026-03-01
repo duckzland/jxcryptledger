@@ -1,5 +1,4 @@
 import '../../../app/exceptions.dart';
-import '../model.dart';
 import 'base.dart';
 
 class TransactionsRulesClose extends TransactionsRulesBase {
