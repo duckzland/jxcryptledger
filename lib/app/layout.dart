@@ -24,6 +24,8 @@ class AppLayout extends StatefulWidget {
 
 class _AppLayoutState extends State<AppLayout> {
   late String _title = widget.title;
+  late CryptosController _cryptosController;
+  late RatesController _ratesController;
 
   void _setTitle(String newTitle) {
     setState(() => _title = newTitle);
@@ -33,6 +35,9 @@ class _AppLayoutState extends State<AppLayout> {
   void initState() {
     super.initState();
     AppLayout.setTitle = _setTitle;
+
+    _cryptosController = locator<CryptosController>();
+    _ratesController = locator<RatesController>();
   }
 
   @override
@@ -40,11 +45,7 @@ class _AppLayoutState extends State<AppLayout> {
     return AnimatedBuilder(
       animation: Listenable.merge([locator<CryptosController>(), locator<RatesController>()]),
       builder: (context, _) {
-        final _cryptosController = locator<CryptosController>();
-        final _ratesController = locator<RatesController>();
-
         final hasRates = _ratesController.hasRates;
-
         final location = GoRouterState.of(context).uri.toString();
 
         // logln("message: Building AppLayout for location: $location");
