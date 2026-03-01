@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:jxcryptledger/core/utils.dart';
+import '../../core/utils.dart';
 
 enum TransactionStatus { inactive, active, partial, closed, unknown }
 
@@ -126,18 +126,12 @@ class TransactionsModel {
     }
   }
 
-  String get timestampAsDate {
-    final isMilliseconds = timestamp > 2000000000;
-
-    final date = isMilliseconds ? DateTime.fromMillisecondsSinceEpoch(timestamp) : DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
+  String get timestampAsFormattedDate {
+    return Utils.timestampToFormattedDate(timestamp);
   }
 
-  int get timestampAsMs {
-    return timestamp < 20000000000 ? timestamp * 1000 : timestamp;
+  int get sanitizedTimestamp {
+    return Utils.sanitizeTimestamp(timestamp);
   }
 
   String get srAmountText => Utils.formatSmartDouble(srAmount);

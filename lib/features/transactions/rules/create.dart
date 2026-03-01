@@ -44,7 +44,7 @@ class TransactionsRulesCreate extends TransactionsRulesBase {
     if (tx.srId == tx.rrId) {
       throw ValidationException(
         AppErrorCode.txSourceIdEqualResultId,
-        "Update failed: Source Id cannot be the same as ResultId (tid=${tx.tid}, srId=${tx.srId}, rrId=${tx.rrId})",
+        "Add failed: Source Id cannot be the same as ResultId (tid=${tx.tid}, srId=${tx.srId}, rrId=${tx.rrId})",
         "Invalid transaction, same source and target coin.",
         silent: silent,
       );

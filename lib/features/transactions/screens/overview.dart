@@ -101,10 +101,10 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
         'source': '${tx.srAmountText} $sourceCoinSymbol',
         'exchangedRate': '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
         'status': tx.statusText,
-        'date': tx.timestampAsDate,
+        'date': tx.timestampAsFormattedDate,
         'tx': tx,
 
-        '_timestamp': tx.timestampAsMs,
+        '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.balance,
         '_sourceValue': tx.srAmount,
         '_exchangedRateValue': tx.rateDouble,

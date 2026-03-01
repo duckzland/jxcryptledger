@@ -14,7 +14,7 @@ class RatesRepository {
   Future<void> add(RatesModel rate) async {
     final box = Hive.box<RatesModel>(boxName);
     final key = '${rate.sourceId}-${rate.targetId}';
-    final rateWithTimestamp = rate.copyWith(timestamp: DateTime.now().millisecondsSinceEpoch);
+    final rateWithTimestamp = rate.copyWith(timestamp: DateTime.now().microsecondsSinceEpoch);
     await box.put(key, rateWithTimestamp);
   }
 
@@ -42,7 +42,7 @@ class RatesRepository {
 
   Future<void> cleanupOldRates({Duration olderThan = const Duration(days: 1)}) async {
     final box = Hive.box<RatesModel>(boxName);
-    final nowEpoch = DateTime.now().millisecondsSinceEpoch;
+    final nowEpoch = DateTime.now().microsecondsSinceEpoch;
     final keysToDelete = <dynamic>[];
 
     for (int i = 0; i < box.length; i++) {
