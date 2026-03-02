@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../app/layout.dart';
 import '../features/settings/page.dart';
-import '../features/transactions/pages/index.dart';
+import '../features/tools/page.dart';
+import '../features/transactions/page.dart';
 import '../features/unlock/controller.dart';
 import '../features/unlock/page.dart';
 
@@ -11,9 +12,7 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class AppRouter {
   static bool _showBackFor(String location) {
-    if (location == "/transactions") return false;
-    if (location == "/unlock") return false;
-    return true;
+    return false;
   }
 
   static final router = GoRouter(
@@ -44,8 +43,10 @@ class AppRouter {
           return AppLayout(title: _titleFor(location), showBack: _showBackFor(location), child: child);
         },
         routes: [
-          GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPagesIndex()),
+          GoRoute(path: "/", redirect: (context, state) => "/transactions"),
+          GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPage()),
 
+          GoRoute(path: "/tools", builder: (context, state) => const ToolsPage()),
           GoRoute(path: "/settings", builder: (context, state) => const SettingsPage()),
         ],
       ),

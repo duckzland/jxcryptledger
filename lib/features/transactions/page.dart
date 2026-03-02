@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:jxcryptledger/widgets/notify.dart';
 
-import '../../../app/exceptions.dart';
-import '../../../app/layout.dart';
-import '../../../app/theme.dart';
-import '../../../core/locator.dart';
-import '../../../widgets/button.dart';
-import '../../../widgets/panel.dart';
-import '../../cryptos/controller.dart';
-import '../controller.dart';
-import '../forms/create.dart';
-import '../model.dart';
-import '../screens/active.dart';
-import '../screens/history.dart';
-import '../screens/journal.dart';
-import '../screens/overview.dart';
+import '../../app/exceptions.dart';
+import '../../app/layout.dart';
+import '../../app/theme.dart';
+import '../../core/locator.dart';
+import '../../widgets/button.dart';
+import '../../widgets/panel.dart';
+import '../cryptos/controller.dart';
+import 'controller.dart';
+import 'forms/create.dart';
+import 'model.dart';
+import 'screens/active.dart';
+import 'screens/history.dart';
+import 'screens/journal.dart';
+import 'screens/overview.dart';
 
 enum TransactionsViewMode { overview, active, journal, history }
 
-class TransactionsPagesIndex extends StatefulWidget {
-  const TransactionsPagesIndex({super.key});
+class TransactionsPage extends StatefulWidget {
+  const TransactionsPage({super.key});
 
   @override
-  State<TransactionsPagesIndex> createState() => _TransactionsPagesIndexState();
+  State<TransactionsPage> createState() => _TransactionsPageState();
 }
 
-class _TransactionsPagesIndexState extends State<TransactionsPagesIndex> {
+class _TransactionsPageState extends State<TransactionsPage> {
   late TransactionsController _txController;
   final CryptosController _cryptosController = locator<CryptosController>();
 
