@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import '../../core/log.dart';
 import 'service.dart';
 
 class RatesController extends ChangeNotifier {
@@ -7,7 +6,6 @@ class RatesController extends ChangeNotifier {
 
   RatesController(this.service) {
     service.registerOnComplete(() {
-      logln("On Rates callback received2");
       notifyListeners();
     });
   }
@@ -36,5 +34,9 @@ class RatesController extends ChangeNotifier {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> delete(int sourceId, int targetId) async {
+    await service.delete(sourceId, targetId);
   }
 }

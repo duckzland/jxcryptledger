@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../../app/layout.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
+import 'screens/qrcode.dart';
 import 'screens/calculator.dart';
 import 'screens/converter.dart';
 
-enum ToolsViewMode { calculator, converter }
+enum ToolsViewMode { calculator, converter, qrcode }
 
 class ToolsPage extends StatefulWidget {
   const ToolsPage({super.key});
@@ -101,6 +102,26 @@ class _ToolsPageState extends State<ToolsPage> {
               });
             },
           ),
+
+          WidgetButton(
+            icon: Icons.qr_code_2,
+            padding: const EdgeInsets.all(8),
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "QR Generator",
+            evaluator: (s) {
+              if (_viewMode == ToolsViewMode.qrcode) {
+                s.active();
+              } else {
+                s.normal();
+              }
+            },
+            onPressed: (_) {
+              setState(() {
+                _viewMode = ToolsViewMode.qrcode;
+              });
+            },
+          ),
         ],
       ),
     );
@@ -117,6 +138,11 @@ class _ToolsPageState extends State<ToolsPage> {
         _changePageTitle("Converter");
 
         return ToolsConverterView();
+
+      case ToolsViewMode.qrcode:
+        _changePageTitle("QR Code Generator");
+
+        return ToolsQRGeneratorView();
     }
   }
 }

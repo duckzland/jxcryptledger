@@ -26,6 +26,8 @@ dependencies:
   uuid: ^4.0.0
   data_table_2: ^2.7.2
   animated_tree_view: ^2.3.0
+  barcode_widget: ^2.0.4
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   dotenv: ^4.2.0

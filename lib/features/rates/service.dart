@@ -28,8 +28,13 @@ class RatesService {
     await ratesRepo.cleanupOldRates();
   }
 
+  Future<void> delete(int sourceId, int targetId) async {
+    logln('[Rates] Deleting $sourceId-$targetId.');
+    await ratesRepo.delete(sourceId, targetId);
+  }
+
   void registerOnComplete(void Function() cb) {
-    logln('[Rates] registering on complete.');
+    logln('[Rates] Registering on complete.');
     onComplete = cb;
   }
 
