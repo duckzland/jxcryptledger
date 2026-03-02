@@ -1,5 +1,6 @@
 import 'package:hive_ce/hive_ce.dart';
 
+import '../../core/log.dart';
 import 'model.dart';
 
 class RatesRepository {
@@ -41,6 +42,8 @@ class RatesRepository {
   }
 
   Future<void> cleanupOldRates({Duration olderThan = const Duration(days: 1)}) async {
+    logln('[Rates] Cleaning old rates.');
+
     final box = Hive.box<RatesModel>(boxName);
     final nowEpoch = DateTime.now().microsecondsSinceEpoch;
     final keysToDelete = <dynamic>[];
