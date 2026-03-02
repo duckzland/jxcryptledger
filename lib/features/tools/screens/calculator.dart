@@ -6,10 +6,10 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/balance_text.dart';
-import '../../../widgets/field_amount.dart';
+import '../../../widgets/fields/amount.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../../../widgets/field_crypto_search.dart';
+import '../../../widgets/fields/crypto_search.dart';
 
 class ToolsCalculatorView extends StatefulWidget {
   const ToolsCalculatorView({super.key});
@@ -103,7 +103,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   }
 
   Widget _buildRatesRevertAmountField() {
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Rate',
       helperText: 'e.g., 10.5',
       onChanged: (value) {
@@ -119,7 +119,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   }
 
   Widget _buildRatesAmountField() {
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Rate',
       helperText: 'e.g., 10.5',
       onChanged: (value) {
@@ -135,7 +135,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   }
 
   Widget _buildSourceAmountField() {
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 1.5',
       onChanged: (value) {
@@ -151,11 +151,11 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   }
 
   Widget _buildSourceCryptoField() {
-    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedSource = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedSource = id));
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedTarget = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedTarget = id));
   }
 
   Widget _buildCalculatedResult() {

@@ -4,10 +4,10 @@ import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
-import '../../../widgets/field_amount.dart';
-import '../../../widgets/field_datepicker.dart';
-import '../../../widgets/field_crypto_search.dart';
-import '../../../widgets/field_textarea.dart';
+import '../../../widgets/fields/amount.dart';
+import '../../../widgets/fields/datepicker.dart';
+import '../../../widgets/fields/crypto_search.dart';
+import '../../../widgets/fields/textarea.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -288,7 +288,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
       symbol = _cryptoController.getSymbol(srid);
     }
 
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       initialValue: _srAmount,
       suffixText: symbol,
@@ -301,7 +301,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   Widget _buildSourceCryptoField() {
-    return WidgetsFieldCryptoSearch(
+    return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: _selectedSrId,
       enabled: isRoot,
@@ -318,7 +318,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
       symbol = _cryptoController.getSymbol(rrid);
     }
 
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       initialValue: _rrAmount,
       suffixText: symbol,
@@ -331,7 +331,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldCryptoSearch(
+    return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: _selectedRrId,
       enabled: !(!isRoot && !isActive),
@@ -340,7 +340,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   Widget _buildNotesField() {
-    return WidgetsFieldTextarea(
+    return WidgetsFieldsTextarea(
       title: isRoot ? 'Purchase Notes' : 'Trading Notes',
       helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
       onChanged: (value) {
@@ -359,7 +359,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
       firstDate = DateTime(localParent.year, localParent.month, localParent.day);
     }
 
-    return WidgetsFieldDatepicker(
+    return WidgetsFieldsDatepicker(
       labelText: 'Date',
       enabled: !hasLeaf,
       initialDate: initialDate,

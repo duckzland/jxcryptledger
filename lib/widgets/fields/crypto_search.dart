@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
-import '../app/theme.dart';
-import '../core/locator.dart';
-import '../features/cryptos/model.dart';
-import '../features/cryptos/controller.dart';
+import '../../app/theme.dart';
+import '../../core/locator.dart';
+import '../../features/cryptos/model.dart';
+import '../../features/cryptos/controller.dart';
 
-class WidgetsFieldCryptoSearch extends FormField<int> {
-  WidgetsFieldCryptoSearch({
+class WidgetsFieldsCryptoSearch extends FormField<int> {
+  WidgetsFieldsCryptoSearch({
     super.key,
     super.initialValue,
     super.validator,
@@ -17,7 +17,7 @@ class WidgetsFieldCryptoSearch extends FormField<int> {
     String hintText = "Search by name, symbol, or ID...",
   }) : super(
          builder: (FormFieldState<int> state) {
-           return _CryptoSearchFieldBody(
+           return _WidgetsFieldsCryptoSearchBody(
              initialValue: initialValue,
              labelText: labelText,
              hintText: hintText,
@@ -34,7 +34,7 @@ class WidgetsFieldCryptoSearch extends FormField<int> {
        );
 }
 
-class _CryptoSearchFieldBody extends StatefulWidget {
+class _WidgetsFieldsCryptoSearchBody extends StatefulWidget {
   final Function(int)? onSelected;
   final int? initialValue;
   final String labelText;
@@ -42,7 +42,7 @@ class _CryptoSearchFieldBody extends StatefulWidget {
   final bool? enabled;
   final FormFieldValidator<int>? validator;
 
-  const _CryptoSearchFieldBody({
+  const _WidgetsFieldsCryptoSearchBody({
     required this.onSelected,
     required this.initialValue,
     required this.labelText,
@@ -52,10 +52,10 @@ class _CryptoSearchFieldBody extends StatefulWidget {
   });
 
   @override
-  State<_CryptoSearchFieldBody> createState() => _CryptoSearchFieldBodyState();
+  State<_WidgetsFieldsCryptoSearchBody> createState() => _WidgetsFieldsCryptoSearchBodyState();
 }
 
-class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
+class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSearchBody> {
   late TextEditingController _controller;
   late CryptosController _cryptosController;
   List<CryptosModel> _allCryptos = [];

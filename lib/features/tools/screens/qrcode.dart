@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../widgets/panel.dart';
-import '../../../widgets/field_textarea.dart';
+import '../../../widgets/fields/textarea.dart';
 import '../../../app/theme.dart';
 
 class ToolsQRGeneratorView extends StatefulWidget {
@@ -34,7 +34,7 @@ class _ToolsQRGeneratorViewState extends State<ToolsQRGeneratorView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                WidgetsFieldTextarea(
+                WidgetsFieldsTextarea(
                   title: "Source Text",
                   helperText: "Enter any text to generate the QRCode...",
                   onChanged: (value) {

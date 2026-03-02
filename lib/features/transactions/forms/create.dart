@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
-import '../../../widgets/field_amount.dart';
-import '../../../widgets/field_datepicker.dart';
-import '../../../widgets/field_textarea.dart';
+import '../../../widgets/fields/amount.dart';
+import '../../../widgets/fields/datepicker.dart';
+import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/panel.dart';
-import '../../../widgets/field_crypto_search.dart';
+import '../../../widgets/fields/crypto_search.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -187,7 +187,7 @@ class _TransactionFormState extends State<TransactionFormCreate> {
   }
 
   Widget _buildSourceAmountField() {
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 1.5',
       onChanged: (value) {
@@ -197,11 +197,11 @@ class _TransactionFormState extends State<TransactionFormCreate> {
   }
 
   Widget _buildSourceCryptoField() {
-    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedSrId = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedSrId = id));
   }
 
   Widget _buildResultAmountField() {
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 10.5',
       onChanged: (value) {
@@ -211,11 +211,11 @@ class _TransactionFormState extends State<TransactionFormCreate> {
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedRrId = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedRrId = id));
   }
 
   Widget _buildNotesField() {
-    return WidgetsFieldTextarea(
+    return WidgetsFieldsTextarea(
       title: 'Purchase Notes',
       helperText: 'Add notes..',
       onChanged: (value) {
@@ -227,7 +227,7 @@ class _TransactionFormState extends State<TransactionFormCreate> {
   Widget _buildTimestampField() {
     final currentDate = DateTime.now();
 
-    return WidgetsFieldDatepicker(
+    return WidgetsFieldsDatepicker(
       labelText: 'Date',
       initialDate: currentDate,
       firstDate: DateTime(2000),
