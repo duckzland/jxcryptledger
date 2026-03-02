@@ -53,18 +53,72 @@ class _AppLayoutState extends State<AppLayout> {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: AppTheme.columnHeaderBg,
-            leading: widget.showBack
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
+            centerTitle: true,
+            leadingWidth: 130,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Center(
+                child: Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    WidgetButton(
+                      icon: Icons.account_balance_wallet,
+                      padding: const EdgeInsets.all(8),
+                      iconSize: 20,
+                      minimumSize: const Size(40, 40),
+                      tooltip: "Transactions",
+                      evaluator: (s) {
+                        if (location == "/transactions" || location == "/") {
+                          s.active();
+                        } else {
+                          s.normal();
+                        }
+                      },
+                      onPressed: (s) {
                         context.go("/transactions");
-                      }
-                    },
-                  )
-                : null,
+                      },
+                    ),
+
+                    WidgetButton(
+                      icon: Icons.handyman,
+                      padding: const EdgeInsets.all(8),
+                      iconSize: 20,
+                      minimumSize: const Size(40, 40),
+                      tooltip: "Tools",
+                      evaluator: (s) {
+                        if (location == "/tools") {
+                          s.active();
+                        } else {
+                          s.normal();
+                        }
+                      },
+                      onPressed: (s) {
+                        context.go("/tools");
+                      },
+                    ),
+
+                    WidgetButton(
+                      icon: Icons.settings,
+                      padding: const EdgeInsets.all(8),
+                      iconSize: 20,
+                      minimumSize: const Size(40, 40),
+                      tooltip: "Settings",
+                      evaluator: (s) {
+                        if (location == "/settings") {
+                          s.active();
+                        } else {
+                          s.normal();
+                        }
+                      },
+                      onPressed: (s) {
+                        context.go("/settings");
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
             title: Text(_title),
             actions: [
               Wrap(
@@ -113,26 +167,9 @@ class _AppLayoutState extends State<AppLayout> {
                         }
                       },
                     ),
-
-                  WidgetButton(
-                    icon: Icons.settings,
-                    padding: const EdgeInsets.all(8),
-                    iconSize: 20,
-                    minimumSize: const Size(40, 40),
-                    tooltip: "Settings",
-                    evaluator: (s) {
-                      if (location == "/settings") {
-                        s.active();
-                      } else {
-                        s.normal();
-                      }
-                    },
-                    onPressed: (s) {
-                      context.go("/settings");
-                    },
-                  ),
                 ],
               ),
+              const SizedBox(width: 16),
             ],
           ),
           body: Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), child: widget.child),

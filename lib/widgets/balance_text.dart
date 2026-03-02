@@ -8,6 +8,7 @@ class WidgetsBalanceText extends StatelessWidget {
   final double comparator;
   final double? fontSize;
   final bool? hidePrefix;
+  final FontWeight? fontWeight;
 
   const WidgetsBalanceText({
     super.key,
@@ -16,6 +17,7 @@ class WidgetsBalanceText extends StatelessWidget {
     required this.comparator,
     this.fontSize,
     this.hidePrefix,
+    this.fontWeight,
   });
 
   int _mode() {
@@ -57,7 +59,7 @@ class WidgetsBalanceText extends StatelessWidget {
 
     return Text(
       "$prefix$text",
-      style: TextStyle(color: color, fontSize: fontSize),
+      style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
     );
   }
 }
