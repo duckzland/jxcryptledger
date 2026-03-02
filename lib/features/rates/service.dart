@@ -29,6 +29,7 @@ class RatesService {
   }
 
   void registerOnComplete(void Function() cb) {
+    logln('[Rates] registering on complete.');
     onComplete = cb;
   }
 
@@ -52,8 +53,8 @@ class RatesService {
   }
 
   Future<void> _processQueue() async {
-    if (_isFetching || _queue.isEmpty) return;
-    if (!cryptosRepo.hasAny()) return;
+    if (_isFetching) return;
+    if (_queue.isEmpty) return;
 
     _isFetching = true;
 
@@ -66,9 +67,7 @@ class RatesService {
 
       await _runWorkers(jobQueue);
 
-      if (onComplete != null) {
-        onComplete!();
-      }
+      onComplete?.call();
     } catch (e) {
       rethrow;
     } finally {
@@ -78,7 +77,7 @@ class RatesService {
 
   Future<void> refreshRates() async {
     if (!cryptosRepo.hasAny()) {
-      logln('RatesService: No cryptos available, skipping refresh.');
+      logln('[Rates] No cryptos available, skipping refresh.');
       return;
     }
 

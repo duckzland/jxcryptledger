@@ -4,8 +4,9 @@ import '../../app/layout.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
 import 'screens/calculator.dart';
+import 'screens/converter.dart';
 
-enum ToolsViewMode { calculator }
+enum ToolsViewMode { calculator, converter }
 
 class ToolsPage extends StatefulWidget {
   const ToolsPage({super.key});
@@ -44,7 +45,7 @@ class _ToolsPageState extends State<ToolsPage> {
             Row(
               children: [
                 Expanded(child: SizedBox()),
-                // _buildAction(),
+                _buildAction(),
                 Expanded(child: SizedBox()),
               ],
             ),
@@ -80,6 +81,26 @@ class _ToolsPageState extends State<ToolsPage> {
               });
             },
           ),
+
+          WidgetButton(
+            icon: Icons.swap_horiz,
+            padding: const EdgeInsets.all(8),
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Converter",
+            evaluator: (s) {
+              if (_viewMode == ToolsViewMode.converter) {
+                s.active();
+              } else {
+                s.normal();
+              }
+            },
+            onPressed: (_) {
+              setState(() {
+                _viewMode = ToolsViewMode.converter;
+              });
+            },
+          ),
         ],
       ),
     );
@@ -91,6 +112,11 @@ class _ToolsPageState extends State<ToolsPage> {
         _changePageTitle("Calculator");
 
         return ToolsCalculatorView();
+
+      case ToolsViewMode.converter:
+        _changePageTitle("Converter");
+
+        return ToolsConverterView();
     }
   }
 }

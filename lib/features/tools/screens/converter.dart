@@ -2,30 +2,33 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../widgets/button.dart';
+import '../../rates/controller.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
-import '../../../widgets/balance_text.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../../cryptos/search_field.dart';
 
-class ToolsCalculatorView extends StatefulWidget {
-  const ToolsCalculatorView({super.key});
+class ToolsConverterView extends StatefulWidget {
+  const ToolsConverterView({super.key});
 
   @override
-  State<ToolsCalculatorView> createState() => _ToolsCalculatorViewState();
+  State<ToolsConverterView> createState() => _ToolsConverterViewState();
 }
 
-class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
+class _ToolsConverterViewState extends State<ToolsConverterView> {
   late final CryptosController _cryptosController;
+  late final RatesController _ratesController;
 
   late TextEditingController _sourceAmountController;
-  late TextEditingController _ratesAmountController;
-  late TextEditingController _ratesRevertAmountController;
 
   int? _selectedSource;
   int? _selectedTarget;
+
+  double? _rate;
+  double? _reversedRate;
 
   Timer? _debounce;
 
@@ -33,21 +36,23 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   void initState() {
     super.initState();
     _cryptosController = locator<CryptosController>();
+    _ratesController = locator<RatesController>();
 
     _sourceAmountController = TextEditingController();
 
-    _ratesAmountController = TextEditingController();
-    _ratesRevertAmountController = TextEditingController();
-
     _selectedSource = null;
     _selectedTarget = null;
+
+    _rate = null;
+    _reversedRate = null;
+
+    _ratesController.addListener(_onRatesUpdated);
   }
 
   @override
   void dispose() {
+    _ratesController.removeListener(_onRatesUpdated);
     _sourceAmountController.dispose();
-    _ratesAmountController.dispose();
-    _ratesRevertAmountController.dispose();
     _debounce?.cancel();
 
     super.dispose();
@@ -74,13 +79,34 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
 
                     Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.clear, size: 24)),
+                    const SizedBox(width: 20),
 
-                    Expanded(child: _buildCryptoInputColumn("Sell Rate:", _buildRatesAmountField())),
+                    _buildCryptoInputColumn(
+                      "",
+                      WidgetButton(
+                        icon: Icons.swap_horiz,
+                        tooltip: "Convert",
+                        padding: const EdgeInsets.all(0),
+                        iconSize: 24,
+                        minimumSize: const Size(54, 54),
+                        evaluator: (s) {
+                          final int source = _selectedSource ?? -1;
+                          final int target = _selectedTarget ?? -1;
+                          final double amount = double.tryParse(_sourceAmountController.text) ?? -1;
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.swap_horiz, size: 24)),
-
-                    Expanded(child: _buildCryptoInputColumn("Buyback Rate:", _buildRatesRevertAmountField())),
+                          if (source < 0 || target < 0 || amount < 0) {
+                            s.disable();
+                          } else {
+                            s.action();
+                          }
+                        },
+                        onPressed: (_) {
+                          setState(() {
+                            _getRate();
+                          });
+                        },
+                      ),
+                    ),
                   ],
                 ),
 
@@ -106,38 +132,6 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
     );
   }
 
-  Widget _buildRatesRevertAmountField() {
-    return TextFormField(
-      controller: _ratesRevertAmountController,
-      decoration: _input('Rate', 'e.g., 10.5'),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: _validateAmount,
-      onChanged: (value) {
-        if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-        _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {});
-        });
-      },
-    );
-  }
-
-  Widget _buildRatesAmountField() {
-    return TextFormField(
-      controller: _ratesAmountController,
-      decoration: _input('Rate', 'e.g., 10.5'),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: _validateAmount,
-      onChanged: (value) {
-        if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-        _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {});
-        });
-      },
-    );
-  }
-
   Widget _buildSourceAmountField() {
     return TextFormField(
       controller: _sourceAmountController,
@@ -148,7 +142,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {});
+          _getRate();
         });
       },
     );
@@ -159,7 +153,18 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
       labelText: 'Coin',
       initialValue: null,
       validator: _validateCrypto,
-      onSelected: (id) => setState(() => _selectedSource = id),
+      onSelected: (id) => setState(() {
+        int source = _selectedSource ?? -1;
+
+        if (id != source) {
+          _rate = null;
+          _reversedRate = null;
+        }
+
+        _selectedSource = id;
+
+        _getRate();
+      }),
     );
   }
 
@@ -168,74 +173,56 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
       labelText: 'Coin',
       initialValue: null,
       validator: _validateCrypto,
-      onSelected: (id) => setState(() => _selectedTarget = id),
+      onSelected: (id) => setState(() {
+        int target = _selectedTarget ?? -1;
+
+        if (id != target) {
+          _rate = null;
+          _reversedRate = null;
+        }
+
+        _selectedTarget = id;
+
+        _getRate();
+      }),
     );
   }
 
   Widget _buildCalculatedResult() {
     final double source = double.tryParse(_sourceAmountController.text) ?? 0;
-    final double entryRate = double.tryParse(_ratesAmountController.text) ?? 0;
-    final double returnRate = double.tryParse(_ratesRevertAmountController.text) ?? 0;
+    final double rate = _rate ?? -1;
+    final double reversedRate = _reversedRate ?? -1;
 
-    if (source <= 0 || entryRate <= 0) {
+    if (source <= 0 || rate < 0 || reversedRate < 0) {
       return Text("");
-    }
-
-    final double stage1Balance = source * entryRate;
-    double resultValue = stage1Balance;
-    double profit = 0;
-
-    if (returnRate > 0) {
-      resultValue = stage1Balance / returnRate;
-      profit = resultValue - source;
     }
 
     final String sourceSymbol = _selectedSource != null ? _cryptosController.getSymbol(_selectedSource!) ?? "" : "";
     final String targetSymbol = _selectedTarget != null ? _cryptosController.getSymbol(_selectedTarget!) ?? "" : "";
-    final String currentSymbol = (returnRate > 0) ? sourceSymbol : targetSymbol;
+
+    final double resultValue = source * rate;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          returnRate > 0 ? "Returned amout" : "Calculated Amount",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          "${Utils.formatSmartDouble(source)} $sourceSymbol to $targetSymbol",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
         Text(
-          "${Utils.formatSmartDouble(resultValue)} $currentSymbol",
+          "${Utils.formatSmartDouble(resultValue)} $targetSymbol",
           style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
-
-        if (returnRate > 0 && profit != 0) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.rowHeaderBg,
-              borderRadius: BorderRadius.circular(100),
-              border: Border.all(color: AppTheme.separator),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-
-              children: [
-                Text("Net Profit/Loss:", style: TextStyle(fontSize: 14, color: AppTheme.textMuted)),
-                const SizedBox(width: 8),
-                WidgetsBalanceText(
-                  text: "${Utils.formatSmartDouble(profit)} $sourceSymbol",
-                  value: resultValue,
-                  comparator: source,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  hidePrefix: profit < 0,
-                ),
-              ],
-            ),
-          ),
-        ],
+        Text(
+          "1 $targetSymbol = ${Utils.formatSmartDouble(rate)} $sourceSymbol",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+        ),
+        Text(
+          "1 $sourceSymbol = ${Utils.formatSmartDouble(reversedRate)} $targetSymbol",
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+        ),
       ],
     );
   }
@@ -281,5 +268,34 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
     }
 
     return null;
+  }
+
+  void _onRatesUpdated() {
+    _getRate();
+  }
+
+  Future<void> _getRate() async {
+    try {
+      final int source = _selectedSource ?? 0;
+      final int target = _selectedTarget ?? 0;
+
+      if (source == 0 || target == 0) {
+        return;
+      }
+
+      final rate = await _ratesController.getStoredRate(source, target);
+      if (rate == -9999) {
+        _ratesController.addQueue(source, target);
+        return;
+      }
+      if (mounted) {
+        setState(() {
+          _rate = rate;
+          _reversedRate = 1 / rate;
+        });
+      }
+    } catch (e) {
+      // Do something to process the error message?
+    }
   }
 }

@@ -1,10 +1,16 @@
 import 'package:flutter/foundation.dart';
+import '../../core/log.dart';
 import 'service.dart';
 
 class RatesController extends ChangeNotifier {
   final RatesService service;
 
-  RatesController(this.service);
+  RatesController(this.service) {
+    service.registerOnComplete(() {
+      logln("On Rates callback received2");
+      notifyListeners();
+    });
+  }
 
   bool get isFetching => service.isFetching;
   bool get hasRates => service.hasRates;
@@ -20,7 +26,6 @@ class RatesController extends ChangeNotifier {
 
   void addQueue(int sourceId, int targetId) {
     service.addQueue(sourceId, targetId);
-    service.registerOnComplete(() => notifyListeners());
   }
 
   Future<void> refreshRates() async {
