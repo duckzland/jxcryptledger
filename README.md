@@ -19,7 +19,6 @@ It tracks balances, trades, and transaction trees.
 - Export and import your data so you can back up your ledger or move it to another device.
 - Stronger accuracy checks for transactions to make sure every calculation and update behaves exactly as expected.
 - A smarter test database that can generate complex example data for easier testing and development.
-- Reverse‑rate mode in Active Trading view so you can flip between price directions instantly while trading.
 
 ## License
 MIT
