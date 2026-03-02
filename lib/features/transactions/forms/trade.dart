@@ -4,11 +4,11 @@ import '../../../core/locator.dart';
 import '../../../core/log.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
-import '../../../widgets/field_amount.dart';
-import '../../../widgets/field_datepicker.dart';
-import '../../../widgets/field_textarea.dart';
+import '../../../widgets/fields/amount.dart';
+import '../../../widgets/fields/datepicker.dart';
+import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/panel.dart';
-import '../../../widgets/field_crypto_search.dart';
+import '../../../widgets/fields/crypto_search.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -228,7 +228,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
     final srid = data?.srId ?? 0;
     final symbol = _cryptoController.getSymbol(srid);
 
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'Max: ${Utils.formatSmartDouble(balance)}',
       useMax: balance,
@@ -240,7 +240,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   }
 
   Widget _buildResultAmountField() {
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 10.5',
       onChanged: (value) {
@@ -250,7 +250,11 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: _selectedRrId, onSelected: (id) => setState(() => _selectedRrId = id));
+    return WidgetsFieldsCryptoSearch(
+      labelText: 'Coin',
+      initialValue: _selectedRrId,
+      onSelected: (id) => setState(() => _selectedRrId = id),
+    );
   }
 
   Widget _buildNotesField() {
@@ -260,7 +264,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
         if (_parentNote != null && _parentNote != "") Text(_parentNote!),
         if (_parentNote != null && _parentNote != "") const SizedBox(height: 24),
 
-        WidgetsFieldTextarea(
+        WidgetsFieldsTextarea(
           title: 'New Trading Notes',
           helperText: 'Add trade-specific notes...',
           onChanged: (value) {
@@ -277,7 +281,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
     final DateTime localParent = DateTime.fromMicrosecondsSinceEpoch(tx.sanitizedTimestamp, isUtc: true).toLocal();
     final DateTime firstDate = DateTime(localParent.year, localParent.month, localParent.day);
 
-    return WidgetsFieldDatepicker(
+    return WidgetsFieldsDatepicker(
       labelText: 'Date',
       initialDate: DateTime.now(),
       firstDate: firstDate,

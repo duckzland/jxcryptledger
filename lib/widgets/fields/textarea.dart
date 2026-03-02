@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-class WidgetsFieldTextarea extends StatefulWidget {
+class WidgetsFieldsTextarea extends StatefulWidget {
   final String title;
   final String helperText;
   final String? initialValue;
   final bool enabled;
   final void Function(String value)? onChanged;
 
-  const WidgetsFieldTextarea({
+  const WidgetsFieldsTextarea({
     super.key,
     required this.title,
     required this.helperText,
@@ -18,10 +18,10 @@ class WidgetsFieldTextarea extends StatefulWidget {
   });
 
   @override
-  State<WidgetsFieldTextarea> createState() => _WidgetsFieldTextareaState();
+  State<WidgetsFieldsTextarea> createState() => _WidgetsFieldsTextareaState();
 }
 
-class _WidgetsFieldTextareaState extends State<WidgetsFieldTextarea> {
+class _WidgetsFieldsTextareaState extends State<WidgetsFieldsTextarea> {
   final TextEditingController _textareaController = TextEditingController();
   Timer? _debounce;
 

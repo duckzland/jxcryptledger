@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../app/theme.dart';
+import '../../app/theme.dart';
 
-class WidgetsFieldDatepicker extends StatefulWidget {
+class WidgetsFieldsDatepicker extends StatefulWidget {
   final String labelText;
   final DateTime initialDate;
   final DateTime firstDate;
@@ -11,7 +11,7 @@ class WidgetsFieldDatepicker extends StatefulWidget {
 
   final ValueChanged<DateTime> onSelected;
 
-  const WidgetsFieldDatepicker({
+  const WidgetsFieldsDatepicker({
     super.key,
     required this.labelText,
     required this.initialDate,
@@ -22,10 +22,10 @@ class WidgetsFieldDatepicker extends StatefulWidget {
   });
 
   @override
-  State<WidgetsFieldDatepicker> createState() => _WidgetsFieldDatepickerState();
+  State<WidgetsFieldsDatepicker> createState() => _WidgetsFieldsDatepickerState();
 }
 
-class _WidgetsFieldDatepickerState extends State<WidgetsFieldDatepicker> {
+class _WidgetsFieldsDatepickerState extends State<WidgetsFieldsDatepicker> {
   DateTime? _selectedDate;
 
   @override

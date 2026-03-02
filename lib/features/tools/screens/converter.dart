@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../widgets/button.dart';
-import '../../../widgets/field_amount.dart';
+import '../../../widgets/fields/amount.dart';
 import '../../rates/controller.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../../../widgets/field_crypto_search.dart';
+import '../../../widgets/fields/crypto_search.dart';
 
 class ToolsConverterView extends StatefulWidget {
   const ToolsConverterView({super.key});
@@ -134,7 +134,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   }
 
   Widget _buildSourceAmountField() {
-    return WidgetsFieldAmount(
+    return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 1.5',
       onChanged: (value) {
@@ -145,7 +145,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   }
 
   Widget _buildSourceCryptoField() {
-    return WidgetsFieldCryptoSearch(
+    return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: null,
       onSelected: (id) => setState(() {
@@ -164,7 +164,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldCryptoSearch(
+    return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: null,
       onSelected: (id) => setState(() {

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:jxcryptledger/widgets/notify.dart';
 
-import '../app/theme.dart';
-import '../core/utils.dart';
+import '../../app/theme.dart';
+import '../../core/utils.dart';
 
-class WidgetsFieldAmount extends StatefulWidget {
+class WidgetsFieldsAmount extends StatefulWidget {
   final String title;
   final String helperText;
   final String? initialValue;
@@ -19,7 +19,7 @@ class WidgetsFieldAmount extends StatefulWidget {
 
   final void Function(String value)? onChanged;
 
-  const WidgetsFieldAmount({
+  const WidgetsFieldsAmount({
     super.key,
     required this.title,
     required this.helperText,
@@ -34,10 +34,10 @@ class WidgetsFieldAmount extends StatefulWidget {
   });
 
   @override
-  State<WidgetsFieldAmount> createState() => _WidgetsFieldAmountState();
+  State<WidgetsFieldsAmount> createState() => _WidgetsFieldsAmountState();
 }
 
-class _WidgetsFieldAmountState extends State<WidgetsFieldAmount> {
+class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> {
   final TextEditingController _amountController = TextEditingController();
   Timer? _debounce;
 
