@@ -234,6 +234,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
                   comparator: source,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
+                  hidePrefix: profit < 0,
                 ),
               ],
             ),
