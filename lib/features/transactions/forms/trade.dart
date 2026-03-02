@@ -225,8 +225,8 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   Widget _buildSourceAmountField() {
     final data = widget.initialData;
     final balance = data?.balance ?? 0.0;
-    final srid = data?.srId ?? 0;
-    final symbol = _cryptoController.getSymbol(srid);
+    final rrid = data?.rrId ?? 0;
+    final symbol = _cryptoController.getSymbol(rrid);
 
     return WidgetsFieldsAmount(
       title: 'Amount',
