@@ -4,7 +4,7 @@ import '../../app/exceptions.dart';
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
 import '../../widgets/notify.dart';
-import '../cryptos/repository.dart';
+import '../cryptos/controller.dart';
 import 'controller.dart';
 import 'forms/edit.dart';
 import 'forms/trade.dart';
@@ -15,11 +15,11 @@ enum TransactionsButtonActionMode { edit, trade, close, delete }
 class TransactionsButtons extends StatelessWidget {
   final TransactionsModel tx;
   final void Function() onAction;
-  final CryptosRepository _cryptosRepo = locator<CryptosRepository>();
 
+  CryptosController get _cryptosController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
-  TransactionsButtons({super.key, required this.tx, required this.onAction});
+  const TransactionsButtons({super.key, required this.tx, required this.onAction});
 
   Future<void> _showDeleteDialog(BuildContext context) async {
     await showDialog(
@@ -46,7 +46,10 @@ class TransactionsButtons extends StatelessWidget {
                     Navigator.pop(dialogContext);
                     onAction();
 
-                    widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction deleted.");
+                    String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
+                    String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
+
+                    widgetsNotifySuccess("${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.");
                   } on ValidationException catch (e) {
                     widgetsNotifyError(e.userMessage);
                   } catch (e) {
@@ -196,7 +199,7 @@ class TransactionsButtons extends StatelessWidget {
                 minimumSize: const Size(36, 36),
                 onPressed: (_) => _showEditDialog(context),
                 evaluator: (s) {
-                  _cryptosRepo.hasAny() ? s.normal() : s.disable();
+                  _cryptosController.hasAny() ? s.normal() : s.disable();
                 },
               ),
 
@@ -211,7 +214,7 @@ class TransactionsButtons extends StatelessWidget {
                 minimumSize: const Size(36, 36),
                 onPressed: (_) => _showTradeDialog(context),
                 evaluator: (s) {
-                  _cryptosRepo.hasAny() ? s.action() : s.disable();
+                  _cryptosController.hasAny() ? s.action() : s.disable();
                 },
               ),
 
