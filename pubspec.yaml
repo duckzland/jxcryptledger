@@ -1,4 +1,4 @@
-name: jxcryptledger
+name: JXCLedger
 description: "JxCryptLedger Transaction Manager."
 publish_to: 'none'
 version: 1.0.2
