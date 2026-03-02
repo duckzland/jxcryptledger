@@ -1,7 +1,5 @@
 import 'package:decimal/decimal.dart';
 
-import 'log.dart';
-
 class Utils {
   Utils._();
 
@@ -73,7 +71,6 @@ class Utils {
   }
 
   static int sanitizeTimestamp(int timestamp) {
-    logln("Trying to sanitize: $timestamp");
     if (timestamp < 10000000000) {
       return timestamp * 1000000;
     }

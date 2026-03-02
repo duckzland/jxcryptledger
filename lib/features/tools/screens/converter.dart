@@ -23,6 +23,8 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   late final CryptosController _cryptosController;
   late final RatesController _ratesController;
 
+  final List<(int source, int target)> _temporaryRates = [];
+
   int? _selectedSource;
   int? _selectedTarget;
   String? _sourceAmount;
@@ -52,6 +54,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   void dispose() {
     _ratesController.removeListener(_onRatesUpdated);
     _debounce?.cancel();
+    _cleanTemporaryRates();
 
     super.dispose();
   }
@@ -234,6 +237,8 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
       final rate = await _ratesController.getStoredRate(source, target);
       if (rate == -9999) {
         _ratesController.addQueue(source, target);
+        _temporaryRates.add((source, target));
+
         return;
       }
       if (mounted) {
@@ -245,5 +250,12 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
     } catch (e) {
       // Do something to process the error message?
     }
+  }
+
+  Future<void> _cleanTemporaryRates() async {
+    for (final (source, target) in _temporaryRates) {
+      await _ratesController.delete(source, target);
+    }
+    _temporaryRates.clear();
   }
 }
