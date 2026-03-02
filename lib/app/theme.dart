@@ -25,8 +25,8 @@ class AppTheme {
   static const separator = Color.fromARGB(255, 44, 53, 68);
   static const panelBg = Color(0xFF1B2230);
   static const scrollbarBg = Color.fromARGB(255, 42, 53, 74);
-  static const mutedBg = Color.fromARGB(255, 31, 36, 46);
-  static const closedBg = Color.fromARGB(255, 36, 49, 61);
+  static const mutedBg = Color.fromARGB(255, 41, 47, 59);
+  static const closedBg = Color.fromARGB(255, 37, 52, 66);
 
   static const buttonFg = Color(0xFFE0E0E0);
 
@@ -104,8 +104,8 @@ class AppTheme {
       ),
 
       scrollbarTheme: ScrollbarThemeData(
-        thumbVisibility: WidgetStateProperty.all(true),
-        thickness: WidgetStateProperty.all(12),
+        thumbVisibility: WidgetStateProperty.all(false),
+        thickness: WidgetStateProperty.all(4),
         radius: const Radius.circular(3),
         thumbColor: WidgetStateProperty.all(scrollbarBg),
       ),

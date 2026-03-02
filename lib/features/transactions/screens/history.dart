@@ -52,15 +52,17 @@ class TransactionHistoryState extends State<TransactionHistory> {
       body: Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: WidgetsPanel(
+          padding: const EdgeInsets.only(top: 16, bottom: 16),
           child: TreeView.simple(
             key: ValueKey(widget.transactions.map((e) => "${e.tid}-${e.timestamp}").join('|')),
             tree: _root,
+            padding: const EdgeInsets.only(left: 16),
             showRootNode: false,
             indentation: const Indentation(style: IndentStyle.roundJoint),
             expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
               tree: node,
               color: AppTheme.text,
-              padding: const EdgeInsets.symmetric(horizontal: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 22),
               alignment: Alignment.centerRight,
             ),
             onTreeReady: (controller) {
@@ -130,16 +132,16 @@ class TransactionHistoryState extends State<TransactionHistory> {
     }
 
     return Card(
-      margin: const EdgeInsets.only(top: 4, bottom: 4),
+      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
       color: bgColor,
       child: ListTile(
         title: WidgetsHeader(
           titleColor: fgColor,
-          title: "${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol",
-          subtitle: "${tx.timestampAsFormattedDate} - ${tx.statusText}",
+          title: "${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol",
+          subtitle: "${tx.timestampAsFormattedDate} - ${tx.statusText} - Available ${tx.balanceText} $resultSymbol",
         ),
         trailing: Padding(
-          padding: !node.isLeaf ? EdgeInsets.only(right: 20) : EdgeInsetsGeometry.zero,
+          padding: !node.isLeaf ? EdgeInsets.only(right: 14) : EdgeInsetsGeometry.zero,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

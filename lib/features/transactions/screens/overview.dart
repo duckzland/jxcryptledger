@@ -98,7 +98,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
       rows.add({
         'balance': '${tx.balanceText} $_resultSymbol',
-        'source': '${tx.srAmountText} $sourceCoinSymbol',
+        'source': '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
         'exchangedRate': '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
         'status': tx.statusText,
         'date': tx.timestampAsFormattedDate,

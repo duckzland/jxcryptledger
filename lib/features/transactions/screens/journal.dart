@@ -80,10 +80,11 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
       rows.add({
         'date': tx.timestampAsFormattedDate,
         'balance': '${tx.balanceText} $resultSymbol',
-        'source': '${tx.srAmountText} $sourceCoinSymbol',
+        'source': '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $resultSymbol',
         'rate': '${tx.rateText} $resultSymbol/$sourceCoinSymbol',
         'status': tx.statusText,
         'tx': tx,
+
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
