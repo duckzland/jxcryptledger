@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/log.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
+import '../../../widgets/field_amount.dart';
+import '../../../widgets/field_datepicker.dart';
+import '../../../widgets/field_textarea.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/field_crypto_search.dart';
 import '../../cryptos/controller.dart';
-import '../../cryptos/search_field.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -23,17 +25,15 @@ class TransactionFormTrade extends StatefulWidget {
 }
 
 class _TransactionFormState extends State<TransactionFormTrade> {
-  late CryptosController _cryptosController;
-
+  CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
-
-  late TextEditingController _srAmountController;
-  late TextEditingController _rrAmountController;
-  late TextEditingController _purchaseNotesController;
-  late TextEditingController _tradingNotesController;
 
   int? _selectedRrId;
   DateTime? _selectedDate;
+  String? _srAmount;
+  String? _rrAmount;
+  String? _noteEntry;
+  String? _parentNote;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -50,31 +50,13 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   @override
   void initState() {
     super.initState();
-    _cryptosController = locator<CryptosController>();
 
-    String purchaseNotes = '';
-    if (widget.parent != null && widget.parent!.isRoot) {
-      purchaseNotes = widget.parent!.meta['purchase_notes'];
-    }
-
-    _srAmountController = TextEditingController();
-    _rrAmountController = TextEditingController();
-
-    _purchaseNotesController = TextEditingController(text: purchaseNotes);
-
-    _tradingNotesController = TextEditingController();
+    _parentNote = widget.parent!.isRoot ? widget.parent!.meta['purchase_notes'] : widget.parent!.meta['trading_notes'];
 
     _selectedRrId = null;
-
     _selectedDate = DateTime.now();
-  }
-
-  @override
-  void dispose() {
-    _srAmountController.dispose();
-    _rrAmountController.dispose();
-    _purchaseNotesController.dispose();
-    super.dispose();
+    _srAmount = null;
+    _rrAmount = null;
   }
 
   void _handleSave() async {
@@ -87,10 +69,10 @@ class _TransactionFormState extends State<TransactionFormTrade> {
       rid: _saveRidField(),
       pid: parent.tid,
       srId: parent.rrId,
-      srAmount: double.tryParse(Utils.sanitizeNumber(_srAmountController.text)) ?? 0,
+      srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
       rrId: _selectedRrId ?? 0,
-      rrAmount: double.tryParse(Utils.sanitizeNumber(_rrAmountController.text)) ?? 0,
-      balance: double.tryParse(Utils.sanitizeNumber(_rrAmountController.text)) ?? 0,
+      rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+      balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
       status: TransactionStatus.active.index,
       timestamp: Utils.dateToTimestamp(_selectedDate),
       closable: false,
@@ -131,7 +113,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
     final data = widget.initialData!;
     final meta = Map<String, dynamic>.from(data.meta);
 
-    meta['trading_notes'] = _tradingNotesController.text;
+    meta['trading_notes'] = _noteEntry;
     return meta;
   }
 
@@ -178,14 +160,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
                               children: [
                                 const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Flexible(flex: 3, child: _buildSourceAmountField()),
-                                    const SizedBox(width: 12),
-                                    Flexible(flex: 2, child: _buildSourceCryptoField()),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
+                                Row(children: [Flexible(flex: 3, child: _buildSourceAmountField())]),
                               ],
                             ),
                           ),
@@ -248,59 +223,49 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   }
 
   Widget _buildSourceAmountField() {
-    final balance = widget.initialData?.balance ?? 0;
+    final data = widget.initialData;
+    final balance = data?.balance ?? 0.0;
+    final srid = data?.srId ?? 0;
+    final symbol = _cryptoController.getSymbol(srid);
 
-    return TextFormField(
-      controller: _srAmountController,
-      decoration: _input('Amount', 'Max: ${Utils.formatSmartDouble(balance)}').copyWith(
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.keyboard_double_arrow_up),
-          tooltip: 'Use max',
-          onPressed: () {
-            _srAmountController.text = Utils.formatSmartDouble(balance).replaceAll(",", "");
-          },
-        ),
-      ),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: (value) => _validateAmountWithMax(value, balance),
+    return WidgetsFieldAmount(
+      title: 'Amount',
+      helperText: 'Max: ${Utils.formatSmartDouble(balance)}',
+      useMax: balance,
+      suffixText: symbol,
+      onChanged: (value) {
+        _srAmount = value;
+      },
     );
   }
 
-  Widget _buildSourceCryptoField() {
-    final data = widget.initialData!;
-    return _buildReadOnlyCryptoDisplay(data.rrId);
-  }
-
   Widget _buildResultAmountField() {
-    return TextFormField(
-      controller: _rrAmountController,
-      decoration: _input('Amount', 'e.g., 10.5'),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: _validateAmount,
+    return WidgetsFieldAmount(
+      title: 'Amount',
+      helperText: 'e.g., 10.5',
+      onChanged: (value) {
+        _rrAmount = value;
+      },
     );
   }
 
   Widget _buildResultCryptoField() {
-    return CryptoSearchField(
-      labelText: 'Coin',
-      initialValue: _selectedRrId,
-      validator: _validateCrypto,
-      onSelected: (id) => setState(() => _selectedRrId = id),
-    );
+    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: _selectedRrId, onSelected: (id) => setState(() => _selectedRrId = id));
   }
 
   Widget _buildNotesField() {
-    final existingNotes = _purchaseNotesController.text;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (existingNotes.isNotEmpty) Text(existingNotes),
-        if (existingNotes.isNotEmpty) const SizedBox(height: 24),
-        TextFormField(
-          controller: _tradingNotesController,
-          decoration: _input('New Trading Notes', 'Add trade-specific notes...'),
-          maxLines: 4,
+        if (_parentNote != null && _parentNote != "") Text(_parentNote!),
+        if (_parentNote != null && _parentNote != "") const SizedBox(height: 24),
+
+        WidgetsFieldTextarea(
+          title: 'New Trading Notes',
+          helperText: 'Add trade-specific notes...',
+          onChanged: (value) {
+            setState(() => _noteEntry = value);
+          },
         ),
       ],
     );
@@ -312,57 +277,12 @@ class _TransactionFormState extends State<TransactionFormTrade> {
     final DateTime localParent = DateTime.fromMicrosecondsSinceEpoch(tx.sanitizedTimestamp, isUtc: true).toLocal();
     final DateTime firstDate = DateTime(localParent.year, localParent.month, localParent.day);
 
-    return _buildDatePickerField(
+    return WidgetsFieldDatepicker(
       labelText: 'Date',
       initialDate: DateTime.now(),
       firstDate: firstDate,
       lastDate: DateTime.now(),
       onSelected: (date) => setState(() => _selectedDate = date),
-    );
-  }
-
-  Widget _buildDatePickerField({
-    required String labelText,
-    required DateTime initialDate,
-    required DateTime firstDate,
-    required DateTime lastDate,
-    required ValueChanged<DateTime> onSelected,
-  }) {
-    return TextFormField(
-      readOnly: true,
-      decoration: InputDecoration(labelText: labelText),
-      controller: TextEditingController(
-        text: _selectedDate != null
-            ? "${_selectedDate!.day.toString().padLeft(2, '0')}/"
-                  "${_selectedDate!.month.toString().padLeft(2, '0')}/"
-                  "${_selectedDate!.year}"
-            : "",
-      ),
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: _selectedDate ?? initialDate,
-          firstDate: firstDate,
-          lastDate: lastDate,
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.text,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                ),
-              ),
-              child: child!,
-            );
-          },
-        );
-        if (picked != null) {
-          setState(() => _selectedDate = picked);
-          onSelected(picked);
-        }
-      },
     );
   }
 
@@ -375,81 +295,5 @@ class _TransactionFormState extends State<TransactionFormTrade> {
         WidgetButton(label: "Trade", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
-  }
-
-  Widget _buildReadOnlyCryptoDisplay(int? id) {
-    final String text;
-    if (id == null) {
-      text = 'Unknown Crypto';
-    } else {
-      final crypto = _cryptosController.getById(id);
-      text = crypto == null ? '$id' : '${crypto.symbol} (#${crypto.id})';
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.separator),
-        color: AppTheme.inputBg,
-      ),
-      child: Text(text, textAlign: TextAlign.start),
-    );
-  }
-
-  InputDecoration _input(String label, String hint) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-    );
-  }
-
-  String? _validateAmountWithMax(String? value, double max) {
-    final base = _validateAmount(value);
-    if (base != null) return base;
-
-    final parsed = double.tryParse(value!) ?? 0;
-    if (parsed > max) {
-      return 'Amount cannot exceed $max';
-    }
-
-    return null;
-  }
-
-  String? _validateAmount(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Amount is required';
-    }
-
-    String val = Utils.sanitizeNumber(value);
-
-    final parsed = double.tryParse(val);
-    if (parsed == null) {
-      return 'Enter a valid number';
-    }
-
-    if (parsed <= 0) {
-      return 'Amount must be greater than zero';
-    }
-
-    // if (parsed > 1e12) {
-    //   return 'Amount is unrealistically large';
-    // }
-
-    return null;
-  }
-
-  String? _validateCrypto(int? value) {
-    if (value == null || value == 0) {
-      return 'Crypto is required';
-    }
-
-    if (_cryptosController.getSymbol(value) == null) {
-      return 'Invalid crypto';
-    }
-
-    return null;
   }
 }

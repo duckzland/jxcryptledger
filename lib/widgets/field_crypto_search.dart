@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
-import '../../app/theme.dart';
-import '../../core/locator.dart';
-import 'model.dart';
-import 'controller.dart';
+import '../app/theme.dart';
+import '../core/locator.dart';
+import '../features/cryptos/model.dart';
+import '../features/cryptos/controller.dart';
 
-class CryptoSearchField extends FormField<int> {
-  CryptoSearchField({
+class WidgetsFieldCryptoSearch extends FormField<int> {
+  WidgetsFieldCryptoSearch({
     super.key,
     super.initialValue,
-    required Function(int cryptoId) onSelected,
     super.validator,
+    bool? enabled,
+    Function(int cryptoId)? onSelected,
     String labelText = "Crypto",
     String hintText = "Search by name, symbol, or ID...",
   }) : super(
@@ -20,29 +21,34 @@ class CryptoSearchField extends FormField<int> {
              initialValue: initialValue,
              labelText: labelText,
              hintText: hintText,
+             enabled: enabled,
              onSelected: (id) {
                state.didChange(id);
-               onSelected(id);
+               if (onSelected != null) {
+                 onSelected(id);
+               }
              },
-             errorText: state.errorText,
+             validator: validator,
            );
          },
        );
 }
 
 class _CryptoSearchFieldBody extends StatefulWidget {
-  final Function(int) onSelected;
+  final Function(int)? onSelected;
   final int? initialValue;
   final String labelText;
   final String hintText;
-  final String? errorText;
+  final bool? enabled;
+  final FormFieldValidator<int>? validator;
 
   const _CryptoSearchFieldBody({
     required this.onSelected,
     required this.initialValue,
     required this.labelText,
     required this.hintText,
-    required this.errorText,
+    required this.enabled,
+    required this.validator,
   });
 
   @override
@@ -96,8 +102,9 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TypeAheadField<CryptosModel>(
+        TypeAheadFormField<CryptosModel>(
           textFieldConfiguration: TextFieldConfiguration(
+            enabled: widget.enabled ?? true,
             controller: _controller,
             decoration: InputDecoration(
               labelText: widget.labelText,
@@ -106,6 +113,7 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           ),
+          validator: _validateFromText,
           suggestionsCallback: (pattern) async {
             return await _getSearchSuggestions(pattern);
           },
@@ -131,8 +139,11 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
           },
           onSuggestionSelected: (CryptosModel suggestion) {
             _controller.text = '${suggestion.symbol} (#${suggestion.id})';
-            widget.onSelected(suggestion.id);
+            if (widget.onSelected != null) {
+              widget.onSelected!.call(suggestion.id);
+            }
           },
+
           noItemsFoundBuilder: (context) {
             return const Padding(padding: EdgeInsets.all(8.0), child: Text('No cryptos found'));
           },
@@ -144,13 +155,30 @@ class _CryptoSearchFieldBodyState extends State<_CryptoSearchFieldBody> {
           hideOnLoading: false,
           autoFlipDirection: true,
         ),
-
-        if (widget.errorText != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
-            child: Text(widget.errorText!, style: TextStyle(color: AppTheme.error, fontSize: 12)),
-          ),
       ],
     );
+  }
+
+  int? extractIdFromText(String text) {
+    final match = RegExp(r'\(#(\d+)\)').firstMatch(text);
+    if (match == null) return null;
+    return int.tryParse(match.group(1)!);
+  }
+
+  String? _validateFromText(String? text) {
+    if (text == null || text.isEmpty) {
+      return 'Crypto is required';
+    }
+
+    int? cid = extractIdFromText(text);
+    if (cid == null) {
+      return 'Invalid crypto';
+    }
+
+    if (_cryptosController.getSymbol(cid) == null) {
+      return 'Invalid crypto';
+    }
+
+    return null;
   }
 }

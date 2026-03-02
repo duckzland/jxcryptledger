@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../widgets/button.dart';
+import '../../../widgets/field_amount.dart';
 import '../../rates/controller.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../../cryptos/search_field.dart';
+import '../../../widgets/field_crypto_search.dart';
 
 class ToolsConverterView extends StatefulWidget {
   const ToolsConverterView({super.key});
@@ -22,10 +23,9 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   late final CryptosController _cryptosController;
   late final RatesController _ratesController;
 
-  late TextEditingController _sourceAmountController;
-
   int? _selectedSource;
   int? _selectedTarget;
+  String? _sourceAmount;
 
   double? _rate;
   double? _reversedRate;
@@ -38,10 +38,9 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
     _cryptosController = locator<CryptosController>();
     _ratesController = locator<RatesController>();
 
-    _sourceAmountController = TextEditingController();
-
     _selectedSource = null;
     _selectedTarget = null;
+    _sourceAmount = null;
 
     _rate = null;
     _reversedRate = null;
@@ -52,7 +51,6 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   @override
   void dispose() {
     _ratesController.removeListener(_onRatesUpdated);
-    _sourceAmountController.dispose();
     _debounce?.cancel();
 
     super.dispose();
@@ -92,7 +90,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
                         evaluator: (s) {
                           final int source = _selectedSource ?? -1;
                           final int target = _selectedTarget ?? -1;
-                          final double amount = double.tryParse(_sourceAmountController.text) ?? -1;
+                          final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
 
                           if (source < 0 || target < 0 || amount < 0) {
                             s.disable();
@@ -133,26 +131,20 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   }
 
   Widget _buildSourceAmountField() {
-    return TextFormField(
-      controller: _sourceAmountController,
-      decoration: _input('Amount', 'e.g., 1.5'),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: _validateAmount,
+    return WidgetsFieldAmount(
+      title: 'Amount',
+      helperText: 'e.g., 1.5',
       onChanged: (value) {
-        if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-        _debounce = Timer(const Duration(milliseconds: 100), () {
-          _getRate();
-        });
+        _sourceAmount = value;
+        _getRate();
       },
     );
   }
 
   Widget _buildSourceCryptoField() {
-    return CryptoSearchField(
+    return WidgetsFieldCryptoSearch(
       labelText: 'Coin',
       initialValue: null,
-      validator: _validateCrypto,
       onSelected: (id) => setState(() {
         int source = _selectedSource ?? -1;
 
@@ -169,10 +161,9 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   }
 
   Widget _buildResultCryptoField() {
-    return CryptoSearchField(
+    return WidgetsFieldCryptoSearch(
       labelText: 'Coin',
       initialValue: null,
-      validator: _validateCrypto,
       onSelected: (id) => setState(() {
         int target = _selectedTarget ?? -1;
 
@@ -189,7 +180,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   }
 
   Widget _buildCalculatedResult() {
-    final double source = double.tryParse(_sourceAmountController.text) ?? 0;
+    final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
     final double rate = _rate ?? -1;
     final double reversedRate = _reversedRate ?? -1;
 
@@ -225,49 +216,6 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
         ),
       ],
     );
-  }
-
-  InputDecoration _input(String label, String hint) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-    );
-  }
-
-  String? _validateAmount(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Amount is required';
-    }
-
-    String val = Utils.sanitizeNumber(value);
-
-    final parsed = double.tryParse(val);
-    if (parsed == null) {
-      return 'Enter a valid number';
-    }
-
-    if (parsed <= 0) {
-      return 'Amount must be greater than zero';
-    }
-
-    // if (parsed > 1e12) {
-    //   return 'Amount is unrealistically large';
-    // }
-
-    return null;
-  }
-
-  String? _validateCrypto(int? value) {
-    if (value == null || value == 0) {
-      return 'Crypto is required';
-    }
-
-    if (_cryptosController.getSymbol(value) == null) {
-      return 'Invalid crypto';
-    }
-
-    return null;
   }
 
   void _onRatesUpdated() {
