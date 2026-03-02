@@ -6,9 +6,10 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/balance_text.dart';
+import '../../../widgets/field_amount.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../../cryptos/search_field.dart';
+import '../../../widgets/field_crypto_search.dart';
 
 class ToolsCalculatorView extends StatefulWidget {
   const ToolsCalculatorView({super.key});
@@ -20,12 +21,12 @@ class ToolsCalculatorView extends StatefulWidget {
 class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   late final CryptosController _cryptosController;
 
-  late TextEditingController _sourceAmountController;
-  late TextEditingController _ratesAmountController;
-  late TextEditingController _ratesRevertAmountController;
-
   int? _selectedSource;
   int? _selectedTarget;
+
+  String? _sourceAmount;
+  String? _ratesAmount;
+  String? _ratesRevertAmount;
 
   Timer? _debounce;
 
@@ -34,20 +35,15 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
     super.initState();
     _cryptosController = locator<CryptosController>();
 
-    _sourceAmountController = TextEditingController();
-
-    _ratesAmountController = TextEditingController();
-    _ratesRevertAmountController = TextEditingController();
-
     _selectedSource = null;
     _selectedTarget = null;
+    _sourceAmount = null;
+    _ratesAmount = null;
+    _ratesRevertAmount = null;
   }
 
   @override
   void dispose() {
-    _sourceAmountController.dispose();
-    _ratesAmountController.dispose();
-    _ratesRevertAmountController.dispose();
     _debounce?.cancel();
 
     super.dispose();
@@ -107,75 +103,65 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   }
 
   Widget _buildRatesRevertAmountField() {
-    return TextFormField(
-      controller: _ratesRevertAmountController,
-      decoration: _input('Rate', 'e.g., 10.5'),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: _validateAmount,
+    return WidgetsFieldAmount(
+      title: 'Rate',
+      helperText: 'e.g., 10.5',
       onChanged: (value) {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {});
+          setState(() {
+            _ratesRevertAmount = value;
+          });
         });
       },
     );
   }
 
   Widget _buildRatesAmountField() {
-    return TextFormField(
-      controller: _ratesAmountController,
-      decoration: _input('Rate', 'e.g., 10.5'),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: _validateAmount,
+    return WidgetsFieldAmount(
+      title: 'Rate',
+      helperText: 'e.g., 10.5',
       onChanged: (value) {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {});
+          setState(() {
+            _ratesAmount = value;
+          });
         });
       },
     );
   }
 
   Widget _buildSourceAmountField() {
-    return TextFormField(
-      controller: _sourceAmountController,
-      decoration: _input('Amount', 'e.g., 1.5'),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-      validator: _validateAmount,
+    return WidgetsFieldAmount(
+      title: 'Amount',
+      helperText: 'e.g., 1.5',
       onChanged: (value) {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {});
+          setState(() {
+            _sourceAmount = value;
+          });
         });
       },
     );
   }
 
   Widget _buildSourceCryptoField() {
-    return CryptoSearchField(
-      labelText: 'Coin',
-      initialValue: null,
-      validator: _validateCrypto,
-      onSelected: (id) => setState(() => _selectedSource = id),
-    );
+    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedSource = id));
   }
 
   Widget _buildResultCryptoField() {
-    return CryptoSearchField(
-      labelText: 'Coin',
-      initialValue: null,
-      validator: _validateCrypto,
-      onSelected: (id) => setState(() => _selectedTarget = id),
-    );
+    return WidgetsFieldCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedTarget = id));
   }
 
   Widget _buildCalculatedResult() {
-    final double source = double.tryParse(_sourceAmountController.text) ?? 0;
-    final double entryRate = double.tryParse(_ratesAmountController.text) ?? 0;
-    final double returnRate = double.tryParse(_ratesRevertAmountController.text) ?? 0;
+    final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
+    final double entryRate = _ratesAmount == null ? 0.0 : double.tryParse(_ratesAmount!) ?? 0;
+    final double returnRate = _ratesRevertAmount == null ? 0.0 : double.tryParse(_ratesRevertAmount!) ?? 0;
 
     if (source <= 0 || entryRate <= 0) {
       return Text("");
@@ -238,48 +224,5 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
         ],
       ],
     );
-  }
-
-  InputDecoration _input(String label, String hint) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-    );
-  }
-
-  String? _validateAmount(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Amount is required';
-    }
-
-    String val = Utils.sanitizeNumber(value);
-
-    final parsed = double.tryParse(val);
-    if (parsed == null) {
-      return 'Enter a valid number';
-    }
-
-    if (parsed <= 0) {
-      return 'Amount must be greater than zero';
-    }
-
-    // if (parsed > 1e12) {
-    //   return 'Amount is unrealistically large';
-    // }
-
-    return null;
-  }
-
-  String? _validateCrypto(int? value) {
-    if (value == null || value == 0) {
-      return 'Crypto is required';
-    }
-
-    if (_cryptosController.getSymbol(value) == null) {
-      return 'Invalid crypto';
-    }
-
-    return null;
   }
 }

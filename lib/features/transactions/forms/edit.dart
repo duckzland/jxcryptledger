@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/field_amount.dart';
+import '../../../widgets/field_datepicker.dart';
+import '../../../widgets/field_crypto_search.dart';
+import '../../../widgets/field_textarea.dart';
 import '../../cryptos/controller.dart';
-import '../../cryptos/search_field.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -22,18 +24,15 @@ class TransactionFormEdit extends StatefulWidget {
 }
 
 class _TransactionFormState extends State<TransactionFormEdit> {
-  late CryptosController _cryptosController;
-
+  CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
-
-  late TextEditingController _srAmountController;
-  late TextEditingController _rrAmountController;
-  late TextEditingController _purchaseNotesController;
-  late TextEditingController _tradingNotesController;
 
   int? _selectedSrId;
   int? _selectedRrId;
   DateTime? _selectedDate;
+  String? _srAmount;
+  String? _rrAmount;
+  String? _noteEntry;
 
   bool? _hasLeaf;
 
@@ -52,34 +51,17 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   @override
   void initState() {
     super.initState();
-    _cryptosController = locator<CryptosController>();
 
     final data = widget.initialData!;
-
-    _srAmountController = TextEditingController(text: Utils.formatSmartDouble(data.srAmount).replaceAll(',', ''));
-    _rrAmountController = TextEditingController(text: Utils.formatSmartDouble(data.rrAmount).replaceAll(',', ''));
-
-    if (isRoot) {
-      _purchaseNotesController = TextEditingController(text: data.meta['purchase_notes'] ?? '');
-      _tradingNotesController = TextEditingController(text: '');
-    } else {
-      _purchaseNotesController = TextEditingController(text: data.meta['purchase_notes'] ?? '');
-      _tradingNotesController = TextEditingController(text: data.meta['trading_notes'] ?? '');
-    }
 
     _selectedSrId = data.srId;
     _selectedRrId = data.rrId;
     _selectedDate = DateTime.fromMicrosecondsSinceEpoch(widget.initialData!.sanitizedTimestamp, isUtc: true).toLocal();
+    _srAmount = Utils.formatSmartDouble(data.srAmount).replaceAll(',', '');
+    _rrAmount = Utils.formatSmartDouble(data.rrAmount).replaceAll(',', '');
+    _noteEntry = isRoot ? data.meta['purchase_notes'] ?? '' : data.meta['trading_notes'] ?? '';
 
     detectLeaf(data);
-  }
-
-  @override
-  void dispose() {
-    _srAmountController.dispose();
-    _rrAmountController.dispose();
-    _purchaseNotesController.dispose();
-    super.dispose();
   }
 
   void detectLeaf(TransactionsModel tx) async {
@@ -133,7 +115,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   double _saveBalanceField() {
-    final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmountController.text)) ?? 0;
+    final proposed = _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
 
     final data = widget.initialData!;
 
@@ -150,7 +132,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   double _saveSourceAmountField() {
-    final proposed = double.tryParse(Utils.sanitizeNumber(_srAmountController.text)) ?? 0;
+    final proposed = _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0;
     final data = widget.initialData!;
     if (isRoot) return proposed;
     if (isLeaf && isActive) return proposed;
@@ -165,7 +147,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   double _saveResultAmountField() {
-    final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmountController.text)) ?? 0;
+    final proposed = _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
     final data = widget.initialData!;
     if (isRoot) return proposed;
     if (isLeaf && isActive) return proposed;
@@ -177,9 +159,9 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     final meta = Map<String, dynamic>.from(data.meta);
 
     if (isRoot) {
-      meta['purchase_notes'] = _purchaseNotesController.text;
+      meta['purchase_notes'] = _noteEntry;
     } else {
-      meta['trading_notes'] = _tradingNotesController.text;
+      meta['trading_notes'] = _noteEntry;
     }
 
     return meta;
@@ -231,8 +213,8 @@ class _TransactionFormState extends State<TransactionFormEdit> {
                                 Row(
                                   children: [
                                     Flexible(flex: 3, child: _buildSourceAmountField()),
-                                    const SizedBox(width: 12),
-                                    Flexible(flex: 2, child: _buildSourceCryptoField()),
+                                    if (isRoot) const SizedBox(width: 12),
+                                    if (isRoot) Flexible(flex: 2, child: _buildSourceCryptoField()),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
@@ -254,8 +236,8 @@ class _TransactionFormState extends State<TransactionFormEdit> {
                                 Row(
                                   children: [
                                     Flexible(flex: 3, child: _buildResultAmountField()),
-                                    const SizedBox(width: 12),
-                                    Flexible(flex: 2, child: _buildResultCryptoField()),
+                                    if (!(!isRoot && !isActive)) const SizedBox(width: 12),
+                                    if (!(!isRoot && !isActive)) Flexible(flex: 2, child: _buildResultCryptoField()),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
@@ -298,157 +280,92 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   Widget _buildSourceAmountField() {
-    if (!isActive) {
-      return _buildReadOnlyAmount(_srAmountController.text);
-    } else {
-      return TextFormField(
-        controller: _srAmountController,
-        decoration: _input('Amount', 'e.g., 1.5'),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-        validator: _validateAmount,
-      );
+    String? symbol;
+
+    if (!isRoot) {
+      final data = widget.initialData;
+      final srid = data?.srId ?? 0;
+      symbol = _cryptoController.getSymbol(srid);
     }
+
+    return WidgetsFieldAmount(
+      title: 'Amount',
+      initialValue: _srAmount,
+      suffixText: symbol,
+      enabled: isActive,
+      helperText: 'e.g., 1.5',
+      onChanged: (value) {
+        _srAmount = value;
+      },
+    );
   }
 
   Widget _buildSourceCryptoField() {
-    if (isRoot) {
-      return CryptoSearchField(
-        labelText: 'Coin',
-        initialValue: _selectedSrId,
-        validator: _validateCrypto,
-        onSelected: (id) => setState(() => _selectedSrId = id),
-      );
-    } else {
-      return _buildReadOnlyCryptoDisplay(_selectedSrId);
-    }
+    return WidgetsFieldCryptoSearch(
+      labelText: 'Coin',
+      initialValue: _selectedSrId,
+      enabled: isRoot,
+      onSelected: (id) => setState(() => _selectedSrId = id),
+    );
   }
 
   Widget _buildResultAmountField() {
-    if (isRoot) {
-      return TextFormField(
-        controller: _rrAmountController,
-        decoration: _input('Amount', 'e.g., 10.5'),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-        validator: _validateAmount,
-      );
-    } else {
-      if (!isActive) {
-        return _buildReadOnlyAmount(_rrAmountController.text);
-      } else {
-        return TextFormField(
-          controller: _rrAmountController,
-          decoration: _input('Amount', 'e.g., 10.5'),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-          validator: _validateAmount,
-        );
-      }
+    String? symbol;
+
+    if (!isRoot && !isActive) {
+      final data = widget.initialData;
+      final rrid = data?.rrId ?? 0;
+      symbol = _cryptoController.getSymbol(rrid);
     }
+
+    return WidgetsFieldAmount(
+      title: 'Amount',
+      initialValue: _rrAmount,
+      suffixText: symbol,
+      enabled: isRoot || isActive,
+      helperText: 'e.g., 10.5',
+      onChanged: (value) {
+        _rrAmount = value;
+      },
+    );
   }
 
   Widget _buildResultCryptoField() {
-    if (isRoot) {
-      return CryptoSearchField(
-        labelText: 'Coin',
-        initialValue: _selectedRrId,
-        validator: _validateCrypto,
-        onSelected: (id) => setState(() => _selectedRrId = id),
-      );
-    } else {
-      if (!isActive) {
-        return _buildReadOnlyCryptoDisplay(_selectedRrId);
-      } else {
-        return CryptoSearchField(
-          labelText: 'Coin',
-          initialValue: _selectedRrId,
-          validator: _validateCrypto,
-          onSelected: (id) => setState(() => _selectedRrId = id),
-        );
-      }
-    }
+    return WidgetsFieldCryptoSearch(
+      labelText: 'Coin',
+      initialValue: _selectedRrId,
+      enabled: !(!isRoot && !isActive),
+      onSelected: (id) => setState(() => _selectedRrId = id),
+    );
   }
 
   Widget _buildNotesField() {
-    if (isRoot) {
-      return TextFormField(controller: _purchaseNotesController, decoration: _input('Purchase Notes', 'Edit notes...'), maxLines: 4);
-    } else {
-      return TextFormField(controller: _tradingNotesController, decoration: _input('Trading Notes', 'Edit trading notes...'), maxLines: 4);
-    }
+    return WidgetsFieldTextarea(
+      title: isRoot ? 'Purchase Notes' : 'Trading Notes',
+      helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
+      onChanged: (value) {
+        setState(() => _noteEntry = value);
+      },
+    );
   }
 
   Widget _buildTimestampField() {
     TransactionsModel tx = widget.initialData!;
     final initialDate = DateTime.fromMicrosecondsSinceEpoch(tx.sanitizedTimestamp, isUtc: true).toLocal();
     final hasLeaf = _hasLeaf ?? false;
-
-    if (!hasLeaf) {
-      DateTime firstDate = DateTime(2000).toLocal();
-      if (widget.parent != null) {
-        final DateTime localParent = DateTime.fromMicrosecondsSinceEpoch(widget.parent!.sanitizedTimestamp, isUtc: true).toLocal();
-        firstDate = DateTime(localParent.year, localParent.month, localParent.day);
-      }
-
-      return _buildDatePickerField(
-        labelText: 'Date',
-        initialDate: initialDate,
-        firstDate: firstDate,
-        lastDate: DateTime.now().toLocal(),
-        onSelected: (date) => setState(() => _selectedDate = date),
-      );
-    } else {
-      return _buildReadOnlyDateDisplay(initialDate);
+    DateTime firstDate = DateTime(2000).toLocal();
+    if (widget.parent != null) {
+      final DateTime localParent = DateTime.fromMicrosecondsSinceEpoch(widget.parent!.sanitizedTimestamp, isUtc: true).toLocal();
+      firstDate = DateTime(localParent.year, localParent.month, localParent.day);
     }
-  }
 
-  Widget _buildDatePickerField({
-    required String labelText,
-    required DateTime initialDate,
-    required DateTime firstDate,
-    required DateTime lastDate,
-    required ValueChanged<DateTime> onSelected,
-  }) {
-    return TextFormField(
-      readOnly: true,
-      decoration: InputDecoration(labelText: labelText),
-      controller: TextEditingController(
-        text: _selectedDate != null
-            ? "${_selectedDate!.day.toString().padLeft(2, '0')}/"
-                  "${_selectedDate!.month.toString().padLeft(2, '0')}/"
-                  "${_selectedDate!.year}"
-            : "",
-      ),
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: _selectedDate ?? initialDate,
-          firstDate: firstDate,
-          lastDate: lastDate,
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.text,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                ),
-              ),
-              child: child!,
-            );
-          },
-        );
-        if (picked != null) {
-          setState(() => _selectedDate = picked);
-          onSelected(picked);
-        }
-      },
-    );
-  }
-
-  Widget _buildReadOnlyDateDisplay(DateTime date) {
-    return TextFormField(
-      readOnly: true,
-      decoration: const InputDecoration(labelText: 'Date'),
-      controller: TextEditingController(text: "${date.year}-${date.month}-${date.day}"),
+    return WidgetsFieldDatepicker(
+      labelText: 'Date',
+      enabled: !hasLeaf,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: DateTime.now().toLocal(),
+      onSelected: (date) => setState(() => _selectedDate = date),
     );
   }
 
@@ -461,82 +378,5 @@ class _TransactionFormState extends State<TransactionFormEdit> {
         WidgetButton(label: "Update", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
-  }
-
-  Widget _buildReadOnlyCryptoDisplay(int? id) {
-    final String text;
-    if (id == null) {
-      text = 'Unknown Crypto';
-    } else {
-      final crypto = _cryptosController.getById(id);
-      text = crypto == null ? '$id' : '${crypto.symbol} (#${crypto.id})';
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.separator),
-        color: AppTheme.inputBg,
-      ),
-      child: Text(text, textAlign: TextAlign.start),
-    );
-  }
-
-  Widget _buildReadOnlyAmount(String value) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.separator),
-        color: AppTheme.inputBg,
-      ),
-      child: Text(value.isEmpty ? '0' : value),
-    );
-  }
-
-  InputDecoration _input(String label, String hint) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-    );
-  }
-
-  String? _validateAmount(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Amount is required';
-    }
-
-    String val = Utils.sanitizeNumber(value);
-
-    final parsed = double.tryParse(val);
-    if (parsed == null) {
-      return 'Enter a valid number';
-    }
-
-    if (parsed <= 0) {
-      return 'Amount must be greater than zero';
-    }
-
-    // if (parsed > 1e12) {
-    //   return 'Amount is unrealistically large';
-    // }
-
-    return null;
-  }
-
-  String? _validateCrypto(int? value) {
-    if (value == null || value == 0) {
-      return 'Crypto is required';
-    }
-
-    if (_cryptosController.getSymbol(value) == null) {
-      return 'Invalid crypto';
-    }
-
-    return null;
   }
 }
