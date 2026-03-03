@@ -132,7 +132,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSaveButton() {
-    return WidgetButton(
+    return WidgetsButton(
       label: "Save Changes",
       initialState: WidgetsButtonActionState.action,
       evaluator: (s) {
@@ -161,7 +161,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildResetButton(List<SettingKey> editableKeys) {
-    return WidgetButton(
+    return WidgetsButton(
       initialState: WidgetsButtonActionState.error,
       label: "Reset to Default",
       onPressed: (s) async {
@@ -172,13 +172,13 @@ class _SettingsPageState extends State<SettingsPage> {
               title: const Text("Reset Settings"),
               content: const Text("Are you sure you want to reset all settings to default values?"),
               actions: [
-                WidgetButton(
+                WidgetsButton(
                   label: "Cancel",
                   onPressed: (s) {
                     Navigator.pop(context, false);
                   },
                 ),
-                WidgetButton(initialState: WidgetsButtonActionState.error, label: "Reset", onPressed: (s) => Navigator.pop(context, true)),
+                WidgetsButton(initialState: WidgetsButtonActionState.error, label: "Reset", onPressed: (s) => Navigator.pop(context, true)),
               ],
             );
           },
@@ -205,7 +205,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildCancelButton() {
-    return WidgetButton(
+    return WidgetsButton(
       label: "Cancel",
       initialState: WidgetsButtonActionState.action,
       onPressed: (s) {

@@ -63,7 +63,7 @@ class _ToolsPageState extends State<ToolsPage> {
       child: Wrap(
         spacing: 4,
         children: [
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.calculate,
             padding: const EdgeInsets.all(8),
             iconSize: 20,
@@ -83,7 +83,7 @@ class _ToolsPageState extends State<ToolsPage> {
             },
           ),
 
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.swap_horiz,
             padding: const EdgeInsets.all(8),
             iconSize: 20,
@@ -103,7 +103,7 @@ class _ToolsPageState extends State<ToolsPage> {
             },
           ),
 
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.qr_code_2,
             padding: const EdgeInsets.all(8),
             iconSize: 20,

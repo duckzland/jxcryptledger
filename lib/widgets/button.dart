@@ -4,31 +4,20 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-enum WidgetsButtonActionState {
-  allowActions,
-  disallowActions,
-  disabled,
-  inProgress,
-  active,
-  error,
-  normal,
-  primary,
-  action,
-  warning,
-}
+enum WidgetsButtonActionState { allowActions, disallowActions, disabled, inProgress, active, error, normal, primary, action, warning }
 
-class WidgetButton extends StatefulWidget {
+class WidgetsButton extends StatefulWidget {
   final String? label;
   final IconData? icon;
-  final FutureOr<void> Function(WidgetButtonState state)? onPressed;
+  final FutureOr<void> Function(WidgetsButtonState state)? onPressed;
   final String? tooltip;
   final EdgeInsetsGeometry? padding;
-  final FutureOr<void> Function(WidgetButtonState state)? evaluator;
+  final FutureOr<void> Function(WidgetsButtonState state)? evaluator;
   final WidgetsButtonActionState initialState;
   final double? iconSize;
   final Size? minimumSize;
 
-  const WidgetButton({
+  const WidgetsButton({
     super.key,
     this.label,
     this.icon,
@@ -42,10 +31,10 @@ class WidgetButton extends StatefulWidget {
   });
 
   @override
-  State<WidgetButton> createState() => WidgetButtonState();
+  State<WidgetsButton> createState() => WidgetsButtonState();
 }
 
-class WidgetButtonState extends State<WidgetButton> {
+class WidgetsButtonState extends State<WidgetsButton> {
   WidgetsButtonActionState _state = WidgetsButtonActionState.normal;
 
   @override
@@ -72,13 +61,12 @@ class WidgetButtonState extends State<WidgetButton> {
   }
 
   @override
-  void didUpdateWidget(covariant WidgetButton oldWidget) {
+  void didUpdateWidget(covariant WidgetsButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     _runEvaluator();
   }
 
-  bool get _disabled =>
-      _state == WidgetsButtonActionState.disabled || _state == WidgetsButtonActionState.disallowActions;
+  bool get _disabled => _state == WidgetsButtonActionState.disabled || _state == WidgetsButtonActionState.disallowActions;
 
   bool get _inProgress => _state == WidgetsButtonActionState.inProgress;
 

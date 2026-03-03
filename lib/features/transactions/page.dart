@@ -371,7 +371,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       child: Wrap(
         spacing: 4,
         children: [
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.show_chart,
             padding: const EdgeInsets.all(8),
             iconSize: 20,
@@ -391,7 +391,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
               });
             },
           ),
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.account_balance_wallet_outlined,
             padding: const EdgeInsets.all(8),
             iconSize: 20,
@@ -411,7 +411,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
               });
             },
           ),
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.article_outlined,
             padding: const EdgeInsets.all(8),
             iconSize: 20,
@@ -431,7 +431,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
               });
             },
           ),
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.history,
             padding: const EdgeInsets.all(8),
             iconSize: 20,
@@ -451,7 +451,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
               });
             },
           ),
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.add,
             padding: const EdgeInsets.all(8),
             initialState: WidgetsButtonActionState.action,
@@ -509,7 +509,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
           const SizedBox(height: 16),
           const Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.add,
             initialState: WidgetsButtonActionState.action,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -543,7 +543,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          WidgetButton(
+          WidgetsButton(
             icon: Icons.refresh,
             initialState: WidgetsButtonActionState.action,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

@@ -294,9 +294,9 @@ class _TransactionFormState extends State<TransactionFormTrade> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+        WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
         const SizedBox(width: 12),
-        WidgetButton(label: "Trade", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
+        WidgetsButton(label: "Trade", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
   }

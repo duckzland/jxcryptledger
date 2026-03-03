@@ -34,9 +34,9 @@ class TransactionsButtons extends StatelessWidget {
               "This action cannot be undone.",
             ),
             actions: [
-              WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
               const SizedBox(width: 12),
-              WidgetButton(
+              WidgetsButton(
                 label: 'Delete',
                 initialState: WidgetsButtonActionState.error,
                 onPressed: (_) async {
@@ -74,9 +74,9 @@ class TransactionsButtons extends StatelessWidget {
             title: const Text("Close Transaction"),
             content: const Text("Are you sure you want to close this transaction?"),
             actions: [
-              WidgetButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
               const SizedBox(width: 12),
-              WidgetButton(
+              WidgetsButton(
                 label: 'Close',
                 initialState: WidgetsButtonActionState.action,
                 onPressed: (_) async {
@@ -190,7 +190,7 @@ class TransactionsButtons extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             if (isUpdatable && tx.isActive)
-              WidgetButton(
+              WidgetsButton(
                 key: Key("edit-button-${tx.tid}"),
                 icon: Icons.edit,
                 tooltip: "Edit",
@@ -204,7 +204,7 @@ class TransactionsButtons extends StatelessWidget {
               ),
 
             if (isTradable)
-              WidgetButton(
+              WidgetsButton(
                 key: Key("trade-button-${tx.tid}"),
                 icon: Icons.swap_horiz,
                 initialState: WidgetsButtonActionState.action,
@@ -219,7 +219,7 @@ class TransactionsButtons extends StatelessWidget {
               ),
 
             if (isDeletable)
-              WidgetButton(
+              WidgetsButton(
                 key: Key("delete-button-${tx.tid}"),
                 icon: Icons.delete,
                 initialState: WidgetsButtonActionState.error,
@@ -231,7 +231,7 @@ class TransactionsButtons extends StatelessWidget {
               ),
 
             if (isClosable)
-              WidgetButton(
+              WidgetsButton(
                 key: Key("close-button-${tx.tid}"),
                 icon: Icons.close,
                 initialState: WidgetsButtonActionState.warning,
