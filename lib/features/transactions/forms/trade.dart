@@ -51,7 +51,9 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   void initState() {
     super.initState();
 
-    _parentNote = widget.parent!.isRoot ? widget.parent!.meta['purchase_notes'] : widget.parent!.meta['trading_notes'];
+    if (widget.parent != null) {
+      _parentNote = widget.parent!.isRoot ? widget.parent!.meta['purchase_notes'] : widget.parent!.meta['trading_notes'];
+    }
 
     _selectedRrId = null;
     _selectedDate = DateTime.now();
@@ -79,22 +81,8 @@ class _TransactionFormState extends State<TransactionFormTrade> {
       meta: _saveNotesField(),
     );
 
-    final newParentBalance = parent.balance - child.srAmount;
-
-    logln('[USER TRADE] Calculated new parent balance: $newParentBalance (old: ${parent.balance} - child: ${child.srAmount})');
-
-    TransactionStatus newStatus;
-    if (newParentBalance <= 0) {
-      newStatus = TransactionStatus.inactive;
-    } else {
-      newStatus = TransactionStatus.partial;
-    }
-
-    final updatedParent = parent.copyWith(balance: newParentBalance, status: newStatus.index);
-
     try {
       await _txController.add(child);
-      await _txController.update(updatedParent);
       widget.onSave?.call(null);
     } catch (e) {
       widget.onSave?.call(e);

@@ -30,12 +30,9 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
     );
 
     final otx = await origTx;
-    final leaves = await terminalLeaves;
     final targetCloser = await targetParentCloser;
     final children = await leafChildren;
     final hasChildren = children.isNotEmpty;
-
-    final allClosed = leaves.isEmpty || leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (tx.status != otx!.status) {
       switch (tx.statusEnum) {
@@ -71,7 +68,7 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
             "This transaction cannot be marked as partially completed.",
           );
 
-          await txCheckTerminalIsClosed(
+          await txCheckTerminalIsNotAllClosed(
             AppErrorCode.txUpdatePartialCannotAllClosed,
             "This transaction cannot be marked as partial because all related transactions are already completed.",
           );
@@ -109,13 +106,8 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
           break;
 
         case false:
-          if (tx.isRoot && allClosed) {
-            throw ValidationException(
-              AppErrorCode.txUpdateNotClosableRootAllClosed,
-              "$mode root cannot be not-closable when all children closed (tid=${tx.tid})",
-              "This transaction must remain closable.",
-              silent: silent,
-            );
+          if (tx.isRoot) {
+            await txCheckTerminalIsNotAllClosed(AppErrorCode.txUpdateNotClosableRootAllClosed, "This transaction must remain closable.");
           }
           if (tx.isLeaf && otx.isActive && targetCloser != null) {
             throw ValidationException(

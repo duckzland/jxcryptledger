@@ -1,11 +1,13 @@
-import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:intl/intl.dart';
 
 final DateFormat _fmt = DateFormat('HH:mm:ss.SSSSSS');
 
+const bool isProd = bool.fromEnvironment('dart.vm.product');
+
 void logln(String message) {
-  if (!kDebugMode) return;
+  if (isProd) return;
 
   final ts = _fmt.format(DateTime.now());
-  debugPrint('[JX] $ts - $message');
+  stdout.writeln('[JX] $ts - $message');
 }

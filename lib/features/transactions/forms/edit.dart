@@ -75,8 +75,6 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     if (!_formKey.currentState!.validate()) return;
 
     final data = widget.initialData!;
-    TransactionsModel? parent = widget.parent;
-
     final tx = data.copyWith(
       srId: _saveSourceCryptoField(),
       srAmount: _saveSourceAmountField(),
@@ -89,25 +87,6 @@ class _TransactionFormState extends State<TransactionFormEdit> {
 
     try {
       await _txController.update(tx);
-
-      if (tx.isLeaf && parent != null && data.srAmount != tx.srAmount && parent.rrId == data.srId) {
-        double newBalance = parent.balance;
-        if (data.srAmount > tx.srAmount) {
-          newBalance += data.srAmount - tx.srAmount;
-        } else {
-          double needToTake = tx.srAmount - data.srAmount;
-          if (newBalance >= needToTake) {
-            newBalance -= needToTake;
-          }
-        }
-
-        final ptx = parent.copyWith(
-          balance: newBalance,
-          status: newBalance > 0 ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
-        );
-        await _txController.update(ptx);
-      }
-
       widget.onSave?.call(null);
     } catch (e) {
       widget.onSave?.call(e);
