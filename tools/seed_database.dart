@@ -9,7 +9,6 @@ import 'package:jxcryptledger/features/cryptos/adapter.dart';
 import 'package:jxcryptledger/features/cryptos/model.dart';
 import 'package:jxcryptledger/features/cryptos/parser.dart';
 import 'package:jxcryptledger/features/rates/adapter.dart';
-import 'package:jxcryptledger/features/rates/model.dart';
 import 'package:jxcryptledger/features/transactions/adapter.dart';
 import 'package:jxcryptledger/features/transactions/model.dart';
 import 'package:jxcryptledger/features/transactions/repository.dart';
@@ -18,23 +17,7 @@ final env = DotEnv()..load();
 final txRepo = TransactionsRepository();
 final AesGcm aes = AesGcm.with256bits();
 
-final List<int> staticCmcIds = [
-  1, // BTC
-  2, // LTC
-  52, // XRP
-  1831, // BCH
-  2010, // ADA
-  6636, // DOT
-  5426, // SOL
-  5805, // AVAX
-  3890, // MATIC
-  1975, // LINK
-  512, // XLM
-  1958, // TRX
-  1321, // ETC
-  328, // XMR
-  3794, // ATOM
-];
+final List<int> staticCmcIds = [1, 2, 52, 1831, 2010, 6636, 5426, 5805, 3890, 1975, 512, 1958, 1321, 328, 3794];
 
 int pickCmcId(int index) => staticCmcIds[index % staticCmcIds.length];
 
@@ -78,8 +61,7 @@ Future<bool> fetchCryptos({required String endpoint, required Box<CryptosModel> 
 
 Future<String> encryptValue(String plainText, Uint8List keyBytes) async {
   final secretKey = SecretKey(keyBytes);
-
-  final nonce = aes.newNonce(); // 12 bytes
+  final nonce = aes.newNonce();
   final secretBox = await aes.encrypt(utf8.encode(plainText), secretKey: secretKey, nonce: nonce);
 
   final combined = <int>[...nonce, ...secretBox.cipherText, ...secretBox.mac.bytes];
@@ -92,7 +74,6 @@ String requireEnv(String key) {
   if (v == null || v.isEmpty) {
     throw Exception("$key not set in .env");
   }
-
   return v.replaceAll('\uFEFF', '').trim();
 }
 
@@ -101,11 +82,50 @@ Future<Uint8List> derivePasswordKey(String password, String salt) async {
 
   final secretKey = await pbkdf2.deriveKey(secretKey: SecretKey(utf8.encode(password)), nonce: utf8.encode(salt));
 
-  final bytes = await secretKey.extractBytes();
-  return Uint8List.fromList(bytes);
+  return Uint8List.fromList(await secretKey.extractBytes());
 }
 
-Future<void> main() async {
+Future<TransactionsModel> createChild(
+  String label,
+  TransactionsRepository repo,
+  TransactionsModel parent,
+  double srAmount,
+  int rrId,
+) async {
+  final tid = repo.generateTid();
+  final rrAmount = srAmount * 2;
+
+  if (parent.rrId == rrId) {
+    rrId += 1;
+  }
+
+  final tx = TransactionsModel(
+    tid: tid,
+    pid: parent.tid,
+    rid: parent.isRoot ? parent.tid : parent.rid,
+    srAmount: srAmount,
+    srId: parent.rrId,
+    rrAmount: rrAmount,
+    rrId: rrId,
+    balance: rrAmount,
+    status: TransactionStatus.active.index,
+    closable: false,
+    timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+    meta: {},
+  );
+  print("Generating Leaf $label: ${tx.tid}");
+  await repo.add(tx);
+
+  return tx;
+}
+
+Future<void> main(List<String> args) async {
+  final bool noArgs = args.isEmpty;
+
+  final bool seedTx = noArgs ? true : args.contains('--seed-transactions');
+
+  final bool seedCryptos = noArgs ? true : args.contains('--seed-cryptos');
+
   final dir = requireEnv('APP_DATA_DIR');
   final password = requireEnv('APP_DB_PASSWORD');
 
@@ -117,7 +137,15 @@ Future<void> main() async {
   Hive.registerAdapter(CryptosAdapter());
 
   print("Wiping old boxes...");
-  final boxes = ['settings_box', 'transactions_box', 'cryptos_box', 'rates_box'];
+  final boxes = ['settings_box', 'rates_box'];
+
+  if (seedTx) {
+    boxes.add('transactions_box');
+  }
+
+  if (seedCryptos) {
+    boxes.add('cryptos_box');
+  }
 
   for (final box in boxes) {
     try {
@@ -138,63 +166,76 @@ Future<void> main() async {
   final encryptedMarker = await encryptValue("initialized", key);
   await settingsBox.put('vaultInitialized', encryptedMarker);
 
-  print("Seeding cryptos...");
-  final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');
-  await fetchCryptos(endpoint: requireEnv('CMC_ENDPOINT'), cryptosBox: cryptosBox);
-
-  print("Seeding transactions...");
-  final txBox = await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
-
-  final rootTid = txRepo.generateTid();
-  final root = TransactionsModel(
-    tid: rootTid,
-    pid: '0',
-    rid: '0',
-    srAmount: 0,
-    srId: pickCmcId(0),
-    rrAmount: 0,
-    rrId: pickCmcId(1),
-    balance: 0,
-    status: TransactionStatus.active.index,
-    closable: false,
-    timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
-    meta: {},
-  );
-
-  await txBox.put(rootTid, root);
-
-  for (int i = 0; i < 30; i++) {
-    final tid = txRepo.generateTid();
-    final parentTid = (i % 5 == 0) ? rootTid : txRepo.generateTid();
-
-    final status = switch (i % 4) {
-      0 => TransactionStatus.active.index,
-      1 => TransactionStatus.partial.index,
-      2 => TransactionStatus.inactive.index,
-      _ => TransactionStatus.closed.index,
-    };
-
-    final tx = TransactionsModel(
-      tid: tid,
-      pid: parentTid,
-      rid: rootTid,
-      srAmount: (i + 1) * 10.0,
-      srId: pickCmcId(i),
-      rrAmount: (i + 1) * 20.0,
-      rrId: pickCmcId(i + 1),
-      balance: (i + 1) * 100.0,
-      status: status,
-      closable: status == TransactionStatus.closed.index,
-      timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
-      meta: {"seedIndex": i},
-    );
-
-    await txBox.put(tid, tx);
+  if (seedCryptos) {
+    print("Seeding cryptos...");
+    final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');
+    await fetchCryptos(endpoint: requireEnv('CMC_ENDPOINT'), cryptosBox: cryptosBox);
   }
 
-  print("Seeding rates");
-  await Hive.openBox<RatesModel>('rates_box');
-  // @TODO calculate the rates needed from transactions and seed it
+  if (seedTx) {
+    print("Seeding transactions...");
+    await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
+    final txRepo = TransactionsRepository();
+    await txRepo.init();
+
+    final List<TransactionsModel> roots = [];
+
+    for (int r = 0; r < 3; r++) {
+      final rootTid = txRepo.generateTid();
+      final root = TransactionsModel(
+        tid: rootTid,
+        pid: '0',
+        rid: '0',
+        srAmount: 1000,
+        srId: pickCmcId(r),
+        rrAmount: 100000,
+        rrId: pickCmcId(r + 1),
+        balance: 100000,
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+        meta: {"rootIndex": r},
+      );
+      print("Generating Root: ${root.tid}");
+      await txRepo.add(root);
+      roots.add(root);
+    }
+
+    for (final root in roots) {
+      // Branch A
+      final A = await createChild("A", txRepo, root, root.balance * 0.5, pickCmcId(10));
+      final A1 = await createChild("A1", txRepo, A, A.balance / 2, pickCmcId(11));
+      final A11 = await createChild("A11", txRepo, A1, A1.balance / 2, pickCmcId(12));
+      final A12 = await createChild("A12", txRepo, A1, A1.balance / 2, pickCmcId(13));
+
+      final A2 = await createChild("A2", txRepo, A, A.balance / 2, pickCmcId(14));
+      final A21 = await createChild("A21", txRepo, A2, A2.balance / 3, pickCmcId(15));
+
+      // Branch B
+      final B = await createChild("B", txRepo, root, root.balance * 0.25, pickCmcId(16));
+      final B1 = await createChild("B1", txRepo, B, B.balance / 2, pickCmcId(17));
+      final B2 = await createChild("B2", txRepo, B, B.balance / 2, B.srId);
+
+      // Branch C
+      final C = await createChild("C", txRepo, root, root.balance * 0.25, pickCmcId(19));
+      final C1 = await createChild("C1", txRepo, C, C.balance / 2, C.srId);
+      final C2 = await createChild("C2", txRepo, C, C.balance / 2, root.rrId);
+
+      // Test Close
+      print("Closing: C1");
+      await txRepo.close(C1);
+
+      print("Closing: C2");
+      await txRepo.close(C2);
+
+      print("Decreasing: B2 balance");
+      final B2Decrease = B2.copyWith(srAmount: B2.balance / 4);
+      await txRepo.update(B2Decrease);
+    }
+  }
+
+  // print("Seeding rates");
+  // await Hive.openBox<RatesModel>('rates_box');
 
   print("Vault seeded successfully.");
   await Hive.close();

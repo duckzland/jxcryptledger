@@ -72,8 +72,31 @@ class TransactionsRepository {
 
     await canAdd(ntx);
 
-    await _box.put(ntx.tid, ntx);
-    await _box.flush();
+    if (ntx.isRoot) {
+      await _box.put(ntx.tid, ntx);
+      return;
+    }
+
+    if (ntx.isLeaf) {
+      TransactionsModel? ptx = _box.get(ntx.pid)!;
+      await canTrade(ptx);
+
+      // Update the parent balance and status
+      // This is important to preserve valid tree structure!
+      final balance = ptx.balance - ntx.srAmount;
+      final nptx = ptx.copyWith(
+        balance: balance,
+        status: balance <= 0 ? TransactionStatus.inactive.index : TransactionStatus.partial.index,
+      );
+
+      logln("[ADD] Rebalancing amount ${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}");
+
+      await _box.put(ntx.tid, ntx);
+
+      // Force to revalidate!
+      await update(nptx);
+      return;
+    }
   }
 
   Future<void> update(TransactionsModel tx) async {
@@ -97,7 +120,43 @@ class TransactionsRepository {
 
     await canUpdate(ntx);
 
-    await _box.put(ntx.tid, ntx);
+    if (ntx.isRoot) {
+      await _box.put(ntx.tid, ntx);
+      return;
+    }
+
+    // Update the parent balance and status
+    // This is important to preserve valid tree structure!
+    if (tx.isLeaf) {
+      TransactionsModel? ptx = _box.get(ntx.pid)!;
+      TransactionsModel? otx = _box.get(ntx.tid)!;
+
+      logln("[UPDATE] Rebalancing amount ${otx.srAmount}|${tx.srAmount}|${ptx.rrId}|${otx.srId}");
+
+      await _box.put(ntx.tid, ntx);
+
+      if (otx.srAmount != tx.srAmount && ptx.rrId == otx.srId) {
+        double balance = ptx.balance;
+        if (otx.srAmount > tx.srAmount) {
+          balance += otx.srAmount - tx.srAmount;
+        } else {
+          double spent = tx.srAmount - otx.srAmount;
+          if (balance >= spent) {
+            balance -= spent;
+          }
+        }
+
+        logln("[UPDATE] Recalculated balance ${tx.balance}|${otx.balance}|$balance");
+
+        final nptx = ptx.copyWith(
+          balance: balance,
+          status: balance > 0 ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
+        );
+
+        // Force to revalidate!
+        await update(nptx);
+      }
+    }
   }
 
   Future<void> delete(TransactionsModel tx) async {
@@ -118,14 +177,16 @@ class TransactionsRepository {
   Future<void> close(TransactionsModel tx) async {
     await canClose(tx);
 
+    // canClose already check and throw
     TransactionsModel? otx = _box.get(tx.tid);
     if (otx == null) {
-      return; // canClose already check and throw
+      return;
     }
 
+    // canClose already check and throw
     TransactionsModel? target = await getCloseTargetParent(otx);
     if (target == null) {
-      return; // canClose already check and throw
+      return;
     }
 
     final leaves = await collectTerminalLeaves(target);
@@ -280,32 +341,32 @@ class TransactionsRepository {
     return dfs(parent);
   }
 
-  Future<bool> canAdd(TransactionsModel tx) async {
-    final rules = TransactionsRulesCreate(tx, this, !debugLogs);
+  Future<bool> canAdd(TransactionsModel tx, {bool? silent}) async {
+    final rules = TransactionsRulesCreate(tx, this, silent ?? !debugLogs);
     final isValid = await rules.validate();
     return isValid;
   }
 
-  Future<bool> canDelete(TransactionsModel tx) async {
-    final rules = TransactionsRulesDelete(tx, this, !debugLogs);
+  Future<bool> canDelete(TransactionsModel tx, {bool? silent}) async {
+    final rules = TransactionsRulesDelete(tx, this, silent ?? !debugLogs);
     final isValid = await rules.validate();
     return isValid;
   }
 
-  Future<bool> canUpdate(TransactionsModel tx) async {
-    final rules = TransactionsRulesUpdate(tx, this, !debugLogs);
+  Future<bool> canUpdate(TransactionsModel tx, {bool? silent = false}) async {
+    final rules = TransactionsRulesUpdate(tx, this, silent ?? !debugLogs);
     final isValid = await rules.validate();
     return isValid;
   }
 
-  Future<bool> canClose(TransactionsModel tx) async {
-    final rules = TransactionsRulesClose(tx, this, !debugLogs);
+  Future<bool> canClose(TransactionsModel tx, {bool? silent = false}) async {
+    final rules = TransactionsRulesClose(tx, this, silent ?? !debugLogs);
     final isValid = await rules.validate();
     return isValid;
   }
 
-  Future<bool> canTrade(TransactionsModel tx) async {
-    final rules = TransactionsRulesTrade(tx, this, !debugLogs);
+  Future<bool> canTrade(TransactionsModel tx, {bool? silent}) async {
+    final rules = TransactionsRulesTrade(tx, this, silent ?? !debugLogs);
     final isValid = await rules.validate();
     return isValid;
   }

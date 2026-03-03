@@ -96,7 +96,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isAddable(TransactionsModel tx) async {
     try {
-      await repo.canAdd(tx);
+      await repo.canAdd(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -107,7 +107,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isClosable(TransactionsModel tx) async {
     try {
-      await repo.canClose(tx);
+      await repo.canClose(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -118,7 +118,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isDeletable(TransactionsModel tx) async {
     try {
-      await repo.canDelete(tx);
+      await repo.canDelete(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -129,7 +129,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isUpdatable(TransactionsModel tx) async {
     try {
-      await repo.canUpdate(tx);
+      await repo.canUpdate(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -140,7 +140,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isTradable(TransactionsModel tx) async {
     try {
-      await repo.canTrade(tx);
+      await repo.canTrade(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;

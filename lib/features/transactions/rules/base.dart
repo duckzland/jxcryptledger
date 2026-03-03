@@ -104,7 +104,16 @@ abstract class TransactionsRulesBase {
     final allClosed = terminals.isEmpty || terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (!allClosed) {
-      throw ValidationException(code, "$mode active terminal children exist (tid=${tx.tid})", message, silent: silent);
+      throw ValidationException(code, "$mode active terminal is not all closed (tid=${tx.tid})", message, silent: silent);
+    }
+  }
+
+  Future<void> txCheckTerminalIsNotAllClosed(int code, String message) async {
+    final terminals = await terminalLeaves;
+    final allClosed = terminals.isEmpty || terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+
+    if (allClosed) {
+      throw ValidationException(code, "$mode active terminal is all closed (tid=${tx.tid})", message, silent: silent);
     }
   }
 

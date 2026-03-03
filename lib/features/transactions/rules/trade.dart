@@ -5,6 +5,7 @@ class TransactionsRulesTrade extends TransactionsRulesBase {
   TransactionsRulesTrade(super.tx, super.txRepo, super.silent, {super.mode = "[TXTRADE]"});
 
   @override
+  // We want the parent not the new trade tx!
   Future<bool> validate() async {
     txCheckValidTid(AppErrorCode.txTradeInvalidId, "This trade cannot be processed because its ID is invalid.");
 
