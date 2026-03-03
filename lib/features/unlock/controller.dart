@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
-import 'package:jxcryptledger/features/rates/model.dart';
-import 'package:jxcryptledger/features/transactions/model.dart';
+
+import '../../features/rates/controller.dart';
+import '../../features/rates/model.dart';
+import '../../features/transactions/model.dart';
 
 import '../../app/storage.dart';
 import '../../app/worker.dart';
@@ -9,16 +11,16 @@ import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../cryptos/model.dart';
 import '../encryption/service.dart';
-import '../rates/service.dart';
-import '../settings/repository.dart';
+import '../settings/controller.dart';
+import '../settings/keys.dart';
 
 class UnlockController extends ChangeNotifier {
   bool isFirstRun = false;
   bool _unlocked = false;
   bool get unlocked => _unlocked;
 
-  final SettingsRepository _settingsRepo = locator<SettingsRepository>();
-  final RatesService _ratesService = locator<RatesService>();
+  final SettingsController _settingsController = locator<SettingsController>();
+  final RatesController _ratesController = locator<RatesController>();
   final AppWorker _appWorker = locator<AppWorker>();
 
   Future<void> init() async {
@@ -31,7 +33,7 @@ class UnlockController extends ChangeNotifier {
       final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
       final cipher = HiveAesCipher(encryptionKey);
 
-      await AppStorage.instance.openBox<dynamic>(SettingsRepository.boxName, encryptionCipher: cipher, crashRecovery: false);
+      await AppStorage.instance.openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
 
       await AppStorage.instance.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
     } catch (e) {
@@ -57,7 +59,7 @@ class UnlockController extends ChangeNotifier {
       if (isFirstRun) {
         logln("First run detected, initializing vault");
 
-        await _settingsRepo.save(SettingKey.vaultInitialized, "initialized");
+        await _settingsController.update(SettingKey.vaultInitialized, "initialized");
 
         _unlocked = true;
         notifyListeners();
@@ -71,7 +73,7 @@ class UnlockController extends ChangeNotifier {
     }
 
     try {
-      final decrypted = await _settingsRepo.getDecryptedMarker();
+      final decrypted = await _settingsController.getDecryptedMarker();
 
       if (decrypted != 'initialized') {
         await AppStorage.instance.closeAll();
@@ -79,7 +81,7 @@ class UnlockController extends ChangeNotifier {
       }
 
       logln("Password correct, vault unlocked");
-      await Future.delayed(Duration.zero, () => _ratesService.init());
+      await Future.delayed(Duration.zero, () => _ratesController.init());
       _unlocked = true;
       notifyListeners();
       _appWorker.start();

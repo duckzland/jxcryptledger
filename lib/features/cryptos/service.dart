@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
 import '../settings/repository.dart';
+import '../settings/keys.dart';
 import '../../core/log.dart';
 import 'model.dart';
 import 'parser.dart';

@@ -5,6 +5,7 @@ import '../../app/exceptions.dart';
 import '../../core/log.dart';
 import '../cryptos/repository.dart';
 import '../settings/repository.dart';
+import '../settings/keys.dart';
 import 'parser.dart';
 import 'repository.dart';
 
