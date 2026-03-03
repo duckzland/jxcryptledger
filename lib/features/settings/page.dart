@@ -7,7 +7,7 @@ import '../../core/locator.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
 import 'controller.dart';
-import 'repository.dart';
+import 'keys.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -178,11 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Navigator.pop(context, false);
                   },
                 ),
-                WidgetButton(
-                  initialState: WidgetsButtonActionState.error,
-                  label: "Reset",
-                  onPressed: (s) => Navigator.pop(context, true),
-                ),
+                WidgetButton(initialState: WidgetsButtonActionState.error, label: "Reset", onPressed: (s) => Navigator.pop(context, true)),
               ],
             );
           },

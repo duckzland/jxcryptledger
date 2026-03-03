@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'repository.dart';
+import 'keys.dart';
 
 class SettingsController extends ChangeNotifier {
   final SettingsRepository _repo;
@@ -13,5 +14,9 @@ class SettingsController extends ChangeNotifier {
   Future<void> update(SettingKey key, dynamic value) async {
     await _repo.save(key, value);
     notifyListeners();
+  }
+
+  Future<String?> getDecryptedMarker() async {
+    return await _repo.getDecryptedMarker();
   }
 }
