@@ -84,7 +84,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
 
                     _buildCryptoInputColumn(
                       "",
-                      WidgetButton(
+                      WidgetsButton(
                         icon: Icons.swap_horiz,
                         tooltip: "Convert",
                         padding: const EdgeInsets.all(0),

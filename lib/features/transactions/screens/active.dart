@@ -254,7 +254,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         ),
         const SizedBox(width: 8),
 
-        WidgetButton(
+        WidgetsButton(
           icon: Icons.swap_horiz,
           tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
           padding: const EdgeInsets.all(0),

@@ -62,7 +62,7 @@ class _AppLayoutState extends State<AppLayout> {
                   spacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    WidgetButton(
+                    WidgetsButton(
                       icon: Icons.account_balance_wallet,
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
@@ -80,7 +80,7 @@ class _AppLayoutState extends State<AppLayout> {
                       },
                     ),
 
-                    WidgetButton(
+                    WidgetsButton(
                       icon: Icons.handyman,
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
@@ -98,7 +98,7 @@ class _AppLayoutState extends State<AppLayout> {
                       },
                     ),
 
-                    WidgetButton(
+                    WidgetsButton(
                       icon: Icons.settings,
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
@@ -125,7 +125,7 @@ class _AppLayoutState extends State<AppLayout> {
                 spacing: 4,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  WidgetButton(
+                  WidgetsButton(
                     icon: Icons.refresh,
                     padding: const EdgeInsets.all(8),
                     iconSize: 20,
@@ -147,7 +147,7 @@ class _AppLayoutState extends State<AppLayout> {
                   ),
 
                   if (hasRates)
-                    WidgetButton(
+                    WidgetsButton(
                       icon: Icons.autorenew,
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,

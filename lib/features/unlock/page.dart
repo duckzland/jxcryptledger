@@ -80,7 +80,7 @@ class _UnlockPageState extends State<UnlockPage> {
 
         const SizedBox(height: 20),
 
-        WidgetButton(
+        WidgetsButton(
           label: "Create Vault",
           initialState: WidgetsButtonActionState.action,
           evaluator: (s) {
@@ -134,7 +134,7 @@ class _UnlockPageState extends State<UnlockPage> {
 
         const SizedBox(height: 20),
 
-        WidgetButton(
+        WidgetsButton(
           label: "Unlock",
           initialState: WidgetsButtonActionState.action,
           evaluator: (s) {
