@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../app/exceptions.dart';
+import '../../core/log.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -240,10 +241,12 @@ class TransactionsController extends ChangeNotifier {
   Future<double> collectAllRootSourceAmount(TransactionsModel tx) async {
     double balance = 0;
     final roots = await repo.collectAllRoots();
+    final id = tx.isRoot ? tx.srId : tx.rrId;
     for (final rtx in roots) {
-      if (rtx.srId == tx.srId) {
+      if (rtx.srId == id) {
         balance += rtx.srAmount;
       }
+      logln("Checking ${rtx.rrId} ${rtx.isRoot} ${tx.rrId}");
     }
 
     return balance;
@@ -262,10 +265,10 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<double> collectBranchResultAmount(TransactionsModel tx) async {
-    final txs = await repo.collectTerminalLeaves(tx);
+    final txs = await repo.collectDescendantLeaves(tx);
     double balance = 0;
     for (final rtx in txs) {
-      if (rtx.rrId == tx.srId) {
+      if (rtx.rrId == tx.srId && (rtx.isActive || rtx.isPartial)) {
         balance += rtx.balance;
       }
     }
