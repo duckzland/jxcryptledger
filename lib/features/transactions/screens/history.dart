@@ -1,10 +1,9 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/features/transactions/buttons.dart';
 
+import '../../../features/transactions/buttons.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
-import '../../../core/log.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
