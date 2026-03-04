@@ -10,7 +10,6 @@ import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../buttons.dart';
-import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -33,20 +32,20 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
   late String _resultSymbol;
 
-  late bool _isDeletable;
-  late bool _isClosable;
+  bool _isDeletable = false;
+  bool _isClosable = false;
 
-  int? _sortColumnIndex;
-  bool _sortAscending = true;
+  int _sortColumnIndex = 0;
+  bool _sortAscending = false;
 
-  final _calc = TransactionCalculation();
+  double _totalCapital = 0;
+  double _currentHolding = 0;
+  double _profitLoss = 0;
+  double _profitLossPercentage = 0;
 
   @override
   void initState() {
     super.initState();
-
-    _isDeletable = false;
-    _isClosable = false;
 
     _txController = locator<TransactionsController>();
 
@@ -55,12 +54,11 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
     _rows = _buildRows(widget.transactions);
 
-    _sortColumnIndex = 0;
-    _sortAscending = false;
-    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex!, _sortAscending);
+    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex, _sortAscending);
 
     _checkForClosable();
     _checkForDeletable();
+    _calculateProfitLoss();
   }
 
   @override
@@ -76,34 +74,50 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
       _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
       _rows = _buildRows(widget.transactions);
 
-      if (_sortColumnIndex != null) {
-        final col = _sortColumnIndex!;
-        final asc = _sortAscending;
+      final col = _sortColumnIndex;
+      final asc = _sortAscending;
 
-        switch (col) {
-          case 0:
-            _onSort((d) => d['_timestamp'] as int, col, asc);
-            break;
+      switch (col) {
+        case 0:
+          _onSort((d) => d['_timestamp'] as int, col, asc);
+          break;
 
-          case 1:
-            _onSort((d) => d['_balanceValue'] as double, col, asc);
-            break;
+        case 1:
+          _onSort((d) => d['_balanceValue'] as double, col, asc);
+          break;
 
-          case 2:
-            _onSort((d) => d['_sourceValue'] as double, col, asc);
-            break;
+        case 2:
+          _onSort((d) => d['_sourceValue'] as double, col, asc);
+          break;
 
-          case 3:
-            _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+        case 3:
+          _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
 
-          case 4:
-            _onSort((d) => d['status'] as String, col, asc);
-            break;
-        }
+        case 4:
+          _onSort((d) => d['status'] as String, col, asc);
+          break;
       }
 
       setState(() {});
     }
+  }
+
+  Future<void> _calculateProfitLoss() async {
+    if (widget.transactions.isEmpty) {
+      return;
+    }
+
+    final tx = widget.transactions.first;
+    final capital = await _txController.collectAllRootSourceAmount(tx);
+    final balance = await _txController.collectAllTerminalResultAmount(tx);
+    final profitPercentage = (capital == 0) ? 0.0 : ((balance - capital) / capital) * 100;
+
+    setState(() {
+      _totalCapital = capital;
+      _currentHolding = balance;
+      _profitLoss = balance - capital;
+      _profitLossPercentage = profitPercentage;
+    });
   }
 
   Future<void> _checkForClosable() async {
@@ -284,12 +298,10 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
   @override
   Widget build(BuildContext context) {
-    final cumulativeSourceValue = _calc.totalBalance(widget.transactions);
-
-    return WidgetsPanel(child: Column(children: [_buildHeader(cumulativeSourceValue), const SizedBox(height: 20), _buildTable()]));
+    return WidgetsPanel(child: Column(children: [_buildHeader(), const SizedBox(height: 20), _buildTable()]));
   }
 
-  Widget _buildHeader(double cumulativeSourceValue) {
+  Widget _buildHeader() {
     return Row(
       children: [
         Column(
@@ -310,18 +322,29 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text("Total Balance", style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-                  const SizedBox(height: 1),
-                  WidgetsBalanceText(
-                    text: "${Utils.formatSmartDouble(cumulativeSourceValue)} ${_cryptosController.getSymbol(widget.id) ?? 'Unknown Coin'}",
-                    value: 0,
-                    comparator: 0,
-                    fontSize: 13,
-                  ),
-                ],
+              _buildPanelItem(
+                title: "Total Capital",
+                subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
+                value: 0,
+                comparator: 0,
+              ),
+              _buildPanelItem(
+                title: "Current Balance",
+                subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
+                value: 0,
+                comparator: 0,
+              ),
+              _buildPanelItem(
+                title: "Profit/Loss",
+                subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
+                value: _profitLossPercentage,
+                comparator: 0,
+              ),
+              _buildPanelItem(
+                title: "Profit/Loss %",
+                subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
+                value: _profitLossPercentage,
+                comparator: 0,
               ),
             ],
           ),
@@ -364,6 +387,17 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
             }
           },
         ),
+      ],
+    );
+  }
+
+  Widget _buildPanelItem({required String title, required String subtitle, required double value, required double comparator}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(title, style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        const SizedBox(height: 1),
+        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
       ],
     );
   }

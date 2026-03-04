@@ -22,8 +22,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
   late final CryptosController _cryptosController;
   late List<Map<String, dynamic>> _rows;
 
-  int? _sortColumnIndex;
-  bool _sortAscending = true;
+  int _sortColumnIndex = 0;
+  bool _sortAscending = false;
 
   @override
   void initState() {
@@ -32,9 +32,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
 
     _rows = _buildRows(widget.transactions);
 
-    _sortColumnIndex = 0;
-    _sortAscending = false;
-    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex!, _sortAscending);
+    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex, _sortAscending);
   }
 
   @override
@@ -44,31 +42,29 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
     if (oldWidget.transactions != widget.transactions) {
       _rows = _buildRows(widget.transactions);
 
-      if (_sortColumnIndex != null) {
-        final col = _sortColumnIndex!;
-        final asc = _sortAscending;
+      final col = _sortColumnIndex;
+      final asc = _sortAscending;
 
-        switch (col) {
-          case 0:
-            _onSort((d) => d['_timestamp'] as int, col, asc);
-            break;
+      switch (col) {
+        case 0:
+          _onSort((d) => d['_timestamp'] as int, col, asc);
+          break;
 
-          case 1:
-            _onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc);
-            break;
+        case 1:
+          _onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc);
+          break;
 
-          case 2:
-            _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc);
-            break;
+        case 2:
+          _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc);
+          break;
 
-          case 3:
-            _onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc);
-            break;
+        case 3:
+          _onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc);
+          break;
 
-          case 5:
-            _onSort((d) => d['status'] as String, col, asc);
-            break;
-        }
+        case 5:
+          _onSort((d) => d['status'] as String, col, asc);
+          break;
       }
 
       setState(() {});
