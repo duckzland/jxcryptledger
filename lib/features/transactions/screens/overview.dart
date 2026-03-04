@@ -340,14 +340,14 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
                 value: 0,
                 comparator: 0,
               ),
-              if (_profitLossPercentage > 0)
+              if (_totalCapital > 0)
                 _buildPanelItem(
                   title: "Profit/Loss",
                   subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
                   value: _profitLossPercentage,
                   comparator: 0,
                 ),
-              if (_profitLossPercentage > 0)
+              if (_totalCapital > 0)
                 _buildPanelItem(
                   title: "Profit/Loss %",
                   subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
