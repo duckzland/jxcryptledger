@@ -133,6 +133,82 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
+  Future<void> _showDeleteDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Delete All Transactions"),
+            content: const Text(
+              "This will delete all transactions and all of its history.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Delete',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _txController.deleteAll();
+
+                    Navigator.pop(dialogContext);
+
+                    widgetsNotifySuccess("All transactions deleted.");
+                  } catch (e) {
+                    widgetsNotifyError("Failed to delete transactions.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCloseDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Close All Transactions"),
+            content: const Text(
+              "Are you sure you want to close all closable transactions?\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Close',
+                initialState: WidgetsButtonActionState.warning,
+                onPressed: (_) async {
+                  try {
+                    await _txController.closeAll();
+
+                    Navigator.pop(dialogContext);
+
+                    widgetsNotifySuccess("All transactions closed.");
+                  } catch (e) {
+                    widgetsNotifyError("Failed to close transactions.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _changePageTitle(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
@@ -293,8 +369,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
             const SizedBox(height: 10),
             Row(
               children: [
-                Expanded(child: SizedBox()),
-                _buildAction(),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(spacing: 20, children: [_buildActionButtons()]),
+                  ),
+                ),
+                _buildScreenSwitcher(),
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
@@ -366,7 +447,70 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  Widget _buildAction() {
+  Widget _buildActionButtons() {
+    return WidgetsPanel(
+      child: Wrap(
+        spacing: 4,
+        children: [
+          WidgetsButton(
+            key: Key("delete-button-batch"),
+            icon: Icons.delete,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.error,
+            tooltip: "Delete all transactions",
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            onPressed: (_) => _showDeleteDialog(context),
+            evaluator: (s) async {
+              final bool isDeletable = await _txController.hasDeletableRoot();
+              if (!isDeletable) {
+                s.disable();
+              } else {
+                s.error();
+              }
+            },
+          ),
+          WidgetsButton(
+            key: Key("close-button-batch"),
+            icon: Icons.close,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.warning,
+            tooltip: "Close all closable transactions",
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            onPressed: (_) => _showCloseDialog(context),
+            evaluator: (s) async {
+              final bool isClosable = await _txController.hasClosableLeaf();
+              if (!isClosable) {
+                s.disable();
+              } else {
+                s.warning();
+              }
+            },
+          ),
+          WidgetsButton(
+            key: Key("add-button-single"),
+            icon: Icons.add,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.action,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Add Transaction",
+            onPressed: (_) => _showAddTransactionDialog(),
+            evaluator: (s) {
+              if (!_cryptosController.hasAny()) {
+                s.disable();
+              } else {
+                s.action();
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScreenSwitcher() {
     return WidgetsPanel(
       child: Wrap(
         spacing: 4,
@@ -449,22 +593,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 _viewMode = TransactionsViewMode.history;
                 _detectFilterAndSortOptions();
               });
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.add,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.action,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Add Transaction",
-            onPressed: (_) => _showAddTransactionDialog(),
-            evaluator: (s) {
-              if (!_cryptosController.hasAny()) {
-                s.disable();
-              } else {
-                s.action();
-              }
             },
           ),
         ],

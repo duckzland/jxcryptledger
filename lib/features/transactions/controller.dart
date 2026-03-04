@@ -85,11 +85,85 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteAll() async {
+    final roots = await repo.collectAllRoots();
+
+    for (final tx in roots) {
+      final bool deletable;
+      try {
+        deletable = await isDeletable(tx);
+      } catch (_) {
+        continue;
+      }
+
+      if (!deletable) continue;
+
+      await repo.delete(tx);
+    }
+
+    await load();
+  }
+
+  Future<void> closeAll() async {
+    final leaves = await repo.collectAllTerminalLeaves();
+
+    for (final tx in leaves) {
+      final bool closable;
+      try {
+        closable = await isClosable(tx);
+      } catch (_) {
+        continue;
+      }
+
+      if (!closable) continue;
+
+      await repo.close(tx);
+    }
+
+    await load();
+  }
+
   Future<bool> hasLeaf(TransactionsModel tx) async {
     try {
       final leaf = await repo.getLeaf(tx);
       return leaf.isNotEmpty;
     } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> hasClosableLeaf() async {
+    try {
+      final leaves = await repo.collectAllTerminalLeaves();
+
+      for (final tx in leaves) {
+        try {
+          await repo.canClose(tx, silent: true);
+          return true;
+        } catch (_) {
+          // Ignore failures and continue
+        }
+      }
+
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> hasDeletableRoot() async {
+    try {
+      final roots = await repo.collectAllRoots();
+      for (final tx in roots) {
+        try {
+          await repo.canDelete(tx, silent: true);
+          return true;
+        } catch (_) {
+          // Ignore failures and continue
+        }
+      }
+      return false;
+    } catch (_) {
       return false;
     }
   }

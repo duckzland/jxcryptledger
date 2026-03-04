@@ -131,8 +131,6 @@ class TransactionsRepository {
       TransactionsModel? ptx = _box.get(ntx.pid)!;
       TransactionsModel? otx = _box.get(ntx.tid)!;
 
-      logln("[UPDATE] Rebalancing amount ${otx.srAmount}|${tx.srAmount}|${ptx.rrId}|${otx.srId}");
-
       await _box.put(ntx.tid, ntx);
 
       if (otx.srAmount != tx.srAmount && ptx.rrId == otx.srId) {
@@ -146,7 +144,7 @@ class TransactionsRepository {
           }
         }
 
-        logln("[UPDATE] Recalculated balance ${tx.balance}|${otx.balance}|$balance");
+        logln("[UPDATE] Rebalancing amount ${otx.srAmount}|${tx.srAmount}|${ptx.rrId}|${otx.srId}|${tx.balance}|${otx.balance}|$balance");
 
         final nptx = ptx.copyWith(
           balance: balance,
@@ -286,6 +284,31 @@ class TransactionsRepository {
 
     final filteredMaps = await _filter.filter(maps, query);
     return filteredMaps.map(TransactionsModel.fromMap).toList();
+  }
+
+  Future<List<TransactionsModel>> collectAllRoots() async {
+    final all = await getAll();
+
+    bool isRoot(TransactionsModel tx) {
+      return tx.isRoot || (tx.pid == '0' && tx.rid == '0');
+    }
+
+    return all.where(isRoot).toList();
+  }
+
+  Future<List<TransactionsModel>> collectAllTerminalLeaves() async {
+    final all = await getAll();
+    final Map<String, int> childCount = {};
+    for (final tx in all) {
+      childCount[tx.pid] = (childCount[tx.pid] ?? 0) + 1;
+    }
+
+    bool isTerminalLeaf(TransactionsModel tx) {
+      final hasChildren = (childCount[tx.tid] ?? 0) > 0;
+      return !hasChildren && !tx.isRoot;
+    }
+
+    return all.where(isTerminalLeaf).toList();
   }
 
   Future<List<TransactionsModel>> collectTerminalLeaves(TransactionsModel parent) async {
