@@ -174,6 +174,7 @@ class TransactionsButtons extends StatelessWidget {
         _txController.isClosable(tx),
         _txController.isDeletable(tx),
         _txController.isUpdatable(tx),
+        _txController.hasLeaf(tx),
       ]),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -184,12 +185,13 @@ class TransactionsButtons extends StatelessWidget {
         final isClosable = snapshot.data![1];
         final isDeletable = snapshot.data![2];
         final isUpdatable = snapshot.data![3];
+        final hasLeaf = snapshot.data![4];
 
         return Wrap(
           spacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (isUpdatable && tx.isActive)
+            if (isUpdatable && tx.isActive && !hasLeaf)
               WidgetsButton(
                 key: Key("edit-button-${tx.tid}"),
                 icon: Icons.edit,

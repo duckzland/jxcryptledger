@@ -35,6 +35,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   String? _noteEntry;
 
   bool? _hasLeaf;
+  bool _isActive = true;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -44,7 +45,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   bool get isLeaf => !isRoot;
-  bool get isActive => widget.initialData?.statusEnum == TransactionStatus.active;
+  // bool get isActive => widget.initialData?.statusEnum == TransactionStatus.active;
 
   String generateTid() => _txController.generateTid();
 
@@ -62,12 +63,17 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     _noteEntry = isRoot ? data.meta['purchase_notes'] ?? '' : data.meta['trading_notes'] ?? '';
 
     detectLeaf(data);
+
+    _isActive = widget.initialData?.statusEnum == TransactionStatus.active;
   }
 
   void detectLeaf(TransactionsModel tx) async {
     final leaf = await _txController.hasLeaf(tx);
     setState(() {
       _hasLeaf = leaf;
+      if (_hasLeaf!) {
+        _isActive = false;
+      }
     });
   }
 
@@ -99,7 +105,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     final data = widget.initialData!;
 
     if (isRoot) return proposed;
-    if (isLeaf && isActive) return proposed;
+    if (isLeaf && _isActive) return proposed;
 
     return data.balance;
   }
@@ -114,14 +120,14 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     final proposed = _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0;
     final data = widget.initialData!;
     if (isRoot) return proposed;
-    if (isLeaf && isActive) return proposed;
+    if (isLeaf && _isActive) return proposed;
     return data.srAmount;
   }
 
   int _saveResultCryptoField() {
     final data = widget.initialData!;
     if (isRoot) return _selectedRrId ?? data.rrId;
-    if (isLeaf && isActive) return _selectedRrId ?? data.rrId;
+    if (isLeaf && _isActive) return _selectedRrId ?? data.rrId;
     return data.rrId;
   }
 
@@ -129,7 +135,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     final proposed = _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
     final data = widget.initialData!;
     if (isRoot) return proposed;
-    if (isLeaf && isActive) return proposed;
+    if (isLeaf && _isActive) return proposed;
     return data.rrAmount;
   }
 
@@ -150,101 +156,105 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: IntrinsicWidth(
-        child: IntrinsicHeight(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildTitle(),
-                    const SizedBox(height: 24),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 260,
-                          child: WidgetsPanel(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("On date:", style: TextStyle(fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 16),
-                                _buildTimestampField(),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: WidgetsPanel(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Flexible(flex: 3, child: _buildSourceAmountField()),
-                                    if (isRoot) const SizedBox(width: 12),
-                                    if (isRoot) Flexible(flex: 2, child: _buildSourceCryptoField()),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: WidgetsPanel(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("To:", style: TextStyle(fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Flexible(flex: 3, child: _buildResultAmountField()),
-                                    if (!(!isRoot && !isActive)) const SizedBox(width: 12),
-                                    if (!(!isRoot && !isActive)) Flexible(flex: 2, child: _buildResultCryptoField()),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 1600, maxWidth: 1600, minHeight: 200, maxHeight: 600),
+        child: IntrinsicWidth(
+          child: IntrinsicHeight(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildTitle(),
+                      const SizedBox(height: 24, width: 1600),
 
-                    const SizedBox(height: 24),
-
-                    WidgetsPanel(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Notes:", style: TextStyle(fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 24),
-                          _buildNotesField(),
-                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: 260,
+                            child: WidgetsPanel(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("On date:", style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 16),
+                                  _buildTimestampField(),
+                                  const SizedBox(height: 16),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: WidgetsPanel(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Flexible(flex: 3, child: _buildSourceAmountField()),
+                                      if (isRoot) const SizedBox(width: 12),
+                                      if (isRoot) Flexible(flex: 2, child: _buildSourceCryptoField()),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: WidgetsPanel(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("To:", style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Flexible(flex: 3, child: _buildResultAmountField()),
+                                      if (!(!isRoot && !_isActive)) const SizedBox(width: 12),
+                                      if (!(!isRoot && !_isActive)) Flexible(flex: 2, child: _buildResultCryptoField()),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
-                    WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons()),
-                  ],
+                      const SizedBox(height: 24),
+
+                      WidgetsPanel(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Notes:", style: TextStyle(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 24),
+                            _buildNotesField(),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                      WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons()),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -260,9 +270,9 @@ class _TransactionFormState extends State<TransactionFormEdit> {
 
   Widget _buildSourceAmountField() {
     String? symbol;
+    final data = widget.initialData;
 
     if (!isRoot) {
-      final data = widget.initialData;
       final srid = data?.srId ?? 0;
       symbol = _cryptoController.getSymbol(srid);
     }
@@ -271,7 +281,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
       title: 'Amount',
       initialValue: _srAmount,
       suffixText: symbol,
-      enabled: isActive,
+      enabled: _isActive,
       helperText: 'e.g., 1.5',
       onChanged: (value) {
         _srAmount = value;
@@ -290,8 +300,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
 
   Widget _buildResultAmountField() {
     String? symbol;
-
-    if (!isRoot && !isActive) {
+    if (!isRoot && !_isActive) {
       final data = widget.initialData;
       final rrid = data?.rrId ?? 0;
       symbol = _cryptoController.getSymbol(rrid);
@@ -301,7 +310,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
       title: 'Amount',
       initialValue: _rrAmount,
       suffixText: symbol,
-      enabled: isRoot || isActive,
+      enabled: isRoot || _isActive,
       helperText: 'e.g., 10.5',
       onChanged: (value) {
         _rrAmount = value;
@@ -313,7 +322,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: _selectedRrId,
-      enabled: !(!isRoot && !isActive),
+      enabled: !(!isRoot && !_isActive),
       onSelected: (id) => setState(() => _selectedRrId = id),
     );
   }
