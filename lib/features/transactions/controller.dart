@@ -31,6 +31,12 @@ class TransactionsController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<TransactionsModel?> get(String tid) async {
+    final tx = await repo.get(tid);
+    await load();
+    return tx;
+  }
+
   Future<void> add(TransactionsModel tx) async {
     try {
       await repo.add(tx);
@@ -227,6 +233,42 @@ class TransactionsController extends ChangeNotifier {
     final children = await repo.getLeaf(tx);
     final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
     final double balance = tx.rrAmount - spent;
+
+    return balance;
+  }
+
+  Future<double> collectAllRootSourceAmount(TransactionsModel tx) async {
+    double balance = 0;
+    final roots = await repo.collectAllRoots();
+    for (final rtx in roots) {
+      if (rtx.srId == tx.srId) {
+        balance += rtx.srAmount;
+      }
+    }
+
+    return balance;
+  }
+
+  Future<double> collectAllTerminalResultAmount(TransactionsModel tx) async {
+    double balance = 0;
+    final leaves = await repo.collectAllTerminalLeaves();
+
+    for (final ltx in leaves) {
+      if (ltx.rrId == tx.rrId && ltx.isActive) {
+        balance += ltx.balance;
+      }
+    }
+    return balance;
+  }
+
+  Future<double> collectBranchResultAmount(TransactionsModel tx) async {
+    final txs = await repo.collectTerminalLeaves(tx);
+    double balance = 0;
+    for (final rtx in txs) {
+      if (rtx.rrId == tx.srId) {
+        balance += rtx.balance;
+      }
+    }
 
     return balance;
   }

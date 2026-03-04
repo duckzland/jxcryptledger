@@ -43,12 +43,12 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   late String _sourceSymbol;
   late String _resultSymbol;
 
-  late bool _isReversed;
-  late bool _isDeletable;
-  late bool _isClosable;
+  bool _isReversed = false;
+  bool _isDeletable = false;
+  bool _isClosable = false;
 
-  int? _sortColumnIndex;
-  bool _sortAscending = true;
+  int _sortColumnIndex = 0;
+  bool _sortAscending = false;
 
   double? _customRate;
   double? _marketRate;
@@ -67,12 +67,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   void initState() {
     super.initState();
 
-    _isReversed = false;
-    _sortColumnIndex = 0;
-    _sortAscending = false;
-    _isDeletable = false;
-    _isClosable = false;
-
     _txController = locator<TransactionsController>();
 
     _cryptosController = locator<CryptosController>();
@@ -88,7 +82,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
     _rows = _buildRows(widget.transactions);
 
-    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex!, _sortAscending);
+    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex, _sortAscending);
 
     _checkForClosable();
     _checkForDeletable();
@@ -117,51 +111,49 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
       _rows = _buildRows(widget.transactions);
 
-      if (_sortColumnIndex != null) {
-        final col = _sortColumnIndex!;
-        final asc = _sortAscending;
-        final currentRate = _customRate ?? _marketRate ?? 0.0;
+      final col = _sortColumnIndex;
+      final asc = _sortAscending;
+      final currentRate = _customRate ?? _marketRate ?? 0.0;
 
-        switch (col) {
-          case 0:
-            _onSort((d) => d['_timestamp'] as int, col, asc);
-            break;
+      switch (col) {
+        case 0:
+          _onSort((d) => d['_timestamp'] as int, col, asc);
+          break;
 
-          case 1:
-            _onSort((d) => d['_sourceValue'] as double, col, asc);
+        case 1:
+          _onSort((d) => d['_sourceValue'] as double, col, asc);
 
-            break;
+          break;
 
-          case 2:
-            _onSort((d) => d['_balanceValue'] as double, col, asc);
-            break;
+        case 2:
+          _onSort((d) => d['_balanceValue'] as double, col, asc);
+          break;
 
-          case 3:
-            _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+        case 3:
+          _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
 
-          case 4:
-            if (currentRate == 0) {
-              _onSort((d) => d['_status'] as String, col, asc);
-            }
-            break;
+        case 4:
+          if (currentRate == 0) {
+            _onSort((d) => d['_status'] as String, col, asc);
+          }
+          break;
 
-          case 5:
-            if (currentRate != 0) {
-              _onSort((d) => d['_currentValue'] as double, col, asc);
-            }
-            break;
+        case 5:
+          if (currentRate != 0) {
+            _onSort((d) => d['_currentValue'] as double, col, asc);
+          }
+          break;
 
-          case 6:
-            if (currentRate != 0) {
-              _onSort((d) => d['_profitLossValue'] as double, col, asc);
-            }
-            break;
-          case 7:
-            if (currentRate != 0) {
-              _onSort((d) => d['status'] as String, col, asc);
-            }
-            break;
-        }
+        case 6:
+          if (currentRate != 0) {
+            _onSort((d) => d['_profitLossValue'] as double, col, asc);
+          }
+          break;
+        case 7:
+          if (currentRate != 0) {
+            _onSort((d) => d['status'] as String, col, asc);
+          }
+          break;
       }
 
       setState(() {});

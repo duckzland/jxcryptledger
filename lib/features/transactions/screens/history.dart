@@ -4,9 +4,12 @@ import 'package:jxcryptledger/features/transactions/buttons.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/log.dart';
+import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../controller.dart';
 import '../model.dart';
 
 class TransactionHistory extends StatefulWidget {
@@ -20,6 +23,7 @@ class TransactionHistory extends StatefulWidget {
 
 class TransactionHistoryState extends State<TransactionHistory> {
   final CryptosController _cryptosController = locator<CryptosController>();
+  final TransactionsController _txController = locator<TransactionsController>();
 
   late TreeNode<TransactionsModel> _root;
 
@@ -112,55 +116,120 @@ class TransactionHistoryState extends State<TransactionHistory> {
   }
 
   Widget _buildTransactionPanel(TransactionsModel tx, TreeNode<TransactionsModel> node) {
-    final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown';
-    final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown';
+    return FutureBuilder<List<dynamic>>(
+      future: Future.wait([_txController.collectBranchResultAmount(tx), _txController.hasLeaf(tx)]),
 
-    Color bgColor = AppTheme.rowHeaderBg;
-    if (tx.statusEnum == TransactionStatus.inactive) {
-      bgColor = AppTheme.mutedBg;
-    }
-    if (tx.statusEnum == TransactionStatus.closed) {
-      bgColor = AppTheme.closedBg;
-    }
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Card(child: ListTile(title: Text("Loading...")));
+        }
 
-    Color fgColor = AppTheme.text;
-    if (tx.statusEnum == TransactionStatus.inactive) {
-      fgColor = AppTheme.textMuted;
-    }
-    if (tx.statusEnum == TransactionStatus.closed) {
-      fgColor = AppTheme.textMuted;
-    }
+        if (snapshot.hasError) {
+          return Card(child: ListTile(title: Text("Error loading amounts")));
+        }
 
-    return Card(
-      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
-      color: bgColor,
-      child: ListTile(
-        title: WidgetsHeader(
-          titleColor: fgColor,
-          title: "${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol",
-          subtitle: "${tx.timestampAsFormattedDate} - ${tx.statusText} - Available ${tx.balanceText} $resultSymbol",
-        ),
-        trailing: Padding(
-          padding: !node.isLeaf ? EdgeInsets.only(right: 14) : EdgeInsetsGeometry.zero,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TransactionsButtons(
-                tx: tx,
-                onAction: () {
-                  refreshTree();
+        final hasLeaf = snapshot.data![1] as bool;
+        final capital = tx.srAmount;
+        final balance = snapshot.data![0] as double;
+        final profit = balance - capital;
+        final profitPercentage = (capital == 0) ? 0.0 : ((balance - capital) / capital) * 100;
 
-                  if (mounted) {
-                    setState(() {
-                      _root = _buildTreeNodes(widget.transactions);
-                    });
-                  }
-                },
-              ),
-            ],
+        Color bgColor = AppTheme.rowHeaderBg;
+        Color fgColor = AppTheme.text;
+
+        if (tx.statusEnum == TransactionStatus.inactive) {
+          bgColor = AppTheme.mutedBg;
+          fgColor = AppTheme.textMuted;
+        }
+        if (tx.statusEnum == TransactionStatus.closed) {
+          bgColor = AppTheme.closedBg;
+          fgColor = AppTheme.textMuted;
+        }
+
+        Color plColor = fgColor;
+        String prefix = "";
+        if (profitPercentage > 0) {
+          plColor = const Color.fromARGB(255, 112, 225, 104);
+          prefix = "+";
+        } else if (profitPercentage < 0) {
+          plColor = const Color.fromARGB(255, 255, 109, 109);
+        }
+
+        String srSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown';
+        String rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown';
+
+        return Card(
+          margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
+          color: bgColor,
+          child: ListTile(
+            title: Row(
+              children: [
+                Row(
+                  children: [
+                    WidgetsHeader(
+                      titleColor: fgColor,
+                      title: "${tx.srAmountText} $srSymbol → ${tx.rrAmountText} $rrSymbol",
+                      subtitle: tx.timestampAsFormattedDate,
+                      reversed: true,
+                    ),
+                    const SizedBox(width: 25),
+                    WidgetsHeader(titleColor: fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
+                    const SizedBox(width: 25),
+                    WidgetsHeader(titleColor: fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
+                  ],
+                ),
+                Expanded(
+                  child: hasLeaf && balance > 0
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            WidgetsHeader(
+                              titleColor: fgColor,
+                              title: "${Utils.formatSmartDouble(capital)} $srSymbol",
+                              subtitle: "Total Capital",
+                              reversed: true,
+                            ),
+                            const SizedBox(width: 25),
+                            WidgetsHeader(
+                              titleColor: fgColor,
+                              title: "${Utils.formatSmartDouble(balance)} $srSymbol",
+                              subtitle: "Current Balance",
+                              reversed: true,
+                            ),
+                            const SizedBox(width: 25),
+                            WidgetsHeader(
+                              titleColor: plColor,
+                              title: "$prefix${Utils.formatSmartDouble(profit)} $srSymbol",
+                              subtitle: "Profit / Loss",
+                              reversed: true,
+                            ),
+                            const SizedBox(width: 25),
+                            WidgetsHeader(
+                              titleColor: plColor,
+                              title: "$prefix$profitPercentage%",
+                              subtitle: "Profit / Loss %",
+                              reversed: true,
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+            trailing: TransactionsButtons(
+              tx: tx,
+              onAction: () {
+                refreshTree();
+                if (mounted) {
+                  setState(() {
+                    _root = _buildTreeNodes(widget.transactions);
+                  });
+                }
+              },
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
