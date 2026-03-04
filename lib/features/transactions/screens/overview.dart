@@ -303,7 +303,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
             Text('Coin ID: ${widget.id}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
           ],
         ),
+
         const SizedBox(width: 20),
+
         Expanded(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -332,8 +334,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
           initialState: WidgetsButtonActionState.warning,
           tooltip: "Close all closable transactions found in this group",
           padding: const EdgeInsets.all(0),
-          iconSize: 20,
-          minimumSize: const Size(48, 48),
+          iconSize: 18,
+          minimumSize: const Size(40, 40),
           onPressed: (_) => _showCloseDialog(context),
           evaluator: (s) async {
             if (!_isClosable) {
@@ -351,8 +353,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
           initialState: WidgetsButtonActionState.error,
           tooltip: "Delete all transactions",
           padding: const EdgeInsets.all(0),
-          iconSize: 20,
-          minimumSize: const Size(48, 48),
+          iconSize: 18,
+          minimumSize: const Size(40, 40),
           onPressed: (_) => _showDeleteDialog(context),
           evaluator: (s) async {
             if (!_isDeletable) {
@@ -399,7 +401,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
             onSort: (col, asc) => _onSort((d) => d['_exchangedRateValue'] as double, col, asc),
           ),
           DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc)),
-          DataColumn2(label: Text('Actions'), fixedWidth: 140),
+          DataColumn2(label: Text('Actions'), fixedWidth: 100),
         ],
 
         rows: _rows.map((r) {

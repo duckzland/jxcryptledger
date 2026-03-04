@@ -153,6 +153,9 @@ class _AppLayoutState extends State<AppLayout> {
                       iconSize: 20,
                       minimumSize: const Size(40, 40),
                       tooltip: "Refresh Rates",
+                      evaluator: (s) {
+                        _ratesController.isFetching ? s.progress() : s.reset();
+                      },
                       onPressed: (s) async {
                         s.progress();
                         try {

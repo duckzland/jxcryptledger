@@ -56,14 +56,20 @@ class _UnlockPageState extends State<UnlockPage> {
         TextField(
           controller: _password,
           obscureText: !showPassword,
-          decoration: const InputDecoration(labelText: "Password"),
+          decoration: InputDecoration(
+            labelText: "Password",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+          ),
         ),
         const SizedBox(height: 12),
 
         TextField(
           controller: _confirm,
           obscureText: !showPassword,
-          decoration: const InputDecoration(labelText: "Confirm Password"),
+          decoration: InputDecoration(
+            labelText: "Confirm Password",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+          ),
         ),
 
         const SizedBox(height: 12),
@@ -123,13 +129,18 @@ class _UnlockPageState extends State<UnlockPage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text("Please enter password to unlock", style: TextStyle(fontSize: 16)),
+        Center(child: const Text("Please enter password to unlock", style: TextStyle(fontSize: 16))),
+
         const SizedBox(height: 20),
 
         TextField(
           controller: _password,
           obscureText: true,
-          decoration: InputDecoration(labelText: "Password", errorText: error),
+          decoration: InputDecoration(
+            labelText: "Password",
+            errorText: error,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+          ),
         ),
 
         const SizedBox(height: 20),

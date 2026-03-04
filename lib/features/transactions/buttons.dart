@@ -198,9 +198,9 @@ class TransactionsButtons extends StatelessWidget {
                 key: Key("edit-button-${tx.tid}"),
                 icon: Icons.edit,
                 tooltip: "Edit",
-                padding: const EdgeInsets.all(8),
-                iconSize: 18,
-                minimumSize: const Size(36, 36),
+                padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+                iconSize: 16,
+                minimumSize: const Size(34, 34),
                 onPressed: (_) => _showEditDialog(context),
                 evaluator: (s) {
                   _cryptosController.hasAny() ? s.normal() : s.disable();
@@ -213,9 +213,9 @@ class TransactionsButtons extends StatelessWidget {
                 icon: Icons.swap_horiz,
                 initialState: WidgetsButtonActionState.action,
                 tooltip: "Trade",
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
                 iconSize: 18,
-                minimumSize: const Size(36, 36),
+                minimumSize: const Size(34, 34),
                 onPressed: (_) => _showTradeDialog(context),
                 evaluator: (s) {
                   _cryptosController.hasAny() ? s.action() : s.disable();
@@ -228,9 +228,9 @@ class TransactionsButtons extends StatelessWidget {
                 icon: Icons.delete,
                 initialState: WidgetsButtonActionState.error,
                 tooltip: "Delete",
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
                 iconSize: 18,
-                minimumSize: const Size(36, 36),
+                minimumSize: const Size(34, 34),
                 onPressed: (_) => _showDeleteDialog(context),
               ),
 
@@ -240,9 +240,9 @@ class TransactionsButtons extends StatelessWidget {
                 icon: Icons.close,
                 initialState: WidgetsButtonActionState.warning,
                 tooltip: "Close",
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
                 iconSize: 18,
-                minimumSize: const Size(36, 36),
+                minimumSize: const Size(34, 34),
                 onPressed: (_) => _showCloseDialog(context),
               ),
           ],
