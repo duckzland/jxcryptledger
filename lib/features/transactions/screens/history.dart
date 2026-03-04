@@ -215,16 +215,22 @@ class TransactionHistoryState extends State<TransactionHistory> {
                 ),
               ],
             ),
-            trailing: TransactionsButtons(
-              tx: tx,
-              onAction: () {
-                refreshTree();
-                if (mounted) {
-                  setState(() {
-                    _root = _buildTreeNodes(widget.transactions);
-                  });
-                }
-              },
+            trailing: Wrap(
+              alignment: WrapAlignment.end,
+              children: [
+                TransactionsButtons(
+                  tx: tx,
+                  onAction: () {
+                    refreshTree();
+                    if (mounted) {
+                      setState(() {
+                        _root = _buildTreeNodes(widget.transactions);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(width: 10),
+              ],
             ),
           ),
         );
