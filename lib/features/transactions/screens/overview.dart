@@ -10,6 +10,7 @@ import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../buttons.dart';
+import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -109,15 +110,17 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
     final tx = widget.transactions.first;
     final capital = await _txController.collectAllRootSourceAmount(tx);
-    final balance = await _txController.collectAllTerminalResultAmount(tx);
+    final balance = TransactionCalculation().totalBalance(widget.transactions);
     final profitPercentage = (capital == 0) ? 0.0 : ((balance - capital) / capital) * 100;
 
-    setState(() {
-      _totalCapital = capital;
-      _currentHolding = balance;
-      _profitLoss = balance - capital;
-      _profitLossPercentage = profitPercentage;
-    });
+    if (mounted) {
+      setState(() {
+        _totalCapital = capital;
+        _currentHolding = balance;
+        _profitLoss = balance - capital;
+        _profitLossPercentage = profitPercentage;
+      });
+    }
   }
 
   Future<void> _checkForClosable() async {
@@ -322,30 +325,33 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildPanelItem(
-                title: "Total Capital",
-                subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
-                value: 0,
-                comparator: 0,
-              ),
+              if (_totalCapital > 0)
+                _buildPanelItem(
+                  title: "Total Capital",
+                  subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
+                  value: 0,
+                  comparator: 0,
+                ),
               _buildPanelItem(
                 title: "Current Balance",
                 subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
                 value: 0,
                 comparator: 0,
               ),
-              _buildPanelItem(
-                title: "Profit/Loss",
-                subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
-                value: _profitLossPercentage,
-                comparator: 0,
-              ),
-              _buildPanelItem(
-                title: "Profit/Loss %",
-                subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
-                value: _profitLossPercentage,
-                comparator: 0,
-              ),
+              if (_profitLossPercentage > 0)
+                _buildPanelItem(
+                  title: "Profit/Loss",
+                  subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
+                  value: _profitLossPercentage,
+                  comparator: 0,
+                ),
+              if (_profitLossPercentage > 0)
+                _buildPanelItem(
+                  title: "Profit/Loss %",
+                  subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
+                  value: _profitLossPercentage,
+                  comparator: 0,
+                ),
             ],
           ),
         ),

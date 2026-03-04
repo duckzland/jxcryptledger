@@ -288,12 +288,7 @@ class TransactionsRepository {
 
   Future<List<TransactionsModel>> collectAllRoots() async {
     final all = await getAll();
-
-    bool isRoot(TransactionsModel tx) {
-      return tx.isRoot || (tx.pid == '0' && tx.rid == '0');
-    }
-
-    return all.where(isRoot).toList();
+    return all.where((tx) => tx.isRoot).toList();
   }
 
   Future<List<TransactionsModel>> collectAllTerminalLeaves() async {
@@ -372,6 +367,29 @@ class TransactionsRepository {
       }
 
       return leaves;
+    }
+
+    return dfs(parent);
+  }
+
+  Future<List<TransactionsModel>> collectDescendantLeaves(TransactionsModel parent) async {
+    final all = await getAll();
+
+    final Map<String, List<TransactionsModel>> childrenMap = {};
+    for (final tx in all) {
+      childrenMap.putIfAbsent(tx.pid, () => []).add(tx);
+    }
+
+    List<TransactionsModel> dfs(TransactionsModel node) {
+      final children = childrenMap[node.tid] ?? [];
+      final descendants = <TransactionsModel>[];
+
+      for (final child in children) {
+        descendants.add(child);
+        descendants.addAll(dfs(child));
+      }
+
+      return descendants;
     }
 
     return dfs(parent);
