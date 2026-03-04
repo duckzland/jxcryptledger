@@ -338,6 +338,19 @@ class TransactionsRepository {
     return dfs(parent);
   }
 
+  Future<List<TransactionsModel>> collectAllRootLeaves(TransactionsModel parent) async {
+    final all = await getAll();
+
+    final leaves = <TransactionsModel>[];
+    for (final tx in all) {
+      if (tx.rid == parent.tid) {
+        leaves.add(tx);
+      }
+    }
+
+    return leaves;
+  }
+
   Future<List<TransactionsModel>> collectAllLeaves(TransactionsModel parent) async {
     final all = await getAll();
 

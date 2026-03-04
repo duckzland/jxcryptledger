@@ -50,8 +50,12 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   void initState() {
     super.initState();
 
-    if (widget.parent != null) {
-      _parentNote = widget.parent!.isRoot ? widget.parent!.meta['purchase_notes'] : widget.parent!.meta['trading_notes'];
+    if (widget.initialData != null && widget.initialData!.isRoot) {
+      _parentNote = widget.initialData!.meta['purchase_notes'];
+    }
+
+    if (widget.initialData != null && widget.initialData!.isLeaf) {
+      _parentNote = widget.initialData!.meta['trading_notes'];
     }
 
     _selectedRrId = null;

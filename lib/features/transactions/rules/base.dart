@@ -13,16 +13,20 @@ abstract class TransactionsRulesBase {
   Future<TransactionsModel?>? _otxCache;
   Future<TransactionsModel?>? _ptxCache;
   Future<TransactionsModel?>? _rtxCache;
-  Future<List<TransactionsModel>>? _leavesCache;
+  Future<List<TransactionsModel>>? _terminalLeavesCache;
   Future<TransactionsModel?>? _targetCloserCache;
   Future<List<TransactionsModel>>? _childrenCache;
+  Future<List<TransactionsModel>>? _allLeavesCache;
+  Future<List<TransactionsModel>>? _allRootLeavesCache;
 
   Future<TransactionsModel?> get origTx async => _otxCache ??= txRepo.get(tx.tid);
   Future<TransactionsModel?> get parentTx async => _ptxCache ??= txRepo.get(tx.pid);
   Future<TransactionsModel?> get rootTx async => _rtxCache ??= txRepo.get(tx.rid);
-  Future<List<TransactionsModel>> get terminalLeaves async => _leavesCache ??= txRepo.collectTerminalLeaves(tx);
+  Future<List<TransactionsModel>> get terminalLeaves async => _terminalLeavesCache ??= txRepo.collectTerminalLeaves(tx);
   Future<TransactionsModel?> get targetParentCloser async => _targetCloserCache ??= txRepo.getCloseTargetParent(tx);
   Future<List<TransactionsModel>> get leafChildren async => _childrenCache ??= txRepo.getLeaf(tx);
+  Future<List<TransactionsModel>> get allLeaves async => _allLeavesCache ??= txRepo.collectAllLeaves(tx);
+  Future<List<TransactionsModel>> get allRootLeaves async => _allRootLeavesCache ??= txRepo.collectAllRootLeaves(tx);
 
   void txCheckValidTid(int code, String message) {
     if (tx.tid == '0') {
@@ -118,7 +122,7 @@ abstract class TransactionsRulesBase {
   }
 
   Future<void> txCheckLeavesIsNotActive(int code, String message) async {
-    final leaves = await terminalLeaves;
+    final leaves = tx.isRoot ? await allRootLeaves : await allLeaves;
     final allInactive =
         leaves.isEmpty ||
         leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.inactive);
