@@ -110,8 +110,15 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
       return;
     }
 
-    final tx = widget.transactions.first;
-    final capital = await _txController.collectAllRootSourceAmount(tx);
+    // Extract all roots for the same srId as this group!
+    double capital = 0;
+    final roots = await _txController.collectAllRoots();
+    for (final rtx in roots) {
+      if (rtx.srId == widget.id) {
+        capital += rtx.srAmount;
+      }
+    }
+
     final balance = _calc.totalBalance(widget.transactions);
     final profitPercentage = (capital == 0) ? 0.0 : ((balance - capital) / capital) * 100;
 

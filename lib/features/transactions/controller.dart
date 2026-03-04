@@ -237,17 +237,8 @@ class TransactionsController extends ChangeNotifier {
     return balance;
   }
 
-  Future<double> collectAllRootSourceAmount(TransactionsModel tx) async {
-    double balance = 0;
-    final roots = await repo.collectAllRoots();
-    final id = tx.isRoot ? tx.srId : tx.rrId;
-    for (final rtx in roots) {
-      if (rtx.srId == id) {
-        balance += rtx.srAmount;
-      }
-    }
-
-    return balance;
+  Future<List<TransactionsModel>> collectAllRoots() async {
+    return await repo.collectAllRoots();
   }
 
   Future<double> collectAllTerminalResultAmount(TransactionsModel tx) async {
