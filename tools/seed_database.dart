@@ -180,7 +180,7 @@ Future<void> main(List<String> args) async {
 
     final List<TransactionsModel> roots = [];
 
-    for (int r = 0; r < 3; r++) {
+    for (int r = 0; r < 5; r++) {
       final rootTid = txRepo.generateTid();
       final root = TransactionsModel(
         tid: rootTid,
@@ -198,7 +198,10 @@ Future<void> main(List<String> args) async {
       );
       print("Generating Root: ${root.tid}");
       await txRepo.add(root);
-      roots.add(root);
+
+      if (r < 3) {
+        roots.add(root);
+      }
     }
 
     for (final root in roots) {

@@ -398,15 +398,21 @@ class _TransactionsActiveState extends State<TransactionsActive> {
             plPercentage: plPercentage,
           ),
         ),
-        
+
         const SizedBox(width: 20),
+
         SizedBox(
           width: 150,
-          height: 40,
+          height: 42,
           child: TextField(
             controller: _customRateController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(labelText: "Custom Rates", hintText: averageRate.toStringAsFixed(8)),
+            decoration: InputDecoration(
+              labelText: "Custom Rates",
+              hintText: averageRate.toStringAsFixed(8),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            style: TextStyle(fontSize: 14),
             onChanged: (value) {
               if (_debounce?.isActive ?? false) _debounce!.cancel();
 
@@ -419,14 +425,15 @@ class _TransactionsActiveState extends State<TransactionsActive> {
             },
           ),
         ),
+
         const SizedBox(width: 8),
 
         WidgetsButton(
           icon: Icons.swap_horiz,
           tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
           padding: const EdgeInsets.all(0),
-          iconSize: 20,
-          minimumSize: const Size(48, 48),
+          iconSize: 18,
+          minimumSize: const Size(40, 40),
           evaluator: (s) {
             if (_isReversed) {
               s.action();
@@ -449,8 +456,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           initialState: WidgetsButtonActionState.warning,
           tooltip: "Close all closable transactions found in this group",
           padding: const EdgeInsets.all(0),
-          iconSize: 20,
-          minimumSize: const Size(48, 48),
+          iconSize: 18,
+          minimumSize: const Size(40, 40),
           onPressed: (_) => _showCloseDialog(context),
           evaluator: (s) async {
             if (!_isClosable) {
@@ -468,8 +475,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           initialState: WidgetsButtonActionState.error,
           tooltip: "Delete all transactions",
           padding: const EdgeInsets.all(0),
-          iconSize: 20,
-          minimumSize: const Size(48, 48),
+          iconSize: 18,
+          minimumSize: const Size(40, 40),
           onPressed: (_) => _showDeleteDialog(context),
           evaluator: (s) async {
             if (!_isDeletable) {
@@ -540,7 +547,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           ],
 
           DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc)),
-          DataColumn2(label: Text('Actions'), fixedWidth: 140),
+          DataColumn2(label: Text('Actions'), fixedWidth: 100),
         ],
 
         rows: _rows.map((r) {
