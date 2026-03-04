@@ -33,6 +33,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
   late String _resultSymbol;
 
+  final TransactionCalculation _calc = TransactionCalculation();
+
   bool _isDeletable = false;
   bool _isClosable = false;
 
@@ -43,8 +45,6 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
   double _currentHolding = 0;
   double _profitLoss = 0;
   double _profitLossPercentage = 0;
-
-  TransactionCalculation _calc = TransactionCalculation();
 
   @override
   void initState() {
