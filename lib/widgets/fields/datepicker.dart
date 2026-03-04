@@ -44,7 +44,10 @@ class _WidgetsFieldsDatepickerState extends State<WidgetsFieldsDatepicker> {
     return TextFormField(
       readOnly: true,
       enabled: widget.enabled,
-      decoration: InputDecoration(labelText: widget.labelText),
+      decoration: InputDecoration(
+        labelText: widget.labelText,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+      ),
       controller: TextEditingController(
         text: _selectedDate != null
             ? "${_selectedDate!.day.toString().padLeft(2, '0')}/"

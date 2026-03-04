@@ -203,18 +203,9 @@ abstract class TransactionsRulesBase {
 
   Future<void> otxCheckAllowChangeSrOrRrFields(int code, String message) async {
     final TransactionsModel? otx = await origTx;
-    // final leavesList = await leaves;
-    // final target = await targetCloser;
     final childList = await leafChildren;
 
     final hasChildren = childList.isNotEmpty;
-
-    // final allClosed = leavesList.isEmpty || leavesList.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-
-    // final spent = childList.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
-
-    // final o = await otx; // cached original transaction
-    // final balance = o!.rrAmount - spent;
 
     if (otx != null) {
       if (tx.rrId != otx.rrId || tx.rrAmount != otx.rrAmount || tx.srId != otx.srId || tx.srAmount != otx.srAmount) {
