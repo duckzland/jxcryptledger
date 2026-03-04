@@ -28,6 +28,7 @@ class TransactionsButtons extends StatelessWidget {
         backgroundColor: Colors.transparent,
         body: Center(
           child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
             title: const Text("Delete Transaction"),
             content: const Text(
               "This will delete this transaction and all of its history.\n"
@@ -71,6 +72,7 @@ class TransactionsButtons extends StatelessWidget {
         backgroundColor: Colors.transparent,
         body: Center(
           child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
             title: const Text("Close Transaction"),
             content: const Text("Are you sure you want to close this transaction?"),
             actions: [
