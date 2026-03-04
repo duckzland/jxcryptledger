@@ -61,7 +61,11 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
             _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc);
             break;
 
-          case 4:
+          case 3:
+            _onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc);
+            break;
+
+          case 5:
             _onSort((d) => d['status'] as String, col, asc);
             break;
         }
@@ -74,14 +78,15 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
   List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
     final rows = <Map<String, dynamic>>[];
     for (final tx in txs) {
-      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
+      final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
         'balance': '${tx.balanceText} $resultSymbol',
-        'source': '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $resultSymbol',
-        'rate': '${tx.rateText} $resultSymbol/$sourceCoinSymbol',
+        'source': '${tx.srAmountText} $sourceSymbol',
+        'result': '${tx.rrAmountText} $resultSymbol',
+        'rate': '${tx.rateText} $resultSymbol/$sourceSymbol',
         'status': tx.statusText,
         'tx': tx,
 
@@ -89,7 +94,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
         '_sourceValue': tx.srAmount,
-        '_sourceSymbol': sourceCoinSymbol,
+        '_sourceSymbol': sourceSymbol,
+        '_resultValue': tx.rrAmount,
+        '_resultSymbol': resultSymbol,
       });
     }
     return rows;
@@ -125,6 +132,11 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
                   size: ColumnSize.M,
                   onSort: (col, asc) => _onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
                 ),
+                DataColumn2(
+                  label: Text('To '),
+                  size: ColumnSize.M,
+                  onSort: (col, asc) => _onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc),
+                ),
                 const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
                 DataColumn2(
                   label: const Text('Status '),
@@ -139,6 +151,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
                     DataCell(Text(r['date'] ?? '')),
                     DataCell(Text(r['balance'] ?? '')),
                     DataCell(Text(r['source'] ?? '')),
+                    DataCell(Text(r['result'] ?? '')),
                     DataCell(Text(r['rate'] ?? '')),
                     DataCell(Text(r['status'] ?? '')),
                     DataCell(
