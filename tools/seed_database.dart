@@ -222,15 +222,16 @@ Future<void> main(List<String> args) async {
       final C2 = await createChild("C2", txRepo, C, C.balance / 2, root.rrId);
 
       // Test Close
-      print("Closing: C1");
-      await txRepo.close(C1);
+      // print("Closing: C1");
+      // await txRepo.close(C1);
 
-      print("Closing: C2");
-      await txRepo.close(C2);
+      // print("Closing: C2");
+      // await txRepo.close(C2);
 
-      print("Decreasing: B2 balance");
-      final B2Decrease = B2.copyWith(srAmount: B2.balance / 4);
-      await txRepo.update(B2Decrease);
+      // Test decreasing amount
+      // print("Decreasing: B2 balance");
+      // final B2Decrease = B2.copyWith(srAmount: B2.balance / 4);
+      // await txRepo.update(B2Decrease);
     }
   }
 

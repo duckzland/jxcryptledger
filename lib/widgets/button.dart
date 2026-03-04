@@ -220,4 +220,5 @@ class WidgetsButtonState extends State<WidgetsButton> {
   WidgetsButtonActionState error() => setAppState(WidgetsButtonActionState.error);
   WidgetsButtonActionState reset() => setAppState(WidgetsButtonActionState.normal);
   WidgetsButtonActionState action() => setAppState(WidgetsButtonActionState.action);
+  WidgetsButtonActionState warning() => setAppState(WidgetsButtonActionState.warning);
 }
