@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../../app/exceptions.dart';
-import '../../core/log.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -246,7 +245,6 @@ class TransactionsController extends ChangeNotifier {
       if (rtx.srId == id) {
         balance += rtx.srAmount;
       }
-      logln("Checking ${rtx.rrId} ${rtx.isRoot} ${tx.rrId}");
     }
 
     return balance;

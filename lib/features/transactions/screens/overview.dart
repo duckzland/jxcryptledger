@@ -44,6 +44,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
   double _profitLoss = 0;
   double _profitLossPercentage = 0;
 
+  TransactionCalculation _calc = TransactionCalculation();
+
   @override
   void initState() {
     super.initState();
@@ -110,7 +112,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
 
     final tx = widget.transactions.first;
     final capital = await _txController.collectAllRootSourceAmount(tx);
-    final balance = TransactionCalculation().totalBalance(widget.transactions);
+    final balance = _calc.totalBalance(widget.transactions);
     final profitPercentage = (capital == 0) ? 0.0 : ((balance - capital) / capital) * 100;
 
     if (mounted) {
