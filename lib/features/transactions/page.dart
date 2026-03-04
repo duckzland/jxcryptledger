@@ -706,7 +706,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
         final rrId = grouped.keys.elementAt(idx);
         final txs = grouped[rrId]!;
 
-        return TransactionsOverview(id: rrId, transactions: txs, onStatusChanged: () => setState(() {}));
+        return TransactionsOverview(
+          key: Key("$rrId-$_filterMode-$_sortMode"),
+          id: rrId,
+          transactions: txs,
+          onStatusChanged: () => setState(() {}),
+        );
       },
     );
   }
@@ -724,7 +729,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
         final txs = grouped[key]!;
 
-        return TransactionsActive(srid: srId, rrid: rrId, transactions: txs, onStatusChanged: () => setState(() {}));
+        return TransactionsActive(
+          key: Key("$srId-$rrId-$_filterMode-$_sortMode"),
+          srid: srId,
+          rrid: rrId,
+          transactions: txs,
+          onStatusChanged: () => setState(() {}),
+        );
       },
     );
   }
