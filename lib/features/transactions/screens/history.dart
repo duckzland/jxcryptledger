@@ -205,7 +205,7 @@ class TransactionHistoryState extends State<TransactionHistory> {
                             const SizedBox(width: 25),
                             WidgetsHeader(
                               titleColor: plColor,
-                              title: "$prefix$profitPercentage%",
+                              title: "$prefix${Utils.formatSmartDouble(profitPercentage, maxDecimals: 2)}%",
                               subtitle: "Profit / Loss %",
                               reversed: true,
                             ),
