@@ -28,44 +28,9 @@ abstract class TransactionsRulesBase {
   Future<List<TransactionsModel>> get allLeaves async => _allLeavesCache ??= txRepo.collectAllLeaves(tx);
   Future<List<TransactionsModel>> get allRootLeaves async => _allRootLeavesCache ??= txRepo.collectAllRootLeaves(tx);
 
-  void txCheckValidTid(int code, String message) {
-    if (tx.tid == '0') {
-      throw ValidationException(code, "$mode invalid tid='0'", message, silent: silent);
-    }
-  }
-
-  void txCheckValidFields(int code, String message) {
-    if (tx.rrId <= 0 || tx.srId <= 0 || tx.srAmount <= 0 || tx.rrAmount <= 0 || tx.timestamp <= 0) {
-      throw ValidationException(code, "$mode invalid required fields (tid=${tx.tid})", message, silent: silent);
-    }
-  }
-
-  void txCheckSrIdMustNotEqualRrId(int code, String message) {
-    if (tx.srId == tx.rrId) {
-      throw ValidationException(
-        code,
-        "$mode Source Id cannot be the same as ResultId (tid=${tx.tid}, srId=${tx.srId}, rrId=${tx.rrId})",
-        message,
-        silent: silent,
-      );
-    }
-  }
-
   void txCheckIsRoot(int code, String message) {
     if (!tx.isRoot) {
       throw ValidationException(code, "$mode transaction is not root (tid=${tx.tid})", message, silent: silent);
-    }
-  }
-
-  void txCheckValidRootPid(int code, String message) {
-    if (tx.pid == '0' && tx.rid != '0') {
-      throw ValidationException(code, "$mode pid=0 but rid!=0 (pid=${tx.pid}, rid=${tx.rid})", message, silent: silent);
-    }
-  }
-
-  void txCheckValidRootRid(int code, String message) {
-    if (tx.rid == '0' && tx.pid != '0') {
-      throw ValidationException(code, "$mode rid=0 but pid!=0 (pid=${tx.pid}, rid=${tx.rid})", message, silent: silent);
     }
   }
 
