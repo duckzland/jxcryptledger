@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import '../../app/exceptions.dart';
 import '../../core/utils.dart';
 
 enum TransactionStatus { inactive, active, partial, closed, unknown }
@@ -17,7 +18,7 @@ class TransactionsModel {
   final int timestamp;
   final Map<String, dynamic> meta;
 
-  const TransactionsModel({
+  TransactionsModel({
     required this.tid,
     required this.rid,
     required this.pid,
@@ -30,7 +31,88 @@ class TransactionsModel {
     required this.closable,
     required this.timestamp,
     required this.meta,
-  });
+  }) {
+    if (tid.isEmpty) {
+      throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be empty.", "Invalid transaction data.");
+    }
+    if (tid == '0') {
+      throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be '0'.", "Invalid transaction data.");
+    }
+
+    if (rid.isEmpty) {
+      throw ValidationException(AppErrorCode.txBasicInvalidRid, "rid cannot be empty.", "Invalid transaction data.");
+    }
+    if (pid.isEmpty) {
+      throw ValidationException(AppErrorCode.txBasicInvalidPid, "pid cannot be empty.", "Invalid transaction data.");
+    }
+
+    final isRidRoot = rid == '0';
+    final isPidRoot = pid == '0';
+    if (isRidRoot != isPidRoot) {
+      throw ValidationException(
+        AppErrorCode.txBasicInvalidRootRelation,
+        "Invalid root relationship: rid=$rid pid=$pid",
+        "Invalid transaction structure.",
+      );
+    }
+
+    if (srAmount <= 0) {
+      throw ValidationException(
+        AppErrorCode.txBasicInvalidSrAmount,
+        "srAmount must be > 0 (srAmount=$srAmount).",
+        "Invalid transaction amount.",
+      );
+    }
+    if (rrAmount <= 0) {
+      throw ValidationException(
+        AppErrorCode.txBasicInvalidRrAmount,
+        "rrAmount must be > 0 (rrAmount=$rrAmount).",
+        "Invalid transaction amount.",
+      );
+    }
+    if (balance < 0) {
+      throw ValidationException(
+        AppErrorCode.txBasicInvalidBalance,
+        "balance must be >= 0 (balance=$balance).",
+        "Invalid transaction balance.",
+      );
+    }
+
+    if (srId <= 0) {
+      throw ValidationException(AppErrorCode.txBasicInvalidSrId, "srId must be > 0 (srId=$srId).", "Invalid transaction source.");
+    }
+    if (rrId <= 0) {
+      throw ValidationException(AppErrorCode.txBasicInvalidRrId, "rrId must be > 0 (rrId=$rrId).", "Invalid transaction target.");
+    }
+
+    if (srId == rrId) {
+      throw ValidationException(
+        AppErrorCode.txBasicSrIdEqualsRrId,
+        "srId must not equal rrId (srId=$srId, rrId=$rrId).",
+        "Invalid transaction source/target.",
+      );
+    }
+
+    if (status < 0 || status >= TransactionStatus.values.length) {
+      throw ValidationException(AppErrorCode.txBasicInvalidStatus, "Invalid status value: $status", "Invalid transaction status.");
+    }
+
+    final now = DateTime.now().toUtc().microsecondsSinceEpoch;
+    if (timestamp <= 0) {
+      throw ValidationException(
+        AppErrorCode.txBasicInvalidTimestamp,
+        "timestamp must be > 0 (timestamp=$timestamp).",
+        "Invalid transaction timestamp.",
+      );
+    }
+    if (timestamp > now) {
+      throw ValidationException(
+        AppErrorCode.txBasicTimestampInFuture,
+        "timestamp cannot be in the future (timestamp=$timestamp, now=$now).",
+        "Invalid transaction timestamp.",
+      );
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -114,19 +196,83 @@ class TransactionsModel {
   }
 
   factory TransactionsModel.fromJson(Map<String, dynamic> json) {
+    const requiredKeys = [
+      'tid',
+      'rid',
+      'pid',
+      'srAmount',
+      'srId',
+      'rrAmount',
+      'rrId',
+      'balance',
+      'status',
+      'closable',
+      'timestamp',
+      'meta',
+    ];
+
+    for (final key in requiredKeys) {
+      if (!json.containsKey(key)) {
+        throw ValidationException(AppErrorCode.txJsonMissingField, "Missing required field: $key", "Invalid transaction data.");
+      }
+    }
+
+    if (json['tid'] is! String) {
+      throw ValidationException(AppErrorCode.txJsonInvalidTidType, "tid must be a string.", "Invalid transaction data.");
+    }
+    if (json['rid'] is! String) {
+      throw ValidationException(AppErrorCode.txJsonInvalidRidType, "rid must be a string.", "Invalid transaction data.");
+    }
+    if (json['pid'] is! String) {
+      throw ValidationException(AppErrorCode.txJsonInvalidPidType, "pid must be a string.", "Invalid transaction data.");
+    }
+
+    if (json['srAmount'] is! num) {
+      throw ValidationException(AppErrorCode.txJsonInvalidSrAmountType, "srAmount must be numeric.", "Invalid transaction data.");
+    }
+    if (json['rrAmount'] is! num) {
+      throw ValidationException(AppErrorCode.txJsonInvalidRrAmountType, "rrAmount must be numeric.", "Invalid transaction data.");
+    }
+    if (json['balance'] is! num) {
+      throw ValidationException(AppErrorCode.txJsonInvalidBalanceType, "balance must be numeric.", "Invalid transaction data.");
+    }
+
+    if (json['srId'] is! num) {
+      throw ValidationException(AppErrorCode.txJsonInvalidSrIdType, "srId must be numeric.", "Invalid transaction data.");
+    }
+    if (json['rrId'] is! num) {
+      throw ValidationException(AppErrorCode.txJsonInvalidRrIdType, "rrId must be numeric.", "Invalid transaction data.");
+    }
+
+    if (json['status'] is! num) {
+      throw ValidationException(AppErrorCode.txJsonInvalidStatusType, "status must be numeric.", "Invalid transaction data.");
+    }
+
+    if (json['timestamp'] is! num) {
+      throw ValidationException(AppErrorCode.txJsonInvalidTimestampType, "timestamp must be numeric.", "Invalid transaction data.");
+    }
+
+    if (json['closable'] is! bool) {
+      throw ValidationException(AppErrorCode.txJsonInvalidClosableType, "closable must be boolean.", "Invalid transaction data.");
+    }
+
+    if (json['meta'] is! Map) {
+      throw ValidationException(AppErrorCode.txJsonInvalidMetaType, "meta must be a JSON object.", "Invalid transaction data.");
+    }
+
     return TransactionsModel(
       tid: json['tid'] as String,
       rid: json['rid'] as String,
       pid: json['pid'] as String,
       srAmount: (json['srAmount'] as num).toDouble(),
-      srId: json['srId'] as int,
+      srId: (json['srId'] as num).toInt(),
       rrAmount: (json['rrAmount'] as num).toDouble(),
-      rrId: json['rrId'] as int,
+      rrId: (json['rrId'] as num).toInt(),
       balance: (json['balance'] as num).toDouble(),
-      status: json['status'] as int,
+      status: (json['status'] as num).toInt(),
       closable: json['closable'] as bool,
-      timestamp: json['timestamp'] as int,
-      meta: Map<String, dynamic>.from(json['meta'] ?? {}),
+      timestamp: (json['timestamp'] as num).toInt(),
+      meta: Map<String, dynamic>.from(json['meta'] as Map),
     );
   }
 

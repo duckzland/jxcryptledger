@@ -6,9 +6,7 @@ class TransactionsRulesClose extends TransactionsRulesBase {
 
   @override
   Future<bool> validate() async {
-    txCheckSrIdMustNotEqualRrId(AppErrorCode.txSourceIdEqualResultId, "Cannot close, same source and target coin.");
-
-    txCheckIsLeaf(AppErrorCode.txCloseRoot, "This transaction cannot be closed directly.");
+    txCheckIsLeaf(AppErrorCode.txCloseNotLeaf, "This transaction cannot be closed directly.");
 
     txCheckIsActive(AppErrorCode.txCloseNotActive, "An inactive transaction cannot be closed.");
 

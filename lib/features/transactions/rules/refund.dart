@@ -6,13 +6,7 @@ class TransactionsRulesRefund extends TransactionsRulesBase {
 
   @override
   Future<bool> validate() async {
-    txCheckValidTid(AppErrorCode.txRefundInvalidId, "Invalid transaction ID (tid=${tx.tid}).");
-
-    txCheckValidFields(AppErrorCode.txRefundInvalidFields, "Required transaction fields are missing or invalid.");
-
     txCheckIsActive(AppErrorCode.txRefundInactive, "Transaction is not active.");
-
-    txCheckSrIdMustNotEqualRrId(AppErrorCode.txRefundSourceEqualsTarget, "Source and target coin cannot be the same.");
 
     txCheckIsLeaf(AppErrorCode.txRefundRootClosed, "This closed root transaction cannot be refunded.");
 

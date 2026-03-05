@@ -7,12 +7,6 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
 
   @override
   Future<bool> validate() async {
-    txCheckValidTid(AppErrorCode.txTradeInvalidId, "Cannot update, Invalid ID (tid=${tx.tid})");
-
-    txCheckValidFields(AppErrorCode.txUpdateInvalidFields, "Some required transaction details are missing or invalid.");
-
-    txCheckSrIdMustNotEqualRrId(AppErrorCode.txSourceIdEqualResultId, "Cannot update, same source and target coin.");
-
     await otxCheckExists(AppErrorCode.txUpdateNotFound, "This transaction can no longer be found.");
 
     await otxCheckValidRootId(AppErrorCode.txUpdateRootPidRid, "This transaction cannot be changed in that way.");

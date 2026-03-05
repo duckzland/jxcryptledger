@@ -7,12 +7,6 @@ class TransactionsRulesTrade extends TransactionsRulesBase {
   @override
   // We want the parent not the new trade tx!
   Future<bool> validate() async {
-    txCheckValidTid(AppErrorCode.txTradeInvalidId, "This trade cannot be processed because its ID is invalid.");
-
-    txCheckValidFields(AppErrorCode.txTradeInvalidFields, "Some required trade details are missing or invalid.");
-
-    txCheckSrIdMustNotEqualRrId(AppErrorCode.txSourceIdEqualResultId, "Cannot trade for same source and target coin.");
-
     await otxCheckExists(AppErrorCode.txTradeNotFound, "This trade cannot be processed because the original transaction was not found.");
 
     await otxCheckValidLeaf(AppErrorCode.txTradeMissingParent, "Invalid transaction cannot be traded.");

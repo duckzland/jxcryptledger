@@ -251,39 +251,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  // Future<void> _showExportDialog(BuildContext context) async {
-  //   await showDialog(
-  //     context: context,
-  //     builder: (dialogContext) => Scaffold(
-  //       backgroundColor: Colors.transparent,
-  //       body: Center(
-  //         child: AlertDialog(
-  //           actionsAlignment: MainAxisAlignment.center,
-  //           title: const Text("Export Transactions Database"),
-  //           content: const Text("This will export your database."),
-  //           actions: [
-  //             WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-  //             const SizedBox(width: 12),
-  //             WidgetsButton(
-  //               label: 'Export',
-  //               initialState: WidgetsButtonActionState.error,
-  //               onPressed: (_) async {
-  //                 try {
-  //                   await _exportAndDownload();
-
-  //                   Navigator.pop(dialogContext);
-  //                 } catch (e) {
-  //                   widgetsNotifyError("Failed to export database. ${e.toString()}");
-  //                 }
-  //               },
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Future<void> _showImportDialog(BuildContext context) async {
     await showDialog(
       context: context,
@@ -348,7 +315,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
   Future<void> _showImportFileSelector() async {
     try {
       final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
-
       final file = await openFile(acceptedTypeGroups: [typeGroup]);
 
       if (file == null) {
@@ -357,14 +323,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
       }
 
       final json = await file.readAsString();
-      final ok = await _txController.importDatabase(json);
-
-      if (!ok) {
-        widgetsNotifyError("Failed to import database.");
-        return;
-      }
+      await _txController.importDatabase(json);
 
       widgetsNotifySuccess("Database imported successfully.");
+    } on ValidationException catch (e) {
+      widgetsNotifyError(e.userMessage);
     } catch (e) {
       logln("Import failed: $e");
       widgetsNotifyError("Import failed.");

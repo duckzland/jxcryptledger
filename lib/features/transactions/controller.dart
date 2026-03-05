@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../app/exceptions.dart';
+import '../../core/log.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -322,13 +323,12 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
-  Future<bool> importDatabase(String rawJson) async {
+  Future<void> importDatabase(String rawJson) async {
     try {
       await repo.import(rawJson);
       await load();
-      return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 }
