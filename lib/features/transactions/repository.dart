@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:hive_ce/hive_ce.dart';
@@ -251,6 +252,27 @@ class TransactionsRepository {
 
     await _box.delete(tx.tid);
     await _box.put(updatedTarget.tid, updatedTarget);
+  }
+
+  Future<String> export() async {
+    final items = _box.values.toList();
+    final jsonList = items.map((tx) => tx.toJson()).toList();
+    return jsonEncode(jsonList);
+  }
+
+  Future<void> import(String rawJson) async {
+    final decoded = jsonDecode(rawJson);
+
+    if (decoded is! List) {
+      throw FormatException('Invalid JSON format for import');
+    }
+
+    await _box.clear();
+
+    for (final item in decoded) {
+      final tx = TransactionsModel.fromJson(item);
+      await _box.put(tx.tid, tx);
+    }
   }
 
   Future<int> clear() async {

@@ -1,16 +1,19 @@
+import 'dart:io';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/widgets/notify.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../core/log.dart';
+import '../../widgets/notify.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
 import '../cryptos/controller.dart';
 import 'controller.dart';
-import 'forms/create.dart';
 import 'model.dart';
+import 'forms/create.dart';
 import 'screens/active.dart';
 import 'screens/history.dart';
 import 'screens/journal.dart';
@@ -246,6 +249,126 @@ class _TransactionsPageState extends State<TransactionsPage> {
         ),
       ),
     );
+  }
+
+  // Future<void> _showExportDialog(BuildContext context) async {
+  //   await showDialog(
+  //     context: context,
+  //     builder: (dialogContext) => Scaffold(
+  //       backgroundColor: Colors.transparent,
+  //       body: Center(
+  //         child: AlertDialog(
+  //           actionsAlignment: MainAxisAlignment.center,
+  //           title: const Text("Export Transactions Database"),
+  //           content: const Text("This will export your database."),
+  //           actions: [
+  //             WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+  //             const SizedBox(width: 12),
+  //             WidgetsButton(
+  //               label: 'Export',
+  //               initialState: WidgetsButtonActionState.error,
+  //               onPressed: (_) async {
+  //                 try {
+  //                   await _exportAndDownload();
+
+  //                   Navigator.pop(dialogContext);
+  //                 } catch (e) {
+  //                   widgetsNotifyError("Failed to export database. ${e.toString()}");
+  //                 }
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Future<void> _showImportDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Import Transactions"),
+            content: const Text(
+              "This will erase all existing transactions before inserting new data from the selected file.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Import',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _showImportFileSelector();
+
+                    Navigator.pop(dialogContext);
+                  } catch (e) {
+                    widgetsNotifyError("Failed to import transactions.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showExportFileSelector() async {
+    final json = await _txController.exportDatabase();
+    if (json.isEmpty) {
+      widgetsNotifyError("Failed to export database.");
+      return;
+    }
+
+    final suggestedName = "txs_${DateTime.now().millisecondsSinceEpoch}.json";
+    final saveLocation = await getSaveLocation(suggestedName: suggestedName, confirmButtonText: "Save");
+
+    if (saveLocation == null || saveLocation.path.isEmpty) {
+      widgetsNotifyError("Export cancelled.");
+      return;
+    }
+
+    try {
+      final file = File(saveLocation.path);
+      await file.writeAsString(json);
+      widgetsNotifySuccess("Database exported successfully.");
+    } catch (e) {
+      logln("Failed to save export file: $e");
+      widgetsNotifyError("Failed to save exported file.");
+    }
+  }
+
+  Future<void> _showImportFileSelector() async {
+    try {
+      final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
+
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+
+      if (file == null) {
+        widgetsNotifyError("No file selected.");
+        return;
+      }
+
+      final json = await file.readAsString();
+      final ok = await _txController.importDatabase(json);
+
+      if (!ok) {
+        widgetsNotifyError("Failed to import database.");
+        return;
+      }
+
+      widgetsNotifySuccess("Database imported successfully.");
+    } catch (e) {
+      logln("Import failed: $e");
+      widgetsNotifyError("Import failed.");
+    }
   }
 
   void _changePageTitle(String title) {
@@ -495,7 +618,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             children: [
               WidgetsButton(
                 key: Key("wipe-button-batch"),
-                icon: Icons.folder_delete,
+                icon: Icons.delete_sweep,
                 padding: const EdgeInsets.all(8),
                 initialState: WidgetsButtonActionState.error,
                 tooltip: "Reset transactions database",
@@ -507,6 +630,40 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     s.disable();
                   } else {
                     s.error();
+                  }
+                },
+              ),
+              WidgetsButton(
+                key: Key("import-button-batch"),
+                icon: Icons.arrow_downward,
+                padding: const EdgeInsets.all(8),
+                initialState: WidgetsButtonActionState.primary,
+                tooltip: "Import transactions to database",
+                iconSize: 20,
+                minimumSize: const Size(40, 40),
+                onPressed: (_) => _showImportDialog(context),
+                evaluator: (s) {
+                  // if (!_txController.isEmpty()) {
+                  //   s.disable();
+                  // } else {
+                  //   s.primary();
+                  // }
+                },
+              ),
+              WidgetsButton(
+                key: Key("export-button-batch"),
+                icon: Icons.arrow_upward,
+                padding: const EdgeInsets.all(8),
+                initialState: WidgetsButtonActionState.action,
+                tooltip: "Export transactions from database",
+                iconSize: 20,
+                minimumSize: const Size(40, 40),
+                onPressed: (_) => _showExportFileSelector(),
+                evaluator: (s) {
+                  if (_txController.isEmpty()) {
+                    s.disable();
+                  } else {
+                    s.action();
                   }
                 },
               ),
@@ -705,18 +862,42 @@ class _TransactionsPageState extends State<TransactionsPage> {
           const SizedBox(height: 16),
           const Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
-          WidgetsButton(
-            icon: Icons.add,
-            initialState: WidgetsButtonActionState.action,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            onPressed: (_) => _showAddTransactionDialog(),
-            evaluator: (s) {
-              if (!_cryptosController.hasAny()) {
-                s.disable();
-              } else {
-                s.action();
-              }
-            },
+          Wrap(
+            spacing: 20,
+            children: [
+              WidgetsButton(
+                icon: Icons.add,
+                iconSize: 16,
+                label: "Add New",
+                initialState: WidgetsButtonActionState.action,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                onPressed: (_) => _showAddTransactionDialog(),
+                evaluator: (s) {
+                  if (!_cryptosController.hasAny()) {
+                    s.disable();
+                  } else {
+                    s.action();
+                  }
+                },
+              ),
+              WidgetsButton(
+                key: Key("import-button-new"),
+                label: "Import",
+                icon: Icons.arrow_downward,
+                iconSize: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                initialState: WidgetsButtonActionState.primary,
+                tooltip: "Import transactions to database",
+                onPressed: (_) => _showImportFileSelector(),
+                evaluator: (s) {
+                  // if (!_txController.isEmpty()) {
+                  //   s.disable();
+                  // } else {
+                  //   s.primary();
+                  // }
+                },
+              ),
+            ],
           ),
         ],
       ),

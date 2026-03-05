@@ -313,4 +313,22 @@ class TransactionsController extends ChangeNotifier {
 
     return branchAmounts;
   }
+
+  Future<String> exportDatabase() async {
+    try {
+      return await repo.export();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  Future<bool> importDatabase(String rawJson) async {
+    try {
+      await repo.import(rawJson);
+      await load();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
