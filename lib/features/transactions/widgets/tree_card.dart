@@ -237,7 +237,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
     Color plColor = _fgColor;
     if (_rProfitPercentage > 0) {
       plColor = const Color.fromARGB(255, 112, 225, 104);
-    } else if (_profitPercentage < 0) {
+    } else if (_rProfitPercentage < 0) {
       plColor = const Color.fromARGB(255, 255, 109, 109);
     }
 
