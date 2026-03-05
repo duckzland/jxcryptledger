@@ -32,84 +32,90 @@ class TransactionsModel {
     required this.timestamp,
     required this.meta,
   }) {
+    // --- Basic ID checks ---
     if (tid.isEmpty) {
-      throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be empty.", "Invalid transaction data.");
+      throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be empty.", "Please enter a transaction ID.");
     }
     if (tid == '0') {
-      throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be '0'.", "Invalid transaction data.");
+      throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be '0'.", "This transaction ID is not allowed.");
     }
 
     if (rid.isEmpty) {
-      throw ValidationException(AppErrorCode.txBasicInvalidRid, "rid cannot be empty.", "Invalid transaction data.");
+      throw ValidationException(AppErrorCode.txBasicInvalidRid, "rid cannot be empty.", "Please enter a reference ID.");
     }
     if (pid.isEmpty) {
-      throw ValidationException(AppErrorCode.txBasicInvalidPid, "pid cannot be empty.", "Invalid transaction data.");
+      throw ValidationException(AppErrorCode.txBasicInvalidPid, "pid cannot be empty.", "Please enter a parent reference.");
     }
 
+    // --- Root relationship ---
     final isRidRoot = rid == '0';
     final isPidRoot = pid == '0';
     if (isRidRoot != isPidRoot) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidRootRelation,
         "Invalid root relationship: rid=$rid pid=$pid",
-        "Invalid transaction structure.",
+        "This transaction’s parent reference is incorrect.",
       );
     }
 
+    // --- Amounts ---
     if (srAmount <= 0) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidSrAmount,
         "srAmount must be > 0 (srAmount=$srAmount).",
-        "Invalid transaction amount.",
+        "Source amount must be greater than zero.",
       );
     }
     if (rrAmount <= 0) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidRrAmount,
         "rrAmount must be > 0 (rrAmount=$rrAmount).",
-        "Invalid transaction amount.",
+        "Result amount must be greater than zero.",
       );
     }
     if (balance < 0) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidBalance,
         "balance must be >= 0 (balance=$balance).",
-        "Invalid transaction balance.",
+        "Balance cannot be negative.",
       );
     }
 
+    // --- Source/Target IDs ---
     if (srId <= 0) {
-      throw ValidationException(AppErrorCode.txBasicInvalidSrId, "srId must be > 0 (srId=$srId).", "Invalid transaction source.");
+      throw ValidationException(AppErrorCode.txBasicInvalidSrId, "srId must be > 0 (srId=$srId).", "Please select a valid source account.");
     }
     if (rrId <= 0) {
-      throw ValidationException(AppErrorCode.txBasicInvalidRrId, "rrId must be > 0 (rrId=$rrId).", "Invalid transaction target.");
+      throw ValidationException(AppErrorCode.txBasicInvalidRrId, "rrId must be > 0 (rrId=$rrId).", "Please select a valid target account.");
     }
-
     if (srId == rrId) {
       throw ValidationException(
         AppErrorCode.txBasicSrIdEqualsRrId,
         "srId must not equal rrId (srId=$srId, rrId=$rrId).",
-        "Invalid transaction source/target.",
+        "Source and target coin must be different.",
       );
     }
 
+    // --- Status ---
     if (status < 0 || status >= TransactionStatus.values.length) {
-      throw ValidationException(AppErrorCode.txBasicInvalidStatus, "Invalid status value: $status", "Invalid transaction status.");
+      throw ValidationException(AppErrorCode.txBasicInvalidStatus, "Invalid status value: $status", "Please select a valid status.");
     }
 
+    // --- Timestamp ---
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
+
     if (timestamp <= 0) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidTimestamp,
         "timestamp must be > 0 (timestamp=$timestamp).",
-        "Invalid transaction timestamp.",
+        "Invalid date.",
       );
     }
     if (timestamp > now) {
       throw ValidationException(
         AppErrorCode.txBasicTimestampInFuture,
         "timestamp cannot be in the future (timestamp=$timestamp, now=$now).",
-        "Invalid transaction timestamp.",
+        "Date cannot be in the future.",
       );
     }
   }

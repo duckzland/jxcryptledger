@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../../app/exceptions.dart';
-import '../../core/log.dart';
 import 'model.dart';
 import 'repository.dart';
 

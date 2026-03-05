@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/exceptions.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
@@ -51,24 +52,27 @@ class _TransactionFormState extends State<TransactionFormCreate> {
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final tx = TransactionsModel(
-      tid: generateTid(),
-      rid: '0',
-      pid: '0',
-      srId: _selectedSrId ?? 0,
-      srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
-      rrId: _selectedRrId ?? 0,
-      rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-      balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-      status: TransactionStatus.active.index,
-      timestamp: Utils.dateToTimestamp(_selectedDate),
-      closable: true,
-      meta: {'purchase_notes': _noteEntry},
-    );
-
     try {
+      final tx = TransactionsModel(
+        tid: generateTid(),
+        rid: '0',
+        pid: '0',
+        srId: _selectedSrId ?? 0,
+        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
+        rrId: _selectedRrId ?? 0,
+        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        status: TransactionStatus.active.index,
+        timestamp: Utils.dateToTimestamp(_selectedDate),
+        closable: true,
+        meta: {'purchase_notes': _noteEntry},
+      );
+
       await _txController.add(tx);
       widget.onSave?.call(null);
+    } on ValidationException catch (e) {
+      // TODO: Improve this by analyzing the error code and set the form field error state!
+      widget.onSave?.call(e);
     } catch (e) {
       widget.onSave?.call(e);
     }

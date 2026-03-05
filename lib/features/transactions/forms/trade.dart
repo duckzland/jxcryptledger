@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/exceptions.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
@@ -68,25 +69,26 @@ class _TransactionFormState extends State<TransactionFormTrade> {
     if (!_formKey.currentState!.validate()) return;
 
     final parent = widget.initialData!;
-
-    final child = TransactionsModel(
-      tid: generateTid(),
-      rid: _saveRidField(),
-      pid: parent.tid,
-      srId: parent.rrId,
-      srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
-      rrId: _selectedRrId ?? 0,
-      rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-      balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-      status: TransactionStatus.active.index,
-      timestamp: Utils.dateToTimestamp(_selectedDate),
-      closable: false,
-      meta: _saveNotesField(),
-    );
-
     try {
+      final child = TransactionsModel(
+        tid: generateTid(),
+        rid: _saveRidField(),
+        pid: parent.tid,
+        srId: parent.rrId,
+        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
+        rrId: _selectedRrId ?? 0,
+        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        status: TransactionStatus.active.index,
+        timestamp: Utils.dateToTimestamp(_selectedDate),
+        closable: false,
+        meta: _saveNotesField(),
+      );
       await _txController.add(child);
       widget.onSave?.call(null);
+    } on ValidationException catch (e) {
+      // TODO: Improve this by analyzing the error code and set the form field error state!
+      widget.onSave?.call(e);
     } catch (e) {
       widget.onSave?.call(e);
     }
@@ -154,6 +156,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
                                   const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 16),
                                   Row(children: [Flexible(flex: 3, child: _buildSourceAmountField())]),
+                                  const SizedBox(height: 16),
                                 ],
                               ),
                             ),

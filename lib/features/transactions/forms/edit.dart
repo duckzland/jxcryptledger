@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/exceptions.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
@@ -80,20 +81,22 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final data = widget.initialData!;
-    final tx = data.copyWith(
-      srId: _saveSourceCryptoField(),
-      srAmount: _saveSourceAmountField(),
-      rrId: _saveResultCryptoField(),
-      rrAmount: _saveResultAmountField(),
-      balance: _saveBalanceField(),
-      timestamp: _selectedDate != null ? Utils.dateToTimestamp(_selectedDate) : data.timestamp,
-      meta: _saveNotesField(),
-    );
-
     try {
+      final data = widget.initialData!;
+      final tx = data.copyWith(
+        srId: _saveSourceCryptoField(),
+        srAmount: _saveSourceAmountField(),
+        rrId: _saveResultCryptoField(),
+        rrAmount: _saveResultAmountField(),
+        balance: _saveBalanceField(),
+        timestamp: _selectedDate != null ? Utils.dateToTimestamp(_selectedDate) : data.timestamp,
+        meta: _saveNotesField(),
+      );
       await _txController.update(tx);
       widget.onSave?.call(null);
+    } on ValidationException catch (e) {
+      // TODO: Improve this by analyzing the error code and set the form field error state!
+      widget.onSave?.call(e);
     } catch (e) {
       widget.onSave?.call(e);
     }
