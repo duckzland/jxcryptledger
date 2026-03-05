@@ -14,7 +14,7 @@ import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
-import '../buttons.dart';
+import '../widgets/buttons.dart';
 import '../calculations.dart';
 import '../model.dart';
 

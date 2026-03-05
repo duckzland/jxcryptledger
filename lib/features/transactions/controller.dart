@@ -253,7 +253,7 @@ class TransactionsController extends ChangeNotifier {
     return balance;
   }
 
-  Future<double> collectBranchResultAmount(TransactionsModel tx) async {
+  Future<double> collectBranchTotalResultAmount(TransactionsModel tx) async {
     final txs = await repo.collectDescendantLeaves(tx);
     double balance = 0;
     for (final rtx in txs) {
@@ -263,5 +263,20 @@ class TransactionsController extends ChangeNotifier {
     }
 
     return balance;
+  }
+
+  Future<Map<int, double>> collectBranchActiveAmount(TransactionsModel tx) async {
+    final txs = await repo.collectDescendantLeaves(tx);
+
+    final Map<int, double> branchAmounts = {};
+
+    for (final rtx in txs) {
+      if (rtx.isActive || rtx.isPartial) {
+        final key = rtx.rrId;
+        branchAmounts[key] = (branchAmounts[key] ?? 0) + rtx.balance;
+      }
+    }
+
+    return branchAmounts;
   }
 }

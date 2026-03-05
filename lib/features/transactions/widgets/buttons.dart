@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../app/exceptions.dart';
-import '../../core/locator.dart';
-import '../../widgets/button.dart';
-import '../../widgets/notify.dart';
-import '../cryptos/controller.dart';
-import 'controller.dart';
-import 'forms/edit.dart';
-import 'forms/trade.dart';
-import 'model.dart';
+import '../../../app/exceptions.dart';
+import '../../../core/locator.dart';
+import '../../../widgets/button.dart';
+import '../../../widgets/notify.dart';
+import '../../cryptos/controller.dart';
+import '../controller.dart';
+import '../forms/edit.dart';
+import '../forms/trade.dart';
+import '../model.dart';
 
 enum TransactionsButtonActionMode { edit, trade, close, delete }
 

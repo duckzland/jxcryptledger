@@ -1,15 +1,10 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
-import '../../../features/transactions/buttons.dart';
 import '../../../app/theme.dart';
-import '../../../core/locator.dart';
-import '../../../core/utils.dart';
-import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
-import '../../cryptos/controller.dart';
-import '../controller.dart';
 import '../model.dart';
+import '../widgets/tree_card.dart';
 
 class TransactionHistory extends StatefulWidget {
   final List<TransactionsModel> transactions;
@@ -21,9 +16,6 @@ class TransactionHistory extends StatefulWidget {
 }
 
 class TransactionHistoryState extends State<TransactionHistory> {
-  final CryptosController _cryptosController = locator<CryptosController>();
-  final TransactionsController _txController = locator<TransactionsController>();
-
   late TreeNode<TransactionsModel> _root;
 
   @override
@@ -65,8 +57,8 @@ class TransactionHistoryState extends State<TransactionHistory> {
             expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
               tree: node,
               color: AppTheme.text,
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+              alignment: Alignment.topRight,
             ),
             onTreeReady: (controller) {
               void expandAll(TreeNode node) {
@@ -83,7 +75,18 @@ class TransactionHistoryState extends State<TransactionHistory> {
             builder: (context, node) {
               final tx = node.data;
               if (tx == null) return const SizedBox.shrink();
-              return _buildTransactionPanel(tx, node);
+              return TransactionsTreeCard(
+                tx: tx,
+                node: node,
+                onAction: () {
+                  refreshTree();
+                  if (mounted) {
+                    setState(() {
+                      _root = _buildTreeNodes(widget.transactions);
+                    });
+                  }
+                },
+              );
             },
           ),
         ),
@@ -112,129 +115,5 @@ class TransactionHistoryState extends State<TransactionHistory> {
     }
 
     return root;
-  }
-
-  Widget _buildTransactionPanel(TransactionsModel tx, TreeNode<TransactionsModel> node) {
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([_txController.collectBranchResultAmount(tx), _txController.hasLeaf(tx)]),
-
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Card(child: ListTile(title: Text("Loading...")));
-        }
-
-        if (snapshot.hasError) {
-          return Card(child: ListTile(title: Text("Error loading amounts")));
-        }
-
-        final hasLeaf = snapshot.data![1] as bool;
-        final capital = tx.srAmount;
-        final balance = snapshot.data![0] as double;
-        final profit = balance - capital;
-        final profitPercentage = (capital == 0) ? 0.0 : ((balance - capital) / capital) * 100;
-
-        Color bgColor = AppTheme.rowHeaderBg;
-        Color fgColor = AppTheme.text;
-
-        if (tx.statusEnum == TransactionStatus.inactive) {
-          bgColor = AppTheme.mutedBg;
-          fgColor = AppTheme.textMuted;
-        }
-        if (tx.statusEnum == TransactionStatus.closed) {
-          bgColor = AppTheme.closedBg;
-          fgColor = AppTheme.textMuted;
-        }
-
-        Color plColor = fgColor;
-        String prefix = "";
-        if (profitPercentage > 0) {
-          plColor = const Color.fromARGB(255, 112, 225, 104);
-          prefix = "+";
-        } else if (profitPercentage < 0) {
-          plColor = const Color.fromARGB(255, 255, 109, 109);
-        }
-
-        String srSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown';
-        String rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown';
-
-        return Card(
-          margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
-          color: bgColor,
-          child: ListTile(
-            title: Row(
-              children: [
-                Row(
-                  children: [
-                    WidgetsHeader(
-                      titleColor: fgColor,
-                      title: "${tx.srAmountText} $srSymbol → ${tx.rrAmountText} $rrSymbol",
-                      subtitle: tx.timestampAsFormattedDate,
-                      reversed: true,
-                    ),
-                    const SizedBox(width: 25),
-                    WidgetsHeader(titleColor: fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
-                    const SizedBox(width: 25),
-                    WidgetsHeader(titleColor: fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
-                  ],
-                ),
-                Expanded(
-                  child: hasLeaf && balance > 0
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            WidgetsHeader(
-                              titleColor: fgColor,
-                              title: "${Utils.formatSmartDouble(capital)} $srSymbol",
-                              subtitle: "Total Capital",
-                              reversed: true,
-                            ),
-                            const SizedBox(width: 25),
-                            WidgetsHeader(
-                              titleColor: fgColor,
-                              title: "${Utils.formatSmartDouble(balance)} $srSymbol",
-                              subtitle: "Current Balance",
-                              reversed: true,
-                            ),
-                            const SizedBox(width: 25),
-                            WidgetsHeader(
-                              titleColor: plColor,
-                              title: "$prefix${Utils.formatSmartDouble(profit)} $srSymbol",
-                              subtitle: "Profit / Loss",
-                              reversed: true,
-                            ),
-                            const SizedBox(width: 25),
-                            WidgetsHeader(
-                              titleColor: plColor,
-                              title: "$prefix${Utils.formatSmartDouble(profitPercentage, maxDecimals: 2)}%",
-                              subtitle: "Profit / Loss %",
-                              reversed: true,
-                            ),
-                          ],
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-            trailing: Wrap(
-              alignment: WrapAlignment.end,
-              children: [
-                TransactionsButtons(
-                  tx: tx,
-                  onAction: () {
-                    refreshTree();
-                    if (mounted) {
-                      setState(() {
-                        _root = _buildTreeNodes(widget.transactions);
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(width: 10),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 }
