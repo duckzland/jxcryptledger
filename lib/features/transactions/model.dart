@@ -96,6 +96,40 @@ class TransactionsModel {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'tid': tid,
+      'rid': rid,
+      'pid': pid,
+      'srAmount': srAmount,
+      'srId': srId,
+      'rrAmount': rrAmount,
+      'rrId': rrId,
+      'balance': balance,
+      'status': status,
+      'closable': closable,
+      'timestamp': timestamp,
+      'meta': meta,
+    };
+  }
+
+  factory TransactionsModel.fromJson(Map<String, dynamic> json) {
+    return TransactionsModel(
+      tid: json['tid'] as String,
+      rid: json['rid'] as String,
+      pid: json['pid'] as String,
+      srAmount: (json['srAmount'] as num).toDouble(),
+      srId: json['srId'] as int,
+      rrAmount: (json['rrAmount'] as num).toDouble(),
+      rrId: json['rrId'] as int,
+      balance: (json['balance'] as num).toDouble(),
+      status: json['status'] as int,
+      closable: json['closable'] as bool,
+      timestamp: json['timestamp'] as int,
+      meta: Map<String, dynamic>.from(json['meta'] ?? {}),
+    );
+  }
+
   TransactionStatus get statusEnum {
     switch (status) {
       case 0:
