@@ -558,7 +558,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
               DataCell(Text(r['status'])),
               DataCell(
-                TransactionsButtons(
+                TransactionsWidgetsButtons(
                   tx: r['tx'],
                   onAction: () {
                     widget.onStatusChanged();

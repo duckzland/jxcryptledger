@@ -10,16 +10,14 @@ import '../forms/edit.dart';
 import '../forms/trade.dart';
 import '../model.dart';
 
-enum TransactionsButtonActionMode { edit, trade, close, delete }
-
-class TransactionsButtons extends StatelessWidget {
+class TransactionsWidgetsButtons extends StatelessWidget {
   final TransactionsModel tx;
   final void Function() onAction;
 
   CryptosController get _cryptosController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
-  const TransactionsButtons({super.key, required this.tx, required this.onAction});
+  const TransactionsWidgetsButtons({super.key, required this.tx, required this.onAction});
 
   Future<void> _showDeleteDialog(BuildContext context) async {
     await showDialog(
@@ -43,6 +41,50 @@ class TransactionsButtons extends StatelessWidget {
                 onPressed: (_) async {
                   try {
                     await _txController.removeRoot(tx);
+
+                    Navigator.pop(dialogContext);
+                    onAction();
+
+                    String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
+                    String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
+
+                    widgetsNotifySuccess("${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.");
+                  } on ValidationException catch (e) {
+                    widgetsNotifyError(e.userMessage);
+                  } catch (e) {
+                    widgetsNotifyError(e.toString());
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRefundDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Refund Transaction"),
+            content: const Text(
+              "This will cancel this transaction and refund the balance back to its parent transaction.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Refund',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _txController.removeLeaf(tx);
 
                     Navigator.pop(dialogContext);
                     onAction();
@@ -176,6 +218,7 @@ class TransactionsButtons extends StatelessWidget {
         _txController.isClosable(tx),
         _txController.isDeletable(tx),
         _txController.isUpdatable(tx),
+        _txController.isRefundable(tx),
         _txController.hasLeaf(tx),
       ]),
       builder: (context, snapshot) {
@@ -187,7 +230,8 @@ class TransactionsButtons extends StatelessWidget {
         final isClosable = snapshot.data![1];
         final isDeletable = snapshot.data![2];
         final isUpdatable = snapshot.data![3];
-        final hasLeaf = snapshot.data![4];
+        final isRefundable = snapshot.data![4];
+        final hasLeaf = snapshot.data![5];
 
         return Wrap(
           spacing: 4,
@@ -197,7 +241,7 @@ class TransactionsButtons extends StatelessWidget {
               WidgetsButton(
                 key: Key("edit-button-${tx.tid}"),
                 icon: Icons.edit,
-                tooltip: "Edit",
+                tooltip: "Edit this transaction",
                 padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
                 iconSize: 16,
                 minimumSize: const Size(34, 34),
@@ -212,7 +256,7 @@ class TransactionsButtons extends StatelessWidget {
                 key: Key("trade-button-${tx.tid}"),
                 icon: Icons.swap_horiz,
                 initialState: WidgetsButtonActionState.action,
-                tooltip: "Trade",
+                tooltip: "Trade this transaction",
                 padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
                 iconSize: 18,
                 minimumSize: const Size(34, 34),
@@ -227,11 +271,23 @@ class TransactionsButtons extends StatelessWidget {
                 key: Key("delete-button-${tx.tid}"),
                 icon: Icons.delete,
                 initialState: WidgetsButtonActionState.error,
-                tooltip: "Delete",
+                tooltip: "Delete this transaction",
                 padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
                 iconSize: 18,
                 minimumSize: const Size(34, 34),
                 onPressed: (_) => _showDeleteDialog(context),
+              ),
+
+            if (isRefundable)
+              WidgetsButton(
+                key: Key("refund-button-${tx.tid}"),
+                icon: Icons.u_turn_left,
+                initialState: WidgetsButtonActionState.error,
+                tooltip: "Refund this transaction",
+                padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+                iconSize: 18,
+                minimumSize: const Size(34, 34),
+                onPressed: (_) => _showRefundDialog(context),
               ),
 
             if (isClosable)
@@ -239,7 +295,7 @@ class TransactionsButtons extends StatelessWidget {
                 key: Key("close-button-${tx.tid}"),
                 icon: Icons.close,
                 initialState: WidgetsButtonActionState.warning,
-                tooltip: "Close",
+                tooltip: "Close this transaction",
                 padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
                 iconSize: 18,
                 minimumSize: const Size(34, 34),

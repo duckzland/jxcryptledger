@@ -462,7 +462,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
               DataCell(Text(r['exchangedRate'])),
               DataCell(Text(r['status'])),
               DataCell(
-                TransactionsButtons(
+                TransactionsWidgetsButtons(
                   tx: r['tx'],
                   onAction: () {
                     widget.onStatusChanged();
