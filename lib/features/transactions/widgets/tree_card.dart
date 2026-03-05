@@ -1,10 +1,12 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
+import '../../../widgets/layouts/wrapped_two_columns.dart';
 import '../../cryptos/controller.dart';
 import '../model.dart';
 import '../controller.dart';
@@ -50,6 +52,8 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
   Color _fgColor = AppTheme.text;
 
   Map<int, double> _branchAmounts = {};
+
+  double _panelHeight = 40;
 
   @override
   void initState() {
@@ -124,111 +128,40 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (!mounted || _loading) return const SizedBox.shrink();
+    return Card(
+      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
+      color: _bgColor,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: CustomMultiChildLayout(
+          delegate: WidgetsLayoutsWrappedTwoColumns(
+            onWrapChanged: (wrap) {
+              final double target = wrap ? 95 : 40;
 
-    const padMiddle = EdgeInsets.only(left: 20, right: 20, top: 0);
-    const padRight = EdgeInsets.only(left: 20, right: 0, top: 0);
-    const padTrail = EdgeInsets.only(left: 20, right: 25, top: 6);
+              if (_panelHeight == target) return;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final totalWidth = constraints.maxWidth;
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                setState(() => _panelHeight = target);
+              });
+            },
 
-        _measure();
-
-        final remaining = totalWidth - _leftWidth - _rightWidth - _trailingWidth;
-        final shouldWrapMiddle = _middleWidth > remaining && remaining > 0;
-
-        final leftGroup = _buildLeftGroup();
-        final rightGroup = _buildRightGroup();
-        final middleGroup = _buildMiddleGroup();
-
-        return Card(
-          margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
-          color: _bgColor,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (!shouldWrapMiddle)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                leftGroup,
-
-                                Padding(padding: padMiddle, child: middleGroup),
-
-                                Expanded(
-                                  child: Padding(
-                                    padding: padRight,
-                                    child: Align(alignment: Alignment.centerRight, child: rightGroup),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                          if (shouldWrapMiddle)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    leftGroup,
-
-                                    Expanded(
-                                      child: Padding(
-                                        padding: padRight,
-                                        child: Align(alignment: Alignment.centerRight, child: rightGroup),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                middleGroup,
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    Padding(
-                      padding: padTrail,
-                      child: TransactionsButtons(tx: widget.tx, onAction: widget.onAction),
-                    ),
-                  ],
-                ),
-
-                Offstage(
-                  child: Container(key: _leftKey, child: leftGroup),
-                ),
-
-                Offstage(
-                  child: Padding(key: _middleKey, padding: padMiddle, child: middleGroup),
-                ),
-
-                Offstage(
-                  child: Padding(key: _rightKey, padding: padRight, child: rightGroup),
-                ),
-
-                Offstage(
-                  child: Padding(
-                    key: _trailingKey,
-                    padding: padTrail,
-                    child: TransactionsButtons(tx: widget.tx, onAction: widget.onAction),
-                  ),
-                ),
-              ],
-            ),
+            currentHeight: _panelHeight,
           ),
-        );
-      },
+          children: [
+            LayoutId(id: 'left', child: _buildLeftGroup()),
+            LayoutId(id: 'middle', child: _buildMiddleGroup()),
+            LayoutId(id: 'right', child: _buildRightGroup()),
+            LayoutId(
+              id: 'trailing',
+              child: Padding(
+                padding: EdgeInsets.only(left: 10, right: 25, top: 6),
+                child: TransactionsButtons(tx: widget.tx, onAction: widget.onAction),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -258,7 +191,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
         WidgetsHeader(titleColor: _fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
         const SizedBox(width: 20),
         WidgetsHeader(titleColor: _fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
-        const SizedBox(width: 20),
+        if (showBalance) const SizedBox(width: 20),
         if (showBalance)
           WidgetsHeader(
             titleColor: _fgColor,
