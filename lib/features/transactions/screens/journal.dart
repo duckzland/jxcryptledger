@@ -139,7 +139,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
                   fixedWidth: 100,
                   onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc),
                 ),
-                const DataColumn2(label: Text('Actions'), fixedWidth: 100),
+                const DataColumn2(label: Text('Actions'), fixedWidth: 130),
               ],
               rows: table.map((r) {
                 return DataRow(
