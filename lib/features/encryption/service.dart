@@ -62,17 +62,11 @@ class EncryptionService {
   }
 
   Future<Uint8List> loadPasswordKey(String password) async {
-    final String saltValue = dotenv.get(
-      'APP_SALT',
-      fallback: '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a',
-    );
+    final String saltValue = dotenv.get('APP_SALT', fallback: '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a');
 
     final pbkdf2 = Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: 100000, bits: 256);
 
-    final secretKey = await pbkdf2.deriveKey(
-      secretKey: SecretKey(utf8.encode(password)),
-      nonce: utf8.encode(saltValue),
-    );
+    final secretKey = await pbkdf2.deriveKey(secretKey: SecretKey(utf8.encode(password)), nonce: utf8.encode(saltValue));
 
     _secretKey = secretKey;
 

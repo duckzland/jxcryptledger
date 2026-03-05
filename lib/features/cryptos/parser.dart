@@ -31,13 +31,7 @@ List<Map<String, dynamic>> cryptosParser(Map args) {
         name = pinyin.toLowerCase();
       }
 
-      result.add({
-        "id": id,
-        "name": name.trim(),
-        "symbol": symbol.trim().toUpperCase(),
-        "status": status,
-        "active": isActive,
-      });
+      result.add({"id": id, "name": name.trim(), "symbol": symbol.trim().toUpperCase(), "status": status, "active": isActive});
     } catch (_) {
       // skip invalid entry
     }

@@ -144,7 +144,16 @@ abstract class TransactionsRulesBase {
     final hasChildren = childList.isNotEmpty;
 
     if (!hasChildren) {
-      throw ValidationException(code, "$mode inactive requires children (tid=${tx.tid})", message, silent: silent);
+      throw ValidationException(code, "$mode requires child transaction(tid=${tx.tid})", message, silent: silent);
+    }
+  }
+
+  Future<void> txCheckMustNotHaveChildren(int code, String message) async {
+    final childList = await leafChildren;
+    final hasChildren = childList.isNotEmpty;
+
+    if (hasChildren) {
+      throw ValidationException(code, "$mode must not have any children (tid=${tx.tid})", message, silent: silent);
     }
   }
 

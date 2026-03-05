@@ -5,26 +5,13 @@ class CryptosModel {
   final int status;
   final int active;
 
-  const CryptosModel({
-    required this.id,
-    required this.name,
-    required this.symbol,
-    required this.status,
-    required this.active,
-  });
+  const CryptosModel({required this.id, required this.name, required this.symbol, required this.status, required this.active});
 
   /// Normalized search key for Hive lookups
   String get searchKey => '$symbol $name $id'.toLowerCase();
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'symbol': symbol,
-      'status': status,
-      'active': active,
-      'searchKey': searchKey,
-    };
+    return {'id': id, 'name': name, 'symbol': symbol, 'status': status, 'active': active, 'searchKey': searchKey};
   }
 
   factory CryptosModel.fromMap(Map<String, dynamic> map) {
@@ -37,13 +24,7 @@ class CryptosModel {
     );
   }
 
-  CryptosModel copyWith({
-    int? id,
-    String? name,
-    String? symbol,
-    int? status,
-    int? active,
-  }) {
+  CryptosModel copyWith({int? id, String? name, String? symbol, int? status, int? active}) {
     return CryptosModel(
       id: id ?? this.id,
       name: name ?? this.name,
