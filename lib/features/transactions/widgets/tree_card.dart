@@ -5,10 +5,10 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../cryptos/controller.dart';
-import 'buttons.dart';
 import '../model.dart';
 import '../controller.dart';
 import '../../../widgets/header.dart';
+import 'buttons.dart';
 
 class TransactionsTreeCard extends StatefulWidget {
   final TransactionsModel tx;
@@ -25,79 +25,98 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
   final CryptosController _cryptosController = locator<CryptosController>();
   final TransactionsController _txController = locator<TransactionsController>();
 
-  final leftKey = GlobalKey();
-  final rightKey = GlobalKey();
-  final middleKey = GlobalKey();
-  final trailingKey = GlobalKey();
+  final _leftKey = GlobalKey();
+  final _rightKey = GlobalKey();
+  final _middleKey = GlobalKey();
+  final _trailingKey = GlobalKey();
 
-  double leftWidth = 0;
-  double rightWidth = 0;
-  double middleWidth = 0;
-  double trailingWidth = 0;
+  double _leftWidth = 0;
+  double _rightWidth = 0;
+  double _middleWidth = 0;
+  double _trailingWidth = 0;
 
-  bool wrapMiddle = false;
+  bool _loading = true;
+  bool _hasLeaf = false;
 
-  bool loading = true;
-  bool hasLeaf = false;
+  double _capital = 0;
+  double _balance = 0;
+  double _profit = 0;
+  double _profitPercentage = 0;
+  double _rBalance = 0;
+  double _rProfit = 0;
+  double _rProfitPercentage = 0;
 
-  double capital = 0;
-  double balance = 0;
-  double profit = 0;
-  double profitPercentage = 0;
+  Color _bgColor = AppTheme.rowHeaderBg;
+  Color _fgColor = AppTheme.text;
 
-  Map<int, double> branchAmounts = {};
+  Map<int, double> _branchAmounts = {};
 
   @override
   void initState() {
     super.initState();
+
+    final tx = widget.tx;
+    if (tx.statusEnum == TransactionStatus.inactive) {
+      _bgColor = AppTheme.mutedBg;
+      _fgColor = AppTheme.textMuted;
+    }
+    if (tx.statusEnum == TransactionStatus.closed) {
+      _bgColor = AppTheme.closedBg;
+      _fgColor = AppTheme.textMuted;
+    }
     _loadData();
   }
 
   Future<void> _loadData() async {
     final tx = widget.tx;
 
-    final results = await Future.wait([
-      _txController.collectBranchTotalResultAmount(tx),
-      _txController.hasLeaf(tx),
-      _txController.collectBranchActiveAmount(tx),
-    ]);
+    final results = await Future.wait([_txController.hasLeaf(tx), _txController.collectBranchActiveAmount(tx)]);
 
-    final totalResult = results[0] as double;
-    final leaf = results[1] as bool;
-    final branch = results[2] as Map<int, double>;
+    final leaf = results[0] as bool;
+    final branch = results[1] as Map<int, double>;
+    final totalResult = branch[tx.srId] ?? 0;
+    final totalReturnResult = branch[tx.rrId] ?? 0;
 
     final cap = tx.srAmount;
     final bal = totalResult;
     final prof = bal - cap;
     final profPct = cap == 0 ? 0 : (prof / cap) * 100;
 
+    final rCap = tx.rrAmount;
+    final rBal = totalReturnResult;
+    final rProf = rBal - rCap;
+    final rProfPct = rCap == 0 ? 0 : (rProf / rCap) * 100;
+
     setState(() {
-      hasLeaf = leaf;
-      capital = cap;
-      balance = bal;
-      profit = prof;
-      profitPercentage = profPct as double;
-      branchAmounts = branch;
-      loading = false;
+      _hasLeaf = leaf;
+      _capital = cap;
+      _balance = bal;
+      _profit = prof;
+      _profitPercentage = profPct as double;
+      _rBalance = rBal;
+      _rProfit = rProf;
+      _rProfitPercentage = rProfPct as double;
+      _branchAmounts = branch;
+      _loading = false;
     });
   }
 
   void _measure() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final lw = leftKey.currentContext?.size?.width ?? 0;
-      final rw = rightKey.currentContext?.size?.width ?? 0;
-      final mw = middleKey.currentContext?.size?.width ?? 0;
-      final tw = trailingKey.currentContext?.size?.width ?? 0;
+      final lw = _leftKey.currentContext?.size?.width ?? 0;
+      final rw = _rightKey.currentContext?.size?.width ?? 0;
+      final mw = _middleKey.currentContext?.size?.width ?? 0;
+      final tw = _trailingKey.currentContext?.size?.width ?? 0;
 
-      if (tw != trailingWidth) {
-        setState(() => trailingWidth = tw);
+      if (tw != _trailingWidth) {
+        setState(() => _trailingWidth = tw);
       }
 
-      if (lw != leftWidth || rw != rightWidth || mw != middleWidth) {
+      if (lw != _leftWidth || rw != _rightWidth || mw != _middleWidth) {
         setState(() {
-          leftWidth = lw;
-          rightWidth = rw;
-          middleWidth = mw;
+          _leftWidth = lw;
+          _rightWidth = rw;
+          _middleWidth = mw;
         });
       }
     });
@@ -105,33 +124,8 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (!mounted || loading) return const SizedBox.shrink();
+    if (!mounted || _loading) return const SizedBox.shrink();
 
-    final tx = widget.tx;
-
-    final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
-    final rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? '';
-
-    Color bgColor = AppTheme.rowHeaderBg;
-    Color fgColor = AppTheme.text;
-
-    if (tx.statusEnum == TransactionStatus.inactive) {
-      bgColor = AppTheme.mutedBg;
-      fgColor = AppTheme.textMuted;
-    }
-    if (tx.statusEnum == TransactionStatus.closed) {
-      bgColor = AppTheme.closedBg;
-      fgColor = AppTheme.textMuted;
-    }
-
-    Color plColor = fgColor;
-    if (profitPercentage > 0) {
-      plColor = const Color.fromARGB(255, 112, 225, 104);
-    } else if (profitPercentage < 0) {
-      plColor = const Color.fromARGB(255, 255, 109, 109);
-    }
-
-    // Centralized padding config
     const padMiddle = EdgeInsets.only(left: 20, right: 20, top: 0);
     const padRight = EdgeInsets.only(left: 20, right: 0, top: 0);
     const padTrail = EdgeInsets.only(left: 20, right: 25, top: 6);
@@ -142,16 +136,16 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
 
         _measure();
 
-        final remaining = totalWidth - leftWidth - rightWidth - trailingWidth;
-        final shouldWrapMiddle = middleWidth > remaining && remaining > 0;
+        final remaining = totalWidth - _leftWidth - _rightWidth - _trailingWidth;
+        final shouldWrapMiddle = _middleWidth > remaining && remaining > 0;
 
-        final leftGroup = _buildLeftGroup(fgColor, tx, srSymbol, rrSymbol);
-        final rightGroup = _buildRightGroup(fgColor, plColor, capital, balance, profit, profitPercentage, srSymbol, hasLeaf);
-        final middleGroup = _buildMiddleGroup(fgColor, branchAmounts, _cryptosController);
+        final leftGroup = _buildLeftGroup();
+        final rightGroup = _buildRightGroup();
+        final middleGroup = _buildMiddleGroup();
 
         return Card(
           margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
-          color: bgColor,
+          color: _bgColor,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -206,28 +200,28 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
 
                     Padding(
                       padding: padTrail,
-                      child: TransactionsButtons(tx: tx, onAction: widget.onAction),
+                      child: TransactionsButtons(tx: widget.tx, onAction: widget.onAction),
                     ),
                   ],
                 ),
 
                 Offstage(
-                  child: Container(key: leftKey, child: leftGroup),
+                  child: Container(key: _leftKey, child: leftGroup),
                 ),
 
                 Offstage(
-                  child: Padding(key: middleKey, padding: padMiddle, child: middleGroup),
+                  child: Padding(key: _middleKey, padding: padMiddle, child: middleGroup),
                 ),
 
                 Offstage(
-                  child: Padding(key: rightKey, padding: padRight, child: rightGroup),
+                  child: Padding(key: _rightKey, padding: padRight, child: rightGroup),
                 ),
 
                 Offstage(
                   child: Padding(
-                    key: trailingKey,
+                    key: _trailingKey,
                     padding: padTrail,
-                    child: TransactionsButtons(tx: tx, onAction: widget.onAction),
+                    child: TransactionsButtons(tx: widget.tx, onAction: widget.onAction),
                   ),
                 ),
               ],
@@ -238,47 +232,79 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
     );
   }
 
-  Widget _buildLeftGroup(Color fgColor, TransactionsModel tx, String srSymbol, String rrSymbol) {
+  Widget _buildLeftGroup() {
+    bool showBalance = _hasLeaf && _rBalance > 0;
+    Color plColor = _fgColor;
+    if (_rProfitPercentage > 0) {
+      plColor = const Color.fromARGB(255, 112, 225, 104);
+    } else if (_profitPercentage < 0) {
+      plColor = const Color.fromARGB(255, 255, 109, 109);
+    }
+
+    final tx = widget.tx;
+    final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
+    final rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? '';
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         WidgetsHeader(
-          titleColor: fgColor,
+          titleColor: _fgColor,
           title: "${tx.srAmountText} $srSymbol → ${tx.rrAmountText} $rrSymbol",
           subtitle: tx.timestampAsFormattedDate,
           reversed: true,
         ),
         const SizedBox(width: 20),
-        WidgetsHeader(titleColor: fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
+        WidgetsHeader(titleColor: _fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
         const SizedBox(width: 20),
-        WidgetsHeader(titleColor: fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
+        WidgetsHeader(titleColor: _fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
+        const SizedBox(width: 20),
+        if (showBalance)
+          WidgetsHeader(
+            titleColor: _fgColor,
+            title: "${Utils.formatSmartDouble(_rBalance)} $rrSymbol",
+            subtitle: "Balance",
+            reversed: true,
+          ),
+
+        if (showBalance) const SizedBox(width: 20),
+
+        if (showBalance)
+          WidgetsHeader(
+            titleColor: plColor,
+            title:
+                "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)} $srSymbol (${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfitPercentage, maxDecimals: 2)}%)",
+            subtitle: "Return (%)",
+            reversed: true,
+          ),
       ],
     );
   }
 
-  Widget _buildRightGroup(
-    Color fgColor,
-    Color plColor,
-    double capital,
-    double balance,
-    double profit,
-    double profitPercentage,
-    String srSymbol,
-    bool hasLeaf,
-  ) {
-    if (!hasLeaf || balance <= 0) return const SizedBox.shrink();
+  Widget _buildRightGroup() {
+    if (!_hasLeaf || _balance <= 0) return const SizedBox.shrink();
+
+    Color plColor = _fgColor;
+    if (_profitPercentage > 0) {
+      plColor = const Color.fromARGB(255, 112, 225, 104);
+    } else if (_profitPercentage < 0) {
+      plColor = const Color.fromARGB(255, 255, 109, 109);
+    }
+
+    final tx = widget.tx;
+    final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        WidgetsHeader(titleColor: fgColor, title: "${Utils.formatSmartDouble(capital)} $srSymbol", subtitle: "Capital", reversed: true),
+        WidgetsHeader(titleColor: _fgColor, title: "${Utils.formatSmartDouble(_capital)} $srSymbol", subtitle: "Capital", reversed: true),
         const SizedBox(width: 15),
-        WidgetsHeader(titleColor: fgColor, title: "${Utils.formatSmartDouble(balance)} $srSymbol", subtitle: "Balance", reversed: true),
+        WidgetsHeader(titleColor: _fgColor, title: "${Utils.formatSmartDouble(_balance)} $srSymbol", subtitle: "Balance", reversed: true),
         const SizedBox(width: 15),
         WidgetsHeader(
           titleColor: plColor,
           title:
-              "${profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(profit)} $srSymbol (${profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(profitPercentage, maxDecimals: 2)}%)",
+              "${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profit)} $srSymbol (${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profitPercentage, maxDecimals: 2)}%)",
           subtitle: "Return (%)",
           reversed: true,
         ),
@@ -286,16 +312,16 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
     );
   }
 
-  Widget _buildMiddleGroup(Color fgColor, Map<int, double> branchAmounts, CryptosController cryptos) {
+  Widget _buildMiddleGroup() {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: branchAmounts.entries.map((entry) {
-        final symbol = cryptos.getSymbol(entry.key) ?? '';
+      children: _branchAmounts.entries.map((entry) {
+        final symbol = _cryptosController.getSymbol(entry.key) ?? '';
         final amount = Utils.formatSmartDouble(entry.value);
 
         return Padding(
           padding: const EdgeInsets.only(right: 25),
-          child: WidgetsHeader(titleColor: fgColor, title: amount, subtitle: symbol, reversed: true),
+          child: WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: symbol, reversed: true),
         );
       }).toList(),
     );
