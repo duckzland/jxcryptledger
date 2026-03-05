@@ -5,7 +5,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../buttons.dart';
+import '../widgets/buttons.dart';
 import '../model.dart';
 
 class TransactionsJournalView extends StatefulWidget {
