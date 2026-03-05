@@ -138,6 +138,16 @@ class TransactionsController extends ChangeNotifier {
     await load();
   }
 
+  Future<bool> wipeAll() async {
+    try {
+      final removed = await repo.clear();
+      await load();
+      return removed != 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<bool> hasLeaf(TransactionsModel tx) async {
     try {
       final leaf = await repo.getLeaf(tx);
@@ -247,6 +257,10 @@ class TransactionsController extends ChangeNotifier {
     } catch (e) {
       return false;
     }
+  }
+
+  bool isEmpty() {
+    return repo.isEmpty();
   }
 
   Future<double> getCapitalBalance(TransactionsModel tx) async {

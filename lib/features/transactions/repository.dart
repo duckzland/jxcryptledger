@@ -168,7 +168,18 @@ class TransactionsRepository {
     }
 
     // This is to preseve tree sanity!
-    _deleteLeaves(tx);
+    final all = await getAll();
+    for (final ttx in all) {
+      if (tx.tid == ttx.rid || tx.tid == ttx.pid) {
+        if (debugLogs) {
+          logln(
+            '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+          );
+        }
+
+        _box.delete(ttx.tid);
+      }
+    }
 
     await _box.delete(tx.tid);
   }
@@ -240,6 +251,10 @@ class TransactionsRepository {
 
     await _box.delete(tx.tid);
     await _box.put(updatedTarget.tid, updatedTarget);
+  }
+
+  Future<int> clear() async {
+    return await _box.clear();
   }
 
   Future<TransactionsModel?> get(String tid) async {
@@ -463,18 +478,7 @@ class TransactionsRepository {
     return isValid;
   }
 
-  Future<void> _deleteLeaves(TransactionsModel tx) async {
-    final all = await getAll();
-    for (final ttx in all) {
-      if (tx.tid == ttx.rid || tx.tid == ttx.pid) {
-        if (debugLogs) {
-          logln(
-            '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
-          );
-        }
-
-        _box.delete(ttx.tid);
-      }
-    }
+  bool isEmpty() {
+    return _box.isEmpty;
   }
 }

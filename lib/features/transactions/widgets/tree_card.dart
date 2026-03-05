@@ -27,17 +27,6 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
   final CryptosController _cryptosController = locator<CryptosController>();
   final TransactionsController _txController = locator<TransactionsController>();
 
-  final _leftKey = GlobalKey();
-  final _rightKey = GlobalKey();
-  final _middleKey = GlobalKey();
-  final _trailingKey = GlobalKey();
-
-  double _leftWidth = 0;
-  double _rightWidth = 0;
-  double _middleWidth = 0;
-  double _trailingWidth = 0;
-
-  bool _loading = true;
   bool _hasLeaf = false;
 
   double _capital = 0;
@@ -101,28 +90,6 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
       _rProfit = rProf;
       _rProfitPercentage = rProfPct as double;
       _branchAmounts = branch;
-      _loading = false;
-    });
-  }
-
-  void _measure() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final lw = _leftKey.currentContext?.size?.width ?? 0;
-      final rw = _rightKey.currentContext?.size?.width ?? 0;
-      final mw = _middleKey.currentContext?.size?.width ?? 0;
-      final tw = _trailingKey.currentContext?.size?.width ?? 0;
-
-      if (tw != _trailingWidth) {
-        setState(() => _trailingWidth = tw);
-      }
-
-      if (lw != _leftWidth || rw != _rightWidth || mw != _middleWidth) {
-        setState(() {
-          _leftWidth = lw;
-          _rightWidth = rw;
-          _middleWidth = mw;
-        });
-      }
     });
   }
 

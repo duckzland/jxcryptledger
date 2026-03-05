@@ -209,6 +209,45 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
+  Future<void> _showWipeDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Reset Transactions Database"),
+            content: const Text(
+              "Are you sure you want to reset transactions database?\n"
+              "This will remove all transactions entries and reset your database into an empty database\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Reset Database',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _txController.wipeAll();
+
+                    Navigator.pop(dialogContext);
+
+                    widgetsNotifySuccess("Database reset complete.");
+                  } catch (e) {
+                    widgetsNotifyError("Failed to reset database.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _changePageTitle(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
@@ -448,65 +487,94 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 
   Widget _buildActionButtons() {
-    return WidgetsPanel(
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsButton(
-            key: Key("delete-button-batch"),
-            icon: Icons.delete,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.error,
-            tooltip: "Delete all transactions",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showDeleteDialog(context),
-            evaluator: (s) async {
-              final bool isDeletable = await _txController.hasDeletableRoot();
-              if (!isDeletable) {
-                s.disable();
-              } else {
-                s.error();
-              }
-            },
+    return Row(
+      children: [
+        WidgetsPanel(
+          child: Wrap(
+            spacing: 4,
+            children: [
+              WidgetsButton(
+                key: Key("wipe-button-batch"),
+                icon: Icons.folder_delete,
+                padding: const EdgeInsets.all(8),
+                initialState: WidgetsButtonActionState.error,
+                tooltip: "Reset transactions database",
+                iconSize: 20,
+                minimumSize: const Size(40, 40),
+                onPressed: (_) => _showWipeDialog(context),
+                evaluator: (s) {
+                  if (_txController.isEmpty()) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+              ),
+            ],
           ),
-          WidgetsButton(
-            key: Key("close-button-batch"),
-            icon: Icons.close,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.warning,
-            tooltip: "Close all closable transactions",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showCloseDialog(context),
-            evaluator: (s) async {
-              final bool isClosable = await _txController.hasClosableLeaf();
-              if (!isClosable) {
-                s.disable();
-              } else {
-                s.warning();
-              }
-            },
+        ),
+        SizedBox(width: 10),
+        WidgetsPanel(
+          child: Wrap(
+            spacing: 4,
+            children: [
+              WidgetsButton(
+                key: Key("delete-button-batch"),
+                icon: Icons.delete,
+                padding: const EdgeInsets.all(8),
+                initialState: WidgetsButtonActionState.error,
+                tooltip: "Remove deletable transactions",
+                iconSize: 20,
+                minimumSize: const Size(40, 40),
+                onPressed: (_) => _showDeleteDialog(context),
+                evaluator: (s) async {
+                  final bool isDeletable = await _txController.hasDeletableRoot();
+                  if (!isDeletable) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+              ),
+              WidgetsButton(
+                key: Key("close-button-batch"),
+                icon: Icons.close,
+                padding: const EdgeInsets.all(8),
+                initialState: WidgetsButtonActionState.warning,
+                tooltip: "Close all closable transactions",
+                iconSize: 20,
+                minimumSize: const Size(40, 40),
+                onPressed: (_) => _showCloseDialog(context),
+                evaluator: (s) async {
+                  final bool isClosable = await _txController.hasClosableLeaf();
+                  if (!isClosable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+              ),
+              WidgetsButton(
+                key: Key("add-button-single"),
+                icon: Icons.add,
+                padding: const EdgeInsets.all(8),
+                initialState: WidgetsButtonActionState.action,
+                iconSize: 20,
+                minimumSize: const Size(40, 40),
+                tooltip: "Add New Transaction",
+                onPressed: (_) => _showAddTransactionDialog(),
+                evaluator: (s) {
+                  if (!_cryptosController.hasAny()) {
+                    s.disable();
+                  } else {
+                    s.action();
+                  }
+                },
+              ),
+            ],
           ),
-          WidgetsButton(
-            key: Key("add-button-single"),
-            icon: Icons.add,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.action,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Add Transaction",
-            onPressed: (_) => _showAddTransactionDialog(),
-            evaluator: (s) {
-              if (!_cryptosController.hasAny()) {
-                s.disable();
-              } else {
-                s.action();
-              }
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
