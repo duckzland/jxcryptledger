@@ -206,35 +206,42 @@ Future<void> main(List<String> args) async {
 
     for (final root in roots) {
       // Branch A
-      final A = await createChild("A", txRepo, root, root.balance * 0.5, pickCmcId(10));
-      final A1 = await createChild("A1", txRepo, A, A.balance / 2, pickCmcId(11));
-      final A11 = await createChild("A11", txRepo, A1, A1.balance / 2, pickCmcId(12));
-      final A12 = await createChild("A12", txRepo, A1, A1.balance / 2, pickCmcId(13));
+      final a = await createChild("A", txRepo, root, root.balance * 0.5, pickCmcId(10));
+      final a1 = await createChild("A1", txRepo, a, a.balance / 2, pickCmcId(11));
+      await createChild("A11", txRepo, a1, a1.balance / 2, pickCmcId(12));
+      await createChild("A12", txRepo, a1, a1.balance / 2, pickCmcId(13));
+      // final a11 = await createChild("A11", txRepo, a1, a1.balance / 2, pickCmcId(12));
+      // final a12 = await createChild("A12", txRepo, a1, a1.balance / 2, pickCmcId(13));
 
-      final A2 = await createChild("A2", txRepo, A, A.balance / 2, pickCmcId(14));
-      final A21 = await createChild("A21", txRepo, A2, A2.balance / 3, pickCmcId(15));
+      final a2 = await createChild("A2", txRepo, a, a.balance / 2, pickCmcId(14));
+      await createChild("A21", txRepo, a2, a2.balance / 3, pickCmcId(15));
+      // final a21 = await createChild("A21", txRepo, a2, a2.balance / 3, pickCmcId(15));
 
       // Branch B
-      final B = await createChild("B", txRepo, root, root.balance * 0.25, pickCmcId(16));
-      final B1 = await createChild("B1", txRepo, B, B.balance / 2, pickCmcId(17));
-      final B2 = await createChild("B2", txRepo, B, B.balance / 2, B.srId);
+      final b = await createChild("B", txRepo, root, root.balance * 0.25, pickCmcId(16));
+      await createChild("B1", txRepo, b, b.balance / 2, pickCmcId(17));
+      await createChild("B2", txRepo, b, b.balance / 2, b.srId);
+      // final b1 = await createChild("B1", txRepo, b, b.balance / 2, pickCmcId(17));
+      // final b2 = await createChild("B2", txRepo, b, b.balance / 2, b.srId);
 
       // Branch C
-      final C = await createChild("C", txRepo, root, root.balance * 0.25, pickCmcId(19));
-      final C1 = await createChild("C1", txRepo, C, C.balance / 2, C.srId);
-      final C2 = await createChild("C2", txRepo, C, C.balance / 2, root.rrId);
+      final c = await createChild("C", txRepo, root, root.balance * 0.25, pickCmcId(19));
+      await createChild("C1", txRepo, c, c.balance / 2, c.srId);
+      await createChild("C2", txRepo, c, c.balance / 2, root.rrId);
+      // final c1 = await createChild("C1", txRepo, c, c.balance / 2, c.srId);
+      // final c2 = await createChild("C2", txRepo, c, c.balance / 2, root.rrId
 
       // Test Close
-      // print("Closing: C1");
-      // await txRepo.close(C1);
+      // print("Closing: c1");
+      // await txRepo.close(c1);
 
-      // print("Closing: C2");
-      // await txRepo.close(C2);
+      // print("Closing: c2");
+      // await txRepo.close(c2);
 
       // Test decreasing amount
-      // print("Decreasing: B2 balance");
-      // final B2Decrease = B2.copyWith(srAmount: B2.balance / 4);
-      // await txRepo.update(B2Decrease);
+      // print("Decreasing: b2 balance");
+      // final b2Decrease = b2.copyWith(srAmount: b2.balance / 4);
+      // await txRepo.update(b2Decrease);
     }
   }
 
