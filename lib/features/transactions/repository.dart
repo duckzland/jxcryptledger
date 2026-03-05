@@ -8,6 +8,7 @@ import 'model.dart';
 import 'rules/close.dart';
 import 'rules/create.dart';
 import 'rules/delete.dart';
+import 'rules/refund.dart';
 import 'rules/trade.dart';
 import 'rules/update.dart';
 
@@ -207,6 +208,37 @@ class TransactionsRepository {
     }
 
     await _box.put(closedTx.tid, closedTx);
+    await _box.put(updatedTarget.tid, updatedTarget);
+  }
+
+  Future<void> refund(TransactionsModel tx) async {
+    await canRefund(tx);
+
+    // canClose already check and throw
+    TransactionsModel? otx = _box.get(tx.tid);
+    TransactionsModel? ptx = _box.get(tx.pid);
+    if (otx == null || ptx == null) {
+      return;
+    }
+
+    final leaves = await collectTerminalLeaves(ptx);
+    final allClosed =
+        leaves.isNotEmpty &&
+        leaves
+            // Current tx hasn't mutate status yet thus ignore it!
+            .where((leaf) => leaf.tid != otx.tid)
+            .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+
+    final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
+    final updatedTarget = ptx.copyWith(balance: ptx.balance + tx.srAmount, status: newStatus);
+
+    if (debugLogs) {
+      logln(
+        '[REFUNDING] ${tx.tid}|${tx.pid}|${tx.rid}|{tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+      );
+    }
+
+    await _box.delete(tx.tid);
     await _box.put(updatedTarget.tid, updatedTarget);
   }
 
@@ -421,6 +453,12 @@ class TransactionsRepository {
 
   Future<bool> canTrade(TransactionsModel tx, {bool? silent}) async {
     final rules = TransactionsRulesTrade(tx, this, silent ?? !debugLogs);
+    final isValid = await rules.validate();
+    return isValid;
+  }
+
+  Future<bool> canRefund(TransactionsModel tx, {bool? silent}) async {
+    final rules = TransactionsRulesRefund(tx, this, silent ?? !debugLogs);
     final isValid = await rules.validate();
     return isValid;
   }

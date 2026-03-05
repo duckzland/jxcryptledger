@@ -156,7 +156,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
               id: 'trailing',
               child: Padding(
                 padding: EdgeInsets.only(left: 10, right: 25, top: 6),
-                child: TransactionsButtons(tx: widget.tx, onAction: widget.onAction),
+                child: TransactionsWidgetsButtons(tx: widget.tx, onAction: widget.onAction),
               ),
             ),
           ],

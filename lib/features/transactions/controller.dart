@@ -91,6 +91,15 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
+  Future<void> removeLeaf(TransactionsModel tx) async {
+    try {
+      await repo.refund(tx);
+      await load();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> deleteAll() async {
     final roots = await repo.collectAllRoots();
 
@@ -221,6 +230,17 @@ class TransactionsController extends ChangeNotifier {
   Future<bool> isTradable(TransactionsModel tx) async {
     try {
       await repo.canTrade(tx, silent: true);
+      return true;
+    } on ValidationException catch (_) {
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isRefundable(TransactionsModel tx) async {
+    try {
+      await repo.canRefund(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;

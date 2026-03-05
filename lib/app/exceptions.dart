@@ -57,6 +57,17 @@ class AppErrorCode {
   static const int txDeleteActiveChildren = 1502;
   static const int txDeleteInactiveLeaves = 1503;
 
+  static const int txRefundInvalidId = 1601;
+  static const int txRefundInvalidFields = 1602;
+  static const int txRefundSourceEqualsTarget = 1603;
+  static const int txRefundRootClosed = 1604;
+  static const int txRefundInsufficientBalance = 1605;
+  static const int txRefundNotFound = 1606;
+  static const int txRefundInvalidLinkage = 1607;
+  static const int txRefundHasChildren = 1608;
+  static const int txRefundParentMismatch = 1609;
+  static const int txRefundInactive = 1610;
+
   static const int netHttpFailure = 2001;
   static const int netEmptyResponse = 2002;
   static const int netParseFailure = 2003;

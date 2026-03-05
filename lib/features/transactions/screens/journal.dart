@@ -151,7 +151,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
                     DataCell(Text(r['rate'] ?? '')),
                     DataCell(Text(r['status'] ?? '')),
                     DataCell(
-                      TransactionsButtons(
+                      TransactionsWidgetsButtons(
                         tx: r['tx'],
                         onAction: () {
                           widget.onStatusChanged();
