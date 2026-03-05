@@ -539,7 +539,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           ],
 
           DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc)),
-          DataColumn2(label: Text('Actions'), fixedWidth: 100),
+          DataColumn2(label: Text('Actions'), fixedWidth: 130),
         ],
 
         rows: _rows.map((r) {
