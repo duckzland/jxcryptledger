@@ -1,6 +1,7 @@
 import 'dart:io';
-import 'package:win_toast/win_toast.dart';
+
 import 'package:desktop_notifications/desktop_notifications.dart';
+import 'package:win_toast/win_toast.dart';
 
 import '../../core/log.dart';
 
@@ -27,7 +28,7 @@ class NotificationService {
   }
 
   Future<void> show(String message) async {
-    logln("[Notification] Firing notification for: $message");
+    logln("[Notification] Firing notification for: $message linux: ${Platform.isLinux} windows: ${Platform.isWindows}");
     if (Platform.isWindows) {
       final xml =
           '''
@@ -47,7 +48,7 @@ class NotificationService {
     }
 
     if (Platform.isLinux) {
-      await linuxClient?.notify(message);
+      await linuxClient?.notify("JxCryptLedger", body: message, appName: "JxCryptLedger", expireTimeoutMs: 5000);
       return;
     }
   }
