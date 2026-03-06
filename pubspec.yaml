@@ -26,12 +26,11 @@ dependencies:
   uuid: ^4.0.0
   data_table_2: ^2.7.2
   animated_tree_view: ^2.3.0
-  barcode_widget: ^2.0.4
   qr_flutter: ^4.1.0
   file_selector: ^1.1.0
-  desktop_notifications: ^0.6.3
-  win_toast: ^0.4.0
   flutter_local_notifications: ^21.0.0
+  flutter_local_notifications_windows: ^3.0.0
+  path: ^1.9.1
 
 dev_dependencies:
   dotenv: ^4.2.0
@@ -63,4 +62,3 @@ msix_config:
   msix_version: 1.0.0.0
   logo_path: assets/icon.png
   install_certificate: true
-  toast_activator_clsid: "3900e1e5-8211-4bab-82d7-0dea9e1db2cd"

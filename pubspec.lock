@@ -33,22 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.0"
-  barcode:
-    dependency: transitive
-    description:
-      name: barcode
-      sha256: "7b6729c37e3b7f34233e2318d866e8c48ddb46c1f7ad01ff7bb2a8de1da2b9f4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.9"
-  barcode_widget:
-    dependency: "direct main"
-    description:
-      name: barcode_widget
-      sha256: "6f2c5b08659b1a5f4d88d183e6007133ea2f96e50e7b8bb628f03266c3931427"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.4"
   boolean_selector:
     dependency: transitive
     description:
@@ -169,14 +153,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.4"
-  desktop_notifications:
-    dependency: "direct main"
-    description:
-      name: desktop_notifications
-      sha256: "6d92694ad6e9297a862c5ff7dd6b8ff64c819972557754769f819d2209612927"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.3"
   diffutil_dart:
     dependency: transitive
     description:
@@ -391,7 +367,7 @@ packages:
     source: hosted
     version: "11.0.0"
   flutter_local_notifications_windows:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_local_notifications_windows
       sha256: "3a2654ba104fbb52c618ebed9def24ef270228470718c43b3a6afcd5c81bef0c"
@@ -609,7 +585,7 @@ packages:
     source: hosted
     version: "2.2.0"
   path:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path
       sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
@@ -853,14 +829,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
-  win_toast:
-    dependency: "direct main"
-    description:
-      name: win_toast
-      sha256: "1e0dc6e1094bc882ed87133e80c12cbe805d72f6faa7ed98795c7ffe7f7ea900"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.0"
   xdg_directories:
     dependency: transitive
     description:
