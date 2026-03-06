@@ -1,46 +1,37 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
-    // 1. Linux Setup
-    const linuxSettings = LinuxInitializationSettings(
+    final String exePath = File(Platform.resolvedExecutable).parent.path;
+    final String iconPath = p.join(exePath, 'data', 'flutter_assets', 'assets', 'icon.png');
+
+    final windowsSettings = WindowsInitializationSettings(
+      appName: 'JXLedger',
+      appUserModelId: 'com.duckzland.jxledger',
+      guid: '3900e1e5-8211-4bab-82d7-0dea9e1db2cd',
+      iconPath: iconPath,
+    );
+
+    final linuxSettings = LinuxInitializationSettings(
       defaultActionName: 'Open Notification',
-      //defaultIcon: 'assets/icon.png', // Ensure this exists
+      defaultIcon: AssetsLinuxIcon('assets/icon.png'),
     );
 
-    // 2. Windows Setup
-    // Uses the companion package: flutter_local_notifications_windows
-    // No specific InitializationSettings object needed here,
-    // but the plugin handles the platform check internally.
+    final initSettings = InitializationSettings(linux: linuxSettings, windows: windowsSettings);
 
-    const initSettings = InitializationSettings(
-      linux: linuxSettings,
-      // Add android/iOS here if needed later
-    );
-
-    await _plugin.initialize(
-      settings: initSettings,
-      onDidReceiveNotificationResponse: (details) {
-        // Handle click events here safely on the main thread
-      },
-    );
+    await _plugin.initialize(settings: initSettings, onDidReceiveNotificationResponse: (details) {});
   }
 
   Future<void> show(String message) async {
-    // Platform-specific details
-    const linuxDetails = LinuxNotificationDetails(urgency: LinuxNotificationUrgency.normal);
-
-    const windowsDetails = WindowsNotificationDetails(); // Standard toast
-
-    const notificationDetails = NotificationDetails(linux: linuxDetails, windows: windowsDetails);
-
-    await _plugin.show(
-      id: 0, // ID
-      title: 'JXLedger', // Title
-      body: message, // Body
-      notificationDetails: notificationDetails,
+    const NotificationDetails notificationDetails = NotificationDetails(
+      linux: LinuxNotificationDetails(urgency: LinuxNotificationUrgency.normal),
+      windows: WindowsNotificationDetails(),
     );
+
+    await _plugin.show(id: 0, title: 'JXLedger', body: message, notificationDetails: notificationDetails);
   }
 }
