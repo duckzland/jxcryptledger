@@ -24,10 +24,11 @@ class WatchersForm extends StatefulWidget {
 
 class _WatchersFormState extends State<WatchersForm> {
   WatchersController get _controller => locator<WatchersController>();
-  CryptosController get _cryptosController => locator<CryptosController>();
 
+  String? _wid;
   int? _selectedSrId;
   int? _selectedRrId;
+  int? _sent;
   String? _rateAmount;
   String? _limitCount;
   String? _durationMinutes;
@@ -43,12 +44,13 @@ class _WatchersFormState extends State<WatchersForm> {
 
     final data = widget.initialData;
 
+    _wid = data?.wid ?? generateWid();
     _selectedSrId = data?.srId;
     _selectedRrId = data?.rrId;
-    _rateAmount = data?.rates.toString();
-    _rateAmount = data?.rates.toString() ?? "0";
-    _limitCount = data?.limit.toString() ?? "3";
-    _durationMinutes = data?.duration.toString() ?? "60";
+    _sent = 0;
+    _rateAmount = Utils.sanitizeNumber(data?.rates.toString() ?? "");
+    _limitCount = Utils.sanitizeNumber(data?.limit.toString() ?? "3");
+    _durationMinutes = Utils.sanitizeNumber(data?.duration.toString() ?? "60");
     _message = data?.message ?? "";
   }
 
@@ -56,34 +58,19 @@ class _WatchersFormState extends State<WatchersForm> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final isEdit = widget.initialData != null;
-      final old = widget.initialData;
-
-      final sourceSymbol = _cryptosController.getSymbol(_selectedSrId ?? 0) ?? "";
-      final targetSymbol = _cryptosController.getSymbol(_selectedRrId ?? 0) ?? "";
-
-      final craftedMessage = "$sourceSymbol to $targetSymbol reached $_rateAmount.";
-
-      final message = (_message == null || _message!.trim().isEmpty) ? craftedMessage : _message!;
-
       final model = WatchersModel(
-        wid: isEdit ? old!.wid : generateWid(),
-        srId: _selectedSrId ?? 0,
-        rrId: _selectedRrId ?? 0,
+        wid: _wid!,
+        srId: _selectedSrId!,
+        rrId: _selectedRrId!,
         rates: double.tryParse(Utils.sanitizeNumber(_rateAmount ?? "0")) ?? 0,
-        sent: isEdit ? old!.sent : 0,
+        sent: _sent!,
         limit: int.tryParse(_limitCount ?? "0") ?? 0,
         duration: int.tryParse(_durationMinutes ?? "0") ?? 0,
-        message: message,
+        message: _message!,
         timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
       );
 
-      if (isEdit) {
-        await _controller.update(model);
-      } else {
-        await _controller.add(model);
-      }
-
+      await _controller.update(model);
       widget.onSave?.call(null);
     } on ValidationException catch (e) {
       // TODO: Improve this by analyzing the error code and set the form field error state!

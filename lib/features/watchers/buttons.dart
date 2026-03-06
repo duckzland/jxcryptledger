@@ -122,6 +122,16 @@ class WatchersButtons extends StatelessWidget {
           minimumSize: const Size(34, 34),
           onPressed: (_) => _showDeleteDialog(context),
         ),
+        WidgetsButton(
+          key: Key("test-button-${tx.wid}"),
+          icon: Icons.arrow_forward,
+          initialState: WidgetsButtonActionState.action,
+          tooltip: "Test sending notification",
+          padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+          iconSize: 18,
+          minimumSize: const Size(34, 34),
+          onPressed: (_) => _wxController.sendNotification(tx),
+        ),
       ],
     );
   }
