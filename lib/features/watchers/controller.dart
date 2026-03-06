@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core./locator.dart';
+import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../rates/controller.dart';
 import 'model.dart';
