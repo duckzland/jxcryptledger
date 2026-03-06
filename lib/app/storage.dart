@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
-import 'package:jxcryptledger/core/log.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../core/log.dart';
 import '../features/cryptos/adapter.dart';
 import '../features/cryptos/model.dart';
 import '../features/rates/adapter.dart';

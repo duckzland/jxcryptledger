@@ -1,9 +1,9 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/core/utils.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/utils.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/notify.dart';

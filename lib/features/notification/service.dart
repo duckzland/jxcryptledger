@@ -12,8 +12,8 @@ class NotificationService {
     if (Platform.isWindows) {
       final icon = "${Directory.current.path}\\assets\\icon.png";
       await WinToast.instance().initialize(
-        aumId: "com.duckzland.jxcryptledger",
-        displayName: "JxCryptLedger",
+        aumId: "com.duckzland.jxledger",
+        displayName: "JXLedger",
         iconPath: icon,
         clsid: "3900e1e5-8211-4bab-82d7-0dea9e1db2cd",
       );
@@ -48,7 +48,7 @@ class NotificationService {
     }
 
     if (Platform.isLinux) {
-      await linuxClient?.notify("JxCryptLedger", body: message, appName: "JxCryptLedger", expireTimeoutMs: 5000);
+      await linuxClient?.notify("JXLedger", body: message, appName: "JXLedger", expireTimeoutMs: 5000);
       return;
     }
   }

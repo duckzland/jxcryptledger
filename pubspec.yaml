@@ -1,5 +1,5 @@
-name: jxcryptledger
-description: "JxCryptLedger Transaction Manager."
+name: jxledger
+description: "JXLedger Transaction Manager."
 publish_to: 'none'
 version: 1.0.2
 
@@ -56,9 +56,9 @@ flutter_launcher_icons:
     icon_name: "jxledger"
 
 msix_config:
-  display_name: JxLedger
+  display_name: JXLedger
   publisher_display_name: Jason Xie
-  identity_name: com.duckzland.jxcryptledger
+  identity_name: com.duckzland.jxledger
   msix_version: 1.0.0.0
   logo_path: assets/icon.png
   install_certificate: true
