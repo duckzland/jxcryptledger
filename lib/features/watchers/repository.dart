@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:hive_ce/hive_ce.dart';
 import '../../core/locator.dart';
 import '../../core/utils.dart';
+import '../cryptos/controller.dart';
 import '../notification/service.dart';
 import '../rates/controller.dart';
 import 'model.dart';
@@ -12,6 +13,7 @@ class WatchersRepository {
 
   Box<WatchersModel> get _box => Hive.box<WatchersModel>(boxName);
   RatesController get rates => locator<RatesController>();
+  CryptosController get cryptos => locator<CryptosController>();
 
   Future<void> init() async {
     if (!Hive.isBoxOpen(boxName)) {
@@ -45,19 +47,19 @@ class WatchersRepository {
     return list;
   }
 
-  Future<void> saveAll(List<WatchersModel> watchers) async {
+  Future<void> saveAll(List<WatchersModel> wx) async {
     await _box.clear();
-    for (final w in watchers) {
+    for (final w in wx) {
       await _box.put(w.wid, w);
     }
   }
 
-  Future<void> add(WatchersModel watcher) async {
-    return await _box.put(watcher.wid, watcher);
+  Future<void> add(WatchersModel wx) async {
+    return await _box.put(wx.wid, wx);
   }
 
-  Future<void> update(WatchersModel watcher) async {
-    await _box.put(watcher.wid, watcher);
+  Future<void> update(WatchersModel wx) async {
+    await _box.put(wx.wid, wx);
   }
 
   Future<void> delete(String key) async {
@@ -72,29 +74,40 @@ class WatchersRepository {
     return _box.isEmpty;
   }
 
-  Future<void> evaluateWatcher(WatchersModel w) async {
+  Future<void> process(WatchersModel wx) async {
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
 
-    final last = Utils.sanitizeTimestamp(w.timestamp);
+    final last = Utils.sanitizeTimestamp(wx.timestamp);
 
-    if (w.limit > 0 && w.sent >= w.limit) return;
+    if (wx.limit > 0 && wx.sent >= wx.limit) return;
 
-    final nextAllowed = last + (w.duration * 60000000);
+    final nextAllowed = last + (wx.duration * 60000000);
     if (now < nextAllowed) return;
 
-    final current = await rates.getStoredRate(w.srId, w.rrId);
+    final current = await rates.getStoredRate(wx.srId, wx.rrId);
     if (current == -9999) {
-      rates.addQueue(w.srId, w.rrId);
+      rates.addQueue(wx.srId, wx.rrId);
       return;
     }
-    
-    if (current < w.rates) return;
 
-    final updated = w.copyWith(sent: w.sent + 1, timestamp: now);
+    if (current < wx.rates) return;
 
-    await _box.put(w.wid, updated);
+    final updated = wx.copyWith(sent: wx.sent + 1, timestamp: now);
+
+    await _box.put(wx.wid, updated);
+
+    await sendNotification(wx);
+  }
+
+  Future<void> sendNotification(WatchersModel wx) async {
+    String message = wx.message;
+    if (message == "" || message.trim().isEmpty) {
+      final sourceSymbol = cryptos.getSymbol(wx.srId) ?? "";
+      final targetSymbol = cryptos.getSymbol(wx.rrId) ?? "";
+      message = "$sourceSymbol to $targetSymbol reached ${wx.rates}.";
+    }
 
     final notify = locator<NotificationService>();
-    await notify.show(w.message);
+    await notify.show(message);
   }
 }

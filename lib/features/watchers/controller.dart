@@ -65,7 +65,11 @@ class WatchersController extends ChangeNotifier {
     await load();
     for (final w in _items) {
       logln("[Watcher] Evaluating ${w.srId}-${w.rrId}");
-      repo.evaluateWatcher(w);
+      repo.process(w);
     }
+  }
+
+  Future<void> sendNotification(WatchersModel wx) async {
+    await repo.sendNotification(wx);
   }
 }

@@ -50,12 +50,8 @@ class WatchersModel {
       throw ValidationException(AppErrorCode.watcherLimitInvalid, "limit must be >= 1.", "Limit must be at least 1.");
     }
 
-    if (duration <= 1) {
+    if (duration < 1) {
       throw ValidationException(AppErrorCode.watcherDurationInvalid, "duration must be >= 1.", "Duration must be at least 1 minute.");
-    }
-
-    if (message.trim().isEmpty) {
-      throw ValidationException(AppErrorCode.watcherMessageEmpty, "message cannot be empty.", "Please enter a notification message.");
     }
   }
 
