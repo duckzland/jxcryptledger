@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:decimal/decimal.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
-import 'package:jxcryptledger/features/rates/adapter.dart';
-import 'package:jxcryptledger/features/rates/model.dart';
-import 'package:jxcryptledger/features/rates/repository.dart';
+import 'package:jxledger/features/rates/adapter.dart';
+import 'package:jxledger/features/rates/model.dart';
+import 'package:jxledger/features/rates/repository.dart';
 
 final env = DotEnv()..load();
 

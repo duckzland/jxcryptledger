@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jxcryptledger/widgets/notify.dart';
 
 import '../../app/layout.dart';
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
+import '../../widgets/notify.dart';
 import 'controller.dart';
 import 'keys.dart';
 

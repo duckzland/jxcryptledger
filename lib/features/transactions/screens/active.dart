@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:jxcryptledger/features/transactions/controller.dart';
 
 import '../../../core/utils.dart';
 import '../../../app/theme.dart';
@@ -16,6 +15,7 @@ import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
+import '../controller.dart';
 import '../model.dart';
 
 class TransactionsActive extends StatefulWidget {
