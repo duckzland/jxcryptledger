@@ -21,7 +21,7 @@ call flutter clean
 echo [2/3] Building Windows & MSIX...
 call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER%
 
-call dart run msix:create --version %FULL_VERSION% --build-windows false --install-certificate false
+call dart run msix:create --version %FULL_VERSION% --install-certificate false
 
 echo [3/3] Pooling Installer...
 

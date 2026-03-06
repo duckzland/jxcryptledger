@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../app/worker.dart';
+import '../features/notification/service.dart';
 import '../features/rates/repository.dart';
 import '../features/rates/service.dart';
 import '../features/rates/controller.dart';
@@ -11,6 +12,8 @@ import '../features/settings/controller.dart';
 import '../features/settings/repository.dart';
 import '../features/transactions/controller.dart';
 import '../features/transactions/repository.dart';
+import '../features/watchers/controller.dart';
+import '../features/watchers/repository.dart';
 
 final GetIt locator = GetIt.instance;
 
@@ -37,4 +40,11 @@ void setupLocator() {
 
   // Workers
   locator.registerLazySingleton<AppWorker>(() => AppWorker());
+
+  // Watchers
+  locator.registerLazySingleton<WatchersRepository>(() => WatchersRepository());
+  locator.registerLazySingleton<WatchersController>(() => WatchersController(locator<WatchersRepository>()));
+
+  // Notification
+  locator.registerLazySingleton(() => NotificationService());
 }

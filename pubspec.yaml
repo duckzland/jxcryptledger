@@ -29,6 +29,8 @@ dependencies:
   barcode_widget: ^2.0.4
   qr_flutter: ^4.1.0
   file_selector: ^1.1.0
+  desktop_notifications: ^0.6.3
+  win_toast: ^0.4.0
 
 dev_dependencies:
   dotenv: ^4.2.0
@@ -60,3 +62,4 @@ msix_config:
   msix_version: 1.0.0.0
   logo_path: assets/icon.png
   install_certificate: true
+  toast_activator_clsid: "3900e1e5-8211-4bab-82d7-0dea9e1db2cd"

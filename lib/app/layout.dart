@@ -54,7 +54,7 @@ class _AppLayoutState extends State<AppLayout> {
           appBar: AppBar(
             backgroundColor: AppTheme.columnHeaderBg,
             centerTitle: true,
-            leadingWidth: 130,
+            leadingWidth: 180,
             leading: Padding(
               padding: const EdgeInsets.only(left: 8.0),
               child: Center(
@@ -67,7 +67,7 @@ class _AppLayoutState extends State<AppLayout> {
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
                       minimumSize: const Size(40, 40),
-                      tooltip: "Transactions",
+                      tooltip: "Manage Transactions",
                       evaluator: (s) {
                         if (location == "/transactions" || location == "/") {
                           s.active();
@@ -81,11 +81,29 @@ class _AppLayoutState extends State<AppLayout> {
                     ),
 
                     WidgetsButton(
+                      icon: Icons.notification_add,
+                      padding: const EdgeInsets.all(8),
+                      iconSize: 20,
+                      minimumSize: const Size(40, 40),
+                      tooltip: "Manage Watchers",
+                      evaluator: (s) {
+                        if (location == "/watchers") {
+                          s.active();
+                        } else {
+                          s.normal();
+                        }
+                      },
+                      onPressed: (s) {
+                        context.go("/watchers");
+                      },
+                    ),
+
+                    WidgetsButton(
                       icon: Icons.handyman,
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
                       minimumSize: const Size(40, 40),
-                      tooltip: "Tools",
+                      tooltip: "Use Crypto Tools",
                       evaluator: (s) {
                         if (location == "/tools") {
                           s.active();
