@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
-import '../../../widgets/panel.dart';
-import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/amount.dart';
+import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
+import '../../../widgets/panel.dart';
 import '../../app/exceptions.dart';
-import '../cryptos/controller.dart';
 import 'controller.dart';
 import 'model.dart';
 

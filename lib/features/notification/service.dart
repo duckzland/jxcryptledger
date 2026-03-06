@@ -1,55 +1,46 @@
-import 'dart:io';
-
-import 'package:desktop_notifications/desktop_notifications.dart';
-import 'package:win_toast/win_toast.dart';
-
-import '../../core/log.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
-  NotificationsClient? linuxClient;
+  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
-    if (Platform.isWindows) {
-      final icon = "${Directory.current.path}\\assets\\icon.png";
-      await WinToast.instance().initialize(
-        aumId: "com.duckzland.jxledger",
-        displayName: "JXLedger",
-        iconPath: icon,
-        clsid: "3900e1e5-8211-4bab-82d7-0dea9e1db2cd",
-      );
+    // 1. Linux Setup
+    const linuxSettings = LinuxInitializationSettings(
+      defaultActionName: 'Open Notification',
+      //defaultIcon: 'assets/icon.png', // Ensure this exists
+    );
 
-      WinToast.instance().setActivatedCallback(null);
-      WinToast.instance().setDismissedCallback(null);
-    }
+    // 2. Windows Setup
+    // Uses the companion package: flutter_local_notifications_windows
+    // No specific InitializationSettings object needed here,
+    // but the plugin handles the platform check internally.
 
-    if (Platform.isLinux) {
-      linuxClient = NotificationsClient();
-    }
+    const initSettings = InitializationSettings(
+      linux: linuxSettings,
+      // Add android/iOS here if needed later
+    );
+
+    await _plugin.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: (details) {
+        // Handle click events here safely on the main thread
+      },
+    );
   }
 
   Future<void> show(String message) async {
-    logln("[Notification] Firing notification for: $message linux: ${Platform.isLinux} windows: ${Platform.isWindows}");
-    if (Platform.isWindows) {
-      final xml =
-          '''
-<toast scenario="reminder">
-  <visual>
-    <binding template="ToastGeneric">
-      <text>$message</text>
-    </binding>
-  </visual>
-</toast>
+    // Platform-specific details
+    const linuxDetails = LinuxNotificationDetails(urgency: LinuxNotificationUrgency.normal);
 
-''';
+    const windowsDetails = WindowsNotificationDetails(); // Standard toast
 
-      await WinToast.instance().showCustomToast(xml: xml);
+    const notificationDetails = NotificationDetails(linux: linuxDetails, windows: windowsDetails);
 
-      return;
-    }
-
-    if (Platform.isLinux) {
-      await linuxClient?.notify("JXLedger", body: message, appName: "JXLedger", expireTimeoutMs: 5000);
-      return;
-    }
+    await _plugin.show(
+      id: 0, // ID
+      title: 'JXLedger', // Title
+      body: message, // Body
+      notificationDetails: notificationDetails,
+    );
   }
 }
