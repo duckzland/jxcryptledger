@@ -13,6 +13,8 @@ import '../features/rates/adapter.dart';
 import '../features/rates/model.dart';
 import '../features/transactions/adapter.dart';
 import '../features/transactions/model.dart';
+import '../features/watchers/adapter.dart';
+import '../features/watchers/model.dart';
 
 class AppStorage {
   AppStorage._();
@@ -32,6 +34,7 @@ class AppStorage {
     Hive.registerAdapter<TransactionsModel>(TransactionsAdapter());
     Hive.registerAdapter<CryptosModel>(CryptosAdapter());
     Hive.registerAdapter<RatesModel>(RatesAdapter());
+    Hive.registerAdapter<WatchersModel>(WatchersAdapter());
 
     _initialized = true;
   }

@@ -7,6 +7,7 @@ import '../features/tools/page.dart';
 import '../features/transactions/page.dart';
 import '../features/unlock/controller.dart';
 import '../features/unlock/page.dart';
+import '../features/watchers/page.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -46,6 +47,7 @@ class AppRouter {
           GoRoute(path: "/", redirect: (context, state) => "/transactions"),
           GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPage()),
 
+          GoRoute(path: "/watchers", builder: (context, state) => const WatchersPage()),
           GoRoute(path: "/tools", builder: (context, state) => const ToolsPage()),
           GoRoute(path: "/settings", builder: (context, state) => const SettingsPage()),
         ],
@@ -55,7 +57,7 @@ class AppRouter {
 
   static String _titleFor(String location) {
     if (location.startsWith("/settings")) return "Settings";
-    if (location.startsWith("/transaction_detail")) return "Transaction Detail";
+    if (location.startsWith("/watchers")) return "Notifications";
     return "Transactions";
   }
 }

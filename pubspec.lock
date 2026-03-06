@@ -153,6 +153,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.7.2"
+  dbus:
+    dependency: transitive
+    description:
+      name: dbus
+      sha256: d0c98dcd4f5169878b6cf8f6e0a52403a9dff371a3e2f019697accbf6f44a270
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.12"
   decimal:
     dependency: "direct main"
     description:
@@ -161,6 +169,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.4"
+  desktop_notifications:
+    dependency: "direct main"
+    description:
+      name: desktop_notifications
+      sha256: "6d92694ad6e9297a862c5ff7dd6b8ff64c819972557754769f819d2209612927"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.3"
   diffutil_dart:
     dependency: transitive
     description:
@@ -797,6 +813,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  win_toast:
+    dependency: "direct main"
+    description:
+      name: win_toast
+      sha256: "1e0dc6e1094bc882ed87133e80c12cbe805d72f6faa7ed98795c7ffe7f7ea900"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
   xdg_directories:
     dependency: transitive
     description:

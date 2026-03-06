@@ -137,7 +137,7 @@ Future<void> main(List<String> args) async {
   Hive.registerAdapter(CryptosAdapter());
 
   print("Wiping old boxes...");
-  final boxes = ['settings_box', 'rates_box'];
+  final boxes = ['settings_box', 'rates_box', 'watchers_box'];
 
   if (seedTx) {
     boxes.add('transactions_box');

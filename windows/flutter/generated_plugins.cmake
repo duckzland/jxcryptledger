@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_windows
+  win_toast
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

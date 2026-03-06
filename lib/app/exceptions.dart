@@ -99,6 +99,15 @@ class AppErrorCode {
   static const int netParseFailure = 2003;
   static const int netUnknownFailure = 2004;
   static const int netInvalidRatePayload = 2100;
+
+  static const int watcherWidEmpty = 3001;
+  static const int watcherSourceInvalid = 3002;
+  static const int watcherReferenceInvalid = 3003;
+  static const int watcherPairSame = 3004;
+  static const int watcherRateInvalid = 3005;
+  static const int watcherLimitInvalid = 3006;
+  static const int watcherDurationInvalid = 3007;
+  static const int watcherMessageEmpty = 3008;
 }
 
 class AppExceptionConfig {

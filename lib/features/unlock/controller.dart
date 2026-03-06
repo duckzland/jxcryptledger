@@ -11,8 +11,11 @@ import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../cryptos/model.dart';
 import '../encryption/service.dart';
+import '../notification/service.dart';
 import '../settings/controller.dart';
 import '../settings/keys.dart';
+import '../watchers/controller.dart';
+import '../watchers/model.dart';
 
 class UnlockController extends ChangeNotifier {
   bool isFirstRun = false;
@@ -21,6 +24,8 @@ class UnlockController extends ChangeNotifier {
 
   final SettingsController _settingsController = locator<SettingsController>();
   final RatesController _ratesController = locator<RatesController>();
+  final WatchersController _watchersController = locator<WatchersController>();
+  final NotificationService _notificationService = locator<NotificationService>();
   final AppWorker _appWorker = locator<AppWorker>();
 
   Future<void> init() async {
@@ -44,14 +49,21 @@ class UnlockController extends ChangeNotifier {
     try {
       await AppStorage.instance.openBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
-      logln("Failed to open cryptos box");
+      logln("Failed to open cryptos box: ${e.toString()}");
       return false;
     }
 
     try {
       await AppStorage.instance.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
-      logln("Failed to open rates box");
+      logln("Failed to open rates box: ${e.toString()}");
+      return false;
+    }
+
+    try {
+      await AppStorage.instance.openBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
+    } catch (e) {
+      logln("Failed to open watchers box: ${e.toString()}");
       return false;
     }
 
@@ -81,7 +93,11 @@ class UnlockController extends ChangeNotifier {
       }
 
       logln("Password correct, vault unlocked");
-      await Future.delayed(Duration.zero, () => _ratesController.init());
+      await Future.delayed(Duration.zero, () {
+        _notificationService.init();
+        _ratesController.init();
+        _watchersController.init();
+      });
       _unlocked = true;
       notifyListeners();
       _appWorker.start();
