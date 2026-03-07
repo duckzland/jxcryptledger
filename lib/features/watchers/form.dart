@@ -150,7 +150,7 @@ class _WatchersFormState extends State<WatchersForm> {
                                   const Text("Operator", style: TextStyle(fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 16),
                                   DropdownButtonFormField<String>(
-                                    value: _operator,
+                                    initialValue: _operator,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(),
                                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
