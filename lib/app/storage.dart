@@ -49,6 +49,36 @@ class AppStorage {
     return await Hive.openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
   }
 
+  Future<Box<T>> openOrRebuildBox<T>(String name, {HiveCipher? encryptionCipher, bool crashRecovery = true}) async {
+    await init();
+
+    Box<T>? box;
+    try {
+      box = await openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
+      return box;
+    } catch (e) {
+      logln("Failed to open $name: ${e.toString()}");
+
+      try {
+        if (box != null && box.isOpen) {
+          await box.close();
+        } else if (Hive.isBoxOpen(name)) {
+          await Hive.box<T>(name).close();
+        }
+
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        await Hive.deleteBoxFromDisk(name);
+        box = await openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
+        logln("Rebuild box $name completed");
+        return box;
+      } catch (rebuildError) {
+        logln("Rebuild failed for $name: ${rebuildError.toString()}");
+        rethrow;
+      }
+    }
+  }
+
   Future<void> closeAll() async {
     await Hive.close();
     _initialized = false;

@@ -13,10 +13,12 @@ class WatchersAdapter extends TypeAdapter<WatchersModel> {
       rrId: reader.readInt(),
       rates: reader.readDouble(),
       sent: reader.readInt(),
+      operator: reader.readInt(),
       limit: reader.readInt(),
       duration: reader.readInt(),
       message: reader.readString(),
       timestamp: reader.readInt(),
+      meta: Map<String, dynamic>.from(reader.readMap()),
     );
   }
 
@@ -27,9 +29,11 @@ class WatchersAdapter extends TypeAdapter<WatchersModel> {
     writer.writeInt(obj.rrId);
     writer.writeDouble(obj.rates);
     writer.writeInt(obj.sent);
+    writer.writeInt(obj.operator);
     writer.writeInt(obj.limit);
     writer.writeInt(obj.duration);
     writer.writeString(obj.message);
     writer.writeInt(obj.timestamp);
+    writer.writeMap(obj.meta);
   }
 }
