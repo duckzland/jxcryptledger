@@ -27,8 +27,15 @@ class AppStorage {
 
     if (!kIsWeb) {
       Directory dir = await getApplicationDocumentsDirectory();
-      logln("Initializing Hive at ${dir.path}");
-      Hive.init(dir.path);
+      String hivePath = dir.path;
+
+      // Force dev to use different folder
+      if (kDebugMode) {
+        hivePath = '${dir.path}/jxledger_dev';
+      }
+
+      logln("Initializing Hive at $hivePath");
+      Hive.init(hivePath);
     }
 
     Hive.registerAdapter<TransactionsModel>(TransactionsAdapter());
