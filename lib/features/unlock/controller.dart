@@ -47,21 +47,21 @@ class UnlockController extends ChangeNotifier {
     }
 
     try {
-      await AppStorage.instance.openBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
+      await AppStorage.instance.openOrRebuildBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
       logln("Failed to open cryptos box: ${e.toString()}");
       return false;
     }
 
     try {
-      await AppStorage.instance.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
+      await AppStorage.instance.openOrRebuildBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
       logln("Failed to open rates box: ${e.toString()}");
       return false;
     }
 
     try {
-      await AppStorage.instance.openBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
+      await AppStorage.instance.openOrRebuildBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
       logln("Failed to open watchers box: ${e.toString()}");
       return false;

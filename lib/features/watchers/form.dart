@@ -28,6 +28,7 @@ class _WatchersFormState extends State<WatchersForm> {
   int? _selectedSrId;
   int? _selectedRrId;
   int? _sent;
+  String? _operator;
   String? _rateAmount;
   String? _limitCount;
   String? _durationMinutes;
@@ -47,6 +48,7 @@ class _WatchersFormState extends State<WatchersForm> {
     _selectedSrId = data?.srId;
     _selectedRrId = data?.rrId;
     _sent = 0;
+    _operator = data?.operator.toString() ?? WatchersOperator.greaterThan.index.toString();
     _rateAmount = Utils.sanitizeNumber(data?.rates.toString() ?? "");
     _limitCount = Utils.sanitizeNumber(data?.limit.toString() ?? "3");
     _durationMinutes = Utils.sanitizeNumber(data?.duration.toString() ?? "60");
@@ -63,10 +65,12 @@ class _WatchersFormState extends State<WatchersForm> {
         rrId: _selectedRrId!,
         rates: double.tryParse(Utils.sanitizeNumber(_rateAmount ?? "0")) ?? 0,
         sent: _sent!,
+        operator: int.tryParse(_operator ?? "2") ?? 2,
         limit: int.tryParse(_limitCount ?? "0") ?? 0,
         duration: int.tryParse(_durationMinutes ?? "0") ?? 0,
         message: _message!,
         timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+        meta: {},
       );
 
       await _controller.update(model);
@@ -143,6 +147,37 @@ class _WatchersFormState extends State<WatchersForm> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  const Text("Operator", style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 16),
+                                  DropdownButtonFormField<String>(
+                                    value: _operator,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      labelText: "Operator",
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(value: "0", child: Text("Rate = target rate")),
+                                      DropdownMenuItem(value: "1", child: Text("Rate < target rate")),
+                                      DropdownMenuItem(value: "2", child: Text("Rate > target rate")),
+                                    ],
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        _operator = newValue!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: WidgetsPanel(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   const Text("Target Rate", style: TextStyle(fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 16),
                                   WidgetsFieldsAmount(
@@ -191,7 +226,7 @@ class _WatchersFormState extends State<WatchersForm> {
                                   const SizedBox(height: 16),
                                   TextFormField(
                                     initialValue: _durationMinutes,
-                                    decoration: const InputDecoration(labelText: "Minutes"),
+                                    decoration: const InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
                                     keyboardType: TextInputType.number,
                                     onChanged: (v) => _durationMinutes = v,
                                   ),

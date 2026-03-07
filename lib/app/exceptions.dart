@@ -108,6 +108,7 @@ class AppErrorCode {
   static const int watcherLimitInvalid = 3006;
   static const int watcherDurationInvalid = 3007;
   static const int watcherMessageEmpty = 3008;
+  static const int watcherInvalidOperator = 3009;
 }
 
 class AppExceptionConfig {

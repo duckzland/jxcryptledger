@@ -90,7 +90,14 @@ class WatchersRepository {
       return;
     }
 
-    if (current < wx.rates) return;
+    switch (wx.operatorEnum) {
+      case WatchersOperator.equal:
+        if (current != wx.rates) return;
+      case WatchersOperator.lessThan:
+        if (current >= wx.rates) return;
+      case WatchersOperator.greaterThan:
+        if (current <= wx.rates) return;
+    }
 
     final updated = wx.copyWith(sent: wx.sent + 1, timestamp: now);
 

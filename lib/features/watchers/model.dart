@@ -1,15 +1,19 @@
 import '../../app/exceptions.dart';
 
+enum WatchersOperator { equal, lessThan, greaterThan }
+
 class WatchersModel {
   final String wid;
   final int srId;
   final int rrId;
   final double rates;
   final int sent;
+  final int operator;
   final int limit;
   final int duration;
   final String message;
   final int timestamp;
+  final Map<String, dynamic> meta;
 
   WatchersModel({
     required this.wid,
@@ -17,10 +21,12 @@ class WatchersModel {
     required this.rrId,
     required this.rates,
     required this.sent,
+    required this.operator,
     required this.limit,
     required this.duration,
     required this.message,
     required this.timestamp,
+    required this.meta,
   }) {
     if (wid.isEmpty) {
       throw ValidationException(AppErrorCode.watcherWidEmpty, "wid cannot be empty.", "Watcher ID is missing.");
@@ -53,6 +59,10 @@ class WatchersModel {
     if (duration < 1) {
       throw ValidationException(AppErrorCode.watcherDurationInvalid, "duration must be >= 1.", "Duration must be at least 1 minute.");
     }
+
+    if (operator < 0 || operator >= WatchersOperator.values.length) {
+      throw ValidationException(AppErrorCode.watcherInvalidOperator, "invalid operator", "Invalid operator detected");
+    }
   }
 
   factory WatchersModel.fromJson(Map<String, dynamic> json) {
@@ -62,10 +72,12 @@ class WatchersModel {
       rrId: json['rrId'] as int,
       rates: (json['rates'] as num).toDouble(),
       sent: json['sent'] as int,
+      operator: json['operator'] as int,
       limit: json['limit'] as int,
       duration: json['duration'] as int,
       message: json['message'] as String,
       timestamp: json['timestamp'] as int,
+      meta: Map<String, dynamic>.from(json['meta'] as Map),
     );
   }
 
@@ -76,10 +88,12 @@ class WatchersModel {
       'rrId': rrId,
       'rates': rates,
       'sent': sent,
+      'operator': operator,
       'limit': limit,
       'duration': duration,
       'message': message,
       'timestamp': timestamp,
+      'meta': meta,
     };
   }
 
@@ -89,10 +103,12 @@ class WatchersModel {
     int? rrId,
     double? rates,
     int? sent,
+    int? operator,
     int? limit,
     int? duration,
     String? message,
     int? timestamp,
+    Map<String, dynamic>? meta,
   }) {
     return WatchersModel(
       wid: wid ?? this.wid,
@@ -100,10 +116,34 @@ class WatchersModel {
       rrId: rrId ?? this.rrId,
       rates: rates ?? this.rates,
       sent: sent ?? this.sent,
+      operator: operator ?? WatchersOperator.greaterThan.index,
       limit: limit ?? this.limit,
       duration: duration ?? this.duration,
       message: message ?? this.message,
       timestamp: timestamp ?? this.timestamp,
+      meta: meta ?? Map<String, dynamic>.from(this.meta),
     );
+  }
+
+  WatchersOperator get operatorEnum {
+    switch (operator) {
+      case 0:
+        return WatchersOperator.equal;
+      case 1:
+        return WatchersOperator.lessThan;
+      default:
+        return WatchersOperator.greaterThan;
+    }
+  }
+
+  String get operatorText {
+    switch (operatorEnum) {
+      case WatchersOperator.equal:
+        return '=';
+      case WatchersOperator.lessThan:
+        return '<';
+      case WatchersOperator.greaterThan:
+        return '>';
+    }
   }
 }
