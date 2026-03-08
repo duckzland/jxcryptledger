@@ -478,7 +478,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny() && _txController.items.isEmpty) {
+    if (!_cryptosController.hasAny() && _txController.items.isNotEmpty) {
       return Column(children: [Expanded(child: _buildFetchCryptosState())]);
     }
 
@@ -605,13 +605,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 iconSize: 20,
                 minimumSize: const Size(40, 40),
                 onPressed: (_) => _showImportDialog(context),
-                evaluator: (s) {
-                  // if (!_txController.isEmpty()) {
-                  //   s.disable();
-                  // } else {
-                  //   s.primary();
-                  // }
-                },
+                evaluator: (s) {},
               ),
               WidgetsButton(
                 key: Key("export-button-batch"),
@@ -852,13 +846,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 initialState: WidgetsButtonActionState.primary,
                 tooltip: "Import transactions to database",
                 onPressed: (_) => _showImportFileSelector(),
-                evaluator: (s) {
-                  // if (!_txController.isEmpty()) {
-                  //   s.disable();
-                  // } else {
-                  //   s.primary();
-                  // }
-                },
+                evaluator: (s) {},
               ),
             ],
           ),
