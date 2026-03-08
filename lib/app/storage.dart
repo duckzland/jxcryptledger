@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 import '../core/log.dart';
 import '../features/cryptos/adapter.dart';
@@ -21,22 +22,40 @@ class AppStorage {
   static final AppStorage instance = AppStorage._();
 
   bool _initialized = false;
+  String? _hivePath;
 
   Future<void> init() async {
     if (_initialized) return;
+    
+    // Not supporting web!
+    if (kIsWeb) return;
 
-    if (!kIsWeb) {
-      Directory dir = await getApplicationDocumentsDirectory();
-      String hivePath = dir.path;
+    Directory dir = await getApplicationDocumentsDirectory();
 
-      // Force dev to use different folder
-      if (kDebugMode) {
-        hivePath = '${dir.path}/jxledger_dev';
-      }
+    String newHivePath = '${dir.path}/jxledger/live';
 
-      logln("Initializing Hive at $hivePath");
-      Hive.init(hivePath);
+    // Set as old dir first for checking and migrating
+    _hivePath = dir.path;
+
+    if (kDebugMode) {
+      _hivePath = '${dir.path}/jxledger_dev';
+      newHivePath = '${dir.path}/jxledger/dev';
     }
+
+    final moveThis = await exists();
+    if (moveThis) {
+      await migrateHiveFiles(_hivePath!, newHivePath, ['rates_box', 'cryptos_box', 'settings_box', 'watchers_box', 'transactions_box']);
+    }
+
+    // Switch to new directory
+    _hivePath = newHivePath;
+
+    if (!await Directory(_hivePath!).exists()) {
+      await Directory(_hivePath!).create(recursive: true);
+    }
+
+    logln("Initializing Hive at $newHivePath");
+    Hive.init(_hivePath!);
 
     Hive.registerAdapter<TransactionsModel>(TransactionsAdapter());
     Hive.registerAdapter<CryptosModel>(CryptosAdapter());
@@ -86,6 +105,40 @@ class AppStorage {
     }
   }
 
+  Future<void> migrateHiveFiles(String oldDirPath, String newDirPath, List<String> boxNames) async {
+    await Hive.close();
+
+    final oldDir = Directory(oldDirPath);
+    final newDir = Directory(newDirPath);
+
+    if (!await newDir.exists()) {
+      await newDir.create(recursive: true);
+    }
+
+    for (String boxName in boxNames) {
+      final extensions = ['.hive', '.lock'];
+
+      for (String ext in extensions) {
+        final fileName = '$boxName$ext';
+        final oldFile = File(p.join(oldDir.path, fileName));
+        final newFile = File(p.join(newDir.path, fileName));
+
+        if (await oldFile.exists()) {
+          try {
+            await oldFile.rename(newFile.path);
+
+            logln('Moved $fileName to new folder.');
+          } catch (e) {
+            await oldFile.copy(newFile.path);
+            await oldFile.delete();
+
+            logln('Copied and deleted $fileName (rename failed).');
+          }
+        }
+      }
+    }
+  }
+
   Future<void> closeAll() async {
     await Hive.close();
     _initialized = false;
@@ -94,10 +147,12 @@ class AppStorage {
   Future<bool> exists() async {
     if (kIsWeb) return false;
 
-    final dir = await getApplicationDocumentsDirectory();
+    if (_hivePath == null) {
+      return false;
+    }
 
-    final settingsFile = File('${dir.path}/settings_box.hive');
-    final transactionsFile = File('${dir.path}/transactions_box.hive');
+    final settingsFile = File('$_hivePath/settings_box.hive');
+    final transactionsFile = File('$_hivePath/transactions_box.hive');
 
     return await settingsFile.exists() || await transactionsFile.exists();
   }
