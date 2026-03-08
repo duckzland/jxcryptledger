@@ -1,9 +1,13 @@
+import 'dart:io';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../core/log.dart';
 import '../../widgets/button.dart';
 import '../../widgets/notify.dart';
 import '../../widgets/panel.dart';
@@ -70,6 +74,42 @@ class _WatchersPageState extends State<WatchersPage> {
     );
   }
 
+  Future<void> _showRestartDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Restart Watchers"),
+            content: const Text(
+              "This will restart all watchers by setting sent to 0.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Restart',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _wxController.restart();
+
+                    Navigator.pop(dialogContext);
+                  } catch (e) {
+                    widgetsNotifyError("Failed to import watchers.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showDeleteDialog(BuildContext context) async {
     await showDialog(
       context: context,
@@ -108,9 +148,92 @@ class _WatchersPageState extends State<WatchersPage> {
     );
   }
 
+  Future<void> _showImportDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Import Watcher"),
+            content: const Text(
+              "This will erase all existing watcher before inserting new data from the selected file.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Import',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _showImportFileSelector();
+
+                    Navigator.pop(dialogContext);
+                  } catch (e) {
+                    widgetsNotifyError("Failed to import watchers.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showExportFileSelector() async {
+    final json = await _wxController.exportDatabase();
+    if (json.isEmpty) {
+      widgetsNotifyError("Failed to export database.");
+      return;
+    }
+
+    final suggestedName = "wxs_${DateTime.now().millisecondsSinceEpoch}.json";
+    final saveLocation = await getSaveLocation(suggestedName: suggestedName, confirmButtonText: "Save");
+
+    if (saveLocation == null || saveLocation.path.isEmpty) {
+      widgetsNotifyError("Export cancelled.");
+      return;
+    }
+
+    try {
+      final file = File(saveLocation.path);
+      await file.writeAsString(json);
+      widgetsNotifySuccess("Database exported successfully.");
+    } catch (e) {
+      logln("Failed to save export file: $e");
+      widgetsNotifyError("Failed to save exported file.");
+    }
+  }
+
+  Future<void> _showImportFileSelector() async {
+    try {
+      final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+
+      if (file == null) {
+        widgetsNotifyError("No file selected.");
+        return;
+      }
+
+      final json = await file.readAsString();
+      await _wxController.importDatabase(json);
+
+      widgetsNotifySuccess("Database imported successfully.");
+    } on ValidationException catch (e) {
+      widgetsNotifyError(e.userMessage);
+    } catch (e) {
+      logln("Import failed: $e");
+      widgetsNotifyError("Import failed.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny() && _wxController.items.isEmpty) {
+    if (!_cryptosController.hasAny() && _wxController.items.isNotEmpty) {
       return Column(children: [Expanded(child: _buildFetchCryptosState())]);
     }
 
@@ -166,6 +289,17 @@ class _WatchersPageState extends State<WatchersPage> {
                     s.action();
                   }
                 },
+              ),
+              WidgetsButton(
+                key: Key("import-button-new"),
+                label: "Import",
+                icon: Icons.arrow_downward,
+                iconSize: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                initialState: WidgetsButtonActionState.primary,
+                tooltip: "Import watchers to database",
+                onPressed: (_) => _showImportFileSelector(),
+                evaluator: (s) {},
               ),
             ],
           ),
@@ -223,6 +357,34 @@ class _WatchersPageState extends State<WatchersPage> {
         spacing: 4,
         children: [
           WidgetsButton(
+            key: Key("import-button-batch"),
+            icon: Icons.arrow_downward,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.primary,
+            tooltip: "Import watchers to database",
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            onPressed: (_) => _showImportDialog(context),
+            evaluator: (s) {},
+          ),
+          WidgetsButton(
+            key: Key("export-button-batch"),
+            icon: Icons.arrow_upward,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.action,
+            tooltip: "Export watchers from database",
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            onPressed: (_) => _showExportFileSelector(),
+            evaluator: (s) {
+              if (_wxController.isEmpty()) {
+                s.disable();
+              } else {
+                s.action();
+              }
+            },
+          ),
+          WidgetsButton(
             key: Key("wipe-button-batch"),
             icon: Icons.delete_sweep,
             padding: const EdgeInsets.all(8),
@@ -236,6 +398,23 @@ class _WatchersPageState extends State<WatchersPage> {
                 s.disable();
               } else {
                 s.error();
+              }
+            },
+          ),
+          WidgetsButton(
+            key: Key("restart-button-batch"),
+            icon: Icons.refresh,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.warning,
+            tooltip: "Restart all watchers",
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            onPressed: (_) => _showRestartDialog(context),
+            evaluator: (s) {
+              if (!_wxController.hasRestartable()) {
+                s.disable();
+              } else {
+                s.warning();
               }
             },
           ),
@@ -268,8 +447,6 @@ class _WatchersPageState extends State<WatchersPage> {
               headingRowHeight: AppTheme.tableHeadingRowHeight,
               dataRowHeight: AppTheme.tableDataRowMinHeight,
               showCheckboxColumn: false,
-              // sortColumnIndex: _sortColumnIndex,
-              // sortAscending: _sortAscending,
               isHorizontalScrollBarVisible: false,
               columns: const [
                 DataColumn(label: Text("From")),

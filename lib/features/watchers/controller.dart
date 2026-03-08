@@ -72,4 +72,39 @@ class WatchersController extends ChangeNotifier {
   Future<void> sendNotification(WatchersModel wx) async {
     await repo.sendNotification(wx);
   }
+
+  Future<String> exportDatabase() async {
+    try {
+      return await repo.export();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  Future<void> importDatabase(String rawJson) async {
+    try {
+      await repo.import(rawJson);
+      await load();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> restart() async {
+    for (final wx in _items) {
+      final resetWx = wx.copyWith(sent: 0, timestamp: 0);
+      await repo.update(resetWx);
+    }
+
+    await load();
+  }
+
+  bool hasRestartable() {
+    for (final wx in _items) {
+      if (wx.sent >= wx.limit) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
