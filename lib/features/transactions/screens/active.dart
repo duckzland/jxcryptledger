@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/exceptions.dart';
 import '../../../core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
@@ -13,6 +14,9 @@ import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
+import '../../watchers/controller.dart';
+import '../../watchers/form.dart';
+import '../../watchers/model.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -35,6 +39,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   late final CryptosController _cryptosController;
   late final RatesController _ratesController;
   late final TransactionsController _txController;
+  late final WatchersController _wxController;
 
   late List<Map<String, dynamic>> _rows;
 
@@ -63,6 +68,15 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     return _isReversed ? (m == 0 ? null : 1 / m) : m;
   }
 
+  double? get nonReversedEffectiveRate {
+    final m = _marketRate;
+    if (m == null) return null;
+
+    return m;
+  }
+
+  WatchersModel? _linkedWatcher;
+
   @override
   void initState() {
     super.initState();
@@ -76,6 +90,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     _ratesController = locator<RatesController>();
     _ratesController.addListener(_onRatesUpdated);
 
+    _wxController = locator<WatchersController>();
+    _wxController.load();
+
+    _wxController.addListener(_onControllerChanged);
+
     _loadMarketRate();
 
     _customRateController = TextEditingController();
@@ -86,12 +105,16 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
     _checkForClosable();
     _checkForDeletable();
+
+    _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
   }
 
   @override
   void dispose() {
     _customRateController.dispose();
     _ratesController.removeListener(_onRatesUpdated);
+    _wxController.removeListener(_onControllerChanged);
+
     _debounce?.cancel();
 
     super.dispose();
@@ -158,6 +181,10 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
       setState(() {});
     }
+  }
+
+  void _onControllerChanged() {
+    setState(() {});
   }
 
   Future<void> _loadMarketRate() async {
@@ -240,6 +267,42 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         continue;
       }
     }
+  }
+
+  void _showAddWatcherDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Center(
+            child: WatchersForm(
+              initialData: _linkedWatcher,
+              initialSrId: _linkedWatcher == null ? widget.srid : null,
+              initialRrId: _linkedWatcher == null ? widget.rrid : null,
+              initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
+              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+              onSave: (e) async {
+                if (e == null) {
+                  Navigator.pop(dialogContext);
+                  setState(() {
+                    _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                  });
+                  return;
+                }
+
+                if (e is ValidationException) {
+                  widgetsNotifyError(e.userMessage, ctx: context);
+                  return;
+                }
+
+                widgetsNotifyError(e.toString(), ctx: context);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _showDeleteDialog(BuildContext context) async {
@@ -438,6 +501,26 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               _isReversed = !_isReversed;
               _rows = _buildRows(widget.transactions);
             });
+          },
+        ),
+        const SizedBox(width: 8),
+
+        WidgetsButton(
+          icon: Icons.add_alarm,
+          padding: const EdgeInsets.all(8),
+          initialState: WidgetsButtonActionState.action,
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
+          evaluator: (s) {
+            if (_linkedWatcher == null) {
+              s.normal();
+            } else {
+              _linkedWatcher!.isSpent() ? s.error() : s.action();
+            }
+          },
+          onPressed: (_) {
+            _showAddWatcherDialog();
           },
         ),
 
