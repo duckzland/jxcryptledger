@@ -14,8 +14,20 @@ import 'model.dart';
 class WatchersForm extends StatefulWidget {
   final void Function(Object? error)? onSave;
   final WatchersModel? initialData;
+  final int? initialSrId;
+  final int? initialRrId;
+  final double? initialRate;
+  final String? linkedToTx;
 
-  const WatchersForm({super.key, required this.onSave, this.initialData});
+  const WatchersForm({
+    super.key,
+    required this.onSave,
+    this.initialData,
+    this.initialSrId,
+    this.initialRrId,
+    this.initialRate,
+    this.linkedToTx,
+  });
 
   @override
   State<WatchersForm> createState() => _WatchersFormState();
@@ -53,6 +65,18 @@ class _WatchersFormState extends State<WatchersForm> {
     _limitCount = Utils.sanitizeNumber(data?.limit.toString() ?? "3");
     _durationMinutes = Utils.sanitizeNumber(data?.duration.toString() ?? "60");
     _message = data?.message ?? "";
+
+    if (widget.initialSrId != null) {
+      _selectedSrId = widget.initialSrId;
+    }
+
+    if (widget.initialRrId != null) {
+      _selectedRrId = widget.initialRrId;
+    }
+
+    if (widget.initialRate != null) {
+      _rateAmount = Utils.sanitizeNumber(widget.initialRate.toString());
+    }
   }
 
   void _handleSave() async {
@@ -70,7 +94,7 @@ class _WatchersFormState extends State<WatchersForm> {
         duration: int.tryParse(_durationMinutes ?? "0") ?? 0,
         message: _message!,
         timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
-        meta: {},
+        meta: widget.linkedToTx != null ? {"txLink": widget.linkedToTx} : {},
       );
 
       await _controller.update(model);
@@ -116,6 +140,7 @@ class _WatchersFormState extends State<WatchersForm> {
                                   WidgetsFieldsCryptoSearch(
                                     labelText: 'Coin',
                                     initialValue: _selectedSrId,
+                                    enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked(),
                                     onSelected: (id) => setState(() => _selectedSrId = id),
                                   ),
                                 ],
@@ -134,6 +159,7 @@ class _WatchersFormState extends State<WatchersForm> {
                                   WidgetsFieldsCryptoSearch(
                                     labelText: 'Coin',
                                     initialValue: _selectedRrId,
+                                    enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked(),
                                     onSelected: (id) => setState(() => _selectedRrId = id),
                                   ),
                                 ],

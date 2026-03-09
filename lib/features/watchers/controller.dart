@@ -57,6 +57,16 @@ class WatchersController extends ChangeNotifier {
     await load();
   }
 
+  WatchersModel? getLinked(String linkKey) {
+    for (final wx in items) {
+      if (wx.meta['txLink'] == linkKey) {
+        return wx;
+      }
+    }
+
+    return null;
+  }
+
   bool isEmpty() {
     return repo.isEmpty();
   }

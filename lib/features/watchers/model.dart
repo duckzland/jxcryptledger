@@ -136,6 +136,17 @@ class WatchersModel {
     }
   }
 
+  String get operatorMessage {
+    switch (operatorEnum) {
+      case WatchersOperator.equal:
+        return "equal to";
+      case WatchersOperator.lessThan:
+        return "less than";
+      case WatchersOperator.greaterThan:
+        return "greater than";
+    }
+  }
+
   String get operatorText {
     switch (operatorEnum) {
       case WatchersOperator.equal:
@@ -145,5 +156,13 @@ class WatchersModel {
       case WatchersOperator.greaterThan:
         return '>';
     }
+  }
+
+  bool isLinked() {
+    return meta.containsKey('txLink');
+  }
+
+  bool isSpent() {
+    return sent > 0 && limit > 0 && sent >= limit;
   }
 }

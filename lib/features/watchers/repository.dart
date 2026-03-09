@@ -76,12 +76,10 @@ class WatchersRepository {
   }
 
   Future<void> process(WatchersModel wx) async {
+    if (wx.isSpent()) return;
+
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
-
     final last = Utils.sanitizeTimestamp(wx.timestamp);
-
-    if (wx.limit > 0 && wx.sent >= wx.limit) return;
-
     final nextAllowed = last + (wx.duration * 60000000);
     if (now < nextAllowed) return;
 
@@ -112,7 +110,8 @@ class WatchersRepository {
     if (message == "" || message.trim().isEmpty) {
       final sourceSymbol = cryptos.getSymbol(wx.srId) ?? "";
       final targetSymbol = cryptos.getSymbol(wx.rrId) ?? "";
-      message = "$sourceSymbol to $targetSymbol reached ${wx.rates}.";
+
+      message = "$sourceSymbol to $targetSymbol is ${wx.operatorMessage} ${wx.rates}.";
     }
 
     final notify = locator<NotificationService>();
