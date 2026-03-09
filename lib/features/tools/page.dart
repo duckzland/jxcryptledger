@@ -51,7 +51,7 @@ class _ToolsPageState extends State<ToolsPage> {
     if (!_cryptosController.hasAny()) {
       return Column(
         children: [
-          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
+          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.')),
         ],
       );
     }
