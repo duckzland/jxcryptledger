@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
+import '../../core/locator.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
+import '../../widgets/screens/fetch_cryptos.dart';
+import '../cryptos/controller.dart';
 import 'screens/qrcode.dart';
 import 'screens/calculator.dart';
 import 'screens/converter.dart';
@@ -18,15 +21,23 @@ class ToolsPage extends StatefulWidget {
 
 class _ToolsPageState extends State<ToolsPage> {
   ToolsViewMode _viewMode = ToolsViewMode.calculator;
+  final CryptosController _cryptosController = locator<CryptosController>();
 
   @override
   void initState() {
     super.initState();
+    _cryptosController.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
+    _cryptosController.removeListener(_onControllerChanged);
+
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    setState(() {});
   }
 
   void _changePageTitle(String title) {
@@ -37,6 +48,13 @@ class _ToolsPageState extends State<ToolsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_cryptosController.hasAny()) {
+      return Column(
+        children: [
+          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
+        ],
+      );
+    }
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),

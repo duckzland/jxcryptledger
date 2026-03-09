@@ -10,6 +10,8 @@ import '../../core/log.dart';
 import '../../widgets/notify.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
+import '../../widgets/screens/empty.dart';
+import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
 import 'controller.dart';
 import 'model.dart';
@@ -114,24 +116,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       context: context,
       builder: (dialogContext) => Scaffold(
         backgroundColor: Colors.transparent,
-        body: Center(
-          child: TransactionFormCreate(
-            onSave: (e) async {
-              if (e == null) {
-                Navigator.pop(dialogContext);
-                widgetsNotifySuccess('Transaction saved');
-                return;
-              }
-
-              if (e is ValidationException) {
-                widgetsNotifyError(e.userMessage, ctx: context);
-                return;
-              }
-
-              widgetsNotifyError(e.toString(), ctx: context);
-            },
-          ),
-        ),
+        body: Center(child: _buildForm(dialogContext)),
       ),
     );
   }
@@ -478,12 +463,38 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny() && _txController.items.isNotEmpty) {
-      return Column(children: [Expanded(child: _buildFetchCryptosState())]);
+    if (!_cryptosController.hasAny()) {
+      return Column(
+        children: [
+          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
+        ],
+      );
     }
 
     if (_txController.items.isEmpty) {
-      return Column(children: [Expanded(child: _buildEmptyState())]);
+      return Column(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: WidgetsScreensEmpty(
+                    title: "Add Transaction",
+                    addTitle: "Add New",
+                    addTooltip: "Create new transaction entry",
+                    addEvaluator: () => _cryptosController.hasAny(),
+                    importTitle: "Import",
+                    importTooltip: "Import transactions to database",
+                    importEvaluator: () => true,
+                    importCallback: (json) async => await _txController.importDatabase(json),
+                    addForm: _buildForm,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
     }
 
     return Center(
@@ -516,6 +527,27 @@ class _TransactionsPageState extends State<TransactionsPage> {
             Expanded(child: _buildScreen()),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext dialogContext) {
+    return Center(
+      child: TransactionFormCreate(
+        onSave: (e) async {
+          if (e == null) {
+            Navigator.pop(dialogContext);
+            widgetsNotifySuccess('Transaction saved');
+            return;
+          }
+
+          if (e is ValidationException) {
+            widgetsNotifyError(e.userMessage, ctx: context);
+            return;
+          }
+
+          widgetsNotifyError(e.toString(), ctx: context);
+        },
       ),
     );
   }
@@ -807,95 +839,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
         return TransactionHistory(transactions: _getHistoryTransactions());
     }
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(Icons.add_circle_outline, size: 60, color: Colors.white30),
-          const SizedBox(height: 16),
-          const Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 20,
-            children: [
-              WidgetsButton(
-                icon: Icons.add,
-                iconSize: 16,
-                label: "Add New",
-                initialState: WidgetsButtonActionState.action,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                onPressed: (_) => _showAddTransactionDialog(),
-                evaluator: (s) {
-                  if (!_cryptosController.hasAny()) {
-                    s.disable();
-                  } else {
-                    s.action();
-                  }
-                },
-              ),
-              WidgetsButton(
-                key: Key("import-button-new"),
-                label: "Import",
-                icon: Icons.arrow_downward,
-                iconSize: 16,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                initialState: WidgetsButtonActionState.primary,
-                tooltip: "Import transactions to database",
-                onPressed: (_) => _showImportFileSelector(),
-                evaluator: (s) {},
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFetchCryptosState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(Icons.cloud_download_outlined, size: 60, color: Colors.white30),
-          const SizedBox(height: 16),
-          const Text('Cryptocurrency data not available', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          const Text(
-            'You need to fetch the latest crypto list before adding transactions.',
-            style: TextStyle(fontSize: 14, color: Colors.white54),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          WidgetsButton(
-            icon: Icons.refresh,
-            initialState: WidgetsButtonActionState.action,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            onPressed: (s) async {
-              s.progress();
-
-              try {
-                await _cryptosController.fetch();
-                widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-                _cryptosController.getSymbolMap();
-                s.action();
-                setState(() {});
-              } catch (e) {
-                if (e is NetworkingException) {
-                  widgetsNotifyError(e.userMessage);
-                }
-              } finally {
-                s.reset();
-              }
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildOverviewList(Map<int, List<TransactionsModel>> grouped) {
