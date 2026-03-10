@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_reorderable_grid_view/widgets/reorderable_builder.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/locator.dart';
@@ -248,7 +250,7 @@ class _PanelsPageState extends State<PanelsPage> {
     final items = _panelsController.items.toList();
     items.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
 
-    return GridView.builder(
+    return ReorderableGridView.builder(
       gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
         itemHeight: 122,
@@ -259,7 +261,16 @@ class _PanelsPageState extends State<PanelsPage> {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final tx = items[index];
-        return TickersWidgetsPanel(tix: tx);
+        return TickersWidgetsPanel(key: ValueKey(tx.tid), tix: tx);
+      },
+      onReorder: (oldIndex, newIndex) {
+        final moved = items.removeAt(oldIndex);
+        items.insert(newIndex, moved);
+
+        for (var i = 0; i < items.length; i++) {
+          items[i].order = i;
+        }
+        _panelsController.updateOrder(items);
       },
     );
   }
