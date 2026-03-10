@@ -188,20 +188,16 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   }
 
   Future<void> _loadMarketRate() async {
-    try {
-      final rate = await _ratesController.getStoredRate(widget.srid, widget.rrid);
-      if (rate == -9999) {
-        _ratesController.addQueue(widget.srid, widget.rrid);
-        return;
-      }
-      if (mounted) {
-        setState(() {
-          _marketRate = rate;
-          _rows = _buildRows(widget.transactions);
-        });
-      }
-    } catch (e) {
-      // Do something to process the error message?
+    final rate = await _ratesController.getStoredRate(widget.srid, widget.rrid);
+    if (rate == -9999) {
+      _ratesController.addQueue(widget.srid, widget.rrid);
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _marketRate = rate;
+        _rows = _buildRows(widget.transactions);
+      });
     }
   }
 
@@ -285,6 +281,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               onSave: (e) async {
                 if (e == null) {
                   Navigator.pop(dialogContext);
+
+                  if (_linkedWatcher == null) {
+                    widgetsNotifySuccess("Created notification watcher.");
+                  } else {
+                    widgetsNotifySuccess("Notification watcher updated");
+                  }
+
                   setState(() {
                     _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
                   });

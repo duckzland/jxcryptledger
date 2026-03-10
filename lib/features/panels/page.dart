@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_reorderable_grid_view/widgets/reorderable_builder.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../app/exceptions.dart';
@@ -32,6 +31,9 @@ class _PanelsPageState extends State<PanelsPage> {
   late final PanelsController _panelsController;
   late final TickersController _tickersController;
   late final CryptosController _cryptosController;
+
+  bool _enableDrag = false;
+  bool _enableTickers = true;
 
   @override
   void initState() {
@@ -235,8 +237,8 @@ class _PanelsPageState extends State<PanelsPage> {
                 const Expanded(child: SizedBox()),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(children: [Expanded(child: _buildTickers())]),
+            if (_enableTickers) SizedBox(height: 16),
+            if (_enableTickers) Row(children: [Expanded(child: _buildTickers())]),
 
             const SizedBox(height: 12),
             Flexible(flex: 10, fit: FlexFit.loose, child: _buildPanels()),
@@ -258,10 +260,12 @@ class _PanelsPageState extends State<PanelsPage> {
         crossAxisSpacing: 12,
         horizontalPadding: 12,
       ),
+      dragEnabled: _enableDrag,
+      dragStartDelay: Duration(microseconds: 10),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final tx = items[index];
-        return TickersWidgetsPanel(key: ValueKey(tx.tid), tix: tx);
+        return TickersWidgetsPanel(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
       },
       onReorder: (oldIndex, newIndex) {
         final moved = items.removeAt(oldIndex);
@@ -394,12 +398,44 @@ class _PanelsPageState extends State<PanelsPage> {
             },
           ),
           WidgetsButton(
+            icon: Icons.remove_red_eye,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.normal,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: _enableTickers ? "Hide tickers" : "ShowTickers",
+            evaluator: (s) {
+              _enableTickers ? s.primary() : s.normal();
+            },
+            onPressed: (_) {
+              setState(() {
+                _enableTickers = !_enableTickers;
+              });
+            },
+          ),
+          WidgetsButton(
+            icon: Icons.drag_indicator,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.normal,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: _enableDrag ? "Turn off panel dragging" : "Turn on panel dragging",
+            evaluator: (s) {
+              _enableDrag ? s.primary() : s.normal();
+            },
+            onPressed: (_) {
+              setState(() {
+                _enableDrag = !_enableDrag;
+              });
+            },
+          ),
+          WidgetsButton(
             icon: Icons.candlestick_chart_outlined,
             padding: const EdgeInsets.all(8),
             initialState: WidgetsButtonActionState.action,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: "Add new tickers",
+            tooltip: "Add new panels",
             evaluator: (s) => s.action(),
             onPressed: (_) {
               _showAddTickerDialog();

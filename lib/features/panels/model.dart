@@ -139,6 +139,10 @@ class PanelsModel {
   }
 
   int getStatus() {
+    if (rate! == -9999) {
+      return 0;
+    }
+
     final prevRate = (meta["oldRate"] is num) ? (meta["oldRate"] as num).toDouble() : double.tryParse(meta["oldRate"]?.toString() ?? "");
 
     if (rate == null || prevRate == null) return 0;

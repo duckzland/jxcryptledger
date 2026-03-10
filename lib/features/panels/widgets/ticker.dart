@@ -79,36 +79,47 @@ class _TickersWidgetsTickerState extends State<TickersWidgetsTicker> {
   Widget build(BuildContext context) {
     final tix = widget.tix;
 
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(0),
-      background: _resolveBackground(),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: tix.getContent() != ""
-            ? [
-                Text(
-                  tix.getTitle(),
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1),
-                ),
-                Text(
-                  tix.getContent(),
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(height: 1.4, fontWeight: FontWeight.bold),
-                ),
-              ]
-            : [
-                Text(
-                  "Loading...",
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(height: 1.4, fontWeight: FontWeight.bold),
-                ),
-              ],
-      ),
+    final targetColor = _resolveBackground();
+    final hsl = HSLColor.fromColor(targetColor);
+    final startColor = hsl.withLightness((hsl.lightness + 0.3).clamp(0.0, 1.0)).toColor();
+
+    return TweenAnimationBuilder<Color?>(
+      duration: const Duration(milliseconds: 500),
+      tween: ColorTween(begin: startColor, end: targetColor),
+      curve: Curves.easeOutQuart,
+      builder: (context, Color? animatedBgColor, child) {
+        return WidgetsPanel(
+          padding: const EdgeInsets.all(0),
+          background: animatedBgColor,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: tix.getContent() != ""
+                ? [
+                    Text(
+                      tix.getTitle(),
+                      softWrap: false,
+                      overflow: TextOverflow.visible,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1),
+                    ),
+                    Text(
+                      tix.getContent(),
+                      softWrap: false,
+                      overflow: TextOverflow.visible,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(height: 1.4, fontWeight: FontWeight.bold),
+                    ),
+                  ]
+                : [
+                    Text(
+                      "Loading...",
+                      softWrap: false,
+                      overflow: TextOverflow.visible,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(height: 1.4, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+          ),
+        );
+      },
     );
   }
 }
