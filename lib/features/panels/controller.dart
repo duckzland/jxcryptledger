@@ -77,6 +77,16 @@ class PanelsController extends ChangeNotifier {
     }
   }
 
+  PanelsModel? getLinked(String linkKey) {
+    for (final wx in items) {
+      if (wx.meta['txLink'] == linkKey) {
+        return wx;
+      }
+    }
+
+    return null;
+  }
+
   bool isEmpty() {
     return repo.isEmpty();
   }
