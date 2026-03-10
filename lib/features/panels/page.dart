@@ -435,7 +435,7 @@ class _PanelsPageState extends State<PanelsPage> {
             initialState: WidgetsButtonActionState.action,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: "Add new panels",
+            tooltip: "Add new panel",
             evaluator: (s) => s.action(),
             onPressed: (_) {
               _showAddTickerDialog();

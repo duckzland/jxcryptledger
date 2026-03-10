@@ -4,7 +4,6 @@ import '../core/locator.dart';
 import '../core/log.dart';
 import '../features/rates/controller.dart';
 import '../features/panels/controller.dart';
-import '../features/tickers/controller.dart';
 import '../features/tickers/service.dart';
 import '../features/watchers/controller.dart';
 

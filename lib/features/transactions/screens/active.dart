@@ -13,6 +13,9 @@ import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../../panels/controller.dart';
+import '../../panels/form.dart';
+import '../../panels/model.dart';
 import '../../rates/controller.dart';
 import '../../watchers/controller.dart';
 import '../../watchers/form.dart';
@@ -40,6 +43,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   late final RatesController _ratesController;
   late final TransactionsController _txController;
   late final WatchersController _wxController;
+  late final PanelsController _tixController;
 
   late List<Map<String, dynamic>> _rows;
 
@@ -69,13 +73,21 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   }
 
   double? get nonReversedEffectiveRate {
-    final m = _marketRate;
-    if (m == null) return null;
+    final c = _customRate;
+    if (c != null) {
+      return _isReversed ? 1 / c : c;
+    }
 
-    return m;
+    final m = _marketRate;
+    if (m != null) {
+      return m;
+    }
+
+    return _calc.averageExchangedRate(widget.transactions, reverse: false);
   }
 
   WatchersModel? _linkedWatcher;
+  PanelsModel? _linkedPanel;
 
   @override
   void initState() {
@@ -95,6 +107,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
     _wxController.addListener(_onControllerChanged);
 
+    _tixController = locator<PanelsController>();
+    _tixController.load();
+
     _loadMarketRate();
 
     _customRateController = TextEditingController();
@@ -107,6 +122,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     _checkForDeletable();
 
     _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+    _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
   }
 
   @override
@@ -263,6 +279,49 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         continue;
       }
     }
+  }
+
+  void _showAddPanelDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Center(
+            child: PanelsForm(
+              initialData: _linkedPanel,
+              initialSrId: _linkedPanel == null ? widget.srid : null,
+              initialRrId: _linkedPanel == null ? widget.rrid : null,
+              initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(widget.transactions) : null,
+              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+              onSave: (e) async {
+                if (e == null) {
+                  Navigator.pop(dialogContext);
+
+                  if (_linkedPanel == null) {
+                    widgetsNotifySuccess("Created panel entry.");
+                  } else {
+                    widgetsNotifySuccess("Panel entry updated");
+                  }
+
+                  setState(() {
+                    _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                  });
+                  return;
+                }
+
+                if (e is ValidationException) {
+                  widgetsNotifyError(e.userMessage, ctx: context);
+                  return;
+                }
+
+                widgetsNotifyError(e.toString(), ctx: context);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showAddWatcherDialog() {
@@ -507,6 +566,25 @@ class _TransactionsActiveState extends State<TransactionsActive> {
           },
         ),
         const SizedBox(width: 8),
+
+        WidgetsButton(
+          icon: Icons.candlestick_chart_outlined,
+          padding: const EdgeInsets.all(8),
+          initialState: WidgetsButtonActionState.action,
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: _linkedPanel == null ? "Add new panel" : "Edit panel",
+          evaluator: (s) {
+            if (_linkedPanel == null) {
+              s.normal();
+            } else {
+              s.action();
+            }
+          },
+          onPressed: (_) {
+            _showAddPanelDialog();
+          },
+        ),
 
         WidgetsButton(
           icon: Icons.add_alarm,
