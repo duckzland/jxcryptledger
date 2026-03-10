@@ -54,7 +54,7 @@ class _AppLayoutState extends State<AppLayout> {
           appBar: AppBar(
             backgroundColor: AppTheme.columnHeaderBg,
             centerTitle: true,
-            leadingWidth: 180,
+            leadingWidth: 210,
             leading: Padding(
               padding: const EdgeInsets.only(left: 8.0),
               child: Center(
@@ -77,6 +77,24 @@ class _AppLayoutState extends State<AppLayout> {
                       },
                       onPressed: (s) {
                         context.go("/transactions");
+                      },
+                    ),
+
+                    WidgetsButton(
+                      icon: Icons.candlestick_chart,
+                      padding: const EdgeInsets.all(8),
+                      iconSize: 20,
+                      minimumSize: const Size(40, 40),
+                      tooltip: "Display Tickers",
+                      evaluator: (s) {
+                        if (location == "/tickers") {
+                          s.active();
+                        } else {
+                          s.normal();
+                        }
+                      },
+                      onPressed: (s) {
+                        context.go("/tickers");
                       },
                     ),
 

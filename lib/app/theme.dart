@@ -28,6 +28,19 @@ class AppTheme {
   static const mutedBg = Color.fromARGB(255, 41, 47, 59);
   static const closedBg = Color.fromARGB(255, 37, 52, 66);
 
+  static const red = Color.fromARGB(255, 133, 36, 36);
+  static const darkRed = Color.fromARGB(255, 100, 25, 25);
+  static const green = Color.fromARGB(255, 22, 106, 69);
+  static const darkGreen = Color.fromARGB(255, 15, 70, 45);
+  static const blue = Color.fromARGB(255, 60, 120, 220);
+  static const lightBlue = Color.fromARGB(255, 100, 160, 230);
+  static const lightPurple = Color.fromARGB(255, 160, 140, 200);
+  static const lightOrange = Color.fromARGB(255, 240, 160, 100);
+  static const orange = Color.fromARGB(255, 195, 102, 51);
+  static const yellow = Color.fromARGB(255, 192, 168, 64);
+  static const teal = Color.fromARGB(255, 40, 170, 140);
+  static const darkGrey = Color.fromARGB(255, 40, 40, 40);
+
   static const buttonFg = Color(0xFFE0E0E0);
 
   static const buttonBgDisabled = Color(0xFF1A1B1F);

@@ -3,6 +3,9 @@ import 'dart:async';
 import '../core/locator.dart';
 import '../core/log.dart';
 import '../features/rates/controller.dart';
+import '../features/panels/controller.dart';
+import '../features/tickers/controller.dart';
+import '../features/tickers/service.dart';
 import '../features/watchers/controller.dart';
 
 class AppWorker {
@@ -21,6 +24,14 @@ class AppWorker {
       logln("[Worker] Processing watchers");
       final watchers = locator<WatchersController>();
       await watchers.onRatesUpdated();
+
+      logln("[Worker] Processing panels");
+      final panels = locator<PanelsController>();
+      await panels.onRatesUpdated();
+
+      logln("[Worker] Refreshing tickers rates");
+      final tickers = locator<TickersService>();
+      await tickers.refreshRates();
     });
   }
 
