@@ -97,4 +97,13 @@ class PanelsController extends ChangeNotifier {
       rethrow;
     }
   }
+
+  void updateOrder(List<PanelsModel> newOrder) {
+    for (var i = 0; i < newOrder.length; i++) {
+      newOrder[i].order = i;
+      repo.update(newOrder[i]);
+    }
+
+    load();
+  }
 }
