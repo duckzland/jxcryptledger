@@ -10,6 +10,11 @@ import '../features/cryptos/service.dart';
 import '../features/cryptos/controller.dart';
 import '../features/settings/controller.dart';
 import '../features/settings/repository.dart';
+import '../features/panels/controller.dart';
+import '../features/panels/repository.dart';
+import '../features/tickers/controller.dart';
+import '../features/tickers/repository.dart';
+import '../features/tickers/service.dart';
 import '../features/transactions/controller.dart';
 import '../features/transactions/repository.dart';
 import '../features/watchers/controller.dart';
@@ -47,4 +52,13 @@ void setupLocator() {
 
   // Notification
   locator.registerLazySingleton(() => NotificationService());
+
+  // Panels
+  locator.registerLazySingleton<PanelsRepository>(() => PanelsRepository());
+  locator.registerLazySingleton<PanelsController>(() => PanelsController(locator<PanelsRepository>(), locator<RatesController>()));
+
+  // Tickers
+  locator.registerLazySingleton<TickersRepository>(() => TickersRepository());
+  locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>()));
+  locator.registerLazySingleton<TickersService>(() => TickersService(locator<TickersController>(), locator<SettingsRepository>()));
 }

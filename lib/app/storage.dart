@@ -12,6 +12,10 @@ import '../features/cryptos/adapter.dart';
 import '../features/cryptos/model.dart';
 import '../features/rates/adapter.dart';
 import '../features/rates/model.dart';
+import '../features/panels/adapter.dart';
+import '../features/panels/model.dart';
+import '../features/tickers/adapter.dart';
+import '../features/tickers/model.dart';
 import '../features/transactions/adapter.dart';
 import '../features/transactions/model.dart';
 import '../features/watchers/adapter.dart';
@@ -26,7 +30,7 @@ class AppStorage {
 
   Future<void> init() async {
     if (_initialized) return;
-    
+
     // Not supporting web!
     if (kIsWeb) return;
 
@@ -44,7 +48,15 @@ class AppStorage {
 
     final moveThis = await exists();
     if (moveThis) {
-      await migrateHiveFiles(_hivePath!, newHivePath, ['rates_box', 'cryptos_box', 'settings_box', 'watchers_box', 'transactions_box']);
+      await migrateHiveFiles(_hivePath!, newHivePath, [
+        'rates_box',
+        'cryptos_box',
+        'settings_box',
+        'watchers_box',
+        'transactions_box',
+        'panels_box',
+        'tickers_box',
+      ]);
     }
 
     // Switch to new directory
@@ -61,6 +73,8 @@ class AppStorage {
     Hive.registerAdapter<CryptosModel>(CryptosAdapter());
     Hive.registerAdapter<RatesModel>(RatesAdapter());
     Hive.registerAdapter<WatchersModel>(WatchersAdapter());
+    Hive.registerAdapter<PanelsModel>(PanelsAdapter());
+    Hive.registerAdapter<TickersModel>(TickersAdapter());
 
     _initialized = true;
   }

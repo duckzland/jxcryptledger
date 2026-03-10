@@ -14,6 +14,10 @@ import '../encryption/service.dart';
 import '../notification/service.dart';
 import '../settings/controller.dart';
 import '../settings/keys.dart';
+import '../panels/controller.dart';
+import '../panels/model.dart';
+import '../tickers/controller.dart';
+import '../tickers/model.dart';
 import '../watchers/controller.dart';
 import '../watchers/model.dart';
 
@@ -25,6 +29,8 @@ class UnlockController extends ChangeNotifier {
   final SettingsController _settingsController = locator<SettingsController>();
   final RatesController _ratesController = locator<RatesController>();
   final WatchersController _watchersController = locator<WatchersController>();
+  final PanelsController _panelsController = locator<PanelsController>();
+  final TickersController _tickersController = locator<TickersController>();
   final NotificationService _notificationService = locator<NotificationService>();
   final AppWorker _appWorker = locator<AppWorker>();
 
@@ -41,6 +47,8 @@ class UnlockController extends ChangeNotifier {
       await AppStorage.instance.openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
 
       await AppStorage.instance.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
+
+      await AppStorage.instance.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
     } catch (e) {
       logln("Failed to decrypt boxes (wrong password)");
       return false;
@@ -64,6 +72,13 @@ class UnlockController extends ChangeNotifier {
       await AppStorage.instance.openOrRebuildBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
       logln("Failed to open watchers box: ${e.toString()}");
+      return false;
+    }
+
+    try {
+      await AppStorage.instance.openOrRebuildBox<TickersModel>('tickers_box', encryptionCipher: null, crashRecovery: false);
+    } catch (e) {
+      logln("Failed to open tickers box: ${e.toString()}");
       return false;
     }
 
@@ -97,6 +112,8 @@ class UnlockController extends ChangeNotifier {
         _notificationService.init();
         _ratesController.init();
         _watchersController.init();
+        _panelsController.init();
+        _tickersController.init();
       });
       _unlocked = true;
       notifyListeners();

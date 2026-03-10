@@ -21,6 +21,69 @@ enum SettingKey {
     hintText: "https://example.com/exchange",
   ),
 
+  altSeasonEndpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'Alt Season Endpoint',
+    defaultValue: "https://api.coinmarketcap.com/data-api/v3/altcoin-season/chart",
+    validator: _validateUrl,
+    hintText: "https://example.com/altseason",
+  ),
+
+  fearGreedEndpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'Fear & Greed Endpoint',
+    defaultValue: "https://api.coinmarketcap.com/data-api/v3/fear-greed/chart",
+    validator: _validateUrl,
+    hintText: "https://example.com/feargreed",
+  ),
+
+  cmc100Endpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'CMC Top 100 Endpoint',
+    defaultValue: "https://api.coinmarketcap.com/data-api/v3/top100/supplement",
+    validator: _validateUrl,
+    hintText: "https://example.com/top100",
+  ),
+
+  marketCapEndpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'Market Cap Endpoint',
+    defaultValue: "https://api.coinmarketcap.com/data-api/v4/global-metrics/quotes/historical",
+    validator: _validateUrl,
+    hintText: "https://example.com/marketcap",
+  ),
+
+  rsiEndpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'RSI Endpoint',
+    defaultValue: "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/rsi/heatmap/overall",
+    validator: _validateUrl,
+    hintText: "https://example.com/rsi",
+  ),
+
+  etfEndpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'ETF Endpoint',
+    defaultValue: "https://api.coinmarketcap.com/data-api/v3/etf/overview/netflow/chart",
+    validator: _validateUrl,
+    hintText: "https://example.com/etf",
+  ),
+
+  dominanceEndpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'Dominance Endpoint',
+    defaultValue: "https://api.coinmarketcap.com/data-api/v3/global-metrics/dominance/overview",
+    validator: _validateUrl,
+    hintText: "https://example.com/dominance",
+  ),
+
   vaultInitialized(type: SettingType.string, isUserEditable: false, label: 'Vault Status', defaultValue: "", validator: null, hintText: "");
 
   final SettingType type;

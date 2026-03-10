@@ -109,6 +109,20 @@ class AppErrorCode {
   static const int watcherDurationInvalid = 3007;
   static const int watcherMessageEmpty = 3008;
   static const int watcherInvalidOperator = 3009;
+
+  static const int tickerBasicInvalidType = 4001;
+  static const int tickerBasicInvalidSrAmount = 4002;
+  static const int tickerBasicInvalidSrId = 4003;
+  static const int tickerBasicInvalidRrId = 4004;
+  static const int tickerBasicInvalidDigit = 4005;
+  static const int tickerBasicInvalidRate = 4006;
+  static const int tickerBasicInvalidValue = 4007;
+  static const int tickerBasicInvalidOrder = 4008;
+  static const int tickerBasicInvalidMeta = 4009;
+  static const int tickerBasicInvalidTid = 4010;
+  static const int tickerCannotRemoveStaticType = 4011;
+  static const int tickerBasicInvalidTitle = 4012;
+  static const int tickerBasicInvalidFormat = 4013;
 }
 
 class AppExceptionConfig {
