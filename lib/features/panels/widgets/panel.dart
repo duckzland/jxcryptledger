@@ -12,8 +12,9 @@ import 'buttons.dart';
 class TickersWidgetsPanel extends StatefulWidget {
   final PanelsModel tix;
   final double? prevRate;
+  final bool isDragging;
 
-  const TickersWidgetsPanel({super.key, required this.tix, this.prevRate});
+  const TickersWidgetsPanel({super.key, required this.tix, required this.isDragging, this.prevRate});
 
   @override
   State<TickersWidgetsPanel> createState() => _TickersWidgetsPanelState();
@@ -25,7 +26,9 @@ class _TickersWidgetsPanelState extends State<TickersWidgetsPanel> {
   late final PanelsController _tixController;
   late final RatesController _ratesController;
 
-  bool _showAction = false;
+  static final List<StateSetter> _subscribers = [];
+
+  static dynamic _activePanelId;
 
   @override
   void initState() {
@@ -35,12 +38,15 @@ class _TickersWidgetsPanelState extends State<TickersWidgetsPanel> {
 
     _ratesController = locator<RatesController>();
     _ratesController.addListener(_onControllerChanged);
+
+    _subscribers.add(setState);
   }
 
   @override
   void dispose() {
     _tixController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
+    _subscribers.remove(setState);
 
     super.dispose();
   }
@@ -53,6 +59,15 @@ class _TickersWidgetsPanelState extends State<TickersWidgetsPanel> {
       if (mounted) {
         setState(() {});
       }
+    }
+  }
+
+  void _handleToggle() {
+    final myId = widget.tix.tid;
+    _activePanelId = (_activePanelId == myId) ? null : myId;
+
+    for (final setter in _subscribers) {
+      setter(() {});
     }
   }
 
@@ -80,6 +95,8 @@ class _TickersWidgetsPanelState extends State<TickersWidgetsPanel> {
     final rateText = "1 $sourceSymbol = ${tix.rate?.toStringAsFixed(tix.digit)} $targetSymbol";
     final inverseText = "1 $targetSymbol = ${(1 / tix.rate!).toStringAsFixed(tix.digit)} $sourceSymbol";
 
+    final bool isThisOneActive = _activePanelId == widget.tix.tid;
+
     final text = tix.rate != null && tix.rate! > 0
         ? [
             Text(fromText, style: Theme.of(context).textTheme.bodyMedium),
@@ -101,33 +118,48 @@ class _TickersWidgetsPanelState extends State<TickersWidgetsPanel> {
             ),
           ];
 
-    return GestureDetector(
-      onTap: () => setState(() => _showAction = !_showAction),
-      child: SizedBox(
-        width: double.infinity,
-        child: Stack(
-          children: [
-            WidgetsPanel(
-              background: _resolveBackground(),
-              child: SizedBox(
-                width: double.infinity,
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: text),
-              ),
-            ),
-            if (_showAction)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: TickersWidgetsButtons(
-                  tix: tix,
-                  onAction: () {
-                    setState(() {});
-                  },
+    final targetColor = _resolveBackground();
+    final hsl = HSLColor.fromColor(targetColor);
+    final startColor = hsl.withLightness((hsl.lightness + 0.3).clamp(0.0, 1.0)).toColor();
+
+    return TweenAnimationBuilder<Color?>(
+      duration: const Duration(milliseconds: 500),
+      tween: ColorTween(begin: startColor, end: targetColor),
+      curve: Curves.easeOutQuart,
+      builder: (context, Color? animatedBgColor, child) {
+        return GestureDetector(
+          onTap: _handleToggle,
+          child: SizedBox(
+            width: double.infinity,
+            child: Stack(
+              children: [
+                WidgetsPanel(
+                  background: animatedBgColor,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: text,
+                    ),
+                  ),
                 ),
-              ),
-          ],
-        ),
-      ),
+                if (isThisOneActive && !widget.isDragging)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: TickersWidgetsButtons(
+                      tix: tix,
+                      onAction: () {
+                        setState(() {});
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

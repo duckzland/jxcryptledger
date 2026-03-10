@@ -5,20 +5,96 @@ import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/notify.dart';
 import '../../cryptos/controller.dart';
+import '../../watchers/controller.dart';
+import '../../watchers/form.dart';
+import '../../watchers/model.dart';
 import '../controller.dart';
 import '../form.dart';
 import '../model.dart';
 
-class TickersWidgetsButtons extends StatelessWidget {
+class TickersWidgetsButtons extends StatefulWidget {
   final PanelsModel tix;
   final void Function() onAction;
 
+  const TickersWidgetsButtons({super.key, required this.tix, required this.onAction});
+
+  @override
+  State<TickersWidgetsButtons> createState() => _TickersWidgetsButtonsState();
+}
+
+class _TickersWidgetsButtonsState extends State<TickersWidgetsButtons> {
   CryptosController get _cryptosController => locator<CryptosController>();
   PanelsController get _tixController => locator<PanelsController>();
 
-  const TickersWidgetsButtons({super.key, required this.tix, required this.onAction});
+  late final WatchersController _wxController;
+
+  WatchersModel? _linkedWatcher;
+
+  @override
+  void initState() {
+    super.initState();
+    _wxController = locator<WatchersController>();
+    _wxController.addListener(_onControllerChanged);
+
+    _linkedWatcher = _wxController.getLinked("panels-${widget.tix.tid}");
+  }
+
+  @override
+  void dispose() {
+    _wxController.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    setState(() {});
+  }
+
+  void _showAddWatcherDialog() {
+    final tix = widget.tix;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Center(
+            child: WatchersForm(
+              initialData: _linkedWatcher,
+              initialSrId: _linkedWatcher == null ? tix.srId : null,
+              initialRrId: _linkedWatcher == null ? tix.rrId : null,
+              initialRate: _linkedWatcher == null ? tix.rate : null,
+              linkedToTx: "panels-${tix.tid}",
+              onSave: (e) async {
+                if (e == null) {
+                  Navigator.pop(dialogContext);
+
+                  if (_linkedWatcher == null) {
+                    widgetsNotifySuccess("Created notification watcher.");
+                  } else {
+                    widgetsNotifySuccess("Notification watcher updated");
+                  }
+
+                  setState(() {
+                    _linkedWatcher = _wxController.getLinked("panels-${tix.tid}");
+                  });
+                  return;
+                }
+
+                if (e is ValidationException) {
+                  widgetsNotifyError(e.userMessage, ctx: context);
+                  return;
+                }
+
+                widgetsNotifyError(e.toString(), ctx: context);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _showDeleteDialog(BuildContext context) async {
+    final tix = widget.tix;
     await showDialog(
       context: context,
       builder: (dialogContext) => Scaffold(
@@ -26,9 +102,9 @@ class TickersWidgetsButtons extends StatelessWidget {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete Ticker"),
+            title: const Text("Delete Panel"),
             content: const Text(
-              "This will delete this ticker.\n"
+              "This will delete this panel.\n"
               "This action cannot be undone.",
             ),
             actions: [
@@ -42,12 +118,12 @@ class TickersWidgetsButtons extends StatelessWidget {
                     await _tixController.delete(tix);
 
                     Navigator.pop(dialogContext);
-                    onAction();
+                    widget.onAction();
 
                     String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
                     String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
 
-                    widgetsNotifySuccess("${tix.srAmount} $sourceSymbol to $targetSymbol ticker deleted.");
+                    widgetsNotifySuccess("${tix.srAmount} $sourceSymbol to $targetSymbol panel deleted.");
                   } on ValidationException catch (e) {
                     widgetsNotifyError(e.userMessage);
                   } catch (e) {
@@ -63,6 +139,7 @@ class TickersWidgetsButtons extends StatelessWidget {
   }
 
   Future<void> _showEditDialog(BuildContext context) async {
+    final tix = widget.tix;
     await showDialog(
       context: context,
       builder: (dialogContext) => Scaffold(
@@ -73,11 +150,11 @@ class TickersWidgetsButtons extends StatelessWidget {
             onSave: (e) async {
               if (e == null) {
                 Navigator.pop(dialogContext);
-                onAction();
+                widget.onAction();
                 String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
                 String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
 
-                widgetsNotifySuccess("${tix.srAmount} $sourceSymbol to $targetSymbol ticker updated.");
+                widgetsNotifySuccess("${tix.srAmount} $sourceSymbol to $targetSymbol panel updated.");
                 return;
               }
 
@@ -96,10 +173,30 @@ class TickersWidgetsButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tix = widget.tix;
     return Wrap(
       spacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
+        WidgetsButton(
+          icon: Icons.add_alarm,
+          padding: const EdgeInsets.all(8),
+          initialState: WidgetsButtonActionState.action,
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
+          evaluator: (s) {
+            if (_linkedWatcher == null) {
+              s.normal();
+            } else {
+              _linkedWatcher!.isSpent() ? s.error() : s.action();
+            }
+          },
+          onPressed: (_) {
+            _showAddWatcherDialog();
+          },
+        ),
+
         WidgetsButton(
           key: Key("edit-button-${tix.tid}"),
           icon: Icons.edit,
