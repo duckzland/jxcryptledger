@@ -48,6 +48,7 @@ class _PanelsPageState extends State<PanelsPage> {
 
     _tickersController = locator<TickersController>();
     _tickersController.load();
+    _tickersController.addListener(_onControllerChanged);
 
     _cryptosController = locator<CryptosController>();
     _cryptosController.addListener(_onControllerChanged);
@@ -59,9 +60,10 @@ class _PanelsPageState extends State<PanelsPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _panelsController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
+    _tickersController.removeListener(_onControllerChanged);
+    super.dispose();
   }
 
   void _onControllerChanged() {
@@ -96,20 +98,23 @@ class _PanelsPageState extends State<PanelsPage> {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete All Panels"),
+            title: const Text("Reset Panels & Tickers Database"),
             content: const Text(
-              "This will delete all panels entry.\n"
+              "This will delete all panels and tickers entries.\n"
               "This action cannot be undone.",
             ),
             actions: [
               WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
               const SizedBox(width: 12),
               WidgetsButton(
-                label: 'Delete',
+                label: 'Reset',
                 initialState: WidgetsButtonActionState.error,
                 onPressed: (_) async {
                   try {
                     await _panelsController.wipe();
+                    await _tickersController.wipe();
+
+                    await _tickersController.populate();
 
                     Navigator.pop(dialogContext);
 
@@ -279,6 +284,8 @@ class _PanelsPageState extends State<PanelsPage> {
 
       final json = await file.readAsString();
       await _panelsController.importDatabase(json);
+      await _panelsController.scheduleRates();
+      await _tickersController.refreshRates();
 
       widgetsNotifySuccess("Database imported successfully.");
     } on ValidationException catch (e) {
@@ -311,7 +318,11 @@ class _PanelsPageState extends State<PanelsPage> {
               importTitle: "Import",
               importTooltip: "Import panels to database",
               importEvaluator: () => true,
-              importCallback: (json) async => await _panelsController.importDatabase(json),
+              importCallback: (json) async {
+                await _panelsController.importDatabase(json);
+                await _panelsController.scheduleRates();
+                await _tickersController.refreshRates();
+              },
               addForm: _buildForm,
             ),
           ),
@@ -590,7 +601,7 @@ class _PanelsPageState extends State<PanelsPage> {
             icon: Icons.delete_sweep,
             padding: const EdgeInsets.all(8),
             initialState: WidgetsButtonActionState.error,
-            tooltip: "Delete all tickers",
+            tooltip: "Reset Panels and Tickers Database",
             iconSize: 20,
             minimumSize: const Size(40, 40),
             onPressed: (_) => _showDeleteDialog(context),

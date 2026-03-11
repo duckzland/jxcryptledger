@@ -61,6 +61,6 @@ void setupLocator() {
 
   // Tickers
   locator.registerLazySingleton<TickersRepository>(() => TickersRepository());
-  locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>()));
-  locator.registerLazySingleton<TickersService>(() => TickersService(locator<TickersController>(), locator<SettingsRepository>()));
+  locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>(), locator<TickersService>()));
+  locator.registerLazySingleton<TickersService>(() => TickersService(locator<TickersRepository>(), locator<SettingsRepository>()));
 }

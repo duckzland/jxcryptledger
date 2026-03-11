@@ -2,7 +2,17 @@ import '../../app/exceptions.dart';
 
 enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
 
-enum TickerFormat { nodecimal, normalNumber, currency, shortCurrency, shortCurrencyWithSign, percentage, shortPercentage, raw }
+enum TickerFormat {
+  nodecimal,
+  normalNumber,
+  normalCurrency,
+  shortCurrency,
+  shortCurrencyWithSign,
+  percentage,
+  shortPercentage,
+  shortPercentageWithSign,
+  raw,
+}
 
 class TickersModel {
   final String tid;
@@ -122,7 +132,7 @@ class TickersModel {
       case TickerFormat.normalNumber:
         return val.toStringAsFixed(2);
 
-      case TickerFormat.currency:
+      case TickerFormat.normalCurrency:
         return "\$${_formatNumberWithCommas(val, 2)}";
 
       case TickerFormat.shortCurrency:
@@ -137,6 +147,10 @@ class TickersModel {
 
       case TickerFormat.shortPercentage:
         return "${val.toStringAsFixed(1)}%";
+
+      case TickerFormat.shortPercentageWithSign:
+        final sign = val < 0 ? "-" : "+";
+        return "$sign${val.toStringAsFixed(1)}%";
 
       case TickerFormat.raw:
         return raw;

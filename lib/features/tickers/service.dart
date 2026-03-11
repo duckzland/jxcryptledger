@@ -2,16 +2,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
+import '../../core/log.dart';
 import '../panels/model.dart';
 import '../settings/keys.dart';
 import '../settings/repository.dart';
-import 'controller.dart';
+import 'repository.dart';
 
 class TickersService {
-  final TickersController tickersController;
+  final TickersRepository tickersRepo;
   final SettingsRepository settingsRepo;
 
-  TickersService(this.tickersController, this.settingsRepo);
+  TickersService(this.tickersRepo, this.settingsRepo);
 
   Future<Map<String, dynamic>> _fetchJson(SettingKey key, {Map<String, String>? query}) async {
     final endpoint = settingsRepo.get<String>(key) ?? key.defaultValue;
@@ -55,7 +56,7 @@ class TickersService {
     final nowObj = body["data"]["historicalValues"]["now"];
     final index = nowObj["altcoinIndex"].toString();
 
-    tickersController.updateByType(TickerType.altcoinIndex.index, index);
+    tickersRepo.updateByType(TickerType.altcoinIndex.index, index);
 
     return true;
   }
@@ -70,7 +71,7 @@ class TickersService {
     final nowObj = body["data"]["historicalValues"]["now"];
     final score = nowObj["score"].toString();
 
-    tickersController.updateByType(TickerType.fearGreed.index, score);
+    tickersRepo.updateByType(TickerType.fearGreed.index, score);
 
     return true;
   }
@@ -85,7 +86,7 @@ class TickersService {
     final summary = body["data"]["summaryData"]["currentValue"];
     final value = summary["value"].toString();
 
-    tickersController.updateByType(TickerType.cmc100.index, value);
+    tickersRepo.updateByType(TickerType.cmc100.index, value);
 
     return true;
   }
@@ -95,7 +96,7 @@ class TickersService {
 
     final nowCap = body["data"]["historicalValues"]["now"]["marketCap"].toString();
 
-    tickersController.updateByType(TickerType.marketCap.index, nowCap);
+    tickersRepo.updateByType(TickerType.marketCap.index, nowCap);
 
     return true;
   }
@@ -107,9 +108,14 @@ class TickersService {
     );
 
     final overall = body["data"]["overall"];
+    final overBought = (overall["overboughtPercentage"] as num?)?.toDouble() ?? 0.0;
+    final overSold = (overall["oversoldPercentage"] as num?)?.toDouble() ?? 0.0;
     final avgRsi = overall["averageRsi"].toString();
 
-    tickersController.updateByType(TickerType.rsi.index, avgRsi);
+    final pulse = overBought - overSold;
+
+    tickersRepo.updateByType(TickerType.rsi.index, avgRsi);
+    tickersRepo.updateByType(TickerType.pulse.index, pulse.toString());
 
     return true;
   }
@@ -121,7 +127,7 @@ class TickersService {
     // final btcValue = body["data"]["totalBtcValue"].toString();
     final ethValue = body["data"]["totalEthValue"].toString();
 
-    tickersController.updateByType(TickerType.etf.index, ethValue);
+    tickersRepo.updateByType(TickerType.etf.index, ethValue);
 
     return true;
   }
@@ -132,13 +138,13 @@ class TickersService {
     final dominanceList = body["data"]["dominance"] as List<dynamic>;
     final btc = dominanceList[0]["mcProportion"].toString();
 
-    tickersController.updateByType(TickerType.dominance.index, btc);
+    tickersRepo.updateByType(TickerType.dominance.index, btc);
 
     return true;
   }
 
   Future<void> refreshRates() async {
-    final all = await tickersController.getAll();
+    final all = await tickersRepo.getAll();
 
     final types = all.map((tix) => TickerType.values[tix.type]).toSet();
 
@@ -167,5 +173,7 @@ class TickersService {
     }
 
     await Future.wait(jobs);
+
+    logln("[TICKERS] Fetching new ticker data completed");
   }
 }
