@@ -169,6 +169,9 @@ class _WatchboardPageState extends State<WatchboardPage> {
         final tx = items[index];
         return TickersWidgetsPanel(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
       },
+      dragWidgetBuilder: (index, child) {
+        return Material(color: Colors.transparent, elevation: 0, child: child);
+      },
       onReorder: (oldIndex, newIndex) {
         final moved = items.removeAt(oldIndex);
         items.insert(newIndex, moved);
