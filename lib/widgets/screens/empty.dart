@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
-import '../../app/exceptions.dart';
-import '../../core/log.dart';
 import '../button.dart';
-import '../notify.dart';
+import '../dialogs/import.dart';
 
 class WidgetsScreensEmpty extends StatefulWidget {
   final String title;
@@ -47,28 +44,6 @@ class _WidgetsScreensEmptyState extends State<WidgetsScreensEmpty> {
     );
   }
 
-  Future<void> _showImportFileSelector() async {
-    try {
-      final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
-
-      if (file == null) {
-        widgetsNotifyError("No file selected.");
-        return;
-      }
-
-      final json = await file.readAsString();
-      await widget.importCallback(json);
-
-      widgetsNotifySuccess("Database imported successfully.");
-    } on ValidationException catch (e) {
-      widgetsNotifyError(e.userMessage);
-    } catch (e) {
-      logln("Import failed: $e");
-      widgetsNotifyError("Import failed.");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -99,15 +74,15 @@ class _WidgetsScreensEmptyState extends State<WidgetsScreensEmpty> {
                   }
                 },
               ),
-              WidgetsButton(
-                key: Key("import-button-new"),
+              WidgetsDialogsImport(
+                key: const Key("import-button-new"),
                 label: widget.importTitle,
                 tooltip: widget.importTooltip,
                 icon: Icons.arrow_downward,
                 iconSize: 16,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                initialState: WidgetsButtonActionState.primary,
-                onPressed: (_) => _showImportFileSelector(),
+                showDialogBeforeImport: false,
+                onImport: widget.importCallback,
                 evaluator: (s) {
                   if (widget.importEvaluator() == false) {
                     s.disable();

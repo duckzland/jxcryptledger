@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/exceptions.dart';
-import '../../../core/locator.dart';
-import '../../../widgets/button.dart';
-import '../../../widgets/notify.dart';
-import '../../cryptos/controller.dart';
-import '../../watchers/controller.dart';
-import '../../watchers/form.dart';
-import '../../watchers/model.dart';
+import '../../../../app/exceptions.dart';
+import '../../../../core/locator.dart';
+import '../../../../widgets/button.dart';
+import '../../../../widgets/notify.dart';
+import '../../../cryptos/controller.dart';
+import '../../../watchers/controller.dart';
+import '../../../watchers/form.dart';
+import '../../../watchers/model.dart';
 import '../controller.dart';
 import '../form.dart';
 import '../model.dart';
@@ -184,7 +184,7 @@ class _TickersWidgetsButtonsState extends State<TickersWidgetsButtons> {
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 16,
           minimumSize: const Size(34, 34),
-          tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
+          tooltip: _linkedWatcher == null ? "Add new watchboard" : "Edit watchboard",
           evaluator: (s) {
             if (_linkedWatcher == null) {
               s.normal();
@@ -200,7 +200,7 @@ class _TickersWidgetsButtonsState extends State<TickersWidgetsButtons> {
         WidgetsButton(
           key: Key("edit-button-${tix.tid}"),
           icon: Icons.edit,
-          tooltip: "Edit this ticker",
+          tooltip: "Edit this watchboard",
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 16,
           minimumSize: const Size(34, 34),
@@ -213,7 +213,7 @@ class _TickersWidgetsButtonsState extends State<TickersWidgetsButtons> {
           key: Key("delete-button-${tix.tid}"),
           icon: Icons.delete,
           initialState: WidgetsButtonActionState.error,
-          tooltip: "Delete this ticker",
+          tooltip: "Delete this watchboard",
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 18,
           minimumSize: const Size(34, 34),

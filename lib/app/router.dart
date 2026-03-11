@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../app/layout.dart';
 import '../features/settings/page.dart';
-import '../features/panels/page.dart';
+import '../features/watchboard/panels/page.dart';
 import '../features/tools/page.dart';
 import '../features/transactions/page.dart';
 import '../features/unlock/controller.dart';
@@ -44,7 +44,7 @@ class AppRouter {
           GoRoute(path: "/", redirect: (context, state) => "/transactions"),
           GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPage()),
 
-          GoRoute(path: "/tickers", builder: (context, state) => const PanelsPage()),
+          GoRoute(path: "/watchboard", builder: (context, state) => const PanelsPage()),
           GoRoute(path: "/watchers", builder: (context, state) => const WatchersPage()),
           GoRoute(path: "/tools", builder: (context, state) => const ToolsPage()),
           GoRoute(path: "/settings", builder: (context, state) => const SettingsPage()),
@@ -55,8 +55,8 @@ class AppRouter {
 
   static String _titleFor(String location) {
     if (location.startsWith("/settings")) return "Settings";
-    if (location.startsWith("/watchers")) return "Notifications";
-    if (location.startsWith("/tickers")) return "Tickers";
+    if (location.startsWith("/watchers")) return "Rate Watchers";
+    if (location.startsWith("/watchboard")) return "Watchboard";
     return "Transactions";
   }
 }

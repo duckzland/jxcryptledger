@@ -26,9 +26,9 @@ class WatchersButtons extends StatelessWidget {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete Watcher"),
+            title: const Text("Delete Rate Watcher"),
             content: const Text(
-              "This will delete this watcher.\n"
+              "This will delete this rate watcher.\n"
               "This action cannot be undone.",
             ),
             actions: [
@@ -47,7 +47,7 @@ class WatchersButtons extends StatelessWidget {
                     String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
                     String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
 
-                    widgetsNotifySuccess("$sourceSymbol to $targetSymbol watcher deleted.");
+                    widgetsNotifySuccess("$sourceSymbol to $targetSymbol rate watcher deleted.");
                   } on ValidationException catch (e) {
                     widgetsNotifyError(e.userMessage);
                   } catch (e) {
@@ -77,7 +77,7 @@ class WatchersButtons extends StatelessWidget {
                 String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
                 String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
 
-                widgetsNotifySuccess("$sourceSymbol to $targetSymbol watcher updated.");
+                widgetsNotifySuccess("$sourceSymbol to $targetSymbol rate watcher updated.");
                 return;
               }
 
@@ -103,7 +103,7 @@ class WatchersButtons extends StatelessWidget {
         WidgetsButton(
           key: Key("edit-button-${tx.wid}"),
           icon: Icons.edit,
-          tooltip: "Edit this watcher",
+          tooltip: "Edit this rate watcher",
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 16,
           minimumSize: const Size(34, 34),
@@ -116,7 +116,7 @@ class WatchersButtons extends StatelessWidget {
           key: Key("delete-button-${tx.wid}"),
           icon: Icons.delete,
           initialState: WidgetsButtonActionState.error,
-          tooltip: "Delete this watcher",
+          tooltip: "Delete this rate watcher",
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 18,
           minimumSize: const Size(34, 34),

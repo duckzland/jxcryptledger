@@ -14,10 +14,10 @@ import '../encryption/service.dart';
 import '../notification/service.dart';
 import '../settings/controller.dart';
 import '../settings/keys.dart';
-import '../panels/controller.dart';
-import '../panels/model.dart';
-import '../tickers/controller.dart';
-import '../tickers/model.dart';
+import '../watchboard/panels/controller.dart';
+import '../watchboard/panels/model.dart';
+import '../watchboard/tickers/controller.dart';
+import '../watchboard/tickers/model.dart';
 import '../watchers/controller.dart';
 import '../watchers/model.dart';
 

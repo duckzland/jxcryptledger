@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
-import '../../../widgets/panel.dart';
+import '../../../../app/theme.dart';
+import '../../../../widgets/panel.dart';
 import '../../tickers/model.dart';
 
 class TickersWidgetsTicker extends StatefulWidget {

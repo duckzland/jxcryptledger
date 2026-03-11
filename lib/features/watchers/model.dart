@@ -29,7 +29,7 @@ class WatchersModel {
     required this.meta,
   }) {
     if (wid.isEmpty) {
-      throw ValidationException(AppErrorCode.watcherWidEmpty, "wid cannot be empty.", "Watcher ID is missing.");
+      throw ValidationException(AppErrorCode.watcherWidEmpty, "wid cannot be empty.", "Rate Watcher ID is missing.");
     }
 
     if (srId <= 0) {

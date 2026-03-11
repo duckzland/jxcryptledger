@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:jxledger/features/tickers/service.dart';
+import 'package:jxledger/features/watchboard/tickers/service.dart';
 
 import 'model.dart';
 import 'repository.dart';

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart' show AppTheme;
-import '../../../core/locator.dart';
-import '../../../core/utils.dart';
-import '../../../widgets/panel.dart';
-import '../../cryptos/controller.dart';
-import '../../rates/controller.dart';
+import '../../../../app/theme.dart' show AppTheme;
+import '../../../../core/locator.dart';
+import '../../../../core/utils.dart';
+import '../../../../widgets/panel.dart';
+import '../../../cryptos/controller.dart';
+import '../../../rates/controller.dart';
 import '../controller.dart';
 import '../model.dart';
 import 'buttons.dart';

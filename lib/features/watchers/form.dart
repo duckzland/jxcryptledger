@@ -297,7 +297,7 @@ class _WatchersFormState extends State<WatchersForm> {
 
   Widget _buildTitle() {
     final isEdit = widget.initialData != null;
-    return Text(isEdit ? 'Edit Ticker' : 'New Watcher', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text(isEdit ? 'Edit Rate Watcher' : 'New Rate Watcher', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildButtons() {

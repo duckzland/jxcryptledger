@@ -109,16 +109,16 @@ class _AppLayoutState extends State<AppLayout> {
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
                       minimumSize: const Size(40, 40),
-                      tooltip: "Display Tickers & Panels",
+                      tooltip: "Display Watchboard",
                       evaluator: (s) {
-                        if (location == "/tickers") {
+                        if (location == "/watchboard") {
                           s.active();
                         } else {
                           s.normal();
                         }
                       },
                       onPressed: (s) {
-                        context.go("/tickers");
+                        context.go("/watchboard");
                       },
                     ),
 
@@ -127,7 +127,7 @@ class _AppLayoutState extends State<AppLayout> {
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
                       minimumSize: const Size(40, 40),
-                      tooltip: "Manage Watchers",
+                      tooltip: "Manage Rate Watchers",
                       evaluator: (s) {
                         if (location == "/watchers") {
                           s.active();

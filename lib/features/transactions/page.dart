@@ -1,12 +1,12 @@
-import 'dart:io';
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
-import '../../core/log.dart';
+import '../../widgets/dialogs/export.dart';
+import '../../widgets/dialogs/import.dart';
+import '../../widgets/dialogs/reset.dart';
 import '../../widgets/notify.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
@@ -195,128 +195,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _showWipeDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Reset Transactions Database"),
-            content: const Text(
-              "Are you sure you want to reset transactions database?\n"
-              "This will remove all transactions entries and reset your database into an empty database\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Reset Database',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _txController.wipeAll();
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("Database reset complete.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to reset database.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showImportDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Import Transactions"),
-            content: const Text(
-              "This will erase all existing transactions before inserting new data from the selected file.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Import',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _showImportFileSelector();
-
-                    Navigator.pop(dialogContext);
-                  } catch (e) {
-                    widgetsNotifyError("Failed to import transactions.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showExportFileSelector() async {
-    final json = await _txController.exportDatabase();
-    if (json.isEmpty) {
-      widgetsNotifyError("Failed to export database.");
-      return;
-    }
-
-    final suggestedName = "txs_${DateTime.now().millisecondsSinceEpoch}.json";
-    final saveLocation = await getSaveLocation(suggestedName: suggestedName, confirmButtonText: "Save");
-
-    if (saveLocation == null || saveLocation.path.isEmpty) {
-      widgetsNotifyError("Export cancelled.");
-      return;
-    }
-
-    try {
-      final file = File(saveLocation.path);
-      await file.writeAsString(json);
-      widgetsNotifySuccess("Database exported successfully.");
-    } catch (e) {
-      logln("Failed to save export file: $e");
-      widgetsNotifyError("Failed to save exported file.");
-    }
-  }
-
-  Future<void> _showImportFileSelector() async {
-    try {
-      final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
-
-      if (file == null) {
-        widgetsNotifyError("No file selected.");
-        return;
-      }
-
-      final json = await file.readAsString();
-      await _txController.importDatabase(json);
-
-      widgetsNotifySuccess("Database imported successfully.");
-    } on ValidationException catch (e) {
-      widgetsNotifyError(e.userMessage);
-    } catch (e) {
-      logln("Import failed: $e");
-      widgetsNotifyError("Import failed.");
-    }
   }
 
   void _changePageTitle(String title) {
@@ -612,48 +490,44 @@ class _TransactionsPageState extends State<TransactionsPage> {
           child: Wrap(
             spacing: 4,
             children: [
-              WidgetsButton(
-                key: Key("wipe-button-batch"),
-                icon: Icons.delete_sweep,
-                padding: const EdgeInsets.all(8),
-                initialState: WidgetsButtonActionState.error,
-                tooltip: "Reset transactions database",
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                onPressed: (_) => _showWipeDialog(context),
-                evaluator: (s) {
-                  if (_txController.isEmpty()) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-              ),
-              WidgetsButton(
+              WidgetsDialogsImport(
                 key: Key("import-button-batch"),
-                icon: Icons.arrow_downward,
-                padding: const EdgeInsets.all(8),
-                initialState: WidgetsButtonActionState.primary,
                 tooltip: "Import transactions to database",
                 iconSize: 20,
                 minimumSize: const Size(40, 40),
-                onPressed: (_) => _showImportDialog(context),
+                padding: const EdgeInsets.all(8),
+                showDialogBeforeImport: true,
+                onImport: (String json) async {
+                  await _txController.importDatabase(json);
+                },
                 evaluator: (s) {},
               ),
-              WidgetsButton(
-                key: Key("export-button-batch"),
-                icon: Icons.arrow_upward,
-                padding: const EdgeInsets.all(8),
-                initialState: WidgetsButtonActionState.action,
+              WidgetsDialogsExport(
+                key: const Key("export-button-batch"),
                 tooltip: "Export transactions from database",
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                onPressed: (_) => _showExportFileSelector(),
+                suggestedPrefix: "tx_",
+                onExport: _txController.exportDatabase,
                 evaluator: (s) {
                   if (_txController.isEmpty()) {
                     s.disable();
                   } else {
                     s.action();
+                  }
+                },
+              ),
+              WidgetsDialogsReset(
+                key: const Key("reset-button-batch"),
+                tooltip: "Reset transactions database",
+                dialogTitle: "Delete All Transactions",
+                dialogMessage:
+                    "This will delete all transactions and all of its history.\n"
+                    "This action cannot be undone.",
+                onWipe: _txController.deleteAll,
+                evaluator: (s) {
+                  if (_txController.isEmpty()) {
+                    s.disable();
+                  } else {
+                    s.error();
                   }
                 },
               ),
