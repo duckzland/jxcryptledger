@@ -9,6 +9,8 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
+import '../../../widgets/dialogs/alert.dart';
+import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
@@ -281,92 +283,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     }
   }
 
-  void _showAddPanelDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: Center(
-            child: PanelsForm(
-              initialData: _linkedPanel,
-              initialSrId: _linkedPanel == null ? widget.srid : null,
-              initialRrId: _linkedPanel == null ? widget.rrid : null,
-              initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(widget.transactions) : null,
-              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-              onSave: (e) async {
-                if (e == null) {
-                  Navigator.pop(dialogContext);
-
-                  if (_linkedPanel == null) {
-                    widgetsNotifySuccess("Created panel entry.");
-                  } else {
-                    widgetsNotifySuccess("Panel entry updated");
-                  }
-
-                  setState(() {
-                    _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                  });
-                  return;
-                }
-
-                if (e is ValidationException) {
-                  widgetsNotifyError(e.userMessage, ctx: context);
-                  return;
-                }
-
-                widgetsNotifyError(e.toString(), ctx: context);
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showAddWatcherDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: Center(
-            child: WatchersForm(
-              initialData: _linkedWatcher,
-              initialSrId: _linkedWatcher == null ? widget.srid : null,
-              initialRrId: _linkedWatcher == null ? widget.rrid : null,
-              initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
-              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-              onSave: (e) async {
-                if (e == null) {
-                  Navigator.pop(dialogContext);
-
-                  if (_linkedWatcher == null) {
-                    widgetsNotifySuccess("Created notification watcher.");
-                  } else {
-                    widgetsNotifySuccess("Notification watcher updated");
-                  }
-
-                  setState(() {
-                    _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                  });
-                  return;
-                }
-
-                if (e is ValidationException) {
-                  widgetsNotifyError(e.userMessage, ctx: context);
-                  return;
-                }
-
-                widgetsNotifyError(e.toString(), ctx: context);
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _showDeleteDialog(BuildContext context) async {
     await showDialog(
       context: context,
@@ -401,50 +317,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
                     widgetsNotifySuccess("All transactions deleted.");
                   } catch (e) {
                     widgetsNotifyError("Failed to delete transactions.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showCloseDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Close Transactions"),
-            content: const Text(
-              "Are you sure you want to close all closable transactions found in this group?\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Close',
-                initialState: WidgetsButtonActionState.warning,
-                onPressed: (_) async {
-                  try {
-                    await _closeTransactions();
-
-                    if (mounted) {
-                      setState(() {
-                        _isClosable = false;
-                      });
-                    }
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All transactions closed.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to close transactions.");
                   }
                 },
               ),
@@ -567,13 +439,10 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         ),
         const SizedBox(width: 8),
 
-        WidgetsButton(
+        WidgetsDialogsShowForm(
+          key: const Key("add-watchboard-button"),
+          tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
           icon: Icons.candlestick_chart_outlined,
-          padding: const EdgeInsets.all(8),
-          initialState: WidgetsButtonActionState.action,
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: _linkedPanel == null ? "Add new panel" : "Edit panel",
           evaluator: (s) {
             if (_linkedPanel == null) {
               s.normal();
@@ -581,17 +450,45 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               s.action();
             }
           },
-          onPressed: (_) {
-            _showAddPanelDialog();
+          buildForm: (dialogContext) {
+            return PanelsForm(
+              initialData: _linkedPanel,
+              initialSrId: _linkedPanel == null ? widget.srid : null,
+              initialRrId: _linkedPanel == null ? widget.rrid : null,
+              initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(widget.transactions) : null,
+              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+              onSave: (e) async {
+                if (e == null) {
+                  Navigator.pop(dialogContext);
+
+                  if (_linkedPanel == null) {
+                    widgetsNotifySuccess("Created watchboard entry.");
+                  } else {
+                    widgetsNotifySuccess("Watchboard entry updated");
+                  }
+
+                  setState(() {
+                    _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                  });
+                  return;
+                }
+
+                if (e is ValidationException) {
+                  widgetsNotifyError(e.userMessage, ctx: context);
+                  return;
+                }
+
+                widgetsNotifyError(e.toString(), ctx: context);
+              },
+            );
           },
         ),
 
-        WidgetsButton(
+        const SizedBox(width: 8),
+
+        WidgetsDialogsShowForm(
+          key: const Key("add-watcher-button"),
           icon: Icons.add_alarm,
-          padding: const EdgeInsets.all(8),
-          initialState: WidgetsButtonActionState.action,
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
           tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
           evaluator: (s) {
             if (_linkedWatcher == null) {
@@ -600,21 +497,48 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               _linkedWatcher!.isSpent() ? s.error() : s.action();
             }
           },
-          onPressed: (_) {
-            _showAddWatcherDialog();
+          buildForm: (dialogContext) {
+            return WatchersForm(
+              initialData: _linkedWatcher,
+              initialSrId: _linkedWatcher == null ? widget.srid : null,
+              initialRrId: _linkedWatcher == null ? widget.rrid : null,
+              initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
+              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+              onSave: (e) async {
+                if (e == null) {
+                  Navigator.pop(dialogContext);
+
+                  if (_linkedWatcher == null) {
+                    widgetsNotifySuccess("Created rate watcher.");
+                  } else {
+                    widgetsNotifySuccess("Rate watcher updated");
+                  }
+
+                  setState(() {
+                    _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                  });
+                  return;
+                }
+
+                if (e is ValidationException) {
+                  widgetsNotifyError(e.userMessage, ctx: context);
+                  return;
+                }
+
+                widgetsNotifyError(e.toString(), ctx: context);
+              },
+            );
           },
         ),
 
         const SizedBox(width: 8),
 
-        WidgetsButton(
+        WidgetsDialogsAlert(
           icon: Icons.close,
           initialState: WidgetsButtonActionState.warning,
           tooltip: "Close all closable transactions found in this group",
           padding: const EdgeInsets.all(0),
           iconSize: 18,
-          minimumSize: const Size(40, 40),
-          onPressed: (_) => _showCloseDialog(context),
           evaluator: (s) async {
             if (!_isClosable) {
               s.disable();
@@ -622,23 +546,65 @@ class _TransactionsActiveState extends State<TransactionsActive> {
               s.warning();
             }
           },
+          dialogTitle: "Close Transactions",
+          dialogMessage:
+              "Are you sure you want to close all closable transactions found in this group?\n"
+              "This action cannot be undone.",
+          dialogConfirmLabel: "Close",
+          onPressed: (dialogContext) async {
+            try {
+              await _closeTransactions();
+
+              if (mounted) {
+                setState(() {
+                  _isClosable = false;
+                });
+              }
+
+              Navigator.pop(dialogContext);
+
+              widgetsNotifySuccess("All transactions closed.");
+            } catch (e) {
+              widgetsNotifyError("Failed to close transactions.");
+            }
+          },
         ),
 
         const SizedBox(width: 8),
 
-        WidgetsButton(
+        WidgetsDialogsAlert(
           icon: Icons.delete,
           initialState: WidgetsButtonActionState.error,
           tooltip: "Delete all transactions",
           padding: const EdgeInsets.all(0),
           iconSize: 18,
-          minimumSize: const Size(40, 40),
-          onPressed: (_) => _showDeleteDialog(context),
           evaluator: (s) async {
             if (!_isDeletable) {
               s.disable();
             } else {
               s.error();
+            }
+          },
+          dialogTitle: "Delete Transactions",
+          dialogMessage:
+              "This will delete all transactions in this group and all of its history.\n"
+              "This action cannot be undone.",
+          dialogConfirmLabel: "Delete",
+          onPressed: (dialogContext) async {
+            try {
+              await _deleteTransactions();
+
+              if (mounted) {
+                setState(() {
+                  _isDeletable = false;
+                });
+              }
+
+              Navigator.pop(dialogContext);
+
+              widgetsNotifySuccess("All transactions deleted.");
+            } catch (e) {
+              widgetsNotifyError("Failed to delete transactions.");
             }
           },
         ),

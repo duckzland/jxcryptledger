@@ -1,10 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../button.dart';
+import '../dialogs/show_form.dart';
 import '../dialogs/import.dart';
 
-class WidgetsScreensEmpty extends StatefulWidget {
+class WidgetsScreensEmpty extends StatelessWidget {
   final String title;
   final String addTitle;
   final String addTooltip;
@@ -30,21 +29,6 @@ class WidgetsScreensEmpty extends StatefulWidget {
   });
 
   @override
-  State<WidgetsScreensEmpty> createState() => _WidgetsScreensEmptyState();
-}
-
-class _WidgetsScreensEmptyState extends State<WidgetsScreensEmpty> {
-  void _showAddDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: widget.addForm(dialogContext)),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
@@ -53,21 +37,21 @@ class _WidgetsScreensEmptyState extends State<WidgetsScreensEmpty> {
         children: [
           const Icon(Icons.add_circle_outline, size: 60, color: Colors.white30),
           const SizedBox(height: 16),
-          Text(widget.title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
           Wrap(
             spacing: 20,
             children: [
-              WidgetsButton(
+              WidgetsDialogsShowForm(
+                key: const Key("add-new-button"),
                 icon: Icons.add,
                 iconSize: 16,
-                label: widget.addTitle,
-                tooltip: widget.addTooltip,
-                initialState: WidgetsButtonActionState.action,
+                label: addTitle,
+                tooltip: addTooltip,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                onPressed: (_) => _showAddDialog(),
+                buildForm: (dialogContext) => addForm(dialogContext),
                 evaluator: (s) {
-                  if (widget.addEvaluator() == false) {
+                  if (addEvaluator() == false) {
                     s.disable();
                   } else {
                     s.action();
@@ -76,15 +60,15 @@ class _WidgetsScreensEmptyState extends State<WidgetsScreensEmpty> {
               ),
               WidgetsDialogsImport(
                 key: const Key("import-button-new"),
-                label: widget.importTitle,
-                tooltip: widget.importTooltip,
+                label: importTitle,
+                tooltip: importTooltip,
                 icon: Icons.arrow_downward,
                 iconSize: 16,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                 showDialogBeforeImport: false,
-                onImport: widget.importCallback,
+                onImport: importCallback,
                 evaluator: (s) {
-                  if (widget.importEvaluator() == false) {
+                  if (importEvaluator() == false) {
                     s.disable();
                   } else {
                     s.primary();

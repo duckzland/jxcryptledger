@@ -6,6 +6,8 @@ import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../widgets/button.dart';
+import '../../widgets/dialogs/alert.dart';
+import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
@@ -56,52 +58,6 @@ class _WatchersPageState extends State<WatchersPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
     });
-  }
-
-  void _showAddWatcherDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: _buildForm(dialogContext)),
-      ),
-    );
-  }
-
-  Future<void> _showRestartDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Restart Rate Watchers"),
-            content: const Text(
-              "This will restart all rate watchers by setting sent to 0.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Restart',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _wxController.restart();
-
-                    Navigator.pop(dialogContext);
-                  } catch (e) {
-                    widgetsNotifyError("Failed to import rate watchers.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -186,15 +142,11 @@ class _WatchersPageState extends State<WatchersPage> {
       child: Wrap(
         spacing: 4,
         children: [
-          WidgetsButton(
+          WidgetsDialogsAlert(
             key: Key("restart-button-batch"),
             icon: Icons.refresh,
-            padding: const EdgeInsets.all(8),
             initialState: WidgetsButtonActionState.warning,
             tooltip: "Restart all rate watchers",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showRestartDialog(context),
             evaluator: (s) {
               if (!_wxController.hasRestartable()) {
                 s.disable();
@@ -202,18 +154,27 @@ class _WatchersPageState extends State<WatchersPage> {
                 s.warning();
               }
             },
-          ),
-          WidgetsButton(
-            icon: Icons.add_alarm,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.action,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Add new rate watcher",
-            evaluator: (s) => s.action(),
-            onPressed: (_) {
-              _showAddWatcherDialog();
+            dialogTitle: "Restart Rate Watchers",
+            dialogMessage:
+                "This will restart all rate watchers by setting sent to 0.\n"
+                "This action cannot be undone.",
+            dialogConfirmLabel: "Restart",
+            onPressed: (dialogContext) async {
+              try {
+                await _wxController.restart();
+
+                Navigator.pop(dialogContext);
+              } catch (e) {
+                widgetsNotifyError("Failed to import rate watchers.");
+              }
             },
+          ),
+          WidgetsDialogsShowForm(
+            key: const Key("add-button"),
+            icon: Icons.add_alarm,
+            tooltip: "Add new rate watcher",
+            buildForm: (dialogContext) => _buildForm(dialogContext),
+            evaluator: (s) => s.action(),
           ),
         ],
       ),
