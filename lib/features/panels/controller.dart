@@ -52,6 +52,7 @@ class PanelsController extends ChangeNotifier {
 
   Future<void> wipe() async {
     await _repo.clear();
+    await load();
   }
 
   Future<void> scheduleRates() async {
