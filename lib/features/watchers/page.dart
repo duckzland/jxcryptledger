@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
@@ -8,8 +5,10 @@ import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
-import '../../core/log.dart';
 import '../../widgets/button.dart';
+import '../../widgets/dialogs/export.dart';
+import '../../widgets/dialogs/import.dart';
+import '../../widgets/dialogs/reset.dart';
 import '../../widgets/notify.dart';
 import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
@@ -38,7 +37,7 @@ class _WatchersPageState extends State<WatchersPage> {
     _wxController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
 
-    _changePageTitle("Notification Watchers");
+    _changePageTitle("Rate Watchers");
   }
 
   @override
@@ -77,9 +76,9 @@ class _WatchersPageState extends State<WatchersPage> {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Restart Watchers"),
+            title: const Text("Restart Rate Watchers"),
             content: const Text(
-              "This will restart all watchers by setting sent to 0.\n"
+              "This will restart all rate watchers by setting sent to 0.\n"
               "This action cannot be undone.",
             ),
             actions: [
@@ -94,7 +93,7 @@ class _WatchersPageState extends State<WatchersPage> {
 
                     Navigator.pop(dialogContext);
                   } catch (e) {
-                    widgetsNotifyError("Failed to import watchers.");
+                    widgetsNotifyError("Failed to import rate watchers.");
                   }
                 },
               ),
@@ -103,127 +102,6 @@ class _WatchersPageState extends State<WatchersPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _showDeleteDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete All Watcher"),
-            content: const Text(
-              "This will delete all watcher.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Delete',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _wxController.deleteAll();
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All watchers deleted.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to delete watchers.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showImportDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Import Watcher"),
-            content: const Text(
-              "This will erase all existing watcher before inserting new data from the selected file.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Import',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _showImportFileSelector();
-
-                    Navigator.pop(dialogContext);
-                  } catch (e) {
-                    widgetsNotifyError("Failed to import watchers.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showExportFileSelector() async {
-    final json = await _wxController.exportDatabase();
-    if (json.isEmpty) {
-      widgetsNotifyError("Failed to export database.");
-      return;
-    }
-
-    final suggestedName = "wxs_${DateTime.now().millisecondsSinceEpoch}.json";
-    final saveLocation = await getSaveLocation(suggestedName: suggestedName, confirmButtonText: "Save");
-
-    if (saveLocation == null || saveLocation.path.isEmpty) {
-      widgetsNotifyError("Export cancelled.");
-      return;
-    }
-
-    try {
-      final file = File(saveLocation.path);
-      await file.writeAsString(json);
-      widgetsNotifySuccess("Database exported successfully.");
-    } catch (e) {
-      logln("Failed to save export file: $e");
-      widgetsNotifyError("Failed to save exported file.");
-    }
-  }
-
-  Future<void> _showImportFileSelector() async {
-    try {
-      final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
-
-      if (file == null) {
-        widgetsNotifyError("No file selected.");
-        return;
-      }
-
-      final json = await file.readAsString();
-      await _wxController.importDatabase(json);
-
-      widgetsNotifySuccess("Database imported successfully.");
-    } on ValidationException catch (e) {
-      widgetsNotifyError(e.userMessage);
-    } catch (e) {
-      logln("Import failed: $e");
-      widgetsNotifyError("Import failed.");
-    }
   }
 
   @override
@@ -231,9 +109,7 @@ class _WatchersPageState extends State<WatchersPage> {
     if (!_cryptosController.hasAny()) {
       return Column(
         children: [
-          Expanded(
-            child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding notification watcher.'),
-          ),
+          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
         ],
       );
     }
@@ -243,12 +119,12 @@ class _WatchersPageState extends State<WatchersPage> {
         children: [
           Expanded(
             child: WidgetsScreensEmpty(
-              title: "Add Watcher",
+              title: "Add Rate Watcher",
               addTitle: "Add New",
-              addTooltip: "Create new watcher entry",
+              addTooltip: "Create new rate watcher entry",
               addEvaluator: () => _cryptosController.hasAny(),
               importTitle: "Import",
-              importTooltip: "Import watchers to database",
+              importTooltip: "Import rate watchers to database",
               importEvaluator: () => true,
               importCallback: (json) async => await _wxController.importDatabase(json),
               addForm: _buildForm,
@@ -315,7 +191,7 @@ class _WatchersPageState extends State<WatchersPage> {
             icon: Icons.refresh,
             padding: const EdgeInsets.all(8),
             initialState: WidgetsButtonActionState.warning,
-            tooltip: "Restart all watchers",
+            tooltip: "Restart all rate watchers",
             iconSize: 20,
             minimumSize: const Size(40, 40),
             onPressed: (_) => _showRestartDialog(context),
@@ -333,7 +209,7 @@ class _WatchersPageState extends State<WatchersPage> {
             initialState: WidgetsButtonActionState.action,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: "Add new watcher",
+            tooltip: "Add new rate watcher",
             evaluator: (s) => s.action(),
             onPressed: (_) {
               _showAddWatcherDialog();
@@ -350,26 +226,20 @@ class _WatchersPageState extends State<WatchersPage> {
       child: Wrap(
         spacing: 4,
         children: [
-          WidgetsButton(
+          WidgetsDialogsImport(
             key: Key("import-button-batch"),
-            icon: Icons.arrow_downward,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.primary,
-            tooltip: "Import watchers to database",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showImportDialog(context),
+            tooltip: "Import rate watchers to database",
+            showDialogBeforeImport: true,
+            onImport: (String json) async {
+              await _wxController.importDatabase(json);
+            },
             evaluator: (s) {},
           ),
-          WidgetsButton(
-            key: Key("export-button-batch"),
-            icon: Icons.arrow_upward,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.action,
-            tooltip: "Export watchers from database",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showExportFileSelector(),
+          WidgetsDialogsExport(
+            key: const Key("export-button-batch"),
+            tooltip: "Export rate watchers from database",
+            suggestedPrefix: "wix_",
+            onExport: _wxController.exportDatabase,
             evaluator: (s) {
               if (_wxController.isEmpty()) {
                 s.disable();
@@ -378,15 +248,14 @@ class _WatchersPageState extends State<WatchersPage> {
               }
             },
           ),
-          WidgetsButton(
-            key: Key("wipe-button-batch"),
-            icon: Icons.delete_sweep,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.error,
-            tooltip: "Delete all watchers",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showDeleteDialog(context),
+          WidgetsDialogsReset(
+            key: const Key("reset-button-batch"),
+            tooltip: "Delete All Rate Watcher",
+            dialogTitle: "Delete All Transactions",
+            dialogMessage:
+                "This will delete all rate watcher.\n"
+                "This action cannot be undone.",
+            onWipe: _wxController.deleteAll,
             evaluator: (s) {
               if (_wxController.isEmpty()) {
                 s.disable();

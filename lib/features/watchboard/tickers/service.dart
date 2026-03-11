@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../../app/exceptions.dart';
-import '../../core/log.dart';
+import '../../../app/exceptions.dart';
+import '../../../core/log.dart';
 import '../panels/model.dart';
-import '../settings/keys.dart';
-import '../settings/repository.dart';
+import '../../settings/keys.dart';
+import '../../settings/repository.dart';
 import 'repository.dart';
 
 class TickersService {

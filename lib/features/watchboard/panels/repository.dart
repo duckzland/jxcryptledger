@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:hive_ce/hive_ce.dart';
 
-import '../../core/log.dart';
+import '../../../core/log.dart';
 import 'model.dart';
 
 class PanelsRepository {

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/locator.dart';
-import '../../../core/utils.dart';
-import '../../../widgets/button.dart';
-import '../../../widgets/fields/amount.dart';
-import '../../../widgets/fields/crypto_search.dart';
-import '../../../widgets/panel.dart';
-import '../../app/exceptions.dart';
-import '../rates/controller.dart';
+import '../../../../core/locator.dart';
+import '../../../../core/utils.dart';
+import '../../../../widgets/button.dart';
+import '../../../../widgets/fields/amount.dart';
+import '../../../../widgets/fields/crypto_search.dart';
+import '../../../../widgets/panel.dart';
+import '../../../app/exceptions.dart';
+import '../../rates/controller.dart';
 import 'controller.dart';
 import 'model.dart';
 
@@ -218,7 +218,7 @@ class _PanelsFormState extends State<PanelsForm> {
 
   Widget _buildTitle() {
     final isEdit = widget.initialData != null;
-    return Text(isEdit ? 'Edit Ticker' : 'New Ticker', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text(isEdit ? 'Edit Watchboard' : 'New Watchboard', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildButtons() {

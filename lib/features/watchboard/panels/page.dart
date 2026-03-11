@@ -1,20 +1,19 @@
-import 'dart:io';
-
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
-import '../../app/exceptions.dart';
-import '../../app/layout.dart';
-import '../../core/locator.dart';
-import '../../core/log.dart';
-import '../../widgets/button.dart';
-import '../../widgets/layouts/sliver_grid.dart';
-import '../../widgets/notify.dart';
-import '../../widgets/panel.dart';
-import '../../widgets/screens/empty.dart';
-import '../../widgets/screens/fetch_cryptos.dart';
-import '../cryptos/controller.dart';
+import '../../../app/exceptions.dart';
+import '../../../app/layout.dart';
+import '../../../core/locator.dart';
+import '../../../widgets/button.dart';
+import '../../../widgets/dialogs/export.dart';
+import '../../../widgets/dialogs/import.dart';
+import '../../../widgets/dialogs/reset.dart';
+import '../../../widgets/layouts/sliver_grid.dart';
+import '../../../widgets/notify.dart';
+import '../../../widgets/panel.dart';
+import '../../../widgets/screens/empty.dart';
+import '../../../widgets/screens/fetch_cryptos.dart';
+import '../../cryptos/controller.dart';
 import '../tickers/controller.dart';
 import 'controller.dart';
 import 'form.dart';
@@ -29,7 +28,7 @@ class PanelsPage extends StatefulWidget {
 }
 
 class _PanelsPageState extends State<PanelsPage> {
-  late final PanelsController _panelsController;
+  late final PanelsController _pxController;
   late final TickersController _tickersController;
   late final CryptosController _cryptosController;
 
@@ -42,9 +41,9 @@ class _PanelsPageState extends State<PanelsPage> {
   @override
   void initState() {
     super.initState();
-    _panelsController = locator<PanelsController>();
-    _panelsController.load();
-    _panelsController.addListener(_onControllerChanged);
+    _pxController = locator<PanelsController>();
+    _pxController.load();
+    _pxController.addListener(_onControllerChanged);
 
     _tickersController = locator<TickersController>();
     _tickersController.load();
@@ -53,14 +52,14 @@ class _PanelsPageState extends State<PanelsPage> {
     _cryptosController = locator<CryptosController>();
     _cryptosController.addListener(_onControllerChanged);
 
-    _hasLinked = _panelsController.hasLinked();
+    _hasLinked = _pxController.hasLinked();
 
-    _changePageTitle("Manage Tickers & Panels");
+    _changePageTitle("Crypto Watchboard");
   }
 
   @override
   void dispose() {
-    _panelsController.removeListener(_onControllerChanged);
+    _pxController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
     _tickersController.removeListener(_onControllerChanged);
     super.dispose();
@@ -69,7 +68,7 @@ class _PanelsPageState extends State<PanelsPage> {
   void _onControllerChanged() {
     if (mounted) {
       setState(() {
-        _hasLinked = _panelsController.hasLinked();
+        _hasLinked = _pxController.hasLinked();
       });
     }
   }
@@ -80,53 +79,12 @@ class _PanelsPageState extends State<PanelsPage> {
     });
   }
 
-  void _showAddTickerDialog() {
+  void _showAddWatchboardDialog() {
     showDialog(
       context: context,
       builder: (dialogContext) => Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(child: _buildForm(dialogContext)),
-      ),
-    );
-  }
-
-  Future<void> _showDeleteDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Reset Panels & Tickers Database"),
-            content: const Text(
-              "This will delete all panels and tickers entries.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Reset',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _panelsController.wipe();
-                    await _tickersController.wipe();
-
-                    await _tickersController.populate();
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All panels deleted.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to delete panels.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -139,9 +97,9 @@ class _PanelsPageState extends State<PanelsPage> {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete All Linked Panels"),
+            title: const Text("Delete All Linked Watchboard"),
             content: const Text(
-              "This will delete all linked panels entry.\n"
+              "This will delete all linked watchboard entry.\n"
               "This action cannot be undone.",
             ),
             actions: [
@@ -152,13 +110,13 @@ class _PanelsPageState extends State<PanelsPage> {
                 initialState: WidgetsButtonActionState.error,
                 onPressed: (_) async {
                   try {
-                    await _panelsController.wipeLinked();
+                    await _pxController.wipeLinked();
 
                     Navigator.pop(dialogContext);
 
-                    widgetsNotifySuccess("All linked panels deleted.");
+                    widgetsNotifySuccess("All linked watchboard deleted.");
                   } catch (e) {
-                    widgetsNotifyError("Failed to delete linked panels.");
+                    widgetsNotifyError("Failed to delete linked watchboard.");
                   }
                 },
               ),
@@ -177,9 +135,9 @@ class _PanelsPageState extends State<PanelsPage> {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Update Linked Panels"),
+            title: const Text("Update Linked Watchboard"),
             content: const Text(
-              "This will update all the linked panels.\n"
+              "This will update all the linked watchboard.\n"
               "This action cannot be undone.",
             ),
             actions: [
@@ -190,17 +148,17 @@ class _PanelsPageState extends State<PanelsPage> {
                 initialState: WidgetsButtonActionState.action,
                 onPressed: (_) async {
                   try {
-                    bool updated = await _panelsController.updateLinked();
+                    bool updated = await _pxController.updateLinked();
 
                     Navigator.pop(dialogContext);
 
                     if (updated) {
-                      widgetsNotifySuccess("All linked panel updated.");
+                      widgetsNotifySuccess("All linked watchboard updated.");
                     } else {
-                      widgetsNotifyWarning("Linked panels checked, but no additional data requires updating.");
+                      widgetsNotifyWarning("Linked watchboard checked, but no additional data requires updating.");
                     }
                   } catch (e) {
-                    widgetsNotifyError("Failed to update linked panels.");
+                    widgetsNotifyError("Failed to update linked watchboard.");
                   }
                 },
               ),
@@ -209,91 +167,6 @@ class _PanelsPageState extends State<PanelsPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _showImportDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Import Panels"),
-            content: const Text(
-              "This will erase all existing panels before inserting new data from the selected file.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Import',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _showImportFileSelector();
-
-                    Navigator.pop(dialogContext);
-                  } catch (e) {
-                    widgetsNotifyError("Failed to import panels.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showExportFileSelector() async {
-    final json = await _panelsController.exportDatabase();
-    if (json.isEmpty) {
-      widgetsNotifyError("Failed to export database.");
-      return;
-    }
-
-    final suggestedName = "tixs_${DateTime.now().millisecondsSinceEpoch}.json";
-    final saveLocation = await getSaveLocation(suggestedName: suggestedName, confirmButtonText: "Save");
-
-    if (saveLocation == null || saveLocation.path.isEmpty) {
-      widgetsNotifyError("Export cancelled.");
-      return;
-    }
-
-    try {
-      final file = File(saveLocation.path);
-      await file.writeAsString(json);
-      widgetsNotifySuccess("Database exported successfully.");
-    } catch (e) {
-      logln("Failed to save export file: $e");
-      widgetsNotifyError("Failed to save exported file.");
-    }
-  }
-
-  Future<void> _showImportFileSelector() async {
-    try {
-      final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
-
-      if (file == null) {
-        widgetsNotifyError("No file selected.");
-        return;
-      }
-
-      final json = await file.readAsString();
-      await _panelsController.importDatabase(json);
-      await _panelsController.scheduleRates();
-      await _tickersController.refreshRates();
-
-      widgetsNotifySuccess("Database imported successfully.");
-    } on ValidationException catch (e) {
-      widgetsNotifyError(e.userMessage);
-    } catch (e) {
-      logln("Import failed: $e");
-      widgetsNotifyError("Import failed.");
-    }
   }
 
   @override
@@ -301,26 +174,26 @@ class _PanelsPageState extends State<PanelsPage> {
     if (!_cryptosController.hasAny()) {
       return Column(
         children: [
-          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding tickers.')),
+          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.')),
         ],
       );
     }
 
-    if (_panelsController.items.isEmpty) {
+    if (_pxController.items.isEmpty) {
       return Column(
         children: [
           Expanded(
             child: WidgetsScreensEmpty(
-              title: "Add Panel",
+              title: "Add Watchboard",
               addTitle: "Add New",
-              addTooltip: "Create new panel entry",
+              addTooltip: "Create new watchboard entry",
               addEvaluator: () => _cryptosController.hasAny(),
               importTitle: "Import",
-              importTooltip: "Import panels to database",
+              importTooltip: "Import watchboard to database",
               importEvaluator: () => true,
               importCallback: (json) async {
-                await _panelsController.importDatabase(json);
-                await _panelsController.scheduleRates();
+                await _pxController.importDatabase(json);
+                await _pxController.scheduleRates();
                 await _tickersController.refreshRates();
               },
               addForm: _buildForm,
@@ -366,7 +239,7 @@ class _PanelsPageState extends State<PanelsPage> {
   }
 
   Widget _buildPanels() {
-    final items = _panelsController.items.toList();
+    final items = _pxController.items.toList();
     items.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
 
     return ReorderableGridView.builder(
@@ -391,7 +264,7 @@ class _PanelsPageState extends State<PanelsPage> {
         for (var i = 0; i < items.length; i++) {
           items[i].order = i;
         }
-        _panelsController.updateOrder(items);
+        _pxController.updateOrder(items);
       },
     );
   }
@@ -476,7 +349,7 @@ class _PanelsPageState extends State<PanelsPage> {
             initialState: WidgetsButtonActionState.normal,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: _enableTickers ? "Hide tickers" : "ShowTickers",
+            tooltip: _enableTickers ? "Hide Watchboard Tickers" : "Show Watchboard Tickers",
             evaluator: (s) {
               _enableTickers ? s.primary() : s.normal();
             },
@@ -492,7 +365,7 @@ class _PanelsPageState extends State<PanelsPage> {
             initialState: WidgetsButtonActionState.normal,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: _enableDrag ? "Turn off panel dragging" : "Turn on panel dragging",
+            tooltip: _enableDrag ? "Turn off watchboard dragging" : "Turn on watchboard dragging",
             evaluator: (s) {
               _enableDrag ? s.primary() : s.normal();
             },
@@ -505,7 +378,7 @@ class _PanelsPageState extends State<PanelsPage> {
               setState(() {
                 _lastPress = now;
                 _enableDrag = !_enableDrag;
-                widgetsNotifySuccess(_enableDrag ? "Panel dragging enabled." : "Panel dragging disabled.");
+                widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
               });
             },
           ),
@@ -515,10 +388,10 @@ class _PanelsPageState extends State<PanelsPage> {
             initialState: WidgetsButtonActionState.action,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: "Add new panel",
+            tooltip: "Add new watchboard",
             evaluator: (s) => s.action(),
             onPressed: (_) {
-              _showAddTickerDialog();
+              _showAddWatchboardDialog();
             },
           ),
         ],
@@ -538,7 +411,7 @@ class _PanelsPageState extends State<PanelsPage> {
             initialState: WidgetsButtonActionState.error,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: "Delete linked panel",
+            tooltip: "Delete linked watchboard",
             evaluator: (s) {
               _hasLinked ? s.error() : s.disable();
             },
@@ -552,7 +425,7 @@ class _PanelsPageState extends State<PanelsPage> {
             initialState: WidgetsButtonActionState.normal,
             iconSize: 20,
             minimumSize: const Size(40, 40),
-            tooltip: "Update linked panel",
+            tooltip: "Update linked watchboard",
             evaluator: (s) {
               _hasLinked ? s.primary() : s.disable();
             },
@@ -571,45 +444,45 @@ class _PanelsPageState extends State<PanelsPage> {
       child: Wrap(
         spacing: 4,
         children: [
-          WidgetsButton(
+          WidgetsDialogsImport(
             key: Key("import-button-batch"),
-            icon: Icons.arrow_downward,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.primary,
-            tooltip: "Import tickers to database",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showImportDialog(context),
+            tooltip: "Import watchboard to database",
+            showDialogBeforeImport: true,
+            onImport: (String json) async {
+              await _pxController.importDatabase(json);
+              await _pxController.scheduleRates();
+              await _tickersController.refreshRates();
+            },
             evaluator: (s) {},
           ),
-          WidgetsButton(
-            key: Key("export-button-batch"),
-            icon: Icons.arrow_upward,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.action,
-            tooltip: "Export tickers from database",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showExportFileSelector(),
+          WidgetsDialogsExport(
+            key: const Key("export-button-batch"),
+            tooltip: "Export watchboard from database",
+            suggestedPrefix: "wbx_",
+            onExport: _pxController.exportDatabase,
             evaluator: (s) {
-              if (_panelsController.isEmpty()) {
+              if (_pxController.isEmpty()) {
                 s.disable();
               } else {
                 s.action();
               }
             },
           ),
-          WidgetsButton(
-            key: Key("wipe-button-batch"),
-            icon: Icons.delete_sweep,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.error,
-            tooltip: "Reset Panels and Tickers Database",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showDeleteDialog(context),
+          WidgetsDialogsReset(
+            key: const Key("reset-button-batch"),
+            tooltip: "Reset watchboard database",
+            dialogTitle: "Reset Watchboard Database",
+            dialogMessage:
+                "This will delete all watchboard entries.\n"
+                "This action cannot be undone.",
+            onWipe: () async {
+              await _pxController.wipe();
+              await _tickersController.wipe();
+
+              await _tickersController.populate();
+            },
             evaluator: (s) {
-              if (_panelsController.isEmpty()) {
+              if (_pxController.isEmpty()) {
                 s.disable();
               } else {
                 s.error();

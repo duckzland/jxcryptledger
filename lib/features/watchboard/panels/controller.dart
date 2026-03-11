@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core/log.dart';
-import '../rates/service.dart';
-import '../transactions/repository.dart';
+import '../../../core/log.dart';
+import '../../rates/service.dart';
+import '../../transactions/repository.dart';
 import 'model.dart';
 import 'repository.dart';
 

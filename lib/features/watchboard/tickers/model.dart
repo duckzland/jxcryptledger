@@ -1,5 +1,5 @@
-import '../../app/exceptions.dart';
-import '../../core/utils.dart';
+import '../../../app/exceptions.dart';
+import '../../../core/utils.dart';
 
 enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
 

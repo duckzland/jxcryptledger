@@ -1,4 +1,4 @@
-import '../../app/exceptions.dart';
+import '../../../app/exceptions.dart';
 
 enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
 
@@ -32,16 +32,16 @@ class PanelsModel {
     }
 
     if (srAmount <= 0) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrAmount, "srAmount must be > 0.", "Invalid panel data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidSrAmount, "srAmount must be > 0.", "Invalid watchboard data.");
     }
     if (srId <= 0) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrId, "srId must be > 0.", "Invalid panel data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidSrId, "srId must be > 0.", "Invalid watchboard data.");
     }
     if (rrId <= 0) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidRrId, "srId must be > 0.", "Invalid panel data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidRrId, "srId must be > 0.", "Invalid watchboard data.");
     }
     if (digit < 2) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidDigit, "digit must be > 2.", "Invalid panel data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidDigit, "digit must be > 2.", "Invalid watchboard data.");
     }
 
     if (order != null && order! < 0) {
@@ -73,22 +73,22 @@ class PanelsModel {
 
   factory PanelsModel.fromJson(Map<String, dynamic> json) {
     if (!json.containsKey('tid')) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "Missing required field: tid", "Invalid ticker data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "Missing required field: tid", "Invalid watchboard data.");
     }
     if (json['tid'] is! String) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid must be a string.", "Invalid ticker data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid must be a string.", "Invalid watchboard data.");
     }
     if (json['srAmount'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrAmount, "srAmount must be numeric.", "Invalid ticker data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidSrAmount, "srAmount must be numeric.", "Invalid watchboard data.");
     }
     if (json['srId'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrId, "srId must be numeric.", "Invalid ticker data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidSrId, "srId must be numeric.", "Invalid watchboard data.");
     }
     if (json['rrId'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidRrId, "rrId must be numeric.", "Invalid ticker data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidRrId, "rrId must be numeric.", "Invalid watchboard data.");
     }
     if (json['digit'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidDigit, "digit must be numeric.", "Invalid ticker data.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidDigit, "digit must be numeric.", "Invalid watchboard data.");
     }
 
     return PanelsModel(
@@ -128,10 +128,10 @@ class PanelsModel {
   }
 
   void setRate(double newRate) {
-    // Experimental: trying to preserve old rate
     if (newRate == -9999 && meta["oldRate"] != -9999) {
       return;
     }
+
     if (newRate != rate) {
       meta["oldRate"] = rate;
       rate = newRate;
