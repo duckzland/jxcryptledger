@@ -42,7 +42,7 @@ class AppRouter {
         builder: (context, state, child) {
           final location = state.uri.toString();
 
-          return AppLayout(title: _titleFor(location), showBack: _showBackFor(location), child: child);
+          return AppLayout(title: _titleFor(location), child: child);
         },
         routes: [
           GoRoute(path: "/", redirect: (context, state) => "/transactions"),

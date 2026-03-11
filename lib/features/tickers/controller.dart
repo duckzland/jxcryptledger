@@ -4,15 +4,15 @@ import 'model.dart';
 import 'repository.dart';
 
 class TickersController extends ChangeNotifier {
-  final TickersRepository repo;
+  final TickersRepository _repo;
 
   List<TickersModel> _items = [];
   List<TickersModel> get items => _items;
 
-  TickersController(this.repo);
+  TickersController(this._repo);
 
   String generateTid() {
-    return repo.generateTid();
+    return _repo.generateTid();
   }
 
   Future<void> init() async {
@@ -22,23 +22,23 @@ class TickersController extends ChangeNotifier {
   }
 
   Future<List<TickersModel>> getAll() async {
-    return repo.getAll();
+    return _repo.getAll();
   }
 
   Future<void> load() async {
-    _items = await repo.getAll();
+    _items = await _repo.getAll();
     notifyListeners();
   }
 
   Future<TickersModel?> get(String tid) async {
-    final tx = await repo.get(tid);
+    final tx = await _repo.get(tid);
     await load();
     return tx;
   }
 
   Future<void> add(TickersModel tx) async {
     try {
-      await repo.add(tx);
+      await _repo.add(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -47,7 +47,7 @@ class TickersController extends ChangeNotifier {
 
   Future<void> update(TickersModel tx) async {
     try {
-      await repo.update(tx);
+      await _repo.update(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -56,7 +56,7 @@ class TickersController extends ChangeNotifier {
 
   Future<void> delete(TickersModel tx) async {
     try {
-      await repo.delete(tx);
+      await _repo.delete(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -64,60 +64,60 @@ class TickersController extends ChangeNotifier {
   }
 
   Future<void> wipe() async {
-    await repo.clear();
+    await _repo.clear();
     await load();
   }
 
   bool isEmpty() {
-    return repo.isEmpty();
+    return _repo.isEmpty();
   }
 
   Future<void> updateByType(int type, String newVal) async {
-    await repo.updateByType(type, newVal);
+    await _repo.updateByType(type, newVal);
     await load();
   }
 
   Future<void> populate() async {
     final tickers = [
       TickersModel(
-        tid: repo.generateTid(),
+        tid: _repo.generateTid(),
         type: TickerType.marketCap.index,
         format: TickerFormat.shortCurrency.index,
         title: "Market Cap",
         order: 0,
       ),
-      TickersModel(tid: repo.generateTid(), type: TickerType.pulse.index, format: TickerFormat.raw.index, title: "Market Bias", order: 1),
-      TickersModel(tid: repo.generateTid(), type: TickerType.cmc100.index, format: TickerFormat.currency.index, title: "CMC100", order: 2),
+      TickersModel(tid: _repo.generateTid(), type: TickerType.pulse.index, format: TickerFormat.raw.index, title: "Market Bias", order: 1),
+      TickersModel(tid: _repo.generateTid(), type: TickerType.cmc100.index, format: TickerFormat.currency.index, title: "CMC100", order: 2),
       TickersModel(
-        tid: repo.generateTid(),
+        tid: _repo.generateTid(),
         type: TickerType.altcoinIndex.index,
         format: TickerFormat.percentage.index,
         title: "Altcoin Index",
         order: 3,
       ),
       TickersModel(
-        tid: repo.generateTid(),
+        tid: _repo.generateTid(),
         type: TickerType.fearGreed.index,
         format: TickerFormat.percentage.index,
         title: "Fear & Greed",
         order: 4,
       ),
       TickersModel(
-        tid: repo.generateTid(),
+        tid: _repo.generateTid(),
         type: TickerType.rsi.index,
         format: TickerFormat.normalNumber.index,
         title: "Crypto RSI",
         order: 5,
       ),
       TickersModel(
-        tid: repo.generateTid(),
+        tid: _repo.generateTid(),
         type: TickerType.etf.index,
         format: TickerFormat.shortCurrencyWithSign.index,
         title: "ETF Flow",
         order: 6,
       ),
       TickersModel(
-        tid: repo.generateTid(),
+        tid: _repo.generateTid(),
         type: TickerType.dominance.index,
         format: TickerFormat.shortPercentage.index,
         title: "Dominance",
@@ -126,7 +126,7 @@ class TickersController extends ChangeNotifier {
     ];
 
     for (final tx in tickers) {
-      await repo.add(tx);
+      await _repo.add(tx);
     }
 
     await load();

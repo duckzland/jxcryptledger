@@ -25,9 +25,15 @@ class CryptosService {
 
     try {
       final endpoint = settingsRepo.get<String>(SettingKey.dataEndpoint) ?? SettingKey.dataEndpoint.defaultValue;
+      final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
+
+      final headers = <String, String>{};
+      if (authKey != null && authKey.isNotEmpty) {
+        headers['Authorization'] = authKey;
+      }
 
       final url = Uri.parse(endpoint);
-      final resp = await http.get(url);
+      final resp = await http.get(url, headers: headers);
 
       if (resp.statusCode != 200) {
         throw NetworkingException(

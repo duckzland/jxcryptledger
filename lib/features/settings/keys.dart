@@ -84,6 +84,15 @@ enum SettingKey {
     hintText: "https://example.com/dominance",
   ),
 
+  authorizationKey(
+    type: SettingType.string,
+    isUserEditable: true,
+    label: 'Authorization Key',
+    defaultValue: "",
+    validator: null,
+    hintText: "Will be added to the request authorization header",
+  ),
+
   vaultInitialized(type: SettingType.string, isUserEditable: false, label: 'Vault Status', defaultValue: "", validator: null, hintText: "");
 
   final SettingType type;

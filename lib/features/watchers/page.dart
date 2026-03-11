@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
+import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
@@ -36,6 +37,8 @@ class _WatchersPageState extends State<WatchersPage> {
     _wxController.load();
     _wxController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
+
+    _changePageTitle("Notification Watchers");
   }
 
   @override
@@ -48,6 +51,12 @@ class _WatchersPageState extends State<WatchersPage> {
 
   void _onControllerChanged() {
     setState(() {});
+  }
+
+  void _changePageTitle(String title) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setTitle?.call(title);
+    });
   }
 
   void _showAddWatcherDialog() {

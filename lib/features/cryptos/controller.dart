@@ -14,6 +14,8 @@ class CryptosController extends ChangeNotifier {
 
   CryptosController(this.repo, this.service);
 
+  bool get isFetching => service.isFetching;
+
   Future<void> init() async {
     await repo.init();
     _symbolCache = null;

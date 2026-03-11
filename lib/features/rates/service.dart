@@ -94,11 +94,7 @@ class RatesService {
       }
     }
 
-    try {
-      await _processQueue();
-    } catch (e) {
-      rethrow;
-    }
+    await _processQueue();
   }
 
   bool _isValidPair(int sourceId, int targetId) {
@@ -137,11 +133,7 @@ class RatesService {
     Future<void> worker() async {
       while (jobQueue.isNotEmpty) {
         final job = jobQueue.removeAt(0);
-        try {
-          await _fetchInternal(job.key, job.value);
-        } catch (e) {
-          rethrow;
-        }
+        await _fetchInternal(job.key, job.value);
         await Future.delayed(const Duration(milliseconds: 100));
       }
     }
@@ -162,12 +154,18 @@ class RatesService {
       if (!ids.contains(sourceId) || validTargets.isEmpty) return false;
 
       final endpoint = settingsRepo.get<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
+      final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
+
+      final headers = <String, String>{};
+      if (authKey != null && authKey.isNotEmpty) {
+        headers['Authorization'] = authKey;
+      }
 
       final uri = Uri.parse(
         endpoint,
       ).replace(queryParameters: {'amount': '1', 'id': sourceId.toString(), 'convert_id': validTargets.join(',')});
 
-      final resp = await http.get(uri);
+      final resp = await http.get(uri, headers: headers);
       if (resp.statusCode != 200) {
         throw NetworkingException(
           AppErrorCode.netHttpFailure,
