@@ -3,7 +3,7 @@ import 'package:decimal/decimal.dart';
 class Utils {
   Utils._();
 
-  static String formatSmartDouble(double value, {int maxDecimals = 6, int minDecimals = 0, int limitDecimals = 18}) {
+  static String formatSmartDouble(double value, {int maxDecimals = 6, int minDecimals = 0, int limitDecimals = 18, smartDecimal = false}) {
     if (!value.isFinite) {
       if (value.isNaN) return 'NaN';
       return value >= 0 ? '∞' : '-∞';
@@ -28,6 +28,10 @@ class Utils {
 
     if (effectivePrecision > limitDecimals) {
       effectivePrecision = limitDecimals;
+    }
+
+    if (smartDecimal && value > 10) {
+      effectivePrecision = 2;
     }
 
     dec = dec.round(scale: effectivePrecision);

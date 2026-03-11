@@ -102,6 +102,23 @@ class PanelsController extends ChangeNotifier {
     return false;
   }
 
+  int nextHighestOrder() {
+    int maxOrder = 0;
+
+    for (final wx in items) {
+      final raw = wx.order;
+
+      if (raw != null) {
+        final value = raw;
+        if (value > maxOrder) {
+          maxOrder = value;
+        }
+      }
+    }
+
+    return maxOrder + 1;
+  }
+
   Future<bool> updateLinked() async {
     final txs = await _txRepo.getAll();
     final Map<String, double> grouped = {};

@@ -1,4 +1,5 @@
 import '../../app/exceptions.dart';
+import '../../core/utils.dart';
 
 enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
 
@@ -133,7 +134,7 @@ class TickersModel {
         return val.toStringAsFixed(2);
 
       case TickerFormat.normalCurrency:
-        return "\$${_formatNumberWithCommas(val, 2)}";
+        return "\$${Utils.formatSmartDouble(val, maxDecimals: 2)}";
 
       case TickerFormat.shortCurrency:
         return _formatShortCurrency(val);
@@ -146,36 +147,22 @@ class TickersModel {
         return "$raw/100";
 
       case TickerFormat.shortPercentage:
-        return "${val.toStringAsFixed(1)}%";
+        return "${val.toStringAsFixed(2)}%";
 
       case TickerFormat.shortPercentageWithSign:
         final sign = val < 0 ? "-" : "+";
-        return "$sign${val.toStringAsFixed(1)}%";
+        return "$sign${val.toStringAsFixed(2)}%";
 
       case TickerFormat.raw:
         return raw;
     }
   }
 
-  String _formatNumberWithCommas(double val, int decimals) {
-    final str = val.toStringAsFixed(decimals);
-    final parts = str.split('.');
-    final intPart = parts[0];
-    final decPart = parts.length > 1 ? ".${parts[1]}" : "";
-
-    final buffer = StringBuffer();
-    for (int i = 0; i < intPart.length; i++) {
-      final pos = intPart.length - i;
-      buffer.write(intPart[i]);
-      if (pos > 1 && pos % 3 == 1) buffer.write(',');
-    }
-    return buffer.toString() + decPart;
-  }
-
   String _formatShortCurrency(double val) {
-    if (val >= 1e9) return "${(val / 1e9).toStringAsFixed(1)}B";
-    if (val >= 1e6) return "${(val / 1e6).toStringAsFixed(1)}M";
-    if (val >= 1e3) return "${(val / 1e3).toStringAsFixed(1)}K";
+    if (val >= 1e12) return "${(val / 1e12).toStringAsFixed(2)}T";
+    if (val >= 1e9) return "${(val / 1e9).toStringAsFixed(2)}B";
+    if (val >= 1e6) return "${(val / 1e6).toStringAsFixed(2)}M";
+    if (val >= 1e3) return "${(val / 1e3).toStringAsFixed(2)}K";
     return val.toStringAsFixed(2);
   }
 }
