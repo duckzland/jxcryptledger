@@ -466,6 +466,7 @@ class _PanelsPageState extends State<PanelsPage> {
 
   Widget _buildMainAction() {
     return WidgetsPanel(
+      padding: const EdgeInsets.all(8),
       child: Wrap(
         spacing: 4,
         children: [
@@ -527,6 +528,7 @@ class _PanelsPageState extends State<PanelsPage> {
 
   Widget _buildLinkedAction() {
     return WidgetsPanel(
+      padding: const EdgeInsets.all(8),
       child: Wrap(
         spacing: 4,
         children: [
@@ -565,6 +567,7 @@ class _PanelsPageState extends State<PanelsPage> {
 
   Widget _buildDatabaseAction() {
     return WidgetsPanel(
+      padding: const EdgeInsets.all(8),
       child: Wrap(
         spacing: 4,
         children: [

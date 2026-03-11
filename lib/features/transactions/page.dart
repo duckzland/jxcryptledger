@@ -608,6 +608,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
     return Row(
       children: [
         WidgetsPanel(
+          padding: const EdgeInsets.all(8),
           child: Wrap(
             spacing: 4,
             children: [
@@ -661,6 +662,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
         ),
         SizedBox(width: 10),
         WidgetsPanel(
+          padding: const EdgeInsets.all(8),
           child: Wrap(
             spacing: 4,
             children: [
@@ -726,6 +728,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Widget _buildScreenSwitcher() {
     return WidgetsPanel(
+      padding: const EdgeInsets.all(8),
       child: Wrap(
         spacing: 4,
         children: [

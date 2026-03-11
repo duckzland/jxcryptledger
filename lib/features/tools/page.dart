@@ -78,6 +78,7 @@ class _ToolsPageState extends State<ToolsPage> {
 
   Widget _buildAction() {
     return WidgetsPanel(
+      padding: const EdgeInsets.all(8),
       child: Wrap(
         spacing: 4,
         children: [

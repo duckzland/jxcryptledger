@@ -266,7 +266,12 @@ class _WatchersPageState extends State<WatchersPage> {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Expanded(child: SizedBox()),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(spacing: 20, children: [_buildDatabaseAction()]),
+                  ),
+                ),
                 _buildAction(),
                 const Expanded(child: SizedBox()),
               ],
@@ -301,6 +306,47 @@ class _WatchersPageState extends State<WatchersPage> {
 
   Widget _buildAction() {
     return WidgetsPanel(
+      padding: const EdgeInsets.all(8),
+      child: Wrap(
+        spacing: 4,
+        children: [
+          WidgetsButton(
+            key: Key("restart-button-batch"),
+            icon: Icons.refresh,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.warning,
+            tooltip: "Restart all watchers",
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            onPressed: (_) => _showRestartDialog(context),
+            evaluator: (s) {
+              if (!_wxController.hasRestartable()) {
+                s.disable();
+              } else {
+                s.warning();
+              }
+            },
+          ),
+          WidgetsButton(
+            icon: Icons.add_alarm,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.action,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Add new watcher",
+            evaluator: (s) => s.action(),
+            onPressed: (_) {
+              _showAddWatcherDialog();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDatabaseAction() {
+    return WidgetsPanel(
+      padding: const EdgeInsets.all(8),
       child: Wrap(
         spacing: 4,
         children: [
@@ -347,35 +393,6 @@ class _WatchersPageState extends State<WatchersPage> {
               } else {
                 s.error();
               }
-            },
-          ),
-          WidgetsButton(
-            key: Key("restart-button-batch"),
-            icon: Icons.refresh,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.warning,
-            tooltip: "Restart all watchers",
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            onPressed: (_) => _showRestartDialog(context),
-            evaluator: (s) {
-              if (!_wxController.hasRestartable()) {
-                s.disable();
-              } else {
-                s.warning();
-              }
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.add_alarm,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.action,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Add new watcher",
-            evaluator: (s) => s.action(),
-            onPressed: (_) {
-              _showAddWatcherDialog();
             },
           ),
         ],
