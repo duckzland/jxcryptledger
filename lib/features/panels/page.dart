@@ -304,12 +304,12 @@ class _PanelsPageState extends State<PanelsPage> {
         children: [
           Expanded(
             child: WidgetsScreensEmpty(
-              title: "Add Ticker",
+              title: "Add Panel",
               addTitle: "Add New",
-              addTooltip: "Create new ticker entry",
+              addTooltip: "Create new panel entry",
               addEvaluator: () => _cryptosController.hasAny(),
               importTitle: "Import",
-              importTooltip: "Import tickers to database",
+              importTooltip: "Import panels to database",
               importEvaluator: () => true,
               importCallback: (json) async => await _panelsController.importDatabase(json),
               addForm: _buildForm,
