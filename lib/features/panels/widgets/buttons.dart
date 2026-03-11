@@ -180,10 +180,10 @@ class _TickersWidgetsButtonsState extends State<TickersWidgetsButtons> {
       children: [
         WidgetsButton(
           icon: Icons.add_alarm,
-          padding: const EdgeInsets.all(8),
           initialState: WidgetsButtonActionState.action,
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
+          padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+          iconSize: 16,
+          minimumSize: const Size(34, 34),
           tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
           evaluator: (s) {
             if (_linkedWatcher == null) {
