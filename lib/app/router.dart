@@ -13,10 +13,6 @@ import '../features/watchers/page.dart';
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class AppRouter {
-  static bool _showBackFor(String location) {
-    return false;
-  }
-
   static final router = GoRouter(
     initialLocation: "/unlock",
     navigatorKey: rootNavigatorKey,
