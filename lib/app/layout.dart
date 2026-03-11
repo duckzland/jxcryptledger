@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jxledger/core/log.dart';
 
 import '../../features/rates/controller.dart';
 import '../core/locator.dart';
@@ -13,10 +14,9 @@ class AppLayout extends StatefulWidget {
   static void Function(String)? setTitle;
 
   final String title;
-  final bool showBack;
   final Widget child;
 
-  const AppLayout({super.key, required this.title, required this.child, this.showBack = false});
+  const AppLayout({super.key, required this.title, required this.child});
 
   @override
   State<AppLayout> createState() => _AppLayoutState();
@@ -31,6 +31,9 @@ class _AppLayoutState extends State<AppLayout> {
     setState(() => _title = newTitle);
   }
 
+  bool _isFetchingRates = false;
+  bool _isFetchingCryptos = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +41,29 @@ class _AppLayoutState extends State<AppLayout> {
 
     _cryptosController = locator<CryptosController>();
     _ratesController = locator<RatesController>();
+
+    _ratesController.addListener(_onControllerChanged);
+    _cryptosController.addListener(_onControllerChanged);
+
+    _isFetchingRates = _ratesController.isFetching;
+    _isFetchingCryptos = _cryptosController.isFetching;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _ratesController.removeListener(_onControllerChanged);
+    _cryptosController.removeListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    logln("Debug: layout received controller change ${_ratesController.isFetching} ${_cryptosController.isFetching}");
+    if (mounted) {
+      setState(() {
+        _isFetchingRates = _ratesController.isFetching;
+        _isFetchingCryptos = _cryptosController.isFetching;
+      });
+    }
   }
 
   @override
@@ -85,7 +111,7 @@ class _AppLayoutState extends State<AppLayout> {
                       padding: const EdgeInsets.all(8),
                       iconSize: 20,
                       minimumSize: const Size(40, 40),
-                      tooltip: "Display Tickers",
+                      tooltip: "Display Tickers & Panels",
                       evaluator: (s) {
                         if (location == "/tickers") {
                           s.active();
@@ -167,6 +193,9 @@ class _AppLayoutState extends State<AppLayout> {
                     iconSize: 20,
                     minimumSize: const Size(40, 40),
                     tooltip: "Refresh Cryptos",
+                    evaluator: (s) {
+                      _isFetchingCryptos ? s.progress() : s.reset();
+                    },
                     onPressed: (s) async {
                       s.progress();
                       try {
@@ -190,7 +219,7 @@ class _AppLayoutState extends State<AppLayout> {
                       minimumSize: const Size(40, 40),
                       tooltip: "Refresh Rates",
                       evaluator: (s) {
-                        _ratesController.isFetching ? s.progress() : s.reset();
+                        _isFetchingRates ? s.progress() : s.reset();
                       },
                       onPressed: (s) async {
                         s.progress();

@@ -5,19 +5,19 @@ import 'model.dart';
 import 'repository.dart';
 
 class TransactionsController extends ChangeNotifier {
-  final TransactionsRepository repo;
+  final TransactionsRepository _repo;
 
   List<TransactionsModel> _items = [];
   List<TransactionsModel> get items => _items;
 
-  TransactionsController(this.repo);
+  TransactionsController(this._repo);
 
   String generateTid() {
-    return repo.generateTid();
+    return _repo.generateTid();
   }
 
   Future<void> load() async {
-    _items = await repo.getAll();
+    _items = await _repo.getAll();
     notifyListeners();
   }
 
@@ -27,19 +27,19 @@ class TransactionsController extends ChangeNotifier {
       return;
     }
 
-    _items = await repo.filter(query);
+    _items = await _repo.filter(query);
     notifyListeners();
   }
 
   Future<TransactionsModel?> get(String tid) async {
-    final tx = await repo.get(tid);
+    final tx = await _repo.get(tid);
     await load();
     return tx;
   }
 
   Future<void> add(TransactionsModel tx) async {
     try {
-      await repo.add(tx);
+      await _repo.add(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -48,7 +48,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<void> update(TransactionsModel tx) async {
     try {
-      await repo.update(tx);
+      await _repo.update(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -57,7 +57,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<void> delete(TransactionsModel tx) async {
     try {
-      await repo.delete(tx);
+      await _repo.delete(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -66,7 +66,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<void> closeLeaf(TransactionsModel tx) async {
     try {
-      await repo.close(tx);
+      await _repo.close(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -75,7 +75,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<TransactionsModel?> getParent(TransactionsModel tx) async {
     try {
-      TransactionsModel? ptx = await repo.get(tx.pid);
+      TransactionsModel? ptx = await _repo.get(tx.pid);
       return ptx;
     } catch (e) {
       return null;
@@ -84,7 +84,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<void> removeRoot(TransactionsModel tx) async {
     try {
-      await repo.delete(tx);
+      await _repo.delete(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -93,7 +93,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<void> removeLeaf(TransactionsModel tx) async {
     try {
-      await repo.refund(tx);
+      await _repo.refund(tx);
       await load();
     } catch (e) {
       rethrow;
@@ -101,7 +101,7 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<void> deleteAll() async {
-    final roots = await repo.collectAllRoots();
+    final roots = await _repo.collectAllRoots();
 
     for (final tx in roots) {
       final bool deletable;
@@ -113,14 +113,14 @@ class TransactionsController extends ChangeNotifier {
 
       if (!deletable) continue;
 
-      await repo.delete(tx);
+      await _repo.delete(tx);
     }
 
     await load();
   }
 
   Future<void> closeAll() async {
-    final leaves = await repo.collectAllTerminalLeaves();
+    final leaves = await _repo.collectAllTerminalLeaves();
 
     for (final tx in leaves) {
       final bool closable;
@@ -132,7 +132,7 @@ class TransactionsController extends ChangeNotifier {
 
       if (!closable) continue;
 
-      await repo.close(tx);
+      await _repo.close(tx);
     }
 
     await load();
@@ -140,7 +140,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> wipeAll() async {
     try {
-      final removed = await repo.clear();
+      final removed = await _repo.clear();
       await load();
       return removed != 0;
     } catch (e) {
@@ -150,7 +150,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> hasLeaf(TransactionsModel tx) async {
     try {
-      final leaf = await repo.getLeaf(tx);
+      final leaf = await _repo.getLeaf(tx);
       return leaf.isNotEmpty;
     } catch (e) {
       return false;
@@ -159,11 +159,11 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> hasClosableLeaf() async {
     try {
-      final leaves = await repo.collectAllTerminalLeaves();
+      final leaves = await _repo.collectAllTerminalLeaves();
 
       for (final tx in leaves) {
         try {
-          await repo.canClose(tx, silent: true);
+          await _repo.canClose(tx, silent: true);
           return true;
         } catch (_) {
           // Ignore failures and continue
@@ -178,10 +178,10 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> hasDeletableRoot() async {
     try {
-      final roots = await repo.collectAllRoots();
+      final roots = await _repo.collectAllRoots();
       for (final tx in roots) {
         try {
-          await repo.canDelete(tx, silent: true);
+          await _repo.canDelete(tx, silent: true);
           return true;
         } catch (_) {
           // Ignore failures and continue
@@ -195,7 +195,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isAddable(TransactionsModel tx) async {
     try {
-      await repo.canAdd(tx, silent: true);
+      await _repo.canAdd(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -206,7 +206,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isClosable(TransactionsModel tx) async {
     try {
-      await repo.canClose(tx, silent: true);
+      await _repo.canClose(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -217,7 +217,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isDeletable(TransactionsModel tx) async {
     try {
-      await repo.canDelete(tx, silent: true);
+      await _repo.canDelete(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -228,7 +228,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isUpdatable(TransactionsModel tx) async {
     try {
-      await repo.canUpdate(tx, silent: true);
+      await _repo.canUpdate(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -239,7 +239,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isTradable(TransactionsModel tx) async {
     try {
-      await repo.canTrade(tx, silent: true);
+      await _repo.canTrade(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -250,7 +250,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> isRefundable(TransactionsModel tx) async {
     try {
-      await repo.canRefund(tx, silent: true);
+      await _repo.canRefund(tx, silent: true);
       return true;
     } on ValidationException catch (_) {
       return false;
@@ -260,11 +260,11 @@ class TransactionsController extends ChangeNotifier {
   }
 
   bool isEmpty() {
-    return repo.isEmpty();
+    return _repo.isEmpty();
   }
 
   Future<double> getCapitalBalance(TransactionsModel tx) async {
-    final children = await repo.getLeaf(tx);
+    final children = await _repo.getLeaf(tx);
     final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
     final double balance = tx.rrAmount - spent;
 
@@ -272,12 +272,12 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<List<TransactionsModel>> collectAllRoots() async {
-    return await repo.collectAllRoots();
+    return await _repo.collectAllRoots();
   }
 
   Future<double> collectAllTerminalResultAmount(TransactionsModel tx) async {
     double balance = 0;
-    final leaves = await repo.collectAllTerminalLeaves();
+    final leaves = await _repo.collectAllTerminalLeaves();
 
     for (final ltx in leaves) {
       if (ltx.rrId == tx.rrId && ltx.isActive) {
@@ -288,7 +288,7 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<double> collectBranchTotalResultAmount(TransactionsModel tx) async {
-    final txs = await repo.collectDescendantLeaves(tx);
+    final txs = await _repo.collectDescendantLeaves(tx);
     double balance = 0;
     for (final rtx in txs) {
       if (rtx.rrId == tx.srId && (rtx.isActive || rtx.isPartial)) {
@@ -300,7 +300,7 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<Map<int, double>> collectBranchActiveAmount(TransactionsModel tx) async {
-    final txs = await repo.collectDescendantLeaves(tx);
+    final txs = await _repo.collectDescendantLeaves(tx);
 
     final Map<int, double> branchAmounts = {};
 
@@ -316,7 +316,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<String> exportDatabase() async {
     try {
-      return await repo.export();
+      return await _repo.export();
     } catch (e) {
       return '';
     }
@@ -324,7 +324,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<void> importDatabase(String rawJson) async {
     try {
-      await repo.import(rawJson);
+      await _repo.import(rawJson);
       await load();
     } catch (e) {
       rethrow;

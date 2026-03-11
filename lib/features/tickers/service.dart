@@ -16,8 +16,14 @@ class TickersService {
   Future<Map<String, dynamic>> _fetchJson(SettingKey key, {Map<String, String>? query}) async {
     final endpoint = settingsRepo.get<String>(key) ?? key.defaultValue;
     final uri = Uri.parse(endpoint).replace(queryParameters: query);
+    final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
 
-    final resp = await http.get(uri);
+    final headers = <String, String>{};
+    if (authKey != null && authKey.isNotEmpty) {
+      headers['Authorization'] = authKey;
+    }
+
+    final resp = await http.get(uri, headers: headers);
     if (resp.statusCode != 200) {
       throw NetworkingException(
         AppErrorCode.netHttpFailure,

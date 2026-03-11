@@ -128,6 +128,10 @@ class PanelsModel {
   }
 
   void setRate(double newRate) {
+    // Experimental: trying to preserve old rate
+    if (newRate == -9999 && meta["oldRate"] != -9999) {
+      return;
+    }
     if (newRate != rate) {
       meta["oldRate"] = rate;
       rate = newRate;

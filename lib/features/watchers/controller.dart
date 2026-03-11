@@ -1,59 +1,58 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core/locator.dart';
 import '../../core/log.dart';
-import '../rates/controller.dart';
+import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
 
 class WatchersController extends ChangeNotifier {
-  final WatchersRepository repo;
-  final rates = locator<RatesController>();
+  final WatchersRepository _repo;
+  final RatesService _ratesService;
 
   List<WatchersModel> _items = [];
   List<WatchersModel> get items => _items;
 
-  WatchersController(this.repo);
+  WatchersController(this._repo, this._ratesService);
 
   String generateWid() {
-    return repo.generateWid();
+    return _repo.generateWid();
   }
 
   Future<void> load() async {
-    _items = await repo.getAll();
+    _items = await _repo.getAll();
     notifyListeners();
   }
 
   Future<void> init() async {
     for (final wx in items) {
-      rates.addQueue(wx.srId, wx.rrId);
+      _ratesService.addQueue(wx.srId, wx.rrId);
     }
     notifyListeners();
   }
 
   Future<void> add(WatchersModel watcher) async {
-    rates.addQueue(watcher.srId, watcher.rrId);
-    await repo.add(watcher);
+    _ratesService.addQueue(watcher.srId, watcher.rrId);
+    await _repo.add(watcher);
     await load();
   }
 
   Future<void> update(WatchersModel watcher) async {
-    rates.addQueue(watcher.srId, watcher.rrId);
-    await repo.update(watcher);
+    _ratesService.addQueue(watcher.srId, watcher.rrId);
+    await _repo.update(watcher);
     await load();
   }
 
   Future<void> delete(WatchersModel watcher) async {
-    await rates.delete(watcher.srId, watcher.rrId);
-    await repo.delete(watcher.wid);
+    await _ratesService.delete(watcher.srId, watcher.rrId);
+    await _repo.delete(watcher.wid);
     await load();
   }
 
   Future<void> deleteAll() async {
     for (final wx in items) {
-      await rates.delete(wx.srId, wx.rrId);
+      await _ratesService.delete(wx.srId, wx.rrId);
     }
-    await repo.clear();
+    await _repo.clear();
     await load();
   }
 
@@ -68,24 +67,24 @@ class WatchersController extends ChangeNotifier {
   }
 
   bool isEmpty() {
-    return repo.isEmpty();
+    return _repo.isEmpty();
   }
 
   Future<void> onRatesUpdated() async {
     await load();
     for (final w in _items) {
       logln("[Watcher] Evaluating ${w.srId}-${w.rrId}");
-      repo.process(w);
+      _repo.process(w);
     }
   }
 
   Future<void> sendNotification(WatchersModel wx) async {
-    await repo.sendNotification(wx);
+    await _repo.sendNotification(wx);
   }
 
   Future<String> exportDatabase() async {
     try {
-      return await repo.export();
+      return await _repo.export();
     } catch (e) {
       return '';
     }
@@ -93,7 +92,7 @@ class WatchersController extends ChangeNotifier {
 
   Future<void> importDatabase(String rawJson) async {
     try {
-      await repo.import(rawJson);
+      await _repo.import(rawJson);
       await load();
     } catch (e) {
       rethrow;
@@ -103,7 +102,7 @@ class WatchersController extends ChangeNotifier {
   Future<void> restart() async {
     for (final wx in _items) {
       final resetWx = wx.copyWith(sent: 0, timestamp: 0);
-      await repo.update(resetWx);
+      await _repo.update(resetWx);
     }
 
     await load();

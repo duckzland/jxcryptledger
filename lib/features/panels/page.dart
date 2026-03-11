@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../app/exceptions.dart';
+import '../../app/layout.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../../widgets/button.dart';
@@ -34,6 +35,9 @@ class _PanelsPageState extends State<PanelsPage> {
 
   bool _enableDrag = false;
   bool _enableTickers = true;
+  bool _hasLinked = false;
+
+  DateTime _lastPress = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void initState() {
@@ -47,6 +51,10 @@ class _PanelsPageState extends State<PanelsPage> {
 
     _cryptosController = locator<CryptosController>();
     _cryptosController.addListener(_onControllerChanged);
+
+    _hasLinked = _panelsController.hasLinked();
+
+    _changePageTitle("Manage Tickers & Panels");
   }
 
   @override
@@ -58,8 +66,16 @@ class _PanelsPageState extends State<PanelsPage> {
 
   void _onControllerChanged() {
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _hasLinked = _panelsController.hasLinked();
+      });
     }
+  }
+
+  void _changePageTitle(String title) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setTitle?.call(title);
+    });
   }
 
   void _showAddTickerDialog() {
@@ -80,9 +96,9 @@ class _PanelsPageState extends State<PanelsPage> {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete All Tickers"),
+            title: const Text("Delete All Panels"),
             content: const Text(
-              "This will delete all tickers.\n"
+              "This will delete all panels entry.\n"
               "This action cannot be undone.",
             ),
             actions: [
@@ -97,9 +113,89 @@ class _PanelsPageState extends State<PanelsPage> {
 
                     Navigator.pop(dialogContext);
 
-                    widgetsNotifySuccess("All tickers deleted.");
+                    widgetsNotifySuccess("All panels deleted.");
                   } catch (e) {
-                    widgetsNotifyError("Failed to delete tickers.");
+                    widgetsNotifyError("Failed to delete panels.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteLinkedDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Delete All Linked Panels"),
+            content: const Text(
+              "This will delete all linked panels entry.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Delete',
+                initialState: WidgetsButtonActionState.error,
+                onPressed: (_) async {
+                  try {
+                    await _panelsController.wipeLinked();
+
+                    Navigator.pop(dialogContext);
+
+                    widgetsNotifySuccess("All linked panels deleted.");
+                  } catch (e) {
+                    widgetsNotifyError("Failed to delete linked panels.");
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRefreshLinkedDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: AlertDialog(
+            actionsAlignment: MainAxisAlignment.center,
+            title: const Text("Update Linked Panels"),
+            content: const Text(
+              "This will update all the linked panels.\n"
+              "This action cannot be undone.",
+            ),
+            actions: [
+              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
+              const SizedBox(width: 12),
+              WidgetsButton(
+                label: 'Update',
+                initialState: WidgetsButtonActionState.action,
+                onPressed: (_) async {
+                  try {
+                    bool updated = await _panelsController.updateLinked();
+
+                    Navigator.pop(dialogContext);
+
+                    if (updated) {
+                      widgetsNotifySuccess("All linked panel updated.");
+                    } else {
+                      widgetsNotifyWarning("Linked panels checked, but no additional data requires updating.");
+                    }
+                  } catch (e) {
+                    widgetsNotifyError("Failed to update linked panels.");
                   }
                 },
               ),
@@ -118,9 +214,9 @@ class _PanelsPageState extends State<PanelsPage> {
         body: Center(
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Import Tickers"),
+            title: const Text("Import Panels"),
             content: const Text(
-              "This will erase all existing ticker before inserting new data from the selected file.\n"
+              "This will erase all existing panels before inserting new data from the selected file.\n"
               "This action cannot be undone.",
             ),
             actions: [
@@ -135,7 +231,7 @@ class _PanelsPageState extends State<PanelsPage> {
 
                     Navigator.pop(dialogContext);
                   } catch (e) {
-                    widgetsNotifyError("Failed to import tickers.");
+                    widgetsNotifyError("Failed to import panels.");
                   }
                 },
               ),
@@ -232,9 +328,19 @@ class _PanelsPageState extends State<PanelsPage> {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Expanded(child: SizedBox()),
-                _buildAction(),
-                const Expanded(child: SizedBox()),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(spacing: 20, children: [_buildDatabaseAction()]),
+                  ),
+                ),
+                _buildMainAction(),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(spacing: 20, children: [_buildLinkedAction()]),
+                  ),
+                ),
               ],
             ),
             if (_enableTickers) SizedBox(height: 16),
@@ -347,7 +453,106 @@ class _PanelsPageState extends State<PanelsPage> {
     );
   }
 
-  Widget _buildAction() {
+  Widget _buildMainAction() {
+    return WidgetsPanel(
+      child: Wrap(
+        spacing: 4,
+        children: [
+          WidgetsButton(
+            icon: Icons.remove_red_eye,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.normal,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: _enableTickers ? "Hide tickers" : "ShowTickers",
+            evaluator: (s) {
+              _enableTickers ? s.primary() : s.normal();
+            },
+            onPressed: (_) {
+              setState(() {
+                _enableTickers = !_enableTickers;
+              });
+            },
+          ),
+          WidgetsButton(
+            icon: Icons.drag_indicator,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.normal,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: _enableDrag ? "Turn off panel dragging" : "Turn on panel dragging",
+            evaluator: (s) {
+              _enableDrag ? s.primary() : s.normal();
+            },
+            onPressed: (_) {
+              final now = DateTime.now();
+              if (now.difference(_lastPress).inMilliseconds < 500) {
+                return;
+              }
+
+              setState(() {
+                _lastPress = now;
+                _enableDrag = !_enableDrag;
+                widgetsNotifySuccess(_enableDrag ? "Panel dragging enabled." : "Panel dragging disabled.");
+              });
+            },
+          ),
+          WidgetsButton(
+            icon: Icons.candlestick_chart_outlined,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.action,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Add new panel",
+            evaluator: (s) => s.action(),
+            onPressed: (_) {
+              _showAddTickerDialog();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinkedAction() {
+    return WidgetsPanel(
+      child: Wrap(
+        spacing: 4,
+        children: [
+          WidgetsButton(
+            icon: Icons.delete_forever,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.error,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Delete linked panel",
+            evaluator: (s) {
+              _hasLinked ? s.error() : s.disable();
+            },
+            onPressed: (_) {
+              _showDeleteLinkedDialog(context);
+            },
+          ),
+          WidgetsButton(
+            icon: Icons.line_axis,
+            padding: const EdgeInsets.all(8),
+            initialState: WidgetsButtonActionState.normal,
+            iconSize: 20,
+            minimumSize: const Size(40, 40),
+            tooltip: "Update linked panel",
+            evaluator: (s) {
+              _hasLinked ? s.primary() : s.disable();
+            },
+            onPressed: (_) {
+              _showRefreshLinkedDialog(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDatabaseAction() {
     return WidgetsPanel(
       child: Wrap(
         spacing: 4,
@@ -395,50 +600,6 @@ class _PanelsPageState extends State<PanelsPage> {
               } else {
                 s.error();
               }
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.remove_red_eye,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.normal,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: _enableTickers ? "Hide tickers" : "ShowTickers",
-            evaluator: (s) {
-              _enableTickers ? s.primary() : s.normal();
-            },
-            onPressed: (_) {
-              setState(() {
-                _enableTickers = !_enableTickers;
-              });
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.drag_indicator,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.normal,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: _enableDrag ? "Turn off panel dragging" : "Turn on panel dragging",
-            evaluator: (s) {
-              _enableDrag ? s.primary() : s.normal();
-            },
-            onPressed: (_) {
-              setState(() {
-                _enableDrag = !_enableDrag;
-              });
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.candlestick_chart_outlined,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.action,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Add new panel",
-            evaluator: (s) => s.action(),
-            onPressed: (_) {
-              _showAddTickerDialog();
             },
           ),
         ],
