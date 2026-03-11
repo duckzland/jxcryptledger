@@ -4,6 +4,8 @@ import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../widgets/dialogs/alert.dart';
+import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
@@ -109,92 +111,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
         _filterableOptions = {};
         break;
     }
-  }
-
-  void _showAddTransactionDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: _buildForm(dialogContext)),
-      ),
-    );
-  }
-
-  Future<void> _showDeleteDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete All Transactions"),
-            content: const Text(
-              "This will delete all transactions and all of its history.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Delete',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _txController.deleteAll();
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All transactions deleted.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to delete transactions.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showCloseDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Close All Transactions"),
-            content: const Text(
-              "Are you sure you want to close all closable transactions?\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Close',
-                initialState: WidgetsButtonActionState.warning,
-                onPressed: (_) async {
-                  try {
-                    await _txController.closeAll();
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All transactions closed.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to close transactions.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   void _changePageTitle(String title) {
@@ -522,7 +438,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 dialogMessage:
                     "This will delete all transactions and all of its history.\n"
                     "This action cannot be undone.",
-                onWipe: _txController.deleteAll,
+                onWipe: _txController.wipeAll,
                 evaluator: (s) {
                   if (_txController.isEmpty()) {
                     s.disable();
@@ -540,15 +456,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
           child: Wrap(
             spacing: 4,
             children: [
-              WidgetsButton(
+              WidgetsDialogsAlert(
                 key: Key("delete-button-batch"),
                 icon: Icons.delete,
-                padding: const EdgeInsets.all(8),
                 initialState: WidgetsButtonActionState.error,
                 tooltip: "Remove deletable transactions",
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                onPressed: (_) => _showDeleteDialog(context),
                 evaluator: (s) async {
                   final bool isDeletable = await _txController.hasDeletableRoot();
                   if (!isDeletable) {
@@ -557,16 +469,28 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     s.error();
                   }
                 },
+                dialogTitle: "Delete All Transactions",
+                dialogMessage:
+                    "This will delete all transactions and all of its history.\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Delete",
+                onPressed: (dialogContext) async {
+                  try {
+                    await _txController.deleteAll();
+
+                    Navigator.pop(dialogContext);
+
+                    widgetsNotifySuccess("All transactions deleted.");
+                  } catch (e) {
+                    widgetsNotifyError("Failed to delete transactions.");
+                  }
+                },
               ),
-              WidgetsButton(
+              WidgetsDialogsAlert(
                 key: Key("close-button-batch"),
                 icon: Icons.close,
-                padding: const EdgeInsets.all(8),
                 initialState: WidgetsButtonActionState.warning,
                 tooltip: "Close all closable transactions",
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                onPressed: (_) => _showCloseDialog(context),
                 evaluator: (s) async {
                   final bool isClosable = await _txController.hasClosableLeaf();
                   if (!isClosable) {
@@ -575,16 +499,27 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     s.warning();
                   }
                 },
+                dialogTitle: "Close All Transactions",
+                dialogMessage:
+                    "Are you sure you want to close all closable transactions?\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Close",
+                onPressed: (dialogContext) async {
+                  try {
+                    await _txController.closeAll();
+
+                    Navigator.pop(dialogContext);
+
+                    widgetsNotifySuccess("All transactions closed.");
+                  } catch (e) {
+                    widgetsNotifyError("Failed to close transactions.");
+                  }
+                },
               ),
-              WidgetsButton(
-                key: Key("add-button-single"),
-                icon: Icons.add,
-                padding: const EdgeInsets.all(8),
-                initialState: WidgetsButtonActionState.action,
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                tooltip: "Add New Transaction",
-                onPressed: (_) => _showAddTransactionDialog(),
+              WidgetsDialogsShowForm(
+                key: const Key("add-button"),
+                tooltip: "Add new transaction",
+                buildForm: (dialogContext) => _buildForm(dialogContext),
                 evaluator: (s) {
                   if (!_cryptosController.hasAny()) {
                     s.disable();
