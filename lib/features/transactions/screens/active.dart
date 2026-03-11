@@ -283,50 +283,6 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     }
   }
 
-  Future<void> _showDeleteDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: const Text("Delete Transactions"),
-            content: const Text(
-              "This will delete all transactions in this group and all of its history.\n"
-              "This action cannot be undone.",
-            ),
-            actions: [
-              WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: 'Delete',
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await _deleteTransactions();
-
-                    if (mounted) {
-                      setState(() {
-                        _isDeletable = false;
-                      });
-                    }
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All transactions deleted.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to delete transactions.");
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final txs = widget.transactions;
