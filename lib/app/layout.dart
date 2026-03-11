@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jxledger/core/log.dart';
 
 import '../../features/rates/controller.dart';
 import '../core/locator.dart';
