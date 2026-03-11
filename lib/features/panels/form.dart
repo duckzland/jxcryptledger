@@ -62,7 +62,7 @@ class _PanelsFormState extends State<PanelsForm> {
     _selectedSrId = widget.initialSrId ?? data?.srId;
     _selectedRrId = widget.initialRrId ?? data?.rrId;
     _digit = data?.digit ?? 6;
-    _order = data?.order ?? 0;
+    _order = data?.order ?? _tixController.nextHighestOrder();
     _rate = data?.rate ?? -9999;
 
     _srAmountText = Utils.sanitizeNumber((widget.initialSrAmount ?? data?.srAmount ?? "").toString());

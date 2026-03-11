@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart' show AppTheme;
 import '../../../core/locator.dart';
+import '../../../core/utils.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
@@ -90,26 +91,29 @@ class _TickersWidgetsPanelState extends State<TickersWidgetsPanel> {
     String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
     String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
 
-    final fromText = "${tix.srAmount} $sourceSymbol to $targetSymbol";
-    final toText = "${(tix.rate! * tix.srAmount).toStringAsFixed(tix.digit)} $targetSymbol";
-    final rateText = "1 $sourceSymbol = ${tix.rate?.toStringAsFixed(tix.digit)} $targetSymbol";
-    final inverseText = "1 $targetSymbol = ${(1 / tix.rate!).toStringAsFixed(tix.digit)} $sourceSymbol";
+    final fromText = "${Utils.formatSmartDouble(tix.srAmount)} $sourceSymbol to $targetSymbol";
+    final toText = "${Utils.formatSmartDouble((tix.rate! * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
+    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDouble(tix.rate!, maxDecimals: tix.digit)} $targetSymbol";
+    final inverseText = "1 $targetSymbol = ${Utils.formatSmartDouble((1 / tix.rate!), maxDecimals: tix.digit)} $sourceSymbol";
 
     final bool isThisOneActive = _activePanelId == widget.tix.tid;
 
     final text = tix.rate != null && tix.rate! > 0
         ? [
-            Text(fromText, style: Theme.of(context).textTheme.bodyMedium),
+            Text(fromText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.1, fontSize: 16, fontWeight: FontWeight.w500)),
             Flexible(
               child: Text(
                 toText,
                 softWrap: false,
                 overflow: TextOverflow.visible,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(height: 1.3, fontSize: 27, fontWeight: FontWeight.bold),
               ),
             ),
-            Text(rateText, style: Theme.of(context).textTheme.bodySmall),
-            Text(inverseText, style: Theme.of(context).textTheme.bodySmall),
+            Text(rateText, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontSize: 14, fontWeight: FontWeight.w400)),
+            Text(
+              inverseText,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.1, fontSize: 12, fontWeight: FontWeight.w400),
+            ),
           ]
         : [
             Text(
