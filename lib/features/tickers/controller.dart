@@ -1,15 +1,17 @@
 import 'package:flutter/foundation.dart';
+import 'package:jxledger/features/tickers/service.dart';
 
 import 'model.dart';
 import 'repository.dart';
 
 class TickersController extends ChangeNotifier {
   final TickersRepository _repo;
+  final TickersService _service;
 
   List<TickersModel> _items = [];
   List<TickersModel> get items => _items;
 
-  TickersController(this._repo);
+  TickersController(this._repo, this._service);
 
   String generateTid() {
     return _repo.generateTid();
@@ -86,8 +88,20 @@ class TickersController extends ChangeNotifier {
         title: "Market Cap",
         order: 0,
       ),
-      TickersModel(tid: _repo.generateTid(), type: TickerType.pulse.index, format: TickerFormat.raw.index, title: "Market Bias", order: 1),
-      TickersModel(tid: _repo.generateTid(), type: TickerType.cmc100.index, format: TickerFormat.currency.index, title: "CMC100", order: 2),
+      TickersModel(
+        tid: _repo.generateTid(),
+        type: TickerType.pulse.index,
+        format: TickerFormat.shortPercentageWithSign.index,
+        title: "Market Bias",
+        order: 1,
+      ),
+      TickersModel(
+        tid: _repo.generateTid(),
+        type: TickerType.cmc100.index,
+        format: TickerFormat.normalCurrency.index,
+        title: "CMC100",
+        order: 2,
+      ),
       TickersModel(
         tid: _repo.generateTid(),
         type: TickerType.altcoinIndex.index,
@@ -129,6 +143,11 @@ class TickersController extends ChangeNotifier {
       await _repo.add(tx);
     }
 
+    await load();
+  }
+
+  Future<void> refreshRates() async {
+    await _service.refreshRates();
     await load();
   }
 }

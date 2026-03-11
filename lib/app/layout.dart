@@ -57,7 +57,6 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   void _onControllerChanged() {
-    logln("Debug: layout received controller change ${_ratesController.isFetching} ${_cryptosController.isFetching}");
     if (mounted) {
       setState(() {
         _isFetchingRates = _ratesController.isFetching;

@@ -60,6 +60,8 @@ class PanelsController extends ChangeNotifier {
     for (final w in _items) {
       _ratesService.addQueue(w.srId, w.rrId);
     }
+
+    logln("[PANELS] Scheduling rates completed");
   }
 
   Future<void> onRatesUpdated() async {
