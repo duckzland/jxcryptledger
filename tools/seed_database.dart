@@ -3,23 +3,52 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
+import 'package:decimal/decimal.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:jxledger/features/cryptos/adapter.dart';
 import 'package:jxledger/features/cryptos/model.dart';
 import 'package:jxledger/features/cryptos/parser.dart';
 import 'package:jxledger/features/rates/adapter.dart';
+import 'package:jxledger/features/rates/model.dart';
+import 'package:jxledger/features/rates/repository.dart';
 import 'package:jxledger/features/transactions/adapter.dart';
 import 'package:jxledger/features/transactions/model.dart';
 import 'package:jxledger/features/transactions/repository.dart';
+import 'package:jxledger/features/watchboard/panels/adapter.dart';
+import 'package:jxledger/features/watchboard/panels/model.dart';
+import 'package:jxledger/features/watchboard/panels/repository.dart';
+import 'package:jxledger/features/watchboard/tickers/adapter.dart';
+import 'package:jxledger/features/watchers/adapter.dart';
+import 'package:jxledger/features/watchers/model.dart';
+import 'package:jxledger/features/watchers/repository.dart';
 
 final env = DotEnv()..load();
 final txRepo = TransactionsRepository();
 final AesGcm aes = AesGcm.with256bits();
 
 final List<int> staticCmcIds = [1, 2, 52, 1831, 2010, 6636, 5426, 5805, 3890, 1975, 512, 1958, 1321, 328, 3794];
+final Map<int, String> staticCmcSymbol = {
+  1: "BTC",
+  2: "LTC",
+  52: "XRP",
+  1831: "BCH",
+  2010: "ADA",
+  6636: "DOT",
+  5426: "SOL",
+  5805: "AVAX",
+  3890: "DASH",
+  1975: "LINK",
+  512: "XLM",
+  1958: "TRX",
+  1321: "ETC",
+  328: "XMR",
+  3794: "ATOM",
+};
 
 int pickCmcId(int index) => staticCmcIds[index % staticCmcIds.length];
+
+String pickCmcSymbol(int index) => staticCmcSymbol[index] ?? "UNK";
 
 Future<bool> fetchCryptos({required String endpoint, required Box<CryptosModel> cryptosBox}) async {
   try {
@@ -126,6 +155,12 @@ Future<void> main(List<String> args) async {
 
   final bool seedCryptos = noArgs ? true : args.contains('--seed-cryptos');
 
+  final bool seedPanels = noArgs ? true : args.contains('--seed-panels');
+
+  final bool seedRates = noArgs ? true : args.contains('--seed-rates');
+
+  final bool seedWatchers = noArgs ? true : args.contains('--seed-watchers');
+
   final dir = requireEnv('APP_DATA_DIR');
   final password = requireEnv('APP_DB_PASSWORD');
 
@@ -135,9 +170,12 @@ Future<void> main(List<String> args) async {
   Hive.registerAdapter(TransactionsAdapter());
   Hive.registerAdapter(RatesAdapter());
   Hive.registerAdapter(CryptosAdapter());
+  Hive.registerAdapter(WatchersAdapter());
+  Hive.registerAdapter(PanelsAdapter());
+  Hive.registerAdapter(TickersAdapter());
 
   print("Wiping old boxes...");
-  final boxes = ['settings_box', 'rates_box', 'watchers_box'];
+  final boxes = ['settings_box', 'watchers_box'];
 
   if (seedTx) {
     boxes.add('transactions_box');
@@ -145,6 +183,18 @@ Future<void> main(List<String> args) async {
 
   if (seedCryptos) {
     boxes.add('cryptos_box');
+  }
+
+  if (seedRates) {
+    boxes.add('rates_box');
+  }
+
+  if (seedPanels) {
+    boxes.add('panels_box');
+  }
+
+  if (seedWatchers) {
+    boxes.add('watchers_box');
   }
 
   for (final box in boxes) {
@@ -166,18 +216,31 @@ Future<void> main(List<String> args) async {
   final encryptedMarker = await encryptValue("initialized", key);
   await settingsBox.put('vaultInitialized', encryptedMarker);
 
+  final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');
+
+  await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
+  final txRepo = TransactionsRepository();
+  await txRepo.init();
+
+  await Hive.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
+  final pxRepo = PanelsRepository();
+  await pxRepo.init();
+
+  await Hive.openBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
+  final wxRepo = WatchersRepository();
+  await wxRepo.init();
+
+  await Hive.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
+  final rtRepo = RatesRepository();
+  await rtRepo.init();
+
   if (seedCryptos) {
     print("Seeding cryptos...");
-    final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');
     await fetchCryptos(endpoint: requireEnv('CMC_ENDPOINT'), cryptosBox: cryptosBox);
   }
 
   if (seedTx) {
     print("Seeding transactions...");
-    await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
-    final txRepo = TransactionsRepository();
-    await txRepo.init();
-
     final List<TransactionsModel> roots = [];
 
     for (int r = 0; r < 5; r++) {
@@ -245,8 +308,99 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  // print("Seeding rates");
-  // await Hive.openBox<RatesModel>('rates_box');
+  if (seedWatchers) {
+    print("Seeding watchers...");
+
+    final txs = await txRepo.getAll();
+    for (final tx in txs) {
+      await wxRepo.add(
+        WatchersModel(
+          wid: wxRepo.generateWid(),
+          srId: tx.srId,
+          rrId: tx.rrId,
+          rates: (tx.rrAmount / tx.srAmount) * 1.5,
+          sent: 0,
+          operator: 2,
+          limit: 10,
+          duration: 60,
+          message: "",
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+          meta: {},
+        ),
+      );
+    }
+  }
+
+  if (seedPanels) {
+    print("Seeding panels...");
+    final txs = await txRepo.getAll();
+    int i = 0;
+    for (final tx in txs) {
+      await pxRepo.add(
+        PanelsModel(
+          tid: pxRepo.generateTid(),
+          srId: tx.srId,
+          srAmount: tx.srAmount,
+          rrId: tx.rrId,
+          digit: 6,
+          rate: tx.rrAmount / tx.srAmount,
+          order: i,
+          meta: {},
+        ),
+      );
+      i++;
+    }
+  }
+
+  if (seedRates) {
+    print("Seeding rates from transactions");
+    final txs = await txRepo.getAll();
+    for (final tx in txs) {
+      await rtRepo.add(
+        RatesModel(
+          sourceSymbol: pickCmcSymbol(tx.srId),
+          sourceId: tx.srId,
+          sourceAmount: Decimal.parse("1"),
+          targetSymbol: pickCmcSymbol(tx.rrId),
+          targetId: tx.rrId,
+          targetAmount: Decimal.parse("0"),
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+        ),
+      );
+    }
+
+    print("Seeding rates from panels");
+    final pxs = await pxRepo.getAll();
+    for (final tx in pxs) {
+      await rtRepo.add(
+        RatesModel(
+          sourceSymbol: pickCmcSymbol(tx.srId),
+          sourceId: tx.srId,
+          sourceAmount: Decimal.parse("1"),
+          targetSymbol: pickCmcSymbol(tx.rrId),
+          targetId: tx.rrId,
+          targetAmount: Decimal.parse("0"),
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+        ),
+      );
+    }
+
+    print("Seeding rates from watchers");
+    final wxs = await wxRepo.getAll();
+    for (final tx in wxs) {
+      await rtRepo.add(
+        RatesModel(
+          sourceSymbol: pickCmcSymbol(tx.srId),
+          sourceId: tx.srId,
+          sourceAmount: Decimal.parse("1"),
+          targetSymbol: pickCmcSymbol(tx.rrId),
+          targetId: tx.rrId,
+          targetAmount: Decimal.parse("0"),
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+        ),
+      );
+    }
+  }
 
   print("Vault seeded successfully.");
   await Hive.close();

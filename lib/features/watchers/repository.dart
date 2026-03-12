@@ -2,19 +2,12 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:hive_ce/hive_ce.dart';
-import '../../core/locator.dart';
-import '../../core/utils.dart';
-import '../cryptos/controller.dart';
-import '../notification/service.dart';
-import '../rates/controller.dart';
 import 'model.dart';
 
 class WatchersRepository {
   static const boxName = 'watchers_box';
 
   Box<WatchersModel> get _box => Hive.box<WatchersModel>(boxName);
-  RatesController get rates => locator<RatesController>();
-  CryptosController get cryptos => locator<CryptosController>();
 
   Future<void> init() async {
     if (!Hive.isBoxOpen(boxName)) {
@@ -73,49 +66,6 @@ class WatchersRepository {
 
   bool isEmpty() {
     return _box.isEmpty;
-  }
-
-  Future<void> process(WatchersModel wx) async {
-    if (wx.isSpent()) return;
-
-    final now = DateTime.now().toUtc().microsecondsSinceEpoch;
-    final last = Utils.sanitizeTimestamp(wx.timestamp);
-    final nextAllowed = last + (wx.duration * 60000000);
-    if (now < nextAllowed) return;
-
-    final current = await rates.getStoredRate(wx.srId, wx.rrId);
-    if (current == -9999) {
-      rates.addQueue(wx.srId, wx.rrId);
-      return;
-    }
-
-    switch (wx.operatorEnum) {
-      case WatchersOperator.equal:
-        if (current != wx.rates) return;
-      case WatchersOperator.lessThan:
-        if (current >= wx.rates) return;
-      case WatchersOperator.greaterThan:
-        if (current <= wx.rates) return;
-    }
-
-    final updated = wx.copyWith(sent: wx.sent + 1, timestamp: now);
-
-    await _box.put(wx.wid, updated);
-
-    await sendNotification(wx);
-  }
-
-  Future<void> sendNotification(WatchersModel wx) async {
-    String message = wx.message;
-    if (message == "" || message.trim().isEmpty) {
-      final sourceSymbol = cryptos.getSymbol(wx.srId) ?? "";
-      final targetSymbol = cryptos.getSymbol(wx.rrId) ?? "";
-
-      message = "$sourceSymbol to $targetSymbol is ${wx.operatorMessage} ${wx.rates}.";
-    }
-
-    final notify = locator<NotificationService>();
-    await notify.show(message);
   }
 
   Future<String> export() async {

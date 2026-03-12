@@ -48,7 +48,9 @@ void setupLocator() {
 
   // Watchers
   locator.registerLazySingleton<WatchersRepository>(() => WatchersRepository());
-  locator.registerLazySingleton<WatchersController>(() => WatchersController(locator<WatchersRepository>(), locator<RatesService>()));
+  locator.registerLazySingleton<WatchersController>(
+    () => WatchersController(locator<WatchersRepository>(), locator<RatesService>(), locator<NotificationService>(), locator<CryptosService>()),
+  );
 
   // Notification
   locator.registerLazySingleton(() => NotificationService());

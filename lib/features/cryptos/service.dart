@@ -10,13 +10,25 @@ import 'parser.dart';
 import 'repository.dart';
 
 class CryptosService {
-  final CryptosRepository cryptosRepo;
+  final CryptosRepository repo;
   final SettingsRepository settingsRepo;
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
 
-  CryptosService(this.cryptosRepo, this.settingsRepo);
+  CryptosService(this.repo, this.settingsRepo);
+
+  String? getSymbol(int id) {
+    return repo.getSymbol(id);
+  }
+
+  List<CryptosModel> getAll() {
+    return repo.getAll();
+  }
+
+  CryptosModel? getById(int id) {
+    return repo.getById(id);
+  }
 
   Future<bool> fetch() async {
     if (_isFetching) return false;
@@ -54,13 +66,13 @@ class CryptosService {
         );
       }
 
-      await cryptosRepo.clear();
+      await repo.clear();
 
       for (final m in parsed) {
-        await cryptosRepo.add(CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]));
+        await repo.add(CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]));
       }
 
-      await cryptosRepo.flush();
+      await repo.flush();
       logln("Fetching cryptos completed");
       return true;
     } on NetworkingException {
