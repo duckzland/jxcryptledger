@@ -19,8 +19,8 @@ import '../cryptos/controller.dart';
 import 'tickers/controller.dart';
 import 'panels/controller.dart';
 import 'panels/form.dart';
-import 'panels/widgets/panel.dart';
-import 'panels/widgets/ticker.dart';
+import 'panels/widgets/display.dart';
+import 'tickers/display.dart';
 
 class WatchboardPage extends StatefulWidget {
   const WatchboardPage({super.key});
@@ -167,7 +167,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final tx = items[index];
-        return TickersWidgetsPanel(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
+        return PanelsWidgetsDisplay(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
       },
       dragWidgetBuilder: (index, child) {
         return Material(color: Colors.transparent, elevation: 0, child: child);
@@ -224,7 +224,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
             itemCount: items.length,
             itemBuilder: (context, index) {
               final tx = items[index];
-              return TickersWidgetsTicker(tix: tx);
+              return TickersDisplay(tix: tx);
             },
           ),
         );
