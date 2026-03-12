@@ -100,7 +100,7 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
 
     final text = tix.rate != null && tix.rate! > 0
         ? [
-            Text(fromText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.1, fontSize: 16, fontWeight: FontWeight.w500)),
+            Text(fromText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1, fontSize: 16, fontWeight: FontWeight.w500)),
             Flexible(
               child: Text(
                 toText,
@@ -138,6 +138,7 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
             child: Stack(
               children: [
                 WidgetsPanel(
+                  padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 12),
                   background: animatedBgColor,
                   child: SizedBox(
                     width: double.infinity,

@@ -7,6 +7,11 @@ BuildContext _resolveContext(BuildContext? ctx) {
   return ctx ?? rootNavigatorKey.currentContext!;
 }
 
+void widgetsNotifyClear({BuildContext? ctx}) {
+  final context = _resolveContext(ctx);
+  ScaffoldMessenger.of(context).removeCurrentSnackBar();
+}
+
 void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
   final context = _resolveContext(ctx);
 
