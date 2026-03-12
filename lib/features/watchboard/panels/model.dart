@@ -1,9 +1,5 @@
 import '../../../app/exceptions.dart';
 
-enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
-
-enum TickerFormat { nodecimal, number, currency, shortCurrency, shortCurrencyWithSign, percentage, shortPercentage, raw }
-
 class PanelsModel {
   final String tid;
   final double srAmount;

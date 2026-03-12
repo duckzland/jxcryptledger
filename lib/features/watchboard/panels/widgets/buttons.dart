@@ -14,17 +14,17 @@ import '../controller.dart';
 import '../form.dart';
 import '../model.dart';
 
-class TickersWidgetsButtons extends StatefulWidget {
+class PanelsWidgetsButtons extends StatefulWidget {
   final PanelsModel tix;
   final void Function() onAction;
 
-  const TickersWidgetsButtons({super.key, required this.tix, required this.onAction});
+  const PanelsWidgetsButtons({super.key, required this.tix, required this.onAction});
 
   @override
-  State<TickersWidgetsButtons> createState() => _TickersWidgetsButtonsState();
+  State<PanelsWidgetsButtons> createState() => _PanelsWidgetsButtonsState();
 }
 
-class _TickersWidgetsButtonsState extends State<TickersWidgetsButtons> {
+class _PanelsWidgetsButtonsState extends State<PanelsWidgetsButtons> {
   CryptosController get _cryptosController => locator<CryptosController>();
   PanelsController get _tixController => locator<PanelsController>();
 
