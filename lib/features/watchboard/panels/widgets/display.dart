@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 import '../../../../app/theme.dart' show AppTheme;
 import '../../../../core/locator.dart';
@@ -125,6 +126,7 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
     final targetColor = _resolveBackground();
     final hsl = HSLColor.fromColor(targetColor);
     final startColor = hsl.withLightness((hsl.lightness + 0.3).clamp(0.0, 1.0)).toColor();
+    final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
 
     return TweenAnimationBuilder<Color?>(
       duration: const Duration(milliseconds: 500),
@@ -140,6 +142,7 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
                 WidgetsPanel(
                   padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 12),
                   background: animatedBgColor,
+                  borderColor: mutedColor,
                   child: SizedBox(
                     width: double.infinity,
                     child: Column(

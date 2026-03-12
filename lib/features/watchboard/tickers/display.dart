@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/utils.dart';
 import '../../../widgets/panel.dart';
 import 'model.dart';
 
@@ -82,6 +83,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
     final targetColor = _resolveBackground();
     final hsl = HSLColor.fromColor(targetColor);
     final startColor = hsl.withLightness((hsl.lightness + 0.3).clamp(0.0, 1.0)).toColor();
+    final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
 
     return TweenAnimationBuilder<Color?>(
       duration: const Duration(milliseconds: 500),
@@ -91,6 +93,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
         return WidgetsPanel(
           padding: const EdgeInsets.all(0),
           background: animatedBgColor,
+          borderColor: mutedColor,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,

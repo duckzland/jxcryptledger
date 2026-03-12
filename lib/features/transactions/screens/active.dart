@@ -324,6 +324,10 @@ class _TransactionsActiveState extends State<TransactionsActive> {
     required double avgPL,
     required double plPercentage,
   }) {
+    final btnIconSize = 18.0;
+    final btnSize = const Size(40, 40);
+    final btnPadding = const EdgeInsets.all(0);
+
     return Row(
       children: [
         Column(
@@ -348,8 +352,8 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         const SizedBox(width: 20),
 
         SizedBox(
-          width: 200,
-          height: 42,
+          width: 180,
+          height: 40,
           child: WidgetsFieldsAmount(
             title: "Custom Rates",
             suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
@@ -372,10 +376,10 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
         WidgetsButton(
           icon: Icons.swap_horiz,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
           tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
-          padding: const EdgeInsets.all(0),
-          iconSize: 18,
-          minimumSize: const Size(40, 40),
           evaluator: (s) {
             if (_isReversed) {
               s.action();
@@ -394,8 +398,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
         WidgetsDialogsShowForm(
           key: const Key("add-watchboard-button"),
-          tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
           icon: Icons.candlestick_chart_outlined,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
+          tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
           evaluator: (s) {
             if (_linkedPanel == null) {
               s.normal();
@@ -442,6 +449,9 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         WidgetsDialogsShowForm(
           key: const Key("add-watcher-button"),
           icon: Icons.add_alarm,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
           tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
           evaluator: (s) {
             if (_linkedWatcher == null) {
@@ -488,10 +498,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
         WidgetsDialogsAlert(
           icon: Icons.close,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
           initialState: WidgetsButtonActionState.warning,
           tooltip: "Close all closable transactions found in this group",
-          padding: const EdgeInsets.all(0),
-          iconSize: 18,
           evaluator: (s) async {
             if (!_isClosable) {
               s.disable();
@@ -527,10 +538,11 @@ class _TransactionsActiveState extends State<TransactionsActive> {
 
         WidgetsDialogsAlert(
           icon: Icons.delete,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
           initialState: WidgetsButtonActionState.error,
           tooltip: "Delete all transactions",
-          padding: const EdgeInsets.all(0),
-          iconSize: 18,
           evaluator: (s) async {
             if (!_isDeletable) {
               s.disable();
@@ -566,9 +578,7 @@ class _TransactionsActiveState extends State<TransactionsActive> {
   }
 
   Widget _buildTable(double currentRate) {
-    return
-    // @TODO: Why this will only work on SizedBox, while the github docs specified to use Flexible or Expanded?
-    SizedBox(
+    return SizedBox(
       width: double.infinity,
       height: (_rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
