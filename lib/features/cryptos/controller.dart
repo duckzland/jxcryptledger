@@ -10,8 +10,6 @@ class CryptosController extends ChangeNotifier {
   final CryptosRepository repo;
   final CryptosService service;
 
-  Map<int, String>? _symbolCache;
-
   CryptosController(this.repo, this.service);
 
   bool get isFetching => service.isFetching;
