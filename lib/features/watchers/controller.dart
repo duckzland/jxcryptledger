@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/log.dart';
+import '../../core/utils.dart';
+import '../cryptos/service.dart';
+import '../notification/service.dart';
 import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -8,11 +11,13 @@ import 'repository.dart';
 class WatchersController extends ChangeNotifier {
   final WatchersRepository _repo;
   final RatesService _ratesService;
+  final NotificationService _notificationService;
+  final CryptosService _cryptosService;
 
   List<WatchersModel> _items = [];
   List<WatchersModel> get items => _items;
 
-  WatchersController(this._repo, this._ratesService);
+  WatchersController(this._repo, this._ratesService, this._notificationService, this._cryptosService);
 
   String generateWid() {
     return _repo.generateWid();
@@ -74,12 +79,50 @@ class WatchersController extends ChangeNotifier {
     await load();
     for (final w in _items) {
       logln("[Watcher] Evaluating ${w.srId}-${w.rrId}");
-      _repo.process(w);
+      process(w);
     }
   }
 
+  Future<void> process(WatchersModel wx) async {
+    if (wx.isSpent()) return;
+
+    final now = DateTime.now().toUtc().microsecondsSinceEpoch;
+    final last = Utils.sanitizeTimestamp(wx.timestamp);
+    final nextAllowed = last + (wx.duration * 60000000);
+    if (now < nextAllowed) return;
+
+    final current = await _ratesService.getStoredRate(wx.srId, wx.rrId);
+    if (current == -9999) {
+      _ratesService.addQueue(wx.srId, wx.rrId);
+      return;
+    }
+
+    switch (wx.operatorEnum) {
+      case WatchersOperator.equal:
+        if (current != wx.rates) return;
+      case WatchersOperator.lessThan:
+        if (current >= wx.rates) return;
+      case WatchersOperator.greaterThan:
+        if (current <= wx.rates) return;
+    }
+
+    final updated = wx.copyWith(sent: wx.sent + 1, timestamp: now);
+
+    await _repo.update(updated);
+
+    await sendNotification(wx);
+  }
+
   Future<void> sendNotification(WatchersModel wx) async {
-    await _repo.sendNotification(wx);
+    String message = wx.message;
+    if (message == "" || message.trim().isEmpty) {
+      final sourceSymbol = _cryptosService.getSymbol(wx.srId) ?? "";
+      final targetSymbol = _cryptosService.getSymbol(wx.rrId) ?? "";
+
+      message = "$sourceSymbol to $targetSymbol is ${wx.operatorMessage} ${wx.rates}.";
+    }
+
+    await _notificationService.show(message);
   }
 
   Future<String> exportDatabase() async {

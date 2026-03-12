@@ -18,7 +18,6 @@ class CryptosController extends ChangeNotifier {
 
   Future<void> init() async {
     await repo.init();
-    _symbolCache = null;
     notifyListeners();
   }
 
@@ -26,19 +25,16 @@ class CryptosController extends ChangeNotifier {
 
   Future<void> add(CryptosModel crypto) async {
     await repo.add(crypto);
-    _symbolCache = null;
     notifyListeners();
   }
 
   Future<void> delete(int id) async {
     await repo.delete(id);
-    _symbolCache = null;
     notifyListeners();
   }
 
   Future<void> clear() async {
     await repo.clear();
-    _symbolCache = null;
     notifyListeners();
   }
 
@@ -56,13 +52,11 @@ class CryptosController extends ChangeNotifier {
   }
 
   Map<int, String> getSymbolMap() {
-    if (_symbolCache != null) return _symbolCache!;
-    _symbolCache = repo.getSymbolMap();
-    return _symbolCache!;
+    return repo.getSymbolMap();
   }
 
   String? getSymbol(int id) {
-    return getSymbolMap()[id];
+    return repo.getSymbol(id);
   }
 
   List<CryptosModel> getAll() {
@@ -78,7 +72,6 @@ class CryptosController extends ChangeNotifier {
       final success = await service.fetch();
 
       if (success) {
-        _symbolCache = null;
         notifyListeners();
       }
 
