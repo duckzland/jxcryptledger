@@ -21,11 +21,14 @@ class WidgetsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      clipBehavior: Clip.antiAlias,
       padding: padding,
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: background ?? AppTheme.panelBg,
-        border: Border.all(color: borderColor ?? AppTheme.separator),
-        borderRadius: BorderRadius.circular(borderRadius),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: borderColor ?? AppTheme.separator),
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
       ),
       child: child,
     );
