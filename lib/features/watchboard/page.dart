@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
@@ -31,7 +33,7 @@ class WatchboardPage extends StatefulWidget {
 
 class _WatchboardPageState extends State<WatchboardPage> {
   late final PanelsController _pxController;
-  late final TickersController _tickersController;
+  late final TickersController _tixController;
   late final CryptosController _cryptosController;
 
   bool _enableDrag = false;
@@ -40,6 +42,8 @@ class _WatchboardPageState extends State<WatchboardPage> {
 
   DateTime _lastPress = DateTime.fromMillisecondsSinceEpoch(0);
 
+  Timer? _debounceTimer;
+
   @override
   void initState() {
     super.initState();
@@ -47,9 +51,9 @@ class _WatchboardPageState extends State<WatchboardPage> {
     _pxController.load();
     _pxController.addListener(_onControllerChanged);
 
-    _tickersController = locator<TickersController>();
-    _tickersController.load();
-    _tickersController.addListener(_onControllerChanged);
+    _tixController = locator<TickersController>();
+    _tixController.load();
+    _tixController.addListener(_onControllerChanged);
 
     _cryptosController = locator<CryptosController>();
     _cryptosController.addListener(_onControllerChanged);
@@ -63,7 +67,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
   void dispose() {
     _pxController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
-    _tickersController.removeListener(_onControllerChanged);
+    _tixController.removeListener(_onControllerChanged);
     super.dispose();
   }
 
@@ -106,7 +110,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
               importCallback: (json) async {
                 await _pxController.importDatabase(json);
                 await _pxController.scheduleRates();
-                await _tickersController.refreshRates();
+                await _tixController.refreshRates();
               },
               addForm: _buildForm,
             ),
@@ -157,7 +161,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
     return ReorderableGridView.builder(
       gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
-        itemHeight: 122,
+        itemHeight: 110,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
         horizontalPadding: 12,
@@ -185,7 +189,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
   }
 
   Widget _buildTickers() {
-    final items = _tickersController.items.toList()..sort((a, b) => a.order.compareTo(b.order));
+    final items = _tixController.items.toList()..sort((a, b) => a.order.compareTo(b.order));
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -213,7 +217,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
 
         return SizedBox(
           height: tickerHeight,
-          child: GridView.builder(
+          child: ReorderableGridView.builder(
             gridDelegate: SliverGridDelegateWithMinWidth(
               minCrossAxisExtent: newWidth > 140 ? newWidth : 140,
               itemHeight: 50,
@@ -221,10 +225,24 @@ class _WatchboardPageState extends State<WatchboardPage> {
               crossAxisSpacing: 8,
               horizontalPadding: 8,
             ),
+            dragEnabled: _enableDrag,
+            dragStartDelay: Duration(microseconds: 10),
             itemCount: items.length,
             itemBuilder: (context, index) {
               final tx = items[index];
-              return TickersDisplay(tix: tx);
+              return TickersDisplay(key: ValueKey(tx.tid), tix: tx);
+            },
+            dragWidgetBuilder: (index, child) {
+              return Material(color: Colors.transparent, elevation: 0, child: child);
+            },
+            onReorder: (oldIndex, newIndex) {
+              final moved = items.removeAt(oldIndex);
+              items.insert(newIndex, moved);
+
+              for (var i = 0; i < items.length; i++) {
+                items[i].order = i;
+              }
+              _tixController.updateOrder(items);
             },
           ),
         );
@@ -269,8 +287,11 @@ class _WatchboardPageState extends State<WatchboardPage> {
               _enableTickers ? s.primary() : s.normal();
             },
             onPressed: (_) {
-              setState(() {
-                _enableTickers = !_enableTickers;
+              _debounceTimer?.cancel();
+              _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+                setState(() {
+                  _enableTickers = !_enableTickers;
+                });
               });
             },
           ),
@@ -285,14 +306,18 @@ class _WatchboardPageState extends State<WatchboardPage> {
               _enableDrag ? s.primary() : s.normal();
             },
             onPressed: (_) {
-              final now = DateTime.now();
-              if (now.difference(_lastPress).inMilliseconds < 500) {
-                return;
-              }
+              _debounceTimer?.cancel();
+              _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+                final now = DateTime.now();
+                if (now.difference(_lastPress).inMilliseconds < 500) {
+                  return;
+                }
+                setState(() {
+                  _lastPress = now;
+                  _enableDrag = !_enableDrag;
+                });
 
-              setState(() {
-                _lastPress = now;
-                _enableDrag = !_enableDrag;
+                widgetsNotifyClear();
                 widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
               });
             },
@@ -386,7 +411,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
             onImport: (String json) async {
               await _pxController.importDatabase(json);
               await _pxController.scheduleRates();
-              await _tickersController.refreshRates();
+              await _tixController.refreshRates();
             },
             evaluator: (s) {},
           ),
@@ -412,9 +437,9 @@ class _WatchboardPageState extends State<WatchboardPage> {
                 "This action cannot be undone.",
             onWipe: () async {
               await _pxController.wipe();
-              await _tickersController.wipe();
+              await _tixController.wipe();
 
-              await _tickersController.populate();
+              await _tixController.populate();
             },
             evaluator: (s) {
               if (_pxController.isEmpty()) {

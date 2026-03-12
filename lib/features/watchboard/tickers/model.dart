@@ -20,7 +20,7 @@ class TickersModel {
   final int type;
   final int format;
   final String title;
-  final int order;
+  int order;
   String value;
   Map<String, dynamic> meta;
 

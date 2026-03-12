@@ -150,4 +150,13 @@ class TickersController extends ChangeNotifier {
     await _service.refreshRates();
     await load();
   }
+
+  void updateOrder(List<TickersModel> newOrder) {
+    for (var i = 0; i < newOrder.length; i++) {
+      newOrder[i].order = i;
+      _repo.update(newOrder[i]);
+    }
+
+    load();
+  }
 }

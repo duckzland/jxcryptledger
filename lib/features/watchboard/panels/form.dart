@@ -7,6 +7,7 @@ import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/fields/crypto_search.dart';
 import '../../../../widgets/panel.dart';
 import '../../../app/exceptions.dart';
+import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
 import 'controller.dart';
 import 'model.dart';
@@ -36,6 +37,7 @@ class PanelsForm extends StatefulWidget {
 class _PanelsFormState extends State<PanelsForm> {
   PanelsController get _tixController => locator<PanelsController>();
   RatesController get _rateController => locator<RatesController>();
+  CryptosController get _cryptosController => locator<CryptosController>();
 
   int? _selectedSrId;
   int? _selectedRrId;
@@ -44,6 +46,7 @@ class _PanelsFormState extends State<PanelsForm> {
 
   String? _tid;
   String? _srAmountText;
+  String? _sourceSymbol;
 
   double? _rate;
 
@@ -66,6 +69,10 @@ class _PanelsFormState extends State<PanelsForm> {
     _rate = data?.rate ?? -9999;
 
     _srAmountText = Utils.sanitizeNumber((widget.initialSrAmount ?? data?.srAmount ?? "").toString());
+
+    if (widget.linkedToTx != null || (data != null && data.isLinked())) {
+      _sourceSymbol = _selectedSrId != null ? _cryptosController.getSymbol(_selectedSrId!) : "";
+    }
   }
 
   void _handleSave() async {
@@ -138,24 +145,28 @@ class _PanelsFormState extends State<PanelsForm> {
                                     flex: 3,
                                     child: WidgetsFieldsAmount(
                                       title: 'Amount',
+                                      suffixText: _sourceSymbol,
                                       enabled: widget.initialData == null
                                           ? widget.initialSrAmount == null
                                           : !widget.initialData!.isLinked(),
                                       helperText: 'e.g., 65000',
                                       initialValue: _srAmountText,
+                                      allowClean: _sourceSymbol == null,
+                                      allowCopy: _sourceSymbol == null,
                                       onChanged: (v) => _srAmountText = Utils.sanitizeNumber(v),
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
-                                  Flexible(
-                                    flex: 2,
-                                    child: WidgetsFieldsCryptoSearch(
-                                      labelText: 'Coin',
-                                      enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked(),
-                                      initialValue: _selectedSrId,
-                                      onSelected: (id) => setState(() => _selectedSrId = id),
+                                  if (_sourceSymbol == null) const SizedBox(height: 16),
+                                  if (_sourceSymbol == null)
+                                    Flexible(
+                                      flex: 2,
+                                      child: WidgetsFieldsCryptoSearch(
+                                        labelText: 'Coin',
+                                        enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked(),
+                                        initialValue: _selectedSrId,
+                                        onSelected: (id) => setState(() => _selectedSrId = id),
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                               const SizedBox(height: 16),
