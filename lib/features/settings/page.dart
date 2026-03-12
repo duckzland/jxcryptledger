@@ -78,13 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildCancelButton(),
-            const SizedBox(width: 12),
-            _buildResetButton(editableKeys),
-            const SizedBox(width: 12),
-            _buildSaveButton(),
-          ],
+          children: [_buildResetButton(editableKeys), const SizedBox(width: 12), _buildSaveButton()],
         ),
       );
     }
@@ -200,22 +194,6 @@ class _SettingsPageState extends State<SettingsPage> {
         widgetsNotifySuccess("Settings reset to default");
 
         s.error();
-      },
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return WidgetsButton(
-      label: "Cancel",
-      initialState: WidgetsButtonActionState.action,
-      onPressed: (s) {
-        if (!mounted) return;
-
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go("/transactions");
-        }
       },
     );
   }

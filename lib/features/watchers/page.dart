@@ -171,7 +171,6 @@ class _WatchersPageState extends State<WatchersPage> {
           ),
           WidgetsDialogsShowForm(
             key: const Key("add-button"),
-            icon: Icons.add_alarm,
             tooltip: "Add new rate watcher",
             buildForm: (dialogContext) => _buildForm(dialogContext),
             evaluator: (s) => s.action(),
