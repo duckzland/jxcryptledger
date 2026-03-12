@@ -325,7 +325,6 @@ class _WatchboardPageState extends State<WatchboardPage> {
           WidgetsDialogsShowForm(
             key: const Key("add-button"),
             tooltip: "Add new watchboard",
-            icon: Icons.candlestick_chart_outlined,
             buildForm: (dialogContext) => _buildForm(dialogContext),
             evaluator: (s) => s.action(),
           ),

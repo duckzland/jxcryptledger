@@ -5,6 +5,9 @@ class RatesController extends ChangeNotifier {
   final RatesService service;
 
   RatesController(this.service) {
+    service.registerOnStart(() {
+      notifyListeners();
+    });
     service.registerOnComplete(() {
       notifyListeners();
     });

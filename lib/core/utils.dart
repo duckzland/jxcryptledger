@@ -30,7 +30,7 @@ class Utils {
       effectivePrecision = limitDecimals;
     }
 
-    if (smartDecimal && value.abs() > 10) {
+    if (smartDecimal && value.abs() > 100) {
       effectivePrecision = 2;
     }
 

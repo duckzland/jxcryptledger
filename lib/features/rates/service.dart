@@ -15,6 +15,7 @@ class RatesService {
   final SettingsRepository settingsRepo;
 
   void Function()? onComplete;
+  void Function()? onStart;
 
   RatesService(this.ratesRepo, this.cryptosRepo, this.settingsRepo);
 
@@ -37,6 +38,11 @@ class RatesService {
   void registerOnComplete(void Function() cb) {
     logln('[Rates] Registering on complete.');
     onComplete = cb;
+  }
+
+  void registerOnStart(void Function() cb) {
+    logln('[Rates] Registering on start.');
+    onStart = cb;
   }
 
   Future<double> getStoredRate(int sourceId, int targetId) async {
@@ -63,7 +69,7 @@ class RatesService {
     if (_queue.isEmpty) return;
 
     _isFetching = true;
-
+    onStart?.call();
     try {
       final jobs = List<(int, int)>.from(_queue);
       _queue.clear();
@@ -72,12 +78,9 @@ class RatesService {
       final jobQueue = grouped.entries.map((e) => MapEntry(e.key, e.value.toList())).toList();
 
       await _runWorkers(jobQueue);
-
-      onComplete?.call();
-    } catch (e) {
-      rethrow;
     } finally {
       _isFetching = false;
+      onComplete?.call();
     }
   }
 
