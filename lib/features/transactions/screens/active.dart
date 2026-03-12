@@ -11,6 +11,7 @@ import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
+import '../../../widgets/fields/amount.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
@@ -347,17 +348,13 @@ class _TransactionsActiveState extends State<TransactionsActive> {
         const SizedBox(width: 20),
 
         SizedBox(
-          width: 150,
+          width: 200,
           height: 42,
-          child: TextField(
-            controller: _customRateController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: "Custom Rates",
-              hintText: averageRate.toStringAsFixed(8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-            ),
-            style: TextStyle(fontSize: 14),
+          child: WidgetsFieldsAmount(
+            title: "Custom Rates",
+            suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
+            helperText: averageRate.toStringAsFixed(8),
+            allowCopy: false,
             onChanged: (value) {
               if (_debounce?.isActive ?? false) _debounce!.cancel();
 
