@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 import '../../../../app/theme.dart' show AppTheme;
 import '../../../../core/locator.dart';
