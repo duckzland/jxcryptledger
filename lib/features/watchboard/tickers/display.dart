@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/utils.dart';
 import '../../../widgets/panel.dart';
 import 'model.dart';
 
