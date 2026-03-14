@@ -14,19 +14,26 @@ class TickersDisplay extends StatefulWidget {
 }
 
 class _TickersDisplayState extends State<TickersDisplay> {
-  Color _resolveBackground() {
+  Color _currentColor = AppTheme.darkGrey;
+
+  Color _resolveBackground(Color currentColor) {
     final rawValue = widget.tix.value;
+    final oldRawValue = widget.tix.meta['oldValue'] as String?;
+
+    final current = double.tryParse(rawValue) ?? 0;
+    final old = double.tryParse(oldRawValue ?? '') ?? 0;
+
     try {
       switch (widget.tix.getType()) {
         case TickerType.marketCap:
-          final change = double.tryParse(rawValue) ?? 0;
-          if (change > 0) return AppTheme.green;
-          if (change < 0) return AppTheme.red;
-          return AppTheme.red;
+          if (current > old) return AppTheme.green;
+          if (current < old) return AppTheme.red;
+          return currentColor;
 
         case TickerType.cmc100:
-          final change = double.tryParse(rawValue) ?? 0;
-          return change >= 0 ? AppTheme.green : AppTheme.red;
+          if (current > old) return AppTheme.green;
+          if (current < old) return AppTheme.red;
+          return currentColor;
 
         case TickerType.rsi:
           final index = double.tryParse(rawValue) ?? 0;
@@ -43,10 +50,9 @@ class _TickersDisplayState extends State<TickersDisplay> {
           return AppTheme.darkGrey;
 
         case TickerType.etf:
-          final etf = double.tryParse(rawValue) ?? 0;
-          if (etf > 0) return AppTheme.green;
-          if (etf < 0) return AppTheme.red;
-          return AppTheme.darkGrey;
+          if (current > old) return AppTheme.green;
+          if (current < old) return AppTheme.red;
+          return currentColor;
 
         case TickerType.dominance:
           final dom = double.tryParse(rawValue) ?? 0;
@@ -79,10 +85,16 @@ class _TickersDisplayState extends State<TickersDisplay> {
   Widget build(BuildContext context) {
     final tix = widget.tix;
 
-    final targetColor = _resolveBackground();
+    final targetColor = _resolveBackground(_currentColor);
     final hsl = HSLColor.fromColor(targetColor);
     final startColor = hsl.withLightness((hsl.lightness + 0.3).clamp(0.0, 1.0)).toColor();
     final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
+
+    if (targetColor != _currentColor) {
+      setState(() {
+        _currentColor = targetColor;
+      });
+    }
 
     return TweenAnimationBuilder<Color?>(
       duration: const Duration(milliseconds: 500),
