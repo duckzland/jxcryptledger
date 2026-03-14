@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 import '../../../app/exceptions.dart';
@@ -33,6 +34,8 @@ class TickersService {
         details: resp.statusCode,
       );
     }
+
+    logln('[TICKERS] Fetching from : $uri [${resp.statusCode}]');
 
     try {
       return json.decode(resp.body) as Map<String, dynamic>;
