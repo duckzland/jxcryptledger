@@ -1,11 +1,12 @@
 import 'dart:async';
+
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
 import '../../core/log.dart';
 import '../cryptos/repository.dart';
-import '../settings/repository.dart';
 import '../settings/keys.dart';
+import '../settings/repository.dart';
 import 'parser.dart';
 import 'repository.dart';
 
@@ -169,6 +170,9 @@ class RatesService {
       ).replace(queryParameters: {'amount': '1', 'id': sourceId.toString(), 'convert_id': validTargets.join(',')});
 
       final resp = await http.get(uri, headers: headers);
+
+      logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
+
       if (resp.statusCode != 200) {
         throw NetworkingException(
           AppErrorCode.netHttpFailure,
