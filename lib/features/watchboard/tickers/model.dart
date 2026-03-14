@@ -21,8 +21,10 @@ class TickersModel {
   final int format;
   final String title;
   int order;
-  String value;
+  // String value;
   Map<String, dynamic> meta;
+
+  String _value;
 
   TickersModel({
     required this.tid,
@@ -30,9 +32,10 @@ class TickersModel {
     required this.format,
     required this.title,
     required this.order,
-    this.value = "",
+    String value = "",
     Map<String, dynamic>? meta,
-  }) : meta = meta ?? {} {
+  }) : _value = value,
+       meta = meta ?? {} {
     if (tid.isEmpty) {
       throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be empty.", "Please enter a transaction ID.");
     }
@@ -88,6 +91,13 @@ class TickersModel {
       value: value ?? this.value,
       meta: meta ?? Map<String, dynamic>.from(this.meta),
     );
+  }
+
+  String get value => _value;
+
+  set value(String newValue) {
+    meta['oldValue'] = _value;
+    _value = newValue;
   }
 
   TickerType getType() {
