@@ -23,6 +23,7 @@ class RatesService {
   bool _isFetching = false;
   bool get isFetching => _isFetching;
   bool get hasRates => ratesRepo.hasAny();
+  Timer? _watchdog;
 
   final List<(int sourceId, int targetId)> _queue = [];
   Timer? _debounce;
@@ -65,11 +66,21 @@ class RatesService {
     _debounce = Timer(const Duration(milliseconds: 200), _processQueue);
   }
 
+  void _startWatchdog() {
+    _watchdog?.cancel();
+    _watchdog = Timer(const Duration(seconds: 60), () {
+      logln('[RATES] Watchdog triggered — forcing unlock.');
+      _isFetching = false;
+    });
+  }
+
   Future<void> _processQueue() async {
     if (_isFetching) return;
     if (_queue.isEmpty) return;
 
     _isFetching = true;
+    _startWatchdog();
+
     onStart?.call();
     try {
       final jobs = List<(int, int)>.from(_queue);
@@ -80,6 +91,7 @@ class RatesService {
 
       await _runWorkers(jobQueue);
     } finally {
+      _watchdog?.cancel();
       _isFetching = false;
       onComplete?.call();
     }
@@ -136,74 +148,99 @@ class RatesService {
   Future<void> _runWorkers(List<MapEntry<int, List<int>>> jobQueue) async {
     Future<void> worker() async {
       while (jobQueue.isNotEmpty) {
-        final job = jobQueue.removeAt(0);
-        await _fetchInternal(job.key, job.value);
+        MapEntry<int, List<int>>? job;
+
+        try {
+          if (jobQueue.isEmpty) return;
+          job = jobQueue.removeAt(0);
+        } catch (_) {
+          return;
+        }
+
+        try {
+          await _fetchInternal(job.key, job.value);
+        } catch (e) {
+          logln('[RATES] Unexpected worker error for ${job.key}: $e');
+        }
+
         await Future.delayed(const Duration(milliseconds: 100));
       }
     }
 
     const maxWorkers = 5;
     final workersToStart = maxWorkers.clamp(1, jobQueue.length);
-    await Future.wait(List.generate(workersToStart, (_) => worker()));
+    await Future.wait(List.generate(workersToStart, (_) => worker()), eagerError: false);
   }
 
-  Future<bool> _fetchInternal(int sourceId, List<int> targetIds) async {
-    if (!cryptosRepo.hasAny()) return false;
-    if (sourceId <= 0) return false;
+  Future<void> _fetchInternal(int sourceId, List<int> targetIds) async {
+    if (!cryptosRepo.hasAny()) {
+      throw NetworkingException(
+        AppErrorCode.netMissingCryptos,
+        "Rates fetch failed: No cryptos map",
+        "Unable to retrieve rates from the server.",
+      );
+    }
+    if (sourceId <= 0) {
+      throw NetworkingException(
+        AppErrorCode.netInvalidRatePayload,
+        "Rates fetch failed: Missing sourceId",
+        "Unable to retrieve rates from the server.",
+      );
+    }
+
+    final ids = cryptosRepo.getAll().map((c) => c.id).toSet();
+    final validTargets = targetIds.where(ids.contains).toList();
+
+    if (!ids.contains(sourceId) || validTargets.isEmpty) {
+      throw NetworkingException(
+        AppErrorCode.netInvalidRatePayload,
+        "Rates fetch failed: Invalid id for source and/or target",
+        "Unable to retrieve rates from the server.",
+      );
+    }
+
+    final endpoint = settingsRepo.get<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
+    final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
+
+    final headers = <String, String>{};
+    if (authKey != null && authKey.isNotEmpty) {
+      headers['Authorization'] = authKey;
+    }
+
+    final uri = Uri.parse(
+      endpoint,
+    ).replace(queryParameters: {'amount': '1', 'id': sourceId.toString(), 'convert_id': validTargets.join(',')});
+
+    final resp = await http.get(uri, headers: headers);
+
+    logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
+
+    if (resp.statusCode != 200) {
+      throw NetworkingException(
+        AppErrorCode.netHttpFailure,
+        "Rates fetch failed: HTTP ${resp.statusCode}",
+        "Unable to retrieve rates from the server.",
+        details: resp.statusCode,
+      );
+    }
+
+    RatesParserResult parsed;
 
     try {
-      final ids = cryptosRepo.getAll().map((c) => c.id).toSet();
-      final validTargets = targetIds.where(ids.contains).toList();
+      parsed = parseRatesJson(resp.body);
+    } catch (e) {
+      throw NetworkingException(
+        AppErrorCode.netParseFailure,
+        "Rates fetch failed: failed to parse with error",
+        "The server returned invalid rates data.",
+        details: e,
+      );
+    }
 
-      if (!ids.contains(sourceId) || validTargets.isEmpty) return false;
-
-      final endpoint = settingsRepo.get<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
-      final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
-
-      final headers = <String, String>{};
-      if (authKey != null && authKey.isNotEmpty) {
-        headers['Authorization'] = authKey;
+    for (final rate in parsed.rates) {
+      if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
+        await ratesRepo.add(rate);
       }
-
-      final uri = Uri.parse(
-        endpoint,
-      ).replace(queryParameters: {'amount': '1', 'id': sourceId.toString(), 'convert_id': validTargets.join(',')});
-
-      final resp = await http.get(uri, headers: headers);
-
-      logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
-
-      if (resp.statusCode != 200) {
-        throw NetworkingException(
-          AppErrorCode.netHttpFailure,
-          "Rates fetch failed: HTTP ${resp.statusCode}",
-          "Unable to retrieve rates from the server.",
-          details: resp.statusCode,
-        );
-      }
-
-      RatesParserResult parsed;
-
-      try {
-        parsed = parseRatesJson(resp.body);
-      } catch (e) {
-        throw NetworkingException(
-          AppErrorCode.netParseFailure,
-          "Rates fetch failed: failed to parse with error",
-          "The server returned invalid rates data.",
-          details: e,
-        );
-      }
-
-      for (final rate in parsed.rates) {
-        if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
-          await ratesRepo.add(rate);
-        }
-      }
-
-      return true;
-    } catch (_) {
-      return false;
     }
   }
 }
