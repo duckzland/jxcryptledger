@@ -67,7 +67,6 @@ class PanelsController extends ChangeNotifier {
   Future<void> onRatesUpdated() async {
     await load();
     for (final w in _items) {
-      logln("[TICKERS] Evaluating ${w.srId}-${w.rrId}");
       final newRate = await _ratesService.getStoredRate(w.srId, w.rrId);
 
       if (newRate == -9999) {
