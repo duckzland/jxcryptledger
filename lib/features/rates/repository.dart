@@ -42,7 +42,7 @@ class RatesRepository {
   }
 
   Future<void> cleanupOldRates({Duration olderThan = const Duration(days: 1)}) async {
-    logln('[Rates] Cleaning old rates.');
+    logln('[RATES] Cleaning old rates.');
 
     final box = Hive.box<RatesModel>(boxName);
     final nowEpoch = DateTime.now().microsecondsSinceEpoch;

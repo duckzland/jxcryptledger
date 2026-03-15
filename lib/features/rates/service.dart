@@ -32,17 +32,17 @@ class RatesService {
   }
 
   Future<void> delete(int sourceId, int targetId) async {
-    logln('[Rates] Deleting $sourceId-$targetId.');
+    logln('[RATES] Deleting $sourceId-$targetId.');
     await ratesRepo.delete(sourceId, targetId);
   }
 
   void registerOnComplete(void Function() cb) {
-    logln('[Rates] Registering on complete.');
+    logln('[RATES] Registering on complete.');
     onComplete = cb;
   }
 
   void registerOnStart(void Function() cb) {
-    logln('[Rates] Registering on start.');
+    logln('[RATES] Registering on start.');
     onStart = cb;
   }
 
@@ -87,7 +87,7 @@ class RatesService {
 
   Future<void> refreshRates() async {
     if (!cryptosRepo.hasAny()) {
-      logln('[Rates] No cryptos available, skipping refresh.');
+      logln('[RATES] No cryptos available, skipping refresh.');
       return;
     }
 

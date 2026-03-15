@@ -16,19 +16,19 @@ class AppWorker {
     _started = true;
 
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
-      logln("[Worker] Refreshing transactions rates");
+      logln("[WORKER] Refreshing transactions rates");
       final rates = locator<RatesController>();
       await rates.refreshRates();
 
-      logln("[Worker] Processing watchers");
+      logln("[WORKER] Processing watchers");
       final watchers = locator<WatchersController>();
       await watchers.onRatesUpdated();
 
-      logln("[Worker] Processing panels");
+      logln("[WORKER] Processing panels");
       final panels = locator<PanelsController>();
       await panels.onRatesUpdated();
 
-      logln("[Worker] Refreshing tickers rates");
+      logln("[WORKER] Refreshing tickers rates");
       final tickers = locator<TickersController>();
       await tickers.refreshRates();
     });

@@ -21,7 +21,6 @@ class TickersModel {
   final int format;
   final String title;
   int order;
-  // String value;
   Map<String, dynamic> meta;
 
   String _value;

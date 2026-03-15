@@ -78,7 +78,7 @@ class WatchersController extends ChangeNotifier {
   Future<void> onRatesUpdated() async {
     await load();
     for (final w in _items) {
-      logln("[Watcher] Evaluating ${w.srId}-${w.rrId}");
+      logln("[WATCHER] Evaluating ${w.srId}-${w.rrId}");
       process(w);
     }
   }
