@@ -95,8 +95,10 @@ class TickersModel {
   String get value => _value;
 
   set value(String newValue) {
-    meta['oldValue'] = _value;
-    _value = newValue;
+    if (value != "") {
+      meta['oldValue'] = _value;
+      _value = newValue;
+    }
   }
 
   TickerType getType() {

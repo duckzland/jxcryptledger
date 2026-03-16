@@ -50,8 +50,8 @@ class _TickersDisplayState extends State<TickersDisplay> {
           return AppTheme.darkGrey;
 
         case TickerType.etf:
-          if (current > old) return AppTheme.green;
-          if (current < old) return AppTheme.red;
+          if (current > 0) return AppTheme.green;
+          if (current < 0) return AppTheme.red;
           return currentColor;
 
         case TickerType.dominance:
