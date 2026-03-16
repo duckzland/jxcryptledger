@@ -83,9 +83,10 @@ class WidgetsButtonState extends State<WidgetsButton> {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.all(bg),
           foregroundColor: WidgetStateProperty.all(fg),
+          shadowColor: WidgetStateProperty.all(fg.withAlpha(200)),
           padding: WidgetStateProperty.all(widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
           shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
-          elevation: WidgetStateProperty.all(2),
+          elevation: WidgetStateProperty.all(0),
           minimumSize: WidgetStateProperty.all(widget.minimumSize ?? Size.zero),
           mouseCursor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.disabled) ? SystemMouseCursors.basic : SystemMouseCursors.click,
@@ -205,7 +206,9 @@ class WidgetsButtonState extends State<WidgetsButton> {
 
   // Helper methods previously provided by AppActionController
   WidgetsButtonActionState setAppState(WidgetsButtonActionState s) {
-    if (mounted) setState(() => _state = s);
+    if (mounted && _state != s) {
+      setState(() => _state = s);
+    }
     return s;
   }
 

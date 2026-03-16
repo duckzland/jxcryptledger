@@ -116,7 +116,7 @@ class WatchersModel {
       rrId: rrId ?? this.rrId,
       rates: rates ?? this.rates,
       sent: sent ?? this.sent,
-      operator: operator ?? WatchersOperator.greaterThan.index,
+      operator: operator ?? this.operator,
       limit: limit ?? this.limit,
       duration: duration ?? this.duration,
       message: message ?? this.message,

@@ -39,6 +39,7 @@ class WatchersButtons extends StatelessWidget {
           buildForm: (BuildContext dialogContext) {
             return WatchersForm(
               initialData: tx,
+              linkedToTx: tx.meta["txLink"],
               onSave: (e) async {
                 if (e == null) {
                   Navigator.pop(dialogContext);

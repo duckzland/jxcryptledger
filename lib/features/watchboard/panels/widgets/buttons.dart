@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/exceptions.dart';
 import '../../../../core/locator.dart';
+import '../../../../core/log.dart';
 import '../../../../widgets/button.dart';
 import '../../../../widgets/dialogs/alert.dart';
 import '../../../../widgets/dialogs/show_form.dart';
@@ -48,7 +49,11 @@ class _PanelsWidgetsButtonsState extends State<PanelsWidgetsButtons> {
   }
 
   void _onControllerChanged() {
-    setState(() {});
+    if (mounted) {
+      setState(() {
+        _linkedWatcher = _wxController.getLinked("panels-${widget.tix.tid}");
+      });
+    }
   }
 
   @override
@@ -118,6 +123,7 @@ class _PanelsWidgetsButtonsState extends State<PanelsWidgetsButtons> {
           buildForm: (BuildContext dialogContext) {
             return PanelsForm(
               initialData: tix,
+              linkedToTx: tix.meta["txLink"],
               onSave: (e) async {
                 if (e == null) {
                   Navigator.pop(dialogContext);
