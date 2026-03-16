@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
@@ -17,8 +19,11 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
-  final Map<SettingKey, dynamic> _buffer = {};
+  late Map<SettingKey, dynamic> _buffer = {};
   late final SettingsController _controller;
+  Timer? _debounce;
+
+  int _buildCount = 0;
 
   bool _isDirty() {
     final userKeys = SettingKey.values.where((k) => k.isUserEditable);
@@ -93,6 +98,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Text(key.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
         const SizedBox(height: 10),
         TextFormField(
+          key: ValueKey("${key.name}-$_buildCount"),
           initialValue: _buffer[key]?.toString(),
           decoration: InputDecoration(
             hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
@@ -115,8 +121,11 @@ class _SettingsPageState extends State<SettingsPage> {
             return null;
           },
           onChanged: (val) {
-            setState(() {
-              _buffer[key] = key.type == SettingType.integer ? int.tryParse(val) : val;
+            if (_debounce?.isActive ?? false) _debounce!.cancel();
+            _debounce = Timer(const Duration(milliseconds: 300), () {
+              setState(() {
+                _buffer[key] = key.type == SettingType.integer ? int.tryParse(val) : val;
+              });
             });
           },
         ),
@@ -181,13 +190,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
         s.progress();
 
+        Map<SettingKey, dynamic> newBuff = {};
         for (var key in editableKeys) {
           final def = key.defaultValue;
           await _controller.update(key, def);
-          _buffer[key] = def;
+          newBuff[key] = def;
         }
 
-        setState(() {});
+        setState(() {
+          _buildCount++;
+          _buffer = newBuff;
+        });
 
         if (!mounted) return;
         widgetsNotifySuccess("Settings reset to default");
