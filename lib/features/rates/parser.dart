@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
+import 'package:rational/rational.dart';
 
 import 'model.dart';
 
@@ -48,6 +49,7 @@ RatesParserResult parseRatesJson(String body) {
     // price can be string or number
     final priceStr = priceRaw.toString();
     final targetAmount = Decimal.parse(priceStr);
+    final reversed = Decimal.one / targetAmount;
 
     rates.add(
       RatesModel(
@@ -57,6 +59,19 @@ RatesParserResult parseRatesJson(String body) {
         targetSymbol: targetSymbol,
         targetId: targetId,
         targetAmount: targetAmount,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+      ),
+    );
+
+    // Added revesed rates
+    rates.add(
+      RatesModel(
+        sourceAmount: Decimal.parse(sourceAmount.toString()),
+        sourceSymbol: targetSymbol,
+        sourceId: targetId,
+        targetSymbol: sourceSymbol,
+        targetId: sourceId,
+        targetAmount: reversed.toDecimal(scaleOnInfinitePrecision: 18),
         timestamp: DateTime.now().microsecondsSinceEpoch,
       ),
     );

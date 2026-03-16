@@ -134,12 +134,41 @@ class RatesService {
   Map<int, Set<int>> _groupJobs(List<(int, int)> jobs) {
     final ids = cryptosRepo.getAll().map((c) => c.id).toSet();
     final grouped = <int, Set<int>>{};
+    final wb = <int, int>{};
 
     for (final (sourceId, targetId) in jobs) {
-      if (!ids.contains(sourceId) || !ids.contains(targetId)) continue;
+      wb[sourceId] = (wb[sourceId] ?? 0) + 1;
+      wb[targetId] = (wb[targetId] ?? 0) + 1;
+    }
 
-      grouped.putIfAbsent(sourceId, () => <int>{});
-      grouped[sourceId]!.add(targetId);
+    for (final (rawSource, rawTarget) in jobs) {
+      if (!ids.contains(rawSource) || !ids.contains(rawTarget)) {
+        continue;
+      }
+
+      var source = rawSource;
+      var target = rawTarget;
+
+      if ((wb[target] ?? 0) > (wb[source] ?? 0)) {
+        final tmp = source;
+        source = target;
+        target = tmp;
+      }
+
+      grouped.putIfAbsent(source, () => <int>{});
+      grouped[source]!.add(target);
+    }
+
+    for (final sid in grouped.keys.toList()) {
+      final uniq = grouped[sid]!.toList();
+
+      if (uniq.length == 1) {
+        final nv = uniq.first;
+
+        grouped.putIfAbsent(nv, () => <int>{});
+        grouped[nv]!.add(sid);
+        grouped.remove(sid);
+      }
     }
 
     return grouped;
@@ -213,7 +242,8 @@ class RatesService {
 
     final resp = await http.get(uri, headers: headers);
 
-    logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
+    logln('[RATES] Fetching rates : ${sourceId.toString()} ${validTargets.join(',')}');
+    // logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
 
     if (resp.statusCode != 200) {
       throw NetworkingException(
