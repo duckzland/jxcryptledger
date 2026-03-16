@@ -49,6 +49,7 @@ class WatchersController extends ChangeNotifier {
 
   Future<void> delete(WatchersModel watcher) async {
     await _ratesService.delete(watcher.srId, watcher.rrId);
+    await _ratesService.delete(watcher.rrId, watcher.srId);
     await _repo.delete(watcher.wid);
     await load();
   }
