@@ -26,7 +26,6 @@ class PanelsModel {
     if (tid == '0') {
       throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be '0'.", "This transaction ID is not allowed.");
     }
-
     if (srAmount <= 0) {
       throw ValidationException(AppErrorCode.tickerBasicInvalidSrAmount, "srAmount must be > 0.", "Invalid watchboard data.");
     }
