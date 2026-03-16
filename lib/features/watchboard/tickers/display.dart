@@ -68,8 +68,8 @@ class _TickersDisplayState extends State<TickersDisplay> {
 
         case TickerType.altcoinIndex:
           final pct = int.tryParse(rawValue) ?? 0;
-          if (pct >= 75) return Colors.blue.shade100;
-          if (pct >= 50) return Colors.purple.shade100;
+          if (pct >= 75) return Colors.blue;
+          if (pct >= 50) return Colors.purple;
           if (pct >= 25) return AppTheme.orange;
           return AppTheme.darkRed;
 
