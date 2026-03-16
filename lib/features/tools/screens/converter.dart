@@ -255,6 +255,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   Future<void> _cleanTemporaryRates() async {
     for (final (source, target) in _temporaryRates) {
       await _ratesController.delete(source, target);
+      await _ratesController.delete(target, source);
     }
     _temporaryRates.clear();
   }

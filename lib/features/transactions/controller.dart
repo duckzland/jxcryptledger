@@ -1,16 +1,18 @@
 import 'package:flutter/foundation.dart';
 
 import '../../app/exceptions.dart';
+import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
 
 class TransactionsController extends ChangeNotifier {
   final TransactionsRepository _repo;
+  final RatesService _ratesService;
 
   List<TransactionsModel> _items = [];
   List<TransactionsModel> get items => _items;
 
-  TransactionsController(this._repo);
+  TransactionsController(this._repo, this._ratesService);
 
   String generateTid() {
     return _repo.generateTid();
@@ -57,6 +59,8 @@ class TransactionsController extends ChangeNotifier {
 
   Future<void> delete(TransactionsModel tx) async {
     try {
+      await _ratesService.delete(tx.srId, tx.rrId);
+      await _ratesService.delete(tx.rrId, tx.srId);
       await _repo.delete(tx);
       await load();
     } catch (e) {

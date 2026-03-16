@@ -46,6 +46,8 @@ class PanelsController extends ChangeNotifier {
   }
 
   Future<void> delete(PanelsModel tx) async {
+    await _ratesService.delete(tx.srId, tx.rrId);
+    await _ratesService.delete(tx.rrId, tx.srId);
     await _repo.delete(tx);
     await load();
   }
