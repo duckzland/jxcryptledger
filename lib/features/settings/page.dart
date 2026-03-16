@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
@@ -21,7 +19,6 @@ class _SettingsPageState extends State<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
   late Map<SettingKey, dynamic> _buffer = {};
   late final SettingsController _controller;
-  Timer? _debounce;
 
   int _buildCount = 0;
 
@@ -121,11 +118,8 @@ class _SettingsPageState extends State<SettingsPage> {
             return null;
           },
           onChanged: (val) {
-            if (_debounce?.isActive ?? false) _debounce!.cancel();
-            _debounce = Timer(const Duration(milliseconds: 300), () {
-              setState(() {
-                _buffer[key] = key.type == SettingType.integer ? int.tryParse(val) : val;
-              });
+            setState(() {
+              _buffer[key] = key.type == SettingType.integer ? int.tryParse(val) : val;
             });
           },
         ),
