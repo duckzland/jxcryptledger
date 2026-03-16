@@ -77,8 +77,7 @@ class WatchersController extends ChangeNotifier {
   }
 
   Future<void> onRatesUpdated() async {
-    await load();
-    for (final w in _items) {
+    for (final w in items) {
       logln("[WATCHER] Evaluating ${w.srId}-${w.rrId}");
       process(w);
     }
@@ -110,6 +109,7 @@ class WatchersController extends ChangeNotifier {
     final updated = wx.copyWith(sent: wx.sent + 1, timestamp: now);
 
     await _repo.update(updated);
+    await load();
 
     await sendNotification(wx);
   }
@@ -127,20 +127,12 @@ class WatchersController extends ChangeNotifier {
   }
 
   Future<String> exportDatabase() async {
-    try {
-      return await _repo.export();
-    } catch (e) {
-      return '';
-    }
+    return await _repo.export();
   }
 
   Future<void> importDatabase(String rawJson) async {
-    try {
-      await _repo.import(rawJson);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.import(rawJson);
+    await load();
   }
 
   Future<void> restart() async {
@@ -153,7 +145,7 @@ class WatchersController extends ChangeNotifier {
   }
 
   bool hasRestartable() {
-    for (final wx in _items) {
+    for (final wx in items) {
       if (wx.sent >= wx.limit) {
         return true;
       }

@@ -6,6 +6,8 @@ import '../../../../core/utils.dart';
 import '../../../../widgets/panel.dart';
 import '../../../cryptos/controller.dart';
 import '../../../rates/controller.dart';
+import '../../../watchers/controller.dart';
+import '../../../watchers/model.dart';
 import '../controller.dart';
 import '../model.dart';
 import 'buttons.dart';
@@ -31,6 +33,10 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
 
   static dynamic _activePanelId;
 
+  late final WatchersController _wxController;
+
+  WatchersModel? _linkedWatcher;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +46,11 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
     _ratesController = locator<RatesController>();
     _ratesController.addListener(_onControllerChanged);
 
+    _wxController = locator<WatchersController>();
+    _wxController.addListener(_onWatcherChanged);
+
+    _linkedWatcher = _wxController.getLinked("panels-${widget.tix.tid}");
+
     _subscribers.add(setState);
   }
 
@@ -47,14 +58,25 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
   void dispose() {
     _tixController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
+    _wxController.removeListener(_onWatcherChanged);
     _subscribers.remove(setState);
 
     super.dispose();
   }
 
+  void _onWatcherChanged() async {
+    final tix = widget.tix;
+    if (mounted) {
+      setState(() {
+        _linkedWatcher = _wxController.getLinked("panels-${tix.tid}");
+      });
+    }
+  }
+
   void _onControllerChanged() async {
     final tix = widget.tix;
     final newRate = await _ratesController.getStoredRate(tix.srId, tix.rrId);
+
     if (newRate != tix.rate) {
       tix.setRate(newRate);
       if (mounted) {
@@ -151,6 +173,24 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
                     ),
                   ),
                 ),
+                if (_linkedWatcher != null)
+                  Positioned(
+                    top: 8,
+                    left: 6,
+                    child: Icon(
+                      Icons.add_alarm,
+                      size: 16,
+                      color: _linkedWatcher!.isSpent() ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
+                    ),
+                  ),
+
+                if (tix.isLinked())
+                  Positioned(
+                    top: 8,
+                    left: _linkedWatcher != null ? 24 : 6,
+                    child: Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.text.withAlpha(205)),
+                  ),
+
                 if (isThisOneActive && !widget.isDragging)
                   Positioned(
                     top: 8,
