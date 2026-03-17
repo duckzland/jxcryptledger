@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/exceptions.dart';
 import '../../../widgets/button.dart';
-import '../../../widgets/notify.dart';
+import '../../mixins/actions.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
+import 'controller.dart';
 import 'form.dart';
 import 'model.dart';
 
-class WatchersButtons extends StatelessWidget {
+class WatchersButtons extends StatelessWidget with MixinsActions {
   final WatchersModel tx;
-  final void Function() onSave;
-  final void Function() onDelete;
-  final void Function() onNotify;
+  final WatchersController wxController;
+  final void Function() onAction;
 
-  const WatchersButtons({super.key, required this.tx, required this.onSave, required this.onDelete, required this.onNotify});
+  const WatchersButtons({super.key, required this.tx, required this.wxController, required this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -34,22 +33,13 @@ class WatchersButtons extends StatelessWidget {
             return WatchersForm(
               initialData: tx,
               linkedToTx: tx.meta["txLink"],
-              onSave: (e) async {
-                if (e == null) {
-                  Navigator.pop(dialogContext);
-                  onSave();
-
-                  widgetsNotifySuccess("Rate watcher updated.");
-                  return;
-                }
-
-                if (e is ValidationException) {
-                  widgetsNotifyError(e.userMessage, ctx: context);
-                  return;
-                }
-
-                widgetsNotifyError(e.toString(), ctx: context);
-              },
+              onSave: (e) => doFormSave<WatchersModel>(
+                context,
+                dialogContext: dialogContext,
+                onComplete: onAction,
+                successMessage: "Rate watcher updated.",
+                error: e,
+              ),
             );
           },
         ),
@@ -66,18 +56,14 @@ class WatchersButtons extends StatelessWidget {
               "This will delete this rate watcher.\n"
               "This action cannot be undone.",
           dialogConfirmLabel: "Delete",
-          onPressed: (dialogContext) async {
-            try {
-              onDelete();
-              Navigator.pop(dialogContext);
-
-              widgetsNotifySuccess("Rate watcher deleted.");
-            } on ValidationException catch (e) {
-              widgetsNotifyError(e.userMessage);
-            } catch (e) {
-              widgetsNotifyError(e.toString());
-            }
-          },
+          onPressed: (dialogContext) => doAction<WatchersModel>(
+            context,
+            dialogContext: dialogContext,
+            data: tx,
+            action: wxController.delete,
+            onComplete: onAction,
+            successMessage: "Rate watcher deleted.",
+          ),
         ),
         WidgetsButton(
           key: Key("test-button-${tx.wid}"),
@@ -87,7 +73,7 @@ class WatchersButtons extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 18,
           minimumSize: const Size(34, 34),
-          onPressed: (_) => onNotify(),
+          onPressed: (_) => wxController.sendNotification(tx),
         ),
       ],
     );

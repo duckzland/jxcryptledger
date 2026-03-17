@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
+import '../../../mixins/actions.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
-import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../widgets/buttons.dart';
@@ -26,7 +26,7 @@ class TransactionsOverview extends StatefulWidget {
   State<TransactionsOverview> createState() => _TransactionsOverviewState();
 }
 
-class _TransactionsOverviewState extends State<TransactionsOverview> {
+class _TransactionsOverviewState extends State<TransactionsOverview> with MixinsActions {
   late final CryptosController _cryptosController;
   late final TransactionsController _txController;
 
@@ -298,23 +298,16 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
               "Are you sure you want to close all closable transactions found in this group?\n"
               "This action cannot be undone.",
           dialogConfirmLabel: "Close",
-          onPressed: (dialogContext) async {
-            try {
-              await _closeTransactions();
-
-              if (mounted) {
-                setState(() {
-                  _isClosable = false;
-                });
-              }
-
-              Navigator.pop(dialogContext);
-
-              widgetsNotifySuccess("All transactions closed.");
-            } catch (e) {
-              widgetsNotifyError("Failed to close transactions.");
-            }
-          },
+          onPressed: (dialogContext) => doAction<TransactionsModel>(
+            context,
+            dialogContext: dialogContext,
+            onStart: _closeTransactions,
+            onComplete: () => setState(() {
+              _isClosable = false;
+            }),
+            successMessage: "All transactions closed.",
+            errorMessage: "Failed to close transactions.",
+          ),
         ),
 
         const SizedBox(width: 8),
@@ -337,23 +330,16 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
               "This will delete all transactions in this group and all of its history.\n"
               "This action cannot be undone.",
           dialogConfirmLabel: "Delete",
-          onPressed: (dialogContext) async {
-            try {
-              await _deleteTransactions();
-
-              if (mounted) {
-                setState(() {
-                  _isDeletable = false;
-                });
-              }
-
-              Navigator.pop(dialogContext);
-
-              widgetsNotifySuccess("All transactions deleted.");
-            } catch (e) {
-              widgetsNotifyError("Failed to delete transactions.");
-            }
-          },
+          onPressed: (dialogContext) => doAction<TransactionsModel>(
+            context,
+            dialogContext: dialogContext,
+            onStart: _deleteTransactions,
+            onComplete: () => setState(() {
+              _isDeletable = false;
+            }),
+            successMessage: "All transactions deleted.",
+            errorMessage: "Failed to delete transactions.",
+          ),
         ),
       ],
     );
@@ -417,6 +403,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview> {
               DataCell(
                 TransactionsWidgetsButtons(
                   tx: r['tx'],
+                  cryptosController: _cryptosController,
+                  txController: _txController,
                   onAction: () {
                     widget.onStatusChanged();
                     setState(() {});

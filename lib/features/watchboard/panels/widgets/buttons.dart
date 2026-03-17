@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/exceptions.dart';
+import '../../../../mixins/actions.dart';
 import '../../../../widgets/button.dart';
 import '../../../../widgets/dialogs/alert.dart';
 import '../../../../widgets/dialogs/show_form.dart';
-import '../../../../widgets/notify.dart';
 import '../../../watchers/form.dart';
 import '../../../watchers/model.dart';
+import '../controller.dart';
 import '../form.dart';
 import '../model.dart';
 
-class PanelsWidgetsButtons extends StatelessWidget {
+class PanelsWidgetsButtons extends StatelessWidget with MixinsActions {
   final PanelsModel tix;
+  final PanelsController tixController;
   final WatchersModel? linkedWatcher;
   final void Function() onAction;
-  final void Function() onDelete;
 
-  const PanelsWidgetsButtons({super.key, required this.tix, required this.linkedWatcher, required this.onAction, required this.onDelete});
+  const PanelsWidgetsButtons({
+    super.key,
+    required this.tix,
+    required this.linkedWatcher,
+    required this.tixController,
+    required this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,22 +53,12 @@ class PanelsWidgetsButtons extends StatelessWidget {
               initialRrId: wix == null ? tix.rrId : null,
               initialRate: wix == null ? tix.rate : null,
               linkedToTx: "panels-${tix.tid}",
-              onSave: (e) async {
-                if (e == null) {
-                  Navigator.pop(dialogContext);
-
-                  widgetsNotifySuccess(wix == null ? "Created notification watcher." : "Notification watcher updated");
-
-                  return;
-                }
-
-                if (e is ValidationException) {
-                  widgetsNotifyError(e.userMessage, ctx: context);
-                  return;
-                }
-
-                widgetsNotifyError(e.toString(), ctx: context);
-              },
+              onSave: (e) => doFormSave<WatchersModel>(
+                context,
+                dialogContext: dialogContext,
+                successMessage: wix == null ? "Created notification watcher." : "Notification watcher updated",
+                error: e,
+              ),
             );
           },
         ),
@@ -79,21 +75,13 @@ class PanelsWidgetsButtons extends StatelessWidget {
             return PanelsForm(
               initialData: tix,
               linkedToTx: tix.meta["txLink"],
-              onSave: (e) async {
-                if (e == null) {
-                  Navigator.pop(dialogContext);
-                  onAction();
-                  widgetsNotifySuccess("watchboard panel updated.");
-                  return;
-                }
-
-                if (e is ValidationException) {
-                  widgetsNotifyError(e.userMessage, ctx: context);
-                  return;
-                }
-
-                widgetsNotifyError(e.toString(), ctx: context);
-              },
+              onSave: (e) => doFormSave<WatchersModel>(
+                context,
+                dialogContext: dialogContext,
+                onComplete: onAction,
+                successMessage: "watchboard panel updated.",
+                error: e,
+              ),
             );
           },
         ),
@@ -109,17 +97,14 @@ class PanelsWidgetsButtons extends StatelessWidget {
           dialogTitle: "Delete Watchboard",
           dialogMessage: "This will delete this watchboard.\nThis action cannot be undone.",
           dialogConfirmLabel: "Delete",
-          onPressed: (dialogContext) async {
-            try {
-              onDelete();
-              Navigator.pop(dialogContext);
-              widgetsNotifySuccess("Watchboard panel deleted.");
-            } on ValidationException catch (e) {
-              widgetsNotifyError(e.userMessage);
-            } catch (e) {
-              widgetsNotifyError(e.toString());
-            }
-          },
+          onPressed: (dialogContext) => doAction<PanelsModel>(
+            context,
+            dialogContext: dialogContext,
+            data: tix,
+            action: tixController.delete,
+            onComplete: onAction,
+            successMessage: "Watchboard panel deleted.",
+          ),
         ),
       ],
     );

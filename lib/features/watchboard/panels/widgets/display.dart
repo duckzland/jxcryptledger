@@ -197,11 +197,8 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
                     right: 8,
                     child: PanelsWidgetsButtons(
                       tix: tix,
+                      tixController: _tixController,
                       linkedWatcher: _linkedWatcher,
-                      onDelete: () async {
-                        await _tixController.delete(tix);
-                        setState(() {});
-                      },
                       onAction: () {
                         setState(() {});
                       },
