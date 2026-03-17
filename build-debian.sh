@@ -4,7 +4,7 @@
 flutter build linux --release
 
 # 2. Setup Variables
-APP_NAME="jxcryptledger"
+APP_NAME="jxledger"
 
 # Read version from version.txt and remove any trailing whitespace/newlines
 if [ -f version.txt ]; then
@@ -34,10 +34,10 @@ cp assets/icon.png $DEB_DIR/usr/share/icons/hicolor/512x512/apps/$APP_NAME.png
 cat <<EOF > $DEB_DIR/usr/share/applications/$APP_NAME.desktop
 [Desktop Entry]
 Version: $VERSION
-Name=JxCryptLedger
-GenericName=JxCryptLedger
-Comment=JxCryptLedger Transaction Manager
-Exec=/usr/bin/jxcryptledger
+Name=JxLedger
+GenericName=JxLedger
+Comment=JxLedger Transaction Manager
+Exec=/usr/bin/jxledger
 Icon=$APP_NAME
 Type=Application
 Categories=Utility;
@@ -51,7 +51,7 @@ Version: $VERSION
 Architecture: amd64
 Maintainer: Jason Xie <jason.xie@victheme.com>
 Depends: libgtk-3-0, libglib2.0-0, libjpeg-turbo8
-Description: JxCryptLedger Transaction Manager
+Description: JxLedger Transaction Manager
 EOF
 
 # 8. Set Permissions

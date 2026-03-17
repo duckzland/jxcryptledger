@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
-import '../../../core/locator.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/notify.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
-import 'controller.dart';
 import 'form.dart';
 import 'model.dart';
 
 class WatchersButtons extends StatelessWidget {
   final WatchersModel tx;
-  final void Function() onAction;
+  final void Function() onSave;
+  final void Function() onDelete;
+  final void Function() onNotify;
 
-  WatchersController get _wxController => locator<WatchersController>();
-
-  const WatchersButtons({super.key, required this.tx, required this.onAction});
+  const WatchersButtons({super.key, required this.tx, required this.onSave, required this.onDelete, required this.onNotify});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +37,7 @@ class WatchersButtons extends StatelessWidget {
               onSave: (e) async {
                 if (e == null) {
                   Navigator.pop(dialogContext);
-                  onAction();
+                  onSave();
 
                   widgetsNotifySuccess("Rate watcher updated.");
                   return;
@@ -70,10 +68,8 @@ class WatchersButtons extends StatelessWidget {
           dialogConfirmLabel: "Delete",
           onPressed: (dialogContext) async {
             try {
-              await _wxController.delete(tx);
-
+              onDelete();
               Navigator.pop(dialogContext);
-              onAction();
 
               widgetsNotifySuccess("Rate watcher deleted.");
             } on ValidationException catch (e) {
@@ -91,7 +87,7 @@ class WatchersButtons extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 18,
           minimumSize: const Size(34, 34),
-          onPressed: (_) => _wxController.sendNotification(tx),
+          onPressed: (_) => onNotify(),
         ),
       ],
     );
