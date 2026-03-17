@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme.dart' show AppTheme;
+import '../../../../app/theme.dart';
 import '../../../../core/locator.dart';
 import '../../../../core/utils.dart';
 import '../../../../widgets/panel.dart';
@@ -24,11 +24,10 @@ class PanelsWidgetsDisplay extends StatefulWidget {
 }
 
 class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
-  CryptosController get _cryptosController => locator<CryptosController>();
-
   late final PanelsController _tixController;
   late final RatesController _ratesController;
   late final WatchersController _wxController;
+  late final CryptosController _cryptosController;
 
   static final List<StateSetter> _subscribers = [];
 
@@ -47,6 +46,8 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
 
     _wxController = locator<WatchersController>();
     _wxController.addListener(_onWatcherChanged);
+
+    _cryptosController = locator<CryptosController>();
 
     _linkedWatcher = _wxController.getLinked("panels-${widget.tix.tid}");
 
@@ -196,6 +197,11 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
                     right: 8,
                     child: PanelsWidgetsButtons(
                       tix: tix,
+                      linkedWatcher: _linkedWatcher,
+                      onDelete: () async {
+                        await _tixController.delete(tix);
+                        setState(() {});
+                      },
                       onAction: () {
                         setState(() {});
                       },

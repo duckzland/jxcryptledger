@@ -76,6 +76,7 @@ class WidgetsButtonState extends State<WidgetsButton> {
   Widget build(BuildContext context) {
     final bg = _backgroundColor();
     final fg = _foregroundColor();
+    final br = Color.lerp(bg, fg, 0.70)!;
 
     final button = MouseRegion(
       cursor: _disabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
@@ -83,7 +84,7 @@ class WidgetsButtonState extends State<WidgetsButton> {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.all(bg),
           foregroundColor: WidgetStateProperty.all(fg),
-          shadowColor: WidgetStateProperty.all(fg.withAlpha(200)),
+          shadowColor: WidgetStateProperty.all(br),
           padding: WidgetStateProperty.all(widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
           shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
           elevation: WidgetStateProperty.all(0),

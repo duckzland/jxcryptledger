@@ -45,7 +45,7 @@ class CryptosController extends ChangeNotifier {
     return repo.filter(query);
   }
 
-  bool hasAny() {
+  bool isEmpty() {
     return repo.hasAny();
   }
 

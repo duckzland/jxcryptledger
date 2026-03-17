@@ -70,7 +70,7 @@ class _WatchersPageState extends State<WatchersPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny()) {
+    if (!_cryptosController.isEmpty()) {
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
@@ -86,7 +86,7 @@ class _WatchersPageState extends State<WatchersPage> {
               title: "Add Rate Watcher",
               addTitle: "Add New",
               addTooltip: "Create new rate watcher entry",
-              addEvaluator: () => _cryptosController.hasAny(),
+              addEvaluator: () => _cryptosController.isEmpty(),
               importTitle: "Import",
               importTooltip: "Import rate watchers to database",
               importEvaluator: () => true,

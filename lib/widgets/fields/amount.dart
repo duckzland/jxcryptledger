@@ -48,7 +48,8 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> {
   void initState() {
     super.initState();
     if (widget.initialValue != null) {
-      _amountController.text = widget.initialValue!;
+      final val = widget.initialValue!;
+      _amountController.text = val == "" ? val : Utils.formatSmartDouble(double.parse(val));
     }
   }
 

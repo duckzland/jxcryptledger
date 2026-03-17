@@ -15,7 +15,6 @@ class WatchersButtons extends StatelessWidget {
   final WatchersModel tx;
   final void Function() onAction;
 
-  CryptosController get _cryptosController => locator<CryptosController>();
   WatchersController get _wxController => locator<WatchersController>();
 
   const WatchersButtons({super.key, required this.tx, required this.onAction});
@@ -29,13 +28,11 @@ class WatchersButtons extends StatelessWidget {
         WidgetsDialogsShowForm(
           key: Key("edit-button-${tx.wid}"),
           icon: Icons.edit,
+          initialState: WidgetsButtonActionState.normal,
           tooltip: "Edit this rate watcher",
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 16,
           minimumSize: const Size(34, 34),
-          evaluator: (s) {
-            _cryptosController.hasAny() ? s.normal() : s.disable();
-          },
           buildForm: (BuildContext dialogContext) {
             return WatchersForm(
               initialData: tx,
@@ -44,10 +41,8 @@ class WatchersButtons extends StatelessWidget {
                 if (e == null) {
                   Navigator.pop(dialogContext);
                   onAction();
-                  String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
-                  String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
 
-                  widgetsNotifySuccess("$sourceSymbol to $targetSymbol rate watcher updated.");
+                  widgetsNotifySuccess("Rate watcher updated.");
                   return;
                 }
 
@@ -81,10 +76,7 @@ class WatchersButtons extends StatelessWidget {
               Navigator.pop(dialogContext);
               onAction();
 
-              String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
-              String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
-
-              widgetsNotifySuccess("$sourceSymbol to $targetSymbol rate watcher deleted.");
+              widgetsNotifySuccess("Rate watcher deleted.");
             } on ValidationException catch (e) {
               widgetsNotifyError(e.userMessage);
             } catch (e) {
