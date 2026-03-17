@@ -29,10 +29,10 @@ class WatchersController extends ChangeNotifier {
   }
 
   Future<void> init() async {
+    await load();
     for (final wx in items) {
       _ratesService.addQueue(wx.srId, wx.rrId);
     }
-    notifyListeners();
   }
 
   Future<void> add(WatchersModel watcher) async {
