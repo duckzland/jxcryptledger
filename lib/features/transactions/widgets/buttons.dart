@@ -1,36 +1,39 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/exceptions.dart';
-import '../../../core/locator.dart';
+import '../../../mixins/actions.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
-import '../../../widgets/notify.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../forms/edit.dart';
 import '../forms/trade.dart';
 import '../model.dart';
 
-class TransactionsWidgetsButtons extends StatelessWidget {
+class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
   final TransactionsModel tx;
+  final CryptosController cryptosController;
+  final TransactionsController txController;
   final void Function() onAction;
 
-  CryptosController get _cryptosController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
-
-  const TransactionsWidgetsButtons({super.key, required this.tx, required this.onAction});
+  const TransactionsWidgetsButtons({
+    super.key,
+    required this.tx,
+    required this.txController,
+    required this.cryptosController,
+    required this.onAction,
+  });
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Object?>>(
       future: Future.wait([
-        _txController.isTradable(tx),
-        _txController.isClosable(tx),
-        _txController.isDeletable(tx),
-        _txController.isUpdatable(tx),
-        _txController.isRefundable(tx),
-        _txController.hasLeaf(tx),
-        _txController.getParent(tx),
+        txController.isTradable(tx),
+        txController.isClosable(tx),
+        txController.isDeletable(tx),
+        txController.isUpdatable(tx),
+        txController.isRefundable(tx),
+        txController.hasLeaf(tx),
+        txController.getParent(tx),
       ]),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -45,6 +48,9 @@ class TransactionsWidgetsButtons extends StatelessWidget {
         final hasLeaf = snapshot.data![5] as bool;
         final ptx = snapshot.data![6] as TransactionsModel?;
 
+        final sourceSymbol = cryptosController.getSymbol(tx.srId) ?? "";
+        final targetSymbol = cryptosController.getSymbol(tx.rrId) ?? "";
+
         return Wrap(
           spacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -58,27 +64,19 @@ class TransactionsWidgetsButtons extends StatelessWidget {
                 iconSize: 16,
                 minimumSize: const Size(34, 34),
                 evaluator: (s) {
-                  _cryptosController.isEmpty() ? s.normal() : s.disable();
+                  cryptosController.isEmpty() ? s.normal() : s.disable();
                 },
                 buildForm: (dialogContext) {
                   return TransactionFormEdit(
                     initialData: tx,
                     parent: ptx,
-                    onSave: (e) async {
-                      if (e == null) {
-                        Navigator.pop(dialogContext);
-                        onAction();
-                        widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction updated.");
-                        return;
-                      }
-
-                      if (e is ValidationException) {
-                        widgetsNotifyError(e.userMessage, ctx: context);
-                        return;
-                      }
-
-                      widgetsNotifyError(e.toString(), ctx: context);
-                    },
+                    onSave: (e) => doFormSave<TransactionsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      onComplete: onAction,
+                      successMessage: "${tx.srAmountText} - ${tx.balanceText} transaction updated.",
+                      error: e,
+                    ),
                   );
                 },
               ),
@@ -93,27 +91,19 @@ class TransactionsWidgetsButtons extends StatelessWidget {
                 iconSize: 18,
                 minimumSize: const Size(34, 34),
                 evaluator: (s) {
-                  _cryptosController.isEmpty() ? s.action() : s.disable();
+                  cryptosController.isEmpty() ? s.action() : s.disable();
                 },
                 buildForm: (dialogContext) {
                   return TransactionFormTrade(
                     initialData: tx,
                     parent: ptx,
-                    onSave: (e) async {
-                      if (e == null) {
-                        Navigator.pop(dialogContext);
-                        onAction();
-                        widgetsNotifySuccess("New trading transaction created.");
-                        return;
-                      }
-
-                      if (e is ValidationException) {
-                        widgetsNotifyError(e.userMessage, ctx: context);
-                        return;
-                      }
-
-                      widgetsNotifyError(e.toString(), ctx: context);
-                    },
+                    onSave: (e) => doFormSave<TransactionsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      onComplete: onAction,
+                      successMessage: "New trading transaction created.",
+                      error: e,
+                    ),
                   );
                 },
               ),
@@ -132,23 +122,14 @@ class TransactionsWidgetsButtons extends StatelessWidget {
                     "This will delete this transaction and all of its history.\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Delete",
-                onPressed: (dialogContext) async {
-                  try {
-                    await _txController.removeRoot(tx);
-
-                    Navigator.pop(dialogContext);
-                    onAction();
-
-                    String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
-                    String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
-
-                    widgetsNotifySuccess("${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.");
-                  } on ValidationException catch (e) {
-                    widgetsNotifyError(e.userMessage);
-                  } catch (e) {
-                    widgetsNotifyError(e.toString());
-                  }
-                },
+                onPressed: (dialogContext) => doAction<TransactionsModel>(
+                  context,
+                  dialogContext: dialogContext,
+                  data: tx,
+                  action: txController.removeRoot,
+                  onComplete: onAction,
+                  successMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
+                ),
               ),
 
             if (isRefundable)
@@ -165,23 +146,14 @@ class TransactionsWidgetsButtons extends StatelessWidget {
                     "This will cancel this transaction and refund the balance back to its parent transaction.\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Refund",
-                onPressed: (dialogContext) async {
-                  try {
-                    await _txController.removeLeaf(tx);
-
-                    Navigator.pop(dialogContext);
-                    onAction();
-
-                    String sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "";
-                    String targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "";
-
-                    widgetsNotifySuccess("${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.");
-                  } on ValidationException catch (e) {
-                    widgetsNotifyError(e.userMessage);
-                  } catch (e) {
-                    widgetsNotifyError(e.toString());
-                  }
-                },
+                onPressed: (dialogContext) => doAction<TransactionsModel>(
+                  context,
+                  dialogContext: dialogContext,
+                  data: tx,
+                  action: txController.removeLeaf,
+                  onComplete: onAction,
+                  successMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
+                ),
               ),
 
             if (isClosable)
@@ -196,22 +168,14 @@ class TransactionsWidgetsButtons extends StatelessWidget {
                 dialogTitle: "Close Transaction",
                 dialogMessage: "Are you sure you want to close this transaction?",
                 dialogConfirmLabel: "Close",
-                onPressed: (dialogContext) async {
-                  try {
-                    await _txController.closeLeaf(tx);
-
-                    Navigator.pop(dialogContext);
-                    onAction();
-
-                    widgetsNotifySuccess("${tx.srAmountText} - ${tx.balanceText} transaction closed.");
-                  } on ValidationException catch (e) {
-                    Navigator.pop(dialogContext);
-                    widgetsNotifyError(e.userMessage);
-                  } catch (e) {
-                    Navigator.pop(dialogContext);
-                    widgetsNotifyError(e.toString());
-                  }
-                },
+                onPressed: (dialogContext) => doAction<TransactionsModel>(
+                  context,
+                  dialogContext: dialogContext,
+                  data: tx,
+                  action: txController.closeLeaf,
+                  onComplete: onAction,
+                  successMessage: "${tx.srAmountText} - ${tx.balanceText} transaction closed.",
+                ),
               ),
           ],
         );

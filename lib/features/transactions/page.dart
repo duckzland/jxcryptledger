@@ -4,6 +4,7 @@ import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../mixins/actions.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
@@ -32,7 +33,7 @@ class TransactionsPage extends StatefulWidget {
   State<TransactionsPage> createState() => _TransactionsPageState();
 }
 
-class _TransactionsPageState extends State<TransactionsPage> {
+class _TransactionsPageState extends State<TransactionsPage> with MixinsActions {
   late TransactionsController _txController;
   final CryptosController _cryptosController = locator<CryptosController>();
 
@@ -328,20 +329,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   Widget _buildForm(BuildContext dialogContext) {
     return Center(
       child: TransactionFormCreate(
-        onSave: (e) async {
-          if (e == null) {
-            Navigator.pop(dialogContext);
-            widgetsNotifySuccess('Transaction saved');
-            return;
-          }
-
-          if (e is ValidationException) {
-            widgetsNotifyError(e.userMessage, ctx: context);
-            return;
-          }
-
-          widgetsNotifyError(e.toString(), ctx: context);
-        },
+        onSave: (e) => doFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
       ),
     );
   }
@@ -474,17 +462,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     "This will delete all transactions and all of its history.\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Delete",
-                onPressed: (dialogContext) async {
-                  try {
-                    await _txController.deleteAll();
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All transactions deleted.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to delete transactions.");
-                  }
-                },
+                onPressed: (dialogContext) => doAction<TransactionsModel>(
+                  context,
+                  dialogContext: dialogContext,
+                  onStart: _txController.deleteAll,
+                  successMessage: "All transactions deleted.",
+                  errorMessage: "Failed to delete transactions.",
+                ),
               ),
               WidgetsDialogsAlert(
                 key: Key("close-button-batch"),
@@ -504,17 +488,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     "Are you sure you want to close all closable transactions?\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Close",
-                onPressed: (dialogContext) async {
-                  try {
-                    await _txController.closeAll();
-
-                    Navigator.pop(dialogContext);
-
-                    widgetsNotifySuccess("All transactions closed.");
-                  } catch (e) {
-                    widgetsNotifyError("Failed to close transactions.");
-                  }
-                },
+                onPressed: (dialogContext) => doAction<TransactionsModel>(
+                  context,
+                  dialogContext: dialogContext,
+                  onStart: _txController.closeAll,
+                  successMessage: "All transactions closed.",
+                  errorMessage: "Failed to close transactions.",
+                ),
               ),
               WidgetsDialogsShowForm(
                 key: const Key("add-button"),

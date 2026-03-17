@@ -5,6 +5,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../controller.dart';
 import '../widgets/buttons.dart';
 import '../model.dart';
 
@@ -19,6 +20,7 @@ class TransactionsJournalView extends StatefulWidget {
 }
 
 class _TransactionsJournalViewState extends State<TransactionsJournalView> {
+  late final TransactionsController _txController;
   late final CryptosController _cryptosController;
   late List<Map<String, dynamic>> _rows;
 
@@ -28,6 +30,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
   @override
   void initState() {
     super.initState();
+    _txController = locator<TransactionsController>();
     _cryptosController = locator<CryptosController>();
 
     _rows = _buildRows(widget.transactions);
@@ -153,6 +156,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> {
                     DataCell(
                       TransactionsWidgetsButtons(
                         tx: r['tx'],
+                        cryptosController: _cryptosController,
+                        txController: _txController,
                         onAction: () {
                           widget.onStatusChanged();
                           setState(() {});
