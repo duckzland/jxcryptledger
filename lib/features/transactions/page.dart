@@ -257,7 +257,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny()) {
+    if (!_cryptosController.isEmpty()) {
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
@@ -276,7 +276,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     title: "Add Transaction",
                     addTitle: "Add New",
                     addTooltip: "Create new transaction entry",
-                    addEvaluator: () => _cryptosController.hasAny(),
+                    addEvaluator: () => _cryptosController.isEmpty(),
                     importTitle: "Import",
                     importTooltip: "Import transactions to database",
                     importEvaluator: () => true,
@@ -521,7 +521,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 tooltip: "Add new transaction",
                 buildForm: (dialogContext) => _buildForm(dialogContext),
                 evaluator: (s) {
-                  if (!_cryptosController.hasAny()) {
+                  if (!_cryptosController.isEmpty()) {
                     s.disable();
                   } else {
                     s.action();

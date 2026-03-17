@@ -48,7 +48,7 @@ class _ToolsPageState extends State<ToolsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny()) {
+    if (!_cryptosController.isEmpty()) {
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.')),

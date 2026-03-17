@@ -58,7 +58,7 @@ class TransactionsWidgetsButtons extends StatelessWidget {
                 iconSize: 16,
                 minimumSize: const Size(34, 34),
                 evaluator: (s) {
-                  _cryptosController.hasAny() ? s.normal() : s.disable();
+                  _cryptosController.isEmpty() ? s.normal() : s.disable();
                 },
                 buildForm: (dialogContext) {
                   return TransactionFormEdit(
@@ -93,7 +93,7 @@ class TransactionsWidgetsButtons extends StatelessWidget {
                 iconSize: 18,
                 minimumSize: const Size(34, 34),
                 evaluator: (s) {
-                  _cryptosController.hasAny() ? s.action() : s.disable();
+                  _cryptosController.isEmpty() ? s.action() : s.disable();
                 },
                 buildForm: (dialogContext) {
                   return TransactionFormTrade(

@@ -87,7 +87,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.hasAny()) {
+    if (!_cryptosController.isEmpty()) {
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.')),
@@ -95,7 +95,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
       );
     }
 
-    if (_pxController.items.isEmpty) {
+    if (_pxController.isEmpty()) {
       return Column(
         children: [
           Expanded(
@@ -103,7 +103,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
               title: "Add Watchboard",
               addTitle: "Add New",
               addTooltip: "Create new watchboard entry",
-              addEvaluator: () => _cryptosController.hasAny(),
+              addEvaluator: () => _cryptosController.isEmpty(),
               importTitle: "Import",
               importTooltip: "Import watchboard to database",
               importEvaluator: () => true,
