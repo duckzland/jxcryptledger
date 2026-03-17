@@ -24,7 +24,7 @@ class TickersController extends ChangeNotifier {
   }
 
   Future<List<TickersModel>> getAll() async {
-    return _repo.getAll();
+    return await _repo.getAll();
   }
 
   Future<void> load() async {

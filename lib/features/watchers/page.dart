@@ -277,8 +277,15 @@ class _WatchersPageState extends State<WatchersPage> {
                     DataCell(
                       WatchersButtons(
                         tx: r['tx'],
-                        onAction: () {
+                        onDelete: () async {
+                          await _wxController.delete(r['tx']);
                           setState(() {});
+                        },
+                        onSave: () {
+                          setState(() {});
+                        },
+                        onNotify: () {
+                          _wxController.sendNotification(r['tx']);
                         },
                       ),
                     ),

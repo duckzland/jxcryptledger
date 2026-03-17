@@ -135,13 +135,29 @@ class RatesService {
     final ids = cryptosRepo.getAll().map((c) => c.id).toSet();
     final grouped = <int, Set<int>>{};
     final wb = <int, int>{};
+    final seen = <(int, int)>{};
+    final cleaned = <(int, int)>[];
 
-    for (final (sourceId, targetId) in jobs) {
+    for (final j in jobs) {
+      final a = j.$1;
+      final b = j.$2;
+
+      final reversed = (b, a);
+
+      if (seen.contains(reversed)) {
+        continue;
+      }
+
+      seen.add(j);
+      cleaned.add(j);
+    }
+
+    for (final (sourceId, targetId) in cleaned) {
       wb[sourceId] = (wb[sourceId] ?? 0) + 1;
       wb[targetId] = (wb[targetId] ?? 0) + 1;
     }
 
-    for (final (rawSource, rawTarget) in jobs) {
+    for (final (rawSource, rawTarget) in cleaned) {
       if (!ids.contains(rawSource) || !ids.contains(rawTarget)) {
         continue;
       }
