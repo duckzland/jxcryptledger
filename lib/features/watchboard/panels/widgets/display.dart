@@ -28,12 +28,11 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
 
   late final PanelsController _tixController;
   late final RatesController _ratesController;
+  late final WatchersController _wxController;
 
   static final List<StateSetter> _subscribers = [];
 
   static dynamic _activePanelId;
-
-  late final WatchersController _wxController;
 
   WatchersModel? _linkedWatcher;
 

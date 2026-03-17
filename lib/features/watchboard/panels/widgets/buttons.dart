@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/exceptions.dart';
 import '../../../../core/locator.dart';
-import '../../../../core/log.dart';
 import '../../../../widgets/button.dart';
 import '../../../../widgets/dialogs/alert.dart';
 import '../../../../widgets/dialogs/show_form.dart';
