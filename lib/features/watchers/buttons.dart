@@ -6,7 +6,6 @@ import '../../../widgets/button.dart';
 import '../../../widgets/notify.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
-import '../cryptos/controller.dart';
 import 'controller.dart';
 import 'form.dart';
 import 'model.dart';
