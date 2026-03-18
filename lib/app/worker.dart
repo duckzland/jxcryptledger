@@ -3,6 +3,7 @@ import 'dart:async';
 import '../core/locator.dart';
 import '../core/log.dart';
 import '../features/rates/controller.dart';
+import '../features/transactions/controller.dart';
 import '../features/watchboard/panels/controller.dart';
 import '../features/watchboard/tickers/controller.dart';
 import '../features/watchers/controller.dart';
@@ -16,21 +17,31 @@ class AppWorker {
     _started = true;
 
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
-      logln("[WORKER] Refreshing transactions rates");
       final rates = locator<RatesController>();
-      await rates.refreshRates();
-
-      logln("[WORKER] Processing watchers");
-      final watchers = locator<WatchersController>();
-      await watchers.onRatesUpdated();
-
-      logln("[WORKER] Processing panels");
       final panels = locator<PanelsController>();
-      await panels.onRatesUpdated();
-
-      logln("[WORKER] Refreshing tickers rates");
+      final watchers = locator<WatchersController>();
       final tickers = locator<TickersController>();
-      await tickers.refreshRates();
+      final transactions = locator<TransactionsController>();
+
+      if (!panels.isEmpty() || !watchers.isEmpty() || !transactions.isEmpty()) {
+        logln("[WORKER] Refreshing transactions rates");
+        await rates.refreshRates();
+      }
+
+      if (!watchers.isEmpty()) {
+        logln("[WORKER] Processing watchers");
+        await watchers.onRatesUpdated();
+      }
+
+      if (!panels.isEmpty()) {
+        logln("[WORKER] Processing panels");
+        await panels.onRatesUpdated();
+      }
+
+      if (!panels.isEmpty()) {
+        logln("[WORKER] Refreshing tickers rates");
+        await tickers.refreshRates();
+      }
     });
   }
 

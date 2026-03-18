@@ -407,7 +407,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
           WidgetsDialogsExport(
             key: const Key("export-button-batch"),
             tooltip: "Export watchboard from database",
-            suggestedPrefix: "wbx_",
+            suggestedPrefix: "watchboards_",
             onExport: _pxController.exportDatabase,
             isEmpty: _pxController.isEmpty,
           ),

@@ -184,6 +184,7 @@ class TransactionsModel extends CoreBaseModel<String> {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'tid': tid,

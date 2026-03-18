@@ -132,6 +132,8 @@ class TickersController extends ChangeNotifier {
     }
 
     await load();
+
+    _service.refreshRates();
   }
 
   Future<void> refreshRates() async {

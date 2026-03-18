@@ -208,9 +208,11 @@ class RatesService {
       }
     }
 
-    const maxWorkers = 5;
-    final workersToStart = maxWorkers.clamp(1, jobQueue.length);
-    await Future.wait(List.generate(workersToStart, (_) => worker()), eagerError: false);
+    if (jobQueue.isNotEmpty) {
+      const maxWorkers = 5;
+      final workersToStart = jobQueue.length == 1 ? 1 : maxWorkers.clamp(1, jobQueue.length);
+      await Future.wait(List.generate(workersToStart, (_) => worker()), eagerError: false);
+    }
   }
 
   Future<void> _fetchInternal(int sourceId, List<int> targetIds) async {
