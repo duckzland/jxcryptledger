@@ -4,7 +4,7 @@ import '../../../core/abstracts/repository.dart';
 import '../../../core/mixins/id_generator.dart';
 import 'model.dart';
 
-class TickersRepository extends CoreBaseRepository<TickersModel, String> with CoreMixinsIdGenerator<TickersModel, String>  {
+class TickersRepository extends CoreBaseRepository<TickersModel, String> with CoreMixinsIdGenerator<TickersModel, String> {
   @override
   String get boxName => 'tickers_box';
 
@@ -23,6 +23,6 @@ class TickersRepository extends CoreBaseRepository<TickersModel, String> with Co
     }
 
     model.value = newVal;
-    await box.put(model.tid, model);
+    await box.put(model.uuid, model);
   }
 }

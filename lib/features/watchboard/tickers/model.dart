@@ -102,7 +102,7 @@ class TickersModel extends CoreBaseModel<String> {
   String get value => _value;
 
   set value(String newValue) {
-    if (value != "") {
+    if (newValue.isNotEmpty && newValue != _value) {
       meta['oldValue'] = _value;
       _value = newValue;
     }

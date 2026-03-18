@@ -22,7 +22,7 @@ class RatesService {
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
-  bool get hasRates => ratesRepo.isEmpty();
+  bool get hasRates => !ratesRepo.isEmpty();
   Timer? _watchdog;
 
   final List<(int sourceId, int targetId)> _queue = [];
@@ -94,7 +94,7 @@ class RatesService {
   }
 
   Future<void> refreshRates() async {
-    if (!cryptosRepo.isEmpty()) {
+    if (cryptosRepo.isEmpty()) {
       logln('[RATES] No cryptos available, skipping refresh.');
       return;
     }
@@ -111,7 +111,7 @@ class RatesService {
 
   bool _isValidPair(int sourceId, int targetId) {
     if (sourceId == 0 || targetId == 0) return false;
-    if (!cryptosRepo.isEmpty()) return false;
+    if (cryptosRepo.isEmpty()) return false;
 
     final ids = cryptosRepo.extract().map((c) => c.uuid).toSet();
     return ids.contains(sourceId) && ids.contains(targetId);
@@ -214,7 +214,7 @@ class RatesService {
   }
 
   Future<void> _fetchInternal(int sourceId, List<int> targetIds) async {
-    if (!cryptosRepo.isEmpty()) {
+    if (cryptosRepo.isEmpty()) {
       throw NetworkingException(
         AppErrorCode.netMissingCryptos,
         "Rates fetch failed: No cryptos map",

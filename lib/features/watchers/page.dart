@@ -67,7 +67,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
 
   @override
   Widget build(BuildContext context) {
-    if (!_cryptosController.isEmpty()) {
+    if (_cryptosController.isEmpty()) {
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
@@ -83,7 +83,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
               title: "Add Rate Watcher",
               addTitle: "Add New",
               addTooltip: "Create new rate watcher entry",
-              addEvaluator: () => _cryptosController.isEmpty(),
+              addEvaluator: () => !_cryptosController.isEmpty(),
               importTitle: "Import",
               importTooltip: "Import rate watchers to database",
               importEvaluator: () => true,
