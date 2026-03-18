@@ -7,6 +7,7 @@ import '../../core/log.dart';
 import '../cryptos/repository.dart';
 import '../settings/keys.dart';
 import '../settings/repository.dart';
+import 'model.dart';
 import 'parser.dart';
 import 'repository.dart';
 
@@ -30,6 +31,10 @@ class RatesService {
 
   Future<void> init() async {
     await ratesRepo.cleanupOldRates();
+  }
+
+  Future<List<RatesModel>> getAll() async {
+    return await ratesRepo.getAll();
   }
 
   Future<void> delete(int sourceId, int targetId) async {

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'model.dart';
 import 'service.dart';
 
 class RatesController extends ChangeNotifier {
@@ -19,6 +20,10 @@ class RatesController extends ChangeNotifier {
   Future<void> init() async {
     await service.init();
     notifyListeners();
+  }
+
+  Future<List<RatesModel>> getAll() async {
+    return await service.getAll();
   }
 
   Future<double> getStoredRate(int sourceId, int targetId) {

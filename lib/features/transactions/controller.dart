@@ -305,4 +305,15 @@ class TransactionsController extends ChangeNotifier {
       rethrow;
     }
   }
+
+  List<String> getAllRateID() {
+    List<String> ids = [];
+
+    for (final tx in items) {
+      ids.add("${tx.srId}-${tx.rrId}");
+      ids.add("${tx.rrId}-${tx.srId}");
+    }
+
+    return ids;
+  }
 }
