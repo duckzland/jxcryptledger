@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../mixins/actions.dart';
 import '../button.dart';
 
-class WidgetsDialogsAlert extends StatefulWidget {
-  final Future<void> Function(BuildContext dialogContext) onPressed;
-
+class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActions {
   final String? label;
   final String tooltip;
   final IconData icon;
@@ -18,9 +17,15 @@ class WidgetsDialogsAlert extends StatefulWidget {
   final String dialogCancelLabel;
   final String dialogConfirmLabel;
 
+  final T? actionData;
+  final String? actionSuccessMessage;
+  final String? actionErrorMessage;
+  final Future<void> Function(T)? actionCallback;
+  final VoidCallback? actionCompleteCallback;
+  final VoidCallback? actionStartCallback;
+
   const WidgetsDialogsAlert({
     super.key,
-    required this.onPressed,
 
     this.label,
     this.tooltip = "Confirm action",
@@ -35,13 +40,20 @@ class WidgetsDialogsAlert extends StatefulWidget {
     this.dialogMessage = "This action cannot be undone.",
     this.dialogCancelLabel = "Cancel",
     this.dialogConfirmLabel = "Confirm",
+
+    this.actionData,
+    this.actionSuccessMessage,
+    this.actionErrorMessage,
+    this.actionCompleteCallback,
+    this.actionCallback,
+    this.actionStartCallback,
   });
 
   @override
-  State<WidgetsDialogsAlert> createState() => _WidgetsDialogsAlertState();
+  State<WidgetsDialogsAlert<T>> createState() => _WidgetsDialogsAlertState<T>();
 }
 
-class _WidgetsDialogsAlertState extends State<WidgetsDialogsAlert> {
+class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with MixinsActions {
   Future<void> _showDialog(BuildContext context) async {
     await showDialog(
       context: context,
@@ -58,7 +70,16 @@ class _WidgetsDialogsAlertState extends State<WidgetsDialogsAlert> {
               WidgetsButton(
                 label: widget.dialogConfirmLabel,
                 initialState: widget.initialState,
-                onPressed: (_) => widget.onPressed(dialogContext),
+                onPressed: (_) => doAction<T>(
+                  context,
+                  dialogContext: dialogContext,
+                  data: widget.actionData,
+                  action: widget.actionCallback,
+                  onStart: widget.actionStartCallback,
+                  onComplete: widget.actionCompleteCallback,
+                  successMessage: widget.actionSuccessMessage,
+                  errorMessage: widget.actionErrorMessage,
+                ),
               ),
             ],
           ),

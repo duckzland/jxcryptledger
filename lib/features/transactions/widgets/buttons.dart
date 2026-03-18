@@ -122,14 +122,10 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                     "This will delete this transaction and all of its history.\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Delete",
-                onPressed: (dialogContext) => doAction<TransactionsModel>(
-                  context,
-                  dialogContext: dialogContext,
-                  data: tx,
-                  action: txController.removeRoot,
-                  onComplete: onAction,
-                  successMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
-                ),
+                actionData: tx,
+                actionCallback: txController.removeRoot,
+                actionCompleteCallback: onAction,
+                actionSuccessMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
               ),
 
             if (isRefundable)
@@ -146,14 +142,10 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                     "This will cancel this transaction and refund the balance back to its parent transaction.\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Refund",
-                onPressed: (dialogContext) => doAction<TransactionsModel>(
-                  context,
-                  dialogContext: dialogContext,
-                  data: tx,
-                  action: txController.removeLeaf,
-                  onComplete: onAction,
-                  successMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
-                ),
+                actionData: tx,
+                actionCallback: txController.removeLeaf,
+                actionCompleteCallback: onAction,
+                actionSuccessMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
               ),
 
             if (isClosable)
@@ -168,14 +160,10 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                 dialogTitle: "Close Transaction",
                 dialogMessage: "Are you sure you want to close this transaction?",
                 dialogConfirmLabel: "Close",
-                onPressed: (dialogContext) => doAction<TransactionsModel>(
-                  context,
-                  dialogContext: dialogContext,
-                  data: tx,
-                  action: txController.closeLeaf,
-                  onComplete: onAction,
-                  successMessage: "${tx.srAmountText} - ${tx.balanceText} transaction closed.",
-                ),
+                actionData: tx,
+                actionCallback: txController.closeLeaf,
+                actionCompleteCallback: onAction,
+                actionSuccessMessage: "${tx.srAmountText} - ${tx.balanceText} transaction closed.",
               ),
           ],
         );

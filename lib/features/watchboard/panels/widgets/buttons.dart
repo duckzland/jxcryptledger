@@ -97,14 +97,10 @@ class PanelsWidgetsButtons extends StatelessWidget with MixinsActions {
           dialogTitle: "Delete Watchboard",
           dialogMessage: "This will delete this watchboard.\nThis action cannot be undone.",
           dialogConfirmLabel: "Delete",
-          onPressed: (dialogContext) => doAction<PanelsModel>(
-            context,
-            dialogContext: dialogContext,
-            data: tix,
-            action: tixController.delete,
-            onComplete: onAction,
-            successMessage: "Watchboard panel deleted.",
-          ),
+          actionData: tix,
+          actionCallback: tixController.delete,
+          actionCompleteCallback: onAction,
+          actionSuccessMessage: "Watchboard panel deleted.",
         ),
       ],
     );

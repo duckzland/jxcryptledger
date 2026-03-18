@@ -460,13 +460,9 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                     "This will delete all transactions and all of its history.\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Delete",
-                onPressed: (dialogContext) => doAction<TransactionsModel>(
-                  context,
-                  dialogContext: dialogContext,
-                  onStart: _txController.deleteAll,
-                  successMessage: "All transactions deleted.",
-                  errorMessage: "Failed to delete transactions.",
-                ),
+                actionStartCallback: _txController.deleteAll,
+                actionSuccessMessage: "All transactions deleted.",
+                actionErrorMessage: "Failed to delete transactions.",
               ),
               WidgetsDialogsAlert(
                 key: Key("close-button-batch"),
@@ -486,18 +482,14 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                     "Are you sure you want to close all closable transactions?\n"
                     "This action cannot be undone.",
                 dialogConfirmLabel: "Close",
-                onPressed: (dialogContext) => doAction<TransactionsModel>(
-                  context,
-                  dialogContext: dialogContext,
-                  onStart: _txController.closeAll,
-                  successMessage: "All transactions closed.",
-                  errorMessage: "Failed to close transactions.",
-                ),
+                actionStartCallback: _txController.closeAll,
+                actionSuccessMessage: "All transactions closed.",
+                actionErrorMessage: "Failed to close transactions.",
               ),
               WidgetsDialogsShowForm(
                 key: const Key("add-button"),
                 tooltip: "Add new transaction",
-                buildForm: (dialogContext) => _buildForm(dialogContext),
+                buildForm: _buildForm,
                 evaluator: (s) {
                   if (!_cryptosController.isEmpty()) {
                     s.disable();
