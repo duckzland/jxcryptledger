@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:go_router/go_router.dart';
+import 'package:jxledger/app/router.dart';
+
 import '../core/locator.dart';
 import '../core/log.dart';
 import '../features/rates/controller.dart';
@@ -23,24 +26,29 @@ class AppWorker {
       final tickers = locator<TickersController>();
       final transactions = locator<TransactionsController>();
 
-      // Wipe non used rates early
+      bool mustAlwaysFetchRate = false;
+      final current = AppRouter.router.routerDelegate.currentConfiguration.uri.toString();
+      if (current == "/tools") {
+        mustAlwaysFetchRate = true;
+      }
+
       final pxs = panels.getAllRateID();
       final wxs = watchers.getAllRateID();
       final txs = transactions.getAllRateID();
       final uxs = [...pxs, ...wxs, ...txs];
 
       if (uxs.isNotEmpty) {
+        logln("[WORKER] Trying to clean old rates");
         final rxs = await rates.getAll();
         for (final rx in rxs) {
           final key = '${rx.sourceId}-${rx.targetId}';
           if (!uxs.contains(key)) {
-            logln("[WORKER] Wiping old rates for $key");
             await rates.delete(rx.sourceId, rx.targetId);
           }
         }
       }
 
-      if (!panels.isEmpty() || !watchers.isEmpty() || !transactions.isEmpty()) {
+      if (!panels.isEmpty() || !watchers.isEmpty() || !transactions.isEmpty() || mustAlwaysFetchRate) {
         logln("[WORKER] Refreshing transactions rates");
         await rates.refreshRates();
       }
