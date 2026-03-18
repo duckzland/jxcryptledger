@@ -57,6 +57,17 @@ class PanelsController extends ChangeNotifier {
     await load();
   }
 
+  List<String> getAllRateID() {
+    List<String> ids = [];
+
+    for (final tx in items) {
+      ids.add("${tx.srId}-${tx.rrId}");
+      ids.add("${tx.rrId}-${tx.srId}");
+    }
+
+    return ids;
+  }
+
   Future<void> scheduleRates() async {
     await load();
     for (final w in _items) {

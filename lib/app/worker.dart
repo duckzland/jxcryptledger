@@ -23,6 +23,23 @@ class AppWorker {
       final tickers = locator<TickersController>();
       final transactions = locator<TransactionsController>();
 
+      // Wipe non used rates early
+      final pxs = panels.getAllRateID();
+      final wxs = watchers.getAllRateID();
+      final txs = transactions.getAllRateID();
+      final uxs = [...pxs, ...wxs, ...txs];
+
+      if (uxs.isNotEmpty) {
+        final rxs = await rates.getAll();
+        for (final rx in rxs) {
+          final key = '${rx.sourceId}-${rx.targetId}';
+          if (!uxs.contains(key)) {
+            logln("[WORKER] Wiping old rates for $key");
+            await rates.delete(rx.sourceId, rx.targetId);
+          }
+        }
+      }
+
       if (!panels.isEmpty() || !watchers.isEmpty() || !transactions.isEmpty()) {
         logln("[WORKER] Refreshing transactions rates");
         await rates.refreshRates();
