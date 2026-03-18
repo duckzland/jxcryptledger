@@ -402,20 +402,13 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                 onImport: (String json) async {
                   await _txController.importDatabase(json);
                 },
-                evaluator: (s) {},
               ),
               WidgetsDialogsExport(
                 key: const Key("export-button-batch"),
                 tooltip: "Export transactions from database",
                 suggestedPrefix: "tx_",
                 onExport: _txController.exportDatabase,
-                evaluator: (s) {
-                  if (_txController.isEmpty()) {
-                    s.disable();
-                  } else {
-                    s.action();
-                  }
-                },
+                isEmpty: _txController.isEmpty,
               ),
               WidgetsDialogsReset(
                 key: const Key("reset-button-batch"),
@@ -425,13 +418,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                     "This will delete all transactions and all of its history.\n"
                     "This action cannot be undone.",
                 onWipe: _txController.wipeAll,
-                evaluator: (s) {
-                  if (_txController.isEmpty()) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
+                isEmpty: _txController.isEmpty,
               ),
             ],
           ),

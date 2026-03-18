@@ -409,13 +409,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
             tooltip: "Export watchboard from database",
             suggestedPrefix: "wbx_",
             onExport: _pxController.exportDatabase,
-            evaluator: (s) {
-              if (_pxController.isEmpty()) {
-                s.disable();
-              } else {
-                s.action();
-              }
-            },
+            isEmpty: _pxController.isEmpty,
           ),
           WidgetsDialogsReset(
             key: const Key("reset-button-batch"),
@@ -430,13 +424,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
 
               await _tixController.populate();
             },
-            evaluator: (s) {
-              if (_pxController.isEmpty()) {
-                s.disable();
-              } else {
-                s.error();
-              }
-            },
+            isEmpty: _pxController.isEmpty,
           ),
         ],
       ),

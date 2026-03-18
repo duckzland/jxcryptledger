@@ -202,13 +202,7 @@ class _WatchersPageState extends State<WatchersPage> {
             tooltip: "Export rate watchers from database",
             suggestedPrefix: "wix_",
             onExport: _wxController.exportDatabase,
-            evaluator: (s) {
-              if (_wxController.isEmpty()) {
-                s.disable();
-              } else {
-                s.action();
-              }
-            },
+            isEmpty: _wxController.isEmpty,
           ),
           WidgetsDialogsReset(
             key: const Key("reset-button-batch"),
@@ -218,13 +212,7 @@ class _WatchersPageState extends State<WatchersPage> {
                 "This will delete all rate watcher.\n"
                 "This action cannot be undone.",
             onWipe: _wxController.deleteAll,
-            evaluator: (s) {
-              if (_wxController.isEmpty()) {
-                s.disable();
-              } else {
-                s.error();
-              }
-            },
+            isEmpty: _wxController.isEmpty,
           ),
         ],
       ),
