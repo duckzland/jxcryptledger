@@ -88,6 +88,11 @@ class UnlockController extends ChangeNotifier {
 
         await _settingsController.update(SettingKey.vaultInitialized, "initialized");
 
+        _notificationService.init();
+        _ratesController.init();
+        _watchersController.init();
+        _panelsController.init();
+        _tickersController.init();
         _unlocked = true;
         notifyListeners();
         _appWorker.start();
