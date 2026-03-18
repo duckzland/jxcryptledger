@@ -15,6 +15,7 @@ class CryptosController extends ChangeNotifier {
 
   Future<void> init() async {
     await repo.init();
+    _items = await repo.getAll();
     notifyListeners();
   }
 

@@ -64,7 +64,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                 iconSize: 16,
                 minimumSize: const Size(34, 34),
                 evaluator: (s) {
-                  cryptosController.isEmpty() ? s.normal() : s.disable();
+                  !cryptosController.isEmpty() ? s.normal() : s.disable();
                 },
                 buildForm: (dialogContext) {
                   return TransactionFormEdit(
@@ -91,7 +91,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                 iconSize: 18,
                 minimumSize: const Size(34, 34),
                 evaluator: (s) {
-                  cryptosController.isEmpty() ? s.action() : s.disable();
+                  !cryptosController.isEmpty() ? s.action() : s.disable();
                 },
                 buildForm: (dialogContext) {
                   return TransactionFormTrade(
