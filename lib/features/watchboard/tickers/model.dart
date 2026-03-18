@@ -168,7 +168,7 @@ class TickersModel extends CoreBaseModel<String> {
         return "${val.toStringAsFixed(2)}%";
 
       case TickerFormat.shortPercentageWithSign:
-        final sign = val < 0 ? "-" : "+";
+        final sign = val < 0 ? "" : "+";
         return "$sign${val.toStringAsFixed(2)}%";
 
       case TickerFormat.raw:
