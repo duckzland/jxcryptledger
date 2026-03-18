@@ -334,6 +334,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     return WidgetsFieldsTextarea(
       title: isRoot ? 'Purchase Notes' : 'Trading Notes',
       helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
+      initialValue: _noteEntry,
       onChanged: (value) {
         setState(() => _noteEntry = value);
       },

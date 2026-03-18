@@ -197,7 +197,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
           WidgetsDialogsExport(
             key: const Key("export-button-batch"),
             tooltip: "Export rate watchers from database",
-            suggestedPrefix: "wix_",
+            suggestedPrefix: "watchers_",
             onExport: _wxController.exportDatabase,
             isEmpty: _wxController.isEmpty,
           ),

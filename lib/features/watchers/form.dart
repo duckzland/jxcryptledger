@@ -74,7 +74,7 @@ class _WatchersFormState extends State<WatchersForm> {
       _selectedRrId = widget.initialRrId;
     }
 
-    if (widget.initialRate != null) {
+    if (widget.initialRate != null && widget.initialRate! > 0) {
       _rateAmount = Utils.sanitizeNumber(widget.initialRate.toString());
     }
   }

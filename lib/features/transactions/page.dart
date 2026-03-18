@@ -406,7 +406,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
               WidgetsDialogsExport(
                 key: const Key("export-button-batch"),
                 tooltip: "Export transactions from database",
-                suggestedPrefix: "tx_",
+                suggestedPrefix: "transactions_",
                 onExport: _txController.exportDatabase,
                 isEmpty: _txController.isEmpty,
               ),
@@ -478,7 +478,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                 tooltip: "Add new transaction",
                 buildForm: _buildForm,
                 evaluator: (s) {
-                  if (!_cryptosController.isEmpty()) {
+                  if (_cryptosController.isEmpty()) {
                     s.disable();
                   } else {
                     s.action();
