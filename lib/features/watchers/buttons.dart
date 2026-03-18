@@ -43,7 +43,7 @@ class WatchersButtons extends StatelessWidget with MixinsActions {
             );
           },
         ),
-        WidgetsDialogsAlert(
+        WidgetsDialogsAlert<WatchersModel>(
           key: Key("delete-button-${tx.wid}"),
           icon: Icons.delete,
           initialState: WidgetsButtonActionState.error,
@@ -56,14 +56,10 @@ class WatchersButtons extends StatelessWidget with MixinsActions {
               "This will delete this rate watcher.\n"
               "This action cannot be undone.",
           dialogConfirmLabel: "Delete",
-          onPressed: (dialogContext) => doAction<WatchersModel>(
-            context,
-            dialogContext: dialogContext,
-            data: tx,
-            action: wxController.delete,
-            onComplete: onAction,
-            successMessage: "Rate watcher deleted.",
-          ),
+          actionData: tx,
+          actionCallback: wxController.delete,
+          actionCompleteCallback: onAction,
+          actionSuccessMessage: "Rate watcher deleted.",
         ),
         WidgetsButton(
           key: Key("test-button-${tx.wid}"),

@@ -298,16 +298,12 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
               "Are you sure you want to close all closable transactions found in this group?\n"
               "This action cannot be undone.",
           dialogConfirmLabel: "Close",
-          onPressed: (dialogContext) => doAction<TransactionsModel>(
-            context,
-            dialogContext: dialogContext,
-            onStart: _closeTransactions,
-            onComplete: () => setState(() {
-              _isClosable = false;
-            }),
-            successMessage: "All transactions closed.",
-            errorMessage: "Failed to close transactions.",
-          ),
+          actionStartCallback: _closeTransactions,
+          actionCompleteCallback: () => setState(() {
+            _isClosable = false;
+          }),
+          actionSuccessMessage: "All transactions closed.",
+          actionErrorMessage: "Failed to close transactions.",
         ),
 
         const SizedBox(width: 8),
@@ -330,16 +326,12 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
               "This will delete all transactions in this group and all of its history.\n"
               "This action cannot be undone.",
           dialogConfirmLabel: "Delete",
-          onPressed: (dialogContext) => doAction<TransactionsModel>(
-            context,
-            dialogContext: dialogContext,
-            onStart: _deleteTransactions,
-            onComplete: () => setState(() {
-              _isDeletable = false;
-            }),
-            successMessage: "All transactions deleted.",
-            errorMessage: "Failed to delete transactions.",
-          ),
+          actionStartCallback: _deleteTransactions,
+          actionCompleteCallback: () => setState(() {
+            _isDeletable = false;
+          }),
+          actionSuccessMessage: "All transactions deleted.",
+          actionErrorMessage: "Failed to delete transactions.",
         ),
       ],
     );

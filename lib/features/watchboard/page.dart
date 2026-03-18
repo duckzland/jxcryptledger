@@ -351,17 +351,9 @@ class _WatchboardPageState extends State<WatchboardPage> {
                 "This will delete all linked watchboard entry.\n"
                 "This action cannot be undone.",
             dialogConfirmLabel: "Delete",
-            onPressed: (dialogContext) async {
-              try {
-                await _pxController.wipeLinked();
-
-                Navigator.pop(dialogContext);
-
-                widgetsNotifySuccess("All linked watchboard deleted.");
-              } catch (e) {
-                widgetsNotifyError("Failed to delete linked watchboard.");
-              }
-            },
+            actionStartCallback: _pxController.wipeLinked,
+            actionSuccessMessage: "All linked watchboard deleted.",
+            actionErrorMessage: "Failed to delete linked watchboard.",
           ),
 
           WidgetsDialogsAlert(
@@ -376,21 +368,19 @@ class _WatchboardPageState extends State<WatchboardPage> {
                 "This will update all the linked watchboard.\n"
                 "This action cannot be undone.",
             dialogConfirmLabel: "Update",
-            onPressed: (dialogContext) async {
+            actionCompleteCallback: () async {
               try {
                 bool updated = await _pxController.updateLinked();
-
-                Navigator.pop(dialogContext);
-
                 if (updated) {
                   widgetsNotifySuccess("All linked watchboard updated.");
                 } else {
                   widgetsNotifyWarning("Linked watchboard checked, but no additional data requires updating.");
                 }
               } catch (e) {
-                widgetsNotifyError("Failed to update linked watchboard.");
+                rethrow;
               }
             },
+            actionErrorMessage: "Failed to update linked watchboard.",
           ),
         ],
       ),
