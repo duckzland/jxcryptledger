@@ -15,6 +15,7 @@ class WidgetsDialogsReset extends StatefulWidget {
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonState s)? evaluator;
+  final bool Function()? isEmpty;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -33,6 +34,7 @@ class WidgetsDialogsReset extends StatefulWidget {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.error,
     this.evaluator,
+    this.isEmpty,
 
     this.dialogTitle = "Reset Database",
     this.dialogMessage =
@@ -82,8 +84,25 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
     );
   }
 
+  void _evaluate(WidgetsButtonState s) {
+    if (widget.isEmpty == null) {
+      return;
+    }
+
+    if (widget.isEmpty!()) {
+      s.disable();
+    } else {
+      s.error();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    void Function(WidgetsButtonState s)? evaluator = widget.evaluator;
+    if (evaluator == null && widget.isEmpty != null) {
+      evaluator = _evaluate;
+    }
+
     return WidgetsButton(
       label: widget.label,
       tooltip: widget.tooltip,
@@ -93,7 +112,7 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
       onPressed: (_) => _showDialog(context),
-      evaluator: widget.evaluator,
+      evaluator: evaluator,
     );
   }
 }

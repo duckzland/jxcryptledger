@@ -16,7 +16,9 @@ class WidgetsDialogsExport extends StatefulWidget {
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
+
   final void Function(WidgetsButtonState s)? evaluator;
+  final bool Function()? isEmpty;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -37,6 +39,7 @@ class WidgetsDialogsExport extends StatefulWidget {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.action,
     this.evaluator,
+    this.isEmpty,
 
     this.dialogTitle = "Export Data",
     this.dialogMessage = "This will export your data to a JSON file.",
@@ -106,8 +109,25 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
     );
   }
 
+  void _evaluate(WidgetsButtonState s) {
+    if (widget.isEmpty == null) {
+      return;
+    }
+
+    if (widget.isEmpty!()) {
+      s.disable();
+    } else {
+      s.action();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    void Function(WidgetsButtonState s)? evaluator = widget.evaluator;
+    if (evaluator == null && widget.isEmpty != null) {
+      evaluator = _evaluate;
+    }
+
     return WidgetsButton(
       label: widget.label,
       tooltip: widget.tooltip,
@@ -117,7 +137,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
       onPressed: (_) => _showDialog(context),
-      evaluator: widget.evaluator,
+      evaluator: evaluator,
     );
   }
 }
