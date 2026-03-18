@@ -2,7 +2,7 @@ import 'package:hive_ce/hive_ce.dart';
 
 import 'model.dart';
 
-abstract class CoreBaseRepository<T extends BaseModel<K>, K> {
+abstract class CoreBaseRepository<T extends CoreBaseModel<K>, K> {
   String get boxName;
   Box<T> get box => Hive.box<T>(boxName);
 

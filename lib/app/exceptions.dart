@@ -1,4 +1,4 @@
-import '../core/log.dart';
+import '../core/abstracts/exceptions.dart';
 
 class AppErrorCode {
   static const int txBasicInvalidTid = 1001;
@@ -126,43 +126,10 @@ class AppErrorCode {
   static const int tickerBasicInvalidFormat = 4013;
 }
 
-class AppExceptionConfig {
-  static final bool showCodeToUser = () {
-    final raw = String.fromEnvironment('HIDE_ERROR_CODE');
-    if (raw.isEmpty) return true;
-    return raw != 'true';
-  }();
-}
-
-abstract class AppException implements Exception {
-  final int code;
-  final String devMessage;
-  final Object? details;
-  final bool silent;
-
-  final String _rawUserMessage;
-
-  AppException(this.code, this.devMessage, String userMessage, {this.details, this.silent = false}) : _rawUserMessage = userMessage {
-    if (!silent) {
-      logln('[$code] $devMessage');
-    }
-  }
-
-  String get formattedUserMessage {
-    final show = AppExceptionConfig.showCodeToUser;
-    return show ? '[$code] $_rawUserMessage' : _rawUserMessage;
-  }
-
-  String get userMessage => formattedUserMessage;
-
-  @override
-  String toString() => '$runtimeType(code=$code, devMessage=$devMessage, userMessage=$formattedUserMessage)';
-}
-
-class ValidationException extends AppException {
+class ValidationException extends CoreBaseException {
   ValidationException(super.code, super.devMessage, super.userMessage, {super.details, super.silent});
 }
 
-class NetworkingException extends AppException {
+class NetworkingException extends CoreBaseException {
   NetworkingException(super.code, super.devMessage, super.userMessage, {super.details, super.silent});
 }

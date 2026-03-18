@@ -3,7 +3,7 @@ import 'package:decimal/decimal.dart';
 import '../../core/abstracts/model.dart';
 import '../../core/utils.dart';
 
-class RatesModel extends BaseModel<String> {
+class RatesModel extends CoreBaseModel<String> {
   final String sourceSymbol;
   final int sourceId;
   final Decimal sourceAmount;
