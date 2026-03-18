@@ -1,7 +1,7 @@
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/model.dart';
 
-class PanelsModel extends BaseModel<String> {
+class PanelsModel extends CoreBaseModel<String> {
   final String tid;
   final double srAmount;
   final int srId;

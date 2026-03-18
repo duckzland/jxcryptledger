@@ -3,7 +3,7 @@ import 'dart:math';
 import '../abstracts/model.dart';
 import '../abstracts/repository.dart';
 
-mixin CoreMixinsIdGenerator<T extends BaseModel<K>, K> on CoreBaseRepository<T, K> {
+mixin CoreMixinsIdGenerator<T extends CoreBaseModel<K>, K> on CoreBaseRepository<T, K> {
   String generateId() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final random = Random();

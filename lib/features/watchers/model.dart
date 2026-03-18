@@ -3,7 +3,7 @@ import '../../core/abstracts/model.dart';
 
 enum WatchersOperator { equal, lessThan, greaterThan }
 
-class WatchersModel extends BaseModel<String> {
+class WatchersModel extends CoreBaseModel<String> {
   final String wid;
   final int srId;
   final int rrId;

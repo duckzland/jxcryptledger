@@ -1,6 +1,6 @@
 import '../../core/abstracts/model.dart';
 
-class CryptosModel extends BaseModel<int> {
+class CryptosModel extends CoreBaseModel<int> {
   final int id;
   final String name;
   final String symbol;
