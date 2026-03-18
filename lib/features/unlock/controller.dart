@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxledger/features/cryptos/controller.dart';
 
 import '../../features/rates/controller.dart';
 import '../../features/rates/model.dart';
@@ -31,6 +32,7 @@ class UnlockController extends ChangeNotifier {
   final WatchersController _watchersController = locator<WatchersController>();
   final PanelsController _panelsController = locator<PanelsController>();
   final TickersController _tickersController = locator<TickersController>();
+  final CryptosController _cryptosController = locator<CryptosController>();
   final NotificationService _notificationService = locator<NotificationService>();
   final AppWorker _appWorker = locator<AppWorker>();
 
@@ -119,6 +121,7 @@ class UnlockController extends ChangeNotifier {
         _watchersController.init();
         _panelsController.init();
         _tickersController.init();
+        _cryptosController.init();
       });
       _unlocked = true;
       notifyListeners();
