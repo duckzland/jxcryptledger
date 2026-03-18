@@ -1,4 +1,5 @@
 import '../../../app/exceptions.dart';
+import '../../../core/abstracts/model.dart';
 import '../../../core/utils.dart';
 
 enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
@@ -15,7 +16,7 @@ enum TickerFormat {
   raw,
 }
 
-class TickersModel {
+class TickersModel extends BaseModel<String> {
   final String tid;
   final int type;
   final int format;
@@ -24,6 +25,9 @@ class TickersModel {
   Map<String, dynamic> meta;
 
   String _value;
+
+  @override
+  String get uuid => tid;
 
   TickersModel({
     required this.tid,
@@ -54,6 +58,9 @@ class TickersModel {
       throw ValidationException(AppErrorCode.tickerBasicInvalidType, "type must be valid.", "Invalid ticker data.");
     }
   }
+
+  @override
+  Map<String, dynamic> toJson() => toMap();
 
   Map<String, dynamic> toMap() {
     return {'tid': tid, 'type': type, 'format': format, 'title': title, 'order': order, 'value': value, 'meta': meta};

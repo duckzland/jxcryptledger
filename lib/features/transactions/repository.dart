@@ -1,10 +1,10 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:hive_ce/hive_ce.dart';
 
+import '../../core/abstracts/repository.dart';
 import '../../core/filtering.dart';
 import '../../core/log.dart';
+import '../../core/mixins/exportable.dart';
+import '../../core/mixins/id_generator.dart';
 import 'model.dart';
 import 'rules/close.dart';
 import 'rules/create.dart';
@@ -14,13 +14,17 @@ import 'rules/refund.dart';
 import 'rules/trade.dart';
 import 'rules/update.dart';
 
-class TransactionsRepository {
-  static const String boxName = 'transactions_box';
+class TransactionsRepository extends CoreBaseRepository<TransactionsModel, String>
+    with CoreMixinsIdGenerator<TransactionsModel, String>, CoreMixinsExportable<TransactionsModel, String> {
+  @override
+  String get boxName => 'transactions_box';
+
+  @override
+  get fromJson => TransactionsModel.fromJson;
+
   final bool debugLogs = true;
 
   final FilterIsolate _filter = FilterIsolate();
-
-  Box<TransactionsModel> get _box => Hive.box<TransactionsModel>(boxName);
 
   Future<void> init() async {
     await _filter.init();
@@ -29,30 +33,7 @@ class TransactionsRepository {
     }
   }
 
-  String generateTid() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    final random = Random();
-
-    while (true) {
-      final now = DateTime.now().microsecondsSinceEpoch;
-      final timePart = now.toRadixString(36).padLeft(4, '0');
-      final timeSuffix = timePart.substring(timePart.length - 4);
-      final randomPart = String.fromCharCodes(Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
-
-      final id = '$timeSuffix$randomPart';
-      if (!_box.containsKey(id)) {
-        if (debugLogs) {
-          logln('Generated unique ID: $id');
-        }
-        return id;
-      }
-
-      if (debugLogs) {
-        logln('Collision detected for $id, retrying...');
-      }
-    }
-  }
-
+  @override
   Future<void> add(TransactionsModel tx) async {
     if (debugLogs) {
       logln(
@@ -76,12 +57,12 @@ class TransactionsRepository {
     await canAdd(ntx);
 
     if (ntx.isRoot) {
-      await _box.put(ntx.tid, ntx);
+      await box.put(ntx.tid, ntx);
       return;
     }
 
     if (ntx.isLeaf) {
-      TransactionsModel? ptx = _box.get(ntx.pid)!;
+      TransactionsModel? ptx = box.get(ntx.pid)!;
       await canTrade(ptx);
 
       // Update the parent balance and status
@@ -94,7 +75,7 @@ class TransactionsRepository {
 
       logln("[ADD] Rebalancing amount ${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}");
 
-      await _box.put(ntx.tid, ntx);
+      await box.put(ntx.tid, ntx);
 
       // Force to revalidate!
       await update(nptx);
@@ -102,6 +83,7 @@ class TransactionsRepository {
     }
   }
 
+  @override
   Future<void> update(TransactionsModel tx) async {
     if (debugLogs) {
       logln(
@@ -124,17 +106,17 @@ class TransactionsRepository {
     await canUpdate(ntx);
 
     if (ntx.isRoot) {
-      await _box.put(ntx.tid, ntx);
+      await box.put(ntx.tid, ntx);
       return;
     }
 
     // Update the parent balance and status
     // This is important to preserve valid tree structure!
     if (tx.isLeaf) {
-      TransactionsModel? ptx = _box.get(ntx.pid)!;
-      TransactionsModel? otx = _box.get(ntx.tid)!;
+      TransactionsModel? ptx = box.get(ntx.pid)!;
+      TransactionsModel? otx = box.get(ntx.tid)!;
 
-      await _box.put(ntx.tid, ntx);
+      await box.put(ntx.tid, ntx);
 
       if (otx.srAmount != tx.srAmount && ptx.rrId == otx.srId) {
         double balance = ptx.balance;
@@ -160,6 +142,7 @@ class TransactionsRepository {
     }
   }
 
+  @override
   Future<void> delete(TransactionsModel tx) async {
     await canDelete(tx);
 
@@ -179,18 +162,18 @@ class TransactionsRepository {
           );
         }
 
-        _box.delete(ttx.tid);
+        box.delete(ttx.tid);
       }
     }
 
-    await _box.delete(tx.tid);
+    await box.delete(tx.tid);
   }
 
   Future<void> close(TransactionsModel tx) async {
     await canClose(tx);
 
     // canClose already check and throw
-    TransactionsModel? otx = _box.get(tx.tid);
+    TransactionsModel? otx = box.get(tx.tid);
     if (otx == null) {
       return;
     }
@@ -220,16 +203,16 @@ class TransactionsRepository {
       );
     }
 
-    await _box.put(closedTx.tid, closedTx);
-    await _box.put(updatedTarget.tid, updatedTarget);
+    await box.put(closedTx.tid, closedTx);
+    await box.put(updatedTarget.tid, updatedTarget);
   }
 
   Future<void> refund(TransactionsModel tx) async {
     await canRefund(tx);
 
     // canClose already check and throw
-    TransactionsModel? otx = _box.get(tx.tid);
-    TransactionsModel? ptx = _box.get(tx.pid);
+    TransactionsModel? otx = box.get(tx.tid);
+    TransactionsModel? ptx = box.get(tx.pid);
     if (otx == null || ptx == null) {
       return;
     }
@@ -251,46 +234,24 @@ class TransactionsRepository {
       );
     }
 
-    await _box.delete(tx.tid);
-    await _box.put(updatedTarget.tid, updatedTarget);
+    await box.delete(tx.tid);
+    await box.put(updatedTarget.tid, updatedTarget);
   }
 
-  Future<String> export() async {
-    final items = _box.values.toList();
-    final jsonList = items.map((tx) => tx.toJson()).toList();
-    return jsonEncode(jsonList);
-  }
-
+  @override
   Future<void> import(String rawJson) async {
     final rule = TransactionsRulesImport();
     final txs = rule.validateJson(rawJson);
-    await _box.clear();
+    await box.clear();
     for (final tx in txs) {
-      await _box.put(tx.tid, tx);
+      await box.put(tx.tid, tx);
     }
-  }
-
-  Future<int> clear() async {
-    return await _box.clear();
-  }
-
-  Future<TransactionsModel?> get(String tid) async {
-    return _box.get(tid);
-  }
-
-  Future<List<TransactionsModel>> getAll() async {
-    final list = <TransactionsModel>[];
-    for (final key in _box.keys) {
-      final tx = _box.get(key);
-      if (tx != null) list.add(tx);
-    }
-    return list;
   }
 
   Future<List<TransactionsModel>> getLeaf(TransactionsModel tx) async {
     final list = <TransactionsModel>[];
-    for (final key in _box.keys) {
-      final ltx = _box.get(key);
+    for (final key in box.keys) {
+      final ltx = box.get(key);
       if (ltx != null && ltx.pid == tx.tid) list.add(ltx);
     }
     return list;
@@ -493,9 +454,5 @@ class TransactionsRepository {
     final rules = TransactionsRulesRefund(tx, this, silent ?? !debugLogs);
     final isValid = await rules.validate();
     return isValid;
-  }
-
-  bool isEmpty() {
-    return _box.isEmpty;
   }
 }

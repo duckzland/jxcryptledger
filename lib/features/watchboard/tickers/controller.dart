@@ -14,7 +14,7 @@ class TickersController extends ChangeNotifier {
   TickersController(this._repo, this._service);
 
   String generateTid() {
-    return _repo.generateTid();
+    return _repo.generateId();
   }
 
   Future<void> init() async {
@@ -39,30 +39,18 @@ class TickersController extends ChangeNotifier {
   }
 
   Future<void> add(TickersModel tx) async {
-    try {
-      await _repo.add(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.add(tx);
+    await load();
   }
 
   Future<void> update(TickersModel tx) async {
-    try {
-      await _repo.update(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.update(tx);
+    await load();
   }
 
   Future<void> delete(TickersModel tx) async {
-    try {
-      await _repo.delete(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.delete(tx);
+    await load();
   }
 
   Future<void> wipe() async {
@@ -82,56 +70,56 @@ class TickersController extends ChangeNotifier {
   Future<void> populate() async {
     final tickers = [
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.marketCap.index,
         format: TickerFormat.shortCurrency.index,
         title: "Market Cap",
         order: 0,
       ),
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.pulse.index,
         format: TickerFormat.shortPercentageWithSign.index,
         title: "Market Bias",
         order: 1,
       ),
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.cmc100.index,
         format: TickerFormat.normalCurrency.index,
         title: "CMC100",
         order: 2,
       ),
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.altcoinIndex.index,
         format: TickerFormat.percentage.index,
         title: "Altcoin Index",
         order: 3,
       ),
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.fearGreed.index,
         format: TickerFormat.percentage.index,
         title: "Fear & Greed",
         order: 4,
       ),
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.rsi.index,
         format: TickerFormat.normalNumber.index,
         title: "Crypto RSI",
         order: 5,
       ),
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.etf.index,
         format: TickerFormat.shortCurrencyWithSign.index,
         title: "ETF Flow",
         order: 6,
       ),
       TickersModel(
-        tid: _repo.generateTid(),
+        tid: _repo.generateId(),
         type: TickerType.dominance.index,
         format: TickerFormat.shortPercentage.index,
         title: "Dominance",

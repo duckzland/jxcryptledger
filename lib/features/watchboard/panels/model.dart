@@ -1,6 +1,7 @@
 import '../../../app/exceptions.dart';
+import '../../../core/abstracts/model.dart';
 
-class PanelsModel {
+class PanelsModel extends BaseModel<String> {
   final String tid;
   final double srAmount;
   final int srId;
@@ -9,6 +10,9 @@ class PanelsModel {
   double? rate;
   int? order;
   Map<String, dynamic> meta;
+
+  @override
+  String get uuid => tid;
 
   PanelsModel({
     required this.tid,
@@ -64,6 +68,7 @@ class PanelsModel {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() => toMap();
 
   factory PanelsModel.fromJson(Map<String, dynamic> json) {

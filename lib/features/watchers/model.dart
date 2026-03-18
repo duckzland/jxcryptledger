@@ -1,8 +1,9 @@
 import '../../app/exceptions.dart';
+import '../../core/abstracts/model.dart';
 
 enum WatchersOperator { equal, lessThan, greaterThan }
 
-class WatchersModel {
+class WatchersModel extends BaseModel<String> {
   final String wid;
   final int srId;
   final int rrId;
@@ -14,6 +15,9 @@ class WatchersModel {
   final String message;
   final int timestamp;
   final Map<String, dynamic> meta;
+
+  @override
+  String get uuid => wid;
 
   WatchersModel({
     required this.wid,
@@ -81,6 +85,7 @@ class WatchersModel {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'wid': wid,

@@ -71,14 +71,14 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
       if (widget.initialValue != null) {
         final crypto = _cryptosController.getById(widget.initialValue!);
         if (crypto != null) {
-          _controller.text = '${crypto.symbol} (#${crypto.id})';
+          _controller.text = '${crypto.symbol} (#${crypto.uuid})';
         }
       }
     });
   }
 
   Future<void> _loadCryptos() async {
-    final cryptos = _cryptosController.getAll();
+    final cryptos = _cryptosController.extract();
     setState(() {
       _allCryptos = cryptos;
     });
@@ -124,7 +124,7 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${suggestion.symbol} (#${suggestion.id})',
+                    '${suggestion.symbol} (#${suggestion.uuid})',
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
@@ -138,9 +138,9 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
             );
           },
           onSuggestionSelected: (CryptosModel suggestion) {
-            _controller.text = '${suggestion.symbol} (#${suggestion.id})';
+            _controller.text = '${suggestion.symbol} (#${suggestion.uuid})';
             if (widget.onSelected != null) {
-              widget.onSelected!.call(suggestion.id);
+              widget.onSelected!.call(suggestion.uuid);
             }
           },
 

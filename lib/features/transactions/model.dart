@@ -1,10 +1,11 @@
 import 'package:decimal/decimal.dart';
 import '../../app/exceptions.dart';
+import '../../core/abstracts/model.dart';
 import '../../core/utils.dart';
 
 enum TransactionStatus { inactive, active, partial, closed, unknown }
 
-class TransactionsModel {
+class TransactionsModel extends BaseModel<String> {
   final String tid;
   final String rid;
   final String pid;
@@ -17,6 +18,9 @@ class TransactionsModel {
   final bool closable;
   final int timestamp;
   final Map<String, dynamic> meta;
+
+  @override
+  String get uuid => tid;
 
   TransactionsModel({
     required this.tid,
@@ -105,11 +109,7 @@ class TransactionsModel {
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
 
     if (timestamp <= 0) {
-      throw ValidationException(
-        AppErrorCode.txBasicInvalidTimestamp,
-        "timestamp must be > 0 (timestamp=$timestamp).",
-        "Invalid date.",
-      );
+      throw ValidationException(AppErrorCode.txBasicInvalidTimestamp, "timestamp must be > 0 (timestamp=$timestamp).", "Invalid date.");
     }
     if (timestamp > now) {
       throw ValidationException(
