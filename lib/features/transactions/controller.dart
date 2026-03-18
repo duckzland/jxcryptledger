@@ -15,7 +15,7 @@ class TransactionsController extends ChangeNotifier {
   TransactionsController(this._repo, this._ratesService);
 
   String generateTid() {
-    return _repo.generateTid();
+    return _repo.generateId();
   }
 
   Future<void> load() async {
@@ -40,68 +40,39 @@ class TransactionsController extends ChangeNotifier {
   }
 
   Future<void> add(TransactionsModel tx) async {
-    try {
-      await _repo.add(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.add(tx);
+    await load();
   }
 
   Future<void> update(TransactionsModel tx) async {
-    try {
-      await _repo.update(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.update(tx);
+    await load();
   }
 
   Future<void> delete(TransactionsModel tx) async {
-    try {
-      await _ratesService.delete(tx.srId, tx.rrId);
-      await _ratesService.delete(tx.rrId, tx.srId);
-      await _repo.delete(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _ratesService.delete(tx.srId, tx.rrId);
+    await _ratesService.delete(tx.rrId, tx.srId);
+    await _repo.delete(tx);
+    await load();
   }
 
   Future<void> closeLeaf(TransactionsModel tx) async {
-    try {
-      await _repo.close(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.close(tx);
+    await load();
   }
 
   Future<TransactionsModel?> getParent(TransactionsModel tx) async {
-    try {
-      TransactionsModel? ptx = await _repo.get(tx.pid);
-      return ptx;
-    } catch (e) {
-      return null;
-    }
+    return await _repo.get(tx.pid);
   }
 
   Future<void> removeRoot(TransactionsModel tx) async {
-    try {
-      await _repo.delete(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.delete(tx);
+    await load();
   }
 
   Future<void> removeLeaf(TransactionsModel tx) async {
-    try {
-      await _repo.refund(tx);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.refund(tx);
+    await load();
   }
 
   Future<void> deleteAll() async {

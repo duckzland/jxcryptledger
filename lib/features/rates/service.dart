@@ -22,7 +22,7 @@ class RatesService {
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
-  bool get hasRates => ratesRepo.hasAny();
+  bool get hasRates => ratesRepo.isEmpty();
   Timer? _watchdog;
 
   final List<(int sourceId, int targetId)> _queue = [];
@@ -34,7 +34,7 @@ class RatesService {
 
   Future<void> delete(int sourceId, int targetId) async {
     logln('[RATES] Deleting $sourceId-$targetId.');
-    await ratesRepo.delete(sourceId, targetId);
+    await ratesRepo.deletePair(sourceId, targetId);
   }
 
   void registerOnComplete(void Function() cb) {
@@ -48,12 +48,8 @@ class RatesService {
   }
 
   Future<double> getStoredRate(int sourceId, int targetId) async {
-    try {
-      _validateIds(sourceId, targetId);
-    } catch (e) {
-      rethrow;
-    }
-    final existing = await ratesRepo.get(sourceId, targetId);
+    _validateIds(sourceId, targetId);
+    final existing = await ratesRepo.getPair(sourceId, targetId);
     return existing?.rate.toDouble() ?? -9999;
   }
 
@@ -98,7 +94,7 @@ class RatesService {
   }
 
   Future<void> refreshRates() async {
-    if (!cryptosRepo.hasAny()) {
+    if (!cryptosRepo.isEmpty()) {
       logln('[RATES] No cryptos available, skipping refresh.');
       return;
     }
@@ -115,9 +111,9 @@ class RatesService {
 
   bool _isValidPair(int sourceId, int targetId) {
     if (sourceId == 0 || targetId == 0) return false;
-    if (!cryptosRepo.hasAny()) return false;
+    if (!cryptosRepo.isEmpty()) return false;
 
-    final ids = cryptosRepo.getAll().map((c) => c.id).toSet();
+    final ids = cryptosRepo.extract().map((c) => c.uuid).toSet();
     return ids.contains(sourceId) && ids.contains(targetId);
   }
 
@@ -132,7 +128,7 @@ class RatesService {
   }
 
   Map<int, Set<int>> _groupJobs(List<(int, int)> jobs) {
-    final ids = cryptosRepo.getAll().map((c) => c.id).toSet();
+    final ids = cryptosRepo.extract().map((c) => c.uuid).toSet();
     final grouped = <int, Set<int>>{};
     final wb = <int, int>{};
     final seen = <(int, int)>{};
@@ -218,7 +214,7 @@ class RatesService {
   }
 
   Future<void> _fetchInternal(int sourceId, List<int> targetIds) async {
-    if (!cryptosRepo.hasAny()) {
+    if (!cryptosRepo.isEmpty()) {
       throw NetworkingException(
         AppErrorCode.netMissingCryptos,
         "Rates fetch failed: No cryptos map",
@@ -233,7 +229,7 @@ class RatesService {
       );
     }
 
-    final ids = cryptosRepo.getAll().map((c) => c.id).toSet();
+    final ids = cryptosRepo.extract().map((c) => c.uuid).toSet();
     final validTargets = targetIds.where(ids.contains).toList();
 
     if (!ids.contains(sourceId) || validTargets.isEmpty) {

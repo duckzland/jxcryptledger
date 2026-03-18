@@ -1,4 +1,3 @@
-// cryptos_controller.dart
 import 'package:flutter/material.dart';
 
 import '../../app/exceptions.dart';
@@ -19,26 +18,32 @@ class CryptosController extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<CryptosModel> get items => repo.getAll();
+  List<CryptosModel> _items = [];
+  List<CryptosModel> get items => _items;
 
-  Future<void> add(CryptosModel crypto) async {
-    await repo.add(crypto);
+  Future<void> load() async {
+    _items = await repo.getAll();
     notifyListeners();
   }
 
-  Future<void> delete(int id) async {
-    await repo.delete(id);
-    notifyListeners();
+  Future<void> add(CryptosModel crypto) async {
+    await repo.add(crypto);
+    await load();
+  }
+
+  Future<void> deleteById(int id) async {
+    await repo.deleteById(id);
+    await load();
   }
 
   Future<void> clear() async {
     await repo.clear();
-    notifyListeners();
+    await load();
   }
 
   Future<void> flush() async {
     await repo.flush();
-    notifyListeners();
+    await load();
   }
 
   List<CryptosModel> filter(String query) {
@@ -46,7 +51,7 @@ class CryptosController extends ChangeNotifier {
   }
 
   bool isEmpty() {
-    return repo.hasAny();
+    return repo.isEmpty();
   }
 
   Map<int, String> getSymbolMap() {
@@ -57,8 +62,12 @@ class CryptosController extends ChangeNotifier {
     return repo.getSymbol(id);
   }
 
-  List<CryptosModel> getAll() {
-    return repo.getAll();
+  Future<List<CryptosModel>> getAll() async {
+    return await repo.getAll();
+  }
+
+  List<CryptosModel> extract() {
+    return items;
   }
 
   CryptosModel? getById(int id) {
@@ -70,7 +79,7 @@ class CryptosController extends ChangeNotifier {
       final success = await service.fetch();
 
       if (success) {
-        notifyListeners();
+        await load();
       }
 
       return success;

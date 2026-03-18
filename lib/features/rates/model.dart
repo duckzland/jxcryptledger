@@ -1,8 +1,9 @@
 import 'package:decimal/decimal.dart';
 
+import '../../core/abstracts/model.dart';
 import '../../core/utils.dart';
 
-class RatesModel {
+class RatesModel extends BaseModel<String> {
   final String sourceSymbol;
   final int sourceId;
   final Decimal sourceAmount;
@@ -13,7 +14,10 @@ class RatesModel {
 
   final int timestamp;
 
-  const RatesModel({
+  @override
+  String get uuid => "$sourceId-$targetId";
+
+  RatesModel({
     required this.sourceSymbol,
     required this.sourceId,
     required this.sourceAmount,
@@ -22,6 +26,9 @@ class RatesModel {
     required this.targetAmount,
     required this.timestamp,
   });
+
+  @override
+  Map<String, dynamic> toJson() => toMap();
 
   Map<String, dynamic> toMap() {
     return {

@@ -1,10 +1,13 @@
 import 'package:hive_ce/hive_ce.dart';
 
+import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
+import '../../core/mixins/id_generator.dart';
 import 'model.dart';
 
-class RatesRepository {
-  static const String boxName = 'rates_box';
+class RatesRepository extends CoreBaseRepository<RatesModel, String> with CoreMixinsIdGenerator<RatesModel, String> {
+  @override
+  String get boxName => 'rates_box';
 
   Future<void> init() async {
     if (!Hive.isBoxOpen(boxName)) {
@@ -12,33 +15,25 @@ class RatesRepository {
     }
   }
 
-  Future<void> add(RatesModel rate) async {
-    final box = Hive.box<RatesModel>(boxName);
-    final key = '${rate.sourceId}-${rate.targetId}';
-    final rateWithTimestamp = rate.copyWith(timestamp: DateTime.now().microsecondsSinceEpoch);
-    await box.put(key, rateWithTimestamp);
+  @override
+  String generateId() {
+    return "";
   }
 
-  Future<List<RatesModel>> getAll() async {
-    final box = Hive.box<RatesModel>(boxName);
-    return box.values.toList();
+  @override
+  Future<void> add(RatesModel tx) async {
+    final rateWithTimestamp = tx.copyWith(timestamp: DateTime.now().microsecondsSinceEpoch);
+    await box.put(tx.uuid, rateWithTimestamp);
   }
 
-  Future<RatesModel?> get(int sourceId, int targetId) async {
-    final box = Hive.box<RatesModel>(boxName);
+  Future<RatesModel?> getPair(int sourceId, int targetId) async {
     final key = '$sourceId-$targetId';
     return box.get(key);
   }
 
-  Future<void> delete(int sourceId, int targetId) async {
-    final box = Hive.box<RatesModel>(boxName);
+  Future<void> deletePair(int sourceId, int targetId) async {
     final key = '$sourceId-$targetId';
     await box.delete(key);
-  }
-
-  Future<void> clear() async {
-    final box = Hive.box<RatesModel>(boxName);
-    await box.clear();
   }
 
   Future<void> cleanupOldRates({Duration olderThan = const Duration(days: 1)}) async {
@@ -61,10 +56,5 @@ class RatesRepository {
     for (final key in keysToDelete) {
       await box.delete(key);
     }
-  }
-
-  bool hasAny() {
-    final box = Hive.box<RatesModel>(boxName);
-    return box.isNotEmpty;
   }
 }

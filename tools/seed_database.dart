@@ -121,7 +121,7 @@ Future<TransactionsModel> createChild(
   double srAmount,
   int rrId,
 ) async {
-  final tid = repo.generateTid();
+  final tid = repo.generateId();
   final rrAmount = srAmount * 2;
 
   if (parent.rrId == rrId) {
@@ -244,7 +244,7 @@ Future<void> main(List<String> args) async {
     final List<TransactionsModel> roots = [];
 
     for (int r = 0; r < 5; r++) {
-      final rootTid = txRepo.generateTid();
+      final rootTid = txRepo.generateId();
       final root = TransactionsModel(
         tid: rootTid,
         pid: '0',
@@ -315,7 +315,7 @@ Future<void> main(List<String> args) async {
     for (final tx in txs) {
       await wxRepo.add(
         WatchersModel(
-          wid: wxRepo.generateWid(),
+          wid: wxRepo.generateId(),
           srId: tx.srId,
           rrId: tx.rrId,
           rates: (tx.rrAmount / tx.srAmount) * 1.5,
@@ -338,7 +338,7 @@ Future<void> main(List<String> args) async {
     for (final tx in txs) {
       await pxRepo.add(
         PanelsModel(
-          tid: pxRepo.generateTid(),
+          tid: pxRepo.generateId(),
           srId: tx.srId,
           srAmount: tx.srAmount,
           rrId: tx.rrId,

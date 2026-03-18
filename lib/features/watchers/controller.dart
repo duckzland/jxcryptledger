@@ -21,7 +21,7 @@ class WatchersController extends ChangeNotifier {
   WatchersController(this._repo, this._ratesService, this._notificationService, this._cryptosService);
 
   String generateWid() {
-    return _repo.generateWid();
+    return _repo.generateId();
   }
 
   Future<void> load() async {
@@ -51,7 +51,7 @@ class WatchersController extends ChangeNotifier {
   Future<void> delete(WatchersModel watcher) async {
     await _ratesService.delete(watcher.srId, watcher.rrId);
     await _ratesService.delete(watcher.rrId, watcher.srId);
-    await _repo.delete(watcher.wid);
+    await _repo.delete(watcher);
     await load();
   }
 

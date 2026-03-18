@@ -17,7 +17,7 @@ class PanelsController extends ChangeNotifier {
   PanelsController(this._repo, this._ratesService, this._txRepo);
 
   String generateTid() {
-    return _repo.generateTid();
+    return _repo.generateId();
   }
 
   Future<void> init() async {
@@ -184,12 +184,8 @@ class PanelsController extends ChangeNotifier {
   }
 
   Future<void> importDatabase(String rawJson) async {
-    try {
-      await _repo.import(rawJson);
-      await load();
-    } catch (e) {
-      rethrow;
-    }
+    await _repo.import(rawJson);
+    await load();
   }
 
   void updateOrder(List<PanelsModel> newOrder) {

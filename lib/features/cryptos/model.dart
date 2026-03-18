@@ -1,14 +1,22 @@
-class CryptosModel {
+import '../../core/abstracts/model.dart';
+
+class CryptosModel extends BaseModel<int> {
   final int id;
   final String name;
   final String symbol;
   final int status;
   final int active;
 
-  const CryptosModel({required this.id, required this.name, required this.symbol, required this.status, required this.active});
+  @override
+  int get uuid => id;
+
+  CryptosModel({required this.id, required this.name, required this.symbol, required this.status, required this.active});
 
   /// Normalized search key for Hive lookups
   String get searchKey => '$symbol $name $id'.toLowerCase();
+
+  @override
+  Map<String, dynamic> toJson() => toMap();
 
   Map<String, dynamic> toMap() {
     return {'id': id, 'name': name, 'symbol': symbol, 'status': status, 'active': active, 'searchKey': searchKey};
