@@ -5,6 +5,7 @@ import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../mixins/sortable_table.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -28,13 +29,9 @@ class WatchersPage extends StatefulWidget {
   State<WatchersPage> createState() => _WatchersPageState();
 }
 
-class _WatchersPageState extends State<WatchersPage> {
+class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<WatchersPage> {
   late final WatchersController _wxController;
   final CryptosController _cryptosController = locator<CryptosController>();
-
-  late List<Map<String, dynamic>> _rows;
-  int _sortColumnIndex = 0;
-  bool _sortAscending = false;
 
   @override
   void initState() {
@@ -43,7 +40,7 @@ class _WatchersPageState extends State<WatchersPage> {
     _wxController.load();
     _wxController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
-    _rows = _buildRows(_wxController.items);
+    rows = _buildRows(_wxController.items);
 
     _changePageTitle("Rate Watchers");
   }
@@ -58,7 +55,7 @@ class _WatchersPageState extends State<WatchersPage> {
 
   void _onControllerChanged() {
     setState(() {
-      _rows = _buildRows(_wxController.items);
+      rows = _buildRows(_wxController.items);
     });
   }
 
@@ -220,7 +217,7 @@ class _WatchersPageState extends State<WatchersPage> {
   }
 
   Widget _buildTable() {
-    final table = _rows;
+    final table = rows;
 
     return WidgetsPanel(
       child: Column(
@@ -233,17 +230,17 @@ class _WatchersPageState extends State<WatchersPage> {
               headingRowHeight: AppTheme.tableHeadingRowHeight,
               dataRowHeight: AppTheme.tableDataRowMinHeight,
               showCheckboxColumn: false,
-              sortColumnIndex: _sortColumnIndex,
-              sortAscending: _sortAscending,
+              sortColumnIndex: sortColumnIndex,
+              sortAscending: sortAscending,
               isHorizontalScrollBarVisible: false,
               columns: [
-                DataColumn(label: Text("From"), onSort: (col, asc) => _onSort((d) => (d['_srId'] as int), col, asc)),
-                DataColumn(label: Text("To"), onSort: (col, asc) => _onSort((d) => (d['_rrId'] as int), col, asc)),
-                DataColumn(label: Text("Ops"), onSort: (col, asc) => _onSort((d) => (d['_ops'] as int), col, asc)),
-                DataColumn(label: Text("Rate"), onSort: (col, asc) => _onSort((d) => (d['_rate'] as double), col, asc)),
-                DataColumn(label: Text("Sent"), onSort: (col, asc) => _onSort((d) => (d['_sent'] as int), col, asc)),
-                DataColumn(label: Text("Limit"), onSort: (col, asc) => _onSort((d) => (d['_limit'] as int), col, asc)),
-                DataColumn(label: Text("Duration"), onSort: (col, asc) => _onSort((d) => (d['_duration'] as int), col, asc)),
+                DataColumn(label: Text("From"), onSort: (col, asc) => onSort((d) => (d['_srId'] as int), col, asc)),
+                DataColumn(label: Text("To"), onSort: (col, asc) => onSort((d) => (d['_rrId'] as int), col, asc)),
+                DataColumn(label: Text("Ops"), onSort: (col, asc) => onSort((d) => (d['_ops'] as int), col, asc)),
+                DataColumn(label: Text("Rate"), onSort: (col, asc) => onSort((d) => (d['_rate'] as double), col, asc)),
+                DataColumn(label: Text("Sent"), onSort: (col, asc) => onSort((d) => (d['_sent'] as int), col, asc)),
+                DataColumn(label: Text("Limit"), onSort: (col, asc) => onSort((d) => (d['_limit'] as int), col, asc)),
+                DataColumn(label: Text("Duration"), onSort: (col, asc) => onSort((d) => (d['_duration'] as int), col, asc)),
                 DataColumn(label: Text("Action")),
               ],
               rows: table.map((r) {
@@ -301,29 +298,5 @@ class _WatchersPageState extends State<WatchersPage> {
       });
     }
     return rows;
-  }
-
-  void _onSort<T>(T Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
-    setState(() {
-      _rows.sort((a, b) {
-        final aField = getField(a);
-        final bField = getField(b);
-
-        if (aField is (String, num) && bField is (String, num)) {
-          final c1 = aField.$1.compareTo(bField.$1);
-          if (c1 != 0) return ascending ? c1 : -c1;
-
-          final c2 = aField.$2.compareTo(bField.$2);
-          return ascending ? c2 : -c2;
-        }
-
-        return ascending
-            ? Comparable.compare(aField as Comparable, bField as Comparable)
-            : Comparable.compare(bField as Comparable, aField as Comparable);
-      });
-
-      _sortColumnIndex = columnIndex;
-      _sortAscending = ascending;
-    });
   }
 }

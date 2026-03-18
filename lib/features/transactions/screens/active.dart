@@ -7,6 +7,7 @@ import '../../../core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../mixins/actions.dart';
+import '../../../mixins/sortable_table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
@@ -40,14 +41,12 @@ class TransactionsActive extends StatefulWidget {
   State<TransactionsActive> createState() => _TransactionsActiveState();
 }
 
-class _TransactionsActiveState extends State<TransactionsActive> with MixinsActions {
+class _TransactionsActiveState extends State<TransactionsActive> with MixinsActions, MixinsSortableTable<TransactionsActive> {
   late final CryptosController _cryptosController;
   late final RatesController _ratesController;
   late final TransactionsController _txController;
   late final WatchersController _wxController;
   late final PanelsController _tixController;
-
-  late List<Map<String, dynamic>> _rows;
 
   late TextEditingController _customRateController;
 
@@ -57,9 +56,6 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
   bool _isReversed = false;
   bool _isDeletable = false;
   bool _isClosable = false;
-
-  int _sortColumnIndex = 0;
-  bool _sortAscending = false;
 
   double? _customRate;
   double? _marketRate;
@@ -106,7 +102,6 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
 
     _wxController = locator<WatchersController>();
     _wxController.load();
-
     _wxController.addListener(_onControllerChanged);
 
     _tixController = locator<PanelsController>();
@@ -116,9 +111,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
 
     _customRateController = TextEditingController();
 
-    _rows = _buildRows(widget.transactions);
+    rows = _buildRows(widget.transactions);
 
-    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex, _sortAscending);
+    onSort((d) => d['_timestamp'] as int, sortColumnIndex, sortAscending);
 
     _checkForClosable();
     _checkForDeletable();
@@ -150,49 +145,49 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
       _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
       _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
-      _rows = _buildRows(widget.transactions);
+      rows = _buildRows(widget.transactions);
 
-      final col = _sortColumnIndex;
-      final asc = _sortAscending;
+      final col = sortColumnIndex;
+      final asc = sortAscending;
       final currentRate = _customRate ?? _marketRate ?? 0.0;
 
       switch (col) {
         case 0:
-          _onSort((d) => d['_timestamp'] as int, col, asc);
+          onSort((d) => d['_timestamp'] as int, col, asc);
           break;
 
         case 1:
-          _onSort((d) => d['_sourceValue'] as double, col, asc);
+          onSort((d) => d['_sourceValue'] as double, col, asc);
 
           break;
 
         case 2:
-          _onSort((d) => d['_balanceValue'] as double, col, asc);
+          onSort((d) => d['_balanceValue'] as double, col, asc);
           break;
 
         case 3:
-          _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+          onSort((d) => d['_exchangedRateValue'] as double, col, asc);
 
         case 4:
           if (currentRate == 0) {
-            _onSort((d) => d['_status'] as String, col, asc);
+            onSort((d) => d['_status'] as String, col, asc);
           }
           break;
 
         case 5:
           if (currentRate != 0) {
-            _onSort((d) => d['_currentValue'] as double, col, asc);
+            onSort((d) => d['_currentValue'] as double, col, asc);
           }
           break;
 
         case 6:
           if (currentRate != 0) {
-            _onSort((d) => d['_profitLossValue'] as double, col, asc);
+            onSort((d) => d['_profitLossValue'] as double, col, asc);
           }
           break;
         case 7:
           if (currentRate != 0) {
-            _onSort((d) => d['status'] as String, col, asc);
+            onSort((d) => d['status'] as String, col, asc);
           }
           break;
       }
@@ -214,7 +209,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     if (mounted) {
       setState(() {
         _marketRate = rate;
-        _rows = _buildRows(widget.transactions);
+        rows = _buildRows(widget.transactions);
       });
     }
   }
@@ -364,7 +359,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
               _debounce = Timer(const Duration(milliseconds: 100), () {
                 setState(() {
                   _customRate = double.tryParse(value);
-                  _rows = _buildRows(widget.transactions);
+                  rows = _buildRows(widget.transactions);
                 });
               });
             },
@@ -389,7 +384,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
           onPressed: (_) {
             setState(() {
               _isReversed = !_isReversed;
-              _rows = _buildRows(widget.transactions);
+              rows = _buildRows(widget.transactions);
             });
           },
         ),
@@ -529,27 +524,27 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
   Widget _buildTable(double currentRate) {
     return SizedBox(
       width: double.infinity,
-      height: (_rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
         columnSpacing: 12,
         horizontalMargin: 12,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowHeight: AppTheme.tableDataRowMinHeight,
         showCheckboxColumn: false,
-        sortColumnIndex: _sortColumnIndex,
-        sortAscending: _sortAscending,
+        sortColumnIndex: sortColumnIndex,
+        sortAscending: sortAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc)),
+          DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
           DataColumn2(
             size: ColumnSize.S,
             label: WidgetsHeader(title: 'From ', subtitle: _sourceSymbol),
-            onSort: (col, asc) => _onSort((d) => d['_sourceValue'] as double, col, asc),
+            onSort: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
           ),
           DataColumn2(
             size: ColumnSize.S,
             label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-            onSort: (col, asc) => _onSort((d) => d['_balanceValue'] as double, col, asc),
+            onSort: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
           ),
           DataColumn2(
             size: ColumnSize.S,
@@ -557,7 +552,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
               title: 'Exchanged Rate ',
               subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
             ),
-            onSort: (col, asc) => _onSort((d) => d['_exchangedRateValue'] as double, col, asc),
+            onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
           ),
 
           if (currentRate != 0) ...[
@@ -571,20 +566,20 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
             DataColumn2(
               size: ColumnSize.S,
               label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
-              onSort: (col, asc) => _onSort((d) => d['_currentValue'] as double, col, asc),
+              onSort: (col, asc) => onSort((d) => d['_currentValue'] as double, col, asc),
             ),
             DataColumn2(
               size: ColumnSize.S,
               label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
-              onSort: (col, asc) => _onSort((d) => d['_profitLossValue'] as double, col, asc),
+              onSort: (col, asc) => onSort((d) => d['_profitLossValue'] as double, col, asc),
             ),
           ],
 
-          DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc)),
+          DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
           DataColumn2(label: Text('Actions'), fixedWidth: 130),
         ],
 
-        rows: _rows.map((r) {
+        rows: rows.map((r) {
           return DataRow(
             cells: [
               DataCell(Text(r['date'] ?? '0.0')),
@@ -708,29 +703,5 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
         WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
       ],
     );
-  }
-
-  void _onSort<T>(T Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
-    setState(() {
-      _rows.sort((a, b) {
-        final aField = getField(a);
-        final bField = getField(b);
-
-        if (aField is (String, num) && bField is (String, num)) {
-          final c1 = aField.$1.compareTo(bField.$1);
-          if (c1 != 0) return ascending ? c1 : -c1;
-
-          final c2 = aField.$2.compareTo(bField.$2);
-          return ascending ? c2 : -c2;
-        }
-
-        return ascending
-            ? Comparable.compare(aField as Comparable, bField as Comparable)
-            : Comparable.compare(bField as Comparable, aField as Comparable);
-      });
-
-      _sortColumnIndex = columnIndex;
-      _sortAscending = ascending;
-    });
   }
 }

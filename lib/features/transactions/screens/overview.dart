@@ -5,6 +5,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/actions.dart';
+import '../../../mixins/sortable_table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
@@ -26,11 +27,9 @@ class TransactionsOverview extends StatefulWidget {
   State<TransactionsOverview> createState() => _TransactionsOverviewState();
 }
 
-class _TransactionsOverviewState extends State<TransactionsOverview> with MixinsActions {
+class _TransactionsOverviewState extends State<TransactionsOverview> with MixinsActions, MixinsSortableTable<TransactionsOverview> {
   late final CryptosController _cryptosController;
   late final TransactionsController _txController;
-
-  late List<Map<String, dynamic>> _rows;
 
   late String _resultSymbol;
 
@@ -38,9 +37,6 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
 
   bool _isDeletable = false;
   bool _isClosable = false;
-
-  int _sortColumnIndex = 0;
-  bool _sortAscending = false;
 
   double _totalCapital = 0;
   double _currentHolding = 0;
@@ -56,9 +52,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
     _cryptosController = locator<CryptosController>();
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
-    _rows = _buildRows(widget.transactions);
+    rows = _buildRows(widget.transactions);
 
-    _onSort((d) => d['_timestamp'] as int, _sortColumnIndex, _sortAscending);
+    onSort((d) => d['_timestamp'] as int, sortColumnIndex, sortAscending);
 
     _checkForClosable();
     _checkForDeletable();
@@ -76,29 +72,29 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
 
     if (oldWidget.transactions != widget.transactions && mounted) {
       _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
-      _rows = _buildRows(widget.transactions);
+      rows = _buildRows(widget.transactions);
 
-      final col = _sortColumnIndex;
-      final asc = _sortAscending;
+      final col = sortColumnIndex;
+      final asc = sortAscending;
 
       switch (col) {
         case 0:
-          _onSort((d) => d['_timestamp'] as int, col, asc);
+          onSort((d) => d['_timestamp'] as int, col, asc);
           break;
 
         case 1:
-          _onSort((d) => d['_balanceValue'] as double, col, asc);
+          onSort((d) => d['_balanceValue'] as double, col, asc);
           break;
 
         case 2:
-          _onSort((d) => d['_sourceValue'] as double, col, asc);
+          onSort((d) => d['_sourceValue'] as double, col, asc);
           break;
 
         case 3:
-          _onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+          onSort((d) => d['_exchangedRateValue'] as double, col, asc);
 
         case 4:
-          _onSort((d) => d['status'] as String, col, asc);
+          onSort((d) => d['status'] as String, col, asc);
           break;
       }
 
@@ -353,38 +349,34 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
     // @TODO: Why this will only work on SizedBox, while the github docs specified to use Flexible or Expanded?
     SizedBox(
       width: double.infinity,
-      height: (_rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: DataTable2(
         columnSpacing: 12,
         horizontalMargin: 12,
         headingRowHeight: AppTheme.tableHeadingRowHeight,
         dataRowHeight: AppTheme.tableDataRowMinHeight,
         showCheckboxColumn: false,
-        sortColumnIndex: _sortColumnIndex,
-        sortAscending: _sortAscending,
+        sortColumnIndex: sortColumnIndex,
+        sortAscending: sortAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['_timestamp'] as int, col, asc)),
+          DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
           DataColumn2(
             label: Text('Balance '),
             size: ColumnSize.M,
-            onSort: (col, asc) => _onSort((d) => d['_balanceValue'] as double, col, asc),
+            onSort: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
           ),
-          DataColumn2(
-            label: Text('From '),
-            size: ColumnSize.M,
-            onSort: (col, asc) => _onSort((d) => d['_sourceValue'] as double, col, asc),
-          ),
+          DataColumn2(label: Text('From '), size: ColumnSize.M, onSort: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc)),
           DataColumn2(
             label: Text('Exchanged Rate '),
             size: ColumnSize.S,
-            onSort: (col, asc) => _onSort((d) => d['_exchangedRateValue'] as double, col, asc),
+            onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
           ),
-          DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => _onSort((d) => d['status'] as String, col, asc)),
+          DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
           DataColumn2(label: Text('Actions'), fixedWidth: 130),
         ],
 
-        rows: _rows.map((r) {
+        rows: rows.map((r) {
           return DataRow(
             cells: [
               DataCell(Text(r['date'])),
@@ -408,29 +400,5 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
         }).toList(),
       ),
     );
-  }
-
-  void _onSort<T>(T Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
-    setState(() {
-      _rows.sort((a, b) {
-        final aField = getField(a);
-        final bField = getField(b);
-
-        if (aField is (String, num) && bField is (String, num)) {
-          final c1 = aField.$1.compareTo(bField.$1);
-          if (c1 != 0) return ascending ? c1 : -c1;
-
-          final c2 = aField.$2.compareTo(bField.$2);
-          return ascending ? c2 : -c2;
-        }
-
-        return ascending
-            ? Comparable.compare(aField as Comparable, bField as Comparable)
-            : Comparable.compare(bField as Comparable, aField as Comparable);
-      });
-
-      _sortColumnIndex = columnIndex;
-      _sortAscending = ascending;
-    });
   }
 }

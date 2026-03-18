@@ -12,10 +12,10 @@ class TransactionHistory extends StatefulWidget {
   const TransactionHistory({super.key, required this.transactions});
 
   @override
-  TransactionHistoryState createState() => TransactionHistoryState();
+  State<TransactionHistory> createState() => _TransactionHistoryState();
 }
 
-class TransactionHistoryState extends State<TransactionHistory> {
+class _TransactionHistoryState extends State<TransactionHistory> {
   late TreeNode<TransactionsModel> _root;
 
   @override
