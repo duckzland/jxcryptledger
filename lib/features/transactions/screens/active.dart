@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
@@ -318,204 +319,246 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     required double avgPL,
     required double plPercentage,
   }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1000) {
+          return Row(
+            spacing: 20,
+            children: [
+              _buildTitle(CrossAxisAlignment.start),
+              Expanded(
+                child: _buildPanels(
+                  averageRate: averageRate,
+                  totalSourceBalance: totalSourceBalance,
+                  totalBalance: totalBalance,
+                  avgPL: avgPL,
+                  plPercentage: plPercentage,
+                ),
+              ),
+              _buildActions(averageRate: averageRate),
+            ],
+          );
+        } else {
+          return Wrap(
+            direction: Axis.horizontal,
+            runSpacing: 14,
+            spacing: 10,
+            runAlignment: WrapAlignment.center,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _buildTitle(CrossAxisAlignment.center),
+              _buildActions(averageRate: averageRate),
+              _buildPanels(
+                averageRate: averageRate,
+                totalSourceBalance: totalSourceBalance,
+                totalBalance: totalBalance,
+                avgPL: avgPL,
+                plPercentage: plPercentage,
+              ),
+            ],
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildTitle(CrossAxisAlignment align) {
+    return Column(
+      crossAxisAlignment: align,
+      children: [
+        const SizedBox(height: 5),
+        Text('$_sourceSymbol to $_resultSymbol Trades', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+      ],
+    );
+  }
+
+  Widget _buildActions({required double averageRate}) {
     final btnIconSize = 18.0;
     final btnSize = const Size(40, 40);
     final btnPadding = const EdgeInsets.all(0);
-
-    return Row(
+    return Wrap(
+      direction: Axis.horizontal,
+      runSpacing: 14,
+      spacing: 8,
+      runAlignment: WrapAlignment.center,
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
           children: [
-            const SizedBox(height: 5),
-            Text('$_sourceSymbol to $_resultSymbol Trades', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-          ],
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: _buildPanels(
-            averageRate: averageRate,
-            totalSourceBalance: totalSourceBalance,
-            totalBalance: totalBalance,
-            avgPL: avgPL,
-            plPercentage: plPercentage,
-          ),
-        ),
+            SizedBox(
+              width: 180,
+              height: 40,
+              child: WidgetsFieldsAmount(
+                title: "Custom Rates",
+                suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
+                helperText: averageRate.toStringAsFixed(8),
+                allowCopy: false,
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-        const SizedBox(width: 20),
+                  _debounce = Timer(const Duration(milliseconds: 100), () {
+                    setState(() {
+                      _customRate = double.tryParse(value);
+                      rows = _buildRows(widget.transactions);
+                    });
+                  });
+                },
+              ),
+            ),
 
-        SizedBox(
-          width: 180,
-          height: 40,
-          child: WidgetsFieldsAmount(
-            title: "Custom Rates",
-            suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
-            helperText: averageRate.toStringAsFixed(8),
-            allowCopy: false,
-            onChanged: (value) {
-              if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-              _debounce = Timer(const Duration(milliseconds: 100), () {
+            WidgetsButton(
+              icon: Icons.swap_horiz,
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
+              evaluator: (s) {
+                if (_isReversed) {
+                  s.action();
+                } else {
+                  s.normal();
+                }
+              },
+              onPressed: (_) {
                 setState(() {
-                  _customRate = double.tryParse(value);
+                  _isReversed = !_isReversed;
                   rows = _buildRows(widget.transactions);
                 });
-              });
-            },
-          ),
+              },
+            ),
+          ],
         ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            WidgetsDialogsShowForm(
+              key: const Key("add-watchboard-button"),
+              icon: Icons.candlestick_chart_outlined,
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
+              evaluator: (s) {
+                if (_linkedPanel == null) {
+                  s.normal();
+                } else {
+                  s.action();
+                }
+              },
+              buildForm: (dialogContext) {
+                return PanelsForm(
+                  initialData: _linkedPanel,
+                  initialSrId: _linkedPanel == null ? widget.srid : null,
+                  initialRrId: _linkedPanel == null ? widget.rrid : null,
+                  initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(widget.transactions) : null,
+                  linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+                  onSave: (e) => doFormSave<PanelsModel>(
+                    context,
+                    dialogContext: dialogContext,
+                    onComplete: () => setState(() {
+                      _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                    }),
+                    successMessage: _linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
+                    error: e,
+                  ),
+                );
+              },
+            ),
 
-        const SizedBox(width: 8),
+            WidgetsDialogsShowForm(
+              key: const Key("add-watcher-button"),
+              icon: Icons.add_alarm,
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
+              evaluator: (s) {
+                if (_linkedWatcher == null) {
+                  s.normal();
+                } else {
+                  _linkedWatcher!.isSpent() ? s.error() : s.action();
+                }
+              },
+              buildForm: (dialogContext) {
+                return WatchersForm(
+                  initialData: _linkedWatcher,
+                  initialSrId: _linkedWatcher == null ? widget.srid : null,
+                  initialRrId: _linkedWatcher == null ? widget.rrid : null,
+                  initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
+                  linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+                  onSave: (e) => doFormSave<PanelsModel>(
+                    context,
+                    dialogContext: dialogContext,
+                    onComplete: () => setState(() {
+                      _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                    }),
+                    successMessage: _linkedWatcher == null ? "Created rate watcher." : "Rate watcher updated",
+                    error: e,
+                  ),
+                );
+              },
+            ),
 
-        WidgetsButton(
-          icon: Icons.swap_horiz,
-          padding: btnPadding,
-          iconSize: btnIconSize,
-          minimumSize: btnSize,
-          tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
-          evaluator: (s) {
-            if (_isReversed) {
-              s.action();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _isReversed = !_isReversed;
-              rows = _buildRows(widget.transactions);
-            });
-          },
-        ),
-        const SizedBox(width: 8),
+            WidgetsDialogsAlert(
+              icon: Icons.close,
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              initialState: WidgetsButtonActionState.warning,
+              tooltip: "Close all closable transactions found in this group",
+              evaluator: (s) async {
+                if (!_isClosable) {
+                  s.disable();
+                } else {
+                  s.warning();
+                }
+              },
+              dialogTitle: "Close Transactions",
+              dialogMessage:
+                  "Are you sure you want to close all closable transactions found in this group?\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Close",
+              actionStartCallback: _closeTransactions,
+              actionCompleteCallback: () => setState(() {
+                _isClosable = false;
+              }),
+              actionSuccessMessage: "All transactions closed.",
+              actionErrorMessage: "Failed to close transactions.",
+            ),
 
-        WidgetsDialogsShowForm(
-          key: const Key("add-watchboard-button"),
-          icon: Icons.candlestick_chart_outlined,
-          padding: btnPadding,
-          iconSize: btnIconSize,
-          minimumSize: btnSize,
-          tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
-          evaluator: (s) {
-            if (_linkedPanel == null) {
-              s.normal();
-            } else {
-              s.action();
-            }
-          },
-          buildForm: (dialogContext) {
-            return PanelsForm(
-              initialData: _linkedPanel,
-              initialSrId: _linkedPanel == null ? widget.srid : null,
-              initialRrId: _linkedPanel == null ? widget.rrid : null,
-              initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(widget.transactions) : null,
-              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-              onSave: (e) => doFormSave<PanelsModel>(
-                context,
-                dialogContext: dialogContext,
-                onComplete: () => setState(() {
-                  _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                }),
-                successMessage: _linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
-                error: e,
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(width: 8),
-
-        WidgetsDialogsShowForm(
-          key: const Key("add-watcher-button"),
-          icon: Icons.add_alarm,
-          padding: btnPadding,
-          iconSize: btnIconSize,
-          minimumSize: btnSize,
-          tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
-          evaluator: (s) {
-            if (_linkedWatcher == null) {
-              s.normal();
-            } else {
-              _linkedWatcher!.isSpent() ? s.error() : s.action();
-            }
-          },
-          buildForm: (dialogContext) {
-            return WatchersForm(
-              initialData: _linkedWatcher,
-              initialSrId: _linkedWatcher == null ? widget.srid : null,
-              initialRrId: _linkedWatcher == null ? widget.rrid : null,
-              initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
-              linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-              onSave: (e) => doFormSave<PanelsModel>(
-                context,
-                dialogContext: dialogContext,
-                onComplete: () => setState(() {
-                  _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                }),
-                successMessage: _linkedWatcher == null ? "Created rate watcher." : "Rate watcher updated",
-                error: e,
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(width: 8),
-
-        WidgetsDialogsAlert(
-          icon: Icons.close,
-          padding: btnPadding,
-          iconSize: btnIconSize,
-          minimumSize: btnSize,
-          initialState: WidgetsButtonActionState.warning,
-          tooltip: "Close all closable transactions found in this group",
-          evaluator: (s) async {
-            if (!_isClosable) {
-              s.disable();
-            } else {
-              s.warning();
-            }
-          },
-          dialogTitle: "Close Transactions",
-          dialogMessage:
-              "Are you sure you want to close all closable transactions found in this group?\n"
-              "This action cannot be undone.",
-          dialogConfirmLabel: "Close",
-          actionStartCallback: _closeTransactions,
-          actionCompleteCallback: () => setState(() {
-            _isClosable = false;
-          }),
-          actionSuccessMessage: "All transactions closed.",
-          actionErrorMessage: "Failed to close transactions.",
-        ),
-
-        const SizedBox(width: 8),
-
-        WidgetsDialogsAlert(
-          icon: Icons.delete,
-          padding: btnPadding,
-          iconSize: btnIconSize,
-          minimumSize: btnSize,
-          initialState: WidgetsButtonActionState.error,
-          tooltip: "Delete all transactions",
-          evaluator: (s) async {
-            if (!_isDeletable) {
-              s.disable();
-            } else {
-              s.error();
-            }
-          },
-          dialogTitle: "Delete Transactions",
-          dialogMessage:
-              "This will delete all transactions in this group and all of its history.\n"
-              "This action cannot be undone.",
-          dialogConfirmLabel: "Delete",
-          actionStartCallback: _deleteTransactions,
-          actionCompleteCallback: () => setState(() {
-            _isDeletable = false;
-          }),
-          actionSuccessMessage: "All transactions deleted.",
-          actionErrorMessage: "Failed to delete transactions.",
+            WidgetsDialogsAlert(
+              icon: Icons.delete,
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              initialState: WidgetsButtonActionState.error,
+              tooltip: "Delete all transactions",
+              evaluator: (s) async {
+                if (!_isDeletable) {
+                  s.disable();
+                } else {
+                  s.error();
+                }
+              },
+              dialogTitle: "Delete Transactions",
+              dialogMessage:
+                  "This will delete all transactions in this group and all of its history.\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Delete",
+              actionStartCallback: _deleteTransactions,
+              actionCompleteCallback: () => setState(() {
+                _isDeletable = false;
+              }),
+              actionSuccessMessage: "All transactions deleted.",
+              actionErrorMessage: "Failed to delete transactions.",
+            ),
+          ],
         ),
       ],
     );
@@ -525,89 +568,93 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     return SizedBox(
       width: double.infinity,
       height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
-      child: DataTable2(
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: AppTheme.tableHeadingRowHeight,
-        dataRowHeight: AppTheme.tableDataRowMinHeight,
-        showCheckboxColumn: false,
-        sortColumnIndex: sortColumnIndex,
-        sortAscending: sortAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: [
-          DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
-          DataColumn2(
-            size: ColumnSize.S,
-            label: WidgetsHeader(title: 'From ', subtitle: _sourceSymbol),
-            onSort: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
-          ),
-          DataColumn2(
-            size: ColumnSize.S,
-            label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-            onSort: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
-          ),
-          DataColumn2(
-            size: ColumnSize.S,
-            label: WidgetsHeader(
-              title: 'Exchanged Rate ',
-              subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
+        child: DataTable2(
+          minWidth: 1200,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: AppTheme.tableHeadingRowHeight,
+          dataRowHeight: AppTheme.tableDataRowMinHeight,
+          showCheckboxColumn: false,
+          sortColumnIndex: sortColumnIndex,
+          sortAscending: sortAscending,
+          isHorizontalScrollBarVisible: false,
+          columns: [
+            DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
+            DataColumn2(
+              size: ColumnSize.S,
+              label: WidgetsHeader(title: 'From ', subtitle: _sourceSymbol),
+              onSort: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
             ),
-            onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
-          ),
-
-          if (currentRate != 0) ...[
+            DataColumn2(
+              size: ColumnSize.S,
+              label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
+              onSort: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
+            ),
             DataColumn2(
               size: ColumnSize.S,
               label: WidgetsHeader(
-                title: 'Current Rate ',
+                title: 'Exchanged Rate ',
                 subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
               ),
+              onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
             ),
-            DataColumn2(
-              size: ColumnSize.S,
-              label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
-              onSort: (col, asc) => onSort((d) => d['_currentValue'] as double, col, asc),
-            ),
-            DataColumn2(
-              size: ColumnSize.S,
-              label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
-              onSort: (col, asc) => onSort((d) => d['_profitLossValue'] as double, col, asc),
-            ),
-          ],
 
-          DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
-          DataColumn2(label: Text('Actions'), fixedWidth: 130),
-        ],
-
-        rows: rows.map((r) {
-          return DataRow(
-            cells: [
-              DataCell(Text(r['date'] ?? '0.0')),
-              DataCell(Text(r['from'] ?? '0.0')),
-              DataCell(Text(r['to'] ?? '0.0')),
-              DataCell(Text(r['exchangedRate'] ?? '0.0')),
-
-              if (currentRate != 0) ...[
-                DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-                DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-                DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
-              ],
-
-              DataCell(Text(r['status'])),
-              DataCell(
-                TransactionsWidgetsButtons(
-                  tx: r['tx'],
-                  cryptosController: _cryptosController,
-                  txController: _txController,
-                  onAction: () {
-                    widget.onStatusChanged();
-                    setState(() {});
-                  },
+            if (currentRate != 0) ...[
+              DataColumn2(
+                size: ColumnSize.S,
+                label: WidgetsHeader(
+                  title: 'Current Rate ',
+                  subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
                 ),
               ),
+              DataColumn2(
+                size: ColumnSize.S,
+                label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
+                onSort: (col, asc) => onSort((d) => d['_currentValue'] as double, col, asc),
+              ),
+              DataColumn2(
+                size: ColumnSize.S,
+                label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
+                onSort: (col, asc) => onSort((d) => d['_profitLossValue'] as double, col, asc),
+              ),
             ],
-          );
-        }).toList(),
+
+            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
+            DataColumn2(label: Text('Actions'), fixedWidth: 130),
+          ],
+
+          rows: rows.map((r) {
+            return DataRow(
+              cells: [
+                DataCell(Text(r['date'] ?? '0.0')),
+                DataCell(Text(r['from'] ?? '0.0')),
+                DataCell(Text(r['to'] ?? '0.0')),
+                DataCell(Text(r['exchangedRate'] ?? '0.0')),
+
+                if (currentRate != 0) ...[
+                  DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
+                  DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
+                  DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
+                ],
+
+                DataCell(Text(r['status'])),
+                DataCell(
+                  TransactionsWidgetsButtons(
+                    tx: r['tx'],
+                    cryptosController: _cryptosController,
+                    txController: _txController,
+                    onAction: () {
+                      widget.onStatusChanged();
+                      setState(() {});
+                    },
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -663,34 +710,50 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     required double avgPL,
     required double plPercentage,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildPanelItem(
-          title: 'Total Balance',
-          subtitle:
-              '${Utils.formatSmartDouble(totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(totalBalance)} $_resultSymbol',
-          value: 0,
-          comparator: 0,
+    return SizedBox(
+      height: 38,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
+        child: CustomScrollView(
+          scrollDirection: Axis.horizontal,
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                spacing: 16,
+                children: [
+                  _buildPanelItem(
+                    title: 'Total Balance',
+                    subtitle:
+                        '${Utils.formatSmartDouble(totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(totalBalance)} $_resultSymbol',
+                    value: 0,
+                    comparator: 0,
+                  ),
+
+                  _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(averageRate), value: 0, comparator: 0),
+
+                  if (plPercentage != 0 && plPercentage.isFinite) ...[
+                    _buildPanelItem(
+                      title: 'Profit/Loss',
+                      subtitle: "${Utils.formatSmartDouble(avgPL)} $_sourceSymbol",
+                      value: plPercentage,
+                      comparator: 0,
+                    ),
+
+                    _buildPanelItem(
+                      title: 'Profit/Loss %',
+                      subtitle: '${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
+                      value: plPercentage,
+                      comparator: 0,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
-
-        _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(averageRate), value: 0, comparator: 0),
-
-        if (plPercentage != 0 && plPercentage.isFinite) ...[
-          _buildPanelItem(
-            title: 'Profit/Loss',
-            subtitle: "${Utils.formatSmartDouble(avgPL)} $_sourceSymbol",
-            value: plPercentage,
-            comparator: 0,
-          ),
-          _buildPanelItem(
-            title: 'Profit/Loss %',
-            subtitle: '${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
-            value: plPercentage,
-            comparator: 0,
-          ),
-        ],
-      ],
+      ),
     );
   }
 

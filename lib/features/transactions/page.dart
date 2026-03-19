@@ -298,6 +298,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
           children: [
             const SizedBox(height: 10),
             WidgetsActionBar(
+              centering: true,
               leftActions: _buildActionButtons(),
               mainActions: _buildScreenSwitcher(),
               rightActions: Row(

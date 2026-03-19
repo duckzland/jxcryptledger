@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
@@ -214,47 +216,51 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: DataTable2(
-              columnSpacing: 12,
-              horizontalMargin: 12,
-              headingRowHeight: AppTheme.tableHeadingRowHeight,
-              dataRowHeight: AppTheme.tableDataRowMinHeight,
-              showCheckboxColumn: false,
-              sortColumnIndex: sortColumnIndex,
-              sortAscending: sortAscending,
-              isHorizontalScrollBarVisible: false,
-              columns: [
-                DataColumn(label: Text("From"), onSort: (col, asc) => onSort((d) => (d['_srId'] as int), col, asc)),
-                DataColumn(label: Text("To"), onSort: (col, asc) => onSort((d) => (d['_rrId'] as int), col, asc)),
-                DataColumn(label: Text("Ops"), onSort: (col, asc) => onSort((d) => (d['_ops'] as int), col, asc)),
-                DataColumn(label: Text("Rate"), onSort: (col, asc) => onSort((d) => (d['_rate'] as double), col, asc)),
-                DataColumn(label: Text("Sent"), onSort: (col, asc) => onSort((d) => (d['_sent'] as int), col, asc)),
-                DataColumn(label: Text("Limit"), onSort: (col, asc) => onSort((d) => (d['_limit'] as int), col, asc)),
-                DataColumn(label: Text("Duration"), onSort: (col, asc) => onSort((d) => (d['_duration'] as int), col, asc)),
-                DataColumn(label: Text("Action")),
-              ],
-              rows: table.map((r) {
-                return DataRow(
-                  cells: [
-                    DataCell(Text(r['from'])),
-                    DataCell(Text(r['to'])),
-                    DataCell(Text(r['ops'])),
-                    DataCell(Text(r['rate'])),
-                    DataCell(Text(r['sent'])),
-                    DataCell(Text(r['limit'])),
-                    DataCell(Text(r['duration'])),
-                    DataCell(
-                      WatchersButtons(
-                        tx: r['tx'],
-                        wxController: _wxController,
-                        onAction: () {
-                          setState(() {});
-                        },
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
+              child: DataTable2(
+                minWidth: 1200,
+                columnSpacing: 12,
+                horizontalMargin: 12,
+                headingRowHeight: AppTheme.tableHeadingRowHeight,
+                dataRowHeight: AppTheme.tableDataRowMinHeight,
+                showCheckboxColumn: false,
+                sortColumnIndex: sortColumnIndex,
+                sortAscending: sortAscending,
+                isHorizontalScrollBarVisible: false,
+                columns: [
+                  DataColumn(label: Text("From"), onSort: (col, asc) => onSort((d) => (d['_srId'] as int), col, asc)),
+                  DataColumn(label: Text("To"), onSort: (col, asc) => onSort((d) => (d['_rrId'] as int), col, asc)),
+                  DataColumn(label: Text("Ops"), onSort: (col, asc) => onSort((d) => (d['_ops'] as int), col, asc)),
+                  DataColumn(label: Text("Rate"), onSort: (col, asc) => onSort((d) => (d['_rate'] as double), col, asc)),
+                  DataColumn(label: Text("Sent"), onSort: (col, asc) => onSort((d) => (d['_sent'] as int), col, asc)),
+                  DataColumn(label: Text("Limit"), onSort: (col, asc) => onSort((d) => (d['_limit'] as int), col, asc)),
+                  DataColumn(label: Text("Duration"), onSort: (col, asc) => onSort((d) => (d['_duration'] as int), col, asc)),
+                  DataColumn(label: Text("Action")),
+                ],
+                rows: table.map((r) {
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(r['from'])),
+                      DataCell(Text(r['to'])),
+                      DataCell(Text(r['ops'])),
+                      DataCell(Text(r['rate'])),
+                      DataCell(Text(r['sent'])),
+                      DataCell(Text(r['limit'])),
+                      DataCell(Text(r['duration'])),
+                      DataCell(
+                        WatchersButtons(
+                          tx: r['tx'],
+                          wxController: _wxController,
+                          onAction: () {
+                            setState(() {});
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              }).toList(),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],
