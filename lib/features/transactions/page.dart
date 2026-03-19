@@ -4,6 +4,7 @@ import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../mixins/actions.dart';
+import '../../widgets/action_bar.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
@@ -296,25 +297,13 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(spacing: 20, children: [_buildActionButtons()]),
-                  ),
-                ),
-                _buildScreenSwitcher(),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Wrap(
-                      spacing: 20,
-                      children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()],
-                    ),
-                  ),
-                ),
-              ],
+            WidgetsActionBar(
+              leftActions: _buildActionButtons(),
+              mainActions: _buildScreenSwitcher(),
+              rightActions: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()],
+              ),
             ),
             const SizedBox(height: 16),
             Expanded(child: _buildScreen()),
@@ -386,6 +375,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
 
   Widget _buildActionButtons() {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         WidgetsPanel(
           padding: const EdgeInsets.all(8),
