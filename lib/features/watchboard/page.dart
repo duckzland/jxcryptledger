@@ -6,6 +6,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../core/locator.dart';
+import '../../widgets/action_bar.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -123,26 +124,9 @@ class _WatchboardPageState extends State<WatchboardPage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(spacing: 20, children: [_buildDatabaseAction()]),
-                  ),
-                ),
-                _buildMainAction(),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Wrap(spacing: 20, children: [_buildLinkedAction()]),
-                  ),
-                ),
-              ],
-            ),
+            WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildMainAction(), rightActions: _buildLinkedAction()),
             if (_enableTickers) SizedBox(height: 16),
             if (_enableTickers) Row(children: [Expanded(child: _buildTickers())]),
 
@@ -208,7 +192,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
         } else if (maxPerRow >= 2) {
           perRow = 2;
         } else {
-          perRow = 1;
+          perRow = 2;
         }
 
         final rows = (totalTickers / perRow).ceil();

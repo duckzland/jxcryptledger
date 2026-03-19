@@ -52,13 +52,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
 
     return Padding(
-      padding: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.only(top: 20, bottom: 20),
       child: Form(
         key: _formKey,
         child: ListView.separated(
           padding: EdgeInsets.zero,
           itemCount: editableKeys.length + 1,
-          separatorBuilder: (context, index) => const SizedBox(height: 24),
+          separatorBuilder: (context, index) => const SizedBox(height: 20),
           itemBuilder: (context, index) {
             return Center(
               child: ConstrainedBox(
@@ -76,10 +76,16 @@ class _SettingsPageState extends State<SettingsPage> {
     if (index == editableKeys.length) {
       return Padding(
         padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [_buildResetButton(editableKeys), const SizedBox(width: 12), _buildSaveButton()],
+        child: Center(
+          child: Wrap(
+            direction: Axis.horizontal,
+            runSpacing: 20,
+            spacing: 10,
+            runAlignment: WrapAlignment.center,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [_buildResetButton(editableKeys), _buildSaveButton()],
+          ),
         ),
       );
     }

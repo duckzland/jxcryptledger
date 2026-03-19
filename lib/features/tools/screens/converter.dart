@@ -67,54 +67,118 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
         child: WidgetsPanel(
           padding: const EdgeInsets.all(24.0),
           child: Form(
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth > 800) {
+                  return Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
 
-                    Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                          Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.arrow_forward, size: 24)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55),
+                            child: Icon(Icons.arrow_forward, size: 24),
+                          ),
 
-                    Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+                          Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
 
-                    const SizedBox(width: 20),
+                          const SizedBox(width: 20),
 
-                    _buildCryptoInputColumn(
-                      "",
-                      WidgetsButton(
-                        icon: Icons.swap_horiz,
-                        tooltip: "Convert",
-                        padding: const EdgeInsets.all(0),
-                        iconSize: 24,
-                        minimumSize: const Size(54, 54),
-                        evaluator: (s) {
-                          final int source = _selectedSource ?? -1;
-                          final int target = _selectedTarget ?? -1;
-                          final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
+                          _buildCryptoInputColumn(
+                            "",
+                            WidgetsButton(
+                              icon: Icons.swap_horiz,
+                              tooltip: "Convert",
+                              padding: const EdgeInsets.all(0),
+                              iconSize: 24,
+                              minimumSize: const Size(54, 54),
+                              evaluator: (s) {
+                                final int source = _selectedSource ?? -1;
+                                final int target = _selectedTarget ?? -1;
+                                final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
 
-                          if (source < 0 || target < 0 || amount < 0) {
-                            s.disable();
-                          } else {
-                            s.action();
-                          }
-                        },
-                        onPressed: (_) {
-                          setState(() {
-                            _getRate();
-                          });
-                        },
+                                if (source < 0 || target < 0 || amount < 0) {
+                                  s.disable();
+                                } else {
+                                  s.action();
+                                }
+                              },
+                              onPressed: (_) {
+                                setState(() {
+                                  _getRate();
+                                });
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
 
-                _buildCalculatedResult(),
+                      _buildCalculatedResult(),
 
-                const SizedBox(height: 28),
-              ],
+                      const SizedBox(height: 28),
+                    ],
+                  );
+                } else {
+                  return Wrap(
+                    direction: Axis.horizontal,
+                    runSpacing: 20,
+                    spacing: 10,
+                    runAlignment: WrapAlignment.center,
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+                          const SizedBox(width: 10),
+                          Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                        ],
+                      ),
+
+                      Row(
+                        children: [
+                          Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+                          const SizedBox(width: 10),
+                          _buildCryptoInputColumn(
+                            "",
+                            WidgetsButton(
+                              icon: Icons.swap_horiz,
+                              tooltip: "Convert",
+                              padding: const EdgeInsets.all(0),
+                              iconSize: 24,
+                              minimumSize: const Size(54, 54),
+                              evaluator: (s) {
+                                final int source = _selectedSource ?? -1;
+                                final int target = _selectedTarget ?? -1;
+                                final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
+
+                                if (source < 0 || target < 0 || amount < 0) {
+                                  s.disable();
+                                } else {
+                                  s.action();
+                                }
+                              },
+                              onPressed: (_) {
+                                setState(() {
+                                  _getRate();
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+                      _buildCalculatedResult(),
+                      const SizedBox(height: 28),
+                    ],
+                  );
+                }
+              },
             ),
           ),
         ),

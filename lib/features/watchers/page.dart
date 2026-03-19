@@ -6,6 +6,7 @@ import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../mixins/sortable_table.dart';
+import '../../widgets/action_bar.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -101,18 +102,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(spacing: 20, children: [_buildDatabaseAction()]),
-                  ),
-                ),
-                _buildAction(),
-                const Expanded(child: SizedBox()),
-              ],
-            ),
+            WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildAction()),
             const SizedBox(height: 16),
             Expanded(child: _buildTable()),
           ],

@@ -57,33 +57,75 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
         child: WidgetsPanel(
           padding: const EdgeInsets.all(24.0),
           child: Form(
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth > 800) {
+                  return Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
 
-                    Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                          Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.arrow_forward, size: 24)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55),
+                            child: Icon(Icons.arrow_forward, size: 24),
+                          ),
 
-                    Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+                          Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.clear, size: 24)),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.clear, size: 24)),
 
-                    Expanded(child: _buildCryptoInputColumn("Sell Rate:", _buildRatesAmountField())),
+                          Expanded(child: _buildCryptoInputColumn("Sell Rate:", _buildRatesAmountField())),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.swap_horiz, size: 24)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55),
+                            child: Icon(Icons.swap_horiz, size: 24),
+                          ),
 
-                    Expanded(child: _buildCryptoInputColumn("Buyback Rate:", _buildRatesRevertAmountField())),
-                  ],
-                ),
+                          Expanded(child: _buildCryptoInputColumn("Buyback Rate:", _buildRatesRevertAmountField())),
+                        ],
+                      ),
 
-                _buildCalculatedResult(),
+                      _buildCalculatedResult(),
 
-                const SizedBox(height: 28),
-              ],
+                      const SizedBox(height: 28),
+                    ],
+                  );
+                } else {
+                  return Wrap(
+                    direction: Axis.horizontal,
+                    runSpacing: 20,
+                    spacing: 10,
+                    runAlignment: WrapAlignment.center,
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+                          const SizedBox(width: 10),
+                          Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                        ],
+                      ),
+                      Row(children: [Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField()))]),
+                      Row(
+                        children: [
+                          Expanded(child: _buildCryptoInputColumn("Sell Rate:", _buildRatesAmountField())),
+                          const SizedBox(width: 10),
+                          Expanded(child: _buildCryptoInputColumn("Buyback Rate:", _buildRatesRevertAmountField())),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+                      _buildCalculatedResult(),
+                      const SizedBox(height: 28),
+                    ],
+                  );
+                }
+              },
             ),
           ),
         ),

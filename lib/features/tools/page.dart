@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
 import '../../core/locator.dart';
+import '../../widgets/action_bar.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
@@ -61,13 +62,7 @@ class _ToolsPageState extends State<ToolsPage> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(child: SizedBox()),
-                _buildAction(),
-                Expanded(child: SizedBox()),
-              ],
-            ),
+            WidgetsActionBar(mainActions: _buildAction()),
             const SizedBox(height: 16),
             Expanded(child: _buildScreen()),
           ],
