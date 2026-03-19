@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
@@ -107,63 +109,67 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> with 
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: DataTable2(
-              columnSpacing: 12,
-              horizontalMargin: 12,
-              headingRowHeight: AppTheme.tableHeadingRowHeight,
-              dataRowHeight: AppTheme.tableDataRowMinHeight,
-              showCheckboxColumn: false,
-              sortColumnIndex: sortColumnIndex,
-              sortAscending: sortAscending,
-              isHorizontalScrollBarVisible: false,
-              columns: [
-                DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
-                DataColumn2(
-                  label: Text('Balance '),
-                  size: ColumnSize.M,
-                  onSort: (col, asc) => onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
-                ),
-                DataColumn2(
-                  label: Text('From '),
-                  size: ColumnSize.M,
-                  onSort: (col, asc) => onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
-                ),
-                DataColumn2(
-                  label: Text('To '),
-                  size: ColumnSize.M,
-                  onSort: (col, asc) => onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc),
-                ),
-                const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
-                DataColumn2(
-                  label: const Text('Status '),
-                  fixedWidth: 100,
-                  onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc),
-                ),
-                const DataColumn2(label: Text('Actions'), fixedWidth: 130),
-              ],
-              rows: table.map((r) {
-                return DataRow(
-                  cells: [
-                    DataCell(Text(r['date'] ?? '')),
-                    DataCell(Text(r['balance'] ?? '')),
-                    DataCell(Text(r['source'] ?? '')),
-                    DataCell(Text(r['result'] ?? '')),
-                    DataCell(Text(r['rate'] ?? '')),
-                    DataCell(Text(r['status'] ?? '')),
-                    DataCell(
-                      TransactionsWidgetsButtons(
-                        tx: r['tx'],
-                        cryptosController: _cryptosController,
-                        txController: _txController,
-                        onAction: () {
-                          widget.onStatusChanged();
-                          setState(() {});
-                        },
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
+              child: DataTable2(
+                minWidth: 1200,
+                columnSpacing: 12,
+                horizontalMargin: 12,
+                headingRowHeight: AppTheme.tableHeadingRowHeight,
+                dataRowHeight: AppTheme.tableDataRowMinHeight,
+                showCheckboxColumn: false,
+                sortColumnIndex: sortColumnIndex,
+                sortAscending: sortAscending,
+                isHorizontalScrollBarVisible: false,
+                columns: [
+                  DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
+                  DataColumn2(
+                    label: Text('Balance '),
+                    size: ColumnSize.M,
+                    onSort: (col, asc) => onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
+                  ),
+                  DataColumn2(
+                    label: Text('From '),
+                    size: ColumnSize.M,
+                    onSort: (col, asc) => onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
+                  ),
+                  DataColumn2(
+                    label: Text('To '),
+                    size: ColumnSize.M,
+                    onSort: (col, asc) => onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc),
+                  ),
+                  const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
+                  DataColumn2(
+                    label: const Text('Status '),
+                    fixedWidth: 100,
+                    onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc),
+                  ),
+                  const DataColumn2(label: Text('Actions'), fixedWidth: 130),
+                ],
+                rows: table.map((r) {
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(r['date'] ?? '')),
+                      DataCell(Text(r['balance'] ?? '')),
+                      DataCell(Text(r['source'] ?? '')),
+                      DataCell(Text(r['result'] ?? '')),
+                      DataCell(Text(r['rate'] ?? '')),
+                      DataCell(Text(r['status'] ?? '')),
+                      DataCell(
+                        TransactionsWidgetsButtons(
+                          tx: r['tx'],
+                          cryptosController: _cryptosController,
+                          txController: _txController,
+                          onAction: () {
+                            widget.onStatusChanged();
+                            setState(() {});
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              }).toList(),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],

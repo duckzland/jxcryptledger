@@ -74,171 +74,178 @@ class _AppLayoutState extends State<AppLayout> {
 
         // logln("message: Building AppLayout for location: $location");
 
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: AppTheme.columnHeaderBg,
-            centerTitle: true,
-            leadingWidth: 210,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: Center(
-                child: Wrap(
-                  spacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    WidgetsButton(
-                      icon: Icons.account_balance_wallet,
-                      padding: const EdgeInsets.all(8),
-                      iconSize: 20,
-                      minimumSize: const Size(40, 40),
-                      tooltip: "Manage Transactions",
-                      evaluator: (s) {
-                        if (location == "/transactions" || location == "/") {
-                          s.active();
-                        } else {
-                          s.normal();
-                        }
-                      },
-                      onPressed: (s) {
-                        context.go("/transactions");
-                      },
-                    ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final effectiveTitle = width < 800 ? "" : _title;
 
-                    WidgetsButton(
-                      icon: Icons.candlestick_chart,
-                      padding: const EdgeInsets.all(8),
-                      iconSize: 20,
-                      minimumSize: const Size(40, 40),
-                      tooltip: "Display Watchboard",
-                      evaluator: (s) {
-                        if (location == "/watchboard") {
-                          s.active();
-                        } else {
-                          s.normal();
-                        }
-                      },
-                      onPressed: (s) {
-                        context.go("/watchboard");
-                      },
-                    ),
+            return Scaffold(
+              appBar: AppBar(
+                backgroundColor: AppTheme.columnHeaderBg,
+                centerTitle: true,
+                leadingWidth: 210,
+                leading: Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Center(
+                    child: Wrap(
+                      spacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        WidgetsButton(
+                          icon: Icons.account_balance_wallet,
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 20,
+                          minimumSize: const Size(40, 40),
+                          tooltip: "Manage Transactions",
+                          evaluator: (s) {
+                            if (location == "/transactions" || location == "/") {
+                              s.active();
+                            } else {
+                              s.normal();
+                            }
+                          },
+                          onPressed: (s) {
+                            context.go("/transactions");
+                          },
+                        ),
 
-                    WidgetsButton(
-                      icon: Icons.notification_add,
-                      padding: const EdgeInsets.all(8),
-                      iconSize: 20,
-                      minimumSize: const Size(40, 40),
-                      tooltip: "Manage Rate Watchers",
-                      evaluator: (s) {
-                        if (location == "/watchers") {
-                          s.active();
-                        } else {
-                          s.normal();
-                        }
-                      },
-                      onPressed: (s) {
-                        context.go("/watchers");
-                      },
-                    ),
+                        WidgetsButton(
+                          icon: Icons.candlestick_chart,
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 20,
+                          minimumSize: const Size(40, 40),
+                          tooltip: "Display Watchboard",
+                          evaluator: (s) {
+                            if (location == "/watchboard") {
+                              s.active();
+                            } else {
+                              s.normal();
+                            }
+                          },
+                          onPressed: (s) {
+                            context.go("/watchboard");
+                          },
+                        ),
 
-                    WidgetsButton(
-                      icon: Icons.handyman,
-                      padding: const EdgeInsets.all(8),
-                      iconSize: 20,
-                      minimumSize: const Size(40, 40),
-                      tooltip: "Use Crypto Tools",
-                      evaluator: (s) {
-                        if (location == "/tools") {
-                          s.active();
-                        } else {
-                          s.normal();
-                        }
-                      },
-                      onPressed: (s) {
-                        context.go("/tools");
-                      },
-                    ),
+                        WidgetsButton(
+                          icon: Icons.notification_add,
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 20,
+                          minimumSize: const Size(40, 40),
+                          tooltip: "Manage Rate Watchers",
+                          evaluator: (s) {
+                            if (location == "/watchers") {
+                              s.active();
+                            } else {
+                              s.normal();
+                            }
+                          },
+                          onPressed: (s) {
+                            context.go("/watchers");
+                          },
+                        ),
 
-                    WidgetsButton(
-                      icon: Icons.settings,
-                      padding: const EdgeInsets.all(8),
-                      iconSize: 20,
-                      minimumSize: const Size(40, 40),
-                      tooltip: "Settings",
-                      evaluator: (s) {
-                        if (location == "/settings") {
-                          s.active();
-                        } else {
-                          s.normal();
-                        }
-                      },
-                      onPressed: (s) {
-                        context.go("/settings");
-                      },
+                        WidgetsButton(
+                          icon: Icons.handyman,
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 20,
+                          minimumSize: const Size(40, 40),
+                          tooltip: "Use Crypto Tools",
+                          evaluator: (s) {
+                            if (location == "/tools") {
+                              s.active();
+                            } else {
+                              s.normal();
+                            }
+                          },
+                          onPressed: (s) {
+                            context.go("/tools");
+                          },
+                        ),
+
+                        WidgetsButton(
+                          icon: Icons.settings,
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 20,
+                          minimumSize: const Size(40, 40),
+                          tooltip: "Settings",
+                          evaluator: (s) {
+                            if (location == "/settings") {
+                              s.active();
+                            } else {
+                              s.normal();
+                            }
+                          },
+                          onPressed: (s) {
+                            context.go("/settings");
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-            title: Text(_title),
-            actions: [
-              Wrap(
-                spacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  WidgetsButton(
-                    icon: Icons.refresh,
-                    padding: const EdgeInsets.all(8),
-                    iconSize: 20,
-                    minimumSize: const Size(40, 40),
-                    tooltip: "Refresh Cryptos",
-                    evaluator: (s) {
-                      _isFetchingCryptos ? s.progress() : s.reset();
-                    },
-                    onPressed: (s) async {
-                      s.progress();
-                      try {
-                        await _cryptosController.fetch();
-                        widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-                      } catch (e) {
-                        if (e is NetworkingException) {
-                          widgetsNotifyError(e.userMessage);
-                        }
-                      } finally {
-                        s.reset();
-                      }
-                    },
                   ),
-
-                  if (hasRates)
-                    WidgetsButton(
-                      icon: Icons.autorenew,
-                      padding: const EdgeInsets.all(8),
-                      iconSize: 20,
-                      minimumSize: const Size(40, 40),
-                      tooltip: "Refresh Rates",
-                      evaluator: (s) {
-                        _isFetchingRates ? s.progress() : s.reset();
-                      },
-                      onPressed: (s) async {
-                        s.progress();
-                        try {
-                          await _ratesController.refreshRates();
-                          widgetsNotifySuccess("Refreshed rates from exchange.");
-                        } catch (e) {
-                          if (e is NetworkingException) {
-                            widgetsNotifyError(e.userMessage);
+                ),
+                title: Text(effectiveTitle),
+                actions: [
+                  Wrap(
+                    spacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      WidgetsButton(
+                        icon: Icons.refresh,
+                        padding: const EdgeInsets.all(8),
+                        iconSize: 20,
+                        minimumSize: const Size(40, 40),
+                        tooltip: "Refresh Cryptos",
+                        evaluator: (s) {
+                          _isFetchingCryptos ? s.progress() : s.reset();
+                        },
+                        onPressed: (s) async {
+                          s.progress();
+                          try {
+                            await _cryptosController.fetch();
+                            widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
+                          } catch (e) {
+                            if (e is NetworkingException) {
+                              widgetsNotifyError(e.userMessage);
+                            }
+                          } finally {
+                            s.reset();
                           }
-                        } finally {
-                          s.reset();
-                        }
-                      },
-                    ),
+                        },
+                      ),
+
+                      if (hasRates)
+                        WidgetsButton(
+                          icon: Icons.autorenew,
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 20,
+                          minimumSize: const Size(40, 40),
+                          tooltip: "Refresh Rates",
+                          evaluator: (s) {
+                            _isFetchingRates ? s.progress() : s.reset();
+                          },
+                          onPressed: (s) async {
+                            s.progress();
+                            try {
+                              await _ratesController.refreshRates();
+                              widgetsNotifySuccess("Refreshed rates from exchange.");
+                            } catch (e) {
+                              if (e is NetworkingException) {
+                                widgetsNotifyError(e.userMessage);
+                              }
+                            } finally {
+                              s.reset();
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
                 ],
               ),
-              const SizedBox(width: 16),
-            ],
-          ),
-          body: Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), child: widget.child),
+              body: Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), child: widget.child),
+            );
+          },
         );
       },
     );
