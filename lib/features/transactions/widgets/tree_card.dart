@@ -102,14 +102,12 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
         padding: const EdgeInsets.all(12),
         child: CustomMultiChildLayout(
           delegate: WidgetsLayoutsWrappedTwoColumns(
-            onWrapChanged: (wrap) {
-              final double target = wrap ? 95 : 40;
-
-              if (_panelHeight == target) return;
+            onWrapChanged: (int totalRows, double currentHeight) {
+              if (_panelHeight == currentHeight) return;
 
               SchedulerBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
-                setState(() => _panelHeight = target);
+                setState(() => _panelHeight = currentHeight);
               });
             },
 
@@ -117,12 +115,12 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
           ),
           children: [
             LayoutId(id: 'left', child: _buildLeftGroup()),
-            LayoutId(id: 'middle', child: _buildMiddleGroup()),
-            LayoutId(id: 'right', child: _buildRightGroup()),
+            if (_branchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
+            if (!(!_hasLeaf || _balance <= 0)) LayoutId(id: 'right', child: _buildRightGroup()),
             LayoutId(
               id: 'trailing',
               child: Padding(
-                padding: EdgeInsets.only(left: 10, right: 25, top: 6),
+                padding: EdgeInsets.only(right: 25, top: 6),
                 child: TransactionsWidgetsButtons(
                   tx: widget.tx,
                   cryptosController: _cryptosController,
@@ -139,6 +137,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
 
   Widget _buildLeftGroup() {
     bool showBalance = _hasLeaf && _rBalance > 0;
+
     Color plColor = _fgColor;
     if (_rProfitPercentage > 0) {
       plColor = const Color.fromARGB(255, 112, 225, 104);
@@ -150,39 +149,55 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
     final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
     final rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? '';
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        WidgetsHeader(
-          titleColor: _fgColor,
-          title: "${tx.srAmountText} $srSymbol → ${tx.rrAmountText} $rrSymbol",
-          subtitle: tx.timestampAsFormattedDate,
-          reversed: true,
+    final controller = ScrollController();
+    double dragStartX = 0.0;
+    double scrollStartX = 0.0;
+
+    return Listener(
+      onPointerDown: (event) {
+        dragStartX = event.position.dx;
+        scrollStartX = controller.offset;
+      },
+      onPointerMove: (event) {
+        final delta = dragStartX - event.position.dx;
+        final newOffset = (scrollStartX + delta).clamp(0.0, controller.position.maxScrollExtent);
+        controller.jumpTo(newOffset);
+      },
+      child: SingleChildScrollView(
+        controller: controller,
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Row(
+          spacing: 20,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            WidgetsHeader(
+              titleColor: _fgColor,
+              title: "${tx.srAmountText} $srSymbol → ${tx.rrAmountText} $rrSymbol",
+              subtitle: tx.timestampAsFormattedDate,
+              reversed: true,
+            ),
+            WidgetsHeader(titleColor: _fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
+            WidgetsHeader(titleColor: _fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
+            if (showBalance)
+              WidgetsHeader(
+                titleColor: _fgColor,
+                title: "${Utils.formatSmartDouble(_rBalance)} $rrSymbol",
+                subtitle: "Balance",
+                reversed: true,
+              ),
+            if (showBalance)
+              WidgetsHeader(
+                titleColor: plColor,
+                title:
+                    "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)} $srSymbol "
+                    "(${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfitPercentage, maxDecimals: 2)}%)",
+                subtitle: "Return (%)",
+                reversed: true,
+              ),
+          ],
         ),
-        const SizedBox(width: 20),
-        WidgetsHeader(titleColor: _fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
-        const SizedBox(width: 20),
-        WidgetsHeader(titleColor: _fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
-        if (showBalance) const SizedBox(width: 20),
-        if (showBalance)
-          WidgetsHeader(
-            titleColor: _fgColor,
-            title: "${Utils.formatSmartDouble(_rBalance)} $rrSymbol",
-            subtitle: "Balance",
-            reversed: true,
-          ),
-
-        if (showBalance) const SizedBox(width: 20),
-
-        if (showBalance)
-          WidgetsHeader(
-            titleColor: plColor,
-            title:
-                "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)} $srSymbol (${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfitPercentage, maxDecimals: 2)}%)",
-            subtitle: "Return (%)",
-            reversed: true,
-          ),
-      ],
+      ),
     );
   }
 
@@ -199,36 +214,83 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
     final tx = widget.tx;
     final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        WidgetsHeader(titleColor: _fgColor, title: "${Utils.formatSmartDouble(_capital)} $srSymbol", subtitle: "Capital", reversed: true),
-        const SizedBox(width: 15),
-        WidgetsHeader(titleColor: _fgColor, title: "${Utils.formatSmartDouble(_balance)} $srSymbol", subtitle: "Balance", reversed: true),
-        const SizedBox(width: 15),
-        WidgetsHeader(
-          titleColor: plColor,
-          title:
-              "${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profit)} $srSymbol (${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profitPercentage, maxDecimals: 2)}%)",
-          subtitle: "Return (%)",
-          reversed: true,
+    final controller = ScrollController();
+    double dragStartX = 0.0;
+    double scrollStartX = 0.0;
+
+    return Listener(
+      onPointerDown: (event) {
+        dragStartX = event.position.dx;
+        scrollStartX = controller.offset;
+      },
+      onPointerMove: (event) {
+        final delta = dragStartX - event.position.dx;
+        final newOffset = (scrollStartX + delta).clamp(0.0, controller.position.maxScrollExtent);
+        controller.jumpTo(newOffset);
+      },
+      child: SingleChildScrollView(
+        controller: controller,
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 15,
+          children: [
+            WidgetsHeader(
+              titleColor: _fgColor,
+              title: "${Utils.formatSmartDouble(_capital)} $srSymbol",
+              subtitle: "Capital",
+              reversed: true,
+            ),
+            WidgetsHeader(
+              titleColor: _fgColor,
+              title: "${Utils.formatSmartDouble(_balance)} $srSymbol",
+              subtitle: "Balance",
+              reversed: true,
+            ),
+            WidgetsHeader(
+              titleColor: plColor,
+              title:
+                  "${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profit)} $srSymbol "
+                  "(${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profitPercentage, maxDecimals: 2)}%)",
+              subtitle: "Return (%)",
+              reversed: true,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildMiddleGroup() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: _branchAmounts.entries.map((entry) {
-        final symbol = _cryptosController.getSymbol(entry.key) ?? '';
-        final amount = Utils.formatSmartDouble(entry.value);
+    final controller = ScrollController();
+    double dragStartX = 0.0;
+    double scrollStartX = 0.0;
 
-        return Padding(
-          padding: const EdgeInsets.only(right: 25),
-          child: WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: symbol, reversed: true),
-        );
-      }).toList(),
+    return Listener(
+      onPointerDown: (event) {
+        dragStartX = event.position.dx;
+        scrollStartX = controller.offset;
+      },
+      onPointerMove: (event) {
+        final delta = dragStartX - event.position.dx;
+        controller.jumpTo((scrollStartX + delta).clamp(0.0, controller.position.maxScrollExtent));
+      },
+      child: SingleChildScrollView(
+        controller: controller,
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Row(
+          spacing: 25,
+          mainAxisSize: MainAxisSize.min,
+          children: _branchAmounts.entries.map((entry) {
+            final symbol = _cryptosController.getSymbol(entry.key) ?? '';
+            final amount = Utils.formatSmartDouble(entry.value);
+
+            return WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: symbol, reversed: true);
+          }).toList(),
+        ),
+      ),
     );
   }
 }
