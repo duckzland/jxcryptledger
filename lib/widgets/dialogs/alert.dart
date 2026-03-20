@@ -64,22 +64,32 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
             actionsAlignment: MainAxisAlignment.center,
             title: Text(widget.dialogTitle),
             content: Text(widget.dialogMessage),
+
             actions: [
-              WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: widget.dialogConfirmLabel,
-                initialState: widget.initialState,
-                onPressed: (_) => doAction<T>(
-                  context,
-                  dialogContext: dialogContext,
-                  data: widget.actionData,
-                  action: widget.actionCallback,
-                  onStart: widget.actionStartCallback,
-                  onComplete: widget.actionCompleteCallback,
-                  successMessage: widget.actionSuccessMessage,
-                  errorMessage: widget.actionErrorMessage,
-                ),
+              Wrap(
+                direction: Axis.horizontal,
+                runSpacing: 14,
+                spacing: 10,
+                runAlignment: WrapAlignment.center,
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
+                  WidgetsButton(
+                    label: widget.dialogConfirmLabel,
+                    initialState: widget.initialState,
+                    onPressed: (_) => doAction<T>(
+                      context,
+                      dialogContext: dialogContext,
+                      data: widget.actionData,
+                      action: widget.actionCallback,
+                      onStart: widget.actionStartCallback,
+                      onComplete: widget.actionCompleteCallback,
+                      successMessage: widget.actionSuccessMessage,
+                      errorMessage: widget.actionErrorMessage,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

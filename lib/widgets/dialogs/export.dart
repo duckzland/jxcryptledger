@@ -92,15 +92,24 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
             title: Text(widget.dialogTitle),
             content: Text(widget.dialogMessage),
             actions: [
-              WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: widget.dialogExportLabel,
-                initialState: widget.initialState,
-                onPressed: (_) async {
-                  Navigator.pop(dialogContext);
-                  await _selectAndExport();
-                },
+              Wrap(
+                direction: Axis.horizontal,
+                runSpacing: 14,
+                spacing: 10,
+                runAlignment: WrapAlignment.center,
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
+                  WidgetsButton(
+                    label: widget.dialogExportLabel,
+                    initialState: widget.initialState,
+                    onPressed: (_) async {
+                      Navigator.pop(dialogContext);
+                      await _selectAndExport();
+                    },
+                  ),
+                ],
               ),
             ],
           ),

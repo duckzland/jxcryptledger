@@ -160,111 +160,119 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 1600, maxWidth: 1600, minHeight: 200, maxHeight: 600),
-        child: IntrinsicWidth(
-          child: IntrinsicHeight(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildTitle(),
-                      const SizedBox(height: 24, width: 1600),
-
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 260,
-                            child: WidgetsPanel(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("On date:", style: TextStyle(fontWeight: FontWeight.w600)),
-                                  const SizedBox(height: 16),
-                                  _buildTimestampField(),
-                                  const SizedBox(height: 16),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: WidgetsPanel(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Flexible(flex: 3, child: _buildSourceAmountField()),
-                                      if (isRoot) const SizedBox(width: 12),
-                                      if (isRoot) Flexible(flex: 2, child: _buildSourceCryptoField()),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: WidgetsPanel(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("To:", style: TextStyle(fontWeight: FontWeight.w600)),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Flexible(flex: 3, child: _buildResultAmountField()),
-                                      if (!(!isRoot && !_isActive)) const SizedBox(width: 12),
-                                      if (!(!isRoot && !_isActive)) Flexible(flex: 2, child: _buildResultCryptoField()),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      WidgetsPanel(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
+        constraints: const BoxConstraints(maxWidth: 1600),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 20,
+                children: [
+                  _buildTitle(),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth > 900) {
+                        return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 16,
                           children: [
-                            const Text("Notes:", style: TextStyle(fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 24),
-                            _buildNotesField(),
-                            const SizedBox(height: 8),
-                          ],
-                        ),
-                      ),
+                            SizedBox(width: 260, child: _buildDatePanel()),
 
-                      const SizedBox(height: 24),
-                      WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons()),
-                    ],
+                            Expanded(child: _buildFromPanel()),
+
+                            Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
+
+                            Expanded(child: _buildToPanel()),
+                          ],
+                        );
+                      } else {
+                        return Column(spacing: 20, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
+                      }
+                    },
                   ),
-                ),
+                  _buildNotesPanel(),
+                  _buildButtonPanel(),
+                ],
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildDatePanel() {
+    return WidgetsPanel(
+      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
+      child: Column(
+        spacing: 16,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("On date:", style: TextStyle(fontWeight: FontWeight.w600)),
+          _buildTimestampField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFromPanel() {
+    return WidgetsPanel(
+      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
+      child: Column(
+        spacing: 16,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
+          Row(
+            spacing: 12,
+            children: [
+              Flexible(flex: 3, child: _buildSourceAmountField()),
+              if (isRoot) Flexible(flex: 2, child: _buildSourceCryptoField()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToPanel() {
+    return WidgetsPanel(
+      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
+      child: Column(
+        spacing: 16,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("To:", style: TextStyle(fontWeight: FontWeight.w600)),
+          Row(
+            spacing: 12,
+            children: [
+              Flexible(flex: 3, child: _buildResultAmountField()),
+              if (!(!isRoot && !_isActive)) Flexible(flex: 2, child: _buildResultCryptoField()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesPanel() {
+    return WidgetsPanel(
+      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
+      child: Column(
+        spacing: 16,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Notes:", style: TextStyle(fontWeight: FontWeight.w600)),
+          _buildNotesField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButtonPanel() {
+    return WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons());
   }
 
   Widget _buildTitle() {

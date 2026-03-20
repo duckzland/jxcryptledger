@@ -83,19 +83,28 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
             title: Text(widget.dialogTitle),
             content: Text(widget.dialogMessage),
             actions: [
-              WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: widget.dialogImportLabel,
-                initialState: widget.initialState,
-                onPressed: (_) async {
-                  try {
-                    Navigator.pop(dialogContext);
-                    await _selectAndImport();
-                  } catch (e) {
-                    widgetsNotifyError("Failed to import file.");
-                  }
-                },
+              Wrap(
+                direction: Axis.horizontal,
+                runSpacing: 14,
+                spacing: 10,
+                runAlignment: WrapAlignment.center,
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
+                  WidgetsButton(
+                    label: widget.dialogImportLabel,
+                    initialState: widget.initialState,
+                    onPressed: (_) async {
+                      try {
+                        Navigator.pop(dialogContext);
+                        await _selectAndImport();
+                      } catch (e) {
+                        widgetsNotifyError("Failed to import file.");
+                      }
+                    },
+                  ),
+                ],
               ),
             ],
           ),
