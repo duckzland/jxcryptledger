@@ -61,21 +61,30 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
             title: Text(widget.dialogTitle),
             content: Text(widget.dialogMessage),
             actions: [
-              WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
-              const SizedBox(width: 12),
-              WidgetsButton(
-                label: widget.dialogWipeLabel,
-                initialState: WidgetsButtonActionState.error,
-                onPressed: (_) async {
-                  try {
-                    await widget.onWipe();
-                    Navigator.pop(dialogContext);
-                    widgetsNotifySuccess("Database reset complete.");
-                  } catch (e) {
-                    logln("[WIPE] Failed to reset database: $e");
-                    widgetsNotifyError("Failed to reset database.");
-                  }
-                },
+              Wrap(
+                direction: Axis.horizontal,
+                runSpacing: 14,
+                spacing: 10,
+                runAlignment: WrapAlignment.center,
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
+                  WidgetsButton(
+                    label: widget.dialogWipeLabel,
+                    initialState: WidgetsButtonActionState.error,
+                    onPressed: (_) async {
+                      try {
+                        await widget.onWipe();
+                        Navigator.pop(dialogContext);
+                        widgetsNotifySuccess("Database reset complete.");
+                      } catch (e) {
+                        logln("[WIPE] Failed to reset database: $e");
+                        widgetsNotifyError("Failed to reset database.");
+                      }
+                    },
+                  ),
+                ],
               ),
             ],
           ),

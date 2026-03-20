@@ -291,6 +291,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
 
     return WidgetsPanel(
       child: Column(
+        spacing: 20,
         children: [
           _buildHeader(
             txs: txs,
@@ -301,8 +302,6 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
             avgPL: avgPL,
             plPercentage: plPercentage,
           ),
-
-          const SizedBox(height: 20),
 
           _buildTable(currentRate),
         ],
