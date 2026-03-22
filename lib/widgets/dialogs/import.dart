@@ -73,6 +73,14 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
   }
 
   Future<void> _showDialog(BuildContext context) async {
+    final screenWidth = MediaQuery.of(context).size.width;
+    double dialogWidth;
+    if (screenWidth > 360) {
+      dialogWidth = 300;
+    } else {
+      dialogWidth = screenWidth * 0.9;
+    }
+
     await showDialog(
       context: context,
       builder: (dialogContext) => Scaffold(
@@ -81,7 +89,10 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
           child: AlertDialog(
             actionsAlignment: MainAxisAlignment.center,
             title: Text(widget.dialogTitle),
-            content: Text(widget.dialogMessage),
+            content: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: dialogWidth),
+              child: Text(widget.dialogMessage),
+            ),
             actions: [
               Wrap(
                 direction: Axis.horizontal,
