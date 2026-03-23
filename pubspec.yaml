@@ -32,7 +32,6 @@ dependencies:
   flutter_local_notifications_windows: ^3.0.0
   path: ^1.9.1
   reorderable_grid_view: ^2.2.8
-  google_fonts: ^8.0.2
 
 dev_dependencies:
   dotenv: ^4.2.0
@@ -47,6 +46,28 @@ flutter:
     - .env 
     - assets/icon.png
   uses-material-design: true
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Inter-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Inter-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Inter-Black.ttf
+          weight: 900
 
 flutter_launcher_icons:
   image_path: "assets/icon.png"
