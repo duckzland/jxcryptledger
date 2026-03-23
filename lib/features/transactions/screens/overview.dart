@@ -396,9 +396,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
   }
 
   Widget _buildTable() {
-    return
-    // @TODO: Why this will only work on SizedBox, while the github docs specified to use Flexible or Expanded?
-    SizedBox(
+    return SizedBox(
       width: double.infinity,
       height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: ScrollConfiguration(
