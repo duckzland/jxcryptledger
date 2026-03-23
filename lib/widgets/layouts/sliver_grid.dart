@@ -5,7 +5,7 @@ class SliverGridDelegateWithMinWidth extends SliverGridDelegate {
   final double itemHeight;
   final double mainAxisSpacing;
   final double crossAxisSpacing;
-  final double horizontalPadding; // extra padding to add
+  final double horizontalPadding;
 
   const SliverGridDelegateWithMinWidth({
     required this.minCrossAxisExtent,
@@ -17,7 +17,6 @@ class SliverGridDelegateWithMinWidth extends SliverGridDelegate {
 
   @override
   SliverGridLayout getLayout(SliverConstraints constraints) {
-    // include padding in the minimum width calculation
     final effectiveMinWidth = minCrossAxisExtent + horizontalPadding;
 
     final crossAxisCount = (constraints.crossAxisExtent / effectiveMinWidth).floor().clamp(1, double.infinity).toInt();
@@ -29,8 +28,8 @@ class SliverGridDelegateWithMinWidth extends SliverGridDelegate {
       crossAxisCount: crossAxisCount,
       mainAxisStride: itemHeight + mainAxisSpacing,
       crossAxisStride: childCrossAxisExtent + crossAxisSpacing,
-      childMainAxisExtent: itemHeight, // locked height
-      childCrossAxisExtent: childCrossAxisExtent, // expands width
+      childMainAxisExtent: itemHeight,
+      childCrossAxisExtent: childCrossAxisExtent,
       reverseCrossAxis: axisDirectionIsReversed(constraints.crossAxisDirection),
     );
   }

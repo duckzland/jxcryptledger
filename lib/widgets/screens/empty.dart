@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme.dart';
+import '../button.dart';
 import '../dialogs/show_form.dart';
 import '../dialogs/import.dart';
 
@@ -28,6 +30,22 @@ class WidgetsScreensEmpty extends StatelessWidget {
     required this.importCallback,
   });
 
+  void _evaluateAddNew(WidgetsButtonState s) {
+    if (addEvaluator() == false) {
+      s.disable();
+    } else {
+      s.action();
+    }
+  }
+
+  void _evaluateImport(WidgetsButtonState s) {
+    if (importEvaluator() == false) {
+      s.disable();
+    } else {
+      s.primary();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -35,7 +53,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.add_circle_outline, size: 60, color: Colors.white30),
+          const Icon(Icons.add_circle_outline, size: 60, color: AppTheme.separator),
           const SizedBox(height: 16),
           Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
@@ -49,14 +67,8 @@ class WidgetsScreensEmpty extends StatelessWidget {
                 label: addTitle,
                 tooltip: addTooltip,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                buildForm: (dialogContext) => addForm(dialogContext),
-                evaluator: (s) {
-                  if (addEvaluator() == false) {
-                    s.disable();
-                  } else {
-                    s.action();
-                  }
-                },
+                buildForm: addForm,
+                evaluator: _evaluateAddNew,
               ),
               WidgetsDialogsImport(
                 key: const Key("import-button-new"),
@@ -67,13 +79,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                 showDialogBeforeImport: false,
                 onImport: importCallback,
-                evaluator: (s) {
-                  if (importEvaluator() == false) {
-                    s.disable();
-                  } else {
-                    s.primary();
-                  }
-                },
+                evaluator: _evaluateImport,
               ),
             ],
           ),
