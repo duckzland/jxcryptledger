@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
 
-  // static const background = Color(0xFF0D1421);
   static const primary = Color(0xFF007ACC);
   static const inputBg = Color(0xFF202023);
-  //static const panelBg = Color(0xFF323546);
+
   static const buttonBg = Color(0xFF28292E);
   static const error = Color(0xFFC62828);
   static const success = Color(0xFF43F436);
@@ -68,9 +68,12 @@ class AppTheme {
   static const double tableDataRowMinHeight = 42;
 
   static ThemeData get dark {
+    final baseTheme = ThemeData(brightness: Brightness.dark);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+
+      textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme),
 
       colorScheme: const ColorScheme.dark(
         surface: background,

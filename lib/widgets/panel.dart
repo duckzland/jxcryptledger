@@ -15,7 +15,7 @@ class WidgetsPanel extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.background,
     this.borderColor,
-    this.borderRadius = 8,
+    this.borderRadius = 16,
   });
 
   @override
@@ -25,8 +25,8 @@ class WidgetsPanel extends StatelessWidget {
       padding: padding,
       decoration: ShapeDecoration(
         color: background ?? AppTheme.panelBg,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: borderColor ?? AppTheme.separator),
+        shape: ContinuousRectangleBorder(
+          side: BorderSide(color: borderColor ?? AppTheme.separator, width: 1.0),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),

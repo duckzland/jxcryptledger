@@ -114,13 +114,13 @@ class _TickersDisplayState extends State<TickersDisplay> {
                       tix.getTitle(),
                       softWrap: false,
                       overflow: TextOverflow.visible,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11, height: 1),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, height: 1),
                     ),
                     Text(
                       tix.getContent(),
                       softWrap: false,
                       overflow: TextOverflow.visible,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 20, height: 1.1, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 19, height: 1.4, fontWeight: FontWeight.bold),
                     ),
                   ]
                 : [
