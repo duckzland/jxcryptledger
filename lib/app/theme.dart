@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
@@ -68,12 +67,10 @@ class AppTheme {
   static const double tableDataRowMinHeight = 42;
 
   static ThemeData get dark {
-    final baseTheme = ThemeData(brightness: Brightness.dark);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-
-      textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme),
+      fontFamily: 'Inter',
 
       colorScheme: const ColorScheme.dark(
         surface: background,

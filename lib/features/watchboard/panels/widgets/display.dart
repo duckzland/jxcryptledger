@@ -128,10 +128,10 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
                 toText,
                 softWrap: false,
                 overflow: TextOverflow.visible,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(height: 1.4, fontSize: 26, fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(height: 1.4, fontSize: 25, fontWeight: FontWeight.w700),
               ),
             ),
-            Text(rateText, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontSize: 13, fontWeight: FontWeight.w400)),
+            Text(rateText, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
             Text(
               inverseText,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400),
