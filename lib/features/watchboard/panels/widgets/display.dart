@@ -122,19 +122,19 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
 
     final text = tix.rate != null && tix.rate! > 0
         ? [
-            Text(fromText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1, fontSize: 16, fontWeight: FontWeight.w500)),
+            Text(fromText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1, fontSize: 14, fontWeight: FontWeight.w600)),
             Flexible(
               child: Text(
                 toText,
                 softWrap: false,
                 overflow: TextOverflow.visible,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(height: 1.3, fontSize: 27, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(height: 1.4, fontSize: 26, fontWeight: FontWeight.w600),
               ),
             ),
-            Text(rateText, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontSize: 14, fontWeight: FontWeight.w400)),
+            Text(rateText, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontSize: 13, fontWeight: FontWeight.w400)),
             Text(
               inverseText,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.1, fontSize: 12, fontWeight: FontWeight.w400),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400),
             ),
           ]
         : [
