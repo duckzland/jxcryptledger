@@ -145,7 +145,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
     return ReorderableGridView.builder(
       gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
-        itemHeight: 110,
+        itemHeight: 105,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
         horizontalPadding: 12,
@@ -180,7 +180,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
         const baseWidth = 140.0;
         const spacing = 8.0;
         const totalTickers = 8;
-        const itemHeight = 50.0;
+        const itemHeight = 47.0;
         final effectiveWidth = baseWidth + spacing;
         final maxPerRow = (constraints.maxWidth / effectiveWidth).floor().clamp(1, totalTickers);
 
@@ -204,7 +204,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
           child: ReorderableGridView.builder(
             gridDelegate: SliverGridDelegateWithMinWidth(
               minCrossAxisExtent: newWidth > 140 ? newWidth : 140,
-              itemHeight: 50,
+              itemHeight: 47.0,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               horizontalPadding: 8,

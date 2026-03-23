@@ -114,13 +114,13 @@ class _TickersDisplayState extends State<TickersDisplay> {
                       tix.getTitle(),
                       softWrap: false,
                       overflow: TextOverflow.visible,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, height: 1, fontWeight: FontWeight.w400),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
                     ),
                     Text(
                       tix.getContent(),
                       softWrap: false,
                       overflow: TextOverflow.visible,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 19, height: 1.4, fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
                     ),
                   ]
                 : [
@@ -128,7 +128,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
                       "Loading...",
                       softWrap: false,
                       overflow: TextOverflow.visible,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(height: 1.4, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(height: 1.4, fontWeight: FontWeight.w600),
                     ),
                   ],
           ),
