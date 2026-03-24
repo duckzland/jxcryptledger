@@ -107,6 +107,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
             WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildAction()),
             const SizedBox(height: 16),
             Expanded(child: _buildTable()),
+            const SizedBox(height: 16),
           ],
         ),
       ),

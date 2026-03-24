@@ -308,6 +308,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
             ),
             const SizedBox(height: 16),
             Expanded(child: _buildScreen()),
+            const SizedBox(height: 16),
           ],
         ),
       ),

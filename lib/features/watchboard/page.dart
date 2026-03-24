@@ -132,6 +132,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
 
             const SizedBox(height: 12),
             Flexible(flex: 10, fit: FlexFit.loose, child: _buildPanels()),
+            const SizedBox(height: 16),
           ],
         ),
       ),

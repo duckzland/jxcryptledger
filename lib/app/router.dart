@@ -9,8 +9,10 @@ import '../features/transactions/page.dart';
 import '../features/unlock/controller.dart';
 import '../features/unlock/page.dart';
 import '../features/watchers/page.dart';
+import 'page.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> shellNavigatorKey = GlobalKey<NavigatorState>();
 
 class AppRouter {
   static final router = GoRouter(
@@ -35,6 +37,7 @@ class AppRouter {
       ),
 
       ShellRoute(
+        navigatorKey: shellNavigatorKey,
         builder: (context, state, child) {
           final location = state.uri.toString();
 
@@ -42,12 +45,27 @@ class AppRouter {
         },
         routes: [
           GoRoute(path: "/", redirect: (context, state) => "/transactions"),
-          GoRoute(path: "/transactions", builder: (context, state) => const TransactionsPage()),
+          GoRoute(
+            path: "/transactions",
+            builder: (context, state) => const AppPage(child: TransactionsPage()),
+          ),
 
-          GoRoute(path: "/watchboard", builder: (context, state) => const WatchboardPage()),
-          GoRoute(path: "/watchers", builder: (context, state) => const WatchersPage()),
-          GoRoute(path: "/tools", builder: (context, state) => const ToolsPage()),
-          GoRoute(path: "/settings", builder: (context, state) => const SettingsPage()),
+          GoRoute(
+            path: "/watchboard",
+            builder: (context, state) => const AppPage(child: WatchboardPage()),
+          ),
+          GoRoute(
+            path: "/watchers",
+            builder: (context, state) => const AppPage(child: WatchersPage()),
+          ),
+          GoRoute(
+            path: "/tools",
+            builder: (context, state) => const AppPage(child: ToolsPage()),
+          ),
+          GoRoute(
+            path: "/settings",
+            builder: (context, state) => const AppPage(child: SettingsPage()),
+          ),
         ],
       ),
     ],

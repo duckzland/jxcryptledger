@@ -15,6 +15,8 @@ class AppTheme {
   static const profit = Color.fromARGB(255, 62, 220, 51);
   static const text = Colors.white;
   static const textMuted = Colors.white70;
+  static const textInactive = Color.fromARGB(83, 255, 255, 255);
+  static const textHalfInactive = Color.fromARGB(114, 255, 255, 255);
 
   static const background = Color(0xFF0D1421);
   static const scrimBackground = Color.fromARGB(255, 6, 7, 10);
@@ -85,17 +87,17 @@ class AppTheme {
         backgroundColor: headerBg,
         foregroundColor: text,
         elevation: 0,
-        titleTextStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 18, color: text),
+        titleTextStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: text),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: inputBg,
-        labelStyle: const TextStyle(fontSize: 16, color: textMuted),
-        floatingLabelStyle: const TextStyle(fontSize: 13, color: text),
+        labelStyle: const TextStyle(fontSize: 14, color: textInactive),
+        floatingLabelStyle: const TextStyle(fontSize: 13, color: textMuted),
         enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: separator)),
-        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: primary)),
-        hintStyle: TextStyle(color: textMuted),
+        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: textInactive)),
+        hintStyle: TextStyle(color: textHalfInactive),
       ),
 
       dividerTheme: const DividerThemeData(color: AppTheme.separator, thickness: 1),
@@ -132,18 +134,18 @@ class AppTheme {
       ),
 
       tooltipTheme: const TooltipThemeData(
-        decoration: BoxDecoration(color: Color(0xFF323546), borderRadius: BorderRadius.all(Radius.circular(4))),
-        textStyle: TextStyle(color: Color(0xFFE0E0E0), fontSize: 14, fontWeight: FontWeight.w500),
+        decoration: BoxDecoration(color: buttonBg, borderRadius: BorderRadius.all(Radius.circular(4))),
+        textStyle: TextStyle(color: textMuted, fontSize: 12, fontWeight: FontWeight.w400),
       ),
 
       dataTableTheme: DataTableThemeData(
-        headingRowColor: WidgetStateProperty.all(AppTheme.columnHeaderBg),
-        headingTextStyle: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500, fontSize: 14),
-        dataRowColor: WidgetStateProperty.all(AppTheme.rowHeaderBg),
-        dataTextStyle: const TextStyle(color: AppTheme.text, fontSize: 14),
+        headingRowColor: WidgetStateProperty.all(columnHeaderBg),
+        headingTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w500, fontSize: 14),
+        dataRowColor: WidgetStateProperty.all(rowHeaderBg),
+        dataTextStyle: const TextStyle(color: text, fontSize: 14),
         dividerThickness: 1,
-        headingRowHeight: AppTheme.tableHeadingRowHeight,
-        dataRowMinHeight: AppTheme.tableDataRowMinHeight,
+        headingRowHeight: tableHeadingRowHeight,
+        dataRowMinHeight: tableDataRowMinHeight,
       ),
     );
   }
