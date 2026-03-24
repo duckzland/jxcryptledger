@@ -78,34 +78,31 @@ class WidgetsButtonState extends State<WidgetsButton> {
     final fg = _foregroundColor();
     final br = Color.lerp(bg, fg, 0.70)!;
 
-    final button = MouseRegion(
-      cursor: _disabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
-      child: ElevatedButton(
-        style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.all(bg),
-          foregroundColor: WidgetStateProperty.all(fg),
-          shadowColor: WidgetStateProperty.all(br),
-          padding: WidgetStateProperty.all(widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
-          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
-          elevation: WidgetStateProperty.all(0),
-          minimumSize: WidgetStateProperty.all(widget.minimumSize ?? Size.zero),
-          mouseCursor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.disabled) ? SystemMouseCursors.basic : SystemMouseCursors.click,
-          ),
+    final button = ElevatedButton(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all(bg),
+        foregroundColor: WidgetStateProperty.all(fg),
+        shadowColor: WidgetStateProperty.all(br),
+        shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+        elevation: WidgetStateProperty.all(0),
+        padding: WidgetStateProperty.all(widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
+        minimumSize: WidgetStateProperty.all(widget.minimumSize ?? Size.zero),
+        mouseCursor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.disabled) ? SystemMouseCursors.basic : SystemMouseCursors.click,
         ),
-        onPressed: _disabled || _inProgress || _isActive
-            ? null
-            : () async {
-                final userPressed = widget.onPressed;
-                if (userPressed != null) {
-                  final res = userPressed(this);
-                  if (res is Future) await res;
-                }
-                // Re-evaluate state after an interaction
-                await _runEvaluator();
-              },
-        child: _buildChild(fg),
       ),
+      onPressed: _disabled || _inProgress || _isActive
+          ? null
+          : () async {
+              final userPressed = widget.onPressed;
+              if (userPressed != null) {
+                final res = userPressed(this);
+                if (res is Future) await res;
+              }
+              // Re-evaluate state after an interaction
+              await _runEvaluator();
+            },
+      child: _buildChild(fg),
     );
 
     if (widget.tooltip != null) {
@@ -114,6 +111,57 @@ class WidgetsButtonState extends State<WidgetsButton> {
 
     return button;
   }
+
+  // Not Working crash on Alert -> Wrap and some icon only button sizing weird
+  // minimumSize: WidgetStateProperty.all(_minSize),
+  // padding: WidgetStateProperty.all(EdgeInsets.zero),
+  // tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  // LayoutBuilder _layoutBuilder(Color fg) {
+  //   return LayoutBuilder(
+  //     builder: (context, constraints) {
+  //       double tw = widget.icon != null ? widget.iconSize ?? 0 : 0;
+
+  //       if (widget.label != null) {
+  //         if (widget.icon != null) {
+  //           tw += 8;
+  //         }
+
+  //         final TextPainter textPainter = TextPainter(
+  //           text: TextSpan(
+  //             text: widget.label ?? "",
+  //             style: TextStyle(color: fg),
+  //           ),
+  //           maxLines: 1,
+  //           textDirection: TextDirection.ltr,
+  //         )..layout();
+
+  //         tw += textPainter.width;
+  //       }
+
+  //       final EdgeInsetsGeometry geometry = widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 8);
+  //       final EdgeInsets resolvedPadding = geometry.resolve(Directionality.of(context));
+
+  //       final double left = resolvedPadding.left;
+  //       final double right = resolvedPadding.right;
+  //       final double top = resolvedPadding.top;
+  //       final double bottom = resolvedPadding.bottom;
+
+  //       EdgeInsets pads = EdgeInsets.only(left: left, right: right, top: top, bottom: top);
+
+  //       if (widget.label != null) {
+  //         final maxSpace = constraints.maxWidth - tw;
+  //         if (maxSpace < (left + right)) {
+  //           double ratio = (left + right) > 0 ? left / (left + right) : 0.5;
+  //           double newLeft = (maxSpace * ratio).clamp(8.0, left);
+  //           double newRight = (maxSpace * (1 - ratio)).clamp(8.0, right);
+  //           pads = EdgeInsets.only(left: newLeft, right: newRight, top: top, bottom: bottom);
+  //         }
+  //       }
+
+  //       return Padding(padding: pads, child: _buildChild(fg));
+  //     },
+  //   );
+  // }
 
   Widget _buildChild(Color fg) {
     if (_inProgress) {
@@ -129,20 +177,34 @@ class WidgetsButtonState extends State<WidgetsButton> {
 
     if (widget.label != null && widget.icon != null) {
       return Row(
+        spacing: 8,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(widget.icon, size: widget.iconSize ?? 18, color: fg),
-          const SizedBox(width: 8),
-          Text(widget.label!),
+          SizedBox(
+            width: widget.iconSize ?? 18,
+            height: widget.iconSize ?? 18,
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: Icon(widget.icon, size: widget.iconSize ?? 18, color: fg),
+            ),
+          ),
+          Text(widget.label!, softWrap: false, overflow: TextOverflow.visible),
         ],
       );
     }
 
     if (widget.icon != null) {
-      return Icon(widget.icon, size: widget.iconSize ?? 18, color: fg);
+      return SizedBox(
+        width: widget.iconSize ?? 18,
+        height: widget.iconSize ?? 18,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: Icon(widget.icon, size: widget.iconSize ?? 18, color: fg),
+        ),
+      );
     }
 
-    return Text(widget.label ?? "");
+    return Text(widget.label ?? "", softWrap: false, overflow: TextOverflow.visible);
   }
 
   Color _backgroundColor() {

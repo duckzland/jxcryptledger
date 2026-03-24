@@ -65,6 +65,7 @@ class _ToolsPageState extends State<ToolsPage> {
             WidgetsActionBar(mainActions: _buildAction()),
             const SizedBox(height: 16),
             Expanded(child: _buildScreen()),
+            const SizedBox(height: 16),
           ],
         ),
       ),

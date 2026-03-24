@@ -321,11 +321,15 @@ class _WatchersFormState extends State<WatchersForm> {
 
   Widget _buildButtons() {
     final isEdit = widget.initialData != null;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      direction: Axis.horizontal,
+      runSpacing: 14,
+      spacing: 10,
+      runAlignment: WrapAlignment.center,
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        const SizedBox(width: 12),
         WidgetsButton(label: isEdit ? "Save" : "Create", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
