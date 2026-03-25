@@ -41,6 +41,16 @@ class UnlockController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _initializeFeatures() async {
+    await _notificationService.init();
+    await _ratesController.init();
+    await _watchersController.init();
+    await _panelsController.init();
+    await _tickersController.init();
+    await _cryptosController.init();
+    _appWorker.start();
+  }
+
   Future<bool> unlock(String password) async {
     try {
       final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
@@ -89,15 +99,10 @@ class UnlockController extends ChangeNotifier {
         logln("First run detected, initializing vault");
 
         await _settingsController.update(SettingKey.vaultInitialized, "initialized");
+        await _initializeFeatures();
 
-        _notificationService.init();
-        _ratesController.init();
-        _watchersController.init();
-        _panelsController.init();
-        _tickersController.init();
         _unlocked = true;
         notifyListeners();
-        _appWorker.start();
 
         return true;
       }
@@ -115,17 +120,10 @@ class UnlockController extends ChangeNotifier {
       }
 
       logln("Password correct, vault unlocked");
-      await Future.delayed(Duration.zero, () {
-        _notificationService.init();
-        _ratesController.init();
-        _watchersController.init();
-        _panelsController.init();
-        _tickersController.init();
-        _cryptosController.init();
-      });
+
+      await _initializeFeatures();
       _unlocked = true;
       notifyListeners();
-      _appWorker.start();
 
       return true;
     } catch (e) {
