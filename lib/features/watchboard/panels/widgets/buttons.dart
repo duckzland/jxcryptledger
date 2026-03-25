@@ -39,6 +39,7 @@ class PanelsWidgetsButtons extends StatelessWidget with MixinsActions {
           iconSize: 16,
           minimumSize: const Size(34, 34),
           tooltip: wix == null ? "Add new watchboard" : "Edit watchboard",
+          persistBg: true,
           evaluator: (s) {
             if (wix == null) {
               s.normal();

@@ -70,6 +70,7 @@ class WatchersButtons extends StatelessWidget with MixinsActions {
           iconSize: 18,
           minimumSize: const Size(34, 34),
           onPressed: (_) => wxController.sendNotification(tx),
+          persistBg: false,
         ),
       ],
     );

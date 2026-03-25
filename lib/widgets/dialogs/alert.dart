@@ -11,6 +11,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActions {
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonState s)? evaluator;
+  final bool persistBg;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -35,6 +36,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActions {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.error,
     this.evaluator,
+    this.persistBg = false,
 
     this.dialogTitle = "Are you sure?",
     this.dialogMessage = "This action cannot be undone.",
@@ -120,6 +122,7 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
       initialState: widget.initialState,
       onPressed: (_) => _showDialog(context),
       evaluator: widget.evaluator,
+      persistBg: widget.persistBg,
     );
   }
 }

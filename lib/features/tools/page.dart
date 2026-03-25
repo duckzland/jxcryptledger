@@ -4,7 +4,6 @@ import '../../app/layout.dart';
 import '../../core/locator.dart';
 import '../../widgets/action_bar.dart';
 import '../../widgets/button.dart';
-import '../../widgets/panel.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
 import 'screens/qrcode.dart';
@@ -28,6 +27,7 @@ class _ToolsPageState extends State<ToolsPage> {
   void initState() {
     super.initState();
     _cryptosController.addListener(_onControllerChanged);
+    _registerBars("Calculator");
   }
 
   @override
@@ -41,15 +41,23 @@ class _ToolsPageState extends State<ToolsPage> {
     setState(() {});
   }
 
-  void _changePageTitle(String title) {
+  void _removeBars() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setActions?.call(null);
+    });
+  }
+
+  void _registerBars(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
+      AppLayout.setActions?.call(WidgetsActionBar(mainActions: _buildAction()));
     });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
+      _removeBars();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.')),
@@ -59,101 +67,92 @@ class _ToolsPageState extends State<ToolsPage> {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
-        child: Column(
-          spacing: 12,
-          children: [
-            WidgetsActionBar(mainActions: _buildAction()),
-            Expanded(child: _buildScreen()),
-          ],
-        ),
+        child: Column(spacing: 12, children: [Expanded(child: _buildScreen())]),
       ),
     );
   }
 
   Widget _buildAction() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(8),
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsButton(
-            icon: Icons.calculate,
-            padding: const EdgeInsets.all(8),
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Calculator",
-            evaluator: (s) {
-              if (_viewMode == ToolsViewMode.calculator) {
-                s.active();
-              } else {
-                s.normal();
-              }
-            },
-            onPressed: (_) {
-              setState(() {
-                _viewMode = ToolsViewMode.calculator;
-              });
-            },
-          ),
+    return Wrap(
+      spacing: 4,
+      children: [
+        WidgetsButton(
+          icon: Icons.calculate,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Calculator",
+          evaluator: (s) {
+            if (_viewMode == ToolsViewMode.calculator) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = ToolsViewMode.calculator;
+            });
+          },
+        ),
 
-          WidgetsButton(
-            icon: Icons.swap_horiz,
-            padding: const EdgeInsets.all(8),
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Converter",
-            evaluator: (s) {
-              if (_viewMode == ToolsViewMode.converter) {
-                s.active();
-              } else {
-                s.normal();
-              }
-            },
-            onPressed: (_) {
-              setState(() {
-                _viewMode = ToolsViewMode.converter;
-              });
-            },
-          ),
+        WidgetsButton(
+          icon: Icons.swap_horiz,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Converter",
+          evaluator: (s) {
+            if (_viewMode == ToolsViewMode.converter) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = ToolsViewMode.converter;
+            });
+          },
+        ),
 
-          WidgetsButton(
-            icon: Icons.qr_code_2,
-            padding: const EdgeInsets.all(8),
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "QR Generator",
-            evaluator: (s) {
-              if (_viewMode == ToolsViewMode.qrcode) {
-                s.active();
-              } else {
-                s.normal();
-              }
-            },
-            onPressed: (_) {
-              setState(() {
-                _viewMode = ToolsViewMode.qrcode;
-              });
-            },
-          ),
-        ],
-      ),
+        WidgetsButton(
+          icon: Icons.qr_code_2,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "QR Generator",
+          evaluator: (s) {
+            if (_viewMode == ToolsViewMode.qrcode) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = ToolsViewMode.qrcode;
+            });
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildScreen() {
     switch (_viewMode) {
       case ToolsViewMode.calculator:
-        _changePageTitle("Calculator");
+        _registerBars("Calculator");
 
         return ToolsCalculatorView();
 
       case ToolsViewMode.converter:
-        _changePageTitle("Converter");
+        _registerBars("Converter");
 
         return ToolsConverterView();
 
       case ToolsViewMode.qrcode:
-        _changePageTitle("QR Code Generator");
+        _registerBars("QR Code Generator");
 
         return ToolsQRGeneratorView();
     }

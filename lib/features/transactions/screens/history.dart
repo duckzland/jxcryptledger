@@ -55,6 +55,8 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             showRootNode: false,
             indentation: const Indentation(style: IndentStyle.roundJoint),
             expansionBehavior: ExpansionBehavior.scrollToLastChild,
+            animation: kAlwaysCompleteAnimation,
+
             expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
               tree: node,
               color: AppTheme.text,
@@ -62,9 +64,13 @@ class _TransactionHistoryState extends State<TransactionHistory> {
               alignment: Alignment.topRight,
             ),
             onTreeReady: (controller) {
-              for (final child in _root.children.values) {
-                controller.expandAllChildren(child as TreeNode<TransactionsModel>, recursive: true);
-              }
+              Future.delayed(const Duration(milliseconds: 100), () {
+                if (!mounted) return;
+
+                for (final child in _root.children.values) {
+                  controller.expandAllChildren(child as TreeNode<TransactionsModel>, recursive: true);
+                }
+              });
             },
             builder: (context, node) {
               final tx = node.data;

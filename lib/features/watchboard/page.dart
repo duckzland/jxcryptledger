@@ -5,6 +5,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
+import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../widgets/action_bar.dart';
 import '../../widgets/button.dart';
@@ -15,7 +16,6 @@ import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
 import '../../widgets/layouts/sliver_grid.dart';
 import '../../widgets/notify.dart';
-import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
@@ -61,7 +61,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
 
     _hasLinked = _pxController.hasLinked();
 
-    _changePageTitle("Crypto Watchboard");
+    _registerBars("Crypto Watchboard");
   }
 
   @override
@@ -77,18 +77,30 @@ class _WatchboardPageState extends State<WatchboardPage> {
       setState(() {
         _hasLinked = _pxController.hasLinked();
       });
+
+      AppLayout.refreshBar?.call();
     }
   }
 
-  void _changePageTitle(String title) {
+  void _removeBars() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setActions?.call(null);
+    });
+  }
+
+  void _registerBars(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
+      AppLayout.setActions?.call(
+        WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildMainAction(), rightActions: _buildLinkedAction()),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
+      _removeBars();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.')),
@@ -97,6 +109,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
     }
 
     if (_pxController.isEmpty()) {
+      _removeBars();
       return Column(
         children: [
           Expanded(
@@ -120,13 +133,13 @@ class _WatchboardPageState extends State<WatchboardPage> {
       );
     }
 
+    _registerBars("Crypto Watchboard");
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
           spacing: 12,
           children: [
-            WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildMainAction(), rightActions: _buildLinkedAction()),
             if (_enableTickers) Row(children: [Expanded(child: _buildTickers())]),
             Flexible(flex: 10, fit: FlexFit.loose, child: _buildPanels()),
           ],
@@ -253,163 +266,173 @@ class _WatchboardPageState extends State<WatchboardPage> {
   }
 
   Widget _buildMainAction() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(8),
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsButton(
-            icon: Icons.remove_red_eye,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.normal,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: _enableTickers ? "Hide Watchboard Tickers" : "Show Watchboard Tickers",
-            evaluator: (s) {
-              _enableTickers ? s.primary() : s.normal();
-            },
-            onPressed: (_) {
-              _debounceTimer?.cancel();
-              _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-                setState(() {
-                  _enableTickers = !_enableTickers;
-                });
+    return Wrap(
+      spacing: 4,
+      children: [
+        WidgetsButton(
+          key: _enableTickers ? Key("ticker-shown") : Key("ticker-hidden"),
+          icon: Icons.remove_red_eye,
+          padding: const EdgeInsets.all(8),
+          initialState: WidgetsButtonActionState.normal,
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: _enableTickers ? "Hide Watchboard Tickers" : "Show Watchboard Tickers",
+          evaluator: (s) {
+            _enableTickers ? s.primary() : s.normal();
+          },
+          onPressed: (_) {
+            _debounceTimer?.cancel();
+            _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+              setState(() {
+                _enableTickers = !_enableTickers;
               });
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.drag_indicator,
-            padding: const EdgeInsets.all(8),
-            initialState: WidgetsButtonActionState.normal,
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: _enableDrag ? "Turn off watchboard dragging" : "Turn on watchboard dragging",
-            evaluator: (s) {
-              _enableDrag ? s.primary() : s.normal();
-            },
-            onPressed: (_) {
-              _debounceTimer?.cancel();
-              _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-                final now = DateTime.now();
-                if (now.difference(_lastPress).inMilliseconds < 500) {
-                  return;
-                }
-                setState(() {
-                  _lastPress = now;
-                  _enableDrag = !_enableDrag;
-                });
+              AppLayout.refreshBar?.call();
+            });
+          },
+        ),
+        WidgetsButton(
+          key: _enableDrag ? Key("panel-drag-allowed") : Key("panel-drag-disabled"),
+          icon: Icons.drag_indicator,
+          padding: const EdgeInsets.all(8),
+          initialState: WidgetsButtonActionState.normal,
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: _enableDrag ? "Turn off watchboard dragging" : "Turn on watchboard dragging",
+          evaluator: (s) {
+            _enableDrag ? s.primary() : s.normal();
+          },
+          onPressed: (_) {
+            _debounceTimer?.cancel();
+            _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+              final now = DateTime.now();
+              if (now.difference(_lastPress).inMilliseconds < 500) {
+                return;
+              }
+              setState(() {
+                _lastPress = now;
+                _enableDrag = !_enableDrag;
+              });
 
-                widgetsNotifyClear();
-                widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
-              });
-            },
-          ),
-          WidgetsDialogsShowForm(
-            key: const Key("add-button"),
-            tooltip: "Add new watchboard",
-            buildForm: _buildForm,
-            evaluator: (s) => s.action(),
-          ),
-        ],
-      ),
+              AppLayout.refreshBar?.call();
+
+              widgetsNotifyClear();
+              widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
+            });
+          },
+        ),
+        WidgetsDialogsShowForm(
+          key: const Key("add-button"),
+          tooltip: "Add new watchboard",
+          buildForm: _buildForm,
+          evaluator: (s) => s.action(),
+        ),
+      ],
     );
   }
 
   Widget _buildLinkedAction() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(8),
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsDialogsAlert(
-            icon: Icons.delete_forever,
-            initialState: WidgetsButtonActionState.error,
-            tooltip: "Delete linked watchboard",
-            evaluator: (s) {
-              _hasLinked ? s.error() : s.disable();
-            },
-            dialogTitle: "Delete All Linked Watchboard",
-            dialogMessage:
-                "This will delete all linked watchboard entry.\n"
-                "This action cannot be undone.",
-            dialogConfirmLabel: "Delete",
-            actionStartCallback: _pxController.wipeLinked,
-            actionSuccessMessage: "All linked watchboard deleted.",
-            actionErrorMessage: "Failed to delete linked watchboard.",
-          ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        Container(width: 1, height: 24, color: AppTheme.separator),
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsAlert(
+              icon: Icons.delete_forever,
+              initialState: WidgetsButtonActionState.error,
+              tooltip: "Delete linked watchboard",
+              evaluator: (s) {
+                _hasLinked ? s.error() : s.disable();
+              },
+              dialogTitle: "Delete All Linked Watchboard",
+              dialogMessage:
+                  "This will delete all linked watchboard entry.\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Delete",
+              actionStartCallback: _pxController.wipeLinked,
+              actionSuccessMessage: "All linked watchboard deleted.",
+              actionErrorMessage: "Failed to delete linked watchboard.",
+            ),
 
-          WidgetsDialogsAlert(
-            icon: Icons.line_axis,
-            initialState: WidgetsButtonActionState.primary,
-            tooltip: "Update linked watchboard",
-            evaluator: (s) {
-              _hasLinked ? s.primary() : s.disable();
-            },
-            dialogTitle: "Update Linked Watchboard",
-            dialogMessage:
-                "This will update all the linked watchboard.\n"
-                "This action cannot be undone.",
-            dialogConfirmLabel: "Update",
-            actionCompleteCallback: () async {
-              try {
-                bool updated = await _pxController.updateLinked();
-                if (updated) {
-                  widgetsNotifySuccess("All linked watchboard updated.");
-                } else {
-                  widgetsNotifyWarning("Linked watchboard checked, but no additional data requires updating.");
+            WidgetsDialogsAlert(
+              icon: Icons.line_axis,
+              initialState: WidgetsButtonActionState.primary,
+              tooltip: "Update linked watchboard",
+              evaluator: (s) {
+                _hasLinked ? s.primary() : s.disable();
+              },
+              dialogTitle: "Update Linked Watchboard",
+              dialogMessage:
+                  "This will update all the linked watchboard.\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Update",
+              actionCompleteCallback: () async {
+                try {
+                  bool updated = await _pxController.updateLinked();
+                  if (updated) {
+                    widgetsNotifySuccess("All linked watchboard updated.");
+                  } else {
+                    widgetsNotifyWarning("Linked watchboard checked, but no additional data requires updating.");
+                  }
+                } catch (e) {
+                  rethrow;
                 }
-              } catch (e) {
-                rethrow;
-              }
-            },
-            actionErrorMessage: "Failed to update linked watchboard.",
-          ),
-        ],
-      ),
+              },
+              actionErrorMessage: "Failed to update linked watchboard.",
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildDatabaseAction() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(8),
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsDialogsImport(
-            key: Key("import-button-batch"),
-            tooltip: "Import watchboard to database",
-            showDialogBeforeImport: true,
-            onImport: (String json) async {
-              await _pxController.importDatabase(json);
-              _pxController.scheduleRates();
-              await _tixController.refreshRates();
-            },
-            evaluator: (s) {},
-          ),
-          WidgetsDialogsExport(
-            key: const Key("export-button-batch"),
-            tooltip: "Export watchboard from database",
-            suggestedPrefix: "watchboards_",
-            onExport: _pxController.exportDatabase,
-            isEmpty: _pxController.isEmpty,
-          ),
-          WidgetsDialogsReset(
-            key: const Key("reset-button-batch"),
-            tooltip: "Reset watchboard database",
-            dialogTitle: "Reset Watchboard Database",
-            dialogMessage:
-                "This will delete all watchboard entries.\n"
-                "This action cannot be undone.",
-            onWipe: () async {
-              await _pxController.wipe();
-              await _tixController.wipe();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsImport(
+              key: Key("import-button-batch"),
+              tooltip: "Import watchboard to database",
+              showDialogBeforeImport: true,
+              onImport: (String json) async {
+                await _pxController.importDatabase(json);
+                _pxController.scheduleRates();
+                await _tixController.refreshRates();
+              },
+              evaluator: (s) {},
+            ),
+            WidgetsDialogsExport(
+              key: const Key("export-button-batch"),
+              tooltip: "Export watchboard from database",
+              suggestedPrefix: "watchboards_",
+              onExport: _pxController.exportDatabase,
+              isEmpty: _pxController.isEmpty,
+            ),
+            WidgetsDialogsReset(
+              key: const Key("reset-button-batch"),
+              tooltip: "Reset watchboard database",
+              dialogTitle: "Reset Watchboard Database",
+              dialogMessage:
+                  "This will delete all watchboard entries.\n"
+                  "This action cannot be undone.",
+              onWipe: () async {
+                await _pxController.wipe();
+                await _tixController.wipe();
 
-              await _tixController.populate();
-            },
-            isEmpty: _pxController.isEmpty,
-          ),
-        ],
-      ),
+                await _tixController.populate();
+              },
+              isEmpty: _pxController.isEmpty,
+            ),
+          ],
+        ),
+        Container(width: 1, height: 24, color: AppTheme.separator),
+      ],
     );
   }
 }

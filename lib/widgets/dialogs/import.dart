@@ -19,6 +19,7 @@ class WidgetsDialogsImport extends StatefulWidget {
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonState s)? evaluator;
+  final bool persistBg;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -38,6 +39,7 @@ class WidgetsDialogsImport extends StatefulWidget {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.primary,
     this.evaluator,
+    this.persistBg = false,
 
     this.dialogTitle = "Import Data",
     this.dialogMessage = "This will erase existing data before importing.\nThis action cannot be undone.",
@@ -144,6 +146,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
       initialState: widget.initialState,
       onPressed: (_) => _handlePressed(context),
       evaluator: widget.evaluator,
+      persistBg: widget.persistBg,
     );
   }
 }

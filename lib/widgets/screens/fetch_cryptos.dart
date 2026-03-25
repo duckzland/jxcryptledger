@@ -62,6 +62,7 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
             minimumSize: const Size(40, 40),
             onPressed: _fetchCryptos,
+            persistBg: true,
           ),
         ],
       ),

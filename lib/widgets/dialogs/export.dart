@@ -19,6 +19,7 @@ class WidgetsDialogsExport extends StatefulWidget {
 
   final void Function(WidgetsButtonState s)? evaluator;
   final bool Function()? isEmpty;
+  final bool persistBg;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -40,6 +41,7 @@ class WidgetsDialogsExport extends StatefulWidget {
     this.initialState = WidgetsButtonActionState.action,
     this.evaluator,
     this.isEmpty,
+    this.persistBg = false,
 
     this.dialogTitle = "Export Data",
     this.dialogMessage = "This will export your data to a JSON file.",
@@ -158,6 +160,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       initialState: widget.initialState,
       onPressed: (_) => _showDialog(context),
       evaluator: evaluator,
+      persistBg: widget.persistBg,
     );
   }
 }
