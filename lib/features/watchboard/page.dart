@@ -124,15 +124,11 @@ class _WatchboardPageState extends State<WatchboardPage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
+          spacing: 12,
           children: [
-            const SizedBox(height: 10),
             WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildMainAction(), rightActions: _buildLinkedAction()),
-            if (_enableTickers) SizedBox(height: 16),
             if (_enableTickers) Row(children: [Expanded(child: _buildTickers())]),
-
-            const SizedBox(height: 12),
             Flexible(flex: 10, fit: FlexFit.loose, child: _buildPanels()),
-            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -144,6 +140,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
     items.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
 
     return ReorderableGridView.builder(
+      padding: EdgeInsets.only(bottom: 12),
       gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
         itemHeight: 105,

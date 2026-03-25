@@ -60,12 +60,10 @@ class _ToolsPageState extends State<ToolsPage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
+          spacing: 12,
           children: [
-            const SizedBox(height: 10),
             WidgetsActionBar(mainActions: _buildAction()),
-            const SizedBox(height: 16),
             Expanded(child: _buildScreen()),
-            const SizedBox(height: 16),
           ],
         ),
       ),

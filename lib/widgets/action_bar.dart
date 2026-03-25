@@ -22,6 +22,7 @@ class WidgetsActionBar extends StatelessWidget {
         }
         if (constraints.maxWidth > 760) {
           return Row(
+            spacing: 12,
             children: [
               Expanded(
                 child: Align(alignment: Alignment.centerLeft, child: leftActions),

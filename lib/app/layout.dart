@@ -243,7 +243,7 @@ class _AppLayoutState extends State<AppLayout> {
                   const SizedBox(width: 16),
                 ],
               ),
-              body: Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), child: widget.child),
+              body: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8), child: widget.child),
             );
           },
         );
