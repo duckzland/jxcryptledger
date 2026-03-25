@@ -49,7 +49,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
     super.initState();
 
     _txController = locator<TransactionsController>();
-    _txController.load();
+    _txController.start();
     _txController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
 

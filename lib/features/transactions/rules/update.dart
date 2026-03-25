@@ -6,34 +6,34 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
   TransactionsRulesUpdate(super.tx, super.txRepo, super.silent, {super.mode = "[TXUPDATE]"});
 
   @override
-  Future<bool> validate() async {
-    await otxCheckExists(AppErrorCode.txUpdateNotFound, "This transaction can no longer be found.");
+  bool validate() {
+    otxCheckExists(AppErrorCode.txUpdateNotFound, "This transaction can no longer be found.");
 
-    await otxCheckValidRootId(AppErrorCode.txUpdateRootPidRid, "This transaction cannot be changed in that way.");
+    otxCheckValidRootId(AppErrorCode.txUpdateRootPidRid, "This transaction cannot be changed in that way.");
 
-    await otxCheckValidLeaf(AppErrorCode.txUpdateLeafMissingParent, "This transaction is not linked correctly.");
+    otxCheckValidLeaf(AppErrorCode.txUpdateLeafMissingParent, "This transaction is not linked correctly.");
 
-    await otxCheckAllowChangeSrOrRrFields(
+    otxCheckAllowChangeSrOrRrFields(
       AppErrorCode.txUpdateCannotChangeSrRr,
       "This transaction cannot change its accounts or amounts because related transactions depend on it.",
     );
 
-    await otxCheckSufficientBalance(
+    otxCheckSufficientBalance(
       AppErrorCode.txUpdateParentInsufficientBalance,
       "This transaction cannot change its source amounts because the parent has insufficient balance.",
     );
 
-    final otx = await origTx;
-    final targetCloser = await targetParentCloser;
-    final children = await leafChildren;
+    final otx = origTx;
+    final targetCloser = targetParentCloser;
+    final children = leafChildren;
     final hasChildren = children.isNotEmpty;
 
     if (tx.status != otx!.status) {
       switch (tx.statusEnum) {
         case TransactionStatus.inactive:
-          await txCheckMustHaveChildren(AppErrorCode.txUpdateInactiveRequiresChildren, "This transaction cannot be marked inactive.");
+          txCheckMustHaveChildren(AppErrorCode.txUpdateInactiveRequiresChildren, "This transaction cannot be marked inactive.");
 
-          await otxCheckBalanceIsZero(
+          otxCheckBalanceIsZero(
             AppErrorCode.txUpdateInactiveRequiresZeroBalance,
             "This transaction still has remaining balance and cannot be marked inactive.",
           );
@@ -48,7 +48,7 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
           }
 
           if (hasChildren) {
-            await txCheckTerminalIsClosed(
+            txCheckTerminalIsClosed(
               AppErrorCode.txUpdateActiveRequiresChildrenClosed,
               "All related transactions must be completed before this one can be active.",
             );
@@ -57,12 +57,12 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
           break;
 
         case TransactionStatus.partial:
-          await txCheckMustHaveChildren(
+          txCheckMustHaveChildren(
             AppErrorCode.txUpdatePartialRequiresChildren,
             "This transaction cannot be marked as partially completed.",
           );
 
-          await txCheckTerminalIsNotAllClosed(
+          txCheckTerminalIsNotAllClosed(
             AppErrorCode.txUpdatePartialCannotAllClosed,
             "This transaction cannot be marked as partial because all related transactions are already completed.",
           );
@@ -84,24 +84,21 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
       switch (tx.closable) {
         case true:
           if (tx.isRoot) {
-            await txCheckTerminalIsClosed(
-              AppErrorCode.txUpdateClosableRootRequiresClosed,
-              "This transaction cannot be marked as closable yet.",
-            );
+            txCheckTerminalIsClosed(AppErrorCode.txUpdateClosableRootRequiresClosed, "This transaction cannot be marked as closable yet.");
           }
 
           if (tx.isLeaf) {
-            await otxCheckIsActive(
+            otxCheckIsActive(
               AppErrorCode.txUpdateClosableLeafRequiresActive,
               "This transaction must be active before it can be marked as closable.",
             );
-            await txCheckIsClosable(AppErrorCode.txUpdateClosableLeafRequiresTarget, "This transaction cannot be marked as closable yet.");
+            txCheckIsClosable(AppErrorCode.txUpdateClosableLeafRequiresTarget, "This transaction cannot be marked as closable yet.");
           }
           break;
 
         case false:
           if (tx.isRoot) {
-            await txCheckTerminalIsNotAllClosed(AppErrorCode.txUpdateNotClosableRootAllClosed, "This transaction must remain closable.");
+            txCheckTerminalIsNotAllClosed(AppErrorCode.txUpdateNotClosableRootAllClosed, "This transaction must remain closable.");
           }
           if (tx.isLeaf && otx.isActive && targetCloser != null) {
             throw ValidationException(

@@ -5,20 +5,20 @@ class TransactionsRulesRefund extends TransactionsRulesBase {
   TransactionsRulesRefund(super.tx, super.txRepo, super.silent, {super.mode = "[TXREFUND]"});
 
   @override
-  Future<bool> validate() async {
+  bool validate() {
     txCheckIsActive(AppErrorCode.txRefundInactive, "Transaction is not active.");
 
     txCheckIsLeaf(AppErrorCode.txRefundRootClosed, "This closed root transaction cannot be refunded.");
 
     txCheckHasEnoughBalance(AppErrorCode.txRefundInsufficientBalance, "Insufficient remaining balance for refund.");
 
-    await otxCheckExists(AppErrorCode.txRefundNotFound, "The original transaction can no longer be found.");
+    otxCheckExists(AppErrorCode.txRefundNotFound, "The original transaction can no longer be found.");
 
-    await otxCheckValidLeaf(AppErrorCode.txRefundInvalidLinkage, "The transaction is not linked correctly.");
+    otxCheckValidLeaf(AppErrorCode.txRefundInvalidLinkage, "The transaction is not linked correctly.");
 
-    await txCheckMustNotHaveChildren(AppErrorCode.txRefundHasChildren, "This transaction has related child transactions.");
+    txCheckMustNotHaveChildren(AppErrorCode.txRefundHasChildren, "This transaction has related child transactions.");
 
-    final ptx = await parentTx;
+    final ptx = parentTx;
 
     if (ptx!.rrId != tx.srId) {
       throw ValidationException(

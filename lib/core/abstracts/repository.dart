@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:hive_ce/hive_ce.dart';
 
 import 'model.dart';
@@ -32,11 +34,19 @@ abstract class CoreBaseRepository<T extends CoreBaseModel<K>, K> {
     onAction();
   }
 
-  Future<T?> get(K id) async {
+  FutureOr<T?> getAsync(K id) {
     return box.get(id);
   }
 
-  Future<List<T>> getAll() async {
+  FutureOr<List<T>> getAllAsync() {
+    return box.values.toList();
+  }
+
+  T? get(K id) {
+    return box.get(id);
+  }
+
+  List<T> getAll() {
     return box.values.toList();
   }
 

@@ -5,7 +5,7 @@ class TransactionsRulesCreate extends TransactionsRulesBase {
   TransactionsRulesCreate(super.tx, super.txRepo, super.silent, {super.mode = "[TXCREATE]"});
 
   @override
-  Future<bool> validate() async {
+  bool validate() {
     txCheckIsActive(AppErrorCode.txAddStatusNotActive, "A new transaction must start as active.");
 
     if (tx.isRoot) {
@@ -29,12 +29,12 @@ class TransactionsRulesCreate extends TransactionsRulesBase {
     }
 
     if (tx.isLeaf) {
-      final targetCloser = await targetParentCloser;
-      final ptx = await parentTx;
+      final targetCloser = targetParentCloser;
+      final ptx = parentTx;
 
-      await txCheckLeafHasValidRoot(AppErrorCode.txAddLeafMissingRoot, "This transaction is not linked correctly.");
+      txCheckLeafHasValidRoot(AppErrorCode.txAddLeafMissingRoot, "This transaction is not linked correctly.");
 
-      await txCheckLeafHasValidParent(AppErrorCode.txAddLeafMissingParent, "This transaction is not linked correctly.");
+      txCheckLeafHasValidParent(AppErrorCode.txAddLeafMissingParent, "This transaction is not linked correctly.");
 
       if (tx.srId != ptx!.rrId) {
         throw ValidationException(

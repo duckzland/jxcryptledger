@@ -6,20 +6,17 @@ class TransactionsRulesTrade extends TransactionsRulesBase {
 
   @override
   // We want the parent not the new trade tx!
-  Future<bool> validate() async {
-    await otxCheckExists(AppErrorCode.txTradeNotFound, "This trade cannot be processed because the original transaction was not found.");
+  bool validate() {
+    otxCheckExists(AppErrorCode.txTradeNotFound, "This trade cannot be processed because the original transaction was not found.");
 
-    await otxCheckValidLeaf(AppErrorCode.txTradeMissingParent, "Invalid transaction cannot be traded.");
+    otxCheckValidLeaf(AppErrorCode.txTradeMissingParent, "Invalid transaction cannot be traded.");
 
-    await otxCheckActiveOrPartial(
+    otxCheckActiveOrPartial(
       AppErrorCode.txTradeInvalidState,
       "This trade cannot be processed because the original transaction is not in a valid state.",
     );
 
-    await otxCheckPositiveBalance(
-      AppErrorCode.txTradeInvalidBalance,
-      "This trade cannot be processed because the remaining balance is invalid.",
-    );
+    otxCheckPositiveBalance(AppErrorCode.txTradeInvalidBalance, "This trade cannot be processed because the remaining balance is invalid.");
 
     return true;
   }

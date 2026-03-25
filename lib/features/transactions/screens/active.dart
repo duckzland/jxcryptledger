@@ -102,11 +102,12 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     _ratesController.addListener(_onRatesUpdated);
 
     _wxController = locator<WatchersController>();
-    _wxController.load();
+    _wxController.start();
     _wxController.addListener(_onControllerChanged);
 
     _tixController = locator<PanelsController>();
-    _tixController.load();
+    _tixController.start();
+    _tixController.addListener(_onControllerChanged);
 
     _loadMarketRate();
 
@@ -128,6 +129,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     _customRateController.dispose();
     _ratesController.removeListener(_onRatesUpdated);
     _wxController.removeListener(_onControllerChanged);
+    _tixController.removeListener(_onControllerChanged);
 
     _debounce?.cancel();
 
@@ -198,7 +200,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
   }
 
   void _onControllerChanged() {
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadMarketRate() async {

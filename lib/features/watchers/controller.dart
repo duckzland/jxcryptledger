@@ -24,13 +24,17 @@ class WatchersController extends ChangeNotifier {
     return _repo.generateId();
   }
 
-  Future<void> load() async {
-    _items = await _repo.getAll();
+  void start() {
+    _items = _repo.getAll();
+  }
+
+  void load() {
+    start();
     notifyListeners();
   }
 
-  Future<void> init() async {
-    await load();
+  void init() {
+    load();
     for (final wx in items) {
       _ratesService.addQueue(wx.srId, wx.rrId);
     }
@@ -39,20 +43,20 @@ class WatchersController extends ChangeNotifier {
   Future<void> add(WatchersModel watcher) async {
     _ratesService.addQueue(watcher.srId, watcher.rrId);
     await _repo.add(watcher);
-    await load();
+    load();
   }
 
   Future<void> update(WatchersModel watcher) async {
     _ratesService.addQueue(watcher.srId, watcher.rrId);
     await _repo.update(watcher);
-    await load();
+    load();
   }
 
   Future<void> delete(WatchersModel watcher) async {
     await _ratesService.delete(watcher.srId, watcher.rrId);
     await _ratesService.delete(watcher.rrId, watcher.srId);
     await _repo.delete(watcher);
-    await load();
+    load();
   }
 
   Future<void> deleteAll() async {
@@ -60,7 +64,7 @@ class WatchersController extends ChangeNotifier {
       await _ratesService.delete(wx.srId, wx.rrId);
     }
     await _repo.clear();
-    await load();
+    load();
   }
 
   WatchersModel? getLinked(String linkKey) {
@@ -92,7 +96,7 @@ class WatchersController extends ChangeNotifier {
     final nextAllowed = last + (wx.duration * 60000000);
     if (now < nextAllowed) return;
 
-    final current = await _ratesService.getStoredRate(wx.srId, wx.rrId);
+    final current = _ratesService.getStoredRate(wx.srId, wx.rrId);
     if (current == -9999) {
       _ratesService.addQueue(wx.srId, wx.rrId);
       return;
@@ -110,7 +114,7 @@ class WatchersController extends ChangeNotifier {
     final updated = wx.copyWith(sent: wx.sent + 1, timestamp: now);
 
     await _repo.update(updated);
-    await load();
+    load();
 
     await sendNotification(wx);
   }
@@ -133,7 +137,7 @@ class WatchersController extends ChangeNotifier {
 
   Future<void> importDatabase(String rawJson) async {
     await _repo.import(rawJson);
-    await load();
+    load();
   }
 
   Future<void> restart() async {
@@ -142,7 +146,7 @@ class WatchersController extends ChangeNotifier {
       await _repo.update(resetWx);
     }
 
-    await load();
+    load();
   }
 
   bool hasRestartable() {

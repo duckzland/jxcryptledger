@@ -10,23 +10,23 @@ abstract class TransactionsRulesBase {
 
   TransactionsRulesBase(this.tx, this.txRepo, this.silent, {this.mode = "[TXERROR]"});
 
-  Future<TransactionsModel?>? _otxCache;
-  Future<TransactionsModel?>? _ptxCache;
-  Future<TransactionsModel?>? _rtxCache;
-  Future<List<TransactionsModel>>? _terminalLeavesCache;
-  Future<TransactionsModel?>? _targetCloserCache;
-  Future<List<TransactionsModel>>? _childrenCache;
-  Future<List<TransactionsModel>>? _allLeavesCache;
-  Future<List<TransactionsModel>>? _allRootLeavesCache;
+  TransactionsModel? _otxCache;
+  TransactionsModel? _ptxCache;
+  TransactionsModel? _rtxCache;
+  List<TransactionsModel>? _terminalLeavesCache;
+  TransactionsModel? _targetCloserCache;
+  List<TransactionsModel>? _childrenCache;
+  List<TransactionsModel>? _allLeavesCache;
+  List<TransactionsModel>? _allRootLeavesCache;
 
-  Future<TransactionsModel?> get origTx async => _otxCache ??= txRepo.get(tx.tid);
-  Future<TransactionsModel?> get parentTx async => _ptxCache ??= txRepo.get(tx.pid);
-  Future<TransactionsModel?> get rootTx async => _rtxCache ??= txRepo.get(tx.rid);
-  Future<List<TransactionsModel>> get terminalLeaves async => _terminalLeavesCache ??= txRepo.collectTerminalLeaves(tx);
-  Future<TransactionsModel?> get targetParentCloser async => _targetCloserCache ??= txRepo.getCloseTargetParent(tx);
-  Future<List<TransactionsModel>> get leafChildren async => _childrenCache ??= txRepo.getLeaf(tx);
-  Future<List<TransactionsModel>> get allLeaves async => _allLeavesCache ??= txRepo.collectAllLeaves(tx);
-  Future<List<TransactionsModel>> get allRootLeaves async => _allRootLeavesCache ??= txRepo.collectAllRootLeaves(tx);
+  TransactionsModel? get origTx => _otxCache ??= txRepo.get(tx.tid);
+  TransactionsModel? get parentTx => _ptxCache ??= txRepo.get(tx.pid);
+  TransactionsModel? get rootTx => _rtxCache ??= txRepo.get(tx.rid);
+  List<TransactionsModel> get terminalLeaves => _terminalLeavesCache ??= txRepo.collectTerminalLeaves(tx);
+  TransactionsModel? get targetParentCloser => _targetCloserCache ??= txRepo.getCloseTargetParent(tx);
+  List<TransactionsModel> get leafChildren => _childrenCache ??= txRepo.getLeaf(tx);
+  List<TransactionsModel> get allLeaves => _allLeavesCache ??= txRepo.collectAllLeaves(tx);
+  List<TransactionsModel> get allRootLeaves => _allRootLeavesCache ??= txRepo.collectAllRootLeaves(tx);
 
   void txCheckIsRoot(int code, String message) {
     if (!tx.isRoot) {
@@ -52,24 +52,24 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> txCheckLeafHasValidRoot(int code, String message) async {
-    final rtx = await rootTx;
+  void txCheckLeafHasValidRoot(int code, String message) {
+    final rtx = rootTx;
 
     if (rtx == null) {
       throw ValidationException(code, "$mode missing root (rtx == null, rid=${tx.rid})", message, silent: silent);
     }
   }
 
-  Future<void> txCheckLeafHasValidParent(int code, String message) async {
-    final ptx = await parentTx;
+  void txCheckLeafHasValidParent(int code, String message) {
+    final ptx = parentTx;
 
     if (ptx == null) {
       throw ValidationException(code, "$mode missing parent (ptx == null, pid=${tx.pid})", message, silent: silent);
     }
   }
 
-  Future<void> txCheckTerminalIsClosed(int code, String message) async {
-    final terminals = await terminalLeaves;
+  void txCheckTerminalIsClosed(int code, String message) {
+    final terminals = terminalLeaves;
     final allClosed = terminals.isEmpty || terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (!allClosed) {
@@ -77,8 +77,8 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> txCheckTerminalIsNotAllClosed(int code, String message) async {
-    final terminals = await terminalLeaves;
+  void txCheckTerminalIsNotAllClosed(int code, String message) {
+    final terminals = terminalLeaves;
     final allClosed = terminals.isEmpty || terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (allClosed) {
@@ -86,8 +86,8 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> txCheckLeavesIsNotActive(int code, String message) async {
-    final leaves = tx.isRoot ? await allRootLeaves : await allLeaves;
+  void txCheckLeavesIsNotActive(int code, String message) {
+    final leaves = tx.isRoot ? allRootLeaves : allLeaves;
     final allInactive =
         leaves.isEmpty ||
         leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.inactive);
@@ -97,15 +97,15 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> txCheckIsClosable(int code, String message) async {
-    final targetCloser = await targetParentCloser;
+  void txCheckIsClosable(int code, String message) {
+    final targetCloser = targetParentCloser;
     if (targetCloser == null) {
       throw ValidationException(code, "$mode no targetCloser found (tid=${tx.tid})", message, silent: silent);
     }
   }
 
-  Future<void> txCheckMustHaveChildren(int code, String message) async {
-    final childList = await leafChildren;
+  void txCheckMustHaveChildren(int code, String message) {
+    final childList = leafChildren;
     final hasChildren = childList.isNotEmpty;
 
     if (!hasChildren) {
@@ -113,8 +113,8 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> txCheckMustNotHaveChildren(int code, String message) async {
-    final childList = await leafChildren;
+  void txCheckMustNotHaveChildren(int code, String message) {
+    final childList = leafChildren;
     final hasChildren = childList.isNotEmpty;
 
     if (hasChildren) {
@@ -122,43 +122,43 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> otxCheckExists(int code, String message) async {
-    final otx = await origTx;
+  void otxCheckExists(int code, String message) {
+    final otx = origTx;
 
     if (otx == null) {
       throw ValidationException(code, "$mode original transaction not found (tid=${tx.tid})", message, silent: silent);
     }
   }
 
-  Future<void> otxCheckValidRootId(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
+  void otxCheckValidRootId(int code, String message) {
+    final TransactionsModel? otx = origTx;
 
     if (otx != null && otx.isRoot && (tx.pid != '0' || tx.rid != '0')) {
       throw ValidationException(code, "$mode root cannot change pid/rid (tid=${tx.tid})", message, silent: silent);
     }
   }
 
-  Future<void> otxCheckIsActive(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
+  void otxCheckIsActive(int code, String message) {
+    final TransactionsModel? otx = origTx;
 
     if (otx != null && !otx.isActive) {
       throw ValidationException(code, "$mode leaf closable requires active (tid=${tx.tid})", message, silent: silent);
     }
   }
 
-  Future<void> otxCheckValidLeaf(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
-    final TransactionsModel? ptx = await parentTx;
-    final TransactionsModel? rtx = await rootTx;
+  void otxCheckValidLeaf(int code, String message) {
+    final TransactionsModel? otx = origTx;
+    final TransactionsModel? ptx = parentTx;
+    final TransactionsModel? rtx = rootTx;
 
     if (otx != null && otx.isLeaf && (ptx == null || rtx == null)) {
       throw ValidationException(code, "$mode leaf missing parent or root (tid=${tx.tid})", message, silent: silent);
     }
   }
 
-  Future<void> otxCheckSufficientBalance(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
-    final TransactionsModel? ptx = await parentTx;
+  void otxCheckSufficientBalance(int code, String message) {
+    final TransactionsModel? otx = origTx;
+    final TransactionsModel? ptx = parentTx;
 
     if (otx != null &&
         otx.isLeaf &&
@@ -175,9 +175,9 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> otxCheckAllowChangeSrOrRrFields(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
-    final childList = await leafChildren;
+  void otxCheckAllowChangeSrOrRrFields(int code, String message) {
+    final TransactionsModel? otx = origTx;
+    final childList = leafChildren;
 
     final hasChildren = childList.isNotEmpty;
 
@@ -190,24 +190,24 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<void> otxCheckActiveOrPartial(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
+  void otxCheckActiveOrPartial(int code, String message) {
+    final TransactionsModel? otx = origTx;
 
     if (otx != null && !otx.isActive && !otx.isPartial) {
       throw ValidationException(code, "$mode transaction not active or partial (tid=${tx.tid})", message, silent: silent);
     }
   }
 
-  Future<void> otxCheckPositiveBalance(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
+  void otxCheckPositiveBalance(int code, String message) {
+    final TransactionsModel? otx = origTx;
     if (otx != null && otx.balance <= 0) {
       throw ValidationException(code, "$mode balance <= 0 (tid=${tx.tid})", message, silent: silent);
     }
   }
 
-  Future<void> otxCheckBalanceIsZero(int code, String message) async {
-    final TransactionsModel? otx = await origTx;
-    final childList = await leafChildren;
+  void otxCheckBalanceIsZero(int code, String message) {
+    final TransactionsModel? otx = origTx;
+    final childList = leafChildren;
     final spent = childList.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
     final balance = otx == null ? -99999 : otx.rrAmount - spent;
 
@@ -221,5 +221,5 @@ abstract class TransactionsRulesBase {
     }
   }
 
-  Future<bool> validate();
+  bool validate();
 }

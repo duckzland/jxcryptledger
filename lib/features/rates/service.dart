@@ -33,8 +33,8 @@ class RatesService {
     await ratesRepo.cleanupOldRates();
   }
 
-  Future<List<RatesModel>> getAll() async {
-    return await ratesRepo.getAll();
+  List<RatesModel> getAll() {
+    return ratesRepo.getAll();
   }
 
   Future<void> delete(int sourceId, int targetId) async {
@@ -52,9 +52,9 @@ class RatesService {
     onStart = cb;
   }
 
-  Future<double> getStoredRate(int sourceId, int targetId) async {
+  double getStoredRate(int sourceId, int targetId) {
     _validateIds(sourceId, targetId);
-    final existing = await ratesRepo.getPair(sourceId, targetId);
+    final existing = ratesRepo.getPair(sourceId, targetId);
     return existing?.rate.toDouble() ?? -9999;
   }
 
@@ -104,7 +104,7 @@ class RatesService {
       return;
     }
 
-    final all = await ratesRepo.getAll();
+    final all = ratesRepo.getAll();
     for (final r in all) {
       if (r.sourceId != 0 && r.targetId != 0) {
         addQueue(r.sourceId, r.targetId);

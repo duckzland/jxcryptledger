@@ -45,7 +45,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
 
     bool isClosable;
     try {
-      isClosable = await canClose(ntx);
+      isClosable = canClose(ntx);
     } catch (e) {
       isClosable = false;
     }
@@ -54,7 +54,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
       ntx = ntx.copyWith(closable: isClosable);
     }
 
-    await canAdd(ntx);
+    canAdd(ntx);
 
     if (ntx.isRoot) {
       await box.put(ntx.tid, ntx);
@@ -63,7 +63,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
 
     if (ntx.isLeaf) {
       TransactionsModel? ptx = box.get(ntx.pid)!;
-      await canTrade(ptx);
+      canTrade(ptx);
 
       // Update the parent balance and status
       // This is important to preserve valid tree structure!
@@ -94,7 +94,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     TransactionsModel ntx = tx;
     bool isClosable;
     try {
-      isClosable = await canClose(ntx);
+      isClosable = canClose(ntx);
     } catch (e) {
       isClosable = false;
     }
@@ -103,7 +103,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
       ntx = ntx.copyWith(closable: isClosable);
     }
 
-    await canUpdate(ntx);
+    canUpdate(ntx);
 
     if (ntx.isRoot) {
       await box.put(ntx.tid, ntx);
@@ -144,7 +144,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
 
   @override
   Future<void> delete(TransactionsModel tx) async {
-    await canDelete(tx);
+    canDelete(tx);
 
     if (debugLogs) {
       logln(
@@ -153,7 +153,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     }
 
     // This is to preseve tree sanity!
-    final all = await getAll();
+    final all = getAll();
     for (final ttx in all) {
       if (tx.tid == ttx.rid || tx.tid == ttx.pid) {
         if (debugLogs) {
@@ -170,7 +170,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   Future<void> close(TransactionsModel tx) async {
-    await canClose(tx);
+    canClose(tx);
 
     // canClose already check and throw
     TransactionsModel? otx = box.get(tx.tid);
@@ -179,12 +179,12 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     }
 
     // canClose already check and throw
-    TransactionsModel? target = await getCloseTargetParent(otx);
+    TransactionsModel? target = getCloseTargetParent(otx);
     if (target == null) {
       return;
     }
 
-    final leaves = await collectTerminalLeaves(target);
+    final leaves = collectTerminalLeaves(target);
     final allClosed =
         leaves.isNotEmpty &&
         leaves
@@ -208,7 +208,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   Future<void> refund(TransactionsModel tx) async {
-    await canRefund(tx);
+    canRefund(tx);
 
     // canClose already check and throw
     TransactionsModel? otx = box.get(tx.tid);
@@ -217,7 +217,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
       return;
     }
 
-    final leaves = await collectTerminalLeaves(ptx);
+    final leaves = collectTerminalLeaves(ptx);
     final allClosed =
         leaves.isNotEmpty &&
         leaves
@@ -248,7 +248,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     }
   }
 
-  Future<List<TransactionsModel>> getLeaf(TransactionsModel tx) async {
+  List<TransactionsModel> getLeaf(TransactionsModel tx) {
     final list = <TransactionsModel>[];
     for (final key in box.keys) {
       final ltx = box.get(key);
@@ -257,12 +257,12 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return list;
   }
 
-  Future<TransactionsModel?> getCloseTargetParent(TransactionsModel tx) async {
+  TransactionsModel? getCloseTargetParent(TransactionsModel tx) {
     if (tx.isRoot) {
       return null;
     }
 
-    final all = await getAll();
+    final all = getAll();
 
     final Map<String, TransactionsModel> byTid = {for (final t in all) t.tid: t};
 
@@ -295,8 +295,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return parent;
   }
 
-  Future<double> getCapitalBalance(TransactionsModel tx) async {
-    final children = await getLeaf(tx);
+  double getCapitalBalance(TransactionsModel tx) {
+    final children = getLeaf(tx);
     final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
     final double balance = tx.rrAmount - spent;
 
@@ -304,20 +304,20 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   Future<List<TransactionsModel>> filter(String query) async {
-    final all = await getAll();
+    final all = getAll();
     final maps = all.map((e) => e.toMap()).toList();
 
     final filteredMaps = await _filter.filter(maps, query);
     return filteredMaps.map(TransactionsModel.fromMap).toList();
   }
 
-  Future<List<TransactionsModel>> collectAllRoots() async {
-    final all = await getAll();
+  List<TransactionsModel> collectAllRoots() {
+    final all = getAll();
     return all.where((tx) => tx.isRoot).toList();
   }
 
-  Future<List<TransactionsModel>> collectAllTerminalLeaves() async {
-    final all = await getAll();
+  List<TransactionsModel> collectAllTerminalLeaves() {
+    final all = getAll();
     final Map<String, int> childCount = {};
     for (final tx in all) {
       childCount[tx.pid] = (childCount[tx.pid] ?? 0) + 1;
@@ -331,8 +331,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return all.where(isTerminalLeaf).toList();
   }
 
-  Future<List<TransactionsModel>> collectTerminalLeaves(TransactionsModel parent) async {
-    final all = await getAll();
+  List<TransactionsModel> collectTerminalLeaves(TransactionsModel parent) {
+    final all = getAll();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
     for (final tx in all) {
@@ -358,8 +358,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return dfs(parent);
   }
 
-  Future<List<TransactionsModel>> collectAllRootLeaves(TransactionsModel parent) async {
-    final all = await getAll();
+  List<TransactionsModel> collectAllRootLeaves(TransactionsModel parent) {
+    final all = getAll();
 
     final leaves = <TransactionsModel>[];
     for (final tx in all) {
@@ -371,8 +371,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return leaves;
   }
 
-  Future<List<TransactionsModel>> collectAllLeaves(TransactionsModel parent) async {
-    final all = await getAll();
+  List<TransactionsModel> collectAllLeaves(TransactionsModel parent) {
+    final all = getAll();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
     for (final tx in all) {
@@ -397,8 +397,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return dfs(parent);
   }
 
-  Future<List<TransactionsModel>> collectDescendantLeaves(TransactionsModel parent) async {
-    final all = await getAll();
+  List<TransactionsModel> collectDescendantLeaves(TransactionsModel parent) {
+    final all = getAll();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
     for (final tx in all) {
@@ -420,39 +420,39 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return dfs(parent);
   }
 
-  Future<bool> canAdd(TransactionsModel tx, {bool? silent}) async {
+  bool canAdd(TransactionsModel tx, {bool? silent}) {
     final rules = TransactionsRulesCreate(tx, this, silent ?? !debugLogs);
-    final isValid = await rules.validate();
+    final isValid = rules.validate();
     return isValid;
   }
 
-  Future<bool> canDelete(TransactionsModel tx, {bool? silent}) async {
+  bool canDelete(TransactionsModel tx, {bool? silent}) {
     final rules = TransactionsRulesDelete(tx, this, silent ?? !debugLogs);
-    final isValid = await rules.validate();
+    final isValid = rules.validate();
     return isValid;
   }
 
-  Future<bool> canUpdate(TransactionsModel tx, {bool? silent = false}) async {
+  bool canUpdate(TransactionsModel tx, {bool? silent = false}) {
     final rules = TransactionsRulesUpdate(tx, this, silent ?? !debugLogs);
-    final isValid = await rules.validate();
+    final isValid = rules.validate();
     return isValid;
   }
 
-  Future<bool> canClose(TransactionsModel tx, {bool? silent = false}) async {
+  bool canClose(TransactionsModel tx, {bool? silent = false}) {
     final rules = TransactionsRulesClose(tx, this, silent ?? !debugLogs);
-    final isValid = await rules.validate();
+    final isValid = rules.validate();
     return isValid;
   }
 
-  Future<bool> canTrade(TransactionsModel tx, {bool? silent}) async {
+  bool canTrade(TransactionsModel tx, {bool? silent}) {
     final rules = TransactionsRulesTrade(tx, this, silent ?? !debugLogs);
-    final isValid = await rules.validate();
+    final isValid = rules.validate();
     return isValid;
   }
 
-  Future<bool> canRefund(TransactionsModel tx, {bool? silent}) async {
+  bool canRefund(TransactionsModel tx, {bool? silent}) {
     final rules = TransactionsRulesRefund(tx, this, silent ?? !debugLogs);
-    final isValid = await rules.validate();
+    final isValid = rules.validate();
     return isValid;
   }
 }

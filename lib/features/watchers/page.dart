@@ -40,7 +40,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
   void initState() {
     super.initState();
     _wxController = locator<WatchersController>();
-    _wxController.load();
+    _wxController.start();
     _wxController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
     rows = _buildRows(_wxController.items);

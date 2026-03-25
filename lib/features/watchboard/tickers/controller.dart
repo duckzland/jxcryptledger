@@ -17,45 +17,49 @@ class TickersController extends ChangeNotifier {
     return _repo.generateId();
   }
 
-  Future<void> init() async {
+  void init() {
     if (isEmpty()) {
       populate();
     }
   }
 
-  Future<List<TickersModel>> getAll() async {
-    return await _repo.getAll();
+  List<TickersModel> getAll() {
+    return _repo.getAll();
   }
 
-  Future<void> load() async {
-    _items = await _repo.getAll();
+  void start() {
+    _items = _repo.getAll();
+  }
+
+  void load() {
+    start();
     notifyListeners();
   }
 
-  Future<TickersModel?> get(String tid) async {
-    final tx = await _repo.get(tid);
-    await load();
+  TickersModel? get(String tid) {
+    final tx = _repo.get(tid);
+    load();
     return tx;
   }
 
   Future<void> add(TickersModel tx) async {
     await _repo.add(tx);
-    await load();
+    load();
   }
 
   Future<void> update(TickersModel tx) async {
     await _repo.update(tx);
-    await load();
+    load();
   }
 
   Future<void> delete(TickersModel tx) async {
     await _repo.delete(tx);
-    await load();
+    load();
   }
 
   Future<void> wipe() async {
     await _repo.clear();
-    await load();
+    load();
   }
 
   bool isEmpty() {
@@ -64,7 +68,7 @@ class TickersController extends ChangeNotifier {
 
   Future<void> updateByType(int type, String newVal) async {
     await _repo.updateByType(type, newVal);
-    await load();
+    load();
   }
 
   Future<void> populate() async {
@@ -131,14 +135,14 @@ class TickersController extends ChangeNotifier {
       await _repo.add(tx);
     }
 
-    await load();
+    load();
 
     _service.refreshRates();
   }
 
   Future<void> refreshRates() async {
     await _service.refreshRates();
-    await load();
+    load();
   }
 
   void updateOrder(List<TickersModel> newOrder) {
