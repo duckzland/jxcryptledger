@@ -54,6 +54,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             padding: const EdgeInsets.only(left: 16),
             showRootNode: false,
             indentation: const Indentation(style: IndentStyle.roundJoint),
+            expansionBehavior: ExpansionBehavior.scrollToLastChild,
             expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
               tree: node,
               color: AppTheme.text,
