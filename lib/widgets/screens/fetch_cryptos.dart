@@ -56,9 +56,11 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
           const SizedBox(height: 24),
           WidgetsButton(
             icon: Icons.refresh,
+            iconSize: 16,
             label: "Download",
             initialState: WidgetsButtonActionState.action,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+            minimumSize: const Size(40, 40),
             onPressed: _fetchCryptos,
           ),
         ],

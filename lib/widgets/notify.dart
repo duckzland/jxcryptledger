@@ -18,7 +18,11 @@ void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.primary,
-      content: Text(msg, style: const TextStyle(color: AppTheme.text)),
+      content: Text(
+        msg,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: AppTheme.text),
+      ),
     ),
   );
 }
@@ -29,7 +33,11 @@ void widgetsNotifyError(String msg, {BuildContext? ctx}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.error,
-      content: Text(msg, style: const TextStyle(color: AppTheme.text)),
+      content: Text(
+        msg,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: AppTheme.text),
+      ),
     ),
   );
 }
@@ -40,7 +48,11 @@ void widgetsNotifyWarning(String msg, {BuildContext? ctx}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: AppTheme.warning,
-      content: Text(msg, style: const TextStyle(color: AppTheme.text)),
+      content: Text(
+        msg,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: AppTheme.text),
+      ),
     ),
   );
 }

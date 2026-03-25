@@ -214,7 +214,16 @@ class WidgetsButtonState extends State<WidgetsButton> {
         return AppTheme.buttonBgDisabled;
 
       case WidgetsButtonActionState.inProgress:
-        return AppTheme.buttonBgProgress;
+        switch (widget.initialState) {
+          case WidgetsButtonActionState.action:
+            return AppTheme.buttonBgAction;
+
+          case WidgetsButtonActionState.warning:
+            return AppTheme.buttonBgWarning;
+
+          default:
+            return AppTheme.buttonBgProgress;
+        }
 
       case WidgetsButtonActionState.active:
         return AppTheme.buttonBgActive;
