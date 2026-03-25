@@ -205,8 +205,8 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     }
   }
 
-  Future<void> _loadMarketRate() async {
-    final rate = await _ratesController.getStoredRate(widget.srid, widget.rrid);
+  void _loadMarketRate() {
+    final rate = _ratesController.getStoredRate(widget.srid, widget.rrid);
     if (rate == -9999) {
       _ratesController.addQueue(widget.srid, widget.rrid);
       return;
@@ -219,13 +219,13 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     }
   }
 
-  Future<void> _checkForClosable() async {
+  void _checkForClosable() {
     final txs = widget.transactions;
     for (final tx in txs) {
       if (tx.isRoot) continue;
       if (!tx.isActive) continue;
       try {
-        final closable = await _txController.isClosable(tx);
+        final closable = _txController.isClosable(tx);
         if (closable) {
           setState(() {
             _isClosable = true;
@@ -238,13 +238,13 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     }
   }
 
-  Future<void> _checkForDeletable() async {
+  void _checkForDeletable() {
     final txs = widget.transactions;
     for (final tx in txs) {
       if (tx.isLeaf) continue;
       if (!tx.isActive) continue;
       try {
-        final deletable = await _txController.isDeletable(tx);
+        final deletable = _txController.isDeletable(tx);
         if (deletable) {
           setState(() {
             _isDeletable = true;
@@ -515,7 +515,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
               minimumSize: btnSize,
               initialState: WidgetsButtonActionState.warning,
               tooltip: "Close all closable transactions found in this group",
-              evaluator: (s) async {
+              evaluator: (s) {
                 if (!_isClosable) {
                   s.disable();
                 } else {
@@ -542,7 +542,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
               minimumSize: btnSize,
               initialState: WidgetsButtonActionState.error,
               tooltip: "Delete all transactions",
-              evaluator: (s) async {
+              evaluator: (s) {
                 if (!_isDeletable) {
                   s.disable();
                 } else {

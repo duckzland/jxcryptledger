@@ -311,7 +311,7 @@ Future<void> main(List<String> args) async {
   if (seedWatchers) {
     print("Seeding watchers...");
 
-    final txs = await txRepo.getAll();
+    final txs = txRepo.getAll();
     for (final tx in txs) {
       await wxRepo.add(
         WatchersModel(
@@ -333,7 +333,7 @@ Future<void> main(List<String> args) async {
 
   if (seedPanels) {
     print("Seeding panels...");
-    final txs = await txRepo.getAll();
+    final txs = txRepo.getAll();
     int i = 0;
     for (final tx in txs) {
       await pxRepo.add(
@@ -354,7 +354,7 @@ Future<void> main(List<String> args) async {
 
   if (seedRates) {
     print("Seeding rates from transactions");
-    final txs = await txRepo.getAll();
+    final txs = txRepo.getAll();
     for (final tx in txs) {
       await rtRepo.add(
         RatesModel(
@@ -370,7 +370,7 @@ Future<void> main(List<String> args) async {
     }
 
     print("Seeding rates from panels");
-    final pxs = await pxRepo.getAll();
+    final pxs = pxRepo.getAll();
     for (final tx in pxs) {
       await rtRepo.add(
         RatesModel(
@@ -386,7 +386,7 @@ Future<void> main(List<String> args) async {
     }
 
     print("Seeding rates from watchers");
-    final wxs = await wxRepo.getAll();
+    final wxs = wxRepo.getAll();
     for (final tx in wxs) {
       await rtRepo.add(
         RatesModel(

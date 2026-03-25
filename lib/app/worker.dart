@@ -17,13 +17,13 @@ class AppWorker {
     if (_started) return;
     _started = true;
 
+    final rates = locator<RatesController>();
+    final panels = locator<PanelsController>();
+    final watchers = locator<WatchersController>();
+    final tickers = locator<TickersController>();
+    final transactions = locator<TransactionsController>();
+    
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
-      final rates = locator<RatesController>();
-      final panels = locator<PanelsController>();
-      final watchers = locator<WatchersController>();
-      final tickers = locator<TickersController>();
-      final transactions = locator<TransactionsController>();
-
       bool mustAlwaysFetchRate = false;
       final current = AppRouter.router.routerDelegate.currentConfiguration.uri.toString();
       if (current == "/tools") {
@@ -37,7 +37,7 @@ class AppWorker {
 
       if (uxs.isNotEmpty) {
         logln("[WORKER] Trying to clean old rates");
-        final rxs = await rates.getAll();
+        final rxs = rates.getAll();
         for (final rx in rxs) {
           final key = '${rx.sourceId}-${rx.targetId}';
           if (!uxs.contains(key)) {
