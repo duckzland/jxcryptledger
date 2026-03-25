@@ -295,8 +295,8 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
+          spacing: 12,
           children: [
-            const SizedBox(height: 10),
             WidgetsActionBar(
               centering: true,
               leftActions: _buildActionButtons(),
@@ -306,9 +306,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                 children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()],
               ),
             ),
-            const SizedBox(height: 16),
             Expanded(child: _buildScreen()),
-            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -604,6 +602,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
 
   Widget _buildOverviewList(Map<int, List<TransactionsModel>> grouped) {
     return ListView.separated(
+      padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
       itemBuilder: (context, idx) {
@@ -622,6 +621,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
 
   Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
     return ListView.separated(
+      padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
       itemBuilder: (context, idx) {

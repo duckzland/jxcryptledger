@@ -51,22 +51,19 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 20, bottom: 20),
-      child: Form(
-        key: _formKey,
-        child: ListView.separated(
-          padding: EdgeInsets.zero,
-          itemCount: editableKeys.length + 1,
-          separatorBuilder: (context, index) => const SizedBox(height: 20),
-          itemBuilder: (context, index) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1024),
-                child: WidgetsPanel(child: _buildItem(index, editableKeys)),
-              ),
-            );
-          },
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1024),
+        child: Form(
+          key: _formKey,
+          child: ListView.separated(
+            padding: const EdgeInsets.only(bottom: 20),
+            itemCount: editableKeys.length + 1,
+            separatorBuilder: (context, index) => const SizedBox(height: 20),
+            itemBuilder: (context, index) {
+              return WidgetsPanel(child: _buildItem(index, editableKeys));
+            },
+          ),
         ),
       ),
     );
@@ -74,19 +71,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildItem(int index, List<SettingKey> editableKeys) {
     if (index == editableKeys.length) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-        child: Center(
-          child: Wrap(
-            direction: Axis.horizontal,
-            runSpacing: 20,
-            spacing: 10,
-            runAlignment: WrapAlignment.center,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [_buildResetButton(editableKeys), _buildSaveButton()],
-          ),
-        ),
+      return Wrap(
+        direction: Axis.horizontal,
+        runSpacing: 20,
+        spacing: 10,
+        runAlignment: WrapAlignment.center,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [_buildResetButton(editableKeys), _buildSaveButton()],
       );
     }
 
@@ -96,21 +88,22 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildSettingField(SettingKey key) {
     return Column(
+      spacing: 10,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(key.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-        const SizedBox(height: 10),
         TextFormField(
           key: ValueKey("${key.name}-$_buildCount"),
           initialValue: _buffer[key]?.toString(),
           decoration: InputDecoration(
             hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
           ),
           keyboardType: key.type == SettingType.integer ? TextInputType.number : TextInputType.text,
           validator: (value) {
-            if (value == null || value.isEmpty) return "This field is required";
+            if (value == null || value.isEmpty) {
+              return "This field is required";
+            }
 
             if (key.validator != null) {
               final err = key.validator!(value);
