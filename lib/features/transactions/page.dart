@@ -424,8 +424,8 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                 icon: Icons.delete,
                 initialState: WidgetsButtonActionState.error,
                 tooltip: "Remove deletable transactions",
-                evaluator: (s) async {
-                  final bool isDeletable = await _txController.hasDeletableRoot();
+                evaluator: (s) {
+                  final bool isDeletable = _txController.hasDeletableRoot();
                   if (!isDeletable) {
                     s.disable();
                   } else {
@@ -446,8 +446,8 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
                 icon: Icons.close,
                 initialState: WidgetsButtonActionState.warning,
                 tooltip: "Close all closable transactions",
-                evaluator: (s) async {
-                  final bool isClosable = await _txController.hasClosableLeaf();
+                evaluator: (s) {
+                  final bool isClosable = _txController.hasClosableLeaf();
                   if (!isClosable) {
                     s.disable();
                   } else {

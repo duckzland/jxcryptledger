@@ -289,7 +289,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
     _getRate();
   }
 
-  Future<void> _getRate() async {
+  void _getRate() {
     try {
       final int source = _selectedSource ?? 0;
       final int target = _selectedTarget ?? 0;
@@ -298,7 +298,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
         return;
       }
 
-      final rate = await _ratesController.getStoredRate(source, target);
+      final rate = _ratesController.getStoredRate(source, target);
       if (rate == -9999) {
         _ratesController.addQueue(source, target);
         _temporaryRates.add((source, target));

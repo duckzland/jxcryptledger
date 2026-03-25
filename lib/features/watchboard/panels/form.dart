@@ -78,7 +78,7 @@ class _PanelsFormState extends State<PanelsForm> {
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
     final Map<String, dynamic> meta = {};
-    final rate = await _rateController.getStoredRate(_selectedSrId!, _selectedRrId!);
+    final rate = _rateController.getStoredRate(_selectedSrId!, _selectedRrId!);
 
     if (rate == -9999) {
       _rateController.addQueue(_selectedSrId!, _selectedRrId!);

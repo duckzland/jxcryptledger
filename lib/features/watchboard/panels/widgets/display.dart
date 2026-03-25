@@ -75,7 +75,7 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
 
   void _onControllerChanged() async {
     final tix = widget.tix;
-    final newRate = await _ratesController.getStoredRate(tix.srId, tix.rrId);
+    final newRate = _ratesController.getStoredRate(tix.srId, tix.rrId);
 
     if (newRate != tix.rate) {
       tix.setRate(newRate);

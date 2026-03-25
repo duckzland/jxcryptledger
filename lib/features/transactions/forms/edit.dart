@@ -46,7 +46,6 @@ class _TransactionFormState extends State<TransactionFormEdit> {
   }
 
   bool get isLeaf => !isRoot;
-  // bool get isActive => widget.initialData?.statusEnum == TransactionStatus.active;
 
   String generateTid() => _txController.generateTid();
 
@@ -68,8 +67,8 @@ class _TransactionFormState extends State<TransactionFormEdit> {
     _isActive = widget.initialData?.statusEnum == TransactionStatus.active;
   }
 
-  void detectLeaf(TransactionsModel tx) async {
-    final leaf = await _txController.hasLeaf(tx);
+  void detectLeaf(TransactionsModel tx) {
+    final leaf = _txController.hasLeaf(tx);
     setState(() {
       _hasLeaf = leaf;
       if (_hasLeaf!) {
@@ -95,7 +94,6 @@ class _TransactionFormState extends State<TransactionFormEdit> {
       await _txController.update(tx);
       widget.onSave?.call(null);
     } on ValidationException catch (e) {
-      // TODO: Improve this by analyzing the error code and set the form field error state!
       widget.onSave?.call(e);
     } catch (e) {
       widget.onSave?.call(e);

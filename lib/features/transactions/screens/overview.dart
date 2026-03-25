@@ -104,14 +104,14 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
     }
   }
 
-  Future<void> _calculateProfitLoss() async {
+  void _calculateProfitLoss() {
     if (widget.transactions.isEmpty) {
       return;
     }
 
     // Extract all roots for the same srId as this group!
     double capital = 0;
-    final roots = await _txController.collectAllRoots();
+    final roots = _txController.collectAllRoots();
     for (final rtx in roots) {
       if (rtx.srId == widget.id) {
         capital += rtx.srAmount;
@@ -131,13 +131,13 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
     }
   }
 
-  Future<void> _checkForClosable() async {
+  void _checkForClosable() {
     final txs = widget.transactions;
     for (final tx in txs) {
       if (tx.isRoot) continue;
       if (!tx.isActive) continue;
       try {
-        final closable = await _txController.isClosable(tx);
+        final closable = _txController.isClosable(tx);
         if (closable) {
           setState(() {
             _isClosable = true;
@@ -150,13 +150,13 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
     }
   }
 
-  Future<void> _checkForDeletable() async {
+  void _checkForDeletable() {
     final txs = widget.transactions;
     for (final tx in txs) {
       if (tx.isLeaf) continue;
       if (!tx.isActive) continue;
       try {
-        final deletable = await _txController.isDeletable(tx);
+        final deletable = _txController.isDeletable(tx);
         if (deletable) {
           setState(() {
             _isDeletable = true;
@@ -283,7 +283,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
               tooltip: "Close all closable transactions found in this group",
               padding: const EdgeInsets.all(0),
               iconSize: 18,
-              evaluator: (s) async {
+              evaluator: (s) {
                 if (!_isClosable) {
                   s.disable();
                 } else {
@@ -309,7 +309,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
               tooltip: "Delete all transactions",
               padding: const EdgeInsets.all(0),
               iconSize: 18,
-              evaluator: (s) async {
+              evaluator: (s) {
                 if (!_isDeletable) {
                   s.disable();
                 } else {
