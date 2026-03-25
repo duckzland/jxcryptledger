@@ -26,7 +26,7 @@ class RatesRepository extends CoreBaseRepository<RatesModel, String> with CoreMi
     await box.put(tx.uuid, rateWithTimestamp);
   }
 
-  Future<RatesModel?> getPair(int sourceId, int targetId) async {
+ RatesModel? getPair(int sourceId, int targetId) {
     final key = '$sourceId-$targetId';
     return box.get(key);
   }

@@ -5,15 +5,15 @@ class TransactionsRulesDelete extends TransactionsRulesBase {
   TransactionsRulesDelete(super.tx, super.txRepo, super.silent, {super.mode = "[TXDELETE]"});
 
   @override
-  Future<bool> validate() async {
+  bool validate() {
     txCheckIsRoot(AppErrorCode.txDeleteNotRoot, "This transaction cannot be deleted.");
 
-    await txCheckTerminalIsClosed(
+    txCheckTerminalIsClosed(
       AppErrorCode.txDeleteActiveChildren,
       "This transaction cannot be deleted because related transactions are still in progress.",
     );
 
-    await txCheckLeavesIsNotActive(
+    txCheckLeavesIsNotActive(
       AppErrorCode.txDeleteInactiveLeaves,
       "This transaction cannot be deleted because related transactions are still in progress.",
     );

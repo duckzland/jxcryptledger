@@ -44,10 +44,10 @@ class UnlockController extends ChangeNotifier {
   Future<void> _initializeFeatures() async {
     await _notificationService.init();
     await _ratesController.init();
-    await _watchersController.init();
-    await _panelsController.init();
-    await _tickersController.init();
-    await _cryptosController.init();
+    _watchersController.init();
+    _panelsController.init();
+    _tickersController.init();
+    _cryptosController.init();
     _appWorker.start();
   }
 

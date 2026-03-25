@@ -6,65 +6,64 @@ import 'repository.dart';
 import 'service.dart';
 
 class CryptosController extends ChangeNotifier {
-  final CryptosRepository repo;
-  final CryptosService service;
+  final CryptosRepository _repo;
+  final CryptosService _service;
 
-  CryptosController(this.repo, this.service);
+  CryptosController(this._repo, this._service);
 
-  bool get isFetching => service.isFetching;
+  bool get isFetching => _service.isFetching;
 
   Future<void> init() async {
-    await repo.init();
-    _items = await repo.getAll();
-    notifyListeners();
+    await _repo.init();
+    load();
   }
 
   List<CryptosModel> _items = [];
   List<CryptosModel> get items => _items;
 
-  Future<void> load() async {
-    _items = await repo.getAll();
+  void start() {
+    _items = _repo.getAll();
+  }
+
+  void load() {
+    start();
     notifyListeners();
   }
 
   Future<void> add(CryptosModel crypto) async {
-    await repo.add(crypto);
-    await load();
+    await _repo.add(crypto);
+    load();
   }
 
   Future<void> deleteById(int id) async {
-    await repo.deleteById(id);
-    await load();
+    await _repo.deleteById(id);
+    load();
   }
 
   Future<void> clear() async {
-    await repo.clear();
-    await load();
+    await _repo.clear();
+    load();
   }
 
   Future<void> flush() async {
-    await repo.flush();
-    await load();
+    await _repo.flush();
+    load();
   }
 
   List<CryptosModel> filter(String query) {
-    return repo.filter(query);
+    return _repo.filter(query);
   }
 
   bool isEmpty() {
-    return repo.isEmpty();
+    return _repo.isEmpty();
   }
 
   Map<int, String> getSymbolMap() {
-    return repo.getSymbolMap();
+    return _repo.getSymbolMap();
   }
 
   String? getSymbol(int id) {
-    return repo.getSymbol(id);
-  }
-
-  Future<List<CryptosModel>> getAll() async {
-    return await repo.getAll();
+    return _repo.getSymbol(id);
   }
 
   List<CryptosModel> extract() {
@@ -72,15 +71,15 @@ class CryptosController extends ChangeNotifier {
   }
 
   CryptosModel? getById(int id) {
-    return repo.getById(id);
+    return _repo.getById(id);
   }
 
   Future<bool> fetch() async {
     try {
-      final success = await service.fetch();
+      final success = await _service.fetch();
 
       if (success) {
-        await load();
+        load();
       }
 
       return success;

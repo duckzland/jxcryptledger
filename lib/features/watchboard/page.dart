@@ -49,11 +49,11 @@ class _WatchboardPageState extends State<WatchboardPage> {
   void initState() {
     super.initState();
     _pxController = locator<PanelsController>();
-    _pxController.load();
+    _pxController.start();
     _pxController.addListener(_onControllerChanged);
 
     _tixController = locator<TickersController>();
-    _tixController.load();
+    _tixController.start();
     _tixController.addListener(_onControllerChanged);
 
     _cryptosController = locator<CryptosController>();
@@ -110,7 +110,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
               importEvaluator: () => true,
               importCallback: (json) async {
                 await _pxController.importDatabase(json);
-                await _pxController.scheduleRates();
+                _pxController.scheduleRates();
                 await _tixController.refreshRates();
               },
               addForm: _buildForm,
@@ -381,7 +381,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
             showDialogBeforeImport: true,
             onImport: (String json) async {
               await _pxController.importDatabase(json);
-              await _pxController.scheduleRates();
+              _pxController.scheduleRates();
               await _tixController.refreshRates();
             },
             evaluator: (s) {},

@@ -5,12 +5,12 @@ class TransactionsRulesClose extends TransactionsRulesBase {
   TransactionsRulesClose(super.tx, super.txRepo, super.silent, {super.mode = "[TXCLOSE]"});
 
   @override
-  Future<bool> validate() async {
+  bool validate() {
     txCheckIsLeaf(AppErrorCode.txCloseNotLeaf, "This transaction cannot be closed directly.");
 
     txCheckIsActive(AppErrorCode.txCloseNotActive, "An inactive transaction cannot be closed.");
 
-    await txCheckIsClosable(AppErrorCode.txCloseNoTarget, "This transaction is not ready to be closed yet.");
+    txCheckIsClosable(AppErrorCode.txCloseNoTarget, "This transaction is not ready to be closed yet.");
 
     return true;
   }

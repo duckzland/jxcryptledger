@@ -22,7 +22,7 @@ class CryptosService {
     return repo.getSymbol(id);
   }
 
-  Future<List<CryptosModel>> getAll() {
+  List<CryptosModel> getAll() {
     return repo.getAll();
   }
 

@@ -22,11 +22,11 @@ class RatesController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List<RatesModel>> getAll() async {
-    return await service.getAll();
+  List<RatesModel> getAll() {
+    return service.getAll();
   }
 
-  Future<double> getStoredRate(int sourceId, int targetId) {
+  double getStoredRate(int sourceId, int targetId) {
     return service.getStoredRate(sourceId, targetId);
   }
 

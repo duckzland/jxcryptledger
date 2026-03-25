@@ -63,10 +63,8 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
   Future<void> _loadData() async {
     final tx = widget.tx;
 
-    final results = await Future.wait([_txController.hasLeaf(tx), _txController.collectBranchActiveAmount(tx)]);
-
-    final leaf = results[0] as bool;
-    final branch = results[1] as Map<int, double>;
+    final leaf = _txController.hasLeaf(tx);
+    final branch = _txController.collectBranchActiveAmount(tx);
     final totalResult = branch[tx.srId] ?? 0;
     final totalReturnResult = branch[tx.rrId] ?? 0;
 
@@ -120,7 +118,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
             LayoutId(
               id: 'trailing',
               child: Padding(
-                padding: EdgeInsets.only(right: 25, top: 6),
+                padding: EdgeInsets.only(right: 25, top: 6, left: 8),
                 child: TransactionsWidgetsButtons(
                   tx: widget.tx,
                   cryptosController: _cryptosController,

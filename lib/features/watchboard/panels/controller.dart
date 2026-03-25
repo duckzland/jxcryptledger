@@ -20,41 +20,45 @@ class PanelsController extends ChangeNotifier {
     return _repo.generateId();
   }
 
-  Future<void> init() async {
+  void init() {
     scheduleRates();
   }
 
-  Future<void> load() async {
-    _items = await _repo.getAll();
+  void start() {
+    _items = _repo.getAll();
+  }
+
+  void load() {
+    start();
     notifyListeners();
   }
 
-  Future<PanelsModel?> get(String tid) async {
-    final tx = await _repo.get(tid);
-    await load();
+  PanelsModel? get(String tid) {
+    final tx = _repo.get(tid);
+    load();
     return tx;
   }
 
   Future<void> add(PanelsModel tx) async {
     await _repo.add(tx);
-    await load();
+    load();
   }
 
   Future<void> update(PanelsModel tx) async {
     await _repo.update(tx);
-    await load();
+    load();
   }
 
   Future<void> delete(PanelsModel tx) async {
     await _ratesService.delete(tx.srId, tx.rrId);
     await _ratesService.delete(tx.rrId, tx.srId);
     await _repo.delete(tx);
-    await load();
+    load();
   }
 
   Future<void> wipe() async {
     await _repo.clear();
-    await load();
+    load();
   }
 
   List<String> getAllRateID() {
@@ -68,8 +72,8 @@ class PanelsController extends ChangeNotifier {
     return ids;
   }
 
-  Future<void> scheduleRates() async {
-    await load();
+  void scheduleRates() {
+    load();
     for (final w in _items) {
       _ratesService.addQueue(w.srId, w.rrId);
     }
@@ -78,9 +82,9 @@ class PanelsController extends ChangeNotifier {
   }
 
   Future<void> onRatesUpdated() async {
-    await load();
+    load();
     for (final w in _items) {
-      final newRate = await _ratesService.getStoredRate(w.srId, w.rrId);
+      final newRate = _ratesService.getStoredRate(w.srId, w.rrId);
 
       if (newRate == -9999) {
         _ratesService.addQueue(w.srId, w.rrId);
@@ -89,7 +93,7 @@ class PanelsController extends ChangeNotifier {
 
       if (newRate != w.rate) {
         w.setRate(newRate);
-        update(w);
+        await update(w);
       }
     }
   }
@@ -132,7 +136,7 @@ class PanelsController extends ChangeNotifier {
   }
 
   Future<bool> updateLinked() async {
-    final txs = await _txRepo.getAll();
+    final txs = _txRepo.getAll();
     final Map<String, double> grouped = {};
     int updateCount = 0;
 
@@ -159,7 +163,7 @@ class PanelsController extends ChangeNotifier {
 
           if (wx.srAmount != totalAmount) {
             final nwx = wx.copyWith(srAmount: totalAmount);
-            update(nwx);
+            await update(nwx);
             updateCount += 1;
           }
         }
@@ -179,7 +183,7 @@ class PanelsController extends ChangeNotifier {
       await delete(wx);
     }
 
-    await load();
+    load();
   }
 
   bool isEmpty() {
@@ -196,7 +200,7 @@ class PanelsController extends ChangeNotifier {
 
   Future<void> importDatabase(String rawJson) async {
     await _repo.import(rawJson);
-    await load();
+    load();
   }
 
   void updateOrder(List<PanelsModel> newOrder) {
