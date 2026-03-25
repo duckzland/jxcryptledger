@@ -11,7 +11,6 @@ import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
 import '../../widgets/button.dart';
-import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
@@ -55,6 +54,8 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
+
+    _registerBars("Trading View");
   }
 
   @override
@@ -67,6 +68,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
 
   void _onControllerChanged() {
     setState(() {});
+    AppLayout.refreshBar?.call();
   }
 
   void _setFilterAndSortDefault() {
@@ -111,12 +113,6 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
         _filterableOptions = {};
         break;
     }
-  }
-
-  void _changePageTitle(String title) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setTitle?.call(title);
-    });
   }
 
   Map<int, List<TransactionsModel>> _getOverviewTransactions() {
@@ -258,6 +254,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
+      _removeBars();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
@@ -266,6 +263,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
     }
 
     if (_txController.items.isEmpty) {
+      _removeBars();
       return Column(
         children: [
           Expanded(
@@ -292,25 +290,36 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
     }
 
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Column(
-          spacing: 12,
-          children: [
-            WidgetsActionBar(
-              centering: true,
-              leftActions: _buildActionButtons(),
-              mainActions: _buildScreenSwitcher(),
-              rightActions: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()],
-              ),
-            ),
-            Expanded(child: _buildScreen()),
-          ],
-        ),
-      ),
+      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1600), child: _buildScreen()),
     );
+  }
+
+  void _removeBars() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setActions?.call(null);
+    });
+  }
+
+  void _registerBars(String title) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setTitle?.call(title);
+      AppLayout.setActions?.call(
+        WidgetsActionBar(
+          centering: true,
+          leftActions: _buildActionButtons(),
+          mainActions: _buildScreenSwitcher(),
+          rightActions: Row(
+            spacing: 8,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) Container(width: 1, height: 24, color: AppTheme.separator),
+              if (_sortableOptions.isNotEmpty) _buildSorter(),
+              if (_filterableOptions.isNotEmpty) _buildFilter(),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildForm(BuildContext dialogContext) {
@@ -376,217 +385,210 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
   Widget _buildActionButtons() {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      spacing: 10,
       children: [
-        WidgetsPanel(
-          padding: const EdgeInsets.all(8),
-          child: Wrap(
-            spacing: 4,
-            children: [
-              WidgetsDialogsImport(
-                key: Key("import-button-batch"),
-                tooltip: "Import transactions to database",
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                padding: const EdgeInsets.all(8),
-                showDialogBeforeImport: true,
-                onImport: (String json) async {
-                  await _txController.importDatabase(json);
-                },
-              ),
-              WidgetsDialogsExport(
-                key: const Key("export-button-batch"),
-                tooltip: "Export transactions from database",
-                suggestedPrefix: "transactions_",
-                onExport: _txController.exportDatabase,
-                isEmpty: _txController.isEmpty,
-              ),
-              WidgetsDialogsReset(
-                key: const Key("reset-button-batch"),
-                tooltip: "Reset transactions database",
-                dialogTitle: "Delete All Transactions",
-                dialogMessage:
-                    "This will delete all transactions and all of its history.\n"
-                    "This action cannot be undone.",
-                onWipe: _txController.wipeAll,
-                isEmpty: _txController.isEmpty,
-              ),
-            ],
-          ),
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsImport(
+              key: Key("import-button-batch"),
+              tooltip: "Import transactions to database",
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              padding: const EdgeInsets.all(8),
+              showDialogBeforeImport: true,
+              onImport: (String json) async {
+                await _txController.importDatabase(json);
+              },
+            ),
+            WidgetsDialogsExport(
+              key: const Key("export-button-batch"),
+              tooltip: "Export transactions from database",
+              suggestedPrefix: "transactions_",
+              onExport: _txController.exportDatabase,
+              isEmpty: _txController.isEmpty,
+            ),
+            WidgetsDialogsReset(
+              key: const Key("reset-button-batch"),
+              tooltip: "Reset transactions database",
+              dialogTitle: "Delete All Transactions",
+              dialogMessage:
+                  "This will delete all transactions and all of its history.\n"
+                  "This action cannot be undone.",
+              onWipe: _txController.wipeAll,
+              isEmpty: _txController.isEmpty,
+            ),
+          ],
         ),
-        SizedBox(width: 10),
-        WidgetsPanel(
-          padding: const EdgeInsets.all(8),
-          child: Wrap(
-            spacing: 4,
-            children: [
-              WidgetsDialogsAlert(
-                key: Key("delete-button-batch"),
-                icon: Icons.delete,
-                initialState: WidgetsButtonActionState.error,
-                tooltip: "Remove deletable transactions",
-                evaluator: (s) {
-                  final bool isDeletable = _txController.hasDeletableRoot();
-                  if (!isDeletable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-                dialogTitle: "Delete All Transactions",
-                dialogMessage:
-                    "This will delete all transactions and all of its history.\n"
-                    "This action cannot be undone.",
-                dialogConfirmLabel: "Delete",
-                actionStartCallback: _txController.deleteAll,
-                actionSuccessMessage: "All transactions deleted.",
-                actionErrorMessage: "Failed to delete transactions.",
-              ),
-              WidgetsDialogsAlert(
-                key: Key("close-button-batch"),
-                icon: Icons.close,
-                initialState: WidgetsButtonActionState.warning,
-                tooltip: "Close all closable transactions",
-                evaluator: (s) {
-                  final bool isClosable = _txController.hasClosableLeaf();
-                  if (!isClosable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                dialogTitle: "Close All Transactions",
-                dialogMessage:
-                    "Are you sure you want to close all closable transactions?\n"
-                    "This action cannot be undone.",
-                dialogConfirmLabel: "Close",
-                actionStartCallback: _txController.closeAll,
-                actionSuccessMessage: "All transactions closed.",
-                actionErrorMessage: "Failed to close transactions.",
-              ),
-              WidgetsDialogsShowForm(
-                key: const Key("add-button"),
-                tooltip: "Add new transaction",
-                buildForm: _buildForm,
-                evaluator: (s) {
-                  if (_cryptosController.isEmpty()) {
-                    s.disable();
-                  } else {
-                    s.action();
-                  }
-                },
-              ),
-            ],
-          ),
+        Container(width: 1, height: 24, color: AppTheme.separator),
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsAlert(
+              key: Key("delete-button-batch"),
+              icon: Icons.delete,
+              initialState: WidgetsButtonActionState.error,
+              tooltip: "Remove deletable transactions",
+              evaluator: (s) {
+                final bool isDeletable = _txController.hasDeletableRoot();
+                if (!isDeletable) {
+                  s.disable();
+                } else {
+                  s.error();
+                }
+              },
+              dialogTitle: "Delete All Transactions",
+              dialogMessage:
+                  "This will delete all transactions and all of its history.\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Delete",
+              actionStartCallback: _txController.deleteAll,
+              actionSuccessMessage: "All transactions deleted.",
+              actionErrorMessage: "Failed to delete transactions.",
+            ),
+            WidgetsDialogsAlert(
+              key: Key("close-button-batch"),
+              icon: Icons.close,
+              initialState: WidgetsButtonActionState.warning,
+              tooltip: "Close all closable transactions",
+              evaluator: (s) {
+                final bool isClosable = _txController.hasClosableLeaf();
+                if (!isClosable) {
+                  s.disable();
+                } else {
+                  s.warning();
+                }
+              },
+              dialogTitle: "Close All Transactions",
+              dialogMessage:
+                  "Are you sure you want to close all closable transactions?\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Close",
+              actionStartCallback: _txController.closeAll,
+              actionSuccessMessage: "All transactions closed.",
+              actionErrorMessage: "Failed to close transactions.",
+            ),
+            WidgetsDialogsShowForm(
+              key: const Key("add-button"),
+              tooltip: "Add new transaction",
+              buildForm: _buildForm,
+              evaluator: (s) {
+                if (_cryptosController.isEmpty()) {
+                  s.disable();
+                } else {
+                  s.action();
+                }
+              },
+            ),
+          ],
         ),
+        Container(width: 1, height: 24, color: AppTheme.separator),
       ],
     );
   }
 
   Widget _buildScreenSwitcher() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(8),
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsButton(
-            icon: Icons.show_chart,
-            padding: const EdgeInsets.all(8),
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Active Trading",
-            evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.active) {
-                s.active();
-              } else {
-                s.normal();
-              }
-            },
-            onPressed: (_) {
-              setState(() {
-                _viewMode = TransactionsViewMode.active;
-                _detectFilterAndSortOptions();
-              });
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.account_balance_wallet_outlined,
-            padding: const EdgeInsets.all(8),
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Balance Overview",
-            evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.overview) {
-                s.active();
-              } else {
-                s.normal();
-              }
-            },
-            onPressed: (_) {
-              setState(() {
-                _viewMode = TransactionsViewMode.overview;
-                _detectFilterAndSortOptions();
-              });
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.article_outlined,
-            padding: const EdgeInsets.all(8),
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "Journal View",
-            evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.journal) {
-                s.active();
-              } else {
-                s.normal();
-              }
-            },
-            onPressed: (_) {
-              setState(() {
-                _viewMode = TransactionsViewMode.journal;
-                _detectFilterAndSortOptions();
-              });
-            },
-          ),
-          WidgetsButton(
-            icon: Icons.history,
-            padding: const EdgeInsets.all(8),
-            iconSize: 20,
-            minimumSize: const Size(40, 40),
-            tooltip: "History View",
-            evaluator: (s) {
-              if (_viewMode == TransactionsViewMode.history) {
-                s.active();
-              } else {
-                s.normal();
-              }
-            },
-            onPressed: (_) {
-              setState(() {
-                _viewMode = TransactionsViewMode.history;
-                _detectFilterAndSortOptions();
-              });
-            },
-          ),
-        ],
-      ),
+    return Wrap(
+      spacing: 4,
+      children: [
+        WidgetsButton(
+          icon: Icons.show_chart,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Active Trading",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.active) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.active;
+              _detectFilterAndSortOptions();
+            });
+          },
+        ),
+        WidgetsButton(
+          icon: Icons.account_balance_wallet_outlined,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Balance Overview",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.overview) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.overview;
+              _detectFilterAndSortOptions();
+            });
+          },
+        ),
+        WidgetsButton(
+          icon: Icons.article_outlined,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Journal View",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.journal) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.journal;
+              _detectFilterAndSortOptions();
+            });
+          },
+        ),
+        WidgetsButton(
+          icon: Icons.history,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "History View",
+          evaluator: (s) {
+            if (_viewMode == TransactionsViewMode.history) {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (_) {
+            setState(() {
+              _viewMode = TransactionsViewMode.history;
+              _detectFilterAndSortOptions();
+            });
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildScreen() {
     switch (_viewMode) {
       case TransactionsViewMode.overview:
-        _changePageTitle("Transaction Balance");
+        _registerBars("Transaction Balance");
 
         return _buildOverviewList(_getOverviewTransactions());
 
       case TransactionsViewMode.active:
-        _changePageTitle("Trading View");
+        _registerBars("Trading View");
 
         return _buildActiveTradingList(_getActiveTransactions());
 
       case TransactionsViewMode.journal:
-        _changePageTitle("Transaction Overview");
+        _registerBars("Transaction Overview");
 
         return TransactionsJournalView(
           transactions: List<TransactionsModel>.from(_getJournalTransactions()),
@@ -594,7 +596,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
         );
 
       case TransactionsViewMode.history:
-        _changePageTitle("Transaction History");
+        _registerBars("Transaction History");
 
         return TransactionHistory(transactions: _getHistoryTransactions());
     }

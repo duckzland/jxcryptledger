@@ -12,6 +12,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonState s)? evaluator;
+  final bool persistBg;
 
   const WidgetsDialogsShowForm({
     super.key,
@@ -25,6 +26,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.action,
     this.evaluator,
+    this.persistBg = false,
   });
 
   @override
@@ -54,6 +56,7 @@ class _WidgetsDialogsShowFormState extends State<WidgetsDialogsShowForm> {
       initialState: widget.initialState,
       onPressed: (_) => _showDialog(context),
       evaluator: widget.evaluator,
+      persistBg: widget.persistBg,
     );
   }
 }

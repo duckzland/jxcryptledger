@@ -45,7 +45,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     _cryptosController.addListener(_onControllerChanged);
     rows = _buildRows(_wxController.items);
 
-    _changePageTitle("Rate Watchers");
+    _registerBars("Rate Watchers");
   }
 
   @override
@@ -62,15 +62,23 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     });
   }
 
-  void _changePageTitle(String title) {
+  void _removeBars() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLayout.setActions?.call(null);
+    });
+  }
+
+  void _registerBars(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
+      AppLayout.setActions?.call(WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildAction()));
     });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
+      _removeBars();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
@@ -79,6 +87,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     }
 
     if (_wxController.items.isEmpty) {
+      _removeBars();
       return Column(
         children: [
           Expanded(
@@ -98,13 +107,13 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
       );
     }
 
+    _registerBars("Rate Watchers");
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
         child: Column(
           spacing: 12,
           children: [
-            WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildAction()),
             Expanded(child: _buildTable()),
             const SizedBox(height: 1),
           ],
@@ -134,77 +143,78 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
   }
 
   Widget _buildAction() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(8),
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsDialogsAlert<WatchersModel>(
-            key: Key("restart-button-batch"),
-            icon: Icons.refresh,
-            initialState: WidgetsButtonActionState.warning,
-            tooltip: "Restart all rate watchers",
-            evaluator: (s) {
-              if (!_wxController.hasRestartable()) {
-                s.disable();
-              } else {
-                s.warning();
-              }
-            },
-            dialogTitle: "Restart Rate Watchers",
-            dialogMessage:
-                "This will restart all rate watchers by setting sent to 0.\n"
-                "This action cannot be undone.",
-            dialogConfirmLabel: "Restart",
-            actionStartCallback: _wxController.restart,
-            actionSuccessMessage: "All watchers restarted.",
-            actionErrorMessage: "Failed to restart watchers.",
-          ),
-          WidgetsDialogsShowForm(
-            key: const Key("add-button"),
-            initialState: WidgetsButtonActionState.action,
-            tooltip: "Add new rate watcher",
-            buildForm: _buildForm,
-          ),
-        ],
-      ),
+    return Wrap(
+      spacing: 4,
+      children: [
+        WidgetsDialogsAlert<WatchersModel>(
+          key: Key("restart-button-batch"),
+          icon: Icons.refresh,
+          initialState: WidgetsButtonActionState.warning,
+          tooltip: "Restart all rate watchers",
+          evaluator: (s) {
+            if (!_wxController.hasRestartable()) {
+              s.disable();
+            } else {
+              s.warning();
+            }
+          },
+          dialogTitle: "Restart Rate Watchers",
+          dialogMessage:
+              "This will restart all rate watchers by setting sent to 0.\n"
+              "This action cannot be undone.",
+          dialogConfirmLabel: "Restart",
+          actionStartCallback: _wxController.restart,
+          actionSuccessMessage: "All watchers restarted.",
+          actionErrorMessage: "Failed to restart watchers.",
+        ),
+        WidgetsDialogsShowForm(
+          key: const Key("add-button"),
+          initialState: WidgetsButtonActionState.action,
+          tooltip: "Add new rate watcher",
+          buildForm: _buildForm,
+        ),
+      ],
     );
   }
 
   Widget _buildDatabaseAction() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(8),
-      child: Wrap(
-        spacing: 4,
-        children: [
-          WidgetsDialogsImport(
-            key: Key("import-button-batch"),
-            tooltip: "Import rate watchers to database",
-            showDialogBeforeImport: true,
-            onImport: (String json) async {
-              await _wxController.importDatabase(json);
-            },
-            evaluator: (s) {},
-          ),
-          WidgetsDialogsExport(
-            key: const Key("export-button-batch"),
-            tooltip: "Export rate watchers from database",
-            suggestedPrefix: "watchers_",
-            onExport: _wxController.exportDatabase,
-            isEmpty: _wxController.isEmpty,
-          ),
-          WidgetsDialogsReset(
-            key: const Key("reset-button-batch"),
-            tooltip: "Delete All Rate Watcher",
-            dialogTitle: "Delete All Transactions",
-            dialogMessage:
-                "This will delete all rate watcher.\n"
-                "This action cannot be undone.",
-            onWipe: _wxController.deleteAll,
-            isEmpty: _wxController.isEmpty,
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsImport(
+              key: Key("import-button-batch"),
+              tooltip: "Import rate watchers to database",
+              showDialogBeforeImport: true,
+              onImport: (String json) async {
+                await _wxController.importDatabase(json);
+              },
+              evaluator: (s) {},
+            ),
+            WidgetsDialogsExport(
+              key: const Key("export-button-batch"),
+              tooltip: "Export rate watchers from database",
+              suggestedPrefix: "watchers_",
+              onExport: _wxController.exportDatabase,
+              isEmpty: _wxController.isEmpty,
+            ),
+            WidgetsDialogsReset(
+              key: const Key("reset-button-batch"),
+              tooltip: "Delete All Rate Watcher",
+              dialogTitle: "Delete All Transactions",
+              dialogMessage:
+                  "This will delete all rate watcher.\n"
+                  "This action cannot be undone.",
+              onWipe: _wxController.deleteAll,
+              isEmpty: _wxController.isEmpty,
+            ),
+          ],
+        ),
+        Container(width: 1, height: 24, color: AppTheme.separator),
+      ],
     );
   }
 

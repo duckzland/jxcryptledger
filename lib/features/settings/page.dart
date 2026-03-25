@@ -44,6 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call("Settings");
+      AppLayout.setActions?.call(null);
     });
   }
 

@@ -16,6 +16,7 @@ class WidgetsDialogsReset extends StatefulWidget {
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonState s)? evaluator;
   final bool Function()? isEmpty;
+  final bool persistBg;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -35,6 +36,7 @@ class WidgetsDialogsReset extends StatefulWidget {
     this.initialState = WidgetsButtonActionState.error,
     this.evaluator,
     this.isEmpty,
+    this.persistBg = false,
 
     this.dialogTitle = "Reset Database",
     this.dialogMessage =
@@ -133,6 +135,7 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
       initialState: widget.initialState,
       onPressed: (_) => _showDialog(context),
       evaluator: evaluator,
+      persistBg: widget.persistBg,
     );
   }
 }

@@ -447,6 +447,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
               iconSize: btnIconSize,
               minimumSize: btnSize,
               tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
+              persistBg: true,
               evaluator: (s) {
                 if (_linkedPanel == null) {
                   s.normal();
@@ -481,6 +482,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
               iconSize: btnIconSize,
               minimumSize: btnSize,
               tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
+              persistBg: true,
               evaluator: (s) {
                 if (_linkedWatcher == null) {
                   s.normal();

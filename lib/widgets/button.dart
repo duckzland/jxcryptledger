@@ -16,6 +16,7 @@ class WidgetsButton extends StatefulWidget {
   final WidgetsButtonActionState initialState;
   final double? iconSize;
   final Size? minimumSize;
+  final bool persistBg;
 
   const WidgetsButton({
     super.key,
@@ -28,6 +29,7 @@ class WidgetsButton extends StatefulWidget {
     this.initialState = WidgetsButtonActionState.normal,
     this.iconSize,
     this.minimumSize,
+    this.persistBg = true,
   });
 
   @override
@@ -80,8 +82,19 @@ class WidgetsButtonState extends State<WidgetsButton> {
 
     final button = ElevatedButton(
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.all(bg),
-        foregroundColor: WidgetStateProperty.all(fg),
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.hovered) || widget.persistBg || _state == WidgetsButtonActionState.inProgress) {
+            return _backgroundColor();
+          }
+
+          return AppTheme.buttonBg;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.hovered) || widget.persistBg || _state == WidgetsButtonActionState.inProgress) {
+            return _foregroundColor();
+          }
+          return AppTheme.buttonFg;
+        }),
         shadowColor: WidgetStateProperty.all(br),
         shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
         elevation: WidgetStateProperty.all(0),
