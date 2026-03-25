@@ -46,45 +46,52 @@ class _UnlockPageState extends State<UnlockPage> {
 
   Widget _buildFirstRunUI() {
     return Column(
+      spacing: 20,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text("Welcome!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        const Text("Create a password to secure your vault.", textAlign: TextAlign.center),
-        const SizedBox(height: 20),
-
-        TextField(
-          controller: _password,
-          obscureText: !showPassword,
-          decoration: InputDecoration(
-            labelText: "Password",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        TextField(
-          controller: _confirm,
-          obscureText: !showPassword,
-          decoration: InputDecoration(
-            labelText: "Confirm Password",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Column(
+          spacing: 8,
           children: [
-            Checkbox(value: showPassword, onChanged: (v) => setState(() => showPassword = v!)),
-            const Text("Show password"),
+            const Text("Welcome!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text("Create a password to secure your vault.", textAlign: TextAlign.center),
           ],
         ),
 
-        if (error != null) ...[const SizedBox(height: 8), Text(error!, style: const TextStyle(color: Colors.red))],
+        Column(
+          spacing: 12,
+          children: [
+            TextField(
+              controller: _password,
+              obscureText: !showPassword,
+              decoration: InputDecoration(
+                labelText: "Password",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+              ),
+            ),
+            TextField(
+              controller: _confirm,
+              obscureText: !showPassword,
+              decoration: InputDecoration(
+                labelText: "Confirm Password",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Checkbox(value: showPassword, onChanged: (v) => setState(() => showPassword = v!)),
+                const Text("Show password"),
+              ],
+            ),
 
-        const SizedBox(height: 20),
+            if (error != null)
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red),
+              ),
+          ],
+        ),
 
         WidgetsButton(
           label: "Create Vault",
@@ -127,12 +134,10 @@ class _UnlockPageState extends State<UnlockPage> {
 
   Widget _buildUnlockUI() {
     return Column(
+      spacing: 20,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Center(child: const Text("Please enter password to unlock", style: TextStyle(fontSize: 16))),
-
-        const SizedBox(height: 20),
-
+        const Text("Please enter password to unlock", textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
         TextField(
           controller: _password,
           obscureText: true,
@@ -142,8 +147,6 @@ class _UnlockPageState extends State<UnlockPage> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
           ),
         ),
-
-        const SizedBox(height: 20),
 
         WidgetsButton(
           label: "Unlock",
