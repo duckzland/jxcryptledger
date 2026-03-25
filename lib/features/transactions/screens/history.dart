@@ -62,15 +62,8 @@ class _TransactionHistoryState extends State<TransactionHistory> {
               alignment: Alignment.topRight,
             ),
             onTreeReady: (controller) {
-              void expandAll(TreeNode node) {
-                controller.expandNode(node as TreeNode<TransactionsModel>);
-                for (final child in node.children.values) {
-                  expandAll(child as TreeNode<TransactionsModel>);
-                }
-              }
-
               for (final child in _root.children.values) {
-                expandAll(child as TreeNode<TransactionsModel>);
+                controller.expandAllChildren(child as TreeNode<TransactionsModel>, recursive: true);
               }
             },
             builder: (context, node) {
