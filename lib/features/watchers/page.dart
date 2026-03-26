@@ -71,7 +71,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
   void _registerBars(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
-      AppLayout.setActions?.call(WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildAction()));
+      AppLayout.setActions?.call(WidgetsActionBar(leftActions: _buildAction()));
     });
   }
 
@@ -143,45 +143,43 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
   }
 
   Widget _buildAction() {
-    return Wrap(
-      spacing: 4,
-      children: [
-        WidgetsDialogsAlert<WatchersModel>(
-          key: Key("restart-button-batch"),
-          icon: Icons.refresh,
-          initialState: WidgetsButtonActionState.warning,
-          tooltip: "Restart all rate watchers",
-          evaluator: (s) {
-            if (!_wxController.hasRestartable()) {
-              s.disable();
-            } else {
-              s.warning();
-            }
-          },
-          dialogTitle: "Restart Rate Watchers",
-          dialogMessage:
-              "This will restart all rate watchers by setting sent to 0.\n"
-              "This action cannot be undone.",
-          dialogConfirmLabel: "Restart",
-          actionStartCallback: _wxController.restart,
-          actionSuccessMessage: "All watchers restarted.",
-          actionErrorMessage: "Failed to restart watchers.",
-        ),
-        WidgetsDialogsShowForm(
-          key: const Key("add-button"),
-          initialState: WidgetsButtonActionState.action,
-          tooltip: "Add new rate watcher",
-          buildForm: _buildForm,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDatabaseAction() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
       children: [
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsAlert<WatchersModel>(
+              key: Key("restart-button-batch"),
+              icon: Icons.refresh,
+              initialState: WidgetsButtonActionState.warning,
+              tooltip: "Restart all rate watchers",
+              evaluator: (s) {
+                if (!_wxController.hasRestartable()) {
+                  s.disable();
+                } else {
+                  s.warning();
+                }
+              },
+              dialogTitle: "Restart Rate Watchers",
+              dialogMessage:
+                  "This will restart all rate watchers by setting sent to 0.\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Restart",
+              actionStartCallback: _wxController.restart,
+              actionSuccessMessage: "All watchers restarted.",
+              actionErrorMessage: "Failed to restart watchers.",
+            ),
+            WidgetsDialogsShowForm(
+              key: const Key("add-button"),
+              initialState: WidgetsButtonActionState.action,
+              tooltip: "Add new rate watcher",
+              buildForm: _buildForm,
+            ),
+          ],
+        ),
+        Container(width: 1, height: 24, color: AppTheme.separator),
         Wrap(
           spacing: 4,
           children: [
@@ -213,7 +211,6 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
             ),
           ],
         ),
-        Container(width: 1, height: 24, color: AppTheme.separator),
       ],
     );
   }

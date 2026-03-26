@@ -97,7 +97,7 @@ class _AppLayoutState extends State<AppLayout> {
             final showMenu = width < 800;
 
             return Scaffold(
-              drawer: (showMenu) ? _buildDrawer() : null,
+              drawer: (showMenu) ? _buildDrawer(context) : null,
               appBar: AppBar(
                 backgroundColor: AppTheme.columnHeaderBg,
                 centerTitle: true,
@@ -136,7 +136,7 @@ class _AppLayoutState extends State<AppLayout> {
     );
   }
 
-  Widget _buildDrawer() {
+  Widget _buildDrawer(BuildContext context) {
     final hasRates = _ratesController.hasRates;
 
     return Drawer(

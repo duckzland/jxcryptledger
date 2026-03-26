@@ -50,7 +50,7 @@ class _ToolsPageState extends State<ToolsPage> {
   void _registerBars(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
-      AppLayout.setActions?.call(WidgetsActionBar(mainActions: _buildAction()));
+      AppLayout.setActions?.call(WidgetsActionBar(leftActions: _buildAction()));
     });
   }
 

@@ -15,22 +15,45 @@ class WidgetsActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final Key centerKey = UniqueKey();
     bool doCentering = centering;
+    bool doShrinkWrap = true;
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 560 && centering) {
           doCentering = false;
         }
+        int sideAvailable = 0;
+        if (leftActions != null) {
+          sideAvailable++;
+        }
+
+        if (mainActions != null) {
+          sideAvailable++;
+        }
+
+        if (rightActions != null) {
+          sideAvailable++;
+        }
+
+        if (sideAvailable < 2) {
+          doCentering = false;
+          doShrinkWrap = false;
+        }
+
         if (constraints.maxWidth > 760) {
           return Row(
             spacing: 12,
             children: [
-              Expanded(
-                child: Align(alignment: Alignment.centerLeft, child: leftActions),
-              ),
+              ?leftActions != null
+                  ? Expanded(
+                      child: Align(alignment: Alignment.centerLeft, child: leftActions),
+                    )
+                  : null,
               ?mainActions,
-              Expanded(
-                child: Align(alignment: Alignment.centerRight, child: rightActions),
-              ),
+              ?rightActions != null
+                  ? Expanded(
+                      child: Align(alignment: Alignment.centerRight, child: rightActions),
+                    )
+                  : null,
             ],
           );
         } else {
@@ -40,23 +63,29 @@ class WidgetsActionBar extends StatelessWidget {
               child: ScrollConfiguration(
                 behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
                 child: CustomScrollView(
-                  shrinkWrap: doCentering ? false : true,
+                  shrinkWrap: doCentering ? false : doShrinkWrap,
                   scrollDirection: Axis.horizontal,
                   center: doCentering ? centerKey : null,
                   slivers: [
-                    SliverToBoxAdapter(
-                      child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?leftActions]),
-                    ),
-                    SliverToBoxAdapter(
-                      key: centerKey,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?mainActions]),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?rightActions]),
-                    ),
+                    ?leftActions != null
+                        ? SliverToBoxAdapter(
+                            child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?leftActions]),
+                          )
+                        : null,
+                    ?mainActions != null
+                        ? SliverToBoxAdapter(
+                            key: centerKey,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?mainActions]),
+                            ),
+                          )
+                        : null,
+                    ?rightActions != null
+                        ? SliverToBoxAdapter(
+                            child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?rightActions]),
+                          )
+                        : null,
                   ],
                 ),
               ),
