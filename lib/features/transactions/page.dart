@@ -303,22 +303,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
   void _registerBars(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
-      AppLayout.setActions?.call(
-        WidgetsActionBar(
-          centering: true,
-          leftActions: _buildActionButtons(),
-          mainActions: _buildScreenSwitcher(),
-          rightActions: Row(
-            spacing: 8,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) Container(width: 1, height: 24, color: AppTheme.separator),
-              if (_sortableOptions.isNotEmpty) _buildSorter(),
-              if (_filterableOptions.isNotEmpty) _buildFilter(),
-            ],
-          ),
-        ),
-      );
+      AppLayout.setActions?.call(WidgetsActionBar(centering: true, leftActions: _buildActionBar()));
     });
   }
 
@@ -332,7 +317,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
 
   Widget _buildSorter() {
     return Container(
-      height: 40,
+      height: 38,
       padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.separator, width: 1),
@@ -358,7 +343,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
 
   Widget _buildFilter() {
     return Container(
-      height: 40,
+      height: 38,
       padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.separator, width: 1),
@@ -382,7 +367,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionBar() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
@@ -390,33 +375,85 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
         Wrap(
           spacing: 4,
           children: [
-            WidgetsDialogsImport(
-              key: Key("import-button-batch"),
-              tooltip: "Import transactions to database",
+            WidgetsButton(
+              icon: Icons.show_chart,
+              padding: const EdgeInsets.all(8),
               iconSize: 20,
               minimumSize: const Size(40, 40),
-              padding: const EdgeInsets.all(8),
-              showDialogBeforeImport: true,
-              onImport: (String json) async {
-                await _txController.importDatabase(json);
+              tooltip: "Active Trading",
+              evaluator: (s) {
+                if (_viewMode == TransactionsViewMode.active) {
+                  s.active();
+                } else {
+                  s.normal();
+                }
+              },
+              onPressed: (_) {
+                setState(() {
+                  _viewMode = TransactionsViewMode.active;
+                  _detectFilterAndSortOptions();
+                });
               },
             ),
-            WidgetsDialogsExport(
-              key: const Key("export-button-batch"),
-              tooltip: "Export transactions from database",
-              suggestedPrefix: "transactions_",
-              onExport: _txController.exportDatabase,
-              isEmpty: _txController.isEmpty,
+            WidgetsButton(
+              icon: Icons.account_balance_wallet_outlined,
+              padding: const EdgeInsets.all(8),
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              tooltip: "Balance Overview",
+              evaluator: (s) {
+                if (_viewMode == TransactionsViewMode.overview) {
+                  s.active();
+                } else {
+                  s.normal();
+                }
+              },
+              onPressed: (_) {
+                setState(() {
+                  _viewMode = TransactionsViewMode.overview;
+                  _detectFilterAndSortOptions();
+                });
+              },
             ),
-            WidgetsDialogsReset(
-              key: const Key("reset-button-batch"),
-              tooltip: "Reset transactions database",
-              dialogTitle: "Delete All Transactions",
-              dialogMessage:
-                  "This will delete all transactions and all of its history.\n"
-                  "This action cannot be undone.",
-              onWipe: _txController.wipeAll,
-              isEmpty: _txController.isEmpty,
+            WidgetsButton(
+              icon: Icons.article_outlined,
+              padding: const EdgeInsets.all(8),
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              tooltip: "Journal View",
+              evaluator: (s) {
+                if (_viewMode == TransactionsViewMode.journal) {
+                  s.active();
+                } else {
+                  s.normal();
+                }
+              },
+              onPressed: (_) {
+                setState(() {
+                  _viewMode = TransactionsViewMode.journal;
+                  _detectFilterAndSortOptions();
+                });
+              },
+            ),
+            WidgetsButton(
+              icon: Icons.history,
+              padding: const EdgeInsets.all(8),
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              tooltip: "History View",
+              evaluator: (s) {
+                if (_viewMode == TransactionsViewMode.history) {
+                  s.active();
+                } else {
+                  s.normal();
+                }
+              },
+              onPressed: (_) {
+                setState(() {
+                  _viewMode = TransactionsViewMode.history;
+                  _detectFilterAndSortOptions();
+                });
+              },
             ),
           ],
         ),
@@ -483,94 +520,42 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
           ],
         ),
         Container(width: 1, height: 24, color: AppTheme.separator),
-      ],
-    );
-  }
-
-  Widget _buildScreenSwitcher() {
-    return Wrap(
-      spacing: 4,
-      children: [
-        WidgetsButton(
-          icon: Icons.show_chart,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Active Trading",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.active) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.active;
-              _detectFilterAndSortOptions();
-            });
-          },
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsImport(
+              key: Key("import-button-batch"),
+              tooltip: "Import transactions to database",
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              padding: const EdgeInsets.all(8),
+              showDialogBeforeImport: true,
+              onImport: (String json) async {
+                await _txController.importDatabase(json);
+              },
+            ),
+            WidgetsDialogsExport(
+              key: const Key("export-button-batch"),
+              tooltip: "Export transactions from database",
+              suggestedPrefix: "transactions_",
+              onExport: _txController.exportDatabase,
+              isEmpty: _txController.isEmpty,
+            ),
+            WidgetsDialogsReset(
+              key: const Key("reset-button-batch"),
+              tooltip: "Reset transactions database",
+              dialogTitle: "Delete All Transactions",
+              dialogMessage:
+                  "This will delete all transactions and all of its history.\n"
+                  "This action cannot be undone.",
+              onWipe: _txController.wipeAll,
+              isEmpty: _txController.isEmpty,
+            ),
+          ],
         ),
-        WidgetsButton(
-          icon: Icons.account_balance_wallet_outlined,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Balance Overview",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.overview) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.overview;
-              _detectFilterAndSortOptions();
-            });
-          },
-        ),
-        WidgetsButton(
-          icon: Icons.article_outlined,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Journal View",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.journal) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.journal;
-              _detectFilterAndSortOptions();
-            });
-          },
-        ),
-        WidgetsButton(
-          icon: Icons.history,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "History View",
-          evaluator: (s) {
-            if (_viewMode == TransactionsViewMode.history) {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (_) {
-            setState(() {
-              _viewMode = TransactionsViewMode.history;
-              _detectFilterAndSortOptions();
-            });
-          },
-        ),
+        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) Container(width: 1, height: 24, color: AppTheme.separator),
+        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty)
+          Wrap(spacing: 4, children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()]),
       ],
     );
   }

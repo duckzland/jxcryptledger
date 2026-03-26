@@ -91,9 +91,7 @@ class _WatchboardPageState extends State<WatchboardPage> {
   void _registerBars(String title) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call(title);
-      AppLayout.setActions?.call(
-        WidgetsActionBar(leftActions: _buildDatabaseAction(), mainActions: _buildMainAction(), rightActions: _buildLinkedAction()),
-      );
+      AppLayout.setActions?.call(WidgetsActionBar(leftActions: _buildMainAction()));
     });
   }
 
@@ -266,75 +264,72 @@ class _WatchboardPageState extends State<WatchboardPage> {
   }
 
   Widget _buildMainAction() {
-    return Wrap(
-      spacing: 4,
-      children: [
-        WidgetsButton(
-          key: _enableTickers ? Key("ticker-shown") : Key("ticker-hidden"),
-          icon: Icons.remove_red_eye,
-          padding: const EdgeInsets.all(8),
-          initialState: WidgetsButtonActionState.normal,
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: _enableTickers ? "Hide Watchboard Tickers" : "Show Watchboard Tickers",
-          evaluator: (s) {
-            _enableTickers ? s.primary() : s.normal();
-          },
-          onPressed: (_) {
-            _debounceTimer?.cancel();
-            _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-              setState(() {
-                _enableTickers = !_enableTickers;
-              });
-              AppLayout.refreshBar?.call();
-            });
-          },
-        ),
-        WidgetsButton(
-          key: _enableDrag ? Key("panel-drag-allowed") : Key("panel-drag-disabled"),
-          icon: Icons.drag_indicator,
-          padding: const EdgeInsets.all(8),
-          initialState: WidgetsButtonActionState.normal,
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: _enableDrag ? "Turn off watchboard dragging" : "Turn on watchboard dragging",
-          evaluator: (s) {
-            _enableDrag ? s.primary() : s.normal();
-          },
-          onPressed: (_) {
-            _debounceTimer?.cancel();
-            _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-              final now = DateTime.now();
-              if (now.difference(_lastPress).inMilliseconds < 500) {
-                return;
-              }
-              setState(() {
-                _lastPress = now;
-                _enableDrag = !_enableDrag;
-              });
-
-              AppLayout.refreshBar?.call();
-
-              widgetsNotifyClear();
-              widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
-            });
-          },
-        ),
-        WidgetsDialogsShowForm(
-          key: const Key("add-button"),
-          tooltip: "Add new watchboard",
-          buildForm: _buildForm,
-          evaluator: (s) => s.action(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLinkedAction() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
       children: [
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsButton(
+              key: _enableTickers ? Key("ticker-shown") : Key("ticker-hidden"),
+              icon: Icons.remove_red_eye,
+              padding: const EdgeInsets.all(8),
+              initialState: WidgetsButtonActionState.normal,
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              tooltip: _enableTickers ? "Hide Watchboard Tickers" : "Show Watchboard Tickers",
+              evaluator: (s) {
+                _enableTickers ? s.primary() : s.normal();
+              },
+              onPressed: (_) {
+                _debounceTimer?.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+                  setState(() {
+                    _enableTickers = !_enableTickers;
+                  });
+                  AppLayout.refreshBar?.call();
+                });
+              },
+            ),
+            WidgetsButton(
+              key: _enableDrag ? Key("panel-drag-allowed") : Key("panel-drag-disabled"),
+              icon: Icons.drag_indicator,
+              padding: const EdgeInsets.all(8),
+              initialState: WidgetsButtonActionState.normal,
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              tooltip: _enableDrag ? "Turn off watchboard dragging" : "Turn on watchboard dragging",
+              evaluator: (s) {
+                _enableDrag ? s.primary() : s.normal();
+              },
+              onPressed: (_) {
+                _debounceTimer?.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+                  final now = DateTime.now();
+                  if (now.difference(_lastPress).inMilliseconds < 500) {
+                    return;
+                  }
+                  setState(() {
+                    _lastPress = now;
+                    _enableDrag = !_enableDrag;
+                  });
+
+                  AppLayout.refreshBar?.call();
+
+                  widgetsNotifyClear();
+                  widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
+                });
+              },
+            ),
+            WidgetsDialogsShowForm(
+              key: const Key("add-button"),
+              tooltip: "Add new watchboard",
+              buildForm: _buildForm,
+              evaluator: (s) => s.action(),
+            ),
+          ],
+        ),
         Container(width: 1, height: 24, color: AppTheme.separator),
         Wrap(
           spacing: 4,
@@ -381,6 +376,45 @@ class _WatchboardPageState extends State<WatchboardPage> {
                 }
               },
               actionErrorMessage: "Failed to update linked watchboard.",
+            ),
+          ],
+        ),
+        Container(width: 1, height: 24, color: AppTheme.separator),
+        Wrap(
+          spacing: 4,
+          children: [
+            WidgetsDialogsImport(
+              key: Key("import-button-batch"),
+              tooltip: "Import watchboard to database",
+              showDialogBeforeImport: true,
+              onImport: (String json) async {
+                await _pxController.importDatabase(json);
+                _pxController.scheduleRates();
+                await _tixController.refreshRates();
+              },
+              evaluator: (s) {},
+            ),
+            WidgetsDialogsExport(
+              key: const Key("export-button-batch"),
+              tooltip: "Export watchboard from database",
+              suggestedPrefix: "watchboards_",
+              onExport: _pxController.exportDatabase,
+              isEmpty: _pxController.isEmpty,
+            ),
+            WidgetsDialogsReset(
+              key: const Key("reset-button-batch"),
+              tooltip: "Reset watchboard database",
+              dialogTitle: "Reset Watchboard Database",
+              dialogMessage:
+                  "This will delete all watchboard entries.\n"
+                  "This action cannot be undone.",
+              onWipe: () async {
+                await _pxController.wipe();
+                await _tixController.wipe();
+
+                await _tixController.populate();
+              },
+              isEmpty: _pxController.isEmpty,
             ),
           ],
         ),
@@ -431,7 +465,6 @@ class _WatchboardPageState extends State<WatchboardPage> {
             ),
           ],
         ),
-        Container(width: 1, height: 24, color: AppTheme.separator),
       ],
     );
   }
