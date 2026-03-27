@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
-import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../mixins/action_bar.dart';
 import '../../mixins/sortable_table.dart';
-import '../../widgets/action_bar.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -19,6 +18,7 @@ import '../../widgets/notify.dart';
 import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
+import '../../widgets/separator.dart';
 import '../cryptos/controller.dart';
 import 'buttons.dart';
 import 'controller.dart';
@@ -32,7 +32,7 @@ class WatchersPage extends StatefulWidget {
   State<WatchersPage> createState() => _WatchersPageState();
 }
 
-class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<WatchersPage> {
+class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<WatchersPage>, MixinsActionBar<WatchersPage> {
   late final WatchersController _wxController;
   final CryptosController _cryptosController = locator<CryptosController>();
 
@@ -45,7 +45,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     _cryptosController.addListener(_onControllerChanged);
     rows = _buildRows(_wxController.items);
 
-    _registerBars("Rate Watchers");
+    registerBars("Rate Watchers");
   }
 
   @override
@@ -62,87 +62,8 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     });
   }
 
-  void _removeBars() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setActions?.call(null);
-    });
-  }
-
-  void _registerBars(String title) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setTitle?.call(title);
-      AppLayout.setActions?.call(WidgetsActionBar(leftActions: _buildAction()));
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
-    if (_cryptosController.isEmpty()) {
-      _removeBars();
-      return Column(
-        children: [
-          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
-        ],
-      );
-    }
-
-    if (_wxController.items.isEmpty) {
-      _removeBars();
-      return Column(
-        children: [
-          Expanded(
-            child: WidgetsScreensEmpty(
-              title: "Add Rate Watcher",
-              addTitle: "Add New",
-              addTooltip: "Create new rate watcher entry",
-              addEvaluator: () => !_cryptosController.isEmpty(),
-              importTitle: "Import",
-              importTooltip: "Import rate watchers to database",
-              importEvaluator: () => true,
-              importCallback: (json) async => await _wxController.importDatabase(json),
-              addForm: _buildForm,
-            ),
-          ),
-        ],
-      );
-    }
-
-    _registerBars("Rate Watchers");
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Column(
-          spacing: 12,
-          children: [
-            Expanded(child: _buildTable()),
-            const SizedBox(height: 1),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildForm(BuildContext dialogContext) {
-    return Center(
-      child: WatchersForm(
-        onSave: (e) async {
-          if (e == null) {
-            Navigator.pop(dialogContext);
-            return;
-          }
-
-          if (e is ValidationException) {
-            widgetsNotifyError(e.userMessage, ctx: context);
-            return;
-          }
-
-          widgetsNotifyError(e.toString(), ctx: context);
-        },
-      ),
-    );
-  }
-
-  Widget _buildAction() {
+  Widget buildLeftAction() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
@@ -179,7 +100,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
             ),
           ],
         ),
-        Container(width: 1, height: 24, color: AppTheme.separator),
+        WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [
@@ -212,6 +133,73 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
           ],
         ),
       ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_cryptosController.isEmpty()) {
+      removeBars();
+      return Column(
+        children: [
+          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
+        ],
+      );
+    }
+
+    if (_wxController.items.isEmpty) {
+      removeBars();
+      return Column(
+        children: [
+          Expanded(
+            child: WidgetsScreensEmpty(
+              title: "Add Rate Watcher",
+              addTitle: "Add New",
+              addTooltip: "Create new rate watcher entry",
+              addEvaluator: () => !_cryptosController.isEmpty(),
+              importTitle: "Import",
+              importTooltip: "Import rate watchers to database",
+              importEvaluator: () => true,
+              importCallback: (json) async => await _wxController.importDatabase(json),
+              addForm: _buildForm,
+            ),
+          ),
+        ],
+      );
+    }
+
+    registerBars("Rate Watchers");
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1600),
+        child: Column(
+          spacing: 12,
+          children: [
+            Expanded(child: _buildTable()),
+            const SizedBox(height: 1),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext dialogContext) {
+    return Center(
+      child: WatchersForm(
+        onSave: (e) async {
+          if (e == null) {
+            Navigator.pop(dialogContext);
+            return;
+          }
+
+          if (e is ValidationException) {
+            widgetsNotifyError(e.userMessage, ctx: context);
+            return;
+          }
+
+          widgetsNotifyError(e.toString(), ctx: context);
+        },
+      ),
     );
   }
 

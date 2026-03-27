@@ -6,6 +6,7 @@ import '../core/locator.dart';
 import '../features/cryptos/controller.dart';
 import '../widgets/button.dart';
 import '../widgets/notify.dart';
+import '../widgets/separator.dart';
 import 'exceptions.dart';
 import 'theme.dart';
 
@@ -87,9 +88,6 @@ class _AppLayoutState extends State<AppLayout> {
       animation: Listenable.merge([locator<CryptosController>(), locator<RatesController>()]),
       builder: (context, _) {
         final location = GoRouterState.of(context).uri.toString();
-
-        // logln("message: Building AppLayout for location: $location");
-
         return LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
@@ -100,9 +98,8 @@ class _AppLayoutState extends State<AppLayout> {
               drawer: (showMenu) ? _buildDrawer(context) : null,
               appBar: AppBar(
                 backgroundColor: AppTheme.columnHeaderBg,
-                centerTitle: true,
                 leadingWidth: leadingWidth,
-                leading: _buildLeading(),
+                leading: (showMenu) ? Spacer() : _buildLeading(leadingWidth),
                 title: LayoutBuilder(
                   builder: (context, constraints) {
                     final width = constraints.maxWidth.isFinite ? constraints.maxWidth : MediaQuery.of(context).size.width;
@@ -112,10 +109,9 @@ class _AppLayoutState extends State<AppLayout> {
                         spacing: 8,
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                          if (!showMenu) Container(width: 1, height: 24, color: AppTheme.separator),
-                          _buildNavigation(location, showMenu, context),
+                          (showMenu) ? _buildMenuToggler(context) : _buildNavigation(location),
 
-                          Container(width: 1, height: 24, color: AppTheme.separator),
+                          WidgetsSeparator(),
 
                           if (_actions != null) Expanded(key: Key("bid-$_barBuildId"), child: _actions!),
                         ],
@@ -123,12 +119,9 @@ class _AppLayoutState extends State<AppLayout> {
                     );
                   },
                 ),
-                actions: [if (!showMenu) _buildActions(), if (!showMenu) SizedBox(width: 16)],
+                actions: (!showMenu) ? [_buildActions()] : [],
               ),
-              body: Padding(
-                padding: EdgeInsets.only(left: 16, right: 16, top: !showMenu ? 16 : 8, bottom: 8),
-                child: widget.child,
-              ),
+              body: Padding(padding: EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8), child: widget.child),
             );
           },
         );
@@ -239,65 +232,55 @@ class _AppLayoutState extends State<AppLayout> {
     );
   }
 
-  Widget _buildLeading() {
-    return Padding(
-      padding: EdgeInsets.only(left: 16.0),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(_title, style: TextStyle(fontWeight: FontWeight.w700)),
-      ),
+  Widget _buildLeading(double width) {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Container(
+          padding: EdgeInsets.only(left: 16.0),
+          decoration: BoxDecoration(
+            color: AppTheme.panelBg,
+            borderRadius: const BorderRadius.only(topRight: Radius.circular(4), bottomRight: Radius.circular(4)),
+          ),
+          child: SizedBox(
+            height: 42,
+            width: width - 16,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(_title, style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildActions() {
     final hasRates = _ratesController.hasRates;
-    return Row(
-      spacing: 8,
-      children: [
-        Container(padding: EdgeInsets.only(left: 8, right: 8), width: 1, height: 24, color: AppTheme.separator),
-        Wrap(
-          spacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            WidgetsButton(
-              icon: Icons.refresh,
-              padding: const EdgeInsets.all(8),
-              iconSize: 20,
-              minimumSize: const Size(40, 40),
-              tooltip: "Refresh Cryptos",
-              evaluator: (s) {
-                _isFetchingCryptos ? s.progress() : s.reset();
-              },
-              onPressed: (s) async {
-                s.progress();
-                try {
-                  await _cryptosController.fetch();
-                  widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-                } catch (e) {
-                  if (e is NetworkingException) {
-                    widgetsNotifyError(e.userMessage);
-                  }
-                } finally {
-                  s.reset();
-                }
-              },
-            ),
-
-            if (hasRates)
+    return Padding(
+      padding: EdgeInsets.only(right: 16.0),
+      child: Row(
+        spacing: 8,
+        children: [
+          WidgetsSeparator(padding: EdgeInsets.only(left: 8, right: 8)),
+          Wrap(
+            spacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
               WidgetsButton(
-                icon: Icons.autorenew,
+                icon: Icons.refresh,
                 padding: const EdgeInsets.all(8),
                 iconSize: 20,
                 minimumSize: const Size(40, 40),
-                tooltip: "Refresh Rates",
+                tooltip: "Refresh Cryptos",
                 evaluator: (s) {
-                  _isFetchingRates ? s.progress() : s.reset();
+                  _isFetchingCryptos ? s.progress() : s.reset();
                 },
                 onPressed: (s) async {
                   s.progress();
                   try {
-                    await _ratesController.refreshRates();
-                    widgetsNotifySuccess("Refreshed rates from exchange.");
+                    await _cryptosController.fetch();
+                    widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
                   } catch (e) {
                     if (e is NetworkingException) {
                       widgetsNotifyError(e.userMessage);
@@ -307,121 +290,149 @@ class _AppLayoutState extends State<AppLayout> {
                   }
                 },
               ),
-          ],
-        ),
-      ],
+
+              if (hasRates)
+                WidgetsButton(
+                  icon: Icons.autorenew,
+                  padding: const EdgeInsets.all(8),
+                  iconSize: 20,
+                  minimumSize: const Size(40, 40),
+                  tooltip: "Refresh Rates",
+                  evaluator: (s) {
+                    _isFetchingRates ? s.progress() : s.reset();
+                  },
+                  onPressed: (s) async {
+                    s.progress();
+                    try {
+                      await _ratesController.refreshRates();
+                      widgetsNotifySuccess("Refreshed rates from exchange.");
+                    } catch (e) {
+                      if (e is NetworkingException) {
+                        widgetsNotifyError(e.userMessage);
+                      }
+                    } finally {
+                      s.reset();
+                    }
+                  },
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildNavigation(String location, bool showMenu, BuildContext context) {
-    return showMenu
-        ? Builder(
-            builder: (context) => WidgetsButton(
-              icon: Icons.menu,
-              padding: const EdgeInsets.all(8),
-              iconSize: 20,
-              minimumSize: const Size(40, 40),
-              tooltip: "Open menu",
-              evaluator: (s) {},
-              onPressed: (s) async {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          )
-        : Wrap(
-            spacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              WidgetsButton(
-                icon: Icons.account_balance_wallet,
-                padding: const EdgeInsets.all(8),
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                tooltip: "Manage Transactions",
-                evaluator: (s) {
-                  if (location == "/transactions" || location == "/") {
-                    s.active();
-                  } else {
-                    s.normal();
-                  }
-                },
-                onPressed: (s) {
-                  context.go("/transactions");
-                },
-              ),
+  Widget _buildMenuToggler(BuildContext context) {
+    return Builder(
+      builder: (context) => WidgetsButton(
+        icon: Icons.menu,
+        padding: const EdgeInsets.all(8),
+        iconSize: 20,
+        minimumSize: const Size(40, 40),
+        tooltip: "Open menu",
+        evaluator: (s) {},
+        onPressed: (s) async {
+          Scaffold.of(context).openDrawer();
+        },
+      ),
+    );
+  }
 
-              WidgetsButton(
-                icon: Icons.candlestick_chart,
-                padding: const EdgeInsets.all(8),
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                tooltip: "Display Watchboard",
-                evaluator: (s) {
-                  if (location == "/watchboard") {
-                    s.active();
-                  } else {
-                    s.normal();
-                  }
-                },
-                onPressed: (s) {
-                  context.go("/watchboard");
-                },
-              ),
+  Widget _buildNavigation(String location) {
+    return Wrap(
+      spacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        WidgetsButton(
+          icon: Icons.account_balance_wallet,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Manage Transactions",
+          evaluator: (s) {
+            if (location == "/transactions" || location == "/") {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (s) {
+            context.go("/transactions");
+          },
+        ),
 
-              WidgetsButton(
-                icon: Icons.notification_add,
-                padding: const EdgeInsets.all(8),
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                tooltip: "Manage Rate Watchers",
-                evaluator: (s) {
-                  if (location == "/watchers") {
-                    s.active();
-                  } else {
-                    s.normal();
-                  }
-                },
-                onPressed: (s) {
-                  context.go("/watchers");
-                },
-              ),
+        WidgetsButton(
+          icon: Icons.candlestick_chart,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Display Watchboard",
+          evaluator: (s) {
+            if (location == "/watchboard") {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (s) {
+            context.go("/watchboard");
+          },
+        ),
 
-              WidgetsButton(
-                icon: Icons.handyman,
-                padding: const EdgeInsets.all(8),
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                tooltip: "Use Crypto Tools",
-                evaluator: (s) {
-                  if (location == "/tools") {
-                    s.active();
-                  } else {
-                    s.normal();
-                  }
-                },
-                onPressed: (s) {
-                  context.go("/tools");
-                },
-              ),
+        WidgetsButton(
+          icon: Icons.notification_add,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Manage Rate Watchers",
+          evaluator: (s) {
+            if (location == "/watchers") {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (s) {
+            context.go("/watchers");
+          },
+        ),
 
-              WidgetsButton(
-                icon: Icons.settings,
-                padding: const EdgeInsets.all(8),
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                tooltip: "Settings",
-                evaluator: (s) {
-                  if (location == "/settings") {
-                    s.active();
-                  } else {
-                    s.normal();
-                  }
-                },
-                onPressed: (s) {
-                  context.go("/settings");
-                },
-              ),
-            ],
-          );
+        WidgetsButton(
+          icon: Icons.handyman,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Use Crypto Tools",
+          evaluator: (s) {
+            if (location == "/tools") {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (s) {
+            context.go("/tools");
+          },
+        ),
+
+        WidgetsButton(
+          icon: Icons.settings,
+          padding: const EdgeInsets.all(8),
+          iconSize: 20,
+          minimumSize: const Size(40, 40),
+          tooltip: "Settings",
+          evaluator: (s) {
+            if (location == "/settings") {
+              s.active();
+            } else {
+              s.normal();
+            }
+          },
+          onPressed: (s) {
+            context.go("/settings");
+          },
+        ),
+      ],
+    );
   }
 }

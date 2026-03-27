@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../app/layout.dart';
 import '../../core/locator.dart';
-import '../../widgets/action_bar.dart';
+import '../../mixins/action_bar.dart';
 import '../../widgets/button.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
@@ -19,7 +18,7 @@ class ToolsPage extends StatefulWidget {
   State<ToolsPage> createState() => _ToolsPageState();
 }
 
-class _ToolsPageState extends State<ToolsPage> {
+class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
   ToolsViewMode _viewMode = ToolsViewMode.calculator;
   final CryptosController _cryptosController = locator<CryptosController>();
 
@@ -27,7 +26,7 @@ class _ToolsPageState extends State<ToolsPage> {
   void initState() {
     super.initState();
     _cryptosController.addListener(_onControllerChanged);
-    _registerBars("Calculator");
+    registerBars("Calculator");
   }
 
   @override
@@ -41,23 +40,10 @@ class _ToolsPageState extends State<ToolsPage> {
     setState(() {});
   }
 
-  void _removeBars() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setActions?.call(null);
-    });
-  }
-
-  void _registerBars(String title) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setTitle?.call(title);
-      AppLayout.setActions?.call(WidgetsActionBar(leftActions: _buildAction()));
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
-      _removeBars();
+      removeBars();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.')),
@@ -72,7 +58,8 @@ class _ToolsPageState extends State<ToolsPage> {
     );
   }
 
-  Widget _buildAction() {
+  @override
+  Widget buildLeftAction() {
     return Wrap(
       spacing: 4,
       children: [
@@ -142,17 +129,17 @@ class _ToolsPageState extends State<ToolsPage> {
   Widget _buildScreen() {
     switch (_viewMode) {
       case ToolsViewMode.calculator:
-        _registerBars("Calculator");
+        registerBars("Calculator");
 
         return ToolsCalculatorView();
 
       case ToolsViewMode.converter:
-        _registerBars("Converter");
+        registerBars("Converter");
 
         return ToolsConverterView();
 
       case ToolsViewMode.qrcode:
-        _registerBars("QR Code Generator");
+        registerBars("QR Code Generator");
 
         return ToolsQRGeneratorView();
     }
