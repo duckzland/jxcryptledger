@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../mixins/action_bar.dart';
 import '../../mixins/actions.dart';
-import '../../widgets/action_bar.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
@@ -13,6 +13,7 @@ import '../../widgets/dialogs/reset.dart';
 import '../../widgets/button.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
+import '../../widgets/separator.dart';
 import '../cryptos/controller.dart';
 import 'controller.dart';
 import 'model.dart';
@@ -31,7 +32,7 @@ class TransactionsPage extends StatefulWidget {
   State<TransactionsPage> createState() => _TransactionsPageState();
 }
 
-class _TransactionsPageState extends State<TransactionsPage> with MixinsActions {
+class _TransactionsPageState extends State<TransactionsPage> with MixinsActions, MixinsActionBar<TransactionsPage> {
   late TransactionsController _txController;
   final CryptosController _cryptosController = locator<CryptosController>();
 
@@ -55,7 +56,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
 
-    _registerBars("Trading View");
+    registerBars("Trading View");
   }
 
   @override
@@ -252,122 +253,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_cryptosController.isEmpty()) {
-      _removeBars();
-      return Column(
-        children: [
-          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
-        ],
-      );
-    }
-
-    if (_txController.items.isEmpty) {
-      _removeBars();
-      return Column(
-        children: [
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: WidgetsScreensEmpty(
-                    title: "Add Transaction",
-                    addTitle: "Add New",
-                    addTooltip: "Create new transaction entry",
-                    addEvaluator: () => !_cryptosController.isEmpty(),
-                    importTitle: "Import",
-                    importTooltip: "Import transactions to database",
-                    importEvaluator: () => true,
-                    importCallback: (json) async => await _txController.importDatabase(json),
-                    addForm: _buildForm,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Center(
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1600), child: _buildScreen()),
-    );
-  }
-
-  void _removeBars() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setActions?.call(null);
-    });
-  }
-
-  void _registerBars(String title) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setTitle?.call(title);
-      AppLayout.setActions?.call(WidgetsActionBar(centering: true, leftActions: _buildActionBar()));
-    });
-  }
-
-  Widget _buildForm(BuildContext dialogContext) {
-    return Center(
-      child: TransactionFormCreate(
-        onSave: (e) => doFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
-      ),
-    );
-  }
-
-  Widget _buildSorter() {
-    return Container(
-      height: 38,
-      padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.separator, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: _sortMode,
-          isExpanded: false,
-          icon: const Icon(Icons.arrow_drop_down),
-          style: const TextStyle(fontSize: 14),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemHeight: kMinInteractiveDimension,
-          items: _sortableOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() => _sortMode = value);
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilter() {
-    return Container(
-      height: 38,
-      padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.separator, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: _filterMode,
-          isExpanded: false,
-          icon: const Icon(Icons.arrow_drop_down),
-          style: const TextStyle(fontSize: 14),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemHeight: kMinInteractiveDimension,
-          items: _filterableOptions.entries.map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value))).toList(),
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() => _filterMode = value);
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionBar() {
+  Widget buildLeftAction() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
@@ -457,7 +343,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
             ),
           ],
         ),
-        Container(width: 1, height: 24, color: AppTheme.separator),
+        WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [
@@ -519,7 +405,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
             ),
           ],
         ),
-        Container(width: 1, height: 24, color: AppTheme.separator),
+        WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [
@@ -553,27 +439,130 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
             ),
           ],
         ),
-        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) Container(width: 1, height: 24, color: AppTheme.separator),
+        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) WidgetsSeparator(),
         if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty)
           Wrap(spacing: 4, children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()]),
       ],
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    if (_cryptosController.isEmpty()) {
+      removeBars();
+      return Column(
+        children: [
+          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
+        ],
+      );
+    }
+
+    if (_txController.items.isEmpty) {
+      removeBars();
+      return Column(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: WidgetsScreensEmpty(
+                    title: "Add Transaction",
+                    addTitle: "Add New",
+                    addTooltip: "Create new transaction entry",
+                    addEvaluator: () => !_cryptosController.isEmpty(),
+                    importTitle: "Import",
+                    importTooltip: "Import transactions to database",
+                    importEvaluator: () => true,
+                    importCallback: (json) async => await _txController.importDatabase(json),
+                    addForm: _buildForm,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Center(
+      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1600), child: _buildScreen()),
+    );
+  }
+
+  Widget _buildForm(BuildContext dialogContext) {
+    return Center(
+      child: TransactionFormCreate(
+        onSave: (e) => doFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
+      ),
+    );
+  }
+
+  Widget _buildSorter() {
+    return Container(
+      height: 38,
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.separator, width: 1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _sortMode,
+          isExpanded: false,
+          icon: const Icon(Icons.arrow_drop_down),
+          style: const TextStyle(fontSize: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemHeight: kMinInteractiveDimension,
+          items: _sortableOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _sortMode = value);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilter() {
+    return Container(
+      height: 38,
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.separator, width: 1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _filterMode,
+          isExpanded: false,
+          icon: const Icon(Icons.arrow_drop_down),
+          style: const TextStyle(fontSize: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemHeight: kMinInteractiveDimension,
+          items: _filterableOptions.entries.map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value))).toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _filterMode = value);
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildScreen() {
     switch (_viewMode) {
       case TransactionsViewMode.overview:
-        _registerBars("Transaction Balance");
+        registerBars("Transaction Balance");
 
         return _buildOverviewList(_getOverviewTransactions());
 
       case TransactionsViewMode.active:
-        _registerBars("Trading View");
+        registerBars("Trading View");
 
         return _buildActiveTradingList(_getActiveTransactions());
 
       case TransactionsViewMode.journal:
-        _registerBars("Transaction Overview");
+        registerBars("Transaction Overview");
 
         return TransactionsJournalView(
           transactions: List<TransactionsModel>.from(_getJournalTransactions()),
@@ -581,7 +570,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions 
         );
 
       case TransactionsViewMode.history:
-        _registerBars("Transaction History");
+        registerBars("Transaction History");
 
         return TransactionHistory(transactions: _getHistoryTransactions());
     }
