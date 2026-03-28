@@ -7,7 +7,7 @@ mixin CoreMixinsExportable<T extends CoreBaseModel<K>, K> on CoreBaseRepository<
   T Function(Map<String, dynamic> json) get fromJson;
 
   Future<String> export() async {
-    final items = await getAll();
+    final items = getAll();
     final jsonList = items.map((e) => e.toJson()).toList();
     return jsonEncode(jsonList);
   }
