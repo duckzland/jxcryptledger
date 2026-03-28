@@ -343,6 +343,9 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
             ),
           ],
         ),
+        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) WidgetsSeparator(),
+        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty)
+          Wrap(spacing: 4, children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()]),
         WidgetsSeparator(),
         Wrap(
           spacing: 4,
@@ -439,9 +442,6 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
             ),
           ],
         ),
-        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) WidgetsSeparator(),
-        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty)
-          Wrap(spacing: 4, children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()]),
       ],
     );
   }
