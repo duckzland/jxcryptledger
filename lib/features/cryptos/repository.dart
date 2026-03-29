@@ -13,6 +13,13 @@ class CryptosRepository extends CoreBaseRepository<CryptosModel> with CoreMixins
     _symbolCache = null;
   }
 
+  @override
+  CryptosModel? get(String id) {
+    final key = int.tryParse(id);
+    if (key == null) return null;
+    return box.get(key);
+  }
+
   String? getSymbol(int id) {
     return getSymbolMap()[id];
   }
