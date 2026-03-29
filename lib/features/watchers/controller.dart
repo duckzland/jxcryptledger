@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-
+import '../../core/abstracts/controller.dart';
 import '../../core/log.dart';
+import '../../core/mixins/controllers/exportable.dart';
+import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/utils.dart';
 import '../cryptos/service.dart';
 import '../notification/service.dart';
@@ -9,30 +9,17 @@ import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class WatchersController extends ChangeNotifier {
-  final WatchersRepository _repo;
+class WatchersController extends CoreBaseController<WatchersModel, String, WatchersRepository>
+    with
+        CoreMixinsControllersIdGenerator<WatchersModel, String, WatchersRepository>,
+        CoreMixinsControllersExportable<WatchersModel, String, WatchersRepository> {
   final RatesService _ratesService;
   final NotificationService _notificationService;
   final CryptosService _cryptosService;
 
-  List<WatchersModel> _items = [];
-  List<WatchersModel> get items => _items;
+  WatchersController(super.repo, this._ratesService, this._notificationService, this._cryptosService);
 
-  WatchersController(this._repo, this._ratesService, this._notificationService, this._cryptosService);
-
-  String generateWid() {
-    return _repo.generateId();
-  }
-
-  void start() {
-    _items = _repo.getAll();
-  }
-
-  void load() {
-    start();
-    notifyListeners();
-  }
-
+  @override
   void init() {
     load();
     for (final wx in items) {
@@ -40,30 +27,35 @@ class WatchersController extends ChangeNotifier {
     }
   }
 
-  Future<void> add(WatchersModel watcher) async {
-    _ratesService.addQueue(watcher.srId, watcher.rrId);
-    await _repo.add(watcher);
+  @override
+  Future<void> add(WatchersModel tx) async {
+    _ratesService.addQueue(tx.srId, tx.rrId);
+    await repo.add(tx);
     load();
   }
 
-  Future<void> update(WatchersModel watcher) async {
-    _ratesService.addQueue(watcher.srId, watcher.rrId);
-    await _repo.update(watcher);
+  @override
+  Future<void> update(WatchersModel tx) async {
+    _ratesService.addQueue(tx.srId, tx.rrId);
+    await repo.update(tx);
     load();
   }
 
-  Future<void> delete(WatchersModel watcher) async {
-    await _ratesService.delete(watcher.srId, watcher.rrId);
-    await _ratesService.delete(watcher.rrId, watcher.srId);
-    await _repo.delete(watcher);
+  @override
+  Future<void> delete(WatchersModel tx) async {
+    await _ratesService.delete(tx.srId, tx.rrId);
+    await _ratesService.delete(tx.rrId, tx.srId);
+    await repo.delete(tx);
     load();
   }
 
-  Future<void> deleteAll() async {
-    for (final wx in items) {
-      await _ratesService.delete(wx.srId, wx.rrId);
+  @override
+  Future<void> clear() async {
+    for (final tx in items) {
+      await _ratesService.delete(tx.srId, tx.rrId);
+      await _ratesService.delete(tx.rrId, tx.srId);
     }
-    await _repo.clear();
+    await repo.clear();
     load();
   }
 
@@ -77,10 +69,6 @@ class WatchersController extends ChangeNotifier {
     return null;
   }
 
-  bool isEmpty() {
-    return _repo.isEmpty();
-  }
-
   Future<void> onRatesUpdated() async {
     for (final w in items) {
       logln("[WATCHER] Evaluating ${w.srId}-${w.rrId}");
@@ -88,62 +76,53 @@ class WatchersController extends ChangeNotifier {
     }
   }
 
-  Future<void> process(WatchersModel wx) async {
-    if (wx.isSpent()) return;
+  Future<void> process(WatchersModel tx) async {
+    if (tx.isSpent()) return;
 
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
-    final last = Utils.sanitizeTimestamp(wx.timestamp);
-    final nextAllowed = last + (wx.duration * 60000000);
+    final last = Utils.sanitizeTimestamp(tx.timestamp);
+    final nextAllowed = last + (tx.duration * 60000000);
     if (now < nextAllowed) return;
 
-    final current = _ratesService.getStoredRate(wx.srId, wx.rrId);
+    final current = _ratesService.getStoredRate(tx.srId, tx.rrId);
     if (current == -9999) {
-      _ratesService.addQueue(wx.srId, wx.rrId);
+      _ratesService.addQueue(tx.srId, tx.rrId);
       return;
     }
 
-    switch (wx.operatorEnum) {
+    switch (tx.operatorEnum) {
       case WatchersOperator.equal:
-        if (current != wx.rates) return;
+        if (current != tx.rates) return;
       case WatchersOperator.lessThan:
-        if (current >= wx.rates) return;
+        if (current >= tx.rates) return;
       case WatchersOperator.greaterThan:
-        if (current <= wx.rates) return;
+        if (current <= tx.rates) return;
     }
 
-    final updated = wx.copyWith(sent: wx.sent + 1, timestamp: now);
+    final updated = tx.copyWith(sent: tx.sent + 1, timestamp: now);
 
-    await _repo.update(updated);
+    await repo.update(updated);
     load();
 
-    await sendNotification(wx);
+    await sendNotification(tx);
   }
 
-  Future<void> sendNotification(WatchersModel wx) async {
-    String message = wx.message;
+  Future<void> sendNotification(WatchersModel tx) async {
+    String message = tx.message;
     if (message == "" || message.trim().isEmpty) {
-      final sourceSymbol = _cryptosService.getSymbol(wx.srId) ?? "";
-      final targetSymbol = _cryptosService.getSymbol(wx.rrId) ?? "";
+      final sourceSymbol = _cryptosService.getSymbol(tx.srId) ?? "";
+      final targetSymbol = _cryptosService.getSymbol(tx.rrId) ?? "";
 
-      message = "$sourceSymbol to $targetSymbol is ${wx.operatorMessage} ${wx.rates}.";
+      message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${tx.rates}.";
     }
 
     await _notificationService.show(message);
   }
 
-  Future<String> exportDatabase() async {
-    return await _repo.export();
-  }
-
-  Future<void> importDatabase(String rawJson) async {
-    await _repo.import(rawJson);
-    load();
-  }
-
   Future<void> restart() async {
-    for (final wx in _items) {
+    for (final wx in items) {
       final resetWx = wx.copyWith(sent: 0, timestamp: 0);
-      await _repo.update(resetWx);
+      await repo.update(resetWx);
     }
 
     load();

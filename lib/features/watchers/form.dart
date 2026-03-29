@@ -48,7 +48,7 @@ class _WatchersFormState extends State<WatchersForm> {
 
   final _formKey = GlobalKey<FormState>();
 
-  String generateWid() => _controller.generateWid();
+  String generateWid() => _controller.generateId();
 
   @override
   void initState() {

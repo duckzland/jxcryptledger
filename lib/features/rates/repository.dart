@@ -2,10 +2,10 @@ import 'package:hive_ce/hive_ce.dart';
 
 import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
-import '../../core/mixins/id_generator.dart';
+import '../../core/mixins/repositories/id_generator.dart';
 import 'model.dart';
 
-class RatesRepository extends CoreBaseRepository<RatesModel, String> with CoreMixinsIdGenerator<RatesModel, String> {
+class RatesRepository extends CoreBaseRepository<RatesModel, String> with CoreMixinsRepositoriesIdGenerator<RatesModel, String> {
   @override
   String get boxName => 'rates_box';
 
@@ -26,7 +26,7 @@ class RatesRepository extends CoreBaseRepository<RatesModel, String> with CoreMi
     await box.put(tx.uuid, rateWithTimestamp);
   }
 
- RatesModel? getPair(int sourceId, int targetId) {
+  RatesModel? getPair(int sourceId, int targetId) {
     final key = '$sourceId-$targetId';
     return box.get(key);
   }

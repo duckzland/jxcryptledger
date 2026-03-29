@@ -1,77 +1,42 @@
-import 'package:flutter/material.dart';
+import 'package:jxledger/core/abstracts/controller.dart';
 
 import '../../app/exceptions.dart';
 import 'model.dart';
 import 'repository.dart';
 import 'service.dart';
 
-class CryptosController extends ChangeNotifier {
-  final CryptosRepository _repo;
+class CryptosController extends CoreBaseController<CryptosModel, int, CryptosRepository> {
   final CryptosService _service;
 
-  CryptosController(this._repo, this._service);
+  CryptosController(super.repo, this._service);
 
   bool get isFetching => _service.isFetching;
 
+  @override
   Future<void> init() async {
-    await _repo.init();
-    load();
-  }
-
-  List<CryptosModel> _items = [];
-  List<CryptosModel> get items => _items;
-
-  void start() {
-    _items = _repo.getAll();
-  }
-
-  void load() {
-    start();
-    notifyListeners();
-  }
-
-  Future<void> add(CryptosModel crypto) async {
-    await _repo.add(crypto);
+    await repo.init();
     load();
   }
 
   Future<void> deleteById(int id) async {
-    await _repo.deleteById(id);
-    load();
-  }
-
-  Future<void> clear() async {
-    await _repo.clear();
-    load();
-  }
-
-  Future<void> flush() async {
-    await _repo.flush();
+    await repo.deleteById(id);
     load();
   }
 
   List<CryptosModel> filter(String query) {
-    return _repo.filter(query);
-  }
-
-  bool isEmpty() {
-    return _repo.isEmpty();
+    return repo.filter(query);
   }
 
   Map<int, String> getSymbolMap() {
-    return _repo.getSymbolMap();
+    return repo.getSymbolMap();
   }
 
   String? getSymbol(int id) {
-    return _repo.getSymbol(id);
-  }
-
-  List<CryptosModel> extract() {
-    return items;
+    return repo.getSymbol(id);
   }
 
   CryptosModel? getById(int id) {
-    return _repo.getById(id);
+    return repo.getById(id);
   }
 
   Future<bool> fetch() async {

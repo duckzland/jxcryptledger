@@ -45,7 +45,7 @@ class _TransactionFormState extends State<TransactionFormTrade> {
   bool get isLeaf => !isRoot;
   bool get isActive => widget.initialData?.statusEnum == TransactionStatus.active;
 
-  String generateTid() => _txController.generateTid();
+  String generateTid() => _txController.generateId();
 
   @override
   void initState() {

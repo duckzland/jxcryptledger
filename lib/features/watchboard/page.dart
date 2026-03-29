@@ -229,7 +229,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                   "This will delete all watchboard entries.\n"
                   "This action cannot be undone.",
               onWipe: () async {
-                await _pxController.wipe();
+                await _pxController.clear();
                 await _tixController.wipe();
 
                 await _tixController.populate();

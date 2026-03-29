@@ -35,7 +35,7 @@ class _TransactionFormState extends State<TransactionFormCreate> {
 
   final _formKey = GlobalKey<FormState>();
 
-  String generateTid() => _txController.generateTid();
+  String generateTid() => _txController.generateId();
 
   @override
   void initState() {
