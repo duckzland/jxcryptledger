@@ -127,7 +127,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
               dialogMessage:
                   "This will delete all rate watcher.\n"
                   "This action cannot be undone.",
-              onWipe: _wxController.deleteAll,
+              onWipe: _wxController.clear,
               isEmpty: _wxController.isEmpty,
             ),
           ],

@@ -437,7 +437,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
               dialogMessage:
                   "This will delete all transactions and all of its history.\n"
                   "This action cannot be undone.",
-              onWipe: _txController.wipeAll,
+              onWipe: _txController.wipe,
               isEmpty: _txController.isEmpty,
             ),
           ],

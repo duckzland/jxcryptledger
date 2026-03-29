@@ -1,63 +1,31 @@
-import 'package:flutter/foundation.dart';
-
+import '../../../core/abstracts/controller.dart';
 import '../../../core/log.dart';
+import '../../../core/mixins/controllers/exportable.dart';
+import '../../../core/mixins/controllers/id_generator.dart';
 import '../../rates/service.dart';
 import '../../transactions/repository.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class PanelsController extends ChangeNotifier {
-  final PanelsRepository _repo;
+class PanelsController extends CoreBaseController<PanelsModel, String, PanelsRepository>
+    with
+        CoreMixinsControllersIdGenerator<PanelsModel, String, PanelsRepository>,
+        CoreMixinsControllersExportable<PanelsModel, String, PanelsRepository> {
   final TransactionsRepository _txRepo;
   final RatesService _ratesService;
 
-  List<PanelsModel> _items = [];
-  List<PanelsModel> get items => _items;
+  PanelsController(super.repo, this._ratesService, this._txRepo);
 
-  PanelsController(this._repo, this._ratesService, this._txRepo);
-
-  String generateTid() {
-    return _repo.generateId();
-  }
-
+  @override
   void init() {
     scheduleRates();
   }
 
-  void start() {
-    _items = _repo.getAll();
-  }
-
-  void load() {
-    start();
-    notifyListeners();
-  }
-
-  PanelsModel? get(String tid) {
-    final tx = _repo.get(tid);
-    load();
-    return tx;
-  }
-
-  Future<void> add(PanelsModel tx) async {
-    await _repo.add(tx);
-    load();
-  }
-
-  Future<void> update(PanelsModel tx) async {
-    await _repo.update(tx);
-    load();
-  }
-
+  @override
   Future<void> delete(PanelsModel tx) async {
     await _ratesService.delete(tx.srId, tx.rrId);
     await _ratesService.delete(tx.rrId, tx.srId);
-    await _repo.delete(tx);
-    load();
-  }
-
-  Future<void> wipe() async {
-    await _repo.clear();
+    await repo.delete(tx);
     load();
   }
 
@@ -74,7 +42,7 @@ class PanelsController extends ChangeNotifier {
 
   void scheduleRates() {
     load();
-    for (final w in _items) {
+    for (final w in items) {
       _ratesService.addQueue(w.srId, w.rrId);
     }
 
@@ -83,7 +51,7 @@ class PanelsController extends ChangeNotifier {
 
   Future<void> onRatesUpdated() async {
     load();
-    for (final w in _items) {
+    for (final w in items) {
       final newRate = _ratesService.getStoredRate(w.srId, w.rrId);
 
       if (newRate == -9999) {
@@ -186,27 +154,10 @@ class PanelsController extends ChangeNotifier {
     load();
   }
 
-  bool isEmpty() {
-    return _repo.isEmpty();
-  }
-
-  Future<String> exportDatabase() async {
-    try {
-      return await _repo.export();
-    } catch (e) {
-      return '';
-    }
-  }
-
-  Future<void> importDatabase(String rawJson) async {
-    await _repo.import(rawJson);
-    load();
-  }
-
   void updateOrder(List<PanelsModel> newOrder) {
     for (var i = 0; i < newOrder.length; i++) {
       newOrder[i].order = i;
-      _repo.update(newOrder[i]);
+      repo.update(newOrder[i]);
     }
 
     load();

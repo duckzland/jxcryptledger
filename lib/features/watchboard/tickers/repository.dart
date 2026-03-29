@@ -1,10 +1,10 @@
 import 'package:hive_ce/hive_ce.dart';
 
 import '../../../core/abstracts/repository.dart';
-import '../../../core/mixins/id_generator.dart';
+import '../../../core/mixins/repositories/id_generator.dart';
 import 'model.dart';
 
-class TickersRepository extends CoreBaseRepository<TickersModel, String> with CoreMixinsIdGenerator<TickersModel, String> {
+class TickersRepository extends CoreBaseRepository<TickersModel, String> with CoreMixinsRepositoriesIdGenerator<TickersModel, String> {
   @override
   String get boxName => 'tickers_box';
 

@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import '../abstracts/model.dart';
-import '../abstracts/repository.dart';
+import '../../abstracts/model.dart';
+import '../../abstracts/repository.dart';
 
-mixin CoreMixinsExportable<T extends CoreBaseModel<K>, K> on CoreBaseRepository<T, K> {
+mixin CoreMixinsRepositoriesExportable<T extends CoreBaseModel<K>, K> on CoreBaseRepository<T, K> {
   T Function(Map<String, dynamic> json) get fromJson;
 
   Future<String> export() async {

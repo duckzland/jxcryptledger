@@ -47,7 +47,7 @@ class _TransactionFormState extends State<TransactionFormEdit> {
 
   bool get isLeaf => !isRoot;
 
-  String generateTid() => _txController.generateTid();
+  String generateTid() => _txController.generateId();
 
   @override
   void initState() {

@@ -52,7 +52,7 @@ class _PanelsFormState extends State<PanelsForm> {
 
   final _formKey = GlobalKey<FormState>();
 
-  String generateTid() => _tixController.generateTid();
+  String generateTid() => _tixController.generateId();
 
   @override
   @override

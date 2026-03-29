@@ -3,8 +3,8 @@ import 'package:hive_ce/hive_ce.dart';
 import '../../core/abstracts/repository.dart';
 import '../../core/filtering.dart';
 import '../../core/log.dart';
-import '../../core/mixins/exportable.dart';
-import '../../core/mixins/id_generator.dart';
+import '../../core/mixins/repositories/exportable.dart';
+import '../../core/mixins/repositories/id_generator.dart';
 import 'model.dart';
 import 'rules/close.dart';
 import 'rules/create.dart';
@@ -15,7 +15,7 @@ import 'rules/trade.dart';
 import 'rules/update.dart';
 
 class TransactionsRepository extends CoreBaseRepository<TransactionsModel, String>
-    with CoreMixinsIdGenerator<TransactionsModel, String>, CoreMixinsExportable<TransactionsModel, String> {
+    with CoreMixinsRepositoriesIdGenerator<TransactionsModel, String>, CoreMixinsRepositoriesExportable<TransactionsModel, String> {
   @override
   String get boxName => 'transactions_box';
 
