@@ -3,7 +3,7 @@ import '../../core/log.dart';
 import '../../core/mixins/repositories/id_generator.dart';
 import 'model.dart';
 
-class RatesRepository extends CoreBaseRepository<RatesModel, String> with CoreMixinsRepositoriesIdGenerator<RatesModel, String> {
+class RatesRepository extends CoreBaseRepository<RatesModel> with CoreMixinsRepositoriesIdGenerator<RatesModel> {
   @override
   String get boxName => 'rates_box';
 

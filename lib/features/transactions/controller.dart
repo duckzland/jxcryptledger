@@ -7,11 +7,11 @@ import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class TransactionsController extends CoreBaseController<TransactionsModel, String, TransactionsRepository>
+class TransactionsController extends CoreBaseController<TransactionsModel, TransactionsRepository>
     with
-        CoreMixinsControllersIdGenerator<TransactionsModel, String, TransactionsRepository>,
-        CoreMixinsControllersExportable<TransactionsModel, String, TransactionsRepository>,
-        CoreMixinsControllersRateable<TransactionsModel, String, TransactionsRepository> {
+        CoreMixinsControllersIdGenerator<TransactionsModel, TransactionsRepository>,
+        CoreMixinsControllersExportable<TransactionsModel, TransactionsRepository>,
+        CoreMixinsControllersRateable<TransactionsModel, TransactionsRepository> {
   final RatesService _ratesService;
 
   TransactionsController(super.repo, this._ratesService);

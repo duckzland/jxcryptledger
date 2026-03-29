@@ -69,7 +69,7 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
 
     _loadCryptos().then((_) {
       if (widget.initialValue != null) {
-        final crypto = _cryptosController.get(widget.initialValue!);
+        final crypto = _cryptosController.get(widget.initialValue!.toString());
         if (crypto != null) {
           _controller.text = '${crypto.symbol} (#${crypto.uuid})';
         }

@@ -2,17 +2,19 @@ import '../../../app/exceptions.dart';
 import '../../../core/abstracts/models/base.dart';
 import '../../../core/abstracts/models/rateable.dart';
 
-class PanelsModel extends CoreModelBase<String> implements CoreModelRateable {
+class PanelsModel implements CoreModelBase, CoreModelRateable {
   final String tid;
   final double srAmount;
-  @override
-  final int srId;
-  @override
-  final int rrId;
   final int digit;
   double? rate;
   int? order;
   Map<String, dynamic> meta;
+
+  @override
+  final int srId;
+
+  @override
+  final int rrId;
 
   @override
   String get uuid => tid;

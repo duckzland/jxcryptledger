@@ -2,7 +2,7 @@ import '../../../core/abstracts/repository.dart';
 import '../../../core/mixins/repositories/id_generator.dart';
 import 'model.dart';
 
-class TickersRepository extends CoreBaseRepository<TickersModel, String> with CoreMixinsRepositoriesIdGenerator<TickersModel, String> {
+class TickersRepository extends CoreBaseRepository<TickersModel> with CoreMixinsRepositoriesIdGenerator<TickersModel> {
   @override
   String get boxName => 'tickers_box';
 

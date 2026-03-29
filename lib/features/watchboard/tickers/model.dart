@@ -16,7 +16,7 @@ enum TickerFormat {
   raw,
 }
 
-class TickersModel extends CoreModelBase<String> {
+class TickersModel implements CoreModelBase {
   final String tid;
   final int type;
   final int format;

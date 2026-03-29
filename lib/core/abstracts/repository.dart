@@ -3,11 +3,11 @@ import 'package:hive_ce/hive_ce.dart';
 
 import 'models/base.dart';
 
-abstract class CoreBaseRepository<T extends CoreModelBase<K>, K> {
+abstract class CoreBaseRepository<T extends CoreModelBase> {
   String get boxName;
   Box<T> get box => Hive.box<T>(boxName);
 
-  T? get(K id) {
+  T? get(String id) {
     return box.get(id);
   }
 
@@ -26,7 +26,7 @@ abstract class CoreBaseRepository<T extends CoreModelBase<K>, K> {
     onAction();
   }
 
-  Future<void> delete(K id) async {
+  Future<void> delete(String id) async {
     await box.delete(id);
     onAction();
   }

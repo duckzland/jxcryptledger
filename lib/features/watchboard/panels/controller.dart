@@ -8,11 +8,11 @@ import '../../transactions/repository.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class PanelsController extends CoreBaseController<PanelsModel, String, PanelsRepository>
+class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
     with
-        CoreMixinsControllersIdGenerator<PanelsModel, String, PanelsRepository>,
-        CoreMixinsControllersExportable<PanelsModel, String, PanelsRepository>,
-        CoreMixinsControllersRateable<PanelsModel, String, PanelsRepository> {
+        CoreMixinsControllersIdGenerator<PanelsModel, PanelsRepository>,
+        CoreMixinsControllersExportable<PanelsModel, PanelsRepository>,
+        CoreMixinsControllersRateable<PanelsModel, PanelsRepository> {
   final TransactionsRepository _txRepo;
   final RatesService _ratesService;
 

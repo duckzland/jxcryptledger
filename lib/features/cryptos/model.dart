@@ -1,7 +1,7 @@
 import '../../core/abstracts/models/base.dart';
 import '../../core/abstracts/models/searchable.dart';
 
-class CryptosModel extends CoreModelBase<int> implements CoreModelSearchable {
+class CryptosModel implements CoreModelBase, CoreModelSearchable {
   final int id;
   final String name;
   final String symbol;

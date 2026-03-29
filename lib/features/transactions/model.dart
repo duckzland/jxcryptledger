@@ -6,7 +6,7 @@ import '../../core/utils.dart';
 
 enum TransactionStatus { inactive, active, partial, closed, unknown }
 
-class TransactionsModel extends CoreModelBase<String> implements CoreModelRateable {
+class TransactionsModel implements CoreModelBase, CoreModelRateable {
   final String tid;
   final String rid;
   final String pid;

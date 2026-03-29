@@ -4,7 +4,7 @@ import '../../core/abstracts/models/rateable.dart';
 
 enum WatchersOperator { equal, lessThan, greaterThan }
 
-class WatchersModel extends CoreModelBase<String> implements CoreModelRateable {
+class WatchersModel implements CoreModelBase, CoreModelRateable {
   final String wid;
   @override
   final int srId;
