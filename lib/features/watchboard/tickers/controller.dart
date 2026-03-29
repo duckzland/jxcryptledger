@@ -4,8 +4,8 @@ import 'model.dart';
 import 'repository.dart';
 import 'service.dart';
 
-class TickersController extends CoreBaseController<TickersModel, String, TickersRepository>
-    with CoreMixinsControllersIdGenerator<TickersModel, String, TickersRepository> {
+class TickersController extends CoreBaseController<TickersModel, TickersRepository>
+    with CoreMixinsControllersIdGenerator<TickersModel, TickersRepository> {
   final TickersService _service;
 
   TickersController(super.repo, this._service);

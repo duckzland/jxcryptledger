@@ -11,8 +11,8 @@ import 'rules/refund.dart';
 import 'rules/trade.dart';
 import 'rules/update.dart';
 
-class TransactionsRepository extends CoreBaseRepository<TransactionsModel, String>
-    with CoreMixinsRepositoriesIdGenerator<TransactionsModel, String>, CoreMixinsRepositoriesExportable<TransactionsModel, String> {
+class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
+    with CoreMixinsRepositoriesIdGenerator<TransactionsModel>, CoreMixinsRepositoriesExportable<TransactionsModel> {
   @override
   String get boxName => 'transactions_box';
 

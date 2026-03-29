@@ -4,7 +4,7 @@ import 'model.dart';
 import 'repository.dart';
 import 'service.dart';
 
-class CryptosController extends CoreBaseController<CryptosModel, int, CryptosRepository> {
+class CryptosController extends CoreBaseController<CryptosModel, CryptosRepository> {
   final CryptosService _service;
 
   CryptosController(super.repo, this._service);

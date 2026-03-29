@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'models/base.dart';
 import 'repository.dart';
 
-abstract class CoreBaseController<T extends CoreModelBase<K>, K, R extends CoreBaseRepository<T, K>> extends ChangeNotifier {
+abstract class CoreBaseController<T extends CoreModelBase, R extends CoreBaseRepository<T>> extends ChangeNotifier {
   List<T> listItems = [];
   List<T> get items => listItems;
 
@@ -25,7 +25,7 @@ abstract class CoreBaseController<T extends CoreModelBase<K>, K, R extends CoreB
     notifyListeners();
   }
 
-  T? get(K tid) {
+  T? get(String tid) {
     return repo.get(tid);
   }
 
@@ -48,7 +48,7 @@ abstract class CoreBaseController<T extends CoreModelBase<K>, K, R extends CoreB
     load();
   }
 
-  Future<void> delete(K id) async {
+  Future<void> delete(String id) async {
     await repo.delete(id);
     load();
   }

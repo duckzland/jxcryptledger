@@ -2,7 +2,7 @@ import '../../core/abstracts/repository.dart';
 import '../../core/mixins/repositories/filterable.dart';
 import 'model.dart';
 
-class CryptosRepository extends CoreBaseRepository<CryptosModel, int> with CoreMixinsRepositoriesFilterable<CryptosModel, int> {
+class CryptosRepository extends CoreBaseRepository<CryptosModel> with CoreMixinsRepositoriesFilterable<CryptosModel> {
   @override
   String get boxName => 'cryptos_box';
 

@@ -27,7 +27,7 @@ class CryptosService {
   }
 
   CryptosModel? getById(int id) {
-    return repo.get(id);
+    return repo.get(id.toString());
   }
 
   Future<bool> fetch() async {

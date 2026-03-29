@@ -10,11 +10,11 @@ import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class WatchersController extends CoreBaseController<WatchersModel, String, WatchersRepository>
+class WatchersController extends CoreBaseController<WatchersModel, WatchersRepository>
     with
-        CoreMixinsControllersIdGenerator<WatchersModel, String, WatchersRepository>,
-        CoreMixinsControllersExportable<WatchersModel, String, WatchersRepository>,
-        CoreMixinsControllersRateable<WatchersModel, String, WatchersRepository> {
+        CoreMixinsControllersIdGenerator<WatchersModel, WatchersRepository>,
+        CoreMixinsControllersExportable<WatchersModel, WatchersRepository>,
+        CoreMixinsControllersRateable<WatchersModel, WatchersRepository> {
   final RatesService _ratesService;
   final NotificationService _notificationService;
   final CryptosService _cryptosService;
