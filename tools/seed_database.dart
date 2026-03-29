@@ -220,19 +220,15 @@ Future<void> main(List<String> args) async {
 
   await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
   final txRepo = TransactionsRepository();
-  await txRepo.init();
 
   await Hive.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
   final pxRepo = PanelsRepository();
-  await pxRepo.init();
 
   await Hive.openBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
   final wxRepo = WatchersRepository();
-  await wxRepo.init();
 
   await Hive.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
   final rtRepo = RatesRepository();
-  await rtRepo.init();
 
   if (seedCryptos) {
     print("Seeding cryptos...");
@@ -311,7 +307,7 @@ Future<void> main(List<String> args) async {
   if (seedWatchers) {
     print("Seeding watchers...");
 
-    final txs = txRepo.getAll();
+    final txs = txRepo.extract();
     for (final tx in txs) {
       await wxRepo.add(
         WatchersModel(
@@ -333,7 +329,7 @@ Future<void> main(List<String> args) async {
 
   if (seedPanels) {
     print("Seeding panels...");
-    final txs = txRepo.getAll();
+    final txs = txRepo.extract();
     int i = 0;
     for (final tx in txs) {
       await pxRepo.add(
@@ -354,7 +350,7 @@ Future<void> main(List<String> args) async {
 
   if (seedRates) {
     print("Seeding rates from transactions");
-    final txs = txRepo.getAll();
+    final txs = txRepo.extract();
     for (final tx in txs) {
       await rtRepo.add(
         RatesModel(
@@ -370,7 +366,7 @@ Future<void> main(List<String> args) async {
     }
 
     print("Seeding rates from panels");
-    final pxs = pxRepo.getAll();
+    final pxs = pxRepo.extract();
     for (final tx in pxs) {
       await rtRepo.add(
         RatesModel(
@@ -386,7 +382,7 @@ Future<void> main(List<String> args) async {
     }
 
     print("Seeding rates from watchers");
-    final wxs = wxRepo.getAll();
+    final wxs = wxRepo.extract();
     for (final tx in wxs) {
       await rtRepo.add(
         RatesModel(

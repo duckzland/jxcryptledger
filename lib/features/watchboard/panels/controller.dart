@@ -2,6 +2,7 @@ import '../../../core/abstracts/controller.dart';
 import '../../../core/log.dart';
 import '../../../core/mixins/controllers/exportable.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
+import '../../../core/mixins/controllers/rateable.dart';
 import '../../rates/service.dart';
 import '../../transactions/repository.dart';
 import 'model.dart';
@@ -10,7 +11,8 @@ import 'repository.dart';
 class PanelsController extends CoreBaseController<PanelsModel, String, PanelsRepository>
     with
         CoreMixinsControllersIdGenerator<PanelsModel, String, PanelsRepository>,
-        CoreMixinsControllersExportable<PanelsModel, String, PanelsRepository> {
+        CoreMixinsControllersExportable<PanelsModel, String, PanelsRepository>,
+        CoreMixinsControllersRateable<PanelsModel, String, PanelsRepository> {
   final TransactionsRepository _txRepo;
   final RatesService _ratesService;
 
@@ -22,22 +24,11 @@ class PanelsController extends CoreBaseController<PanelsModel, String, PanelsRep
   }
 
   @override
-  Future<void> delete(PanelsModel tx) async {
+  Future<void> remove(PanelsModel tx) async {
     await _ratesService.delete(tx.srId, tx.rrId);
     await _ratesService.delete(tx.rrId, tx.srId);
-    await repo.delete(tx);
+    await repo.remove(tx);
     load();
-  }
-
-  List<String> getAllRateID() {
-    List<String> ids = [];
-
-    for (final tx in items) {
-      ids.add("${tx.srId}-${tx.rrId}");
-      ids.add("${tx.rrId}-${tx.srId}");
-    }
-
-    return ids;
   }
 
   void scheduleRates() {
@@ -104,7 +95,7 @@ class PanelsController extends CoreBaseController<PanelsModel, String, PanelsRep
   }
 
   Future<bool> updateLinked() async {
-    final txs = _txRepo.getAll();
+    final txs = _txRepo.extract();
     final Map<String, double> grouped = {};
     int updateCount = 0;
 
@@ -148,7 +139,7 @@ class PanelsController extends CoreBaseController<PanelsModel, String, PanelsRep
         continue;
       }
 
-      await delete(wx);
+      await remove(wx);
     }
 
     load();

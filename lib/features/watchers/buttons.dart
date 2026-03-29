@@ -57,7 +57,7 @@ class WatchersButtons extends StatelessWidget with MixinsActions {
               "This action cannot be undone.",
           dialogConfirmLabel: "Delete",
           actionData: tx,
-          actionCallback: wxController.delete,
+          actionCallback: wxController.remove,
           actionCompleteCallback: onAction,
           actionSuccessMessage: "Rate watcher deleted.",
         ),

@@ -1,11 +1,14 @@
 import '../../app/exceptions.dart';
-import '../../core/abstracts/model.dart';
+import '../../core/abstracts/models/base.dart';
+import '../../core/abstracts/models/rateable.dart';
 
 enum WatchersOperator { equal, lessThan, greaterThan }
 
-class WatchersModel extends CoreBaseModel<String> {
+class WatchersModel extends CoreModelBase<String> implements CoreModelRateable {
   final String wid;
+  @override
   final int srId;
+  @override
   final int rrId;
   final double rates;
   final int sent;

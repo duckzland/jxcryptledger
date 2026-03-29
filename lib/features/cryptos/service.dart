@@ -23,11 +23,11 @@ class CryptosService {
   }
 
   List<CryptosModel> getAll() {
-    return repo.getAll();
+    return repo.extract();
   }
 
   CryptosModel? getById(int id) {
-    return repo.getById(id);
+    return repo.get(id);
   }
 
   Future<bool> fetch() async {

@@ -2,6 +2,7 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/controller.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
+import '../../core/mixins/controllers/rateable.dart';
 import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -9,26 +10,17 @@ import 'repository.dart';
 class TransactionsController extends CoreBaseController<TransactionsModel, String, TransactionsRepository>
     with
         CoreMixinsControllersIdGenerator<TransactionsModel, String, TransactionsRepository>,
-        CoreMixinsControllersExportable<TransactionsModel, String, TransactionsRepository> {
+        CoreMixinsControllersExportable<TransactionsModel, String, TransactionsRepository>,
+        CoreMixinsControllersRateable<TransactionsModel, String, TransactionsRepository> {
   final RatesService _ratesService;
 
   TransactionsController(super.repo, this._ratesService);
 
-  Future<void> search(String query) async {
-    if (query.isEmpty) {
-      load();
-      return;
-    }
-
-    listItems = await repo.filter(query);
-    notifyListeners();
-  }
-
   @override
-  Future<void> delete(TransactionsModel tx) async {
+  Future<void> remove(TransactionsModel tx) async {
     await _ratesService.delete(tx.srId, tx.rrId);
     await _ratesService.delete(tx.rrId, tx.srId);
-    await repo.delete(tx);
+    await repo.remove(tx);
     load();
   }
 
@@ -42,7 +34,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Strin
   }
 
   Future<void> removeRoot(TransactionsModel tx) async {
-    await repo.delete(tx);
+    await repo.remove(tx);
     load();
   }
 
@@ -64,7 +56,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Strin
 
       if (!deletable) continue;
 
-      await repo.delete(tx);
+      await repo.remove(tx);
     }
 
     load();
@@ -249,16 +241,5 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Strin
     }
 
     return branchAmounts;
-  }
-
-  List<String> getAllRateID() {
-    List<String> ids = [];
-
-    for (final tx in items) {
-      ids.add("${tx.srId}-${tx.rrId}");
-      ids.add("${tx.rrId}-${tx.srId}");
-    }
-
-    return ids;
   }
 }

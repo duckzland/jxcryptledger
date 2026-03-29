@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import '../../abstracts/model.dart';
+import '../../abstracts/models/base.dart';
 import '../../abstracts/repository.dart';
 
-mixin CoreMixinsRepositoriesExportable<T extends CoreBaseModel<K>, K> on CoreBaseRepository<T, K> {
+mixin CoreMixinsRepositoriesExportable<T extends CoreModelBase<K>, K> on CoreBaseRepository<T, K> {
   T Function(Map<String, dynamic> json) get fromJson;
 
   Future<String> export() async {
-    final items = getAll();
+    final items = extract();
     final jsonList = items.map((e) => e.toJson()).toList();
     return jsonEncode(jsonList);
   }

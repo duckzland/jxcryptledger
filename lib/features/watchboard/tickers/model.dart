@@ -1,5 +1,5 @@
 import '../../../app/exceptions.dart';
-import '../../../core/abstracts/model.dart';
+import '../../../core/abstracts/models/base.dart';
 import '../../../core/utils.dart';
 
 enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
@@ -16,7 +16,7 @@ enum TickerFormat {
   raw,
 }
 
-class TickersModel extends CoreBaseModel<String> {
+class TickersModel extends CoreModelBase<String> {
   final String tid;
   final int type;
   final int format;

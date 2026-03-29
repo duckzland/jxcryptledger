@@ -276,7 +276,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
       if (tx.isLeaf) continue;
       if (!tx.isActive) continue;
       try {
-        await _txController.delete(tx);
+        await _txController.remove(tx);
       } catch (_) {
         continue;
       }
