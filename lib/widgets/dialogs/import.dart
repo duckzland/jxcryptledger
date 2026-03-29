@@ -1,10 +1,10 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:jxledger/widgets/notify.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/log.dart';
 import '../button.dart';
+import '../notify.dart';
 
 class WidgetsDialogsImport extends StatefulWidget {
   final Future<void> Function(String json) onImport;

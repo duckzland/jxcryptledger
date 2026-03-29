@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:jxledger/widgets/notify.dart';
 
 import '../../core/log.dart';
 import '../button.dart';
+import '../notify.dart';
+
 
 class WidgetsDialogsExport extends StatefulWidget {
   final Future<String> Function() onExport;

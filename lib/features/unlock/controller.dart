@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
-import 'package:jxledger/features/cryptos/controller.dart';
 
+import '../../features/cryptos/controller.dart';
 import '../../features/rates/controller.dart';
 import '../../features/rates/model.dart';
 import '../../features/transactions/model.dart';

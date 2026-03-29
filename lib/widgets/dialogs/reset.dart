@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:jxledger/widgets/notify.dart';
 
 import '../../core/log.dart';
 import '../button.dart';
+import '../notify.dart';
 
 class WidgetsDialogsReset extends StatefulWidget {
   final Future<void> Function() onWipe;
