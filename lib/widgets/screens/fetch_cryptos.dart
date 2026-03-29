@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jxledger/app/theme.dart';
 
+import '../../app/theme.dart';
 import '../../app/exceptions.dart';
 import '../../core/locator.dart';
 import '../../features/cryptos/controller.dart';

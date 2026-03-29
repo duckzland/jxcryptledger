@@ -1,5 +1,4 @@
-import 'package:jxledger/core/abstracts/controller.dart';
-
+import '../../core/abstracts/controller.dart';
 import '../../app/exceptions.dart';
 import 'model.dart';
 import 'repository.dart';
