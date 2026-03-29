@@ -11,16 +11,18 @@ class TransactionsModel implements CoreModelBase, CoreModelRateable {
   final String rid;
   final String pid;
   final double srAmount;
-  @override
-  final int srId;
   final double rrAmount;
-  @override
-  final int rrId;
   final double balance;
   final int status;
   final bool closable;
   final int timestamp;
   final Map<String, dynamic> meta;
+
+  @override
+  final int srId;
+
+  @override
+  final int rrId;
 
   @override
   String get uuid => tid;
