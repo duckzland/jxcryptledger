@@ -69,7 +69,7 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
 
     _loadCryptos().then((_) {
       if (widget.initialValue != null) {
-        final crypto = _cryptosController.getById(widget.initialValue!);
+        final crypto = _cryptosController.get(widget.initialValue!);
         if (crypto != null) {
           _controller.text = '${crypto.symbol} (#${crypto.uuid})';
         }
@@ -78,9 +78,8 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
   }
 
   Future<void> _loadCryptos() async {
-    final cryptos = _cryptosController.extract();
     setState(() {
-      _allCryptos = cryptos;
+      _allCryptos = _cryptosController.items;
     });
   }
 

@@ -1,12 +1,15 @@
 import 'dart:async';
-
 import 'package:hive_ce/hive_ce.dart';
 
-import 'model.dart';
+import 'models/base.dart';
 
-abstract class CoreBaseRepository<T extends CoreBaseModel<K>, K> {
+abstract class CoreBaseRepository<T extends CoreModelBase<K>, K> {
   String get boxName;
   Box<T> get box => Hive.box<T>(boxName);
+
+  T? get(K id) {
+    return box.get(id);
+  }
 
   Future<void> add(T tx) async {
     await box.put(tx.uuid, tx);
@@ -18,8 +21,13 @@ abstract class CoreBaseRepository<T extends CoreBaseModel<K>, K> {
     onAction();
   }
 
-  Future<void> delete(T tx) async {
+  Future<void> remove(T tx) async {
     await box.delete(tx.uuid);
+    onAction();
+  }
+
+  Future<void> delete(K id) async {
+    await box.delete(id);
     onAction();
   }
 
@@ -34,20 +42,8 @@ abstract class CoreBaseRepository<T extends CoreBaseModel<K>, K> {
     onAction();
   }
 
-  FutureOr<T?> getAsync(K id) {
-    return box.get(id);
-  }
-
-  FutureOr<List<T>> getAllAsync() {
-    return box.values.toList();
-  }
-
-  T? get(K id) {
-    return box.get(id);
-  }
-
-  List<T> getAll() {
-    return box.values.toList();
+  List<T> extract() {
+    return box.values.cast<T>().toList();
   }
 
   bool isEmpty() {

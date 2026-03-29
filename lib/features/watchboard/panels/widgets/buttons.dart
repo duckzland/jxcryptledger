@@ -99,7 +99,7 @@ class PanelsWidgetsButtons extends StatelessWidget with MixinsActions {
           dialogMessage: "This will delete this watchboard.\nThis action cannot be undone.",
           dialogConfirmLabel: "Delete",
           actionData: tix,
-          actionCallback: tixController.delete,
+          actionCallback: tixController.remove,
           actionCompleteCallback: onAction,
           actionSuccessMessage: "Watchboard panel deleted.",
         ),

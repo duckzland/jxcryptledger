@@ -1,4 +1,3 @@
-import 'package:hive_ce/hive_ce.dart';
 import '../../core/abstracts/repository.dart';
 import '../../core/mixins/repositories/exportable.dart';
 import '../../core/mixins/repositories/id_generator.dart';
@@ -11,12 +10,6 @@ class WatchersRepository extends CoreBaseRepository<WatchersModel, String>
 
   @override
   get fromJson => WatchersModel.fromJson;
-
-  Future<void> init() async {
-    if (!Hive.isBoxOpen(boxName)) {
-      await Hive.openBox<WatchersModel>(boxName);
-    }
-  }
 
   Future<void> saveAll(List<WatchersModel> wx) async {
     await box.clear();

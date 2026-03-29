@@ -1,5 +1,3 @@
-import 'package:hive_ce/hive_ce.dart';
-
 import '../../../core/abstracts/repository.dart';
 import '../../../core/mixins/repositories/exportable.dart';
 import '../../../core/mixins/repositories/id_generator.dart';
@@ -12,10 +10,4 @@ class PanelsRepository extends CoreBaseRepository<PanelsModel, String>
 
   @override
   get fromJson => PanelsModel.fromJson;
-
-  Future<void> init() async {
-    if (!Hive.isBoxOpen(boxName)) {
-      await Hive.openBox<PanelsModel>(boxName);
-    }
-  }
 }

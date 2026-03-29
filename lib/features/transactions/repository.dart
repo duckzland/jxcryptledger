@@ -1,7 +1,4 @@
-import 'package:hive_ce/hive_ce.dart';
-
 import '../../core/abstracts/repository.dart';
-import '../../core/filtering.dart';
 import '../../core/log.dart';
 import '../../core/mixins/repositories/exportable.dart';
 import '../../core/mixins/repositories/id_generator.dart';
@@ -23,15 +20,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   get fromJson => TransactionsModel.fromJson;
 
   final bool debugLogs = true;
-
-  final FilterIsolate _filter = FilterIsolate();
-
-  Future<void> init() async {
-    await _filter.init();
-    if (!Hive.isBoxOpen(boxName)) {
-      await Hive.openBox<TransactionsModel>(boxName);
-    }
-  }
 
   @override
   Future<void> add(TransactionsModel tx) async {
@@ -143,7 +131,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   @override
-  Future<void> delete(TransactionsModel tx) async {
+  Future<void> remove(TransactionsModel tx) async {
     canDelete(tx);
 
     if (debugLogs) {
@@ -153,7 +141,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     }
 
     // This is to preseve tree sanity!
-    final all = getAll();
+    final all = extract();
     for (final ttx in all) {
       if (tx.tid == ttx.rid || tx.tid == ttx.pid) {
         if (debugLogs) {
@@ -262,7 +250,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
       return null;
     }
 
-    final all = getAll();
+    final all = extract();
 
     final Map<String, TransactionsModel> byTid = {for (final t in all) t.tid: t};
 
@@ -303,21 +291,13 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
     return balance;
   }
 
-  Future<List<TransactionsModel>> filter(String query) async {
-    final all = getAll();
-    final maps = all.map((e) => e.toMap()).toList();
-
-    final filteredMaps = await _filter.filter(maps, query);
-    return filteredMaps.map(TransactionsModel.fromMap).toList();
-  }
-
   List<TransactionsModel> collectAllRoots() {
-    final all = getAll();
+    final all = extract();
     return all.where((tx) => tx.isRoot).toList();
   }
 
   List<TransactionsModel> collectAllTerminalLeaves() {
-    final all = getAll();
+    final all = extract();
     final Map<String, int> childCount = {};
     for (final tx in all) {
       childCount[tx.pid] = (childCount[tx.pid] ?? 0) + 1;
@@ -332,7 +312,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   List<TransactionsModel> collectTerminalLeaves(TransactionsModel parent) {
-    final all = getAll();
+    final all = extract();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
     for (final tx in all) {
@@ -359,7 +339,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   List<TransactionsModel> collectAllRootLeaves(TransactionsModel parent) {
-    final all = getAll();
+    final all = extract();
 
     final leaves = <TransactionsModel>[];
     for (final tx in all) {
@@ -372,7 +352,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   List<TransactionsModel> collectAllLeaves(TransactionsModel parent) {
-    final all = getAll();
+    final all = extract();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
     for (final tx in all) {
@@ -398,7 +378,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel, Strin
   }
 
   List<TransactionsModel> collectDescendantLeaves(TransactionsModel parent) {
-    final all = getAll();
+    final all = extract();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
     for (final tx in all) {

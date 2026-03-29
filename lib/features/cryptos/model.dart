@@ -1,6 +1,7 @@
-import '../../core/abstracts/model.dart';
+import '../../core/abstracts/models/base.dart';
+import '../../core/abstracts/models/searchable.dart';
 
-class CryptosModel extends CoreBaseModel<int> {
+class CryptosModel extends CoreModelBase<int> implements CoreModelSearchable {
   final int id;
   final String name;
   final String symbol;
@@ -12,7 +13,7 @@ class CryptosModel extends CoreBaseModel<int> {
 
   CryptosModel({required this.id, required this.name, required this.symbol, required this.status, required this.active});
 
-  /// Normalized search key for Hive lookups
+  @override
   String get searchKey => '$symbol $name $id'.toLowerCase();
 
   @override

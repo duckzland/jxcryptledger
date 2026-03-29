@@ -147,7 +147,7 @@ class TickersService {
   }
 
   Future<void> refreshRates() async {
-    final all = tickersRepo.getAll();
+    final all = tickersRepo.extract();
 
     final types = all.map((tix) => TickerType.values[tix.type]).toSet();
 

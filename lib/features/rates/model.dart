@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 
-import '../../core/abstracts/model.dart';
+import '../../core/abstracts/models/base.dart';
 import '../../core/utils.dart';
 
-class RatesModel extends CoreBaseModel<String> {
+class RatesModel extends CoreModelBase<String> {
   final String sourceSymbol;
   final int sourceId;
   final Decimal sourceAmount;

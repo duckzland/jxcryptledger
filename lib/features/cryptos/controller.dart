@@ -11,17 +11,6 @@ class CryptosController extends CoreBaseController<CryptosModel, int, CryptosRep
 
   bool get isFetching => _service.isFetching;
 
-  @override
-  Future<void> init() async {
-    await repo.init();
-    load();
-  }
-
-  Future<void> deleteById(int id) async {
-    await repo.deleteById(id);
-    load();
-  }
-
   List<CryptosModel> filter(String query) {
     return repo.filter(query);
   }
@@ -32,10 +21,6 @@ class CryptosController extends CoreBaseController<CryptosModel, int, CryptosRep
 
   String? getSymbol(int id) {
     return repo.getSymbol(id);
-  }
-
-  CryptosModel? getById(int id) {
-    return repo.getById(id);
   }
 
   Future<bool> fetch() async {

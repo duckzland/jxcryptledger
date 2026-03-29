@@ -1,10 +1,13 @@
 import '../../../app/exceptions.dart';
-import '../../../core/abstracts/model.dart';
+import '../../../core/abstracts/models/base.dart';
+import '../../../core/abstracts/models/rateable.dart';
 
-class PanelsModel extends CoreBaseModel<String> {
+class PanelsModel extends CoreModelBase<String> implements CoreModelRateable {
   final String tid;
   final double srAmount;
+  @override
   final int srId;
+  @override
   final int rrId;
   final int digit;
   double? rate;

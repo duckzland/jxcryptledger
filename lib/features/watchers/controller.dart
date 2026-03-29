@@ -2,6 +2,7 @@ import '../../core/abstracts/controller.dart';
 import '../../core/log.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
+import '../../core/mixins/controllers/rateable.dart';
 import '../../core/utils.dart';
 import '../cryptos/service.dart';
 import '../notification/service.dart';
@@ -12,7 +13,8 @@ import 'repository.dart';
 class WatchersController extends CoreBaseController<WatchersModel, String, WatchersRepository>
     with
         CoreMixinsControllersIdGenerator<WatchersModel, String, WatchersRepository>,
-        CoreMixinsControllersExportable<WatchersModel, String, WatchersRepository> {
+        CoreMixinsControllersExportable<WatchersModel, String, WatchersRepository>,
+        CoreMixinsControllersRateable<WatchersModel, String, WatchersRepository> {
   final RatesService _ratesService;
   final NotificationService _notificationService;
   final CryptosService _cryptosService;
@@ -42,10 +44,10 @@ class WatchersController extends CoreBaseController<WatchersModel, String, Watch
   }
 
   @override
-  Future<void> delete(WatchersModel tx) async {
+  Future<void> remove(WatchersModel tx) async {
     await _ratesService.delete(tx.srId, tx.rrId);
     await _ratesService.delete(tx.rrId, tx.srId);
-    await repo.delete(tx);
+    await repo.remove(tx);
     load();
   }
 
@@ -135,16 +137,5 @@ class WatchersController extends CoreBaseController<WatchersModel, String, Watch
       }
     }
     return false;
-  }
-
-  List<String> getAllRateID() {
-    List<String> ids = [];
-
-    for (final tx in items) {
-      ids.add("${tx.srId}-${tx.rrId}");
-      ids.add("${tx.rrId}-${tx.srId}");
-    }
-
-    return ids;
   }
 }

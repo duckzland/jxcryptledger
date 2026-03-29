@@ -34,7 +34,7 @@ class RatesService {
   }
 
   List<RatesModel> getAll() {
-    return ratesRepo.getAll();
+    return ratesRepo.extract();
   }
 
   Future<void> delete(int sourceId, int targetId) async {
@@ -104,7 +104,7 @@ class RatesService {
       return;
     }
 
-    final all = ratesRepo.getAll();
+    final all = ratesRepo.extract();
     for (final r in all) {
       if (r.sourceId != 0 && r.targetId != 0) {
         addQueue(r.sourceId, r.targetId);

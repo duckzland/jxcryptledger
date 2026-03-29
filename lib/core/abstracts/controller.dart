@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'model.dart';
+import 'models/base.dart';
 import 'repository.dart';
 
-abstract class CoreBaseController<T extends CoreBaseModel<K>, K, R extends CoreBaseRepository<T, K>> extends ChangeNotifier {
+abstract class CoreBaseController<T extends CoreModelBase<K>, K, R extends CoreBaseRepository<T, K>> extends ChangeNotifier {
   List<T> listItems = [];
   List<T> get items => listItems;
 
@@ -17,7 +17,7 @@ abstract class CoreBaseController<T extends CoreBaseModel<K>, K, R extends CoreB
   }
 
   void start() {
-    listItems = repo.getAll();
+    listItems = repo.extract();
   }
 
   void load() {
@@ -26,16 +26,11 @@ abstract class CoreBaseController<T extends CoreBaseModel<K>, K, R extends CoreB
   }
 
   T? get(K tid) {
-    final tx = repo.get(tid);
-    return tx;
-  }
-
-  List<T> all() {
-    return repo.getAll();
+    return repo.get(tid);
   }
 
   List<T> extract() {
-    return items;
+    return repo.extract();
   }
 
   Future<void> add(T tx) async {
@@ -48,8 +43,13 @@ abstract class CoreBaseController<T extends CoreBaseModel<K>, K, R extends CoreB
     load();
   }
 
-  Future<void> delete(T tx) async {
-    await repo.delete(tx);
+  Future<void> remove(T tx) async {
+    await repo.remove(tx);
+    load();
+  }
+
+  Future<void> delete(K id) async {
+    await repo.delete(id);
     load();
   }
 
