@@ -1,8 +1,9 @@
 import '../../../app/exceptions.dart';
-import '../../../core/abstracts/models/base.dart';
+import '../../../core/abstracts/models/exportable.dart';
+import '../../../core/abstracts/models/with_id.dart';
 import '../../../core/abstracts/models/rateable.dart';
 
-class PanelsModel implements CoreModelBase, CoreModelRateable {
+class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRateable {
   final String tid;
   final double srAmount;
   final int digit;

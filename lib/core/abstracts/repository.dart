@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:hive_ce/hive_ce.dart';
 
-import 'models/base.dart';
+import 'models/with_id.dart';
 
-abstract class CoreBaseRepository<T extends CoreModelBase> {
+abstract class CoreBaseRepository<T extends CoreModelWithId> {
   String get boxName;
   Box<T> get box => Hive.box<T>(boxName);
 

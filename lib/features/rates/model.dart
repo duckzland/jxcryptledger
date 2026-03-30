@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 
-import '../../core/abstracts/models/base.dart';
+import '../../core/abstracts/models/with_id.dart';
 import '../../core/utils.dart';
 
-class RatesModel implements CoreModelBase {
+class RatesModel implements CoreModelWithId {
   final String sourceSymbol;
   final int sourceId;
   final Decimal sourceAmount;
@@ -26,9 +26,6 @@ class RatesModel implements CoreModelBase {
     required this.targetAmount,
     required this.timestamp,
   });
-
-  @override
-  Map<String, dynamic> toJson() => toMap();
 
   Map<String, dynamic> toMap() {
     return {
