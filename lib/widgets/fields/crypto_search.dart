@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../features/cryptos/model.dart';
 import '../../features/cryptos/controller.dart';
+import '../notify.dart';
 
 class WidgetsFieldsCryptoSearch extends FormField<int> {
   WidgetsFieldsCryptoSearch({
@@ -12,6 +14,8 @@ class WidgetsFieldsCryptoSearch extends FormField<int> {
     super.initialValue,
     super.validator,
     bool? enabled,
+    bool allowClean = true,
+    bool allowCopy = true,
     Function(int cryptoId)? onSelected,
     String labelText = "Crypto",
     String hintText = "Search by name, symbol, or ID...",
@@ -22,6 +26,8 @@ class WidgetsFieldsCryptoSearch extends FormField<int> {
              labelText: labelText,
              hintText: hintText,
              enabled: enabled,
+             allowClean: allowClean,
+             allowCopy: allowCopy,
              onSelected: (id) {
                state.didChange(id);
                if (onSelected != null) {
@@ -40,6 +46,8 @@ class _WidgetsFieldsCryptoSearchBody extends StatefulWidget {
   final String labelText;
   final String hintText;
   final bool? enabled;
+  final bool allowClean;
+  final bool allowCopy;
   final FormFieldValidator<int>? validator;
 
   const _WidgetsFieldsCryptoSearchBody({
@@ -49,6 +57,8 @@ class _WidgetsFieldsCryptoSearchBody extends StatefulWidget {
     required this.hintText,
     required this.enabled,
     required this.validator,
+    this.allowClean = true,
+    this.allowCopy = true,
   });
 
   @override
@@ -59,6 +69,8 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
   late TextEditingController _controller;
   late CryptosController _cryptosController;
   List<CryptosModel> _allCryptos = [];
+
+  bool get _shouldShowSuffix => widget.enabled ?? true && (widget.allowClean || widget.allowCopy);
 
   @override
   void initState() {
@@ -110,6 +122,68 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
               hintText: widget.hintText,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              suffixIcon: _shouldShowSuffix
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (widget.allowCopy && _controller.text != "")
+                          IconButton(
+                            icon: const Icon(Icons.copy),
+                            iconSize: 16,
+                            constraints: const BoxConstraints(),
+                            visualDensity: VisualDensity.compact,
+                            mouseCursor: SystemMouseCursors.click,
+                            tooltip: 'Copy to clipboard',
+                            style: ButtonStyle(
+                              overlayColor: WidgetStateProperty.all(Colors.transparent),
+                              foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                if (states.contains(WidgetState.hovered)) {
+                                  return AppTheme.action;
+                                }
+                                return AppTheme.textMuted;
+                              }),
+                              padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
+                              minimumSize: WidgetStateProperty.all(const Size(16, 16)),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () async {
+                              await Clipboard.setData(ClipboardData(text: _controller.text));
+                              widgetsNotifySuccess("${_controller.text} copied to clipboard");
+                            },
+                          ),
+
+                        if (widget.allowClean && _controller.text != "")
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            iconSize: 16,
+                            constraints: const BoxConstraints(),
+                            visualDensity: VisualDensity.compact,
+                            mouseCursor: SystemMouseCursors.click,
+                            tooltip: 'Reset selection',
+                            style: ButtonStyle(
+                              overlayColor: WidgetStateProperty.all(Colors.transparent),
+                              foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                if (states.contains(WidgetState.hovered)) {
+                                  return AppTheme.error;
+                                }
+                                return AppTheme.textMuted;
+                              }),
+                              padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
+                              minimumSize: WidgetStateProperty.all(const Size(16, 16)),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              _controller.text = "";
+                              widget.onSelected?.call(-1);
+                              setState(() {});
+                            },
+                          ),
+
+                        const SizedBox(width: 6),
+                      ],
+                    )
+                  : null,
             ),
           ),
           validator: _validateFromText,
