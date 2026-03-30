@@ -1,12 +1,13 @@
 import 'package:decimal/decimal.dart';
 import '../../app/exceptions.dart';
-import '../../core/abstracts/models/base.dart';
+import '../../core/abstracts/models/exportable.dart';
+import '../../core/abstracts/models/with_id.dart';
 import '../../core/abstracts/models/rateable.dart';
 import '../../core/utils.dart';
 
 enum TransactionStatus { inactive, active, partial, closed, unknown }
 
-class TransactionsModel implements CoreModelBase, CoreModelRateable {
+class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreModelRateable {
   final String tid;
   final String rid;
   final String pid;

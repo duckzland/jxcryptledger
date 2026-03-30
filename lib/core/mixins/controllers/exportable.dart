@@ -1,8 +1,9 @@
 import '../../abstracts/controller.dart';
-import '../../abstracts/models/base.dart';
+import '../../abstracts/models/with_id.dart';
 import '../repositories/exportable.dart';
 
-mixin CoreMixinsControllersExportable<T extends CoreModelBase, R extends CoreMixinsRepositoriesExportable<T>> on CoreBaseController<T, R> {
+mixin CoreMixinsControllersExportable<T extends CoreModelWithId, R extends CoreMixinsRepositoriesExportable<T>>
+    on CoreBaseController<T, R> {
   Future<String> exportDatabase() async {
     try {
       return await repo.export();

@@ -1,7 +1,7 @@
-import '../../core/abstracts/models/base.dart';
+import '../../core/abstracts/models/with_id.dart';
 import '../../core/abstracts/models/searchable.dart';
 
-class CryptosModel implements CoreModelBase, CoreModelSearchable {
+class CryptosModel implements CoreModelWithId, CoreModelSearchable {
   final int id;
   final String name;
   final String symbol;
@@ -15,9 +15,6 @@ class CryptosModel implements CoreModelBase, CoreModelSearchable {
 
   @override
   String get searchKey => '$symbol $name $id'.toLowerCase();
-
-  @override
-  Map<String, dynamic> toJson() => toMap();
 
   Map<String, dynamic> toMap() {
     return {'id': id, 'name': name, 'symbol': symbol, 'status': status, 'active': active, 'searchKey': searchKey};

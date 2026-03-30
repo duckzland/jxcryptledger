@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'models/base.dart';
+import 'models/with_id.dart';
 import 'repository.dart';
 
-abstract class CoreBaseController<T extends CoreModelBase, R extends CoreBaseRepository<T>> extends ChangeNotifier {
+abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseRepository<T>> extends ChangeNotifier {
   List<T> listItems = [];
   List<T> get items => listItems;
 

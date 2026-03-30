@@ -1,10 +1,11 @@
 import '../../app/exceptions.dart';
-import '../../core/abstracts/models/base.dart';
+import '../../core/abstracts/models/exportable.dart';
+import '../../core/abstracts/models/with_id.dart';
 import '../../core/abstracts/models/rateable.dart';
 
 enum WatchersOperator { equal, lessThan, greaterThan }
 
-class WatchersModel implements CoreModelBase, CoreModelRateable {
+class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRateable {
   final String wid;
   @override
   final int srId;

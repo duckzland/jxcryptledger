@@ -1,9 +1,9 @@
 import '../../abstracts/controller.dart';
-import '../../abstracts/models/base.dart';
+import '../../abstracts/models/with_id.dart';
 import '../../abstracts/models/rateable.dart';
 import '../../abstracts/repository.dart';
 
-mixin CoreMixinsControllersRateable<T extends CoreModelBase, R extends CoreBaseRepository<T>> on CoreBaseController<T, R> {
+mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBaseRepository<T>> on CoreBaseController<T, R> {
   List<String> getAllRateID() {
     final ids = <String>[];
 
