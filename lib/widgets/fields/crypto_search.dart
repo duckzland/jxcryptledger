@@ -68,7 +68,6 @@ class _WidgetsFieldsCryptoSearchBody extends StatefulWidget {
 class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSearchBody> {
   late TextEditingController _controller;
   late CryptosController _cryptosController;
-  List<CryptosModel> _allCryptos = [];
 
   bool get _shouldShowSuffix => widget.enabled ?? true && (widget.allowClean || widget.allowCopy);
 
@@ -79,26 +78,16 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
     _cryptosController = locator<CryptosController>();
     _cryptosController.addListener(_loadCryptos);
 
-    _loadCryptos().then((_) {
-      if (widget.initialValue != null) {
-        final crypto = _cryptosController.get(widget.initialValue!.toString());
-        if (crypto != null) {
-          _controller.text = '${crypto.symbol} (#${crypto.uuid})';
-        }
+    if (widget.initialValue != null) {
+      final crypto = _cryptosController.get(widget.initialValue!.toString());
+      if (crypto != null) {
+        _controller.text = '${crypto.symbol} (#${crypto.uuid})';
       }
-    });
+    }
   }
 
-  Future<void> _loadCryptos() async {
-    setState(() {
-      _allCryptos = _cryptosController.items;
-    });
-  }
-
-  Future<List<CryptosModel>> _getSearchSuggestions(String query) async {
-    if (query.isEmpty) return [];
-    final lowerQuery = query.toLowerCase();
-    return _allCryptos.where((crypto) => crypto.searchKey.contains(lowerQuery)).toList();
+  void _loadCryptos() {
+    setState(() {});
   }
 
   @override
@@ -187,8 +176,10 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
             ),
           ),
           validator: _validateFromText,
-          suggestionsCallback: (pattern) async {
-            return await _getSearchSuggestions(pattern);
+          suggestionsCallback: (pattern) {
+            if (pattern.isEmpty) return [];
+            final lowerQuery = pattern.toLowerCase();
+            return _cryptosController.filter(lowerQuery);
           },
           itemBuilder: (context, CryptosModel suggestion) {
             return Padding(
