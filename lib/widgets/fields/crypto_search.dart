@@ -8,75 +8,42 @@ import '../../features/cryptos/model.dart';
 import '../../features/cryptos/controller.dart';
 import '../notify.dart';
 
-class WidgetsFieldsCryptoSearch extends FormField<int> {
-  WidgetsFieldsCryptoSearch({
-    super.key,
-    super.initialValue,
-    super.validator,
-    bool? enabled,
-    bool allowClean = true,
-    bool allowCopy = true,
-    Function(int cryptoId)? onSelected,
-    String labelText = "Crypto",
-    String hintText = "Search by name, symbol, or ID...",
-  }) : super(
-         builder: (FormFieldState<int> state) {
-           return _WidgetsFieldsCryptoSearchBody(
-             initialValue: initialValue,
-             labelText: labelText,
-             hintText: hintText,
-             enabled: enabled,
-             allowClean: allowClean,
-             allowCopy: allowCopy,
-             onSelected: (id) {
-               state.didChange(id);
-               if (onSelected != null) {
-                 onSelected(id);
-               }
-             },
-             validator: validator,
-           );
-         },
-       );
-}
-
-class _WidgetsFieldsCryptoSearchBody extends StatefulWidget {
+class WidgetsFieldsCryptoSearch extends StatefulWidget {
   final Function(int)? onSelected;
   final int? initialValue;
   final String labelText;
   final String hintText;
-  final bool? enabled;
+  final bool enabled;
   final bool allowClean;
   final bool allowCopy;
-  final FormFieldValidator<int>? validator;
 
-  const _WidgetsFieldsCryptoSearchBody({
-    required this.onSelected,
-    required this.initialValue,
-    required this.labelText,
-    required this.hintText,
-    required this.enabled,
-    required this.validator,
+  const WidgetsFieldsCryptoSearch({
+    super.key,
+    this.labelText = "Crypto",
+    this.hintText = "Search by name, symbol, or ID...",
+    this.onSelected,
+    this.initialValue,
+    this.enabled = true,
     this.allowClean = true,
     this.allowCopy = true,
   });
 
   @override
-  State<_WidgetsFieldsCryptoSearchBody> createState() => _WidgetsFieldsCryptoSearchBodyState();
+  State<WidgetsFieldsCryptoSearch> createState() => _WidgetsFieldsCryptoSearchState();
 }
 
-class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSearchBody> {
+class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> {
   late TextEditingController _controller;
   late CryptosController _cryptosController;
 
-  bool get _shouldShowSuffix => widget.enabled ?? true && (widget.allowClean || widget.allowCopy);
+  bool get _shouldShowSuffix => widget.enabled && (widget.allowClean || widget.allowCopy);
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
     _cryptosController = locator<CryptosController>();
-    _cryptosController.addListener(_loadCryptos);
+    _cryptosController.addListener(onControllerChange);
 
     if (widget.initialValue != null) {
       final crypto = _cryptosController.get(widget.initialValue!.toString());
@@ -86,14 +53,14 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
     }
   }
 
-  void _loadCryptos() {
+  void onControllerChange() {
     setState(() {});
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _cryptosController.removeListener(_loadCryptos);
+    _cryptosController.removeListener(onControllerChange);
     super.dispose();
   }
 
@@ -102,80 +69,84 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TypeAheadFormField<CryptosModel>(
-          textFieldConfiguration: TextFieldConfiguration(
-            enabled: widget.enabled ?? true,
-            controller: _controller,
-            decoration: InputDecoration(
-              labelText: widget.labelText,
-              hintText: widget.hintText,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              suffixIcon: _shouldShowSuffix
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (widget.allowCopy && _controller.text != "")
-                          IconButton(
-                            icon: const Icon(Icons.copy),
-                            iconSize: 16,
-                            constraints: const BoxConstraints(),
-                            visualDensity: VisualDensity.compact,
-                            mouseCursor: SystemMouseCursors.click,
-                            tooltip: 'Copy to clipboard',
-                            style: ButtonStyle(
-                              overlayColor: WidgetStateProperty.all(Colors.transparent),
-                              foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.hovered)) {
-                                  return AppTheme.action;
-                                }
-                                return AppTheme.textMuted;
-                              }),
-                              padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-                              minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        TypeAheadField<CryptosModel>(
+          controller: _controller,
+          builder: (context, controller, focusNode) {
+            return TextFormField(
+              enabled: widget.enabled,
+              controller: controller,
+              focusNode: focusNode,
+              validator: _validateFromText,
+              decoration: InputDecoration(
+                labelText: widget.labelText,
+                hintText: widget.hintText,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: _shouldShowSuffix
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (widget.allowCopy && _controller.text != "")
+                            IconButton(
+                              icon: const Icon(Icons.copy),
+                              iconSize: 16,
+                              constraints: const BoxConstraints(),
+                              visualDensity: VisualDensity.compact,
+                              mouseCursor: SystemMouseCursors.click,
+                              tooltip: 'Copy to clipboard',
+                              style: ButtonStyle(
+                                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                                foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                  if (states.contains(WidgetState.hovered)) {
+                                    return AppTheme.action;
+                                  }
+                                  return AppTheme.textMuted;
+                                }),
+                                padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
+                                minimumSize: WidgetStateProperty.all(const Size(16, 16)),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () async {
+                                await Clipboard.setData(ClipboardData(text: _controller.text));
+                                widgetsNotifySuccess("${_controller.text} copied to clipboard");
+                              },
                             ),
-                            onPressed: () async {
-                              await Clipboard.setData(ClipboardData(text: _controller.text));
-                              widgetsNotifySuccess("${_controller.text} copied to clipboard");
-                            },
-                          ),
 
-                        if (widget.allowClean && _controller.text != "")
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            iconSize: 16,
-                            constraints: const BoxConstraints(),
-                            visualDensity: VisualDensity.compact,
-                            mouseCursor: SystemMouseCursors.click,
-                            tooltip: 'Reset selection',
-                            style: ButtonStyle(
-                              overlayColor: WidgetStateProperty.all(Colors.transparent),
-                              foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.hovered)) {
-                                  return AppTheme.error;
-                                }
-                                return AppTheme.textMuted;
-                              }),
-                              padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-                              minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          if (widget.allowClean && _controller.text != "")
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              iconSize: 16,
+                              constraints: const BoxConstraints(),
+                              visualDensity: VisualDensity.compact,
+                              mouseCursor: SystemMouseCursors.click,
+                              tooltip: 'Reset selection',
+                              style: ButtonStyle(
+                                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                                foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                  if (states.contains(WidgetState.hovered)) {
+                                    return AppTheme.error;
+                                  }
+                                  return AppTheme.textMuted;
+                                }),
+                                padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
+                                minimumSize: WidgetStateProperty.all(const Size(16, 16)),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () {
+                                _controller.text = "";
+                                widget.onSelected?.call(-1);
+                                setState(() {});
+                              },
                             ),
-                            onPressed: () {
-                              _controller.text = "";
-                              widget.onSelected?.call(-1);
-                              setState(() {});
-                            },
-                          ),
 
-                        const SizedBox(width: 6),
-                      ],
-                    )
-                  : null,
-            ),
-          ),
-          validator: _validateFromText,
+                          const SizedBox(width: 6),
+                        ],
+                      )
+                    : null,
+              ),
+            );
+          },
           suggestionsCallback: (pattern) {
             if (pattern.isEmpty) return [];
             final lowerQuery = pattern.toLowerCase();
@@ -201,14 +172,11 @@ class _WidgetsFieldsCryptoSearchBodyState extends State<_WidgetsFieldsCryptoSear
               ),
             );
           },
-          onSuggestionSelected: (CryptosModel suggestion) {
+          onSelected: (CryptosModel suggestion) {
             _controller.text = '${suggestion.symbol} (#${suggestion.uuid})';
-            if (widget.onSelected != null) {
-              widget.onSelected!.call(suggestion.uuid);
-            }
+            widget.onSelected?.call(suggestion.uuid);
           },
-
-          noItemsFoundBuilder: (context) {
+          emptyBuilder: (context) {
             return const Padding(padding: EdgeInsets.all(8.0), child: Text('No cryptos found'));
           },
           loadingBuilder: (context) {
