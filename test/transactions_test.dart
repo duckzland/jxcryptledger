@@ -402,7 +402,7 @@ void main() async {
       // 1. root balance should be 130
       expect(rrrrrr.balance, 130);
 
-      // 2. root status should be partial as leaf_1 is still partial [BROKEN]
+      // 2. root status should be partial as leaf_1 is still partial
       expect(rrrrrr.statusEnum, TransactionStatus.partial);
 
       // 3. leaf_2 status should be closed
