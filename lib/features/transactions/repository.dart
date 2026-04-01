@@ -14,8 +14,10 @@ import 'rules/update.dart';
 
 class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     with CoreMixinsRepositoriesIdGenerator<TransactionsModel>, CoreMixinsRepositoriesExportable<TransactionsModel> {
+  String boxNameDefault = 'transactions_box';
+
   @override
-  String get boxName => 'transactions_box';
+  String get boxName => boxNameDefault;
 
   @override
   get fromJson => TransactionsModel.fromJson;
