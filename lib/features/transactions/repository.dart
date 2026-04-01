@@ -174,17 +174,33 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     // canClose already check and throw
     TransactionsModel? target = getCloseTargetParent(otx);
+    bool allClosed = false;
+    List<TransactionsModel> leaves = [];
+
     if (target == null) {
       return;
     }
 
-    final leaves = collectTerminalLeaves(target);
-    final allClosed =
+    // Try terminal leaves first.
+    leaves = collectTerminalLeaves(target);
+    allClosed =
         leaves.isNotEmpty &&
         leaves
             // Current tx hasn't mutate status yet thus ignore it!
             .where((leaf) => leaf.tid != otx.tid)
             .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+
+    // if all terminal leaves are closed, double check current branch is all inactive
+    if (allClosed) {
+      leaves = collectLeavesInBetween(otx, target);
+      allClosed =
+          leaves.isNotEmpty &&
+          leaves
+              // Ignore current otx and its target
+              .where((leaf) => leaf.tid != otx.tid)
+              .where((leaf) => leaf.tid != target.tid)
+              .every((leaf) => leaf.statusEnum == TransactionStatus.inactive);
+    }
 
     final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
     final updatedTarget = target.copyWith(balance: Math.add(target.balance, tx.balance), status: newStatus);
@@ -403,6 +419,27 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     return dfs(parent);
+  }
+
+  List<TransactionsModel> collectLeavesInBetween(TransactionsModel start, TransactionsModel end) {
+    final all = extract();
+
+    final Map<String, TransactionsModel> lookup = {for (final tx in all) tx.tid: tx};
+
+    final ascendants = <TransactionsModel>[];
+    TransactionsModel? current = start;
+
+    while (current != null && !current.isRoot) {
+      final parent = lookup[current.pid];
+      if (parent == null) break;
+      ascendants.add(parent);
+
+      if (parent.tid == end.tid) break;
+
+      current = parent;
+    }
+
+    return ascendants;
   }
 
   bool canAdd(TransactionsModel tx, {bool? silent}) {
