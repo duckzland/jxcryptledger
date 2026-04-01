@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
@@ -68,13 +69,13 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     final m = _marketRate;
     if (m == null) return null;
 
-    return _isReversed ? (m == 0 ? null : 1 / m) : m;
+    return _isReversed ? (m == 0 ? null : Math.subtract(1, m)) : m;
   }
 
   double? get nonReversedEffectiveRate {
     final c = _customRate;
     if (c != null) {
-      return _isReversed ? 1 / c : c;
+      return _isReversed ? Math.divide(1, c) : c;
     }
 
     final m = _marketRate;
@@ -674,8 +675,8 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
       double profitLevel = 0;
 
       if (currentRate != 0) {
-        currentValue = _isReversed ? tx.balance * currentRate : tx.balance / currentRate;
-        profitLoss = currentValue - tx.srAmount;
+        currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+        profitLoss = Math.subtract(currentValue, tx.srAmount);
 
         if (profitLoss > 0) {
           profitLevel = 1;

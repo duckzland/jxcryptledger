@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/layouts/wrapped_two_columns.dart';
@@ -70,13 +71,13 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
 
     final cap = tx.srAmount;
     final bal = totalResult;
-    final prof = bal - cap;
-    final profPct = cap == 0 ? 0 : (prof / cap) * 100;
+    final prof = Math.subtract(bal, cap);
+    final profPct = cap == 0 ? 0 : (Math.divide(prof, cap) * 100);
 
     final rCap = tx.rrAmount;
     final rBal = totalReturnResult;
-    final rProf = rBal - rCap;
-    final rProfPct = rCap == 0 ? 0 : (rProf / rCap) * 100;
+    final rProf = Math.subtract(rBal, rCap);
+    final rProfPct = rCap == 0 ? 0 : (Math.divide(rProf, rCap) * 100);
 
     setState(() {
       _hasLeaf = leaf;

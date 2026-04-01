@@ -1,5 +1,6 @@
 import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
+import '../../core/math.dart';
 import '../../core/mixins/repositories/exportable.dart';
 import '../../core/mixins/repositories/id_generator.dart';
 import 'model.dart';
@@ -55,13 +56,13 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
       // Update the parent balance and status
       // This is important to preserve valid tree structure!
-      final balance = ptx.balance - ntx.srAmount;
+      final balance = Math.subtract(ptx.balance, ntx.srAmount);
       final nptx = ptx.copyWith(
         balance: balance,
         status: balance <= 0 ? TransactionStatus.inactive.index : TransactionStatus.partial.index,
       );
 
-      logln("[ADD] Rebalancing amount ${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}");
+      logln("[ADD] Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}");
 
       await box.put(ntx.tid, ntx);
 
@@ -109,11 +110,11 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       if (otx.srAmount != tx.srAmount && ptx.rrId == otx.srId) {
         double balance = ptx.balance;
         if (otx.srAmount > tx.srAmount) {
-          balance += otx.srAmount - tx.srAmount;
+          balance = Math.add(balance, Math.subtract(otx.srAmount, tx.srAmount));
         } else {
-          double spent = tx.srAmount - otx.srAmount;
+          double spent = Math.subtract(tx.srAmount, otx.srAmount);
           if (balance >= spent) {
-            balance -= spent;
+            balance = Math.subtract(balance, spent);
           }
         }
 
@@ -181,7 +182,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
             .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-    final updatedTarget = target.copyWith(balance: target.balance + tx.balance, status: newStatus);
+    final updatedTarget = target.copyWith(balance: Math.add(target.balance, tx.balance), status: newStatus);
 
     final closedTx = tx.copyWith(balance: 0, status: TransactionStatus.closed.index);
 
@@ -214,7 +215,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
             .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-    final updatedTarget = ptx.copyWith(balance: ptx.balance + tx.srAmount, status: newStatus);
+    final updatedTarget = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
 
     if (debugLogs) {
       logln(
@@ -285,9 +286,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
   double getCapitalBalance(TransactionsModel tx) {
     final children = getLeaf(tx);
-    final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
-    final double balance = tx.rrAmount - spent;
-
+    final double spent = children.fold<double>(0.0, (sum, leaf) => Math.add(sum, leaf.srAmount));
+    final double balance = Math.subtract(tx.rrAmount, spent);
     return balance;
   }
 
