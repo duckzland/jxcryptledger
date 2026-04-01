@@ -45,11 +45,14 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
 
   double _panelHeight = 40;
 
+  late TransactionsModel tx = widget.tx;
+
   @override
   void initState() {
     super.initState();
 
-    final tx = widget.tx;
+    _txController.addListener(onControllerChange);
+
     if (tx.statusEnum == TransactionStatus.inactive) {
       _bgColor = AppTheme.mutedBg;
       _fgColor = AppTheme.textMuted;
@@ -61,9 +64,38 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
     _loadData();
   }
 
-  Future<void> _loadData() async {
-    final tx = widget.tx;
+  @override
+  void dispose() {
+    _txController.removeListener(onControllerChange);
+    super.dispose();
+  }
 
+  void onControllerChange() {
+    final ntx = _txController.get(widget.tx.tid);
+    if (ntx == null || ntx == tx) {
+      return;
+    }
+
+    tx = ntx;
+    if (tx.statusEnum == TransactionStatus.inactive) {
+      _bgColor = AppTheme.mutedBg;
+      _fgColor = AppTheme.textMuted;
+    } else if (tx.statusEnum == TransactionStatus.closed) {
+      _bgColor = AppTheme.closedBg;
+      _fgColor = AppTheme.textMuted;
+    } else {
+      _bgColor = AppTheme.rowHeaderBg;
+      _fgColor = AppTheme.text;
+    }
+
+    setState(() {
+      _bgColor = _bgColor;
+      _fgColor = _fgColor;
+      tx = tx;
+    });
+  }
+
+  Future<void> _loadData() async {
     final leaf = _txController.hasLeaf(tx);
     final branch = _txController.collectBranchActiveAmount(tx);
     final totalResult = branch[tx.srId] ?? 0;
@@ -144,7 +176,6 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
       plColor = const Color.fromARGB(255, 255, 109, 109);
     }
 
-    final tx = widget.tx;
     final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
     final rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? '';
 
@@ -210,7 +241,6 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
       plColor = const Color.fromARGB(255, 255, 109, 109);
     }
 
-    final tx = widget.tx;
     final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
 
     final controller = ScrollController();
