@@ -1,3 +1,4 @@
+import '../../../core/math.dart';
 import '../model.dart';
 import '../repository.dart';
 import '../../../app/exceptions.dart';
@@ -165,7 +166,7 @@ abstract class TransactionsRulesBase {
         ptx != null &&
         otx.srAmount != tx.srAmount &&
         otx.srAmount < tx.srAmount &&
-        ptx.balance < (tx.srAmount - otx.srAmount)) {
+        ptx.balance < Math.subtract(tx.srAmount, otx.srAmount)) {
       throw ValidationException(
         AppErrorCode.txUpdateParentInsufficientBalance,
         "$mode parent has insufficient balance (tid=${tx.tid})",
@@ -208,8 +209,8 @@ abstract class TransactionsRulesBase {
   void otxCheckBalanceIsZero(int code, String message) {
     final TransactionsModel? otx = origTx;
     final childList = leafChildren;
-    final spent = childList.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
-    final balance = otx == null ? -99999 : otx.rrAmount - spent;
+    final spent = childList.fold<double>(0.0, (sum, leaf) => Math.add(sum, leaf.srAmount));
+    final balance = otx == null ? -99999 : Math.subtract(otx.rrAmount, spent);
 
     if (balance > 0) {
       throw ValidationException(

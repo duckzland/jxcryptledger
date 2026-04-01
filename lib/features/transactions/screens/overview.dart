@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/actions.dart';
 import '../../../mixins/sortable_table.dart';
@@ -114,18 +115,18 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
     final roots = _txController.collectAllRoots();
     for (final rtx in roots) {
       if (rtx.srId == widget.id) {
-        capital += rtx.srAmount;
+        capital = Math.add(capital, rtx.srAmount);
       }
     }
 
     final balance = _calc.totalBalance(widget.transactions);
-    final profitPercentage = (capital == 0) ? 0.0 : ((balance - capital) / capital) * 100;
+    final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(balance, capital), capital) * 100);
 
     if (mounted) {
       setState(() {
         _totalCapital = capital;
         _currentHolding = balance;
-        _profitLoss = balance - capital;
+        _profitLoss = Math.subtract(balance, capital);
         _profitLossPercentage = profitPercentage;
       });
     }
