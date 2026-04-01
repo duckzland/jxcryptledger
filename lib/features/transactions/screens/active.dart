@@ -69,7 +69,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     final m = _marketRate;
     if (m == null) return null;
 
-    return _isReversed ? (m == 0 ? null : Math.subtract(1, m)) : m;
+    return _isReversed ? (m == 0 ? null : Math.divide(1, m)) : m;
   }
 
   double? get nonReversedEffectiveRate {
