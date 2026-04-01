@@ -54,6 +54,9 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       TransactionsModel? ptx = box.get(ntx.pid)!;
       canTrade(ptx);
 
+      // Double check if parent can be updated!
+      canUpdate(ptx);
+
       // Update the parent balance and status
       // This is important to preserve valid tree structure!
       final balance = Math.subtract(ptx.balance, ntx.srAmount);
