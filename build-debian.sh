@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# 1. Build the Flutter binary
-flutter build linux --release
-
-# 2. Setup Variables
-APP_NAME="jxledger"
-
 # Read version from version.txt and remove any trailing whitespace/newlines
 if [ -f version.txt ]; then
     VERSION=$(cat version.txt | xargs)
@@ -13,6 +7,14 @@ else
     echo "Error: version.txt not found!"
     exit 1
 fi
+
+
+
+# 1. Build the Flutter binary
+flutter build linux --release --dart-define=APP_VERSION=$VERSION
+
+# 2. Setup Variables
+APP_NAME="jxledger"
 
 DEB_DIR="build/debian_tmp"
 BUNDLE_DIR="build/linux/x64/release/bundle"

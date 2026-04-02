@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/theme.dart';
+import '../../app/version.dart';
 import '../../widgets/button.dart';
 import 'controller.dart';
 
@@ -40,7 +42,18 @@ class _UnlockPageState extends State<UnlockPage> {
     final isFirstRun = widget.controller.isFirstRun;
 
     return Scaffold(
-      body: Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
+      body: Stack(
+        children: [
+          Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('v${AppVersion.full}', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
