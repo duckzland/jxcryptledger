@@ -21,21 +21,23 @@ else
     sed -i "s/^version:.*/version: $BUILD_NAME/" pubspec.yaml
 
     echo "Committing version bump to Git..."
+    git add pubspec.yaml
     git commit pubspec.yaml -m "Bump version to $BUILD_NAME"
 fi
 
 echo "[2/5] Checking lib/app/version.dart version..."
 
-CURRENT_VERSION=$(sed -n 's/.*appVersion = "\(.*\)";/\1/p' "$VERSION_FILE")
+CURRENT_VERSION=$(sed -n 's/.*appVersion = "\(.*\)";/\1/p' lib/app/version.dart)
 
 if [ "$CURRENT_VERSION" == "$FULL_VERSION" ]; then
     echo "lib/app/version.dart already up to date: $FULL_VERSION"
 else
     echo "Updating lib/app/version.dart from $CURRENT_VERSION to $FULL_VERSION..."
     
-    sed -i "s/const String appVersion = \".*\";/const String appVersion = \"$FULL_VERSION\";/" "lib/app/version.dart"
+    sed -i "s/const String appVersion = \".*\";/const String appVersion = \"$FULL_VERSION\";/" lib/app/version.dart
 
     echo "Committing version bump to Git..."
+    git add lib/app/version.dart
     git commit lib/app/version.dart -m "Bump version to $FULL_VERSION"
 fi
 
@@ -43,7 +45,7 @@ echo "[3/5] Cleaning and Fetching..."
 flutter clean
 
 echo "[4/5] Building Version: $FULL_VERSION (Name: $BUILD_NAME, Number: $BUILD_NUMBER)"
-flutter build linux --release --dart-define=APP_VERSION=$FULL_VERSION
+flutter build linux --release
 
 
 echo "[5/5] Bundling to deb package..."
