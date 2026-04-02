@@ -26,6 +26,7 @@ if "%CURRENT_VERSION%"=="%BUILD_NAME%" (
       "(Get-Content pubspec.yaml) -replace '^version:.*', 'version: %BUILD_NAME%' | Set-Content pubspec.yaml"
 
     echo Committing version bump to Git...
+    git add pubspec.yaml
     git commit pubspec.yaml -m "Bump version to %BUILD_NAME%"
 )
 
@@ -45,6 +46,7 @@ if "%CURRENT_VERSION%"=="%FULL_VERSION%" (
       "(Get-Content lib/app/version.dart) -replace 'const String appVersion = \".*\";', 'const String appVersion = \"%FULL_VERSION%\";' | Set-Content lib/app/version.dart"
 
     echo Committing version bump to Git...
+    git add lib/app/version.dart
     git commit lib/app/version.dart -m "Bump version to %FULL_VERSION%"
 )
 
