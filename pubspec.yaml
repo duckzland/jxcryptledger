@@ -1,7 +1,7 @@
 name: jxledger
 description: "JXLedger Transaction Manager."
-publish_to: 'none'
-version: 1.0.22.4
+publish_to: "none"
+version: 1.0.22
 
 environment:
   sdk: ^3.11.0
@@ -44,7 +44,7 @@ dev_dependencies:
 
 flutter:
   assets:
-    - .env 
+    - .env
     - assets/icon.png
   uses-material-design: true
 
