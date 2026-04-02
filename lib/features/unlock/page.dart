@@ -49,7 +49,7 @@ class _UnlockPageState extends State<UnlockPage> {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text('v${AppVersion.full}', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+              child: Text('v$appVersion', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
             ),
           ),
         ],
