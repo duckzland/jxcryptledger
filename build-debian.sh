@@ -1,44 +1,57 @@
 #!/bin/bash
 
-# Read version from version.txt and remove any trailing whitespace/newlines
 if [ -f version.txt ]; then
-    VERSION=$(cat version.txt | xargs)
+    FULL_VERSION=$(cat version.txt | xargs)
+    IFS='.' read -r a b c d <<< "$FULL_VERSION"
+    BUILD_NAME="$a.$b.$c"
+    BUILD_NUMBER="$d"
 else
     echo "Error: version.txt not found!"
     exit 1
 fi
 
+echo "[1/4] Checking pubspec.yaml version..."
+
+CURRENT_VERSION=$(grep "^version:" pubspec.yaml | awk '{print $2}')
+
+if [ "$CURRENT_VERSION" = "$BUILD_NAME" ]; then
+    echo "pubspec.yaml already up to date: $BUILD_NAME"
+else
+    echo "Updating pubspec.yaml from $CURRENT_VERSION to $BUILD_NAME..."
+    sed -i "s/^version:.*/version: $BUILD_NAME/" pubspec.yaml
+
+    echo "Committing version bump to Git..."
+    git commit pubspec.yaml -m "Bump version to $BUILD_NAME"
+fi
+
+echo "[2/5] Cleaning and Fetching..."
+flutter clean
+
+echo "[3/5] Building Version: $FULL_VERSION (Name: $BUILD_NAME, Number: $BUILD_NUMBER)"
+flutter build linux --release --dart-define=APP_VERSION=$FULL_VERSION
 
 
-# 1. Build the Flutter binary
-flutter build linux --release --dart-define=APP_VERSION=$VERSION
+echo "[4/5] Bundling to deb package..."
 
-# 2. Setup Variables
 APP_NAME="jxledger"
-
 DEB_DIR="build/debian_tmp"
 BUNDLE_DIR="build/linux/x64/release/bundle"
 
-# 3. Create the Debian structure
 rm -rf $DEB_DIR
 mkdir -p $DEB_DIR/usr/bin/$APP_NAME-data
 mkdir -p $DEB_DIR/usr/share/applications
 mkdir -p $DEB_DIR/usr/share/icons/hicolor/512x512/apps
 mkdir -p $DEB_DIR/DEBIAN
 
-# 4. Copy Flutter bundle to /usr/bin/
 cp -r $BUNDLE_DIR/* $DEB_DIR/usr/bin/
-
-# 5. Copy Icon to System Icons
 cp assets/icon.png $DEB_DIR/usr/share/icons/hicolor/512x512/apps/$APP_NAME.png
 
-# 6. Create Desktop Entry (Start Menu)
 cat <<EOF > $DEB_DIR/usr/share/applications/$APP_NAME.desktop
 [Desktop Entry]
-Version: $VERSION
-Name=JxLedger
-GenericName=JxLedger
-Comment=JxLedger Transaction Manager
+Version: $FULL_VERSION
+Name=JXLedger
+GenericName=JXLedger
+Comment=JXLedger Transaction Manager
 Exec=/usr/bin/jxledger
 Icon=$APP_NAME
 Type=Application
@@ -46,21 +59,20 @@ Categories=Utility;
 Terminal=false
 EOF
 
-# 7. Create the Control File (Hardcoded to fix the 'diversion' bug)
 cat <<EOF > $DEB_DIR/DEBIAN/control
 Package: $APP_NAME
-Version: $VERSION
+Version: $FULL_VERSION
 Architecture: amd64
 Maintainer: Jason Xie <jason.xie@victheme.com>
 Depends: libgtk-3-0, libglib2.0-0, libjpeg-turbo8
-Description: JxLedger Transaction Manager
+Description: JXLedger Transaction Manager
 EOF
 
-# 8. Set Permissions
 chmod -R 755 $DEB_DIR/DEBIAN
 chmod +x $DEB_DIR/usr/bin/$APP_NAME
 
-# 9. Build the .deb
-dpkg-deb --build $DEB_DIR build/${APP_NAME}_${VERSION}_amd64.deb
+dpkg-deb --build $DEB_DIR build/${APP_NAME}_${FULL_VERSION}_amd64.deb
 
-echo "Success! Created: build/${APP_NAME}_${VERSION}_amd64.deb"
+echo "---------------------------------------"
+echo "Done! Version $FULL_VERSION is in: build/"
+echo "---------------------------------------"
