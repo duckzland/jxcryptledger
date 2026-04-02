@@ -13,7 +13,7 @@ for /f "tokens=1,2,3,4 delims=." %%a in ("%FULL_VERSION%") do (
     set BUILD_NUMBER=%%d
 )
 
-echo [0/3] Checking pubspec.yaml version...
+echo [1/4] Checking pubspec.yaml version...
 for /f "tokens=2 delims=: " %%v in ('findstr /b "version:" pubspec.yaml') do (
     set CURRENT_VERSION=%%v
 )
@@ -31,15 +31,15 @@ if "%CURRENT_VERSION%"=="%BUILD_NAME%" (
 
 echo Building Version: %FULL_VERSION% (Name: %BUILD_NAME%, Number: %BUILD_NUMBER%)
 
-echo [1/3] Cleaning and Fetching...
+echo [2/4] Cleaning and Fetching...
 call flutter clean
 
-echo [2/3] Building Windows & MSIX...
-call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER%
+echo [3/4] Building Windows & MSIX...
+call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER% --dart-define=APP_VERSION=%FULL_VERSION%
 
 call dart run msix:create --version %FULL_VERSION% --install-certificate false
 
-echo [3/3] Pooling Installer...
+echo [4/4] Pooling Installer...
 
 set OUTPUT_DIR=build
 set SOURCE_MSIX=build\windows\x64\runner\Release
