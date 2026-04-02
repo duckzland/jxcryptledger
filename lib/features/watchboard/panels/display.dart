@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme.dart';
-import '../../../../core/locator.dart';
-import '../../../../core/utils.dart';
-import '../../../../widgets/panel.dart';
-import '../../../cryptos/controller.dart';
-import '../../../rates/controller.dart';
-import '../../../watchers/controller.dart';
-import '../../../watchers/model.dart';
-import '../controller.dart';
-import '../model.dart';
+import '../../../app/theme.dart';
+import '../../../core/locator.dart';
+import '../../../core/utils.dart';
+import '../../../widgets/panel.dart';
+import '../../cryptos/controller.dart';
+import '../../rates/controller.dart';
+import '../../watchers/controller.dart';
+import '../../watchers/model.dart';
+import 'controller.dart';
+import 'model.dart';
 import 'buttons.dart';
 
-class PanelsWidgetsDisplay extends StatefulWidget {
+class PanelsDisplay extends StatefulWidget {
   final PanelsModel tix;
   final double? prevRate;
   final bool isDragging;
 
-  const PanelsWidgetsDisplay({super.key, required this.tix, required this.isDragging, this.prevRate});
+  const PanelsDisplay({super.key, required this.tix, required this.isDragging, this.prevRate});
 
   @override
-  State<PanelsWidgetsDisplay> createState() => _PanelsWidgetsDisplayState();
+  State<PanelsDisplay> createState() => _PanelsDisplayState();
 }
 
-class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
+class _PanelsDisplayState extends State<PanelsDisplay> {
   late final PanelsController _tixController;
   late final RatesController _ratesController;
   late final WatchersController _wxController;
@@ -195,7 +195,7 @@ class _PanelsWidgetsDisplayState extends State<PanelsWidgetsDisplay> {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: PanelsWidgetsButtons(
+                    child: PanelsButtons(
                       tix: tix,
                       tixController: _tixController,
                       linkedWatcher: _linkedWatcher,

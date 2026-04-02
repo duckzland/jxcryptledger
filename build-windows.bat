@@ -13,6 +13,22 @@ for /f "tokens=1,2,3,4 delims=." %%a in ("%FULL_VERSION%") do (
     set BUILD_NUMBER=%%d
 )
 
+echo [0/3] Checking pubspec.yaml version...
+for /f "tokens=2 delims=: " %%v in ('findstr /b "version:" pubspec.yaml') do (
+    set CURRENT_VERSION=%%v
+)
+
+if "%CURRENT_VERSION%"=="%BUILD_NAME%" (
+    echo pubspec.yaml already up to date: %BUILD_NAME%
+) else (
+    echo Updating pubspec.yaml from %CURRENT_VERSION% to %BUILD_NAME%...
+    powershell -Command ^
+      "(Get-Content pubspec.yaml) -replace '^version:.*', 'version: %BUILD_NAME%' | Set-Content pubspec.yaml"
+
+    echo Committing version bump to Git...
+    git commit pubspec.yaml -m "Bump version to %BUILD_NAME%"
+)
+
 echo Building Version: %FULL_VERSION% (Name: %BUILD_NAME%, Number: %BUILD_NUMBER%)
 
 echo [1/3] Cleaning and Fetching...

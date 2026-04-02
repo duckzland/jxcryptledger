@@ -74,6 +74,24 @@ class AppTheme {
       brightness: Brightness.dark,
       fontFamily: 'Inter',
 
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(fontFamily: 'Inter'),
+        displayMedium: TextStyle(fontFamily: 'Inter'),
+        displaySmall: TextStyle(fontFamily: 'Inter'),
+        headlineLarge: TextStyle(fontFamily: 'Inter'),
+        headlineMedium: TextStyle(fontFamily: 'Inter'),
+        headlineSmall: TextStyle(fontFamily: 'Inter'),
+        titleLarge: TextStyle(fontFamily: 'Inter'),
+        titleMedium: TextStyle(fontFamily: 'Inter'),
+        titleSmall: TextStyle(fontFamily: 'Inter'),
+        bodyLarge: TextStyle(fontFamily: 'Inter'),
+        bodyMedium: TextStyle(fontFamily: 'Inter'),
+        bodySmall: TextStyle(fontFamily: 'Inter'),
+        labelLarge: TextStyle(fontFamily: 'Inter'),
+        labelMedium: TextStyle(fontFamily: 'Inter'),
+        labelSmall: TextStyle(fontFamily: 'Inter'),
+      ),
+
       colorScheme: const ColorScheme.dark(
         surface: background,
         primary: primary,
@@ -87,17 +105,17 @@ class AppTheme {
         backgroundColor: headerBg,
         foregroundColor: text,
         elevation: 0,
-        titleTextStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: text),
+        titleTextStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: text, fontFamily: 'Inter'),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: inputBg,
-        labelStyle: const TextStyle(fontSize: 14, color: textInactive),
-        floatingLabelStyle: const TextStyle(fontSize: 13, color: textMuted),
+        labelStyle: const TextStyle(fontSize: 14, color: textInactive, fontFamily: 'Inter'),
+        floatingLabelStyle: const TextStyle(fontSize: 13, color: textMuted, fontFamily: 'Inter'),
         enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: separator)),
         focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: textInactive)),
-        hintStyle: TextStyle(color: textHalfInactive),
+        hintStyle: TextStyle(color: textHalfInactive, fontFamily: 'Inter'),
       ),
 
       dividerTheme: const DividerThemeData(color: AppTheme.separator, thickness: 1),
@@ -114,8 +132,15 @@ class AppTheme {
           backgroundColor: buttonBg,
           foregroundColor: text,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: text),
+          textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: text, fontFamily: 'Inter'),
         ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(textStyle: const TextStyle(fontFamily: 'Inter')),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(textStyle: const TextStyle(fontFamily: 'Inter')),
       ),
 
       scrollbarTheme: ScrollbarThemeData(

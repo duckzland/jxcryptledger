@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../../../../mixins/actions.dart';
-import '../../../../widgets/button.dart';
-import '../../../../widgets/dialogs/alert.dart';
-import '../../../../widgets/dialogs/show_form.dart';
-import '../../../watchers/form.dart';
-import '../../../watchers/model.dart';
-import '../controller.dart';
-import '../form.dart';
-import '../model.dart';
+import '../../../mixins/actions.dart';
+import '../../../widgets/button.dart';
+import '../../../widgets/dialogs/alert.dart';
+import '../../../widgets/dialogs/show_form.dart';
+import '../../watchers/form.dart';
+import '../../watchers/model.dart';
+import 'controller.dart';
+import 'form.dart';
+import 'model.dart';
 
-class PanelsWidgetsButtons extends StatelessWidget with MixinsActions {
+class PanelsButtons extends StatelessWidget with MixinsActions {
   final PanelsModel tix;
   final PanelsController tixController;
   final WatchersModel? linkedWatcher;
   final void Function() onAction;
 
-  const PanelsWidgetsButtons({
-    super.key,
-    required this.tix,
-    required this.linkedWatcher,
-    required this.tixController,
-    required this.onAction,
-  });
+  const PanelsButtons({super.key, required this.tix, required this.linkedWatcher, required this.tixController, required this.onAction});
 
   @override
   Widget build(BuildContext context) {
