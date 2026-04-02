@@ -1,4 +1,4 @@
-# JXCryptLedger
+# JXLedger
 
 A lightweight, local‑first crypto transaction ledger built with Flutter and Hive.  
 It tracks balances, trades, and transaction trees.
@@ -22,6 +22,6 @@ It tracks balances, trades, and transaction trees.
 MIT
 
 ## Disclaimer
-JXCryptLedger is provided “as is,” with no guarantees of accuracy, reliability, or data durability.  
+JXLedger is provided “as is,” with no guarantees of accuracy, reliability, or data durability.  
 You are solely responsible for any data you store in the app and for any financial decisions or losses that may result from using it.  
 The author assumes no responsibility for lost data, corrupted storage, or monetary loss of any kind.
