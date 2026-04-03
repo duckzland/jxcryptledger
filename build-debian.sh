@@ -12,6 +12,16 @@ else
     exit 1
 fi
 
+DO_COMMIT=true
+
+for arg in "$@"; do
+    case "$arg" in
+        --no-commit)
+            DO_COMMIT=false
+            ;;
+    esac
+done
+
 echo "[1/7] Checking pubspec.yaml version..."
 
 CURRENT_VERSION=$(grep "^version:" pubspec.yaml | awk '{print $2}')
@@ -23,8 +33,10 @@ else
     sed -i "s/^version:.*/version: $BUILD_NAME/" pubspec.yaml
 
     echo "Committing version bump to Git..."
-    git add pubspec.yaml
-    git commit pubspec.yaml -m "Bump version to $BUILD_NAME"
+    if $DO_COMMIT; then
+        git add pubspec.yaml
+        git commit pubspec.yaml -m "Bump version to $BUILD_NAME"
+    fi
 fi
 
 echo "[2/7] Checking lib/app/constants.dart version..."
@@ -39,8 +51,10 @@ else
     sed -i "s/const String appVersion = \".*\";/const String appVersion = \"$FULL_VERSION\";/" lib/app/constants.dart
 
     echo "Committing version bump to Git..."
-    git add lib/app/constants.dart
-    git commit lib/app/constants.dart -m "Bump version to $FULL_VERSION"
+    if $DO_COMMIT; then
+        git add lib/app/constants.dart
+        git commit lib/app/constants.dart -m "Bump version to $FULL_VERSION"
+    fi
 fi
 
 
@@ -128,7 +142,9 @@ chmod +x $DEB_DIR/usr/lib/$APP_NAME/$APP_NAME
 dpkg-deb --build $DEB_DIR build/${APP_NAME}_${FULL_VERSION}_amd64.deb
 
 echo "[7/7] Post building cleaning..."
-git checkout -- lib/app/constants.dart
+if $DO_COMMIT; then
+    git checkout -- lib/app/constants.dart
+fi
 
 echo "---------------------------------------"
 echo "Done! Version $FULL_VERSION is in: build/"
