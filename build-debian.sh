@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [ -f version.txt ]; then
     FULL_VERSION=$(cat version.txt | xargs)
     IFS='.' read -r a b c d <<< "$FULL_VERSION"
@@ -10,7 +12,7 @@ else
     exit 1
 fi
 
-echo "[1/5] Checking pubspec.yaml version..."
+echo "[1/6] Checking pubspec.yaml version..."
 
 CURRENT_VERSION=$(grep "^version:" pubspec.yaml | awk '{print $2}')
 
@@ -25,29 +27,45 @@ else
     git commit pubspec.yaml -m "Bump version to $BUILD_NAME"
 fi
 
-echo "[2/5] Checking lib/app/version.dart version..."
+echo "[2/6] Checking lib/app/constants.dart version..."
 
-CURRENT_VERSION=$(sed -n 's/.*appVersion = "\(.*\)";/\1/p' lib/app/version.dart)
+CURRENT_VERSION=$(sed -n 's/.*appVersion = "\(.*\)";/\1/p' lib/app/constants.dart)
 
 if [ "$CURRENT_VERSION" == "$FULL_VERSION" ]; then
-    echo "lib/app/version.dart already up to date: $FULL_VERSION"
+    echo "lib/app/constants.dart version already up to date: $FULL_VERSION"
 else
-    echo "Updating lib/app/version.dart from $CURRENT_VERSION to $FULL_VERSION..."
+    echo "Updating lib/app/constants.dart from $CURRENT_VERSION to $FULL_VERSION..."
     
-    sed -i "s/const String appVersion = \".*\";/const String appVersion = \"$FULL_VERSION\";/" lib/app/version.dart
+    sed -i "s/const String appVersion = \".*\";/const String appVersion = \"$FULL_VERSION\";/" lib/app/constants.dart
 
     echo "Committing version bump to Git..."
-    git add lib/app/version.dart
-    git commit lib/app/version.dart -m "Bump version to $FULL_VERSION"
+    git add lib/app/constants.dart
+    git commit lib/app/constants.dart -m "Bump version to $FULL_VERSION"
 fi
 
-echo "[3/5] Cleaning and Fetching..."
+
+echo "[3/6] Updating app salt at lib/app/constants.dart..."
+ENV_SALT=$(sed -n 's/^APP_SALT="\([^"]*\)"/\1/p' .env)
+
+if [ -z "$ENV_SALT" ]; then
+    echo "ERROR: APP_SALT not found in .env"
+    exit 1
+fi
+
+if [ "$CURRENT_SALT" == "$ENV_SALT" ]; then
+    echo "Salt already up to date: $ENV_SALT"
+else
+    echo "Updating appSalt..."
+    sed -i "s/const String appSalt = \".*\";/const String appSalt = \"$ENV_SALT\";/" lib/app/constants.dart
+fi
+
+echo "[4/6] Cleaning and Fetching..."
 flutter clean
 
-echo "[4/5] Building Version: $FULL_VERSION (Name: $BUILD_NAME, Number: $BUILD_NUMBER)"
+echo "[5/6] Building Version: $FULL_VERSION (Name: $BUILD_NAME, Number: $BUILD_NUMBER)"
 flutter build linux --release --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
 
-echo "[5/5] Bundling to deb package..."
+echo "[6/6] Bundling to deb package..."
 
 APP_NAME="jxledger"
 DEB_DIR="build/debian_tmp"

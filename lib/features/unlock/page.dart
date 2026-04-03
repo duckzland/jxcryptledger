@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/constants.dart';
 import '../../app/theme.dart';
-import '../../app/version.dart';
 import '../../widgets/button.dart';
 import 'controller.dart';
 
