@@ -54,7 +54,7 @@ echo [3/6] Cleaning and Fetching...
 call flutter clean
 
 echo [4/6] Building Version: %FULL_VERSION% (Name: %BUILD_NAME%, Number: %BUILD_NUMBER%)
-call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER% --dart-define=APP_VERSION=%FULL_VERSION%
+call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER%
 
 echo [5/6] Bundling to msix...
 call dart run msix:create --version %FULL_VERSION% --install-certificate false

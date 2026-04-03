@@ -45,8 +45,7 @@ echo "[3/5] Cleaning and Fetching..."
 flutter clean
 
 echo "[4/5] Building Version: $FULL_VERSION (Name: $BUILD_NAME, Number: $BUILD_NUMBER)"
-flutter build linux --release
-
+flutter build linux --release --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
 
 echo "[5/5] Bundling to deb package..."
 
