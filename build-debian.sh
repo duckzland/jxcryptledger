@@ -142,9 +142,7 @@ chmod +x $DEB_DIR/usr/lib/$APP_NAME/$APP_NAME
 dpkg-deb --build $DEB_DIR build/${APP_NAME}_${FULL_VERSION}_amd64.deb
 
 echo "[7/7] Post building cleaning..."
-if $DO_COMMIT; then
-    git checkout -- lib/app/constants.dart
-fi
+git checkout -- lib/app/constants.dart
 
 echo "---------------------------------------"
 echo "Done! Version $FULL_VERSION is in: build/"
