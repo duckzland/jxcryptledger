@@ -5,6 +5,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../../app/constants.dart';
+import '../../core/log.dart';
 
 class EncryptionService {
   EncryptionService._();
@@ -65,6 +66,7 @@ class EncryptionService {
 
   Future<Uint8List> loadPasswordKey(String password) async {
     final String saltValue = dotenv.get('APP_SALT', fallback: appSalt);
+    logln("saltvalue: $saltValue");
 
     final pbkdf2 = Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: 100000, bits: 256);
 
