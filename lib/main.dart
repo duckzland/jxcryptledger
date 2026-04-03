@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -8,7 +10,10 @@ import 'core/locator.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  if (File('.env').existsSync()) {
+    await dotenv.load(fileName: ".env", isOptional: true);
+  }
+
   await AppStorage.instance.init();
 
   setupLocator();

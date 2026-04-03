@@ -12,7 +12,7 @@ else
     exit 1
 fi
 
-echo "[1/6] Checking pubspec.yaml version..."
+echo "[1/7] Checking pubspec.yaml version..."
 
 CURRENT_VERSION=$(grep "^version:" pubspec.yaml | awk '{print $2}')
 
@@ -27,7 +27,7 @@ else
     git commit pubspec.yaml -m "Bump version to $BUILD_NAME"
 fi
 
-echo "[2/6] Checking lib/app/constants.dart version..."
+echo "[2/7] Checking lib/app/constants.dart version..."
 
 CURRENT_VERSION=$(sed -n 's/.*appVersion = "\(.*\)";/\1/p' lib/app/constants.dart)
 
@@ -44,7 +44,7 @@ else
 fi
 
 
-echo "[3/6] Updating app salt at lib/app/constants.dart..."
+echo "[3/7] Updating app salt at lib/app/constants.dart..."
 ENV_SALT=$(sed -n 's/^APP_SALT="\([^"]*\)"/\1/p' .env)
 
 if [ -z "$ENV_SALT" ]; then
@@ -59,26 +59,46 @@ else
     sed -i "s/const String appSalt = \".*\";/const String appSalt = \"$ENV_SALT\";/" lib/app/constants.dart
 fi
 
-echo "[4/6] Cleaning and Fetching..."
+echo "[4/7] Cleaning and Fetching..."
 flutter clean
 
-echo "[5/6] Building Version: $FULL_VERSION (Name: $BUILD_NAME, Number: $BUILD_NUMBER)"
+echo "[5/7] Building Version: $FULL_VERSION (Name: $BUILD_NAME, Number: $BUILD_NUMBER)"
 flutter build linux --release --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER
 
-echo "[6/6] Bundling to deb package..."
+echo "[6/7] Bundling to deb package..."
 
 APP_NAME="jxledger"
 DEB_DIR="build/debian_tmp"
 BUNDLE_DIR="build/linux/x64/release/bundle"
 
 rm -rf $DEB_DIR
-mkdir -p $DEB_DIR/usr/bin/$APP_NAME-data
+mkdir -p $DEB_DIR/usr/bin
+mkdir -p $DEB_DIR/usr/lib/$APP_NAME
 mkdir -p $DEB_DIR/usr/share/applications
 mkdir -p $DEB_DIR/usr/share/icons/hicolor/512x512/apps
 mkdir -p $DEB_DIR/DEBIAN
 
-cp -r $BUNDLE_DIR/* $DEB_DIR/usr/bin/
+cp -r $BUNDLE_DIR/* $DEB_DIR/usr/lib/$APP_NAME/
+
 cp assets/icon.png $DEB_DIR/usr/share/icons/hicolor/512x512/apps/$APP_NAME.png
+
+cat <<EOF > $DEB_DIR/DEBIAN/postinst
+#!/bin/sh
+set -e
+
+ln -sf /usr/lib/$APP_NAME/$APP_NAME /usr/bin/$APP_NAME
+
+exit 0
+EOF
+
+cat <<EOF > $DEB_DIR/DEBIAN/prerm
+#!/bin/sh
+set -e
+
+rm -f /usr/bin/$APP_NAME
+
+exit 0
+EOF
 
 cat <<EOF > $DEB_DIR/usr/share/applications/$APP_NAME.desktop
 [Desktop Entry]
@@ -86,7 +106,7 @@ Version: $FULL_VERSION
 Name=JXLedger
 GenericName=JXLedger
 Comment=JXLedger Transaction Manager
-Exec=/usr/bin/jxledger
+Exec=/usr/bin/$APP_NAME
 Icon=$APP_NAME
 Type=Application
 Categories=Utility;
@@ -103,9 +123,12 @@ Description: JXLedger Transaction Manager
 EOF
 
 chmod -R 755 $DEB_DIR/DEBIAN
-chmod +x $DEB_DIR/usr/bin/$APP_NAME
+chmod +x $DEB_DIR/usr/lib/$APP_NAME/$APP_NAME
 
 dpkg-deb --build $DEB_DIR build/${APP_NAME}_${FULL_VERSION}_amd64.deb
+
+echo "[7/7] Post building cleaning..."
+git restore lib/app/constants.dart
 
 echo "---------------------------------------"
 echo "Done! Version $FULL_VERSION is in: build/"
