@@ -31,23 +31,40 @@ if "%CURRENT_VERSION%"=="%BUILD_NAME%" (
 )
 
 echo [2/6] Checking app version...
-for /f "tokens=5 delims= " %%v in ('findstr /b "const String appVersion" ".\lib\app\version.dart"') do (
-    set RAW_VERSION=%%v
-    set CURRENT_VERSION=!RAW_VERSION:"=!
-    set CURRENT_VERSION=!CURRENT_VERSION:;=!
-)
+for /f "tokens=*" %%A in ('powershell -NoProfile -Command "(Select-String -Path 'lib/app/constants.dart' -Pattern 'appVersion').Line.Split([char]34)[1]"') do set "CURRENT_VERSION=%%A"
 
 if "%CURRENT_VERSION%"=="%FULL_VERSION%" (
-    echo lib/app/version.dart already up to date: %FULL_VERSION%
+    echo lib/app/constants.dart already up to date: %FULL_VERSION%
 ) else (
-    echo Updating lib/app/version.dart from %CURRENT_VERSION% to %FULL_VERSION%...
+    echo Updating lib/app/constants.dart from %CURRENT_VERSION% to %FULL_VERSION%...
     
-    powershell -Command ^
-      "(Get-Content lib/app/version.dart) -replace 'const String appVersion = \".*\";', 'const String appVersion = \"%FULL_VERSION%\";' | Set-Content lib/app/version.dart"
+    powershell -Command "(Get-Content 'lib/app/constants.dart') -replace 'const String appVersion = \".*\";', 'const String appVersion = \"%FULL_VERSION%\";' | Set-Content 'lib/app/constants.dart'"
+
 
     echo Committing version bump to Git...
-    git add lib/app/version.dart
-    git commit lib/app/version.dart -m "Bump version to %FULL_VERSION%"
+    git add lib/app/constants.dart
+    git commit lib/app/constants.dart -m "Bump version to %FULL_VERSION%"
+)
+
+
+echo [3/7] Updating app salt at lib/app/constants.dart...
+
+for /f "tokens=*" %%A in ('powershell -NoProfile -Command "(Select-String -Path '.env' -Pattern 'APP_SALT').Line.Split([char]34)[1]"') do set "ENV_SALT=%%A"
+
+if "%ENV_SALT%"=="" (
+    echo ERROR: APP_SALT not found in .env
+    exit /b 1
+)
+
+for /f "tokens=*" %%A in ('powershell -NoProfile -Command "(Select-String -Path 'lib/app/constants.dart' -Pattern 'appSalt').Line.Split([char]34)[1]"') do set "CURRENT_SALT=%%A"
+
+if "%CURRENT_SALT%"=="%ENV_SALT%" (
+    echo Salt already up to date: %ENV_SALT%
+) else (
+    echo Updating appSalt...
+
+    powershell -Command "(Get-Content 'lib/app/constants.dart') -replace 'const String appSalt = \".*\";', 'const String appSalt = \"%ENV_SALT%\";' | Set-Content 'lib/app/constants.dart'"
+
 )
 
 echo [3/6] Cleaning and Fetching...
