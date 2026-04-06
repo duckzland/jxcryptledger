@@ -60,23 +60,23 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Linux Bundle
-        run: flutter build linux --release
-
-      - name: Create DEB Package
+      - name: Build Linux bundle and create DEB package
         run: |
           chmod +x ./build-debian.sh
           ./build-debian.sh --no-commit
-
-      - name: Nuke .env
-        if: always()
-        run: rm -f .env
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-deb
           path: "build/*.deb"
+
+      - name: Cleanup
+        if: always()
+        run: 
+          rm -f .env
+          rm -rf build/
+          rm -rf libs/
 
   create-release:
     # Windows build is disabled for now
