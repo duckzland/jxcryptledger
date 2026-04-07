@@ -163,6 +163,10 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     final asc = sortAscending;
     final currentRate = _customRate ?? _marketRate ?? 0.0;
 
+    if (currentRate == 0.0 && col > 4) {
+      return;
+    }
+
     switch (col) {
       case 0:
         onSort((d) => d['_timestamp'] as int, col, asc);
@@ -181,24 +185,25 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
         onSort((d) => d['_exchangedRateValue'] as double, col, asc);
 
       case 4:
-        if (currentRate == 0) {
+        if (currentRate == 0.0) {
           onSort((d) => d['_status'] as String, col, asc);
         }
         break;
 
       case 5:
-        if (currentRate != 0) {
+        if (currentRate != 0.0) {
           onSort((d) => d['_currentValue'] as double, col, asc);
         }
         break;
 
       case 6:
-        if (currentRate != 0) {
+        if (currentRate != 0.0) {
           onSort((d) => d['_profitLossValue'] as double, col, asc);
         }
         break;
+
       case 7:
-        if (currentRate != 0) {
+        if (currentRate != 0.0) {
           onSort((d) => d['status'] as String, col, asc);
         }
         break;
@@ -414,6 +419,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
                     setState(() {
                       _customRate = double.tryParse(value);
                       rows = _buildRows(widget.transactions);
+                      _applySorting();
                     });
                   });
                 },
@@ -588,7 +594,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
           showCheckboxColumn: false,
-          sortColumnIndex: sortColumnIndex,
+          sortColumnIndex: (currentRate == 0.0 && sortColumnIndex > 4) ? null : sortColumnIndex,
           sortAscending: sortAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
@@ -612,7 +618,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
               onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
             ),
 
-            if (currentRate != 0) ...[
+            if (currentRate != 0.0) ...[
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(
