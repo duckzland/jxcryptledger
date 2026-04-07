@@ -139,6 +139,7 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
 
   void _onRatesUpdated() {
     _loadMarketRate();
+    _applySorting();
   }
 
   @override
@@ -151,52 +152,56 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
 
       rows = _buildRows(widget.transactions);
 
-      final col = sortColumnIndex;
-      final asc = sortAscending;
-      final currentRate = _customRate ?? _marketRate ?? 0.0;
-
-      switch (col) {
-        case 0:
-          onSort((d) => d['_timestamp'] as int, col, asc);
-          break;
-
-        case 1:
-          onSort((d) => d['_sourceValue'] as double, col, asc);
-
-          break;
-
-        case 2:
-          onSort((d) => d['_balanceValue'] as double, col, asc);
-          break;
-
-        case 3:
-          onSort((d) => d['_exchangedRateValue'] as double, col, asc);
-
-        case 4:
-          if (currentRate == 0) {
-            onSort((d) => d['_status'] as String, col, asc);
-          }
-          break;
-
-        case 5:
-          if (currentRate != 0) {
-            onSort((d) => d['_currentValue'] as double, col, asc);
-          }
-          break;
-
-        case 6:
-          if (currentRate != 0) {
-            onSort((d) => d['_profitLossValue'] as double, col, asc);
-          }
-          break;
-        case 7:
-          if (currentRate != 0) {
-            onSort((d) => d['status'] as String, col, asc);
-          }
-          break;
-      }
+      _applySorting();
 
       setState(() {});
+    }
+  }
+
+  void _applySorting() {
+    final col = sortColumnIndex;
+    final asc = sortAscending;
+    final currentRate = _customRate ?? _marketRate ?? 0.0;
+
+    switch (col) {
+      case 0:
+        onSort((d) => d['_timestamp'] as int, col, asc);
+        break;
+
+      case 1:
+        onSort((d) => d['_sourceValue'] as double, col, asc);
+
+        break;
+
+      case 2:
+        onSort((d) => d['_balanceValue'] as double, col, asc);
+        break;
+
+      case 3:
+        onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+
+      case 4:
+        if (currentRate == 0) {
+          onSort((d) => d['_status'] as String, col, asc);
+        }
+        break;
+
+      case 5:
+        if (currentRate != 0) {
+          onSort((d) => d['_currentValue'] as double, col, asc);
+        }
+        break;
+
+      case 6:
+        if (currentRate != 0) {
+          onSort((d) => d['_profitLossValue'] as double, col, asc);
+        }
+        break;
+      case 7:
+        if (currentRate != 0) {
+          onSort((d) => d['status'] as String, col, asc);
+        }
+        break;
     }
   }
 

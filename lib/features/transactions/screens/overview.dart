@@ -76,32 +76,34 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
     if (oldWidget.transactions != widget.transactions && mounted) {
       _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
       rows = _buildRows(widget.transactions);
-
-      final col = sortColumnIndex;
-      final asc = sortAscending;
-
-      switch (col) {
-        case 0:
-          onSort((d) => d['_timestamp'] as int, col, asc);
-          break;
-
-        case 1:
-          onSort((d) => d['_balanceValue'] as double, col, asc);
-          break;
-
-        case 2:
-          onSort((d) => d['_sourceValue'] as double, col, asc);
-          break;
-
-        case 3:
-          onSort((d) => d['_exchangedRateValue'] as double, col, asc);
-
-        case 4:
-          onSort((d) => d['status'] as String, col, asc);
-          break;
-      }
-
+      _applySorting();
       setState(() {});
+    }
+  }
+
+  void _applySorting() {
+    final col = sortColumnIndex;
+    final asc = sortAscending;
+
+    switch (col) {
+      case 0:
+        onSort((d) => d['_timestamp'] as int, col, asc);
+        break;
+
+      case 1:
+        onSort((d) => d['_balanceValue'] as double, col, asc);
+        break;
+
+      case 2:
+        onSort((d) => d['_sourceValue'] as double, col, asc);
+        break;
+
+      case 3:
+        onSort((d) => d['_exchangedRateValue'] as double, col, asc);
+
+      case 4:
+        onSort((d) => d['status'] as String, col, asc);
+        break;
     }
   }
 
