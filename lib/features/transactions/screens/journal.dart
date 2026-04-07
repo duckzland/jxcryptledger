@@ -44,32 +44,36 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> with 
     if (oldWidget.transactions != widget.transactions) {
       rows = _buildRows(widget.transactions);
 
-      final col = sortColumnIndex;
-      final asc = sortAscending;
-
-      switch (col) {
-        case 0:
-          onSort((d) => d['_timestamp'] as int, col, asc);
-          break;
-
-        case 1:
-          onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc);
-          break;
-
-        case 2:
-          onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc);
-          break;
-
-        case 3:
-          onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc);
-          break;
-
-        case 5:
-          onSort((d) => d['status'] as String, col, asc);
-          break;
-      }
+      _applySorting();
 
       setState(() {});
+    }
+  }
+
+  void _applySorting() {
+    final col = sortColumnIndex;
+    final asc = sortAscending;
+
+    switch (col) {
+      case 0:
+        onSort((d) => d['_timestamp'] as int, col, asc);
+        break;
+
+      case 1:
+        onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc);
+        break;
+
+      case 2:
+        onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc);
+        break;
+
+      case 3:
+        onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc);
+        break;
+
+      case 5:
+        onSort((d) => d['status'] as String, col, asc);
+        break;
     }
   }
 
