@@ -764,30 +764,20 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
 
                   if (plPercentage != 0 && plPercentage.isFinite) ...[
                     if (totalProfit != 0.0 && totalLoss != 0.0)
-                      _buildPanelItem(
-                        title: 'Profit TX',
-                        subtitle: "${Utils.formatSmartDouble(totalProfit)} $_sourceSymbol",
-                        value: totalProfit,
-                        comparator: 0,
-                      ),
+                      _buildPanelItem(title: 'Profit', subtitle: Utils.formatSmartDouble(totalProfit), value: totalProfit, comparator: 0),
 
                     if (totalProfit != 0.0 && totalLoss != 0.0)
-                      _buildPanelItem(
-                        title: 'Loss TX',
-                        subtitle: "${Utils.formatSmartDouble(totalLoss)} $_sourceSymbol",
-                        value: totalLoss,
-                        comparator: 0,
-                      ),
+                      _buildPanelItem(title: 'Loss', subtitle: Utils.formatSmartDouble(totalLoss), value: totalLoss, comparator: 0),
 
                     _buildPanelItem(
-                      title: 'Profit/Loss',
+                      title: 'Total P/L',
                       subtitle: "${Utils.formatSmartDouble(totalPL)} $_sourceSymbol",
                       value: plPercentage,
                       comparator: 0,
                     ),
 
                     _buildPanelItem(
-                      title: 'Profit/Loss %',
+                      title: 'P/L %',
                       subtitle: '${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
                       value: plPercentage,
                       comparator: 0,
