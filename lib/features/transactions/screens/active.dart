@@ -301,7 +301,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
     final totalSourceBalance = _calc.totalSourceBalance(txs);
     final totalBalance = _calc.totalBalance(txs);
-    final avgPL = _calc.averageProfitLoss(txs, currentRate, reverse: _isReversed);
+    final totalPL = _calc.totalProfitLoss(txs, currentRate, reverse: _isReversed);
+    final totalProfit = _calc.totalProfit(txs, currentRate, reverse: _isReversed);
+    final totalLoss = _calc.totalLoss(txs, currentRate, reverse: _isReversed);
     final plPercentage = _calc.profitLossPercentage(txs, currentRate, reverse: _isReversed);
 
     return WidgetsPanel(
@@ -314,7 +316,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
             averageRate: averageRate,
             totalSourceBalance: totalSourceBalance,
             totalBalance: totalBalance,
-            avgPL: avgPL,
+            totalPL: totalPL,
+            totalProfit: totalProfit,
+            totalLoss: totalLoss,
             plPercentage: plPercentage,
           ),
 
@@ -330,7 +334,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     required double averageRate,
     required double totalSourceBalance,
     required double totalBalance,
-    required double avgPL,
+    required double totalPL,
+    required double totalProfit,
+    required double totalLoss,
     required double plPercentage,
   }) {
     return LayoutBuilder(
@@ -345,7 +351,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
                   averageRate: averageRate,
                   totalSourceBalance: totalSourceBalance,
                   totalBalance: totalBalance,
-                  avgPL: avgPL,
+                  totalPL: totalPL,
+                  totalProfit: totalProfit,
+                  totalLoss: totalLoss,
                   plPercentage: plPercentage,
                 ),
               ),
@@ -367,7 +375,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
                 averageRate: averageRate,
                 totalSourceBalance: totalSourceBalance,
                 totalBalance: totalBalance,
-                avgPL: avgPL,
+                totalPL: totalPL,
+                totalProfit: totalProfit,
+                totalLoss: totalLoss,
                 plPercentage: plPercentage,
               ),
             ],
@@ -724,7 +734,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
     required double averageRate,
     required double totalSourceBalance,
     required double totalBalance,
-    required double avgPL,
+    required double totalPL,
+    required double totalProfit,
+    required double totalLoss,
     required double plPercentage,
   }) {
     return SizedBox(
@@ -751,9 +763,25 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
                   _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(averageRate), value: 0, comparator: 0),
 
                   if (plPercentage != 0 && plPercentage.isFinite) ...[
+                    if (totalProfit != 0.0 && totalLoss != 0.0)
+                      _buildPanelItem(
+                        title: 'Profit TX',
+                        subtitle: "${Utils.formatSmartDouble(totalProfit)} $_sourceSymbol",
+                        value: totalProfit,
+                        comparator: 0,
+                      ),
+
+                    if (totalProfit != 0.0 && totalLoss != 0.0)
+                      _buildPanelItem(
+                        title: 'Loss TX',
+                        subtitle: "${Utils.formatSmartDouble(totalLoss)} $_sourceSymbol",
+                        value: totalLoss,
+                        comparator: 0,
+                      ),
+
                     _buildPanelItem(
                       title: 'Profit/Loss',
-                      subtitle: "${Utils.formatSmartDouble(avgPL)} $_sourceSymbol",
+                      subtitle: "${Utils.formatSmartDouble(totalPL)} $_sourceSymbol",
                       value: plPercentage,
                       comparator: 0,
                     ),
