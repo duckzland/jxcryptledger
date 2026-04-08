@@ -44,7 +44,7 @@ class TransactionCalculation {
   double averageProfitLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
     if (txs.isEmpty) return 0.0;
 
-    double totalPL = totalProfitLoss(txs, currentRate);
+    double totalPL = totalProfitLoss(txs, currentRate, reverse: reverse);
     return Math.divide(totalPL, txs.length.toDouble());
   }
 
