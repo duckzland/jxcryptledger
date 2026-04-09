@@ -24,7 +24,7 @@ class TransactionsTreeCard extends StatefulWidget {
   State<TransactionsTreeCard> createState() => _TransactionsTreeCardState();
 }
 
-class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
+class _TransactionsTreeCardState extends State<TransactionsTreeCard> with AutomaticKeepAliveClientMixin {
   final CryptosController _cryptosController = locator<CryptosController>();
   final TransactionsController _txController = locator<TransactionsController>();
 
@@ -46,6 +46,9 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> {
   double _panelHeight = 40;
 
   late TransactionsModel tx = widget.tx;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {

@@ -43,7 +43,8 @@ class TransactionsActive extends StatefulWidget {
   State<TransactionsActive> createState() => _TransactionsActiveState();
 }
 
-class _TransactionsActiveState extends State<TransactionsActive> with MixinsActions, MixinsSortableTable<TransactionsActive> {
+class _TransactionsActiveState extends State<TransactionsActive>
+    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsActive> {
   late final CryptosController _cryptosController;
   late final RatesController _ratesController;
   late final TransactionsController _txController;
@@ -88,6 +89,9 @@ class _TransactionsActiveState extends State<TransactionsActive> with MixinsActi
 
   WatchersModel? _linkedWatcher;
   PanelsModel? _linkedPanel;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
