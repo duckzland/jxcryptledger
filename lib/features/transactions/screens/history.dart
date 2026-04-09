@@ -29,9 +29,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.transactions != widget.transactions && mounted) {
-      setState(() {
-        _root = _buildTreeNodes(widget.transactions);
-      });
+      refreshTree();
     }
   }
 
@@ -80,11 +78,6 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                 node: node,
                 onAction: () {
                   refreshTree();
-                  if (mounted) {
-                    setState(() {
-                      _root = _buildTreeNodes(widget.transactions);
-                    });
-                  }
                 },
               );
             },

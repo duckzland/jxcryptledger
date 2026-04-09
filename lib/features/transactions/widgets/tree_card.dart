@@ -129,6 +129,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Card(
       margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
       color: _bgColor,
