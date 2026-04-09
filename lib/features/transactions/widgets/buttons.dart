@@ -15,6 +15,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
   final CryptosController cryptosController;
   final TransactionsController txController;
   final void Function() onAction;
+  final Future Function()? onExit;
 
   const TransactionsWidgetsButtons({
     super.key,
@@ -22,7 +23,9 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
     required this.txController,
     required this.cryptosController,
     required this.onAction,
+    this.onExit,
   });
+
   @override
   Widget build(BuildContext context) {
     final isTradable = txController.isTradable(tx);
@@ -108,7 +111,16 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                 "This action cannot be undone.",
             dialogConfirmLabel: "Delete",
             actionData: tx,
-            actionCallback: txController.removeRoot,
+            actionCallback: (tx) async {
+              if (onExit != null) {
+                onExit?.call();
+                return Future.delayed(const Duration(milliseconds: 150), () {
+                  txController.removeRoot(tx);
+                });
+              } else {
+                return txController.removeRoot(tx);
+              }
+            },
             actionCompleteCallback: onAction,
             actionSuccessMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
           ),
@@ -128,7 +140,16 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                 "This action cannot be undone.",
             dialogConfirmLabel: "Refund",
             actionData: tx,
-            actionCallback: txController.removeLeaf,
+            actionCallback: (tx) async {
+              if (onExit != null) {
+                onExit?.call();
+                return Future.delayed(const Duration(milliseconds: 150), () {
+                  txController.removeLeaf(tx);
+                });
+              } else {
+                return txController.removeLeaf(tx);
+              }
+            },
             actionCompleteCallback: onAction,
             actionSuccessMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
           ),

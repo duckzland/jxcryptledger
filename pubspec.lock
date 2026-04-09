@@ -20,10 +20,11 @@ packages:
   animated_tree_view:
     dependency: "direct main"
     description:
-      name: animated_tree_view
-      sha256: ed982be7fa2cf51b62bb76e95b6a0f423cde12f1da8745a1da938e82a7baacf2
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: fix_failed_insert_root_index_0
+      resolved-ref: b409c81c49ead8d11e854cbe4246ba579dc1b959
+      url: "https://github.com/duckzland/animated_tree_view.git"
+    source: git
     version: "2.3.0"
   archive:
     dependency: transitive
