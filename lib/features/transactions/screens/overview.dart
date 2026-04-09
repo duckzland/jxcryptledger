@@ -228,6 +228,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return WidgetsPanel(child: Column(children: [_buildHeader(), const SizedBox(height: 20), _buildTable()]));
   }
 
