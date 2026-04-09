@@ -30,7 +30,8 @@ class TransactionsOverview extends StatefulWidget {
   State<TransactionsOverview> createState() => _TransactionsOverviewState();
 }
 
-class _TransactionsOverviewState extends State<TransactionsOverview> with MixinsActions, MixinsSortableTable<TransactionsOverview> {
+class _TransactionsOverviewState extends State<TransactionsOverview>
+    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsOverview> {
   late final CryptosController _cryptosController;
   late final TransactionsController _txController;
 
@@ -45,6 +46,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview> with Mixins
   double _currentHolding = 0;
   double _profitLoss = 0;
   double _profitLossPercentage = 0;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
