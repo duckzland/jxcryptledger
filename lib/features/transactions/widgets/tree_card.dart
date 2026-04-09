@@ -15,7 +15,7 @@ import 'buttons.dart';
 
 class TransactionsTreeCard extends StatefulWidget {
   final TransactionsModel tx;
-  final TreeNode<TransactionsModel> node;
+  final IndexedTreeNode<TransactionsModel> node;
   final VoidCallback onAction;
 
   const TransactionsTreeCard({super.key, required this.tx, required this.node, required this.onAction});
@@ -24,9 +24,11 @@ class TransactionsTreeCard extends StatefulWidget {
   State<TransactionsTreeCard> createState() => _TransactionsTreeCardState();
 }
 
-class _TransactionsTreeCardState extends State<TransactionsTreeCard> with AutomaticKeepAliveClientMixin {
+class _TransactionsTreeCardState extends State<TransactionsTreeCard> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   final CryptosController _cryptosController = locator<CryptosController>();
   final TransactionsController _txController = locator<TransactionsController>();
+
+  late TransactionsModel tx = widget.tx;
 
   bool _hasLeaf = false;
 
@@ -45,7 +47,8 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
   double _panelHeight = 40;
 
-  late TransactionsModel tx = widget.tx;
+  late AnimationController _controller;
+  late Animation<double> _fade;
 
   @override
   bool get wantKeepAlive => true;
@@ -64,11 +67,17 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
       _bgColor = AppTheme.closedBg;
       _fgColor = AppTheme.textMuted;
     }
+
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: 1.0);
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    // _controller.forward();
+
     _loadData();
   }
 
   @override
   void dispose() {
+    _controller.dispose();
     _txController.removeListener(onControllerChange);
     super.dispose();
   }
@@ -130,41 +139,50 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Card(
-      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
-      color: _bgColor,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: CustomMultiChildLayout(
-          delegate: WidgetsLayoutsWrappedTwoColumns(
-            onWrapChanged: (int totalRows, double currentHeight) {
-              if (_panelHeight == currentHeight) return;
+    return FadeTransition(
+      opacity: _fade,
+      child: Card(
+        margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
+        color: _bgColor,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: CustomMultiChildLayout(
+            delegate: WidgetsLayoutsWrappedTwoColumns(
+              onWrapChanged: (int totalRows, double currentHeight) {
+                if (_panelHeight == currentHeight) return;
 
-              SchedulerBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                setState(() => _panelHeight = currentHeight);
-              });
-            },
+                SchedulerBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  setState(() => _panelHeight = currentHeight);
+                });
+              },
 
-            currentHeight: _panelHeight,
-          ),
-          children: [
-            LayoutId(id: 'left', child: _buildLeftGroup()),
-            if (_branchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
-            if (!(!_hasLeaf || _balance <= 0)) LayoutId(id: 'right', child: _buildRightGroup()),
-            LayoutId(
-              id: 'trailing',
-              child: Padding(
-                padding: EdgeInsets.only(right: 25, top: 6, left: 8),
-                child: TransactionsWidgetsButtons(
-                  tx: widget.tx,
-                  cryptosController: _cryptosController,
-                  txController: _txController,
-                  onAction: widget.onAction,
+              currentHeight: _panelHeight,
+            ),
+            children: [
+              LayoutId(id: 'left', child: _buildLeftGroup()),
+              if (_branchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
+              if (!(!_hasLeaf || _balance <= 0)) LayoutId(id: 'right', child: _buildRightGroup()),
+              LayoutId(
+                id: 'trailing',
+                child: Padding(
+                  padding: EdgeInsets.only(right: 25, top: 6, left: 8),
+                  child: TransactionsWidgetsButtons(
+                    tx: tx,
+                    cryptosController: _cryptosController,
+                    txController: _txController,
+                    onAction: () {
+                      onControllerChange();
+                      widget.onAction();
+                    },
+                    onExit: () async {
+                      await _controller.reverse();
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

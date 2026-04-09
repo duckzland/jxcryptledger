@@ -572,7 +572,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
       case TransactionsViewMode.history:
         registerBars("Transaction History");
 
-        return TransactionHistory(transactions: _getHistoryTransactions());
+        return TransactionHistory(sortMode: _sortMode, transactions: _getHistoryTransactions());
     }
   }
 
