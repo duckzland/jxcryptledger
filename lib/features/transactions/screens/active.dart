@@ -300,6 +300,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final txs = widget.transactions;
     final averageRate = _calc.averageExchangedRate(txs, reverse: _isReversed);
     final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
