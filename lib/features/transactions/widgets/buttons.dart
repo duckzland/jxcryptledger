@@ -15,7 +15,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
   final CryptosController cryptosController;
   final TransactionsController txController;
   final void Function() onAction;
-  final Future Function()? onExit;
+  final void Function()? onExit;
 
   const TransactionsWidgetsButtons({
     super.key,
@@ -25,6 +25,22 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
     required this.onAction,
     this.onExit,
   });
+
+  Future<void> _actionRefund(TransactionsModel tx) async {
+    if (onExit != null) {
+      onExit?.call();
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
+    await txController.removeLeaf(tx);
+  }
+
+  Future<void> _actionDelete(TransactionsModel tx) async {
+    if (onExit != null) {
+      onExit?.call();
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
+    await txController.removeRoot(tx);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,16 +127,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                 "This action cannot be undone.",
             dialogConfirmLabel: "Delete",
             actionData: tx,
-            actionCallback: (tx) async {
-              if (onExit != null) {
-                onExit?.call();
-                return Future.delayed(const Duration(milliseconds: 150), () {
-                  txController.removeRoot(tx);
-                });
-              } else {
-                return txController.removeRoot(tx);
-              }
-            },
+            actionCallback: _actionDelete,
             actionCompleteCallback: onAction,
             actionSuccessMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
           ),
@@ -140,16 +147,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
                 "This action cannot be undone.",
             dialogConfirmLabel: "Refund",
             actionData: tx,
-            actionCallback: (tx) async {
-              if (onExit != null) {
-                onExit?.call();
-                return Future.delayed(const Duration(milliseconds: 150), () {
-                  txController.removeLeaf(tx);
-                });
-              } else {
-                return txController.removeLeaf(tx);
-              }
-            },
+            actionCallback: _actionRefund,
             actionCompleteCallback: onAction,
             actionSuccessMessage: "${tx.srAmountText} $sourceSymbol - ${tx.balanceText} $targetSymbol transaction deleted.",
           ),

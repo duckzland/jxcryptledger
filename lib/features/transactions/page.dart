@@ -40,6 +40,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
 
   int _sortMode = 0;
   int _filterMode = 0;
+  int _txbuild = 0;
 
   late Map<int, String> _sortableOptions;
   late Map<int, String> _filterableOptions;
@@ -421,6 +422,9 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
               showDialogBeforeImport: true,
               onImport: (String json) async {
                 await _txController.importDatabase(json);
+                setState(() {
+                  _txbuild++;
+                });
               },
             ),
             WidgetsDialogsExport(
@@ -565,6 +569,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
         registerBars("Transaction Overview");
 
         return TransactionsJournalView(
+          key: ValueKey(_txbuild),
           transactions: List<TransactionsModel>.from(_getJournalTransactions()),
           onStatusChanged: () => setState(() {}),
         );
@@ -572,12 +577,13 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
       case TransactionsViewMode.history:
         registerBars("Transaction History");
 
-        return TransactionHistory(sortMode: _sortMode, transactions: _getHistoryTransactions());
+        return TransactionHistory(key: ValueKey(_txbuild), sortMode: _sortMode, transactions: _getHistoryTransactions());
     }
   }
 
   Widget _buildOverviewList(Map<int, List<TransactionsModel>> grouped) {
     return ListView.separated(
+      key: ValueKey(_txbuild),
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
@@ -597,6 +603,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
 
   Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
     return ListView.separated(
+      key: ValueKey(_txbuild),
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
