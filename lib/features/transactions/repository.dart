@@ -236,16 +236,19 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
             .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-    final updatedTarget = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
+    final utx = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
 
     if (debugLogs) {
       logln(
-        '[REFUNDING] ${tx.tid}|${tx.pid}|${tx.rid}|{tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+        '[REFUNDING] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+      );
+      logln(
+        '[REBALANCING] ${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}',
       );
     }
 
     await box.delete(tx.tid);
-    await box.put(updatedTarget.tid, updatedTarget);
+    await box.put(utx.tid, utx);
   }
 
   @override

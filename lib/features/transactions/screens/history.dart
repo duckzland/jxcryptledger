@@ -2,7 +2,6 @@ import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/log.dart';
 import '../../../widgets/panel.dart';
 import '../model.dart';
 import '../widgets/tree_card.dart';
@@ -36,6 +35,19 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       return;
     }
 
+    if (oldWidget.transactions.isEmpty && widget.transactions.isNotEmpty) {
+      _root = _buildTreeNodes(widget.transactions);
+      setState(() {});
+      return;
+    }
+
+    if (oldWidget.transactions.isNotEmpty && widget.transactions.isEmpty) {
+      _root.clear();
+      _nodes = {};
+      setState(() {});
+      return;
+    }
+
     if (oldWidget.sortMode != widget.sortMode) {
       _sortMode = widget.sortMode;
       _root = _buildTreeNodes(widget.transactions);
@@ -54,6 +66,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
     final added = newIds.difference(oldIds);
     final removed = oldIds.difference(newIds);
+    final updated = newIds.intersection(oldIds);
 
     for (final tid in removed) {
       final node = _nodes[tid];
@@ -69,11 +82,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
         }
 
         _nodes.remove(tid);
-
-        logln("Removed transaction $tid");
       }
-
-      setState(() {});
     }
 
     for (final tid in added) {
@@ -104,8 +113,14 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             break;
         }
       }
+    }
 
-      logln("Added transaction $tid");
+    for (final tid in updated) {
+      final newTx = newTxs.firstWhere((t) => t.tid == tid);
+      final node = _nodes[tid];
+      if (node != null) {
+        node.data = newTx;
+      }
     }
   }
 
@@ -143,7 +158,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             builder: (context, node) {
               final tx = node.data;
               if (tx == null) return const SizedBox.shrink();
-              return TransactionsTreeCard(tx: tx, node: node, onAction: () {});
+              return TransactionsTreeCard(key: ValueKey(tx.tid), tx: tx, node: node, onAction: () {});
             },
           ),
         ),

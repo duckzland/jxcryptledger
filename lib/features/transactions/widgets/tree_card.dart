@@ -28,7 +28,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   final CryptosController _cryptosController = locator<CryptosController>();
   final TransactionsController _txController = locator<TransactionsController>();
 
-  late TransactionsModel tx = widget.tx;
+  late TransactionsModel _tx;
 
   bool _hasLeaf = false;
 
@@ -57,83 +57,75 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   void initState() {
     super.initState();
 
-    _txController.addListener(onControllerChange);
+    _tx = widget.tx;
 
-    if (tx.statusEnum == TransactionStatus.inactive) {
+    _txController.addListener(_onControllerChange);
+
+    if (_tx.statusEnum == TransactionStatus.inactive) {
       _bgColor = AppTheme.mutedBg;
       _fgColor = AppTheme.textMuted;
     }
-    if (tx.statusEnum == TransactionStatus.closed) {
+    if (_tx.statusEnum == TransactionStatus.closed) {
       _bgColor = AppTheme.closedBg;
       _fgColor = AppTheme.textMuted;
     }
 
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: 1.0);
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-    // _controller.forward();
 
-    _loadData();
+    _calculateData();
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _txController.removeListener(onControllerChange);
+    _txController.removeListener(_onControllerChange);
     super.dispose();
   }
 
-  void onControllerChange() {
-    final ntx = _txController.get(widget.tx.tid);
-    if (ntx == null || ntx == tx) {
+  void _onControllerChange() {
+    final ntx = _txController.get(_tx.tid);
+    if (ntx == null || ntx == _tx) {
       return;
     }
 
-    tx = ntx;
-    if (tx.statusEnum == TransactionStatus.inactive) {
-      _bgColor = AppTheme.mutedBg;
-      _fgColor = AppTheme.textMuted;
-    } else if (tx.statusEnum == TransactionStatus.closed) {
-      _bgColor = AppTheme.closedBg;
-      _fgColor = AppTheme.textMuted;
-    } else {
-      _bgColor = AppTheme.rowHeaderBg;
-      _fgColor = AppTheme.text;
-    }
-
     setState(() {
-      _bgColor = _bgColor;
-      _fgColor = _fgColor;
-      tx = tx;
+      _tx = ntx;
+      _calculateData();
+      if (_tx.statusEnum == TransactionStatus.inactive) {
+        _bgColor = AppTheme.mutedBg;
+        _fgColor = AppTheme.textMuted;
+      } else if (_tx.statusEnum == TransactionStatus.closed) {
+        _bgColor = AppTheme.closedBg;
+        _fgColor = AppTheme.textMuted;
+      } else {
+        _bgColor = AppTheme.rowHeaderBg;
+        _fgColor = AppTheme.text;
+      }
     });
   }
 
-  Future<void> _loadData() async {
-    final leaf = _txController.hasLeaf(tx);
-    final branch = _txController.collectBranchActiveAmount(tx);
-    final totalResult = branch[tx.srId] ?? 0;
-    final totalReturnResult = branch[tx.rrId] ?? 0;
+  void _calculateData() {
+    _hasLeaf = _txController.hasLeaf(_tx);
+    _branchAmounts = _txController.collectBranchActiveAmount(_tx);
 
-    final cap = tx.srAmount;
-    final bal = totalResult;
-    final prof = Math.subtract(bal, cap);
-    final profPct = cap == 0 ? 0 : (Math.divide(prof, cap) * 100);
+    _capital = _tx.srAmount;
+    _balance = _branchAmounts[_tx.srId] ?? 0;
+    _profit = Math.subtract(_balance, _capital);
+    _profitPercentage = (_capital == 0 ? 0 : (Math.divide(_profit, _capital) * 100)) as double;
 
-    final rCap = tx.rrAmount;
-    final rBal = totalReturnResult;
-    final rProf = Math.subtract(rBal, rCap);
-    final rProfPct = rCap == 0 ? 0 : (Math.divide(rProf, rCap) * 100);
+    _rBalance = Math.add(_branchAmounts[_tx.rrId] ?? 0, _tx.balance);
+    _rProfit = Math.subtract(_rBalance, _tx.rrAmount);
+    _rProfitPercentage = (_tx.rrAmount == 0 ? 0 : (Math.divide(_rProfit, _tx.rrAmount) * 100)) as double;
+  }
 
-    setState(() {
-      _hasLeaf = leaf;
-      _capital = cap;
-      _balance = bal;
-      _profit = prof;
-      _profitPercentage = profPct as double;
-      _rBalance = rBal;
-      _rProfit = rProf;
-      _rProfitPercentage = rProfPct as double;
-      _branchAmounts = branch;
-    });
+  void _onAction() {
+    _onControllerChange();
+    widget.onAction();
+  }
+
+  void _onExit() async {
+    await _controller.reverse();
   }
 
   @override
@@ -168,16 +160,11 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
                 child: Padding(
                   padding: EdgeInsets.only(right: 25, top: 6, left: 8),
                   child: TransactionsWidgetsButtons(
-                    tx: tx,
+                    tx: _tx,
                     cryptosController: _cryptosController,
                     txController: _txController,
-                    onAction: () {
-                      onControllerChange();
-                      widget.onAction();
-                    },
-                    onExit: () async {
-                      await _controller.reverse();
-                    },
+                    onAction: _onAction,
+                    onExit: _onExit,
                   ),
                 ),
               ),
@@ -189,7 +176,8 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   }
 
   Widget _buildLeftGroup() {
-    bool showBalance = _hasLeaf && _rBalance > 0;
+    bool showBalance = _hasLeaf && _rBalance > 0 && _rBalance != _tx.balance;
+    bool showAvailable = _tx.balance > 0;
 
     Color plColor = _fgColor;
     if (_rProfitPercentage > 0) {
@@ -198,8 +186,8 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
       plColor = const Color.fromARGB(255, 255, 109, 109);
     }
 
-    final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
-    final rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? '';
+    final srSymbol = _cryptosController.getSymbol(_tx.srId) ?? '';
+    final rrSymbol = _cryptosController.getSymbol(_tx.rrId) ?? '';
 
     final controller = ScrollController();
     double dragStartX = 0.0;
@@ -225,12 +213,16 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
           children: [
             WidgetsHeader(
               titleColor: _fgColor,
-              title: "${tx.srAmountText} $srSymbol → ${tx.rrAmountText} $rrSymbol",
-              subtitle: tx.timestampAsFormattedDate,
+              title: "${_tx.srAmountText} $srSymbol → ${_tx.rrAmountText} $rrSymbol",
+              subtitle: _tx.timestampAsFormattedDate,
               reversed: true,
             ),
-            WidgetsHeader(titleColor: _fgColor, title: tx.statusText, subtitle: "Status", reversed: true),
-            WidgetsHeader(titleColor: _fgColor, title: "${tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
+
+            WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
+
+            if (showAvailable)
+              WidgetsHeader(titleColor: _fgColor, title: "${_tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
+
             if (showBalance)
               WidgetsHeader(
                 titleColor: _fgColor,
@@ -238,12 +230,13 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
                 subtitle: "Balance",
                 reversed: true,
               ),
+
             if (showBalance)
               WidgetsHeader(
                 titleColor: plColor,
                 title:
-                    "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)} $srSymbol "
-                    "(${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfitPercentage, maxDecimals: 2)}%)",
+                    "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)} $rrSymbol "
+                    "(${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
                 subtitle: "Return (%)",
                 reversed: true,
               ),
@@ -263,7 +256,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
       plColor = const Color.fromARGB(255, 255, 109, 109);
     }
 
-    final srSymbol = _cryptosController.getSymbol(tx.srId) ?? '';
+    final srSymbol = _cryptosController.getSymbol(_tx.srId) ?? '';
 
     final controller = ScrollController();
     double dragStartX = 0.0;
@@ -303,7 +296,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
               titleColor: plColor,
               title:
                   "${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profit)} $srSymbol "
-                  "(${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profitPercentage, maxDecimals: 2)}%)",
+                  "(${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
               subtitle: "Return (%)",
               reversed: true,
             ),

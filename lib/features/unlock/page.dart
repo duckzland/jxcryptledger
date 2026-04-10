@@ -154,6 +154,16 @@ class _UnlockPageState extends State<UnlockPage> {
         TextField(
           controller: _password,
           obscureText: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) async {
+            final ok = await widget.controller.unlock(_password.text);
+            if (ok) {
+              if (!mounted) return;
+              context.go("/transactions");
+            } else {
+              setState(() => error = "Invalid password");
+            }
+          },
           decoration: InputDecoration(
             labelText: "Password",
             errorText: error,
