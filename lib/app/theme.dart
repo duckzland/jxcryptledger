@@ -11,8 +11,8 @@ class AppTheme {
   static const success = Color(0xFF43F436);
   static const warning = Color.fromARGB(255, 213, 161, 20);
   static const action = Color(0xFF43A047);
-  static const loss = Color.fromARGB(255, 245, 50, 50);
-  static const profit = Color.fromARGB(255, 62, 220, 51);
+  static const loss = Color.fromARGB(255, 255, 109, 109);
+  static const profit = Color.fromARGB(255, 112, 225, 104);
   static const text = Colors.white;
   static const textMuted = Colors.white70;
   static const textInactive = Color.fromARGB(83, 255, 255, 255);

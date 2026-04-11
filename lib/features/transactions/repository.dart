@@ -73,7 +73,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
       // Force to revalidate!
       await update(nptx);
-      return;
     }
   }
 

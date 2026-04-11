@@ -31,6 +31,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   late TransactionsModel _tx;
 
   bool _hasLeaf = false;
+  bool _leavesClosed = false;
 
   double _capital = 0;
   double _balance = 0;
@@ -85,7 +86,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
   void _onControllerChange() {
     final ntx = _txController.get(_tx.tid);
-    if (ntx == null || ntx == _tx) {
+    if (ntx == null) {
       return;
     }
 
@@ -117,6 +118,11 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
     _rBalance = Math.add(_branchAmounts[_tx.rrId] ?? 0, _tx.balance);
     _rProfit = Math.subtract(_rBalance, _tx.rrAmount);
     _rProfitPercentage = (_tx.rrAmount == 0 ? 0 : (Math.divide(_rProfit, _tx.rrAmount) * 100)) as double;
+
+    _leavesClosed = _txController.isClosedTerminals(_tx);
+    if (!_hasLeaf || !_tx.isActive) {
+      _leavesClosed = false;
+    }
   }
 
   void _onAction() {
@@ -139,6 +145,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: CustomMultiChildLayout(
+            key: ValueKey(_tx.statusEnum),
             delegate: WidgetsLayoutsWrappedTwoColumns(
               onWrapChanged: (int totalRows, double currentHeight) {
                 if (_panelHeight == currentHeight) return;
@@ -181,9 +188,9 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
     Color plColor = _fgColor;
     if (_rProfitPercentage > 0) {
-      plColor = const Color.fromARGB(255, 112, 225, 104);
+      plColor = AppTheme.profit;
     } else if (_rProfitPercentage < 0) {
-      plColor = const Color.fromARGB(255, 255, 109, 109);
+      plColor = AppTheme.loss;
     }
 
     final srSymbol = _cryptosController.getSymbol(_tx.srId) ?? '';
@@ -231,7 +238,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
                 reversed: true,
               ),
 
-            if (showBalance)
+            if (showBalance || _leavesClosed)
               WidgetsHeader(
                 titleColor: plColor,
                 title:
@@ -251,9 +258,9 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
     Color plColor = _fgColor;
     if (_profitPercentage > 0) {
-      plColor = const Color.fromARGB(255, 112, 225, 104);
+      plColor = AppTheme.profit;
     } else if (_profitPercentage < 0) {
-      plColor = const Color.fromARGB(255, 255, 109, 109);
+      plColor = AppTheme.loss;
     }
 
     final srSymbol = _cryptosController.getSymbol(_tx.srId) ?? '';

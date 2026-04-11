@@ -192,6 +192,18 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     }
   }
 
+  bool isClosedTerminals(TransactionsModel tx) {
+    final leaves = repo.collectTerminalLeaves(tx);
+
+    for (final ltx in leaves) {
+      if (!ltx.isClosed) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   double getCapitalBalance(TransactionsModel tx) {
     final children = repo.getLeaf(tx);
     final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
@@ -234,7 +246,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     final Map<int, double> branchAmounts = {};
 
     for (final rtx in txs) {
-      if (rtx.isActive || rtx.isPartial) {
+      if ((rtx.isActive || rtx.isPartial) && rtx.tid != tx.tid) {
         final key = rtx.rrId;
         branchAmounts[key] = (branchAmounts[key] ?? 0) + rtx.balance;
       }
