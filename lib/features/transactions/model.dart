@@ -353,6 +353,10 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     return statusEnum == TransactionStatus.partial;
   }
 
+  bool get isClosed {
+    return statusEnum == TransactionStatus.closed;
+  }
+
   bool get isRoot {
     return pid == '0' && rid == '0';
   }
