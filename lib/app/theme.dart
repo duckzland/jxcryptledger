@@ -9,38 +9,38 @@ class AppTheme {
   static const buttonBg = Color(0xFF28292E);
   static const error = Color(0xFFC62828);
   static const success = Color(0xFF43F436);
-  static const warning = Color.fromARGB(255, 213, 161, 20);
+  static const warning = Color(0xFFD5A114);
   static const action = Color(0xFF43A047);
-  static const loss = Color.fromARGB(255, 255, 109, 109);
-  static const profit = Color.fromARGB(255, 112, 225, 104);
+  static const loss = Color(0xFFFF6D6D);
+  static const profit = Color(0xFF70E168);
   static const text = Colors.white;
   static const textMuted = Colors.white70;
-  static const textInactive = Color.fromARGB(83, 255, 255, 255);
-  static const textHalfInactive = Color.fromARGB(114, 255, 255, 255);
+  static const textInactive = Color(0x53FFFFFF);
+  static const textHalfInactive = Color(0x72FFFFFF);
 
   static const background = Color(0xFF0D1421);
-  static const scrimBackground = Color.fromARGB(255, 6, 7, 10);
+  static const scrimBackground = Color(0xFF06070A);
   static const headerBg = Color(0xFF161C27);
   static const columnHeaderBg = Color(0xFF000000);
   static const rowHeaderBg = Color(0xFF0D1421);
-  static const separator = Color.fromARGB(255, 44, 53, 68);
+  static const separator = Color(0xFF2C3544);
   static const panelBg = Color(0xFF1B2230);
-  static const scrollbarBg = Color.fromARGB(255, 42, 53, 74);
-  static const mutedBg = Color.fromARGB(255, 41, 47, 59);
-  static const closedBg = Color.fromARGB(255, 37, 52, 66);
+  static const scrollbarBg = Color(0xFF2A354A);
+  static const mutedBg = Color(0xFF292F3B);
+  static const closedBg = Color(0xFF253442);
 
-  static const red = Color.fromARGB(255, 133, 36, 36);
-  static const darkRed = Color.fromARGB(255, 100, 25, 25);
-  static const green = Color.fromARGB(255, 22, 106, 69);
-  static const darkGreen = Color.fromARGB(255, 15, 70, 45);
-  static const blue = Color.fromARGB(255, 60, 120, 220);
-  static const lightBlue = Color.fromARGB(255, 100, 160, 230);
-  static const lightPurple = Color.fromARGB(255, 160, 140, 200);
-  static const lightOrange = Color.fromARGB(255, 240, 160, 100);
-  static const orange = Color.fromARGB(255, 195, 102, 51);
-  static const yellow = Color.fromARGB(255, 192, 168, 64);
-  static const teal = Color.fromARGB(255, 40, 170, 140);
-  static const darkGrey = Color.fromARGB(255, 40, 40, 40);
+  static const red = Color(0xFF852424);
+  static const darkRed = Color(0xFF641919);
+  static const green = Color(0xFF166A45);
+  static const darkGreen = Color(0xFF0F462D);
+  static const blue = Color(0xFF3C78DC);
+  static const lightBlue = Color(0xFF64A0E6);
+  static const lightPurple = Color(0xFFA08CC8);
+  static const lightOrange = Color(0xFFF0A064);
+  static const orange = Color(0xFFC36633);
+  static const yellow = Color(0xFFC0A840);
+  static const teal = Color(0xFF28AA8C);
+  static const darkGrey = Color(0xFF282828);
 
   static const buttonFg = Color(0xFFE0E0E0);
 
@@ -62,7 +62,7 @@ class AppTheme {
   static const buttonBgAction = Color(0xFF43A047);
   static const buttonFgAction = Colors.white;
 
-  static const buttonBgWarning = Color.fromARGB(255, 213, 161, 20);
+  static const buttonBgWarning = Color(0xFFD5A114);
   static const buttonFgWarning = Colors.white;
 
   static const double tableHeadingRowHeight = 50;
@@ -116,6 +116,8 @@ class AppTheme {
         enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: separator)),
         focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: textInactive)),
         hintStyle: TextStyle(color: textHalfInactive, fontFamily: 'Inter'),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(96)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
 
       dividerTheme: const DividerThemeData(color: AppTheme.separator, thickness: 1),

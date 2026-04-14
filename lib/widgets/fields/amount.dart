@@ -38,7 +38,7 @@ class WidgetsFieldsAmount extends StatefulWidget {
 }
 
 class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSuffix<WidgetsFieldsAmount> {
-  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
   Timer? _debounce;
 
   bool get _shouldShowSuffix =>
@@ -52,14 +52,14 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
     super.initState();
     if (widget.initialValue != null) {
       final val = widget.initialValue!;
-      _amountController.text = val == "" ? val : Utils.formatSmartDouble(double.parse(val));
+      _controller.text = val == "" ? val : Utils.formatSmartDouble(double.parse(val));
     }
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    _amountController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -67,32 +67,31 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
   void suffixOnUseMax() {
     final String maxValue = Utils.formatSmartDouble(widget.useMax!).replaceAll(",", "");
 
-    _amountController.text = maxValue;
+    _controller.text = maxValue;
     widget.onChanged?.call(maxValue);
     setState(() {});
   }
 
   @override
   void suffixOnClean() {
-    _amountController.text = "";
+    _controller.text = "";
     widget.onChanged?.call("");
     setState(() {});
   }
 
   @override
   void suffixOnCopy() async {
-    await Clipboard.setData(ClipboardData(text: _amountController.text));
-    widgetsNotifySuccess("${_amountController.text} copied to clipboard");
+    await Clipboard.setData(ClipboardData(text: _controller.text));
+    widgetsNotifySuccess("${_controller.text} copied to clipboard");
   }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: _amountController,
+      controller: _controller,
       decoration: InputDecoration(
         labelText: widget.title,
         hintText: widget.helperText,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
         enabled: widget.enabled,
         suffixIcon: _shouldShowSuffix
             ? Row(
@@ -103,9 +102,9 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
                   if (widget.useMax != null) suffixIconUseMax('Use maximum amount'),
 
-                  if (widget.allowCopy && _amountController.text != "") suffixIconCopy('Copy to clipboard'),
+                  if (widget.allowCopy && _controller.text != "") suffixIconCopy('Copy to clipboard'),
 
-                  if (widget.allowClean && _amountController.text != "") suffixIconClean('Reset amount'),
+                  if (widget.allowClean && _controller.text != "") suffixIconClean('Reset amount'),
 
                   const SizedBox(width: 6),
                 ],

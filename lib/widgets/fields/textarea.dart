@@ -49,7 +49,6 @@ class _WidgetsFieldsTextareaState extends State<WidgetsFieldsTextarea> {
         labelText: widget.title,
         hintText: widget.helperText,
         alignLabelWithHint: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
       ),
       maxLines: 4,
       onChanged: (value) {

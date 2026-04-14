@@ -62,7 +62,7 @@ class UnlockController extends ChangeNotifier {
 
       await AppStorage.instance.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
     } catch (e) {
-      logln("Failed to decrypt boxes (wrong password) ${e.toString()}");
+      logln("Failed to decrypt boxes (wrong password): ${e.toString()}");
       return false;
     }
 

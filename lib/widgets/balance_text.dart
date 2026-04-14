@@ -29,9 +29,9 @@ class WidgetsBalanceText extends StatelessWidget {
   Color _colorForMode(int mode) {
     switch (mode) {
       case 1:
-        return const Color.fromARGB(255, 112, 225, 104);
+        return AppTheme.profit;
       case -1:
-        return const Color.fromARGB(255, 255, 109, 109);
+        return AppTheme.loss;
       default:
         return AppTheme.text;
     }
