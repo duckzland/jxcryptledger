@@ -20,10 +20,10 @@ class TransactionFormCreate extends StatefulWidget {
   const TransactionFormCreate({super.key, required this.onSave, this.initialData, this.parent});
 
   @override
-  State<TransactionFormCreate> createState() => _TransactionFormState();
+  State<TransactionFormCreate> createState() => _TransactionFormCreateState();
 }
 
-class _TransactionFormState extends State<TransactionFormCreate> {
+class _TransactionFormCreateState extends State<TransactionFormCreate> {
   TransactionsController get _txController => locator<TransactionsController>();
 
   int? _selectedSrId;

@@ -82,48 +82,61 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   bool hasLeaf(TransactionsModel tx) {
-    try {
-      final leaf = repo.getLeaf(tx);
-      return leaf.isNotEmpty;
-    } catch (e) {
+    final leaf = repo.getLeaf(tx);
+    return leaf.isNotEmpty;
+  }
+
+  bool hasTradeableLeaf(TransactionsModel tx) {
+    final leaves = repo.collectAllLeaves(tx);
+
+    if (leaves.isEmpty) {
       return false;
     }
+
+    for (final ttx in leaves) {
+      if (ttx.isActive || ttx.isPartial) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   bool hasClosableLeaf() {
-    try {
-      final leaves = repo.collectAllTerminalLeaves();
+    final leaves = repo.collectAllTerminalLeaves();
 
-      for (final tx in leaves) {
-        try {
-          repo.canClose(tx, silent: true);
-          return true;
-        } catch (_) {
-          // Ignore failures and continue
-        }
-      }
-
-      return false;
-    } catch (_) {
+    if (leaves.isEmpty) {
       return false;
     }
+
+    for (final tx in leaves) {
+      try {
+        repo.canClose(tx, silent: true);
+        return true;
+      } catch (_) {
+        // Ignore failures and continue
+      }
+    }
+
+    return false;
   }
 
   bool hasDeletableRoot() {
-    try {
-      final roots = repo.collectAllRoots();
-      for (final tx in roots) {
-        try {
-          repo.canDelete(tx, silent: true);
-          return true;
-        } catch (_) {
-          // Ignore failures and continue
-        }
-      }
-      return false;
-    } catch (_) {
+    final roots = repo.collectAllRoots();
+
+    if (roots.isEmpty) {
       return false;
     }
+
+    for (final tx in roots) {
+      try {
+        repo.canDelete(tx, silent: true);
+        return true;
+      } catch (_) {
+        // Ignore failures and continue
+      }
+    }
+    return false;
   }
 
   bool isAddable(TransactionsModel tx) {
@@ -229,7 +242,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   double collectBranchTotalResultAmount(TransactionsModel tx) {
-    final txs = repo.collectDescendantLeaves(tx);
+    final txs = repo.collectAllLeaves(tx);
     double balance = 0;
     for (final rtx in txs) {
       if (rtx.rrId == tx.srId && (rtx.isActive || rtx.isPartial)) {
@@ -241,7 +254,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   Map<int, double> collectBranchActiveAmount(TransactionsModel tx) {
-    final txs = repo.collectDescendantLeaves(tx);
+    final txs = repo.collectAllLeaves(tx);
 
     final Map<int, double> branchAmounts = {};
 
@@ -253,5 +266,22 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     }
 
     return branchAmounts;
+  }
+
+  List<TransactionsModel> collectTradableLeaves(TransactionsModel tx) {
+    final leaves = repo.collectAllLeaves(tx);
+
+    if (leaves.isEmpty) {
+      return [];
+    }
+
+    final tradableLeaves = <TransactionsModel>[];
+    for (final ttx in leaves) {
+      if (ttx.isActive || ttx.isPartial) {
+        tradableLeaves.add(ttx);
+      }
+    }
+
+    return tradableLeaves;
   }
 }
