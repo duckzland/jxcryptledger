@@ -6,6 +6,7 @@ import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../features/cryptos/model.dart';
 import '../../features/cryptos/controller.dart';
+import '../../mixins/suffix.dart';
 import '../notify.dart';
 
 class WidgetsFieldsCryptoSearch extends StatefulWidget {
@@ -32,7 +33,7 @@ class WidgetsFieldsCryptoSearch extends StatefulWidget {
   State<WidgetsFieldsCryptoSearch> createState() => _WidgetsFieldsCryptoSearchState();
 }
 
-class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> {
+class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> with MixinsSuffix<WidgetsFieldsCryptoSearch> {
   late TextEditingController _controller;
   late CryptosController _cryptosController;
 
@@ -53,15 +54,24 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> {
     }
   }
 
-  void onControllerChange() {
-    setState(() {});
-  }
-
   @override
   void dispose() {
     _controller.dispose();
     _cryptosController.removeListener(onControllerChange);
     super.dispose();
+  }
+
+  @override
+  void suffixOnClean() {
+    _controller.text = "";
+    widget.onSelected?.call(-1);
+    setState(() {});
+  }
+
+  @override
+  void suffixOnCopy() async {
+    await Clipboard.setData(ClipboardData(text: _controller.text));
+    widgetsNotifySuccess("${_controller.text} copied to clipboard");
   }
 
   @override
@@ -87,58 +97,9 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> {
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          if (widget.allowCopy && _controller.text != "")
-                            IconButton(
-                              icon: const Icon(Icons.copy),
-                              iconSize: 16,
-                              constraints: const BoxConstraints(),
-                              visualDensity: VisualDensity.compact,
-                              mouseCursor: SystemMouseCursors.click,
-                              tooltip: 'Copy to clipboard',
-                              style: ButtonStyle(
-                                overlayColor: WidgetStateProperty.all(Colors.transparent),
-                                foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                                  if (states.contains(WidgetState.hovered)) {
-                                    return AppTheme.action;
-                                  }
-                                  return AppTheme.textMuted;
-                                }),
-                                padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-                                minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              onPressed: () async {
-                                await Clipboard.setData(ClipboardData(text: _controller.text));
-                                widgetsNotifySuccess("${_controller.text} copied to clipboard");
-                              },
-                            ),
+                          if (widget.allowCopy && _controller.text != "") suffixIconCopy('Copy to clipboard'),
 
-                          if (widget.allowClean && _controller.text != "")
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              iconSize: 16,
-                              constraints: const BoxConstraints(),
-                              visualDensity: VisualDensity.compact,
-                              mouseCursor: SystemMouseCursors.click,
-                              tooltip: 'Reset selection',
-                              style: ButtonStyle(
-                                overlayColor: WidgetStateProperty.all(Colors.transparent),
-                                foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                                  if (states.contains(WidgetState.hovered)) {
-                                    return AppTheme.error;
-                                  }
-                                  return AppTheme.textMuted;
-                                }),
-                                padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-                                minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              onPressed: () {
-                                _controller.text = "";
-                                widget.onSelected?.call(-1);
-                                setState(() {});
-                              },
-                            ),
+                          if (widget.allowClean && _controller.text != "") suffixIconClean('Reset selection'),
 
                           const SizedBox(width: 6),
                         ],
@@ -189,6 +150,10 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> {
         ),
       ],
     );
+  }
+
+  void onControllerChange() {
+    setState(() {});
   }
 
   int? extractIdFromText(String text) {
