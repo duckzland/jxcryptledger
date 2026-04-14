@@ -5,7 +5,7 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T> {
   int sortColumnIndex = 0;
   bool sortAscending = false;
 
-  void onSort<T>(T Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
+  void onSort<U>(U Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
     setState(() {
       rows.sort((a, b) {
         final aField = getField(a);

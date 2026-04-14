@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../mixins/suffix.dart';
 import '../notify.dart';
-import '../../app/theme.dart';
 import '../../core/utils.dart';
 
 class WidgetsFieldsAmount extends StatefulWidget {
@@ -37,12 +37,15 @@ class WidgetsFieldsAmount extends StatefulWidget {
   State<WidgetsFieldsAmount> createState() => _WidgetsFieldsAmountState();
 }
 
-class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> {
+class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSuffix<WidgetsFieldsAmount> {
   final TextEditingController _amountController = TextEditingController();
   Timer? _debounce;
 
   bool get _shouldShowSuffix =>
       widget.suffixText != null || widget.enabled && (widget.useMax != null || widget.allowClean || widget.allowCopy);
+
+  @override
+  String get suffixText => widget.suffixText ?? "";
 
   @override
   void initState() {
@@ -61,6 +64,28 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> {
   }
 
   @override
+  void suffixOnUseMax() {
+    final String maxValue = Utils.formatSmartDouble(widget.useMax!).replaceAll(",", "");
+
+    _amountController.text = maxValue;
+    widget.onChanged?.call(maxValue);
+    setState(() {});
+  }
+
+  @override
+  void suffixOnClean() {
+    _amountController.text = "";
+    widget.onChanged?.call("");
+    setState(() {});
+  }
+
+  @override
+  void suffixOnCopy() async {
+    await Clipboard.setData(ClipboardData(text: _amountController.text));
+    widgetsNotifySuccess("${_amountController.text} copied to clipboard");
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _amountController,
@@ -74,89 +99,13 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (widget.suffixText != null) Text("${widget.suffixText!} ", style: TextStyle(color: AppTheme.textMuted)),
+                  if (widget.suffixText != null) suffixIconText(),
 
-                  if (widget.useMax != null)
-                    IconButton(
-                      icon: const Icon(Icons.keyboard_double_arrow_up),
-                      iconSize: 16,
-                      constraints: const BoxConstraints(),
-                      visualDensity: VisualDensity.compact,
-                      mouseCursor: SystemMouseCursors.click,
-                      tooltip: 'Use maximum amount',
-                      style: ButtonStyle(
-                        overlayColor: WidgetStateProperty.all(Colors.transparent),
-                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(WidgetState.hovered)) {
-                            return AppTheme.action;
-                          }
-                          return AppTheme.textMuted;
-                        }),
-                        padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-                        minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: () {
-                        final String maxValue = Utils.formatSmartDouble(widget.useMax!).replaceAll(",", "");
+                  if (widget.useMax != null) suffixIconUseMax('Use maximum amount'),
 
-                        _amountController.text = maxValue;
-                        widget.onChanged?.call(maxValue);
-                        setState(() {});
-                      },
-                    ),
+                  if (widget.allowCopy && _amountController.text != "") suffixIconCopy('Copy to clipboard'),
 
-                  if (widget.allowCopy && _amountController.text != "")
-                    IconButton(
-                      icon: const Icon(Icons.copy),
-                      iconSize: 16,
-                      constraints: const BoxConstraints(),
-                      visualDensity: VisualDensity.compact,
-                      mouseCursor: SystemMouseCursors.click,
-                      tooltip: 'Copy to clipboard',
-                      style: ButtonStyle(
-                        overlayColor: WidgetStateProperty.all(Colors.transparent),
-                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(WidgetState.hovered)) {
-                            return AppTheme.action;
-                          }
-                          return AppTheme.textMuted;
-                        }),
-                        padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-                        minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: () async {
-                        await Clipboard.setData(ClipboardData(text: _amountController.text));
-                        widgetsNotifySuccess("${_amountController.text} copied to clipboard");
-                      },
-                    ),
-
-                  if (widget.allowClean && _amountController.text != "")
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      iconSize: 16,
-                      constraints: const BoxConstraints(),
-                      visualDensity: VisualDensity.compact,
-                      mouseCursor: SystemMouseCursors.click,
-                      tooltip: 'Reset amount',
-                      style: ButtonStyle(
-                        overlayColor: WidgetStateProperty.all(Colors.transparent),
-                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(WidgetState.hovered)) {
-                            return AppTheme.error;
-                          }
-                          return AppTheme.textMuted;
-                        }),
-                        padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-                        minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: () {
-                        _amountController.text = "";
-                        widget.onChanged?.call("");
-                        setState(() {});
-                      },
-                    ),
+                  if (widget.allowClean && _amountController.text != "") suffixIconClean('Reset amount'),
 
                   const SizedBox(width: 6),
                 ],

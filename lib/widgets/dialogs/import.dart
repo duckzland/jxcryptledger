@@ -5,6 +5,7 @@ import '../../app/exceptions.dart';
 import '../../core/log.dart';
 import '../button.dart';
 import '../notify.dart';
+import 'alert.dart';
 
 class WidgetsDialogsImport extends StatefulWidget {
   final Future<void> Function(String json) onImport;
@@ -74,69 +75,18 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
     }
   }
 
-  Future<void> _showDialog(BuildContext context) async {
-    final screenWidth = MediaQuery.of(context).size.width;
-    double dialogWidth;
-    if (screenWidth > 360) {
-      dialogWidth = 300;
-    } else {
-      dialogWidth = screenWidth * 0.9;
-    }
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: Text(widget.dialogTitle),
-            content: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: dialogWidth),
-              child: Text(widget.dialogMessage),
-            ),
-            actions: [
-              Wrap(
-                direction: Axis.horizontal,
-                runSpacing: 14,
-                spacing: 10,
-                runAlignment: WrapAlignment.center,
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
-                  WidgetsButton(
-                    label: widget.dialogImportLabel,
-                    initialState: widget.initialState,
-                    onPressed: (_) async {
-                      try {
-                        Navigator.pop(dialogContext);
-                        await _selectAndImport();
-                      } catch (e) {
-                        widgetsNotifyError("Failed to import file.");
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _handlePressed(BuildContext context) async {
-    if (widget.showDialogBeforeImport) {
-      await _showDialog(context);
-    } else {
-      await _selectAndImport();
-    }
+    await _selectAndImport();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WidgetsButton(
+    return WidgetsDialogsAlert(
+      dialogTitle: widget.dialogTitle,
+      dialogMessage: widget.dialogMessage,
+      dialogCancelLabel: widget.dialogCancelLabel,
+      dialogConfirmLabel: widget.dialogImportLabel,
+      actionCompleteCallback: widget.showDialogBeforeImport ? _selectAndImport : null,
       label: widget.label,
       tooltip: widget.tooltip,
       icon: widget.icon,
@@ -144,9 +94,8 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
       padding: widget.padding,
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
-      onPressed: (_) => _handlePressed(context),
       evaluator: widget.evaluator,
-      persistBg: widget.persistBg,
+      onPressed: widget.showDialogBeforeImport ? null : _handlePressed,
     );
   }
 }

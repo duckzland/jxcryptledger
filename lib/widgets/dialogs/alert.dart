@@ -24,6 +24,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActions {
   final Future<void> Function(T)? actionCallback;
   final VoidCallback? actionCompleteCallback;
   final VoidCallback? actionStartCallback;
+  final Future<void> Function(BuildContext)? onPressed;
 
   const WidgetsDialogsAlert({
     super.key,
@@ -49,6 +50,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActions {
     this.actionCompleteCallback,
     this.actionCallback,
     this.actionStartCallback,
+    this.onPressed,
   });
 
   @override
@@ -120,7 +122,7 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
       padding: widget.padding,
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
-      onPressed: (_) => _showDialog(context),
+      onPressed: (_) => widget.onPressed?.call(context) ?? _showDialog(context),
       evaluator: widget.evaluator,
       persistBg: widget.persistBg,
     );

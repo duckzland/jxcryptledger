@@ -1,5 +1,3 @@
-// test/math_test.dart
-
 import 'package:decimal/decimal.dart';
 import 'package:jxledger/core/math.dart';
 import 'package:test/test.dart';

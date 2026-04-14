@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/log.dart';
 import '../button.dart';
 import '../notify.dart';
-
+import 'alert.dart';
 
 class WidgetsDialogsExport extends StatefulWidget {
   final Future<String> Function() onExport;
@@ -57,7 +57,7 @@ class WidgetsDialogsExport extends StatefulWidget {
 }
 
 class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
-  Future<void> _selectAndExport() async {
+  void _selectAndExport() async {
     try {
       final json = await widget.onExport();
       if (json.isEmpty) {
@@ -70,7 +70,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       final saveLocation = await getSaveLocation(suggestedName: suggestedName, confirmButtonText: "Save");
 
       if (saveLocation == null || saveLocation.path.isEmpty) {
-        widgetsNotifyError("Export cancelled.");
+        // widgetsNotifyError("Export cancelled.");
         return;
       }
 
@@ -82,54 +82,6 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       logln("[EXPORT] Failed to save export file: $e");
       widgetsNotifyError("Failed to export data.");
     }
-  }
-
-  Future<void> _showDialog(BuildContext context) async {
-    final screenWidth = MediaQuery.of(context).size.width;
-    double dialogWidth;
-    if (screenWidth > 360) {
-      dialogWidth = 300;
-    } else {
-      dialogWidth = screenWidth * 0.9;
-    }
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            title: Text(widget.dialogTitle),
-            content: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: dialogWidth),
-              child: Text(widget.dialogMessage),
-            ),
-            actions: [
-              Wrap(
-                direction: Axis.horizontal,
-                runSpacing: 14,
-                spacing: 10,
-                runAlignment: WrapAlignment.center,
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
-                  WidgetsButton(
-                    label: widget.dialogExportLabel,
-                    initialState: widget.initialState,
-                    onPressed: (_) async {
-                      Navigator.pop(dialogContext);
-                      await _selectAndExport();
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   void _evaluate(WidgetsButtonState s) {
@@ -151,7 +103,12 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       evaluator = _evaluate;
     }
 
-    return WidgetsButton(
+    return WidgetsDialogsAlert(
+      dialogTitle: widget.dialogTitle,
+      dialogMessage: widget.dialogMessage,
+      dialogCancelLabel: widget.dialogCancelLabel,
+      dialogConfirmLabel: widget.dialogExportLabel,
+      actionCompleteCallback: _selectAndExport,
       label: widget.label,
       tooltip: widget.tooltip,
       icon: widget.icon,
@@ -159,7 +116,6 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       padding: widget.padding,
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
-      onPressed: (_) => _showDialog(context),
       evaluator: evaluator,
       persistBg: widget.persistBg,
     );
