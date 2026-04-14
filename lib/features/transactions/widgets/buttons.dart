@@ -6,6 +6,7 @@ import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
+import '../dialogs/balance_snapshot.dart';
 import '../forms/edit.dart';
 import '../forms/trade.dart';
 import '../model.dart';
@@ -50,6 +51,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
     final isUpdatable = txController.isUpdatable(tx);
     final isRefundable = txController.isRefundable(tx);
     final hasLeaf = txController.hasLeaf(tx);
+    final hasTradeableLeaf = txController.hasTradeableLeaf(tx);
     final ptx = txController.getParent(tx);
 
     final sourceSymbol = cryptosController.getSymbol(tx.srId) ?? "";
@@ -59,6 +61,22 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
       spacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
+        if (tx.isRoot && hasTradeableLeaf)
+          WidgetsDialogsShowForm(
+            key: Key("balance-snapshot-button-${tx.tid}"),
+            icon: Icons.insights,
+            tooltip: "Show balance snapshots of this transaction",
+            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+            iconSize: 16,
+            minimumSize: const Size(34, 34),
+            evaluator: (s) {
+              !cryptosController.isEmpty() ? s.normal() : s.disable();
+            },
+            buildForm: (dialogContext) {
+              return TransactionsDialogsBalanceSnapshots(initialData: tx, parent: ptx);
+            },
+          ),
+
         if (isUpdatable && tx.isActive && !hasLeaf)
           WidgetsDialogsShowForm(
             key: Key("edit-button-${tx.tid}"),

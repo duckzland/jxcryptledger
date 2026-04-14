@@ -26,8 +26,8 @@ abstract class TransactionsRulesBase {
   List<TransactionsModel> get terminalLeaves => _terminalLeavesCache ??= txRepo.collectTerminalLeaves(tx);
   TransactionsModel? get targetParentCloser => _targetCloserCache ??= txRepo.getCloseTargetParent(tx);
   List<TransactionsModel> get leafChildren => _childrenCache ??= txRepo.getLeaf(tx);
-  List<TransactionsModel> get allLeaves => _allLeavesCache ??= txRepo.collectAllLeaves(tx);
-  List<TransactionsModel> get allRootLeaves => _allRootLeavesCache ??= txRepo.collectAllRootLeaves(tx);
+  List<TransactionsModel> get allLeaves => _allLeavesCache ??= txRepo.collectDirectLeaves(tx);
+  List<TransactionsModel> get allRootLeaves => _allRootLeavesCache ??= txRepo.collectRootTreeLeaves(tx);
 
   void txCheckIsRoot(int code, String message) {
     if (!tx.isRoot) {

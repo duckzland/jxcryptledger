@@ -21,10 +21,10 @@ class TransactionFormEdit extends StatefulWidget {
   const TransactionFormEdit({super.key, required this.onSave, this.initialData, this.parent});
 
   @override
-  State<TransactionFormEdit> createState() => _TransactionFormState();
+  State<TransactionFormEdit> createState() => _TransactionFormEditState();
 }
 
-class _TransactionFormState extends State<TransactionFormEdit> {
+class _TransactionFormEditState extends State<TransactionFormEdit> {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 

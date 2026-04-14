@@ -191,7 +191,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     // if all terminal leaves are closed, double check current branch is all inactive
     if (allClosed) {
-      leaves = collectLeavesInBetween(otx, target);
+      leaves = collectInBetweenLeaves(otx, target);
       allClosed =
           leaves.isNotEmpty &&
           leaves
@@ -361,7 +361,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return dfs(parent);
   }
 
-  List<TransactionsModel> collectAllRootLeaves(TransactionsModel parent) {
+  List<TransactionsModel> collectRootTreeLeaves(TransactionsModel parent) {
     final all = extract();
 
     final leaves = <TransactionsModel>[];
@@ -374,7 +374,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return leaves;
   }
 
-  List<TransactionsModel> collectAllLeaves(TransactionsModel parent) {
+  List<TransactionsModel> collectDirectLeaves(TransactionsModel parent) {
     final all = extract();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
@@ -400,7 +400,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return dfs(parent);
   }
 
-  List<TransactionsModel> collectDescendantLeaves(TransactionsModel parent) {
+  List<TransactionsModel> collectAllLeaves(TransactionsModel parent) {
     final all = extract();
 
     final Map<String, List<TransactionsModel>> childrenMap = {};
@@ -423,7 +423,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return dfs(parent);
   }
 
-  List<TransactionsModel> collectLeavesInBetween(TransactionsModel start, TransactionsModel end) {
+  List<TransactionsModel> collectInBetweenLeaves(TransactionsModel start, TransactionsModel end) {
     final all = extract();
 
     final Map<String, TransactionsModel> lookup = {for (final tx in all) tx.tid: tx};
