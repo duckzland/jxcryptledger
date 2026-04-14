@@ -116,7 +116,7 @@ class AppTheme {
         enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: separator)),
         focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: textInactive)),
         hintStyle: TextStyle(color: textHalfInactive, fontFamily: 'Inter'),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(96)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
 
