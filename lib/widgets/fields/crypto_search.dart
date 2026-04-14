@@ -90,8 +90,6 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
               decoration: InputDecoration(
                 labelText: widget.labelText,
                 hintText: widget.hintText,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 suffixIcon: _shouldShowSuffix
                     ? Row(
                         mainAxisSize: MainAxisSize.min,

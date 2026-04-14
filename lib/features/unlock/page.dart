@@ -76,18 +76,12 @@ class _UnlockPageState extends State<UnlockPage> {
             TextField(
               controller: _password,
               obscureText: !showPassword,
-              decoration: InputDecoration(
-                labelText: "Password",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-              ),
+              decoration: InputDecoration(labelText: "Password"),
             ),
             TextField(
               controller: _confirm,
               obscureText: !showPassword,
-              decoration: InputDecoration(
-                labelText: "Confirm Password",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-              ),
+              decoration: InputDecoration(labelText: "Confirm Password"),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -164,11 +158,7 @@ class _UnlockPageState extends State<UnlockPage> {
               setState(() => error = "Invalid password");
             }
           },
-          decoration: InputDecoration(
-            labelText: "Password",
-            errorText: error,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-          ),
+          decoration: InputDecoration(labelText: "Password", errorText: error),
         ),
 
         WidgetsButton(

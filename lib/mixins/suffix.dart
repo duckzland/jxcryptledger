@@ -9,6 +9,21 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
   void suffixOnClean() {}
   void suffixOnCopy() {}
 
+  ButtonStyle _suffixButtonStyling(Color hoverColor) {
+    return ButtonStyle(
+      overlayColor: WidgetStateProperty.all(Colors.transparent),
+      foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.hovered)) {
+          return hoverColor;
+        }
+        return AppTheme.textMuted;
+      }),
+      padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
+      minimumSize: WidgetStateProperty.all(const Size(16, 16)),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
   Widget suffixIconText() {
     return Text("$suffixText ", style: TextStyle(color: AppTheme.textMuted));
   }
@@ -21,18 +36,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
-      style: ButtonStyle(
-        overlayColor: WidgetStateProperty.all(Colors.transparent),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-          if (states.contains(WidgetState.hovered)) {
-            return AppTheme.action;
-          }
-          return AppTheme.textMuted;
-        }),
-        padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-        minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
+      style: _suffixButtonStyling(AppTheme.action),
       onPressed: suffixOnUseMax,
     );
   }
@@ -45,18 +49,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
-      style: ButtonStyle(
-        overlayColor: WidgetStateProperty.all(Colors.transparent),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-          if (states.contains(WidgetState.hovered)) {
-            return AppTheme.action;
-          }
-          return AppTheme.textMuted;
-        }),
-        padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-        minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
+      style: _suffixButtonStyling(AppTheme.action),
       onPressed: suffixOnCopy,
     );
   }
@@ -69,18 +62,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
-      style: ButtonStyle(
-        overlayColor: WidgetStateProperty.all(Colors.transparent),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-          if (states.contains(WidgetState.hovered)) {
-            return AppTheme.error;
-          }
-          return AppTheme.textMuted;
-        }),
-        padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
-        minimumSize: WidgetStateProperty.all(const Size(16, 16)),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
+      style: _suffixButtonStyling(AppTheme.error),
       onPressed: suffixOnClean,
     );
   }
