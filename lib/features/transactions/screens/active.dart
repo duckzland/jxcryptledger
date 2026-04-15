@@ -45,26 +45,39 @@ class TransactionsActive extends StatefulWidget {
 
 class _TransactionsActiveState extends State<TransactionsActive>
     with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsActive> {
+  final _calc = TransactionCalculation();
+
   late final CryptosController _cryptosController;
   late final RatesController _ratesController;
   late final TransactionsController _txController;
   late final WatchersController _wxController;
-  late final PanelsController _tixController;
+  late final PanelsController _pxController;
 
   late TextEditingController _customRateController;
+
+  late List<TransactionsModel> txs;
 
   late String _sourceSymbol;
   late String _resultSymbol;
 
+  late double _currentRate;
+  late double _averageRate;
+  late double _totalSourceBalance;
+  late double _totalBalance;
+  late double _totalPL;
+  late double _totalProfit;
+  late double _totalLoss;
+  late double _plPercentage;
+
   bool _isReversed = false;
   bool _isDeletable = false;
   bool _isClosable = false;
+  bool _isFinalizable = false;
 
   double? _customRate;
   double? _marketRate;
 
   Timer? _debounce;
-  final _calc = TransactionCalculation();
 
   double? get effectiveMarketRate {
     final m = _marketRate;
@@ -84,7 +97,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
       return m;
     }
 
-    return _calc.averageExchangedRate(widget.transactions, reverse: false);
+    return _calc.averageExchangedRate(txs, reverse: false);
   }
 
   WatchersModel? _linkedWatcher;
@@ -110,23 +123,26 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _wxController.start();
     _wxController.addListener(_onControllerChanged);
 
-    _tixController = locator<PanelsController>();
-    _tixController.start();
-    _tixController.addListener(_onControllerChanged);
+    _pxController = locator<PanelsController>();
+    _pxController.start();
+    _pxController.addListener(_onControllerChanged);
+
+    txs = widget.transactions;
 
     _loadMarketRate();
 
     _customRateController = TextEditingController();
 
-    rows = _buildRows(widget.transactions);
+    rows = _buildRows();
 
-    onSort((d) => d['_timestamp'] as int, sortColumnIndex, sortAscending);
-
+    _applySorting();
     _checkForClosable();
     _checkForDeletable();
+    _checkForFinalizable();
+    _calculateProfitLoss();
 
     _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-    _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+    _linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
   }
 
   @override
@@ -134,16 +150,11 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _customRateController.dispose();
     _ratesController.removeListener(_onRatesUpdated);
     _wxController.removeListener(_onControllerChanged);
-    _tixController.removeListener(_onControllerChanged);
+    _pxController.removeListener(_onControllerChanged);
 
     _debounce?.cancel();
 
     super.dispose();
-  }
-
-  void _onRatesUpdated() {
-    _loadMarketRate();
-    _applySorting();
   }
 
   @override
@@ -151,15 +162,37 @@ class _TransactionsActiveState extends State<TransactionsActive>
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.transactions != widget.transactions && mounted) {
-      _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
-      _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
+      setState(() {
+        txs = widget.transactions;
+        rows = _buildRows();
+        _applySorting();
 
-      rows = _buildRows(widget.transactions);
+        _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
+        _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
-      _applySorting();
-
-      setState(() {});
+        _checkForClosable();
+        _checkForDeletable();
+        _checkForFinalizable();
+        _calculateProfitLoss();
+      });
     }
+  }
+
+  void _onRatesUpdated() {
+    _loadMarketRate();
+    _applySorting();
+    _calculateProfitLoss();
+  }
+
+  void _calculateProfitLoss() {
+    _averageRate = _calc.averageExchangedRate(txs, reverse: _isReversed);
+    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    _totalSourceBalance = _calc.totalSourceBalance(txs);
+    _totalBalance = _calc.totalBalance(txs);
+    _totalPL = _calc.totalProfitLoss(txs, _currentRate, reverse: _isReversed);
+    _totalProfit = _calc.totalProfit(txs, _currentRate, reverse: _isReversed);
+    _totalLoss = _calc.totalLoss(txs, _currentRate, reverse: _isReversed);
+    _plPercentage = _calc.profitLossPercentage(txs, _currentRate, reverse: _isReversed);
   }
 
   void _applySorting() {
@@ -229,22 +262,19 @@ class _TransactionsActiveState extends State<TransactionsActive>
     if (mounted) {
       setState(() {
         _marketRate = rate;
-        rows = _buildRows(widget.transactions);
+        rows = _buildRows();
       });
     }
   }
 
   void _checkForClosable() {
-    final txs = widget.transactions;
+    _isClosable = false;
+
     for (final tx in txs) {
-      if (tx.isRoot) continue;
-      if (!tx.isActive) continue;
       try {
         final closable = _txController.isClosable(tx);
         if (closable) {
-          setState(() {
-            _isClosable = true;
-          });
+          _isClosable = true;
           break;
         }
       } catch (_) {
@@ -254,16 +284,29 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   void _checkForDeletable() {
-    final txs = widget.transactions;
+    _isDeletable = false;
+
     for (final tx in txs) {
-      if (tx.isLeaf) continue;
-      if (!tx.isActive) continue;
       try {
         final deletable = _txController.isDeletable(tx);
         if (deletable) {
-          setState(() {
-            _isDeletable = true;
-          });
+          _isDeletable = true;
+          break;
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
+  void _checkForFinalizable() {
+    _isFinalizable = false;
+
+    for (final tx in txs) {
+      try {
+        final finalizable = _txController.isFinalizable(tx);
+        if (finalizable) {
+          _isFinalizable = true;
           break;
         }
       } catch (_) {
@@ -273,10 +316,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   Future<void> _closeTransactions() async {
-    final txs = widget.transactions;
     for (final tx in txs) {
-      if (tx.isRoot) continue;
-      if (!tx.isActive) continue;
       try {
         await _txController.closeLeaf(tx);
       } catch (_) {
@@ -285,11 +325,18 @@ class _TransactionsActiveState extends State<TransactionsActive>
     }
   }
 
-  Future<void> _deleteTransactions() async {
-    final txs = widget.transactions;
+  Future<void> _finalizeTransactions() async {
     for (final tx in txs) {
-      if (tx.isLeaf) continue;
-      if (!tx.isActive) continue;
+      try {
+        await _txController.finalize(tx);
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
+  Future<void> _deleteTransactions() async {
+    for (final tx in txs) {
       try {
         await _txController.remove(tx);
       } catch (_) {
@@ -301,49 +348,10 @@ class _TransactionsActiveState extends State<TransactionsActive>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final txs = widget.transactions;
-    final averageRate = _calc.averageExchangedRate(txs, reverse: _isReversed);
-    final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
-    final totalSourceBalance = _calc.totalSourceBalance(txs);
-    final totalBalance = _calc.totalBalance(txs);
-    final totalPL = _calc.totalProfitLoss(txs, currentRate, reverse: _isReversed);
-    final totalProfit = _calc.totalProfit(txs, currentRate, reverse: _isReversed);
-    final totalLoss = _calc.totalLoss(txs, currentRate, reverse: _isReversed);
-    final plPercentage = _calc.profitLossPercentage(txs, currentRate, reverse: _isReversed);
-
-    return WidgetsPanel(
-      child: Column(
-        spacing: 20,
-        children: [
-          _buildHeader(
-            txs: txs,
-            currentRate: currentRate,
-            averageRate: averageRate,
-            totalSourceBalance: totalSourceBalance,
-            totalBalance: totalBalance,
-            totalPL: totalPL,
-            totalProfit: totalProfit,
-            totalLoss: totalLoss,
-            plPercentage: plPercentage,
-          ),
-
-          _buildTable(currentRate),
-        ],
-      ),
-    );
+    return WidgetsPanel(child: Column(spacing: 20, children: [_buildHeader(), _buildTable()]));
   }
 
-  Widget _buildHeader({
-    required List<TransactionsModel> txs,
-    required double currentRate,
-    required double averageRate,
-    required double totalSourceBalance,
-    required double totalBalance,
-    required double totalPL,
-    required double totalProfit,
-    required double totalLoss,
-    required double plPercentage,
-  }) {
+  Widget _buildHeader() {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1000) {
@@ -351,18 +359,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
             spacing: 20,
             children: [
               _buildTitle(CrossAxisAlignment.start),
-              Expanded(
-                child: _buildPanels(
-                  averageRate: averageRate,
-                  totalSourceBalance: totalSourceBalance,
-                  totalBalance: totalBalance,
-                  totalPL: totalPL,
-                  totalProfit: totalProfit,
-                  totalLoss: totalLoss,
-                  plPercentage: plPercentage,
-                ),
-              ),
-              _buildActions(averageRate: averageRate),
+              Expanded(child: _buildPanels()),
+              _buildActions(),
             ],
           );
         } else {
@@ -373,19 +371,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
             runAlignment: WrapAlignment.center,
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _buildTitle(CrossAxisAlignment.center),
-              _buildActions(averageRate: averageRate),
-              _buildPanels(
-                averageRate: averageRate,
-                totalSourceBalance: totalSourceBalance,
-                totalBalance: totalBalance,
-                totalPL: totalPL,
-                totalProfit: totalProfit,
-                totalLoss: totalLoss,
-                plPercentage: plPercentage,
-              ),
-            ],
+            children: [_buildTitle(CrossAxisAlignment.center), _buildActions(), _buildPanels()],
           );
         }
       },
@@ -403,7 +389,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     );
   }
 
-  Widget _buildActions({required double averageRate}) {
+  Widget _buildActions() {
     final btnIconSize = 18.0;
     final btnSize = const Size(40, 40);
     final btnPadding = const EdgeInsets.all(0);
@@ -425,7 +411,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
               child: WidgetsFieldsAmount(
                 title: "Custom Rates",
                 suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
-                helperText: averageRate.toStringAsFixed(8),
+                helperText: _averageRate.toStringAsFixed(8),
                 allowCopy: false,
                 onChanged: (value) {
                   if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -433,7 +419,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   _debounce = Timer(const Duration(milliseconds: 100), () {
                     setState(() {
                       _customRate = double.tryParse(value);
-                      rows = _buildRows(widget.transactions);
+                      rows = _buildRows();
                       _applySorting();
                     });
                   });
@@ -457,7 +443,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
               onPressed: (_) {
                 setState(() {
                   _isReversed = !_isReversed;
-                  rows = _buildRows(widget.transactions);
+                  rows = _buildRows();
                 });
               },
             ),
@@ -487,13 +473,13 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   initialData: _linkedPanel,
                   initialSrId: _linkedPanel == null ? widget.srid : null,
                   initialRrId: _linkedPanel == null ? widget.rrid : null,
-                  initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(widget.transactions) : null,
+                  initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(txs) : null,
                   linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
                   onSave: (e) => doFormSave<PanelsModel>(
                     context,
                     dialogContext: dialogContext,
                     onComplete: () => setState(() {
-                      _linkedPanel = _tixController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                      _linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
                     }),
                     successMessage: _linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
                     error: e,
@@ -557,11 +543,32 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   "This action cannot be undone.",
               dialogConfirmLabel: "Close",
               actionStartCallback: _closeTransactions,
-              actionCompleteCallback: () => setState(() {
-                _isClosable = false;
-              }),
               actionSuccessMessage: "All transactions closed.",
               actionErrorMessage: "Failed to close transactions.",
+            ),
+
+            WidgetsDialogsAlert(
+              icon: Icons.close_fullscreen,
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              initialState: WidgetsButtonActionState.warning,
+              tooltip: "Finalize all finalizable transactions found in this group",
+              evaluator: (s) {
+                if (!_isFinalizable) {
+                  s.disable();
+                } else {
+                  s.warning();
+                }
+              },
+              dialogTitle: "Finalize Transactions",
+              dialogMessage:
+                  "Are you sure you want to finalize all finalizable transactions found in this group?\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Finalize",
+              actionStartCallback: _finalizeTransactions,
+              actionSuccessMessage: "All transactions finalized.",
+              actionErrorMessage: "Failed to finalize transactions.",
             ),
 
             WidgetsDialogsAlert(
@@ -584,9 +591,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   "This action cannot be undone.",
               dialogConfirmLabel: "Delete",
               actionStartCallback: _deleteTransactions,
-              actionCompleteCallback: () => setState(() {
-                _isDeletable = false;
-              }),
               actionSuccessMessage: "All transactions deleted.",
               actionErrorMessage: "Failed to delete transactions.",
             ),
@@ -596,7 +600,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     );
   }
 
-  Widget _buildTable(double currentRate) {
+  Widget _buildTable() {
     return SizedBox(
       width: double.infinity,
       height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
@@ -609,7 +613,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
           showCheckboxColumn: false,
-          sortColumnIndex: (currentRate == 0.0 && sortColumnIndex > 4) ? null : sortColumnIndex,
+          sortColumnIndex: (_currentRate == 0.0 && sortColumnIndex > 4) ? null : sortColumnIndex,
           sortAscending: sortAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
@@ -633,7 +637,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
               onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
             ),
 
-            if (currentRate != 0.0) ...[
+            if (_currentRate != 0.0) ...[
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(
@@ -654,7 +658,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
             ],
 
             DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
-            DataColumn2(label: Text('Actions'), fixedWidth: 130),
+            DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
 
           rows: rows.map((r) {
@@ -665,7 +669,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 DataCell(Text(r['to'] ?? '0.0')),
                 DataCell(Text(r['exchangedRate'] ?? '0.0')),
 
-                if (currentRate != 0) ...[
+                if (_currentRate != 0) ...[
                   DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
                   DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
                   DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
@@ -679,7 +683,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     txController: _txController,
                     onAction: () {
                       widget.onStatusChanged();
-                      setState(() {});
                     },
                   ),
                 ),
@@ -691,7 +694,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     );
   }
 
-  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
+  List<Map<String, dynamic>> _buildRows() {
     final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
     final rows = <Map<String, dynamic>>[];
 
@@ -700,8 +703,13 @@ class _TransactionsActiveState extends State<TransactionsActive>
       double profitLoss = 0;
       double profitLevel = 0;
 
-      if (currentRate != 0) {
+      if (currentRate != 0 && tx.balance != 0 && !tx.isClosed) {
         currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+
+        if (tx.isFinalized) {
+          currentValue = tx.balance;
+        }
+
         profitLoss = Math.subtract(currentValue, tx.srAmount);
 
         if (profitLoss > 0) {
@@ -735,15 +743,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     return rows;
   }
 
-  Widget _buildPanels({
-    required double averageRate,
-    required double totalSourceBalance,
-    required double totalBalance,
-    required double totalPL,
-    required double totalProfit,
-    required double totalLoss,
-    required double plPercentage,
-  }) {
+  Widget _buildPanels() {
     return SizedBox(
       height: 38,
       child: ScrollConfiguration(
@@ -760,31 +760,31 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   _buildPanelItem(
                     title: 'Total Balance',
                     subtitle:
-                        '${Utils.formatSmartDouble(totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(totalBalance)} $_resultSymbol',
+                        '${Utils.formatSmartDouble(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(_totalBalance)} $_resultSymbol',
                     value: 0,
                     comparator: 0,
                   ),
 
-                  _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(averageRate), value: 0, comparator: 0),
+                  _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(_averageRate), value: 0, comparator: 0),
 
-                  if (plPercentage != 0 && plPercentage.isFinite) ...[
-                    if (totalProfit != 0.0 && totalLoss != 0.0)
-                      _buildPanelItem(title: 'Profit', subtitle: Utils.formatSmartDouble(totalProfit), value: totalProfit, comparator: 0),
+                  if (_plPercentage != 0 && _plPercentage.isFinite) ...[
+                    if (_totalProfit != 0.0 && _totalLoss != 0.0)
+                      _buildPanelItem(title: 'Profit', subtitle: Utils.formatSmartDouble(_totalProfit), value: _totalProfit, comparator: 0),
 
-                    if (totalProfit != 0.0 && totalLoss != 0.0)
-                      _buildPanelItem(title: 'Loss', subtitle: Utils.formatSmartDouble(totalLoss), value: totalLoss, comparator: 0),
+                    if (_totalProfit != 0.0 && _totalLoss != 0.0)
+                      _buildPanelItem(title: 'Loss', subtitle: Utils.formatSmartDouble(_totalLoss), value: _totalLoss, comparator: 0),
 
                     _buildPanelItem(
                       title: 'Total P/L',
-                      subtitle: "${Utils.formatSmartDouble(totalPL)} $_sourceSymbol",
-                      value: plPercentage,
+                      subtitle: "${Utils.formatSmartDouble(_totalPL)} $_sourceSymbol",
+                      value: _plPercentage,
                       comparator: 0,
                     ),
 
                     _buildPanelItem(
                       title: 'P/L %',
-                      subtitle: '${Utils.formatSmartDouble(plPercentage, maxDecimals: 2)}%',
-                      value: plPercentage,
+                      subtitle: '${Utils.formatSmartDouble(_plPercentage, maxDecimals: 2)}%',
+                      value: _plPercentage,
                       comparator: 0,
                     ),
                   ],

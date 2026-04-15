@@ -35,16 +35,19 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
   double _capital = 0;
   double _balance = 0;
+  double _finalized = 0;
   double _profit = 0;
   double _profitPercentage = 0;
   double _rBalance = 0;
+  double _rFinalized = 0;
   double _rProfit = 0;
   double _rProfitPercentage = 0;
 
   Color _bgColor = AppTheme.rowHeaderBg;
   Color _fgColor = AppTheme.text;
 
-  Map<int, double> _branchAmounts = {};
+  Map<int, double> _activeBranchAmounts = {};
+  Map<int, double> _finalizedBranchAmounts = {};
 
   double _panelHeight = 40;
 
@@ -62,19 +65,11 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
     _txController.addListener(_onControllerChange);
 
-    if (_tx.statusEnum == TransactionStatus.inactive) {
-      _bgColor = AppTheme.mutedBg;
-      _fgColor = AppTheme.textMuted;
-    }
-    if (_tx.statusEnum == TransactionStatus.closed) {
-      _bgColor = AppTheme.closedBg;
-      _fgColor = AppTheme.textMuted;
-    }
-
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: 1.0);
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
 
     _calculateData();
+    _calculateColor();
   }
 
   @override
@@ -93,30 +88,41 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
     setState(() {
       _tx = ntx;
       _calculateData();
-      if (_tx.statusEnum == TransactionStatus.inactive) {
-        _bgColor = AppTheme.mutedBg;
-        _fgColor = AppTheme.textMuted;
-      } else if (_tx.statusEnum == TransactionStatus.closed) {
-        _bgColor = AppTheme.closedBg;
-        _fgColor = AppTheme.textMuted;
-      } else {
-        _bgColor = AppTheme.rowHeaderBg;
-        _fgColor = AppTheme.text;
-      }
+      _calculateColor();
     });
+  }
+
+  void _calculateColor() {
+    if (_tx.statusEnum == TransactionStatus.inactive) {
+      _bgColor = AppTheme.mutedBg;
+      _fgColor = AppTheme.textMuted;
+    } else if (_tx.statusEnum == TransactionStatus.closed) {
+      _bgColor = AppTheme.closedBg;
+      _fgColor = AppTheme.textMuted;
+    } else if (_tx.statusEnum == TransactionStatus.finalized) {
+      _bgColor = AppTheme.finalizedBg;
+      _fgColor = AppTheme.textMuted;
+    } else {
+      _bgColor = AppTheme.rowHeaderBg;
+      _fgColor = AppTheme.text;
+    }
   }
 
   void _calculateData() {
     _hasLeaf = _txController.hasLeaf(_tx);
-    _branchAmounts = _txController.collectBranchActiveAmount(_tx);
+    _activeBranchAmounts = _txController.collectBranchActiveAmount(_tx);
+    _finalizedBranchAmounts = _txController.collectBranchFinalizedAmount(_tx);
 
     _capital = _tx.srAmount;
-    _balance = _branchAmounts[_tx.srId] ?? 0;
-    _profit = Math.subtract(_balance, _capital);
+    _balance = _activeBranchAmounts[_tx.srId] ?? 0;
+    _finalized = _activeBranchAmounts[_tx.srId] ?? 0;
+    _profit = Math.subtract((_balance + _finalized), _capital);
     _profitPercentage = (_capital == 0 ? 0 : (Math.divide(_profit, _capital) * 100)) as double;
 
-    _rBalance = Math.add(_branchAmounts[_tx.rrId] ?? 0, _tx.balance);
-    _rProfit = Math.subtract(_rBalance, _tx.rrAmount);
+    _rBalance = Math.add(_activeBranchAmounts[_tx.rrId] ?? 0, _tx.balance);
+    _rFinalized = _finalizedBranchAmounts[_tx.rrId] ?? 0;
+
+    _rProfit = Math.subtract((_rBalance + _rFinalized), _tx.rrAmount);
     _rProfitPercentage = (_tx.rrAmount == 0 ? 0 : (Math.divide(_rProfit, _tx.rrAmount) * 100)) as double;
 
     _leavesClosed = _txController.isClosedTerminals(_tx);
@@ -160,7 +166,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
             ),
             children: [
               LayoutId(id: 'left', child: _buildLeftGroup()),
-              if (_branchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
+              if (_activeBranchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
               if (!(!_hasLeaf || _balance <= 0)) LayoutId(id: 'right', child: _buildRightGroup()),
               LayoutId(
                 id: 'trailing',
@@ -186,6 +192,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   Widget _buildLeftGroup() {
     bool showBalance = _hasLeaf && _rBalance > 0 && _rBalance != _tx.balance;
     bool showAvailable = _tx.balance > 0;
+    bool showFinalized = _rFinalized != 0;
 
     Color plColor = _fgColor;
     if (_rProfitPercentage > 0) {
@@ -221,31 +228,28 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
           children: [
             WidgetsHeader(
               titleColor: _fgColor,
-              title: "${_tx.srAmountText} $srSymbol → ${_tx.rrAmountText} $rrSymbol",
-              subtitle: _tx.timestampAsFormattedDate,
+              title: "${_tx.srAmountText} → ${_tx.rrAmountText}",
+              subtitle: "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
               reversed: true,
             ),
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 
-            if (showAvailable)
-              WidgetsHeader(titleColor: _fgColor, title: "${_tx.balanceText} $rrSymbol", subtitle: "Available", reversed: true),
+            if (showAvailable) WidgetsHeader(titleColor: _fgColor, title: _tx.balanceText, subtitle: "Avail. $rrSymbol", reversed: true),
 
             if (showBalance)
-              WidgetsHeader(
-                titleColor: _fgColor,
-                title: "${Utils.formatSmartDouble(_rBalance)} $rrSymbol",
-                subtitle: "Balance",
-                reversed: true,
-              ),
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_rBalance), subtitle: "Bal. $rrSymbol", reversed: true),
+
+            if (showFinalized)
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_rFinalized), subtitle: "Fin. $rrSymbol", reversed: true),
 
             if (showBalance || _leavesClosed)
               WidgetsHeader(
                 titleColor: plColor,
                 title:
-                    "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)} $rrSymbol "
+                    "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)}"
                     "(${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
-                subtitle: "Return (%)",
+                subtitle: "P/L $rrSymbol (%)",
                 reversed: true,
               ),
           ],
@@ -288,24 +292,17 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
           mainAxisSize: MainAxisSize.min,
           spacing: 15,
           children: [
-            WidgetsHeader(
-              titleColor: _fgColor,
-              title: "${Utils.formatSmartDouble(_capital)} $srSymbol",
-              subtitle: "Capital",
-              reversed: true,
-            ),
-            WidgetsHeader(
-              titleColor: _fgColor,
-              title: "${Utils.formatSmartDouble(_balance)} $srSymbol",
-              subtitle: "Balance",
-              reversed: true,
-            ),
+            WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_capital), subtitle: "Cap. $srSymbol", reversed: true),
+            if (_balance > 0)
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_balance), subtitle: "Bal. $srSymbol", reversed: true),
+            if (_finalized > 0)
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_finalized), subtitle: "Fin. $srSymbol", reversed: true),
             WidgetsHeader(
               titleColor: plColor,
               title:
-                  "${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profit)} $srSymbol "
+                  "${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profit)}"
                   "(${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
-              subtitle: "Return (%)",
+              subtitle: "P/L $srSymbol (%)",
               reversed: true,
             ),
           ],
@@ -335,11 +332,11 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
         child: Row(
           spacing: 25,
           mainAxisSize: MainAxisSize.min,
-          children: _branchAmounts.entries.map((entry) {
+          children: _activeBranchAmounts.entries.map((entry) {
             final symbol = _cryptosController.getSymbol(entry.key) ?? '';
             final amount = Utils.formatSmartDouble(entry.value);
 
-            return WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: symbol, reversed: true);
+            return WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: "Bal. $symbol", reversed: true);
           }).toList(),
         ),
       ),

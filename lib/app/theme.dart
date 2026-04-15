@@ -28,6 +28,7 @@ class AppTheme {
   static const scrollbarBg = Color(0xFF2A354A);
   static const mutedBg = Color(0xFF292F3B);
   static const closedBg = Color(0xFF253442);
+  static const finalizedBg = Color(0xFF253446);
 
   static const red = Color(0xFF852424);
   static const darkRed = Color(0xFF641919);

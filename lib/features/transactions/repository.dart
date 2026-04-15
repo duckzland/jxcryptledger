@@ -7,6 +7,7 @@ import 'model.dart';
 import 'rules/close.dart';
 import 'rules/create.dart';
 import 'rules/delete.dart';
+import 'rules/finalize.dart';
 import 'rules/import.dart';
 import 'rules/refund.dart';
 import 'rules/trade.dart';
@@ -250,6 +251,22 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     await box.put(utx.tid, utx);
   }
 
+  Future<void> finalize(TransactionsModel tx) async {
+    canFinalize(tx);
+
+    if (tx.statusEnum != TransactionStatus.finalized) {
+      tx = tx.copyWith(status: TransactionStatus.finalized.index);
+    }
+
+    if (debugLogs) {
+      logln(
+        '[FINALIZING] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+      );
+    }
+
+    await box.put(tx.tid, tx);
+  }
+
   @override
   Future<void> import(String rawJson) async {
     final rule = TransactionsRulesImport();
@@ -476,6 +493,12 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
   bool canRefund(TransactionsModel tx, {bool? silent}) {
     final rules = TransactionsRulesRefund(tx, this, silent ?? !debugLogs);
+    final isValid = rules.validate();
+    return isValid;
+  }
+
+  bool canFinalize(TransactionsModel tx, {bool? silent}) {
+    final rules = TransactionsRulesFinalize(tx, this, silent ?? !debugLogs);
     final isValid = rules.validate();
     return isValid;
   }

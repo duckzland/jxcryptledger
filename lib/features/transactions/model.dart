@@ -5,7 +5,7 @@ import '../../core/abstracts/models/with_id.dart';
 import '../../core/abstracts/models/rateable.dart';
 import '../../core/utils.dart';
 
-enum TransactionStatus { inactive, active, partial, closed, unknown }
+enum TransactionStatus { inactive, active, partial, closed, finalized, unknown }
 
 class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreModelRateable {
   final String tid;
@@ -299,6 +299,8 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
         return TransactionStatus.partial;
       case 3:
         return TransactionStatus.closed;
+      case 4:
+        return TransactionStatus.finalized;
       default:
         return TransactionStatus.unknown;
     }
@@ -314,6 +316,8 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
         return 'Partial';
       case TransactionStatus.closed:
         return 'Closed';
+      case TransactionStatus.finalized:
+        return 'Finalized';
       case TransactionStatus.unknown:
         return 'Unknown';
     }
@@ -355,6 +359,10 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
 
   bool get isClosed {
     return statusEnum == TransactionStatus.closed;
+  }
+
+  bool get isFinalized {
+    return statusEnum == TransactionStatus.finalized;
   }
 
   bool get isRoot {
