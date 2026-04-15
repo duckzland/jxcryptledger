@@ -18,6 +18,8 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
   final void Function() onAction;
   final void Function()? onExit;
 
+  final bool? allowBalanceSnapshot;
+
   const TransactionsWidgetsButtons({
     super.key,
     required this.tx,
@@ -25,6 +27,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
     required this.cryptosController,
     required this.onAction,
     this.onExit,
+    this.allowBalanceSnapshot = false,
   });
 
   Future<void> _actionRefund(TransactionsModel tx) async {
@@ -61,7 +64,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
       spacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (tx.isRoot && hasTradeableLeaf)
+        if (allowBalanceSnapshot == true && tx.isRoot && hasTradeableLeaf)
           WidgetsDialogsShowForm(
             key: Key("balance-snapshot-button-${tx.tid}"),
             icon: Icons.insights,

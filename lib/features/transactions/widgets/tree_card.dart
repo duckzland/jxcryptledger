@@ -172,6 +172,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
                     txController: _txController,
                     onAction: _onAction,
                     onExit: _onExit,
+                    allowBalanceSnapshot: true,
                   ),
                 ),
               ),

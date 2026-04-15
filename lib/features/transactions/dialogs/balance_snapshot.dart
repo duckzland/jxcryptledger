@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/math.dart';
 import '../../../core/utils.dart';
+import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
@@ -44,7 +46,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   List<TransactionsModel> get tradableLeaves {
     final data = widget.initialData;
     if (data == null) return [];
-    return _txController.collectTradableLeaves(data);
+    final leaves = _txController.collectTradableLeaves(data);
+    if (data.isPartial) {
+      leaves.insert(0, data);
+    }
+    return leaves;
   }
 
   @override
@@ -69,7 +75,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
+        constraints: const BoxConstraints(maxWidth: 1200),
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -114,29 +120,38 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     return rows;
   }
 
-  String _getTotalAmount(List<TransactionsModel> txs) {
-    double total = 0.0;
-    String result = "";
+  double? _getTotalAmount(List<TransactionsModel> txs) {
+    double? total;
 
     for (final tx in txs) {
-      final rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+      double rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+
+      if (rate == -9999 && _cachedRates[tx.rrId] != null) {
+        rate = _cachedRates[tx.rrId]!;
+      }
+
       final amount = rate == -9999 ? 0.0 : tx.rrAmount * rate;
 
       if (rate != -9999) {
-        total += amount;
+        total = (total ?? 0.0) + amount;
       }
     }
 
-    if (total > 0) {
-      result = '${Utils.formatSmartDouble(total)} $tradeSourceSymbol';
-    }
-
-    return result;
+    return total;
   }
 
   Widget _buildTransactionsPanel() {
     final table = _buildRows(tradableLeaves);
-    final total = _getTotalAmount(tradableLeaves);
+    final ttl = _getTotalAmount(tradableLeaves);
+    int ttlRows = table.length;
+    String total = "";
+    double pl = 0.0;
+
+    if (ttl != null) {
+      total = '${Utils.formatSmartDouble(ttl)} $tradeSourceSymbol';
+      pl = Math.subtract(ttl, widget.initialData!.srAmount);
+      ttlRows += 1;
+    }
 
     return WidgetsPanel(
       padding: const EdgeInsets.all(12),
@@ -146,11 +161,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         children: [
           SizedBox(
             width: double.infinity,
-            height: ((table.length + 1) * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+            height: ((ttlRows) * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
               child: DataTable2(
-                minWidth: 1200,
+                minWidth: 800,
                 columnSpacing: 12,
                 horizontalMargin: 12,
                 headingRowHeight: AppTheme.tableHeadingRowHeight,
@@ -161,7 +176,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
                   DataColumn2(label: Text('Date '), fixedWidth: 100),
                   DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
                   DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
-                  DataColumn2(label: Text('Amount '), size: ColumnSize.M),
+                  DataColumn2(label: Text('Amount '), size: ColumnSize.S),
                 ],
                 rows: [
                   ...table.map((r) {
@@ -174,15 +189,16 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
                       ],
                     );
                   }),
-                  DataRow(
-                    color: WidgetStateProperty.all(AppTheme.headerBg),
-                    cells: [
-                      DataCell(Text('')),
-                      DataCell(Text('')),
-                      DataCell(Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataCell(Text(total, style: TextStyle(fontWeight: FontWeight.bold))),
-                    ],
-                  ),
+                  if (ttl != null)
+                    DataRow(
+                      color: WidgetStateProperty.all(AppTheme.headerBg),
+                      cells: [
+                        DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDouble(pl)} $tradeSourceSymbol", value: pl, comparator: 0)),
+                        DataCell(Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataCell(Text(total, style: TextStyle(fontWeight: FontWeight.bold))),
+                      ],
+                    ),
                 ],
               ),
             ),
