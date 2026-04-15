@@ -395,6 +395,28 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
               actionSuccessMessage: "All transactions closed.",
               actionErrorMessage: "Failed to close transactions.",
             ),
+            WidgetsDialogsAlert(
+              key: Key("finalize-button-batch"),
+              icon: Icons.close_fullscreen,
+              initialState: WidgetsButtonActionState.warning,
+              tooltip: "Finalize all finalizable transactions",
+              evaluator: (s) {
+                final bool isFinalizable = _txController.hasFinalizable();
+                if (!isFinalizable) {
+                  s.disable();
+                } else {
+                  s.warning();
+                }
+              },
+              dialogTitle: "Finalize All Transactions",
+              dialogMessage:
+                  "Are you sure you want to finalize all finalizable transactions?\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Finalize",
+              actionStartCallback: _txController.finalizeAll,
+              actionSuccessMessage: "All transactions finalized.",
+              actionErrorMessage: "Failed to finalize transactions.",
+            ),
             WidgetsDialogsShowForm(
               key: const Key("add-button"),
               tooltip: "Add new transaction",

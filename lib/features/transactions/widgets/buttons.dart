@@ -53,6 +53,8 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
     final isDeletable = txController.isDeletable(tx);
     final isUpdatable = txController.isUpdatable(tx);
     final isRefundable = txController.isRefundable(tx);
+    final isFinalizable = txController.isFinalizable(tx);
+
     final hasLeaf = txController.hasLeaf(tx);
     final hasTradeableLeaf = txController.hasTradeableLeaf(tx);
     final ptx = txController.getParent(tx);
@@ -189,6 +191,24 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
             actionCallback: txController.closeLeaf,
             actionCompleteCallback: onAction,
             actionSuccessMessage: "${tx.srAmountText} - ${tx.balanceText} transaction closed.",
+          ),
+
+        if (isFinalizable)
+          WidgetsDialogsAlert(
+            key: Key("finalize-button-${tx.tid}"),
+            icon: Icons.close_fullscreen,
+            initialState: WidgetsButtonActionState.warning,
+            tooltip: "Finalize this transaction",
+            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+            iconSize: 18,
+            minimumSize: const Size(34, 34),
+            dialogTitle: "Finalize Transaction",
+            dialogMessage: "Are you sure you want to finalize this transaction?",
+            dialogConfirmLabel: "finalize",
+            actionData: tx,
+            actionCallback: txController.finalize,
+            actionCompleteCallback: onAction,
+            actionSuccessMessage: "${tx.srAmountText} - ${tx.balanceText} transaction finalized.",
           ),
       ],
     );

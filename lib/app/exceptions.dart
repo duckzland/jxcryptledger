@@ -48,6 +48,8 @@ class AppErrorCode {
   static const int txUpdateClosableLeafRequiresTarget = 1116;
   static const int txUpdateNotClosableRootAllClosed = 1117;
   static const int txUpdateNotClosableLeafActiveTarget = 1118;
+  static const int txUpdateFinalizableRequiresInactiveLeaves = 1119;
+  static const int txUpdateFinalizableRequiresActive = 1120;
 
   static const int txCloseNotLeaf = 1201;
   static const int txCloseNotActive = 1202;

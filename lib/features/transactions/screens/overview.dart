@@ -32,18 +32,21 @@ class TransactionsOverview extends StatefulWidget {
 
 class _TransactionsOverviewState extends State<TransactionsOverview>
     with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsOverview> {
+  final TransactionCalculation _calc = TransactionCalculation();
+
   late final CryptosController _cryptosController;
   late final TransactionsController _txController;
 
   late String _resultSymbol;
-
-  final TransactionCalculation _calc = TransactionCalculation();
+  late List<TransactionsModel> txs;
 
   bool _isDeletable = false;
   bool _isClosable = false;
+  bool _isFinalizable = false;
 
   double _totalCapital = 0;
   double _currentHolding = 0;
+  double _finalizedBalance = 0;
   double _profitLoss = 0;
   double _profitLossPercentage = 0;
 
@@ -54,17 +57,18 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   void initState() {
     super.initState();
 
+    txs = widget.transactions;
     _txController = locator<TransactionsController>();
 
     _cryptosController = locator<CryptosController>();
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
-    rows = _buildRows(widget.transactions);
+    rows = _buildRows();
 
-    onSort((d) => d['_timestamp'] as int, sortColumnIndex, sortAscending);
-
+    _applySorting();
     _checkForClosable();
     _checkForDeletable();
+    _checkForFinalizable();
     _calculateProfitLoss();
   }
 
@@ -78,10 +82,18 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.transactions != widget.transactions && mounted) {
-      _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
-      rows = _buildRows(widget.transactions);
-      _applySorting();
-      setState(() {});
+      setState(() {
+        txs = widget.transactions;
+        rows = _buildRows();
+        _applySorting();
+
+        _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
+
+        _checkForClosable();
+        _checkForDeletable();
+        _checkForFinalizable();
+        _calculateProfitLoss();
+      });
     }
   }
 
@@ -112,7 +124,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   }
 
   void _calculateProfitLoss() {
-    if (widget.transactions.isEmpty) {
+    if (txs.isEmpty) {
       return;
     }
 
@@ -125,30 +137,26 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
       }
     }
 
-    final balance = _calc.totalBalance(widget.transactions);
-    final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(balance, capital), capital) * 100);
+    final finalizedBalance = _calc.totalFinalizedBalance(txs);
+    final balance = _calc.totalActiveBalance(txs);
+    final totalBalance = Math.add(balance, finalizedBalance);
+    final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(totalBalance, capital), capital) * 100);
 
-    if (mounted) {
-      setState(() {
-        _totalCapital = capital;
-        _currentHolding = balance;
-        _profitLoss = Math.subtract(balance, capital);
-        _profitLossPercentage = profitPercentage;
-      });
-    }
+    _totalCapital = capital;
+    _currentHolding = balance;
+    _finalizedBalance = finalizedBalance;
+    _profitLoss = Math.subtract(totalBalance, capital);
+    _profitLossPercentage = profitPercentage;
   }
 
   void _checkForClosable() {
-    final txs = widget.transactions;
+    _isClosable = false;
+
     for (final tx in txs) {
-      if (tx.isRoot) continue;
-      if (!tx.isActive) continue;
       try {
         final closable = _txController.isClosable(tx);
         if (closable) {
-          setState(() {
-            _isClosable = true;
-          });
+          _isClosable = true;
           break;
         }
       } catch (_) {
@@ -158,16 +166,29 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   }
 
   void _checkForDeletable() {
-    final txs = widget.transactions;
+    _isDeletable = false;
+
     for (final tx in txs) {
-      if (tx.isLeaf) continue;
-      if (!tx.isActive) continue;
       try {
         final deletable = _txController.isDeletable(tx);
         if (deletable) {
-          setState(() {
-            _isDeletable = true;
-          });
+          _isDeletable = true;
+          break;
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
+  void _checkForFinalizable() {
+    _isFinalizable = false;
+
+    for (final tx in txs) {
+      try {
+        final finalizable = _txController.isFinalizable(tx);
+        if (finalizable) {
+          _isFinalizable = true;
           break;
         }
       } catch (_) {
@@ -177,10 +198,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   }
 
   Future<void> _closeTransactions() async {
-    final txs = widget.transactions;
     for (final tx in txs) {
-      if (tx.isRoot) continue;
-      if (!tx.isActive) continue;
       try {
         await _txController.closeLeaf(tx);
       } catch (_) {
@@ -189,11 +207,18 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     }
   }
 
-  Future<void> _deleteTransactions() async {
-    final txs = widget.transactions;
+  Future<void> _finalizeTransactions() async {
     for (final tx in txs) {
-      if (tx.isLeaf) continue;
-      if (!tx.isActive) continue;
+      try {
+        await _txController.finalize(tx);
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
+  Future<void> _deleteTransactions() async {
+    for (final tx in txs) {
       try {
         await _txController.remove(tx);
       } catch (_) {
@@ -202,7 +227,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     }
   }
 
-  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
+  List<Map<String, dynamic>> _buildRows() {
     final rows = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
@@ -304,11 +329,31 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                   "This action cannot be undone.",
               dialogConfirmLabel: "Close",
               actionStartCallback: _closeTransactions,
-              actionCompleteCallback: () => setState(() {
-                _isClosable = false;
-              }),
               actionSuccessMessage: "All transactions closed.",
               actionErrorMessage: "Failed to close transactions.",
+            ),
+
+            WidgetsDialogsAlert(
+              icon: Icons.close_fullscreen,
+              padding: const EdgeInsets.all(0),
+              iconSize: 18,
+              initialState: WidgetsButtonActionState.warning,
+              tooltip: "Finalize all finalizable transactions found in this group",
+              evaluator: (s) {
+                if (!_isFinalizable) {
+                  s.disable();
+                } else {
+                  s.warning();
+                }
+              },
+              dialogTitle: "Finalize Transactions",
+              dialogMessage:
+                  "Are you sure you want to finalize all finalizable transactions found in this group?\n"
+                  "This action cannot be undone.",
+              dialogConfirmLabel: "Finalize",
+              actionStartCallback: _finalizeTransactions,
+              actionSuccessMessage: "All transactions finalized.",
+              actionErrorMessage: "Failed to finalize transactions.",
             ),
 
             WidgetsDialogsAlert(
@@ -330,9 +375,6 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                   "This action cannot be undone.",
               dialogConfirmLabel: "Delete",
               actionStartCallback: _deleteTransactions,
-              actionCompleteCallback: () => setState(() {
-                _isDeletable = false;
-              }),
               actionSuccessMessage: "All transactions deleted.",
               actionErrorMessage: "Failed to delete transactions.",
             ),
@@ -363,12 +405,20 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                       value: 0,
                       comparator: 0,
                     ),
-                  _buildPanelItem(
-                    title: "Current Balance",
-                    subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
-                    value: 0,
-                    comparator: 0,
-                  ),
+                  if (_currentHolding > 0)
+                    _buildPanelItem(
+                      title: "Current Balance",
+                      subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
+                      value: 0,
+                      comparator: 0,
+                    ),
+                  if (_finalizedBalance > 0)
+                    _buildPanelItem(
+                      title: "Finalized Balance",
+                      subtitle: "${Utils.formatSmartDouble(_finalizedBalance)} $_resultSymbol",
+                      value: 0,
+                      comparator: 0,
+                    ),
                   if (_totalCapital > 0)
                     _buildPanelItem(
                       title: "Profit/Loss",
@@ -437,7 +487,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
               onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
             ),
             DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
-            DataColumn2(label: Text('Actions'), fixedWidth: 130),
+            DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
 
           rows: rows.map((r) {
@@ -455,7 +505,6 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                     txController: _txController,
                     onAction: () {
                       widget.onStatusChanged();
-                      setState(() {});
                     },
                   ),
                 ),

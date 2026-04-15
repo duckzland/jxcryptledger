@@ -71,7 +71,9 @@ abstract class TransactionsRulesBase {
 
   void txCheckTerminalIsClosed(int code, String message) {
     final terminals = terminalLeaves;
-    final allClosed = terminals.isEmpty || terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final allClosed =
+        terminals.isEmpty ||
+        terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.finalized);
 
     if (!allClosed) {
       throw ValidationException(code, "$mode active terminal is not all closed (tid=${tx.tid})", message, silent: silent);
@@ -80,7 +82,9 @@ abstract class TransactionsRulesBase {
 
   void txCheckTerminalIsNotAllClosed(int code, String message) {
     final terminals = terminalLeaves;
-    final allClosed = terminals.isEmpty || terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+    final allClosed =
+        terminals.isEmpty ||
+        terminals.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.finalized);
 
     if (allClosed) {
       throw ValidationException(code, "$mode active terminal is all closed (tid=${tx.tid})", message, silent: silent);
@@ -91,7 +95,12 @@ abstract class TransactionsRulesBase {
     final leaves = tx.isRoot ? allRootLeaves : allLeaves;
     final allInactive =
         leaves.isEmpty ||
-        leaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed || leaf.statusEnum == TransactionStatus.inactive);
+        leaves.every(
+          (leaf) =>
+              leaf.statusEnum == TransactionStatus.closed ||
+              leaf.statusEnum == TransactionStatus.inactive ||
+              leaf.statusEnum == TransactionStatus.finalized,
+        );
 
     if (!allInactive) {
       throw ValidationException(code, "$mode some leaves are still active (tid=${tx.tid})", message, silent: silent);
@@ -143,7 +152,7 @@ abstract class TransactionsRulesBase {
     final TransactionsModel? otx = origTx;
 
     if (otx != null && !otx.isActive) {
-      throw ValidationException(code, "$mode leaf closable requires active (tid=${tx.tid})", message, silent: silent);
+      throw ValidationException(code, "$mode leaf requires active (tid=${tx.tid})", message, silent: silent);
     }
   }
 

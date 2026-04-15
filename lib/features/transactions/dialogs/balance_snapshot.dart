@@ -32,6 +32,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
   final Map<int, double> _cachedRates = {};
 
+  double get tradeCapital {
+    final data = widget.initialData;
+    return data?.srAmount ?? 0;
+  }
+
   String get tradeSourceSymbol {
     final data = widget.initialData;
     if (data == null) return "";
@@ -124,7 +129,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountText} $sourceSymbol \u203A ${tx.balanceText} $resultSymbol',
+        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol',
         'rate': rate == -9999 ? "" : "1 $resultSymbol = ${Utils.formatSmartDouble(rate)} $tradeSourceSymbol",
         'amount': rate == -9999 ? "" : "${Utils.formatSmartDouble(amount)} $tradeSourceSymbol",
         'tx': tx,
@@ -157,14 +162,15 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   Widget _buildTransactionsPanel() {
     final table = _buildRows(tradableLeaves);
     final ttl = _getTotalAmount(tradableLeaves);
+
     int ttlRows = table.length;
     String total = "";
     double pl = 0.0;
 
     if (ttl != null) {
       total = '${Utils.formatSmartDouble(ttl)} $tradeSourceSymbol';
-      pl = Math.subtract(ttl, widget.initialData!.srAmount);
-      ttlRows += 1;
+      pl = Math.subtract(ttl, tradeCapital);
+      ttlRows += 2;
     }
 
     return WidgetsPanel(
@@ -190,7 +196,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
                   DataColumn2(label: Text('Date '), fixedWidth: 100),
                   DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
                   DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
-                  DataColumn2(label: Text('Amount '), size: ColumnSize.S),
+                  DataColumn2(label: Text('Return '), size: ColumnSize.S),
                 ],
                 rows: [
                   ...table.map((r) {
@@ -207,10 +213,25 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
                     DataRow(
                       color: WidgetStateProperty.all(AppTheme.headerBg),
                       cells: [
+                        DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataCell(
+                          Text(
+                            "${Utils.formatSmartDouble(tradeCapital)} $tradeSourceSymbol",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataCell(Text(total, style: TextStyle(fontWeight: FontWeight.bold))),
+                      ],
+                    ),
+                  if (ttl != null)
+                    DataRow(
+                      color: WidgetStateProperty.all(AppTheme.headerBg),
+                      cells: [
                         DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
                         DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDouble(pl)} $tradeSourceSymbol", value: pl, comparator: 0)),
-                        DataCell(Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataCell(Text(total, style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
                 ],

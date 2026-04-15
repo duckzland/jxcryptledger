@@ -15,7 +15,7 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
 
     otxCheckAllowChangeSrOrRrFields(
       AppErrorCode.txUpdateCannotChangeSrRr,
-      "This transaction cannot change its accounts or amounts because related transactions depend on it.",
+      "This transaction cannot change its coin type or amounts because related transactions depend on it.",
     );
 
     otxCheckSufficientBalance(
@@ -73,6 +73,15 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
           txCheckIsRoot(AppErrorCode.txUpdateClosedRoot, "This transaction cannot be closed directly.");
 
           txCheckIsClosable(AppErrorCode.txUpdateClosedRequiresTarget, "This transaction is not ready to be closed yet.");
+          break;
+
+        case TransactionStatus.finalized:
+          otxCheckIsActive(AppErrorCode.txUpdateFinalizableRequiresActive, "Transaction must be active for finalization.");
+          txCheckLeavesIsNotActive(
+            AppErrorCode.txUpdateFinalizableRequiresInactiveLeaves,
+            "This transaction cannot be finalized because it has active child transaction.",
+          );
+
           break;
 
         case TransactionStatus.unknown:

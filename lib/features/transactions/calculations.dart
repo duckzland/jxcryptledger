@@ -41,6 +41,14 @@ class TransactionCalculation {
     return txs.fold<double>(0, (sum, tx) => Math.add(sum, tx.balance));
   }
 
+  double totalActiveBalance(List<TransactionsModel> txs) {
+    return txs.fold<double>(0, (sum, tx) => Math.add(sum, (tx.isActive || tx.isPartial) ? tx.balance : 0.0));
+  }
+
+  double totalFinalizedBalance(List<TransactionsModel> txs) {
+    return txs.fold<double>(0, (sum, tx) => Math.add(sum, (tx.isFinalized) ? tx.balance : 0.0));
+  }
+
   double averageProfitLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
     if (txs.isEmpty) return 0.0;
 
@@ -54,7 +62,14 @@ class TransactionCalculation {
     double totalPL = 0;
 
     for (final tx in txs) {
-      final currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+      if (tx.isClosed || tx.balance == 0) {
+        continue;
+      }
+
+      double currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+      if (tx.isFinalized) {
+        currentValue = tx.balance;
+      }
 
       totalPL = Math.add(totalPL, Math.subtract(currentValue, tx.srAmount));
     }
@@ -68,7 +83,15 @@ class TransactionCalculation {
     double totalPL = 0;
 
     for (final tx in txs) {
-      final currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+      if (tx.isClosed || tx.balance == 0) {
+        continue;
+      }
+
+      double currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+      if (tx.isFinalized) {
+        currentValue = tx.balance;
+      }
+
       final pol = Math.subtract(currentValue, tx.srAmount);
       if (pol > 0) {
         totalPL = Math.add(totalPL, pol);
@@ -84,7 +107,15 @@ class TransactionCalculation {
     double totalPL = 0;
 
     for (final tx in txs) {
-      final currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+      if (tx.isClosed || tx.balance == 0) {
+        continue;
+      }
+
+      double currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+      if (tx.isFinalized) {
+        currentValue = tx.balance;
+      }
+
       final pol = Math.subtract(currentValue, tx.srAmount);
       if (pol < 0) {
         totalPL = Math.add(totalPL, pol);

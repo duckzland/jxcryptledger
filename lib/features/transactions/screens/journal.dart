@@ -22,9 +22,15 @@ class TransactionsJournalView extends StatefulWidget {
   State<TransactionsJournalView> createState() => _TransactionsJournalViewState();
 }
 
-class _TransactionsJournalViewState extends State<TransactionsJournalView> with MixinsSortableTable<TransactionsJournalView> {
+class _TransactionsJournalViewState extends State<TransactionsJournalView>
+    with AutomaticKeepAliveClientMixin, MixinsSortableTable<TransactionsJournalView> {
   late final TransactionsController _txController;
   late final CryptosController _cryptosController;
+
+  late List<TransactionsModel> txs;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -32,9 +38,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> with 
     _txController = locator<TransactionsController>();
     _cryptosController = locator<CryptosController>();
 
-    rows = _buildRows(widget.transactions);
-
-    onSort((d) => d['_timestamp'] as int, sortColumnIndex, sortAscending);
+    txs = widget.transactions;
+    rows = _buildRows();
+    _applySorting();
   }
 
   @override
@@ -42,11 +48,11 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> with 
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.transactions != widget.transactions) {
-      rows = _buildRows(widget.transactions);
-
-      _applySorting();
-
-      setState(() {});
+      setState(() {
+        txs = widget.transactions;
+        rows = _buildRows();
+        _applySorting();
+      });
     }
   }
 
@@ -77,8 +83,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> with 
     }
   }
 
-  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
+  List<Map<String, dynamic>> _buildRows() {
     final rows = <Map<String, dynamic>>[];
+
     for (final tx in txs) {
       final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
@@ -106,7 +113,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> with 
 
   @override
   Widget build(BuildContext context) {
-    final table = rows;
+    super.build(context);
 
     return WidgetsPanel(
       child: Column(
@@ -148,9 +155,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView> with 
                     fixedWidth: 100,
                     onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc),
                   ),
-                  const DataColumn2(label: Text('Actions'), fixedWidth: 130),
+                  const DataColumn2(label: Text('Actions'), fixedWidth: 160),
                 ],
-                rows: table.map((r) {
+                rows: rows.map((r) {
                   return DataRow(
                     cells: [
                       DataCell(Text(r['date'] ?? '')),

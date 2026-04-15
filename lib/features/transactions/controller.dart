@@ -29,6 +29,11 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     load();
   }
 
+  Future<void> finalize(TransactionsModel tx) async {
+    await repo.finalize(tx);
+    load();
+  }
+
   TransactionsModel? getParent(TransactionsModel tx) {
     return repo.get(tx.pid);
   }
@@ -81,6 +86,29 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     load();
   }
 
+  Future<void> finalizeAll() async {
+    final terminals = repo.collectAllTerminalLeaves();
+    final all = repo.extract();
+
+    // Always close terminals first!
+    final txs = [...terminals, ...all];
+
+    for (final tx in txs) {
+      final bool finalizable;
+      try {
+        finalizable = isFinalizable(tx);
+      } catch (_) {
+        continue;
+      }
+
+      if (!finalizable) continue;
+
+      await repo.finalize(tx);
+    }
+
+    load();
+  }
+
   bool hasLeaf(TransactionsModel tx) {
     final leaf = repo.getLeaf(tx);
     return leaf.isNotEmpty;
@@ -112,6 +140,25 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     for (final tx in leaves) {
       try {
         repo.canClose(tx, silent: true);
+        return true;
+      } catch (_) {
+        // Ignore failures and continue
+      }
+    }
+
+    return false;
+  }
+
+  bool hasFinalizable() {
+    final txs = repo.extract();
+
+    if (txs.isEmpty) {
+      return false;
+    }
+
+    for (final tx in txs) {
+      try {
+        repo.canFinalize(tx, silent: true);
         return true;
       } catch (_) {
         // Ignore failures and continue
@@ -205,6 +252,17 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     }
   }
 
+  bool isFinalizable(TransactionsModel tx) {
+    try {
+      repo.canFinalize(tx, silent: true);
+      return true;
+    } on ValidationException catch (_) {
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   bool isClosedTerminals(TransactionsModel tx) {
     final leaves = repo.collectTerminalLeaves(tx);
 
@@ -260,6 +318,21 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
 
     for (final rtx in txs) {
       if ((rtx.isActive || rtx.isPartial) && rtx.tid != tx.tid) {
+        final key = rtx.rrId;
+        branchAmounts[key] = (branchAmounts[key] ?? 0) + rtx.balance;
+      }
+    }
+
+    return branchAmounts;
+  }
+
+  Map<int, double> collectBranchFinalizedAmount(TransactionsModel tx) {
+    final txs = repo.collectAllLeaves(tx);
+
+    final Map<int, double> branchAmounts = {};
+
+    for (final rtx in txs) {
+      if ((rtx.isFinalized) && rtx.tid != tx.tid) {
         final key = rtx.rrId;
         branchAmounts[key] = (branchAmounts[key] ?? 0) + rtx.balance;
       }
