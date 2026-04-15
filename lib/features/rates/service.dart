@@ -64,7 +64,7 @@ class RatesService {
     _queue.add((sourceId, targetId));
 
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), _processQueue);
+    _debounce = Timer(const Duration(milliseconds: 100), _processQueue);
   }
 
   void _startWatchdog() {
