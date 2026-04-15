@@ -53,6 +53,11 @@ class RatesService {
   }
 
   double getStoredRate(int sourceId, int targetId) {
+    // Source and target is the same coin the rate is always 1
+    if (sourceId == targetId) {
+      return 1;
+    }
+
     _validateIds(sourceId, targetId);
     final existing = ratesRepo.getPair(sourceId, targetId);
     return existing?.rate.toDouble() ?? -9999;
@@ -60,11 +65,14 @@ class RatesService {
 
   void addQueue(int sourceId, int targetId) {
     if (!_isValidPair(sourceId, targetId)) return;
+    if (_queue.contains((sourceId, targetId))) return;
+
+    // logln("[RATES] Adding to queue $sourceId - $targetId");
 
     _queue.add((sourceId, targetId));
 
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 100), _processQueue);
+    _debounce = Timer(const Duration(milliseconds: 10), _processQueue);
   }
 
   void _startWatchdog() {
@@ -117,6 +125,7 @@ class RatesService {
   bool _isValidPair(int sourceId, int targetId) {
     if (sourceId == 0 || targetId == 0) return false;
     if (cryptosRepo.isEmpty()) return false;
+    if (sourceId == targetId) return false;
 
     final ids = cryptosRepo.extract().map((c) => c.uuid).toSet();
     return ids.contains(sourceId) && ids.contains(targetId);

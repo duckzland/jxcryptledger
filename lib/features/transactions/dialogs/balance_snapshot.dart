@@ -58,6 +58,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     super.initState();
 
     _rateController.addListener(_onControllerChanged);
+    _populateRates();
   }
 
   @override
@@ -67,7 +68,20 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   }
 
   void _onControllerChanged() {
+    if (!mounted) return;
     setState(() {});
+  }
+
+  void _populateRates() {
+    for (final tx in tradableLeaves) {
+      double rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+
+      if (rate == -9999) {
+        _rateController.addQueue(tx.rrId, tradeSourceId);
+      } else {
+        _cachedRates[tx.rrId] = rate;
+      }
+    }
   }
 
   @override
@@ -96,10 +110,9 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     for (final tx in txs) {
       final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-
       double rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+
       if (rate == -9999) {
-        _rateController.addQueue(tx.rrId, tradeSourceId);
         if (_cachedRates[tx.rrId] != null) {
           rate = _cachedRates[tx.rrId]!;
         }
@@ -117,6 +130,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         'tx': tx,
       });
     }
+
     return rows;
   }
 
