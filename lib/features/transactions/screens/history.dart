@@ -2,7 +2,10 @@ import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/locator.dart';
 import '../../../widgets/panel.dart';
+import '../../cryptos/controller.dart';
+import '../controller.dart';
 import '../model.dart';
 import '../widgets/tree_card.dart';
 
@@ -17,9 +20,13 @@ class TransactionHistory extends StatefulWidget {
 }
 
 class _TransactionHistoryState extends State<TransactionHistory> {
+  final CryptosController _cryptosController = locator<CryptosController>();
+  final TransactionsController _txController = locator<TransactionsController>();
+
   late IndexedTreeNode<TransactionsModel> _root;
   late Map<String, IndexedTreeNode<TransactionsModel>> _nodes;
   late int _sortMode = widget.sortMode;
+  TreeViewController<TransactionsModel, IndexedTreeNode<TransactionsModel>>? scrollController;
 
   @override
   void initState() {
@@ -32,6 +39,10 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     super.didUpdateWidget(oldWidget);
 
     if (!mounted) {
+      return;
+    }
+
+    if (_txController.isBothEqual(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
@@ -55,9 +66,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       return;
     }
 
-    if (oldWidget.transactions != widget.transactions) {
-      updateTree(oldWidget.transactions, widget.transactions);
-    }
+    updateTree(oldWidget.transactions, widget.transactions);
   }
 
   void updateTree(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
@@ -95,8 +104,12 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
         switch (_sortMode) {
           case 0:
+            final symbol = _cryptosController.getSymbol(tx.srId) ?? tx.srId.toString();
             final children = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
-            final idx = children.indexWhere((c) => c.data!.srId.compareTo(tx.srId) > 0);
+            final idx = children.indexWhere((c) {
+              final symbolA = _cryptosController.getSymbol(c.data!.srId) ?? c.data!.srId.toString();
+              return symbol.trim().toLowerCase().characters.first.compareTo(symbolA.trim().toLowerCase().characters.first) < 0;
+            });
             if (idx == -1) {
               parent.add(node);
             } else {
@@ -111,6 +124,13 @@ class _TransactionHistoryState extends State<TransactionHistory> {
           case 2:
             parent.insert(0, node);
             break;
+        }
+
+        // This tree package is buggy, "Root" wont got scrolled when added while "leaves" does.
+        if (tx.isRoot) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            scrollController?.scrollToItem(node);
+          });
         }
       }
     }
@@ -147,6 +167,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
               alignment: Alignment.topRight,
             ),
             onTreeReady: (controller) {
+              scrollController = controller;
               Future.delayed(const Duration(milliseconds: 100), () {
                 if (!mounted) return;
 

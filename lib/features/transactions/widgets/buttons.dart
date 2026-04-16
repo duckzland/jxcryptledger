@@ -97,7 +97,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
               return TransactionFormEdit(
                 initialData: tx,
                 parent: ptx,
-                onSave: (e) => doFormSave<TransactionsModel>(
+                onSave: (e, stx) => doFormSave<TransactionsModel>(
                   context,
                   dialogContext: dialogContext,
                   onComplete: onAction,
@@ -124,7 +124,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
               return TransactionFormTrade(
                 initialData: tx,
                 parent: ptx,
-                onSave: (e) => doFormSave<TransactionsModel>(
+                onSave: (e, stx) => doFormSave<TransactionsModel>(
                   context,
                   dialogContext: dialogContext,
                   onComplete: onAction,

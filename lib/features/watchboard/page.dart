@@ -6,6 +6,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../core/locator.dart';
+import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
@@ -19,6 +20,7 @@ import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
 import '../cryptos/controller.dart';
+import 'panels/model.dart';
 import 'tickers/controller.dart';
 import 'panels/controller.dart';
 import 'panels/form.dart';
@@ -36,6 +38,9 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
   late final PanelsController _pxController;
   late final TickersController _tixController;
   late final CryptosController _cryptosController;
+
+  final scrollUtil = ScrollTo();
+  late List<PanelsModel> txs;
 
   bool _enableDrag = false;
   bool _enableTickers = true;
@@ -61,21 +66,31 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
 
     _hasLinked = _pxController.hasLinked();
 
+    txs = _pxController.items;
+
     registerBars("Crypto Watchboard");
   }
 
   @override
   void dispose() {
+    scrollUtil.dispose();
+
     _pxController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
     _tixController.removeListener(_onControllerChanged);
+
     super.dispose();
   }
 
   void _onControllerChanged() {
     if (mounted) {
       setState(() {
+        final ntx = _pxController.findNew(txs);
+        txs = _pxController.items;
         _hasLinked = _pxController.hasLinked();
+        if (ntx != null) {
+          scrollUtil.toEnd();
+        }
       });
 
       AppLayout.refreshBar?.call();
@@ -294,10 +309,10 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
   }
 
   Widget _buildPanels() {
-    final items = _pxController.items.toList();
-    items.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
+    txs.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
 
     return ReorderableGridView.builder(
+      controller: scrollUtil.controller,
       padding: EdgeInsets.only(bottom: 12),
       gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
@@ -308,22 +323,22 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
       ),
       dragEnabled: _enableDrag,
       dragStartDelay: Duration(microseconds: 10),
-      itemCount: items.length,
+      itemCount: txs.length,
       itemBuilder: (context, index) {
-        final tx = items[index];
+        final tx = txs[index];
         return PanelsDisplay(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
       },
       dragWidgetBuilder: (index, child) {
         return Material(color: Colors.transparent, elevation: 0, child: child);
       },
       onReorder: (oldIndex, newIndex) {
-        final moved = items.removeAt(oldIndex);
-        items.insert(newIndex, moved);
+        final moved = txs.removeAt(oldIndex);
+        txs.insert(newIndex, moved);
 
-        for (var i = 0; i < items.length; i++) {
-          items[i].order = i;
+        for (var i = 0; i < txs.length; i++) {
+          txs[i].order = i;
         }
-        _pxController.updateOrder(items);
+        _pxController.updateOrder(txs);
       },
     );
   }

@@ -14,7 +14,7 @@ import '../controller.dart';
 import '../model.dart';
 
 class TransactionFormEdit extends StatefulWidget {
-  final void Function(Object? error)? onSave;
+  final void Function(Object? error, TransactionsModel? tx)? onSave;
   final TransactionsModel? initialData;
   final TransactionsModel? parent;
 
@@ -92,11 +92,11 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
         meta: _saveNotesField(),
       );
       await _txController.update(tx);
-      widget.onSave?.call(null);
+      widget.onSave?.call(null, tx);
     } on ValidationException catch (e) {
-      widget.onSave?.call(e);
+      widget.onSave?.call(e, null);
     } catch (e) {
-      widget.onSave?.call(e);
+      widget.onSave?.call(e, null);
     }
   }
 

@@ -5,6 +5,8 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T> {
   int sortColumnIndex = 0;
   bool sortAscending = false;
 
+  late Map<int, Function(int col, bool asc)> sorters = {};
+
   void onSort<U>(U Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
     setState(() {
       rows.sort((a, b) {
@@ -27,5 +29,15 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T> {
       sortColumnIndex = columnIndex;
       sortAscending = ascending;
     });
+  }
+
+  void applySorting() {
+    final col = sortColumnIndex;
+    final asc = sortAscending;
+
+    final sorter = sorters[col];
+    if (sorter != null) {
+      sorter(col, asc);
+    }
   }
 }

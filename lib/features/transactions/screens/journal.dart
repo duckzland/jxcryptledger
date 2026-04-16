@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/scrollto.dart';
+import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
@@ -23,11 +25,17 @@ class TransactionsJournalView extends StatefulWidget {
 }
 
 class _TransactionsJournalViewState extends State<TransactionsJournalView>
-    with AutomaticKeepAliveClientMixin, MixinsSortableTable<TransactionsJournalView> {
+    with
+        AutomaticKeepAliveClientMixin,
+        MixinsSortableTable<TransactionsJournalView>,
+        MixinsScrollToTable<TransactionsJournalView, TransactionsModel> {
   late final TransactionsController _txController;
   late final CryptosController _cryptosController;
 
   late List<TransactionsModel> txs;
+
+  @override
+  final scrollUtil = ScrollTo();
 
   @override
   bool get wantKeepAlive => true;
@@ -39,48 +47,46 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     _cryptosController = locator<CryptosController>();
 
     txs = widget.transactions;
+
+    sorters = {
+      0: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc),
+      1: (col, asc) => onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
+      2: (col, asc) => onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
+      3: (col, asc) => onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc),
+      5: (col, asc) => onSort((d) => d['status'] as String, col, asc),
+    };
+
     rows = _buildRows();
-    _applySorting();
+    applySorting();
+  }
+
+  @override
+  void dispose() {
+    scrollUtil.dispose();
+    super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant TransactionsJournalView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.transactions != widget.transactions) {
-      setState(() {
-        txs = widget.transactions;
-        rows = _buildRows();
-        _applySorting();
-      });
+    if (!mounted) {
+      return;
     }
-  }
 
-  void _applySorting() {
-    final col = sortColumnIndex;
-    final asc = sortAscending;
-
-    switch (col) {
-      case 0:
-        onSort((d) => d['_timestamp'] as int, col, asc);
-        break;
-
-      case 1:
-        onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc);
-        break;
-
-      case 2:
-        onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc);
-        break;
-
-      case 3:
-        onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc);
-        break;
-
-      case 5:
-        onSort((d) => d['status'] as String, col, asc);
-        break;
+    if (_txController.isBothEqual(oldWidget.transactions, widget.transactions)) {
+      return;
     }
+
+    setState(() {
+      final ntx = _txController.findNew(txs);
+      txs = widget.transactions;
+      rows = _buildRows();
+      applySorting();
+      if (ntx != null) {
+        scrollToTableNewRow(ntx);
+      }
+    });
   }
 
   List<Map<String, dynamic>> _buildRows() {
@@ -99,6 +105,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         'status': tx.statusText,
         'tx': tx,
 
+        'uuid': tx.uuid,
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
@@ -123,6 +130,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
               child: DataTable2(
+                scrollController: scrollUtil.controller,
                 minWidth: 1200,
                 columnSpacing: 12,
                 horizontalMargin: 12,
@@ -133,28 +141,12 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                 sortAscending: sortAscending,
                 isHorizontalScrollBarVisible: false,
                 columns: [
-                  DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
-                  DataColumn2(
-                    label: Text('Balance '),
-                    size: ColumnSize.M,
-                    onSort: (col, asc) => onSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
-                  ),
-                  DataColumn2(
-                    label: Text('From '),
-                    size: ColumnSize.M,
-                    onSort: (col, asc) => onSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
-                  ),
-                  DataColumn2(
-                    label: Text('To '),
-                    size: ColumnSize.M,
-                    onSort: (col, asc) => onSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc),
-                  ),
+                  DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sorters[0]),
+                  DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sorters[1]),
+                  DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sorters[2]),
+                  DataColumn2(label: const Text('To'), size: ColumnSize.M, onSort: sorters[3]),
                   const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
-                  DataColumn2(
-                    label: const Text('Status '),
-                    fixedWidth: 100,
-                    onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc),
-                  ),
+                  DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sorters[5]),
                   const DataColumn2(label: Text('Actions'), fixedWidth: 160),
                 ],
                 rows: rows.map((r) {
@@ -173,7 +165,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                           txController: _txController,
                           onAction: () {
                             widget.onStatusChanged();
-                            setState(() {});
                           },
                         ),
                       ),

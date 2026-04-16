@@ -27,6 +27,7 @@ class CryptosRepository extends CoreBaseRepository<CryptosModel> with CoreMixins
   Map<int, String> getSymbolMap() {
     if (_symbolCache != null) return _symbolCache!;
     final all = box.values.cast<CryptosModel>();
-    return {for (var c in all) c.uuid: c.symbol};
+    _symbolCache = {for (var c in all) c.uuid: c.symbol};
+    return _symbolCache!;
   }
 }

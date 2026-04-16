@@ -76,4 +76,15 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   bool isEmpty() {
     return repo.isEmpty();
   }
+
+  T? findNew(List<T> oldItems) {
+    final oldIds = oldItems.map((t) => t.uuid).toSet();
+    final addedIds = items.map((t) => t.uuid).where((id) => !oldIds.contains(id));
+
+    if (addedIds.isEmpty) {
+      return null;
+    }
+
+    return items.firstWhere((el) => el.uuid == addedIds.first);
+  }
 }

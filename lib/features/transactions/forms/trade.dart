@@ -14,7 +14,7 @@ import '../controller.dart';
 import '../model.dart';
 
 class TransactionFormTrade extends StatefulWidget {
-  final void Function(Object? error)? onSave;
+  final void Function(Object? error, TransactionsModel? tx)? onSave;
   final TransactionsModel? initialData;
   final TransactionsModel? parent;
 
@@ -85,12 +85,12 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
         meta: _saveNotesField(),
       );
       await _txController.add(child);
-      widget.onSave?.call(null);
+      widget.onSave?.call(null, child);
     } on ValidationException catch (e) {
       // TODO: Improve this by analyzing the error code and set the form field error state!
-      widget.onSave?.call(e);
+      widget.onSave?.call(e, null);
     } catch (e) {
-      widget.onSave?.call(e);
+      widget.onSave?.call(e, null);
     }
   }
 
