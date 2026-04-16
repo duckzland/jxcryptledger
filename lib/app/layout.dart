@@ -99,7 +99,7 @@ class _AppLayoutState extends State<AppLayout> {
               appBar: AppBar(
                 backgroundColor: AppTheme.columnHeaderBg,
                 leadingWidth: leadingWidth,
-                leading: (showMenu) ? Spacer() : _buildLeading(leadingWidth),
+                leading: (showMenu) ? const SizedBox.shrink() : _buildLeading(leadingWidth),
                 title: LayoutBuilder(
                   builder: (context, constraints) {
                     final width = constraints.maxWidth.isFinite ? constraints.maxWidth : MediaQuery.of(context).size.width;

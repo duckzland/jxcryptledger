@@ -40,6 +40,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   String get tradeSourceSymbol {
     final data = widget.initialData;
     if (data == null) return "";
+
     return _cryptoController.getSymbol(data.srId) ?? "";
   }
 
@@ -51,10 +52,12 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   List<TransactionsModel> get tradableLeaves {
     final data = widget.initialData;
     if (data == null) return [];
+
     final leaves = _txController.collectTradableLeaves(data);
     if (data.isPartial) {
       leaves.insert(0, data);
     }
+
     return leaves;
   }
 

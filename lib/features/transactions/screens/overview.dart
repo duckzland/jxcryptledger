@@ -63,9 +63,17 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     _cryptosController = locator<CryptosController>();
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
+    sorters = {
+      0: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc),
+      1: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
+      2: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
+      3: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
+      4: (col, asc) => onSort((d) => d['status'] as String, col, asc),
+    };
+
     rows = _buildRows();
 
-    _applySorting();
+    applySorting();
     _checkForClosable();
     _checkForDeletable();
     _checkForFinalizable();
@@ -81,46 +89,26 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   void didUpdateWidget(covariant TransactionsOverview oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.transactions != widget.transactions && mounted) {
-      setState(() {
-        txs = widget.transactions;
-        rows = _buildRows();
-        _applySorting();
-
-        _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
-
-        _checkForClosable();
-        _checkForDeletable();
-        _checkForFinalizable();
-        _calculateProfitLoss();
-      });
+    if (!mounted) {
+      return;
     }
-  }
 
-  void _applySorting() {
-    final col = sortColumnIndex;
-    final asc = sortAscending;
-
-    switch (col) {
-      case 0:
-        onSort((d) => d['_timestamp'] as int, col, asc);
-        break;
-
-      case 1:
-        onSort((d) => d['_balanceValue'] as double, col, asc);
-        break;
-
-      case 2:
-        onSort((d) => d['_sourceValue'] as double, col, asc);
-        break;
-
-      case 3:
-        onSort((d) => d['_exchangedRateValue'] as double, col, asc);
-
-      case 4:
-        onSort((d) => d['status'] as String, col, asc);
-        break;
+    if (_txController.isBothEqual(oldWidget.transactions, widget.transactions)) {
+      return;
     }
+
+    setState(() {
+      txs = widget.transactions;
+      rows = _buildRows();
+      applySorting();
+
+      _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
+
+      _checkForClosable();
+      _checkForDeletable();
+      _checkForFinalizable();
+      _calculateProfitLoss();
+    });
   }
 
   void _calculateProfitLoss() {
@@ -470,26 +458,13 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
           sortAscending: sortAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
-            DataColumn2(
-              label: Text('Balance '),
-              size: ColumnSize.M,
-              onSort: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
-            ),
-            DataColumn2(
-              label: Text('From '),
-              size: ColumnSize.M,
-              onSort: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
-            ),
-            DataColumn2(
-              label: Text('Exchanged Rate '),
-              size: ColumnSize.S,
-              onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
-            ),
-            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
-            DataColumn2(label: Text('Actions'), fixedWidth: 160),
+            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sorters[0]),
+            DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sorters[1]),
+            DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sorters[2]),
+            DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sorters[3]),
+            DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sorters[4]),
+            const DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
-
           rows: rows.map((r) {
             return DataRow(
               cells: [

@@ -133,9 +133,40 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
     _customRateController = TextEditingController();
 
+    sorters = {
+      0: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc),
+      1: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
+      2: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
+      3: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
+      4: (col, asc) => (col, asc) {
+        final currentRate = _customRate ?? _marketRate ?? 0.0;
+        if (currentRate == 0.0) {
+          onSort((d) => d['_status'] as String, col, asc);
+        }
+      },
+      5: (col, asc) => (col, asc) {
+        final currentRate = _customRate ?? _marketRate ?? 0.0;
+        if (currentRate != 0.0) {
+          onSort((d) => d['_currentValue'] as double, col, asc);
+        }
+      },
+      6: (col, asc) => (col, asc) {
+        final currentRate = _customRate ?? _marketRate ?? 0.0;
+        if (currentRate != 0.0) {
+          onSort((d) => d['_profitLossValue'] as double, col, asc);
+        }
+      },
+      7: (col, asc) => (col, asc) {
+        final currentRate = _customRate ?? _marketRate ?? 0.0;
+        if (currentRate != 0.0) {
+          onSort((d) => d['status'] as String, col, asc);
+        }
+      },
+    };
+
     rows = _buildRows();
 
-    _applySorting();
+    applySorting();
     _checkForClosable();
     _checkForDeletable();
     _checkForFinalizable();
@@ -161,26 +192,32 @@ class _TransactionsActiveState extends State<TransactionsActive>
   void didUpdateWidget(covariant TransactionsActive oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.transactions != widget.transactions && mounted) {
-      setState(() {
-        txs = widget.transactions;
-        rows = _buildRows();
-        _applySorting();
-
-        _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
-        _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
-
-        _checkForClosable();
-        _checkForDeletable();
-        _checkForFinalizable();
-        _calculateProfitLoss();
-      });
+    if (!mounted) {
+      return;
     }
+
+    if (_txController.isBothEqual(oldWidget.transactions, widget.transactions)) {
+      return;
+    }
+
+    setState(() {
+      txs = widget.transactions;
+      rows = _buildRows();
+      applySorting();
+
+      _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
+      _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
+
+      _checkForClosable();
+      _checkForDeletable();
+      _checkForFinalizable();
+      _calculateProfitLoss();
+    });
   }
 
   void _onRatesUpdated() {
     _loadMarketRate();
-    _applySorting();
+    applySorting();
     _calculateProfitLoss();
   }
 
@@ -193,58 +230,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _totalProfit = _calc.totalProfit(txs, _currentRate, reverse: _isReversed);
     _totalLoss = _calc.totalLoss(txs, _currentRate, reverse: _isReversed);
     _plPercentage = _calc.profitLossPercentage(txs, _currentRate, reverse: _isReversed);
-  }
-
-  void _applySorting() {
-    final col = sortColumnIndex;
-    final asc = sortAscending;
-    final currentRate = _customRate ?? _marketRate ?? 0.0;
-
-    if (currentRate == 0.0 && col > 4) {
-      return;
-    }
-
-    switch (col) {
-      case 0:
-        onSort((d) => d['_timestamp'] as int, col, asc);
-        break;
-
-      case 1:
-        onSort((d) => d['_sourceValue'] as double, col, asc);
-
-        break;
-
-      case 2:
-        onSort((d) => d['_balanceValue'] as double, col, asc);
-        break;
-
-      case 3:
-        onSort((d) => d['_exchangedRateValue'] as double, col, asc);
-
-      case 4:
-        if (currentRate == 0.0) {
-          onSort((d) => d['_status'] as String, col, asc);
-        }
-        break;
-
-      case 5:
-        if (currentRate != 0.0) {
-          onSort((d) => d['_currentValue'] as double, col, asc);
-        }
-        break;
-
-      case 6:
-        if (currentRate != 0.0) {
-          onSort((d) => d['_profitLossValue'] as double, col, asc);
-        }
-        break;
-
-      case 7:
-        if (currentRate != 0.0) {
-          onSort((d) => d['status'] as String, col, asc);
-        }
-        break;
-    }
   }
 
   void _onControllerChanged() {
@@ -420,7 +405,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     setState(() {
                       _customRate = double.tryParse(value);
                       rows = _buildRows();
-                      _applySorting();
+                      applySorting();
                     });
                   });
                 },
@@ -617,16 +602,16 @@ class _TransactionsActiveState extends State<TransactionsActive>
           sortAscending: sortAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn2(label: Text('Date '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc)),
+            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sorters[0]),
             DataColumn2(
               size: ColumnSize.S,
               label: WidgetsHeader(title: 'From ', subtitle: _sourceSymbol),
-              onSort: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
+              onSort: sorters[1],
             ),
             DataColumn2(
               size: ColumnSize.S,
               label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-              onSort: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
+              onSort: sorters[2],
             ),
             DataColumn2(
               size: ColumnSize.S,
@@ -634,7 +619,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 title: 'Exchanged Rate ',
                 subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
               ),
-              onSort: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
+              onSort: sorters[3],
             ),
 
             if (_currentRate != 0.0) ...[
@@ -648,16 +633,15 @@ class _TransactionsActiveState extends State<TransactionsActive>
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
-                onSort: (col, asc) => onSort((d) => d['_currentValue'] as double, col, asc),
+                onSort: sorters[5],
               ),
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
-                onSort: (col, asc) => onSort((d) => d['_profitLossValue'] as double, col, asc),
+                onSort: sorters[6],
               ),
             ],
-
-            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (col, asc) => onSort((d) => d['status'] as String, col, asc)),
+            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: sorters[7]),
             DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
 

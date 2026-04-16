@@ -13,7 +13,7 @@ import '../controller.dart';
 import '../model.dart';
 
 class TransactionFormCreate extends StatefulWidget {
-  final void Function(Object? error)? onSave;
+  final void Function(Object? error, TransactionsModel? tx)? onSave;
   final TransactionsModel? initialData;
   final TransactionsModel? parent;
 
@@ -69,12 +69,12 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
       );
 
       await _txController.add(tx);
-      widget.onSave?.call(null);
+      widget.onSave?.call(null, tx);
     } on ValidationException catch (e) {
       // TODO: Improve this by analyzing the error code and set the form field error state!
-      widget.onSave?.call(e);
+      widget.onSave?.call(e, null);
     } catch (e) {
-      widget.onSave?.call(e);
+      widget.onSave?.call(e, null);
     }
   }
 

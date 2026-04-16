@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../app/layout.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actions.dart';
+import '../../mixins/scrollto_group.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
@@ -32,18 +34,26 @@ class TransactionsPage extends StatefulWidget {
   State<TransactionsPage> createState() => _TransactionsPageState();
 }
 
-class _TransactionsPageState extends State<TransactionsPage> with MixinsActions, MixinsActionBar<TransactionsPage> {
-  late TransactionsController _txController;
+class _TransactionsPageState extends State<TransactionsPage>
+    with MixinsActions, MixinsActionBar<TransactionsPage>, MixinsScrollToGroup<TransactionsPage, TransactionsModel> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
+  late List<TransactionsModel> txs;
+  late TransactionsController _txController;
+
+  late Map<int, String> _sortableOptions;
+  late Map<int, String> _filterableOptions;
+
   TransactionsViewMode _viewMode = TransactionsViewMode.active;
+
+  Map<String, List<TransactionsModel>> groups = {};
 
   int _sortMode = 0;
   int _filterMode = 0;
   int _txbuild = 0;
 
-  late Map<int, String> _sortableOptions;
-  late Map<int, String> _filterableOptions;
+  @override
+  final scrollUtil = ScrollTo();
 
   @override
   void initState() {
@@ -52,7 +62,9 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
     _txController = locator<TransactionsController>();
     _txController.start();
     _txController.addListener(_onControllerChanged);
-    _cryptosController.addListener(_onControllerChanged);
+    _cryptosController.addListener(_onCryptoControllerChanged);
+
+    txs = _txController.items;
 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
@@ -62,14 +74,77 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
 
   @override
   void dispose() {
+    scrollUtil.dispose();
+
     _txController.removeListener(_onControllerChanged);
-    _cryptosController.removeListener(_onControllerChanged);
+    _cryptosController.removeListener(_onCryptoControllerChanged);
 
     super.dispose();
   }
 
-  void _onControllerChanged() {
+  @override
+  double scrollToGroupGetGroupHeight(List<TransactionsModel> txs, double currentWidth) {
+    double height = 0.0;
+
+    switch (_viewMode) {
+      case TransactionsViewMode.overview:
+        height += 16 + 20 + 16;
+        height += (currentWidth > 560) ? 40 : 90;
+        break;
+
+      case TransactionsViewMode.active:
+        height += 16 + 20 + 16;
+        height += (currentWidth > 1000) ? 40 : 120;
+        break;
+
+      default:
+        break;
+    }
+
+    height += (txs.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12;
+
+    return height;
+  }
+
+  @override
+  double scrollToGroupGetSeparatorHeight() {
+    return 24;
+  }
+
+  void _onCryptoControllerChanged() {
     setState(() {});
+    AppLayout.refreshBar?.call();
+  }
+
+  void _onControllerChanged() {
+    if (!_txController.isEqualToItems(txs)) {
+      setState(() {
+        final tx = _txController.findNew(txs);
+        txs = _txController.items;
+
+        String key = "";
+        Map<String, List<TransactionsModel>> oldGroups = groups;
+
+        switch (_viewMode) {
+          case TransactionsViewMode.overview:
+            groups = _getOverviewTransactions();
+            key = (tx != null) ? tx.rrId.toString() : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
+            break;
+
+          case TransactionsViewMode.active:
+            groups = _getActiveTransactions();
+            key = (tx != null) ? "${tx.srId}-${tx.rrId}" : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
+            break;
+
+          default:
+            break;
+        }
+        if (key != "") {
+          scrollToGroup(key, groups, context);
+        }
+      });
+    }
+
     AppLayout.refreshBar?.call();
   }
 
@@ -111,28 +186,28 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
         _filterableOptions = {0: "Show All", 1: "Active Trades", 2: "Partial Trades", 3: "Inactive Trades", 4: "Closed Trades"};
         break;
       case TransactionsViewMode.history:
-        _sortableOptions = {0: "By Crypto ID", 1: "Oldest Trades", 2: "Latest Trades"};
+        _sortableOptions = {0: "Alphabetically", 1: "Oldest Trades", 2: "Latest Trades"};
         _filterableOptions = {};
         break;
     }
   }
 
-  Map<int, List<TransactionsModel>> _getOverviewTransactions() {
+  Map<String, List<TransactionsModel>> _getOverviewTransactions() {
     List<TransactionsModel> filtered;
 
     switch (_filterMode) {
       case 0:
-        filtered = _txController.items.where((t) => t.status == 1 || t.status == 2).toList();
+        filtered = txs.where((t) => t.status == 1 || t.status == 2).toList();
         break;
 
       default:
-        filtered = _txController.items.toList();
+        filtered = txs.toList();
     }
 
-    final grouped = <int, List<TransactionsModel>>{};
+    final grouped = <String, List<TransactionsModel>>{};
     for (final tx in filtered) {
-      grouped.putIfAbsent(tx.rrId, () => <TransactionsModel>[]);
-      grouped[tx.rrId]!.add(tx);
+      grouped.putIfAbsent(tx.rrId.toString(), () => <TransactionsModel>[]);
+      grouped[tx.rrId.toString()]!.add(tx);
     }
 
     final entries = grouped.entries.toList();
@@ -140,8 +215,8 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
     switch (_sortMode) {
       case 0:
         entries.sort((a, b) {
-          final symbolA = _cryptosController.getSymbol(a.key) ?? a.key.toString();
-          final symbolB = _cryptosController.getSymbol(b.key) ?? b.key.toString();
+          final symbolA = _cryptosController.getSymbol(int.parse(a.key)) ?? a.key;
+          final symbolB = _cryptosController.getSymbol(int.parse(b.key)) ?? b.key;
           return symbolA.compareTo(symbolB);
         });
         break;
@@ -163,7 +238,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
         break;
     }
 
-    return Map<int, List<TransactionsModel>>.fromEntries(entries);
+    return Map<String, List<TransactionsModel>>.fromEntries(entries);
   }
 
   Map<String, List<TransactionsModel>> _getActiveTransactions() {
@@ -171,13 +246,11 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
 
     switch (_filterMode) {
       case 0:
-        filtered = _txController.items
-            .where((t) => t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index)
-            .toList();
+        filtered = txs.where((t) => t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index).toList();
         break;
 
       default:
-        filtered = _txController.items.toList();
+        filtered = txs;
     }
 
     final grouped = <String, List<TransactionsModel>>{};
@@ -190,7 +263,14 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
     final entries = grouped.entries.toList();
     switch (_sortMode) {
       case 0:
-        entries.sort((a, b) => a.key.compareTo(b.key));
+        entries.sort((a, b) {
+          final aParts = a.key.split('-');
+          final bParts = b.key.split('-');
+
+          final aSr = _cryptosController.getSymbol(int.parse(aParts[0])) ?? aParts[0];
+          final bSr = _cryptosController.getSymbol(int.parse(bParts[0])) ?? bParts[0];
+          return aSr.compareTo(bSr);
+        });
         break;
 
       case 1:
@@ -218,23 +298,23 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
 
     switch (_filterMode) {
       case 1:
-        filtered = _txController.items.where((t) => t.status == TransactionStatus.active.index).toList();
+        filtered = txs.where((t) => t.status == TransactionStatus.active.index).toList();
         break;
 
       case 2:
-        filtered = _txController.items.where((t) => t.status == TransactionStatus.partial.index).toList();
+        filtered = txs.where((t) => t.status == TransactionStatus.partial.index).toList();
         break;
 
       case 3:
-        filtered = _txController.items.where((t) => t.status == TransactionStatus.inactive.index).toList();
+        filtered = txs.where((t) => t.status == TransactionStatus.inactive.index).toList();
         break;
 
       case 4:
-        filtered = _txController.items.where((t) => t.status == TransactionStatus.closed.index).toList();
+        filtered = txs.where((t) => t.status == TransactionStatus.closed.index).toList();
         break;
 
       default:
-        filtered = _txController.items;
+        filtered = txs;
     }
 
     return filtered;
@@ -243,13 +323,17 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
   List<TransactionsModel> _getHistoryTransactions() {
     switch (_sortMode) {
       case 0:
-        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => a.srId.compareTo(b.srId));
+        return List<TransactionsModel>.from(txs)..sort((a, b) {
+          final aSr = _cryptosController.getSymbol(a.srId) ?? a.srId.toString();
+          final bSr = _cryptosController.getSymbol(b.srId) ?? b.srId.toString();
+          return aSr.compareTo(bSr);
+        });
 
       case 1:
-        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => a.sanitizedTimestamp.compareTo(b.sanitizedTimestamp));
+        return List<TransactionsModel>.from(txs)..sort((a, b) => a.sanitizedTimestamp.compareTo(b.sanitizedTimestamp));
 
       default:
-        return List<TransactionsModel>.from(_txController.items)..sort((a, b) => b.sanitizedTimestamp.compareTo(a.sanitizedTimestamp));
+        return List<TransactionsModel>.from(txs)..sort((a, b) => b.sanitizedTimestamp.compareTo(a.sanitizedTimestamp));
     }
   }
 
@@ -483,7 +567,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
       );
     }
 
-    if (_txController.items.isEmpty) {
+    if (txs.isEmpty) {
       removeBars();
       return Column(
         children: [
@@ -518,7 +602,8 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
   Widget _buildForm(BuildContext dialogContext) {
     return Center(
       child: TransactionFormCreate(
-        onSave: (e) => doFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
+        onSave: (e, stx) =>
+            doFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
       ),
     );
   }
@@ -590,11 +675,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
       case TransactionsViewMode.journal:
         registerBars("Transaction Overview");
 
-        return TransactionsJournalView(
-          key: ValueKey(_txbuild),
-          transactions: List<TransactionsModel>.from(_getJournalTransactions()),
-          onStatusChanged: () => setState(() {}),
-        );
+        return TransactionsJournalView(key: ValueKey(_txbuild), transactions: _getJournalTransactions(), onStatusChanged: () {});
 
       case TransactionsViewMode.history:
         registerBars("Transaction History");
@@ -603,9 +684,10 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
     }
   }
 
-  Widget _buildOverviewList(Map<int, List<TransactionsModel>> grouped) {
+  Widget _buildOverviewList(Map<String, List<TransactionsModel>> grouped) {
     return ListView.separated(
       key: ValueKey(_txbuild),
+      controller: scrollUtil.controller,
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
@@ -615,9 +697,9 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
 
         return TransactionsOverview(
           key: Key("$rrId-$_filterMode-$_sortMode"),
-          id: rrId,
+          id: int.parse(rrId),
           transactions: txs,
-          onStatusChanged: () => setState(() {}),
+          onStatusChanged: () {},
         );
       },
     );
@@ -626,6 +708,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
   Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
     return ListView.separated(
       key: ValueKey(_txbuild),
+      controller: scrollUtil.controller,
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
@@ -643,7 +726,7 @@ class _TransactionsPageState extends State<TransactionsPage> with MixinsActions,
           srid: srId,
           rrid: rrId,
           transactions: txs,
-          onStatusChanged: () => setState(() {}),
+          onStatusChanged: () {},
         );
       },
     );

@@ -6,7 +6,9 @@ import 'package:data_table_2/data_table_2.dart';
 import '../../app/exceptions.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
+import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
+import '../../mixins/scrollto_table.dart';
 import '../../mixins/sortable_table.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
@@ -32,9 +34,16 @@ class WatchersPage extends StatefulWidget {
   State<WatchersPage> createState() => _WatchersPageState();
 }
 
-class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<WatchersPage>, MixinsActionBar<WatchersPage> {
-  late final WatchersController _wxController;
+class _WatchersPageState extends State<WatchersPage>
+    with MixinsSortableTable<WatchersPage>, MixinsActionBar<WatchersPage>, MixinsScrollToTable<WatchersPage, WatchersModel> {
   final CryptosController _cryptosController = locator<CryptosController>();
+
+  late final WatchersController _wxController;
+
+  late List<WatchersModel> txs;
+
+  @override
+  final scrollUtil = ScrollTo();
 
   @override
   void initState() {
@@ -43,23 +52,31 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     _wxController.start();
     _wxController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
-    rows = _buildRows(_wxController.items);
+
+    txs = _wxController.items;
+    sorters = {
+      0: (col, asc) => onSort((d) => d['_srId'] as int, col, asc),
+      1: (col, asc) => onSort((d) => d['_rrId'] as int, col, asc),
+      2: (col, asc) => onSort((d) => d['_ops'] as int, col, asc),
+      3: (col, asc) => onSort((d) => d['_rate'] as double, col, asc),
+      5: (col, asc) => onSort((d) => d['_sent'] as int, col, asc),
+      6: (col, asc) => onSort((d) => d['_limit'] as int, col, asc),
+      7: (col, asc) => onSort((d) => d['_duration'] as int, col, asc),
+    };
+
+    rows = _buildRows();
 
     registerBars("Rate Watchers");
   }
 
   @override
   void dispose() {
+    scrollUtil.dispose();
+
     _wxController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
 
     super.dispose();
-  }
-
-  void _onControllerChanged() {
-    setState(() {
-      rows = _buildRows(_wxController.items);
-    });
   }
 
   @override
@@ -183,6 +200,18 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     );
   }
 
+  void _onControllerChanged() {
+    setState(() {
+      final ntx = _wxController.findNew(txs);
+      txs = _wxController.items;
+      rows = _buildRows();
+      applySorting();
+      if (ntx != null) {
+        scrollToTableNewRow(ntx);
+      }
+    });
+  }
+
   Widget _buildForm(BuildContext dialogContext) {
     return Center(
       child: WatchersForm(
@@ -210,6 +239,7 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
       behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
       child: WidgetsPanel(
         child: DataTable2(
+          scrollController: scrollUtil.controller,
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
@@ -220,14 +250,14 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
           sortAscending: sortAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn(label: Text("From"), onSort: (col, asc) => onSort((d) => (d['_srId'] as int), col, asc)),
-            DataColumn(label: Text("To"), onSort: (col, asc) => onSort((d) => (d['_rrId'] as int), col, asc)),
-            DataColumn(label: Text("Ops"), onSort: (col, asc) => onSort((d) => (d['_ops'] as int), col, asc)),
-            DataColumn(label: Text("Rate"), onSort: (col, asc) => onSort((d) => (d['_rate'] as double), col, asc)),
-            DataColumn(label: Text("Sent"), onSort: (col, asc) => onSort((d) => (d['_sent'] as int), col, asc)),
-            DataColumn(label: Text("Limit"), onSort: (col, asc) => onSort((d) => (d['_limit'] as int), col, asc)),
-            DataColumn(label: Text("Duration"), onSort: (col, asc) => onSort((d) => (d['_duration'] as int), col, asc)),
-            DataColumn(label: Text("Action")),
+            DataColumn(label: const Text("From"), onSort: sorters[0]),
+            DataColumn(label: const Text("To"), onSort: sorters[1]),
+            DataColumn(label: const Text("Ops"), onSort: sorters[2]),
+            DataColumn(label: const Text("Rate"), onSort: sorters[3]),
+            DataColumn(label: const Text("Sent"), onSort: sorters[5]),
+            DataColumn(label: const Text("Limit"), onSort: sorters[6]),
+            DataColumn(label: const Text("Duration"), onSort: sorters[7]),
+            const DataColumn(label: Text("Action")),
           ],
           rows: table.map((r) {
             return DataRow(
@@ -256,8 +286,9 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
     );
   }
 
-  List<Map<String, dynamic>> _buildRows(List<WatchersModel> txs) {
+  List<Map<String, dynamic>> _buildRows() {
     final rows = <Map<String, dynamic>>[];
+
     for (final tx in txs) {
       final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
@@ -271,6 +302,8 @@ class _WatchersPageState extends State<WatchersPage> with MixinsSortableTable<Wa
         'limit': tx.limit.toString(),
         'duration': "${tx.duration}m",
         'tx': tx,
+
+        'uuid': tx.uuid,
 
         '_srId': tx.srId,
         '_rrId': tx.rrId,
