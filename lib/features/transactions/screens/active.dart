@@ -196,7 +196,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
       return;
     }
 
-    if (_txController.isBothEqual(oldWidget.transactions, widget.transactions)) {
+    if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
