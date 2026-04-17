@@ -360,7 +360,26 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return tradableLeaves;
   }
 
-  bool isBothEqual(List<TransactionsModel> a, List<TransactionsModel> b) {
+  bool isBothEqual(TransactionsModel txA, TransactionsModel txB) {
+
+      if (txA.tid != txB.tid ||
+          txA.rid != txB.rid ||
+          txA.pid != txB.pid ||
+          txA.srAmount != txB.srAmount ||
+          txA.rrAmount != txB.rrAmount ||
+          txA.balance != txB.balance ||
+          txA.status != txB.status ||
+          txA.closable != txB.closable ||
+          txA.timestamp != txB.timestamp ||
+          !mapEquals(txA.meta, txB.meta)) {
+        return false;
+      }
+
+
+    return true;
+  }
+
+  bool isBothEqualGroup(List<TransactionsModel> a, List<TransactionsModel> b) {
     if (a.length != b.length) return false;
 
     for (int i = 0; i < a.length; i++) {
@@ -385,6 +404,6 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   bool isEqualToItems(List<TransactionsModel> a) {
-    return isBothEqual(a, items);
+    return isBothEqualGroup(a, items);
   }
 }

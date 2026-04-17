@@ -74,7 +74,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
       return;
     }
 
-    if (_txController.isBothEqual(oldWidget.transactions, widget.transactions)) {
+    if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 

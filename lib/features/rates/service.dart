@@ -216,6 +216,9 @@ class RatesService {
           await _fetchInternal(job.key, job.value);
         } catch (e) {
           logln('[RATES] Unexpected worker error for ${job.key}: $e');
+
+          jobQueue.clear();
+          return;
         }
 
         await Future.delayed(const Duration(milliseconds: 100));

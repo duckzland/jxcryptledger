@@ -42,7 +42,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       return;
     }
 
-    if (_txController.isBothEqual(oldWidget.transactions, widget.transactions)) {
+    if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
@@ -67,6 +67,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     }
 
     updateTree(oldWidget.transactions, widget.transactions);
+    setState(() {});
   }
 
   void updateTree(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
@@ -138,8 +139,112 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     for (final tid in updated) {
       final newTx = newTxs.firstWhere((t) => t.tid == tid);
       final node = _nodes[tid];
+
       if (node != null) {
+        final oldTx = node.data!;
         node.data = newTx;
+        _nodes[tid] = node;
+
+        if (oldTx.isRoot) {
+          bool doScroll = false;
+
+          switch (_sortMode) {
+            case 0:
+              if (oldTx.srId != newTx.srId) {
+                IndexedTreeNode<TransactionsModel>? target;
+                final newSymbol = _cryptosController.getSymbol(newTx.srId) ?? newTx.srId.toString();
+                final newFirstChar = newSymbol.trim().toLowerCase().characters.first;
+
+                for (final entry in _nodes.values) {
+                  final ctx = entry.data!;
+                  if (ctx.isRoot && ctx.tid != newTx.tid) {
+                    final symbolA = _cryptosController.getSymbol(ctx.srId) ?? ctx.srId.toString();
+                    final firstCharA = symbolA.trim().toLowerCase().characters.first;
+                    final comp = newFirstChar.compareTo(firstCharA);
+
+                    if (comp <= 0) {
+                      if (target != null) {
+                        final targetFirstChar = (_cryptosController.getSymbol(target.data!.srId) ?? target.data!.srId.toString())
+                            .trim()
+                            .toLowerCase()
+                            .characters
+                            .first;
+
+                        final tcomp = firstCharA.compareTo(targetFirstChar);
+                        if (tcomp < 0) {
+                          target = entry;
+                        }
+                      } else {
+                        target = entry;
+                      }
+                    }
+                  }
+                }
+
+                _root.remove(node);
+                doScroll = true;
+
+                if (target != null) {
+                  _root.insertBefore(target, node);
+                } else {
+                  _root.add(node);
+                }
+              }
+              break;
+
+            case 1:
+              if (oldTx.timestamp != newTx.timestamp) {
+                IndexedTreeNode<TransactionsModel>? target;
+                for (final entry in _nodes.values) {
+                  final ctx = entry.data!;
+                  if (ctx.isRoot && ctx.tid != newTx.tid && newTx.sanitizedTimestamp > ctx.sanitizedTimestamp) {
+                    if (target == null || ctx.sanitizedTimestamp > target.data!.sanitizedTimestamp) {
+                      target = entry;
+                    }
+                  }
+                }
+
+                _root.remove(node);
+                doScroll = true;
+
+                if (target != null) {
+                  _root.insertAfter(target, node);
+                } else {
+                  _root.insert(0, node);
+                }
+              }
+              break;
+
+            case 2:
+              if (oldTx.timestamp != newTx.timestamp) {
+                IndexedTreeNode<TransactionsModel>? target;
+                for (final entry in _nodes.values) {
+                  final ctx = entry.data!;
+                  if (ctx.isRoot && ctx.tid != newTx.tid && newTx.sanitizedTimestamp < ctx.sanitizedTimestamp) {
+                    if (target == null || ctx.sanitizedTimestamp < target.data!.sanitizedTimestamp) {
+                      target = entry;
+                    }
+                  }
+                }
+
+                _root.remove(node);
+                doScroll = true;
+
+                if (target != null) {
+                  _root.insertAfter(target, node);
+                } else {
+                  _root.insert(0, node);
+                }
+              }
+              break;
+          }
+
+          if (doScroll) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              scrollController?.scrollToItem(node);
+            });
+          }
+        }
       }
     }
   }
