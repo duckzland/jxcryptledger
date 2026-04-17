@@ -12,7 +12,6 @@ class ScrollTo {
     if (!controller.hasClients) {
       return;
     }
-    ;
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 50), () {
       WidgetsBinding.instance.addPostFrameCallback((_) {

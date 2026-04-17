@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/controller.dart';
+import '../../core/math.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/mixins/controllers/rateable.dart';
@@ -280,7 +281,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   double getCapitalBalance(TransactionsModel tx) {
     final children = repo.getLeaf(tx);
     final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
-    final double balance = tx.rrAmount - spent;
+    final double balance = Math.subtract(tx.rrAmount, spent);
 
     return balance;
   }
@@ -295,7 +296,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
 
     for (final ltx in leaves) {
       if (ltx.rrId == tx.rrId && ltx.isActive) {
-        balance += ltx.balance;
+        balance = Math.add(balance, ltx.balance);
       }
     }
     return balance;
@@ -306,7 +307,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     double balance = 0;
     for (final rtx in txs) {
       if (rtx.rrId == tx.srId && (rtx.isActive || rtx.isPartial)) {
-        balance += rtx.balance;
+        balance = Math.add(balance, rtx.balance);
       }
     }
 
@@ -321,7 +322,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     for (final rtx in txs) {
       if ((rtx.isActive || rtx.isPartial) && rtx.tid != tx.tid) {
         final key = rtx.rrId;
-        branchAmounts[key] = (branchAmounts[key] ?? 0) + rtx.balance;
+        branchAmounts[key] = Math.add(branchAmounts[key] ?? 0, rtx.balance);
       }
     }
 
@@ -336,7 +337,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     for (final rtx in txs) {
       if ((rtx.isFinalized) && rtx.tid != tx.tid) {
         final key = rtx.rrId;
-        branchAmounts[key] = (branchAmounts[key] ?? 0) + rtx.balance;
+        branchAmounts[key] = Math.add(branchAmounts[key] ?? 0, rtx.balance);
       }
     }
 

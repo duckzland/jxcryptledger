@@ -147,39 +147,42 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       final node = IndexedTreeNode<TransactionsModel>(key: tx.tid, data: tx);
       final parent = tx.isRoot ? _root : _nodes[tx.pid];
 
-      if (parent != null) {
-        _nodes[tx.tid] = node;
+      if (parent == null) {
+        continue;
+      }
 
-        switch (_sortMode) {
-          case 0:
-            final symbol = _cryptosController.getSymbol(tx.srId) ?? tx.srId.toString();
-            final children = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
-            final idx = children.indexWhere((c) {
-              final symbolA = _cryptosController.getSymbol(c.data!.srId) ?? c.data!.srId.toString();
-              return symbol.trim().toLowerCase().characters.first.compareTo(symbolA.trim().toLowerCase().characters.first) < 0;
-            });
-            if (idx == -1) {
-              parent.add(node);
-            } else {
-              parent.insert(idx, node);
-            }
-            break;
+      _nodes[tx.tid] = node;
 
-          case 1:
-            parent.add(node);
-            break;
-
-          case 2:
-            parent.insert(0, node);
-            break;
-        }
-
-        // This tree package is buggy, "Root" wont got scrolled when added while "leaves" does.
-        if (tx.isRoot) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            scrollController?.scrollToItem(node);
+      switch (_sortMode) {
+        case 0:
+          final symbol = _cryptosController.getSymbol(tx.srId) ?? tx.srId.toString();
+          final siblings = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
+          final idx = siblings.indexWhere((c) {
+            final symbolA = _cryptosController.getSymbol(c.data!.srId) ?? c.data!.srId.toString();
+            return symbol.trim().toLowerCase().characters.first.compareTo(symbolA.trim().toLowerCase().characters.first) < 0;
           });
-        }
+
+          if (idx == -1) {
+            parent.add(node);
+          } else {
+            parent.insert(idx, node);
+          }
+          break;
+
+        case 1:
+          parent.add(node);
+          break;
+
+        case 2:
+          parent.insert(0, node);
+          break;
+      }
+
+      // This tree package is buggy, "Root" wont got scrolled when added while "leaves" does.
+      if (tx.isRoot) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          scrollController?.scrollToItem(node);
+        });
       }
     }
   }
@@ -190,106 +193,57 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     final updated = newIds.intersection(oldIds);
 
     for (final tid in updated) {
-      final ntx = newTxs.firstWhere((t) => t.tid == tid);
+      final tx = newTxs.firstWhere((t) => t.tid == tid);
       final node = _nodes[tid];
+      final parent = tx.isRoot ? _root : _nodes[tx.pid];
 
-      if (node == null || _txController.isBothEqual(ntx, node.data!)) {
+      if (node == null || parent == null || _txController.isBothEqual(tx, node.data!)) {
         continue;
       }
 
       final oldTx = node.data!;
-      node.data = ntx;
+
+      node.data = tx;
       _nodes[tid] = node;
 
-      bool doScroll = false;
-      IndexedTreeNode<TransactionsModel>? txd;
+      final siblings = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
+      final oldIndex = siblings.indexWhere((node) => node.data!.tid == tx.tid);
+
+      if ((siblings.length == 1 && parent.indexWhere((c) => c == node) == 0) ||
+          (oldTx.srId == tx.srId && _sortMode == 0) ||
+          (oldTx.timestamp == tx.timestamp && (_sortMode == 1 || _sortMode == 2))) {
+        continue;
+      }
 
       switch (_sortMode) {
         case 0:
-          if (oldTx.srId == ntx.srId || !oldTx.isRoot) {
-            break;
-          }
+          siblings.sort((a, b) {
+            final aF = (_cryptosController.getSymbol(a.data!.srId) ?? a.data!.srId.toString()).trim().toLowerCase().characters.first;
+            final bF = (_cryptosController.getSymbol(b.data!.srId) ?? b.data!.srId.toString()).trim().toLowerCase().characters.first;
 
-          final ntxF = (_cryptosController.getSymbol(ntx.srId) ?? ntx.srId.toString()).trim().toLowerCase().characters.first;
-
-          for (final entry in _nodes.values) {
-            final ctx = entry.data!;
-            final ctxF = (_cryptosController.getSymbol(ctx.srId) ?? ctx.srId.toString()).trim().toLowerCase().characters.first;
-
-            if (!ctx.isRoot || ctx.tid == ntx.tid || ntxF.compareTo(ctxF) > 0) {
-              continue;
-            }
-
-            if (txd == null) {
-              txd = entry;
-              continue;
-            }
-
-            final txdF = (_cryptosController.getSymbol(txd.data!.srId) ?? txd.data!.srId.toString()).trim().toLowerCase().characters.first;
-            if (ctxF.compareTo(txdF) < 0) {
-              txd = entry;
-            }
-          }
-
-          doScroll = true;
-          _root.remove(node);
-          (txd != null) ? _root.insertBefore(txd, node) : _root.add(node);
-
+            return aF.compareTo(bF);
+          });
           break;
 
         case 1:
-          if (oldTx.timestamp == ntx.timestamp || !oldTx.isRoot) {
-            break;
-          }
-
-          for (final entry in _nodes.values) {
-            final ctx = entry.data!;
-
-            if (!ctx.isRoot ||
-                ctx.tid == ntx.tid ||
-                ntx.sanitizedTimestamp < ctx.sanitizedTimestamp ||
-                (txd != null && ctx.sanitizedTimestamp < txd.data!.sanitizedTimestamp)) {
-              continue;
-            }
-
-            txd = entry;
-          }
-
-          doScroll = true;
-          _root.remove(node);
-          (txd != null) ? _root.insertAfter(txd, node) : _root.insert(0, node);
-
+          siblings.sort((a, b) => a.data!.sanitizedTimestamp.compareTo(b.data!.sanitizedTimestamp));
           break;
-
         case 2:
-          if (oldTx.timestamp == ntx.timestamp || !oldTx.isRoot) {
-            break;
-          }
-
-          for (final entry in _nodes.values) {
-            final ctx = entry.data!;
-
-            if (!ctx.isRoot ||
-                ctx.tid == ntx.tid ||
-                ntx.sanitizedTimestamp > ctx.sanitizedTimestamp ||
-                (txd != null && ctx.sanitizedTimestamp > txd.data!.sanitizedTimestamp)) {
-              continue;
-            }
-
-            txd = entry;
-          }
-
-          doScroll = true;
-          _root.remove(node);
-          (txd != null) ? _root.insertAfter(txd, node) : _root.insert(0, node);
-
+          siblings.sort((a, b) => b.data!.sanitizedTimestamp.compareTo(a.data!.sanitizedTimestamp));
           break;
       }
 
-      if (doScroll) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          scrollController?.scrollToItem(node);
-        });
+      final newIndex = siblings.indexWhere((node) => node.data!.tid == tx.tid);
+
+      if (oldIndex != newIndex) {
+        parent.remove(node);
+        parent.insert(newIndex, node);
+
+        if (oldTx.isRoot) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            scrollController?.scrollToItem(node);
+          });
+        }
       }
     }
   }
