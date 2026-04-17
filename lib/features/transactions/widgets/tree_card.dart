@@ -93,18 +93,25 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   }
 
   void _calculateColor() {
-    if (_tx.statusEnum == TransactionStatus.inactive) {
-      _bgColor = AppTheme.mutedBg;
-      _fgColor = AppTheme.textMuted;
-    } else if (_tx.statusEnum == TransactionStatus.closed) {
-      _bgColor = AppTheme.closedBg;
-      _fgColor = AppTheme.textMuted;
-    } else if (_tx.statusEnum == TransactionStatus.finalized) {
-      _bgColor = AppTheme.finalizedBg;
-      _fgColor = AppTheme.textMuted;
-    } else {
-      _bgColor = AppTheme.rowHeaderBg;
-      _fgColor = AppTheme.text;
+    switch (_tx.statusEnum) {
+      case TransactionStatus.inactive:
+        _bgColor = AppTheme.mutedBg;
+        _fgColor = AppTheme.textMuted;
+        break;
+
+      case TransactionStatus.closed:
+        _bgColor = AppTheme.closedBg;
+        _fgColor = AppTheme.textMuted;
+        break;
+
+      case TransactionStatus.finalized:
+        _bgColor = AppTheme.finalizedBg;
+        _fgColor = AppTheme.textMuted;
+        break;
+
+      default:
+        _bgColor = AppTheme.rowHeaderBg;
+        _fgColor = AppTheme.text;
     }
   }
 
@@ -116,14 +123,14 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
     _capital = _tx.srAmount;
     _balance = _activeBranchAmounts[_tx.srId] ?? 0;
     _finalized = _activeBranchAmounts[_tx.srId] ?? 0;
-    _profit = Math.subtract((_balance + _finalized), _capital);
-    _profitPercentage = (_capital == 0 ? 0 : (Math.divide(_profit, _capital) * 100)) as double;
+    _profit = Math.subtract(Math.add(_balance, _finalized), _capital);
+    _profitPercentage = (_capital == 0 ? 0 : Math.multiply(Math.divide(_profit, _capital), 100)) as double;
 
     _rBalance = Math.add(_activeBranchAmounts[_tx.rrId] ?? 0, _tx.balance);
     _rFinalized = _finalizedBranchAmounts[_tx.rrId] ?? 0;
 
-    _rProfit = Math.subtract((_rBalance + _rFinalized), _tx.rrAmount);
-    _rProfitPercentage = (_tx.rrAmount == 0 ? 0 : (Math.divide(_rProfit, _tx.rrAmount) * 100)) as double;
+    _rProfit = Math.subtract(Math.add(_rBalance, _rFinalized), _tx.rrAmount);
+    _rProfitPercentage = (_tx.rrAmount == 0 ? 0 : Math.multiply(Math.divide(_rProfit, _tx.rrAmount), 100)) as double;
 
     _leavesClosed = _txController.isClosedTerminals(_tx);
     if (!_hasLeaf || !_tx.isActive) {
