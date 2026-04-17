@@ -14,6 +14,7 @@ import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -31,18 +32,12 @@ class TransactionsOverview extends StatefulWidget {
 }
 
 class _TransactionsOverviewState extends State<TransactionsOverview>
-    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsOverview> {
+    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsOverview>, TransactionsMixinsActions {
   final TransactionCalculation _calc = TransactionCalculation();
 
   late final CryptosController _cryptosController;
-  late final TransactionsController _txController;
 
   late String _resultSymbol;
-  late List<TransactionsModel> txs;
-
-  bool _isDeletable = false;
-  bool _isClosable = false;
-  bool _isFinalizable = false;
 
   double _totalCapital = 0;
   double _currentHolding = 0;
@@ -58,7 +53,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     super.initState();
 
     txs = widget.transactions;
-    _txController = locator<TransactionsController>();
+    txController = locator<TransactionsController>();
 
     _cryptosController = locator<CryptosController>();
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
@@ -74,9 +69,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     rows = _buildRows();
 
     applySorting();
-    _checkForClosable();
-    _checkForDeletable();
-    _checkForFinalizable();
+    checkForClosable();
+    checkForDeletable();
+    checkForFinalizable();
     _calculateProfitLoss();
   }
 
@@ -93,7 +88,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
       return;
     }
 
-    if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
+    if (txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
@@ -104,9 +99,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
 
       _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
-      _checkForClosable();
-      _checkForDeletable();
-      _checkForFinalizable();
+      checkForClosable();
+      checkForDeletable();
+      checkForFinalizable();
       _calculateProfitLoss();
     });
   }
@@ -118,7 +113,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
 
     // Extract all roots for the same srId as this group!
     double capital = 0;
-    final roots = _txController.collectAllRoots();
+    final roots = txController.collectAllRoots();
     for (final rtx in roots) {
       if (rtx.srId == widget.id) {
         capital = Math.add(capital, rtx.srAmount);
@@ -135,84 +130,6 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     _finalizedBalance = finalizedBalance;
     _profitLoss = Math.subtract(totalBalance, capital);
     _profitLossPercentage = profitPercentage;
-  }
-
-  void _checkForClosable() {
-    _isClosable = false;
-
-    for (final tx in txs) {
-      try {
-        final closable = _txController.isClosable(tx);
-        if (closable) {
-          _isClosable = true;
-          break;
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  void _checkForDeletable() {
-    _isDeletable = false;
-
-    for (final tx in txs) {
-      try {
-        final deletable = _txController.isDeletable(tx);
-        if (deletable) {
-          _isDeletable = true;
-          break;
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  void _checkForFinalizable() {
-    _isFinalizable = false;
-
-    for (final tx in txs) {
-      try {
-        final finalizable = _txController.isFinalizable(tx);
-        if (finalizable) {
-          _isFinalizable = true;
-          break;
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  Future<void> _closeTransactions() async {
-    for (final tx in txs) {
-      try {
-        await _txController.closeLeaf(tx);
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  Future<void> _finalizeTransactions() async {
-    for (final tx in txs) {
-      try {
-        await _txController.finalize(tx);
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  Future<void> _deleteTransactions() async {
-    for (final tx in txs) {
-      try {
-        await _txController.remove(tx);
-      } catch (_) {
-        continue;
-      }
-    }
   }
 
   List<Map<String, dynamic>> _buildRows() {
@@ -305,7 +222,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
               padding: const EdgeInsets.all(0),
               iconSize: 18,
               evaluator: (s) {
-                if (!_isClosable) {
+                if (!isClosable) {
                   s.disable();
                 } else {
                   s.warning();
@@ -316,7 +233,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                   "Are you sure you want to close all closable transactions found in this group?\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Close",
-              actionStartCallback: _closeTransactions,
+              actionStartCallback: closeTransactions,
               actionSuccessMessage: "All transactions closed.",
               actionErrorMessage: "Failed to close transactions.",
             ),
@@ -328,7 +245,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
               initialState: WidgetsButtonActionState.warning,
               tooltip: "Finalize all finalizable transactions found in this group",
               evaluator: (s) {
-                if (!_isFinalizable) {
+                if (!isFinalizable) {
                   s.disable();
                 } else {
                   s.warning();
@@ -339,7 +256,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                   "Are you sure you want to finalize all finalizable transactions found in this group?\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Finalize",
-              actionStartCallback: _finalizeTransactions,
+              actionStartCallback: finalizeTransactions,
               actionSuccessMessage: "All transactions finalized.",
               actionErrorMessage: "Failed to finalize transactions.",
             ),
@@ -351,7 +268,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
               padding: const EdgeInsets.all(0),
               iconSize: 18,
               evaluator: (s) {
-                if (!_isDeletable) {
+                if (!isDeletable) {
                   s.disable();
                 } else {
                   s.error();
@@ -362,7 +279,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                   "This will delete all transactions in this group and all of its history.\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Delete",
-              actionStartCallback: _deleteTransactions,
+              actionStartCallback: deleteTransactions,
               actionSuccessMessage: "All transactions deleted.",
               actionErrorMessage: "Failed to delete transactions.",
             ),
@@ -477,7 +394,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                   TransactionsWidgetsButtons(
                     tx: r['tx'],
                     cryptosController: _cryptosController,
-                    txController: _txController,
+                    txController: txController,
                     onAction: () {
                       widget.onStatusChanged();
                     },

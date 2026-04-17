@@ -25,6 +25,7 @@ import '../../rates/controller.dart';
 import '../../watchers/controller.dart';
 import '../../watchers/form.dart';
 import '../../watchers/model.dart';
+import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -44,18 +45,15 @@ class TransactionsActive extends StatefulWidget {
 }
 
 class _TransactionsActiveState extends State<TransactionsActive>
-    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsActive> {
+    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsActive>, TransactionsMixinsActions {
   final _calc = TransactionCalculation();
 
   late final CryptosController _cryptosController;
   late final RatesController _ratesController;
-  late final TransactionsController _txController;
   late final WatchersController _wxController;
   late final PanelsController _pxController;
 
   late TextEditingController _customRateController;
-
-  late List<TransactionsModel> txs;
 
   late String _sourceSymbol;
   late String _resultSymbol;
@@ -70,9 +68,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
   late double _plPercentage;
 
   bool _isReversed = false;
-  bool _isDeletable = false;
-  bool _isClosable = false;
-  bool _isFinalizable = false;
 
   double? _customRate;
   double? _marketRate;
@@ -110,7 +105,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
   void initState() {
     super.initState();
 
-    _txController = locator<TransactionsController>();
+    txs = widget.transactions;
+    txController = locator<TransactionsController>();
 
     _cryptosController = locator<CryptosController>();
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
@@ -126,8 +122,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _pxController = locator<PanelsController>();
     _pxController.start();
     _pxController.addListener(_onControllerChanged);
-
-    txs = widget.transactions;
 
     _loadMarketRate();
 
@@ -167,9 +161,9 @@ class _TransactionsActiveState extends State<TransactionsActive>
     rows = _buildRows();
 
     applySorting();
-    _checkForClosable();
-    _checkForDeletable();
-    _checkForFinalizable();
+    checkForClosable();
+    checkForDeletable();
+    checkForFinalizable();
     _calculateProfitLoss();
 
     _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
@@ -196,7 +190,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
       return;
     }
 
-    if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
+    if (txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
@@ -208,9 +202,9 @@ class _TransactionsActiveState extends State<TransactionsActive>
       _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
       _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
-      _checkForClosable();
-      _checkForDeletable();
-      _checkForFinalizable();
+      checkForClosable();
+      checkForDeletable();
+      checkForFinalizable();
       _calculateProfitLoss();
     });
   }
@@ -249,84 +243,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
         _marketRate = rate;
         rows = _buildRows();
       });
-    }
-  }
-
-  void _checkForClosable() {
-    _isClosable = false;
-
-    for (final tx in txs) {
-      try {
-        final closable = _txController.isClosable(tx);
-        if (closable) {
-          _isClosable = true;
-          break;
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  void _checkForDeletable() {
-    _isDeletable = false;
-
-    for (final tx in txs) {
-      try {
-        final deletable = _txController.isDeletable(tx);
-        if (deletable) {
-          _isDeletable = true;
-          break;
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  void _checkForFinalizable() {
-    _isFinalizable = false;
-
-    for (final tx in txs) {
-      try {
-        final finalizable = _txController.isFinalizable(tx);
-        if (finalizable) {
-          _isFinalizable = true;
-          break;
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  Future<void> _closeTransactions() async {
-    for (final tx in txs) {
-      try {
-        await _txController.closeLeaf(tx);
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  Future<void> _finalizeTransactions() async {
-    for (final tx in txs) {
-      try {
-        await _txController.finalize(tx);
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
-  Future<void> _deleteTransactions() async {
-    for (final tx in txs) {
-      try {
-        await _txController.remove(tx);
-      } catch (_) {
-        continue;
-      }
     }
   }
 
@@ -516,7 +432,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
               initialState: WidgetsButtonActionState.warning,
               tooltip: "Close all closable transactions found in this group",
               evaluator: (s) {
-                if (!_isClosable) {
+                if (!isClosable) {
                   s.disable();
                 } else {
                   s.warning();
@@ -527,7 +443,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   "Are you sure you want to close all closable transactions found in this group?\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Close",
-              actionStartCallback: _closeTransactions,
+              actionStartCallback: closeTransactions,
               actionSuccessMessage: "All transactions closed.",
               actionErrorMessage: "Failed to close transactions.",
             ),
@@ -540,7 +456,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
               initialState: WidgetsButtonActionState.warning,
               tooltip: "Finalize all finalizable transactions found in this group",
               evaluator: (s) {
-                if (!_isFinalizable) {
+                if (!isFinalizable) {
                   s.disable();
                 } else {
                   s.warning();
@@ -551,7 +467,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   "Are you sure you want to finalize all finalizable transactions found in this group?\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Finalize",
-              actionStartCallback: _finalizeTransactions,
+              actionStartCallback: finalizeTransactions,
               actionSuccessMessage: "All transactions finalized.",
               actionErrorMessage: "Failed to finalize transactions.",
             ),
@@ -564,7 +480,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
               initialState: WidgetsButtonActionState.error,
               tooltip: "Delete all transactions",
               evaluator: (s) {
-                if (!_isDeletable) {
+                if (!isDeletable) {
                   s.disable();
                 } else {
                   s.error();
@@ -575,7 +491,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   "This will delete all transactions in this group and all of its history.\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Delete",
-              actionStartCallback: _deleteTransactions,
+              actionStartCallback: deleteTransactions,
               actionSuccessMessage: "All transactions deleted.",
               actionErrorMessage: "Failed to delete transactions.",
             ),
@@ -664,7 +580,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   TransactionsWidgetsButtons(
                     tx: r['tx'],
                     cryptosController: _cryptosController,
-                    txController: _txController,
+                    txController: txController,
                     onAction: () {
                       widget.onStatusChanged();
                     },
