@@ -203,9 +203,11 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
       final oldTx = node.data!;
 
+      // Refreshing data
       node.data = tx;
       _nodes[tid] = node;
 
+      // Attempting to reorder if possible
       final siblings = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
       final oldIndex = siblings.indexWhere((node) => node.data!.tid == tx.tid);
 

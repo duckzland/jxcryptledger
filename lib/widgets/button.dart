@@ -125,57 +125,6 @@ class WidgetsButtonState extends State<WidgetsButton> {
     return button;
   }
 
-  // Not Working crash on Alert -> Wrap and some icon only button sizing weird
-  // minimumSize: WidgetStateProperty.all(_minSize),
-  // padding: WidgetStateProperty.all(EdgeInsets.zero),
-  // tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-  // LayoutBuilder _layoutBuilder(Color fg) {
-  //   return LayoutBuilder(
-  //     builder: (context, constraints) {
-  //       double tw = widget.icon != null ? widget.iconSize ?? 0 : 0;
-
-  //       if (widget.label != null) {
-  //         if (widget.icon != null) {
-  //           tw += 8;
-  //         }
-
-  //         final TextPainter textPainter = TextPainter(
-  //           text: TextSpan(
-  //             text: widget.label ?? "",
-  //             style: TextStyle(color: fg),
-  //           ),
-  //           maxLines: 1,
-  //           textDirection: TextDirection.ltr,
-  //         )..layout();
-
-  //         tw += textPainter.width;
-  //       }
-
-  //       final EdgeInsetsGeometry geometry = widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 8);
-  //       final EdgeInsets resolvedPadding = geometry.resolve(Directionality.of(context));
-
-  //       final double left = resolvedPadding.left;
-  //       final double right = resolvedPadding.right;
-  //       final double top = resolvedPadding.top;
-  //       final double bottom = resolvedPadding.bottom;
-
-  //       EdgeInsets pads = EdgeInsets.only(left: left, right: right, top: top, bottom: top);
-
-  //       if (widget.label != null) {
-  //         final maxSpace = constraints.maxWidth - tw;
-  //         if (maxSpace < (left + right)) {
-  //           double ratio = (left + right) > 0 ? left / (left + right) : 0.5;
-  //           double newLeft = (maxSpace * ratio).clamp(8.0, left);
-  //           double newRight = (maxSpace * (1 - ratio)).clamp(8.0, right);
-  //           pads = EdgeInsets.only(left: newLeft, right: newRight, top: top, bottom: bottom);
-  //         }
-  //       }
-
-  //       return Padding(padding: pads, child: _buildChild(fg));
-  //     },
-  //   );
-  // }
-
   Widget _buildChild(Color fg) {
     if (_inProgress) {
       final size = (widget.iconSize ?? 18) - 2;
