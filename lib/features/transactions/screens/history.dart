@@ -31,7 +31,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
   @override
   void initState() {
     super.initState();
-    _root = _buildTreeNodes(widget.transactions);
+    _root = _treeBuildNodes(widget.transactions);
   }
 
   @override
@@ -47,7 +47,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     }
 
     if (oldWidget.transactions.isEmpty && widget.transactions.isNotEmpty) {
-      _root = _buildTreeNodes(widget.transactions);
+      _root = _treeBuildNodes(widget.transactions);
       setState(() {});
       return;
     }
@@ -61,192 +61,14 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
     if (oldWidget.sortMode != widget.sortMode) {
       _sortMode = widget.sortMode;
-      _root = _buildTreeNodes(widget.transactions);
+      _root = _treeBuildNodes(widget.transactions);
       setState(() {});
       return;
     }
 
-    updateTree(oldWidget.transactions, widget.transactions);
-    setState(() {});
-  }
-
-  void updateTree(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
-    final oldIds = oldTxs.map((t) => t.tid).toSet();
-    final newIds = newTxs.map((t) => t.tid).toSet();
-
-    final added = newIds.difference(oldIds);
-    final removed = oldIds.difference(newIds);
-    final updated = newIds.intersection(oldIds);
-
-    for (final tid in removed) {
-      final node = _nodes[tid];
-      final tx = node?.data;
-      if (tx != null) {
-        if (tx.isRoot) {
-          _root.remove(node!);
-        } else {
-          final px = _nodes[tx.pid];
-          if (px != null) {
-            px.remove(node!);
-          }
-        }
-
-        _nodes.remove(tid);
-      }
-    }
-
-    for (final tid in added) {
-      final tx = newTxs.firstWhere((t) => t.tid == tid);
-      final node = IndexedTreeNode<TransactionsModel>(key: tx.tid, data: tx);
-      final parent = tx.isRoot ? _root : _nodes[tx.pid];
-
-      if (parent != null) {
-        _nodes[tx.tid] = node;
-
-        switch (_sortMode) {
-          case 0:
-            final symbol = _cryptosController.getSymbol(tx.srId) ?? tx.srId.toString();
-            final children = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
-            final idx = children.indexWhere((c) {
-              final symbolA = _cryptosController.getSymbol(c.data!.srId) ?? c.data!.srId.toString();
-              return symbol.trim().toLowerCase().characters.first.compareTo(symbolA.trim().toLowerCase().characters.first) < 0;
-            });
-            if (idx == -1) {
-              parent.add(node);
-            } else {
-              parent.insert(idx, node);
-            }
-            break;
-
-          case 1:
-            parent.add(node);
-            break;
-
-          case 2:
-            parent.insert(0, node);
-            break;
-        }
-
-        // This tree package is buggy, "Root" wont got scrolled when added while "leaves" does.
-        if (tx.isRoot) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            scrollController?.scrollToItem(node);
-          });
-        }
-      }
-    }
-
-    for (final tid in updated) {
-      final newTx = newTxs.firstWhere((t) => t.tid == tid);
-      final node = _nodes[tid];
-
-      if (node != null) {
-        final oldTx = node.data!;
-        node.data = newTx;
-        _nodes[tid] = node;
-
-        if (oldTx.isRoot) {
-          bool doScroll = false;
-
-          switch (_sortMode) {
-            case 0:
-              if (oldTx.srId != newTx.srId) {
-                IndexedTreeNode<TransactionsModel>? target;
-                final newSymbol = _cryptosController.getSymbol(newTx.srId) ?? newTx.srId.toString();
-                final newFirstChar = newSymbol.trim().toLowerCase().characters.first;
-
-                for (final entry in _nodes.values) {
-                  final ctx = entry.data!;
-                  if (ctx.isRoot && ctx.tid != newTx.tid) {
-                    final symbolA = _cryptosController.getSymbol(ctx.srId) ?? ctx.srId.toString();
-                    final firstCharA = symbolA.trim().toLowerCase().characters.first;
-                    final comp = newFirstChar.compareTo(firstCharA);
-
-                    if (comp <= 0) {
-                      if (target != null) {
-                        final targetFirstChar = (_cryptosController.getSymbol(target.data!.srId) ?? target.data!.srId.toString())
-                            .trim()
-                            .toLowerCase()
-                            .characters
-                            .first;
-
-                        final tcomp = firstCharA.compareTo(targetFirstChar);
-                        if (tcomp < 0) {
-                          target = entry;
-                        }
-                      } else {
-                        target = entry;
-                      }
-                    }
-                  }
-                }
-
-                _root.remove(node);
-                doScroll = true;
-
-                if (target != null) {
-                  _root.insertBefore(target, node);
-                } else {
-                  _root.add(node);
-                }
-              }
-              break;
-
-            case 1:
-              if (oldTx.timestamp != newTx.timestamp) {
-                IndexedTreeNode<TransactionsModel>? target;
-                for (final entry in _nodes.values) {
-                  final ctx = entry.data!;
-                  if (ctx.isRoot && ctx.tid != newTx.tid && newTx.sanitizedTimestamp > ctx.sanitizedTimestamp) {
-                    if (target == null || ctx.sanitizedTimestamp > target.data!.sanitizedTimestamp) {
-                      target = entry;
-                    }
-                  }
-                }
-
-                _root.remove(node);
-                doScroll = true;
-
-                if (target != null) {
-                  _root.insertAfter(target, node);
-                } else {
-                  _root.insert(0, node);
-                }
-              }
-              break;
-
-            case 2:
-              if (oldTx.timestamp != newTx.timestamp) {
-                IndexedTreeNode<TransactionsModel>? target;
-                for (final entry in _nodes.values) {
-                  final ctx = entry.data!;
-                  if (ctx.isRoot && ctx.tid != newTx.tid && newTx.sanitizedTimestamp < ctx.sanitizedTimestamp) {
-                    if (target == null || ctx.sanitizedTimestamp < target.data!.sanitizedTimestamp) {
-                      target = entry;
-                    }
-                  }
-                }
-
-                _root.remove(node);
-                doScroll = true;
-
-                if (target != null) {
-                  _root.insertAfter(target, node);
-                } else {
-                  _root.insert(0, node);
-                }
-              }
-              break;
-          }
-
-          if (doScroll) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              scrollController?.scrollToItem(node);
-            });
-          }
-        }
-      }
-    }
+    _treeRemoveTxs(oldWidget.transactions, widget.transactions);
+    _treeAddTxs(oldWidget.transactions, widget.transactions);
+    _treeUpdateTxs(oldWidget.transactions, widget.transactions);
   }
 
   @override
@@ -292,7 +114,187 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     );
   }
 
-  IndexedTreeNode<TransactionsModel> _buildTreeNodes(List<TransactionsModel> txs) {
+  void _treeRemoveTxs(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
+    final oldIds = oldTxs.map((t) => t.tid).toSet();
+    final newIds = newTxs.map((t) => t.tid).toSet();
+    final removed = oldIds.difference(newIds);
+
+    for (final tid in removed) {
+      final node = _nodes[tid];
+      final tx = node?.data;
+      if (tx != null) {
+        if (tx.isRoot) {
+          _root.remove(node!);
+        } else {
+          final px = _nodes[tx.pid];
+          if (px != null) {
+            px.remove(node!);
+          }
+        }
+
+        _nodes.remove(tid);
+      }
+    }
+  }
+
+  void _treeAddTxs(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
+    final oldIds = oldTxs.map((t) => t.tid).toSet();
+    final newIds = newTxs.map((t) => t.tid).toSet();
+    final added = newIds.difference(oldIds);
+
+    for (final tid in added) {
+      final tx = newTxs.firstWhere((t) => t.tid == tid);
+      final node = IndexedTreeNode<TransactionsModel>(key: tx.tid, data: tx);
+      final parent = tx.isRoot ? _root : _nodes[tx.pid];
+
+      if (parent != null) {
+        _nodes[tx.tid] = node;
+
+        switch (_sortMode) {
+          case 0:
+            final symbol = _cryptosController.getSymbol(tx.srId) ?? tx.srId.toString();
+            final children = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
+            final idx = children.indexWhere((c) {
+              final symbolA = _cryptosController.getSymbol(c.data!.srId) ?? c.data!.srId.toString();
+              return symbol.trim().toLowerCase().characters.first.compareTo(symbolA.trim().toLowerCase().characters.first) < 0;
+            });
+            if (idx == -1) {
+              parent.add(node);
+            } else {
+              parent.insert(idx, node);
+            }
+            break;
+
+          case 1:
+            parent.add(node);
+            break;
+
+          case 2:
+            parent.insert(0, node);
+            break;
+        }
+
+        // This tree package is buggy, "Root" wont got scrolled when added while "leaves" does.
+        if (tx.isRoot) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            scrollController?.scrollToItem(node);
+          });
+        }
+      }
+    }
+  }
+
+  void _treeUpdateTxs(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
+    final oldIds = oldTxs.map((t) => t.tid).toSet();
+    final newIds = newTxs.map((t) => t.tid).toSet();
+    final updated = newIds.intersection(oldIds);
+
+    for (final tid in updated) {
+      final ntx = newTxs.firstWhere((t) => t.tid == tid);
+      final node = _nodes[tid];
+
+      if (node == null || _txController.isBothEqual(ntx, node.data!)) {
+        continue;
+      }
+
+      final oldTx = node.data!;
+      node.data = ntx;
+      _nodes[tid] = node;
+
+      bool doScroll = false;
+      IndexedTreeNode<TransactionsModel>? txd;
+
+      switch (_sortMode) {
+        case 0:
+          if (oldTx.srId == ntx.srId || !oldTx.isRoot) {
+            break;
+          }
+
+          final ntxF = (_cryptosController.getSymbol(ntx.srId) ?? ntx.srId.toString()).trim().toLowerCase().characters.first;
+
+          for (final entry in _nodes.values) {
+            final ctx = entry.data!;
+            final ctxF = (_cryptosController.getSymbol(ctx.srId) ?? ctx.srId.toString()).trim().toLowerCase().characters.first;
+
+            if (!ctx.isRoot || ctx.tid == ntx.tid || ntxF.compareTo(ctxF) > 0) {
+              continue;
+            }
+
+            if (txd == null) {
+              txd = entry;
+              continue;
+            }
+
+            final txdF = (_cryptosController.getSymbol(txd.data!.srId) ?? txd.data!.srId.toString()).trim().toLowerCase().characters.first;
+            if (ctxF.compareTo(txdF) < 0) {
+              txd = entry;
+            }
+          }
+
+          doScroll = true;
+          _root.remove(node);
+          (txd != null) ? _root.insertBefore(txd, node) : _root.add(node);
+
+          break;
+
+        case 1:
+          if (oldTx.timestamp == ntx.timestamp || !oldTx.isRoot) {
+            break;
+          }
+
+          for (final entry in _nodes.values) {
+            final ctx = entry.data!;
+
+            if (!ctx.isRoot ||
+                ctx.tid == ntx.tid ||
+                ntx.sanitizedTimestamp < ctx.sanitizedTimestamp ||
+                (txd != null && ctx.sanitizedTimestamp < txd.data!.sanitizedTimestamp)) {
+              continue;
+            }
+
+            txd = entry;
+          }
+
+          doScroll = true;
+          _root.remove(node);
+          (txd != null) ? _root.insertAfter(txd, node) : _root.insert(0, node);
+
+          break;
+
+        case 2:
+          if (oldTx.timestamp == ntx.timestamp || !oldTx.isRoot) {
+            break;
+          }
+
+          for (final entry in _nodes.values) {
+            final ctx = entry.data!;
+
+            if (!ctx.isRoot ||
+                ctx.tid == ntx.tid ||
+                ntx.sanitizedTimestamp > ctx.sanitizedTimestamp ||
+                (txd != null && ctx.sanitizedTimestamp > txd.data!.sanitizedTimestamp)) {
+              continue;
+            }
+
+            txd = entry;
+          }
+
+          doScroll = true;
+          _root.remove(node);
+          (txd != null) ? _root.insertAfter(txd, node) : _root.insert(0, node);
+
+          break;
+      }
+
+      if (doScroll) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          scrollController?.scrollToItem(node);
+        });
+      }
+    }
+  }
+
+  IndexedTreeNode<TransactionsModel> _treeBuildNodes(List<TransactionsModel> txs) {
     final root = IndexedTreeNode<TransactionsModel>.root();
     _nodes = <String, IndexedTreeNode<TransactionsModel>>{};
 

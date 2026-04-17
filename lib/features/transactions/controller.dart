@@ -361,20 +361,18 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   bool isBothEqual(TransactionsModel txA, TransactionsModel txB) {
-
-      if (txA.tid != txB.tid ||
-          txA.rid != txB.rid ||
-          txA.pid != txB.pid ||
-          txA.srAmount != txB.srAmount ||
-          txA.rrAmount != txB.rrAmount ||
-          txA.balance != txB.balance ||
-          txA.status != txB.status ||
-          txA.closable != txB.closable ||
-          txA.timestamp != txB.timestamp ||
-          !mapEquals(txA.meta, txB.meta)) {
-        return false;
-      }
-
+    if (txA.tid != txB.tid ||
+        txA.rid != txB.rid ||
+        txA.pid != txB.pid ||
+        txA.srAmount != txB.srAmount ||
+        txA.rrAmount != txB.rrAmount ||
+        txA.balance != txB.balance ||
+        txA.status != txB.status ||
+        txA.closable != txB.closable ||
+        txA.timestamp != txB.timestamp ||
+        !mapEquals(txA.meta, txB.meta)) {
+      return false;
+    }
 
     return true;
   }
@@ -386,16 +384,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
       final txA = a[i];
       final txB = b[i];
 
-      if (txA.tid != txB.tid ||
-          txA.rid != txB.rid ||
-          txA.pid != txB.pid ||
-          txA.srAmount != txB.srAmount ||
-          txA.rrAmount != txB.rrAmount ||
-          txA.balance != txB.balance ||
-          txA.status != txB.status ||
-          txA.closable != txB.closable ||
-          txA.timestamp != txB.timestamp ||
-          !mapEquals(txA.meta, txB.meta)) {
+      if (!isBothEqual(txA, txB)) {
         return false;
       }
     }
