@@ -153,19 +153,33 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
       _nodes[tx.tid] = node;
 
+      final children = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
+      if (children.isEmpty) {
+        parent.add(node);
+        continue;
+      }
+
       switch (_sortMode) {
         case 0:
-          final symbol = _cryptosController.getSymbol(tx.srId) ?? tx.srId.toString();
-          final siblings = parent.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>();
-          final idx = siblings.indexWhere((c) {
-            final symbolA = _cryptosController.getSymbol(c.data!.srId) ?? c.data!.srId.toString();
-            return symbol.trim().toLowerCase().characters.first.compareTo(symbolA.trim().toLowerCase().characters.first) < 0;
+          final siblings = newTxs.where((c) => c.pid == tx.pid).toList();
+          siblings.sort((a, b) {
+            final aF = (_cryptosController.getSymbol(a.srId) ?? a.srId.toString()).trim().toLowerCase().characters.first;
+            final bF = (_cryptosController.getSymbol(b.srId) ?? b.srId.toString()).trim().toLowerCase().characters.first;
+
+            return aF.compareTo(bF);
           });
 
-          if (idx == -1) {
-            parent.add(node);
+          final index = siblings.indexWhere((c) => c.tid == tx.tid);
+
+          if (index == 0 || index == children.length) {
+            parent.insert(index, node);
           } else {
-            parent.insert(idx, node);
+            final tindex = index - 1;
+            if (children.length > tindex) {
+              final tdx = children[tindex];
+              // Insert before is actually insert at and move the tdx down!
+              parent.insertBefore(tdx, node);
+            }
           }
           break;
 
