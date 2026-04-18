@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../app/exceptions.dart';
+import '../../../core/math.dart';
 import '../model.dart';
 
 class TransactionsRulesImport {
@@ -66,7 +67,7 @@ class TransactionsRulesImport {
     for (final tx in txs) {
       final list = children[tx.tid] ?? [];
       if (list.isNotEmpty) {
-        final sum = list.fold<double>(0, (a, b) => a + b.srAmount);
+        final sum = list.fold<double>(0, (a, b) => Math.add(a, b.srAmount));
         if (sum > tx.rrAmount) {
           throw ValidationException(
             AppErrorCode.txImportChildAmountSumExceeded,
@@ -94,15 +95,7 @@ class TransactionsRulesImport {
       final hasActiveChild = list.any((c) => c.status == TransactionStatus.active.index);
 
       if (tx.balance > 0) {
-        if (list.isEmpty) {
-          if (tx.status != TransactionStatus.active.index && tx.status != TransactionStatus.finalized.index) {
-            throw ValidationException(
-              AppErrorCode.txImportNonZeroBalanceNotActive,
-              "Non-zero balance without children must be active or finalized for ${tx.tid}",
-              "Import failed",
-            );
-          }
-        } else if (hasActiveChild) {
+        if (hasActiveChild) {
           if (tx.status != TransactionStatus.partial.index) {
             throw ValidationException(
               AppErrorCode.txImportNonZeroBalanceNotPartial,
