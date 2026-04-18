@@ -94,7 +94,15 @@ class TransactionsRulesImport {
       final hasActiveChild = list.any((c) => c.status == TransactionStatus.active.index);
 
       if (tx.balance > 0) {
-        if (hasActiveChild) {
+        if (list.isEmpty) {
+          if (tx.status != TransactionStatus.active.index && tx.status != TransactionStatus.finalized.index) {
+            throw ValidationException(
+              AppErrorCode.txImportNonZeroBalanceNotActive,
+              "Non-zero balance without children must be active or finalized for ${tx.tid}",
+              "Import failed",
+            );
+          }
+        } else if (hasActiveChild) {
           if (tx.status != TransactionStatus.partial.index) {
             throw ValidationException(
               AppErrorCode.txImportNonZeroBalanceNotPartial,
@@ -103,10 +111,10 @@ class TransactionsRulesImport {
             );
           }
         } else {
-          if (tx.status != TransactionStatus.active.index) {
+          if (tx.status != TransactionStatus.active.index && tx.status != TransactionStatus.finalized.index) {
             throw ValidationException(
               AppErrorCode.txImportNonZeroBalanceNotActive,
-              "Non-zero balance without active children must be active for ${tx.tid}",
+              "Non-zero balance without active children must be active or finalized for ${tx.tid}",
               "Import failed",
             );
           }

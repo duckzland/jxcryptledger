@@ -183,7 +183,14 @@ class _TransactionsPageState extends State<TransactionsPage>
         break;
       case TransactionsViewMode.journal:
         _sortableOptions = {};
-        _filterableOptions = {0: "Show All", 1: "Active Trades", 2: "Partial Trades", 3: "Inactive Trades", 4: "Closed Trades"};
+        _filterableOptions = {
+          0: "Show All",
+          1: "Active Trades",
+          2: "Partial Trades",
+          3: "Inactive Trades",
+          4: "Closed Trades",
+          5: "Finalized Trades",
+        };
         break;
       case TransactionsViewMode.history:
         _sortableOptions = {0: "Alphabetically", 1: "Oldest Trades", 2: "Latest Trades"};
@@ -311,6 +318,10 @@ class _TransactionsPageState extends State<TransactionsPage>
 
       case 4:
         filtered = txs.where((t) => t.status == TransactionStatus.closed.index).toList();
+        break;
+
+      case 5:
+        filtered = txs.where((t) => t.status == TransactionStatus.finalized.index).toList();
         break;
 
       default:

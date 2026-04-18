@@ -280,7 +280,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
 
   double getCapitalBalance(TransactionsModel tx) {
     final children = repo.getLeaf(tx);
-    final double spent = children.fold<double>(0.0, (sum, leaf) => sum + leaf.srAmount);
+    final double spent = children.fold<double>(0.0, (sum, leaf) => Math.add(sum,leaf.srAmount));
     final double balance = Math.subtract(tx.rrAmount, spent);
 
     return balance;
