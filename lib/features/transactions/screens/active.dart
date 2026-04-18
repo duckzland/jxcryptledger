@@ -132,30 +132,10 @@ class _TransactionsActiveState extends State<TransactionsActive>
       1: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
       2: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
       3: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      4: (col, asc) => (col, asc) {
-        final currentRate = _customRate ?? _marketRate ?? 0.0;
-        if (currentRate == 0.0) {
-          onSort((d) => d['_status'] as String, col, asc);
-        }
-      },
-      5: (col, asc) => (col, asc) {
-        final currentRate = _customRate ?? _marketRate ?? 0.0;
-        if (currentRate != 0.0) {
-          onSort((d) => d['_currentValue'] as double, col, asc);
-        }
-      },
-      6: (col, asc) => (col, asc) {
-        final currentRate = _customRate ?? _marketRate ?? 0.0;
-        if (currentRate != 0.0) {
-          onSort((d) => d['_profitLossValue'] as double, col, asc);
-        }
-      },
-      7: (col, asc) => (col, asc) {
-        final currentRate = _customRate ?? _marketRate ?? 0.0;
-        if (currentRate != 0.0) {
-          onSort((d) => d['status'] as String, col, asc);
-        }
-      },
+      4: (col, asc) => onSort((d) => d['status'] as String, col, asc),
+      5: (col, asc) => onSort((d) => d['_currentValue'] as double, col, asc),
+      6: (col, asc) => onSort((d) => d['_profitLossValue'] as double, col, asc),
+      7: (col, asc) => onSort((d) => d['status'] as String, col, asc),
     };
 
     rows = _buildRows();
@@ -210,9 +190,12 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   void _onRatesUpdated() {
-    _loadMarketRate();
-    applySorting();
-    _calculateProfitLoss();
+    setState(() {
+      _loadMarketRate();
+      _calculateProfitLoss();
+      rows = _buildRows();
+      applySorting();
+    });
   }
 
   void _calculateProfitLoss() {
@@ -238,12 +221,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
       _ratesController.addQueue(widget.srid, widget.rrid);
       return;
     }
-    if (mounted) {
-      setState(() {
-        _marketRate = rate;
-        rows = _buildRows();
-      });
-    }
+
+    _marketRate = rate;
   }
 
   @override
@@ -320,6 +299,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   _debounce = Timer(const Duration(milliseconds: 100), () {
                     setState(() {
                       _customRate = double.tryParse(value);
+                      _calculateProfitLoss();
                       rows = _buildRows();
                       applySorting();
                     });
@@ -557,7 +537,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 onSort: sorters[6],
               ),
             ],
-            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: sorters[7]),
+
+            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sorters[4] : sorters[7]),
             DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
 
