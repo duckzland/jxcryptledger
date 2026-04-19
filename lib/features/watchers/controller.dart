@@ -115,7 +115,7 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
       final sourceSymbol = _cryptosService.getSymbol(tx.srId) ?? "";
       final targetSymbol = _cryptosService.getSymbol(tx.rrId) ?? "";
 
-      message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${tx.rates}.";
+      message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDouble(tx.rates)}.";
     }
 
     await _notificationService.show(message);
