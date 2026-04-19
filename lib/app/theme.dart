@@ -20,6 +20,7 @@ class AppTheme {
 
   static const background = Color(0xFF0D1421);
   static const scrimBackground = Color(0xFF06070A);
+  static const menuHeaderBg = Color(0xFF1F3C6E);
   static const headerBg = Color(0xFF161C27);
   static const columnHeaderBg = Color(0xFF000000);
   static const rowHeaderBg = Color(0xFF0D1421);
@@ -142,6 +143,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(textStyle: const TextStyle(fontFamily: 'Inter')),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(textStyle: const TextStyle(fontFamily: 'Inter')),
       ),
