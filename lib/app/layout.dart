@@ -160,7 +160,7 @@ class _AppLayoutState extends State<AppLayout> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.notification_add),
+            leading: const Icon(Icons.add_alarm),
             title: const Text("Manage Rate Watchers"),
             onTap: () {
               Navigator.pop(context);
@@ -380,7 +380,7 @@ class _AppLayoutState extends State<AppLayout> {
         ),
 
         WidgetsButton(
-          icon: Icons.notification_add,
+          icon: Icons.add_alarm,
           padding: const EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),

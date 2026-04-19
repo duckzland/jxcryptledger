@@ -32,6 +32,6 @@ class NotificationService {
       windows: WindowsNotificationDetails(),
     );
 
-    await _plugin.show(id: 0, title: 'JXLedger', body: message, notificationDetails: notificationDetails);
+    await _plugin.show(id: 0, title: null, body: message, notificationDetails: notificationDetails);
   }
 }
