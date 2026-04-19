@@ -42,6 +42,44 @@ class _AppLayoutState extends State<AppLayout> {
     setState(() => _barBuildId = _barBuildId + 1);
   }
 
+  List<Map<String, Object>> menus = [
+    {
+      "icon": Icons.account_balance_wallet,
+      "title": "Manage Transactions",
+      "target": "/transactions",
+      "evaluator": (location) => (location == "/transactions" || location == "/"),
+      "ordering": 0,
+    },
+    {
+      "icon": Icons.candlestick_chart,
+      "title": "Display Watchboard",
+      "target": "/watchboard",
+      "evaluator": (location) => (location == "/watchboard"),
+      "ordering": 1,
+    },
+    {
+      "icon": Icons.add_alarm,
+      "title": "Manage Rate Watchers",
+      "target": "/watchers",
+      "evaluator": (location) => (location == "/watchers"),
+      "ordering": 2,
+    },
+    {
+      "icon": Icons.handyman,
+      "title": "Use Crypto Tools",
+      "target": "/tools",
+      "evaluator": (location) => (location == "/tools"),
+      "ordering": 3,
+    },
+    {
+      "icon": Icons.candlestick_chart,
+      "title": "Settings",
+      "target": "/settings",
+      "evaluator": (location) => (location == "/settings"),
+      "ordering": 4,
+    },
+  ];
+
   Widget? _actions;
   bool _isFetchingRates = false;
   bool _isFetchingCryptos = false;
@@ -95,7 +133,7 @@ class _AppLayoutState extends State<AppLayout> {
             final showMenu = width < 800;
 
             return Scaffold(
-              drawer: (showMenu) ? _buildDrawer(context) : null,
+              drawer: (showMenu) ? _buildDrawer(location, context) : null,
               appBar: AppBar(
                 backgroundColor: AppTheme.columnHeaderBg,
                 leadingWidth: leadingWidth,
@@ -129,60 +167,41 @@ class _AppLayoutState extends State<AppLayout> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
+  Widget _buildDrawer(String location, BuildContext context) {
     final hasRates = _ratesController.hasRates;
+
+    List<Widget> navigation = [];
+    menus.sort((a, b) => (a['ordering'] as int).compareTo(b['ordering'] as int));
+
+    for (var menu in menus) {
+      final evaluator = menu['evaluator'] as bool Function(String);
+      navigation.add(
+        ListTile(
+          leading: Icon(menu['icon'] as IconData),
+          title: Text(menu['title'] as String),
+          selected: evaluator(location),
+          selectedColor: AppTheme.text,
+          selectedTileColor: AppTheme.primary,
+          onTap: () {
+            Navigator.pop(context);
+            context.go(menu['target'] as String);
+          },
+        ),
+      );
+    }
 
     return Drawer(
       child: ListView(
         children: [
           Container(
             height: 60,
-            color: AppTheme.primary,
+            color: AppTheme.menuHeaderBg,
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(_title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           ),
 
-          ListTile(
-            leading: const Icon(Icons.account_balance_wallet),
-            title: const Text("Manage Transactions"),
-            onTap: () {
-              Navigator.pop(context);
-              context.go("/transactions");
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.candlestick_chart),
-            title: const Text("Display Watchboard"),
-            onTap: () {
-              Navigator.pop(context);
-              context.go("/watchboard");
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.add_alarm),
-            title: const Text("Manage Rate Watchers"),
-            onTap: () {
-              Navigator.pop(context);
-              context.go("/watchers");
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.handyman),
-            title: const Text("Use Crypto Tools"),
-            onTap: () {
-              Navigator.pop(context);
-              context.go("/tools");
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text("Settings"),
-            onTap: () {
-              Navigator.pop(context);
-              context.go("/settings");
-            },
-          ),
+          ...navigation,
 
           const Divider(),
 
@@ -339,100 +358,32 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   Widget _buildNavigation(String location) {
-    return Wrap(
-      spacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        WidgetsButton(
-          icon: Icons.account_balance_wallet,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Manage Transactions",
-          evaluator: (s) {
-            if (location == "/transactions" || location == "/") {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (s) {
-            context.go("/transactions");
-          },
-        ),
+    List<Widget> navigation = [];
+    menus.sort((a, b) => (a['ordering'] as int).compareTo(b['ordering'] as int));
 
+    for (var menu in menus) {
+      navigation.add(
         WidgetsButton(
-          icon: Icons.candlestick_chart,
+          icon: menu['icon'] as IconData,
           padding: const EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
-          tooltip: "Display Watchboard",
+          tooltip: menu['title'] as String,
           evaluator: (s) {
-            if (location == "/watchboard") {
+            final evaluator = menu['evaluator'] as bool Function(String);
+            if (evaluator(location)) {
               s.active();
             } else {
               s.normal();
             }
           },
           onPressed: (s) {
-            context.go("/watchboard");
+            context.go(menu['target'] as String);
           },
         ),
+      );
+    }
 
-        WidgetsButton(
-          icon: Icons.add_alarm,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Manage Rate Watchers",
-          evaluator: (s) {
-            if (location == "/watchers") {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (s) {
-            context.go("/watchers");
-          },
-        ),
-
-        WidgetsButton(
-          icon: Icons.handyman,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Use Crypto Tools",
-          evaluator: (s) {
-            if (location == "/tools") {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (s) {
-            context.go("/tools");
-          },
-        ),
-
-        WidgetsButton(
-          icon: Icons.settings,
-          padding: const EdgeInsets.all(8),
-          iconSize: 20,
-          minimumSize: const Size(40, 40),
-          tooltip: "Settings",
-          evaluator: (s) {
-            if (location == "/settings") {
-              s.active();
-            } else {
-              s.normal();
-            }
-          },
-          onPressed: (s) {
-            context.go("/settings");
-          },
-        ),
-      ],
-    );
+    return Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: navigation);
   }
 }
