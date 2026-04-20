@@ -6,7 +6,6 @@ class AppTheme {
   static const primary = Color(0xFF007ACC);
   static const inputBg = Color(0xFF202023);
 
-  static const buttonBg = Color(0xFF28292E);
   static const error = Color(0xFFC62828);
   static const success = Color(0xFF43F436);
   static const warning = Color(0xFFD5A114);
@@ -44,6 +43,7 @@ class AppTheme {
   static const teal = Color(0xFF28AA8C);
   static const darkGrey = Color(0xFF282828);
 
+  static const buttonBg = Color(0xFF28292E);
   static const buttonFg = Color(0xFFE0E0E0);
 
   static const buttonBgDisabled = Color(0xFF1A1B1F);
