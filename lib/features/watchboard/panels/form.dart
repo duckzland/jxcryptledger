@@ -98,7 +98,7 @@ class _PanelsFormState extends State<PanelsForm> {
         srId: _selectedSrId!,
         rrId: _selectedRrId!,
         digit: _digit!,
-        rate: _rate,
+        rate: _rate ?? 0.0,
         order: _order,
         meta: meta,
       );

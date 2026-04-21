@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import '../../core/abstracts/models/with_id.dart';
+import '../../core/math.dart';
 import '../../core/utils.dart';
 
 class RatesModel implements CoreModelWithId {
@@ -80,7 +81,7 @@ class RatesModel implements CoreModelWithId {
       return Decimal.zero;
     }
 
-    return (targetAmount / sourceAmount).toDecimal(scaleOnInfinitePrecision: 8);
+    return (targetAmount / sourceAmount).toDecimal(scaleOnInfinitePrecision: 18);
   }
 
   double get rateDouble {
@@ -89,7 +90,7 @@ class RatesModel implements CoreModelWithId {
 
     if (s <= 0 || t <= 0) return 0.0;
 
-    final double r = s / t;
+    final double r = Math.divide(s, t);
 
     return r.isFinite ? r : 0.0;
   }

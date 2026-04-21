@@ -6,7 +6,6 @@ import '../../core/mixins/controllers/rateable.dart';
 import '../../core/utils.dart';
 import '../cryptos/service.dart';
 import '../notification/service.dart';
-import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -15,50 +14,14 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
         CoreMixinsControllersIdGenerator<WatchersModel, WatchersRepository>,
         CoreMixinsControllersExportable<WatchersModel, WatchersRepository>,
         CoreMixinsControllersRateable<WatchersModel, WatchersRepository> {
-  final RatesService _ratesService;
   final NotificationService _notificationService;
   final CryptosService _cryptosService;
 
-  WatchersController(super.repo, this._ratesService, this._notificationService, this._cryptosService);
+  WatchersController(super.repo, this._notificationService, this._cryptosService);
 
   @override
   void init() {
-    load();
-    for (final wx in items) {
-      _ratesService.addQueue(wx.srId, wx.rrId);
-    }
-  }
-
-  @override
-  Future<void> add(WatchersModel tx) async {
-    _ratesService.addQueue(tx.srId, tx.rrId);
-    await repo.add(tx);
-    load();
-  }
-
-  @override
-  Future<void> update(WatchersModel tx) async {
-    _ratesService.addQueue(tx.srId, tx.rrId);
-    await repo.update(tx);
-    load();
-  }
-
-  @override
-  Future<void> remove(WatchersModel tx) async {
-    await _ratesService.delete(tx.srId, tx.rrId);
-    await _ratesService.delete(tx.rrId, tx.srId);
-    await repo.remove(tx);
-    load();
-  }
-
-  @override
-  Future<void> clear() async {
-    for (final tx in items) {
-      await _ratesService.delete(tx.srId, tx.rrId);
-      await _ratesService.delete(tx.rrId, tx.srId);
-    }
-    await repo.clear();
-    load();
+    scheduleRates();
   }
 
   WatchersModel? getLinked(String linkKey) {
@@ -71,14 +34,10 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
     return null;
   }
 
-  Future<void> onRatesUpdated() async {
-    for (final w in items) {
-      logln("[WATCHER] Evaluating ${w.srId}-${w.rrId}");
-      process(w);
-    }
-  }
+  @override
+  Future<void> processNewRate(WatchersModel tx, double newRate) async {
+    logln("[WATCHERS] Evaluating ${tx.srId}-${tx.rrId}");
 
-  Future<void> process(WatchersModel tx) async {
     if (tx.isSpent()) return;
 
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
@@ -86,19 +45,13 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
     final nextAllowed = last + (tx.duration * 60000000);
     if (now < nextAllowed) return;
 
-    final current = _ratesService.getStoredRate(tx.srId, tx.rrId);
-    if (current == -9999) {
-      _ratesService.addQueue(tx.srId, tx.rrId);
-      return;
-    }
-
     switch (tx.operatorEnum) {
       case WatchersOperator.equal:
-        if (current != tx.rates) return;
+        if (newRate != tx.rates) return;
       case WatchersOperator.lessThan:
-        if (current >= tx.rates) return;
+        if (newRate >= tx.rates) return;
       case WatchersOperator.greaterThan:
-        if (current <= tx.rates) return;
+        if (newRate <= tx.rates) return;
     }
 
     final updated = tx.copyWith(sent: tx.sent + 1, timestamp: now);

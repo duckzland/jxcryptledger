@@ -7,7 +7,7 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
   final String tid;
   final double srAmount;
   final int digit;
-  double? rate;
+  double rate;
   int? order;
   Map<String, dynamic> meta;
 
@@ -26,7 +26,7 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
     required this.srId,
     required this.rrId,
     required this.digit,
-    this.rate,
+    required this.rate,
     this.order,
     Map<String, dynamic>? meta,
   }) : meta = meta ?? {} {
@@ -68,7 +68,7 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
       srId: map['srId'] as int,
       rrId: map['rrId'] as int,
       digit: map['digit'] as int,
-      rate: (map['rate'] as num?)?.toDouble(),
+      rate: (map['rate'] as num).toDouble(),
       order: map['order'] as int?,
       meta: map['meta'] != null ? Map<String, dynamic>.from(map['meta']) : {},
     );
@@ -103,7 +103,7 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
       srId: (json['srId'] as num).toInt(),
       rrId: (json['rrId'] as num).toInt(),
       digit: (json['digit'] as num).toInt(),
-      rate: (json['rate'] as num?)?.toDouble(),
+      rate: (json['rate'] as num).toDouble(),
       order: json['order'] as int?,
       meta: json['meta'] != null ? Map<String, dynamic>.from(json['meta']) : {},
     );
@@ -133,14 +133,15 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
     );
   }
 
-  void setRate(double newRate) {
-    if (newRate == -9999 && meta["oldRate"] != -9999) {
+  void setRate(dynamic newRate) {
+    final nr = newRate as double;
+    if (nr == -9999 && meta["oldRate"] != -9999) {
       return;
     }
 
-    if (newRate != rate) {
+    if (nr != rate) {
       meta["oldRate"] = rate;
-      rate = newRate;
+      rate = nr;
     }
   }
 
@@ -149,15 +150,15 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
   }
 
   int getStatus() {
-    if (rate! == -9999) {
+    if (rate == -9999) {
       return 0;
     }
 
     final prevRate = (meta["oldRate"] is num) ? (meta["oldRate"] as num).toDouble() : double.tryParse(meta["oldRate"]?.toString() ?? "");
 
-    if (rate == null || prevRate == null) return 0;
-    if (rate! > prevRate) return 1;
-    if (rate! < prevRate) return -1;
+    if (prevRate == null) return 0;
+    if (rate > prevRate) return 1;
+    if (rate < prevRate) return -1;
     return 0;
   }
 }

@@ -1,9 +1,7 @@
 import '../../../core/abstracts/controller.dart';
-import '../../../core/log.dart';
 import '../../../core/mixins/controllers/exportable.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
 import '../../../core/mixins/controllers/rateable.dart';
-import '../../rates/service.dart';
 import '../../transactions/repository.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -14,9 +12,8 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
         CoreMixinsControllersExportable<PanelsModel, PanelsRepository>,
         CoreMixinsControllersRateable<PanelsModel, PanelsRepository> {
   final TransactionsRepository _txRepo;
-  final RatesService _ratesService;
 
-  PanelsController(super.repo, this._ratesService, this._txRepo);
+  PanelsController(super.repo, this._txRepo);
 
   @override
   void init() {
@@ -24,36 +21,11 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   }
 
   @override
-  Future<void> remove(PanelsModel tx) async {
-    await _ratesService.delete(tx.srId, tx.rrId);
-    await _ratesService.delete(tx.rrId, tx.srId);
-    await repo.remove(tx);
-    load();
-  }
-
-  void scheduleRates() {
-    load();
-    for (final w in items) {
-      _ratesService.addQueue(w.srId, w.rrId);
-    }
-
-    logln("[PANELS] Scheduling rates completed");
-  }
-
-  Future<void> onRatesUpdated() async {
-    load();
-    for (final w in items) {
-      final newRate = _ratesService.getStoredRate(w.srId, w.rrId);
-
-      if (newRate == -9999) {
-        _ratesService.addQueue(w.srId, w.rrId);
-        continue;
-      }
-
-      if (newRate != w.rate) {
-        w.setRate(newRate);
-        await update(w);
-      }
+  Future<void> processNewRate(PanelsModel tx, double newRate) async {
+    if (newRate != tx.rate) {
+      tx.setRate(newRate);
+      await repo.update(tx);
+      load();
     }
   }
 

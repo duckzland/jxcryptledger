@@ -39,7 +39,7 @@ class RatesService {
 
   Future<void> delete(int sourceId, int targetId) async {
     logln('[RATES] Deleting $sourceId-$targetId.');
-    await ratesRepo.deletePair(sourceId, targetId);
+    await ratesRepo.delete("$sourceId-$targetId");
   }
 
   void registerOnComplete(void Function() cb) {
@@ -59,7 +59,7 @@ class RatesService {
     }
 
     _validateIds(sourceId, targetId);
-    final existing = ratesRepo.getPair(sourceId, targetId);
+    final existing = ratesRepo.get("$sourceId-$targetId");
     return existing?.rate.toDouble() ?? -9999;
   }
 

@@ -29,9 +29,7 @@ void setupLocator() {
 
   // Transactions
   locator.registerLazySingleton<TransactionsRepository>(() => TransactionsRepository());
-  locator.registerLazySingleton<TransactionsController>(
-    () => TransactionsController(locator<TransactionsRepository>(), locator<RatesService>()),
-  );
+  locator.registerLazySingleton<TransactionsController>(() => TransactionsController(locator<TransactionsRepository>()));
 
   // Cryptos
   locator.registerLazySingleton<CryptosRepository>(() => CryptosRepository());
@@ -51,12 +49,7 @@ void setupLocator() {
   // Watchers
   locator.registerLazySingleton<WatchersRepository>(() => WatchersRepository());
   locator.registerLazySingleton<WatchersController>(
-    () => WatchersController(
-      locator<WatchersRepository>(),
-      locator<RatesService>(),
-      locator<NotificationService>(),
-      locator<CryptosService>(),
-    ),
+    () => WatchersController(locator<WatchersRepository>(), locator<NotificationService>(), locator<CryptosService>()),
   );
 
   // Notification
@@ -64,9 +57,7 @@ void setupLocator() {
 
   // Panels
   locator.registerLazySingleton<PanelsRepository>(() => PanelsRepository());
-  locator.registerLazySingleton<PanelsController>(
-    () => PanelsController(locator<PanelsRepository>(), locator<RatesService>(), locator<TransactionsRepository>()),
-  );
+  locator.registerLazySingleton<PanelsController>(() => PanelsController(locator<PanelsRepository>(), locator<TransactionsRepository>()));
 
   // Tickers
   locator.registerLazySingleton<TickersRepository>(() => TickersRepository());

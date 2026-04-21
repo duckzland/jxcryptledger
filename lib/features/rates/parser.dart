@@ -61,7 +61,7 @@ RatesParserResult parseRatesJson(String body) {
       ),
     );
 
-    // Added revesed rates
+    // Added reversed rates
     rates.add(
       RatesModel(
         sourceAmount: Decimal.parse(sourceAmount.toString()),
