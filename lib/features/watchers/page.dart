@@ -7,6 +7,7 @@ import '../../app/exceptions.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
+import '../../core/utils.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/scrollto_table.dart';
 import '../../mixins/sortable_table.dart';
@@ -297,7 +298,7 @@ class _WatchersPageState extends State<WatchersPage>
         'from': sourceSymbol,
         'to': resultSymbol,
         'ops': tx.operatorText,
-        'rate': tx.rates.toString(),
+        'rate': Utils.formatSmartDouble(tx.rates),
         'sent': tx.sent.toString(),
         'limit': tx.limit.toString(),
         'duration': "${tx.duration}m",
