@@ -122,7 +122,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
     _capital = _tx.srAmount;
     _balance = _activeBranchAmounts[_tx.srId] ?? 0;
-    _finalized = _activeBranchAmounts[_tx.srId] ?? 0;
+    _finalized = _finalizedBranchAmounts[_tx.srId] ?? 0;
     _profit = Math.subtract(Math.add(_balance, _finalized), _capital);
     _profitPercentage = (_capital == 0 ? 0 : Math.multiply(Math.divide(_profit, _capital), 100)) as double;
 
