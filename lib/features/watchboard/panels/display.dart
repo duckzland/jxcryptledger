@@ -114,13 +114,13 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
 
     final fromText = "${Utils.formatSmartDouble(tix.srAmount)} $sourceSymbol to $targetSymbol";
-    final toText = "${Utils.formatSmartDouble((tix.rate! * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
-    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDouble(tix.rate!, maxDecimals: tix.digit)} $targetSymbol";
-    final inverseText = "1 $targetSymbol = ${Utils.formatSmartDouble((1 / tix.rate!), maxDecimals: tix.digit)} $sourceSymbol";
+    final toText = "${Utils.formatSmartDouble((tix.rate * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
+    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDouble(tix.rate, maxDecimals: tix.digit)} $targetSymbol";
+    final inverseText = "1 $targetSymbol = ${Utils.formatSmartDouble((1 / tix.rate), maxDecimals: tix.digit)} $sourceSymbol";
 
     final bool isThisOneActive = _activePanelId == widget.tix.tid;
 
-    final text = tix.rate != null && tix.rate! > 0
+    final text = tix.rate > 0
         ? [
             Text(fromText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600)),
             Flexible(
@@ -139,7 +139,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
           ]
         : [
             Text(
-              tix.rate! == -9999 ? "Fetching new rate..." : "Loading...",
+              tix.rate == -9999 ? "Fetching new rate..." : "Loading...",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ];

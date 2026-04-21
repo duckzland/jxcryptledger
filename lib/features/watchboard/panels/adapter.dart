@@ -26,7 +26,7 @@ class PanelsAdapter extends TypeAdapter<PanelsModel> {
     writer.writeInt(obj.srId);
     writer.writeInt(obj.rrId);
     writer.writeInt(obj.digit);
-    writer.writeDouble(obj.rate ?? 0.0);
+    writer.writeDouble(obj.rate);
     writer.writeInt(obj.order ?? 0);
     writer.writeMap(obj.meta);
   }

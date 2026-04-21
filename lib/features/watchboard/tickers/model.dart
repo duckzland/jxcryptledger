@@ -40,10 +40,10 @@ class TickersModel implements CoreModelWithId {
   }) : _value = value,
        meta = meta ?? {} {
     if (tid.isEmpty) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be empty.", "Please enter a transaction ID.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be empty.", "Please enter a ticker ID.");
     }
     if (tid == '0') {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be '0'.", "This transaction ID is not allowed.");
+      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be '0'.", "This ticker ID is not allowed.");
     }
     if (order < 0) {
       throw ValidationException(AppErrorCode.tickerBasicInvalidOrder, "order must be > 0.", "Invalid ordering.");

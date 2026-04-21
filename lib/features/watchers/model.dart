@@ -7,18 +7,20 @@ enum WatchersOperator { equal, lessThan, greaterThan }
 
 class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRateable {
   final String wid;
-  @override
-  final int srId;
-  @override
-  final int rrId;
-  final double rates;
   final int sent;
   final int operator;
   final int limit;
+  final double rates;
   final int duration;
   final String message;
   final int timestamp;
   final Map<String, dynamic> meta;
+
+  @override
+  final int srId;
+
+  @override
+  final int rrId;
 
   @override
   String get uuid => wid;
@@ -78,7 +80,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
       wid: json['wid'] as String,
       srId: json['srId'] as int,
       rrId: json['rrId'] as int,
-      rates: (json['rates'] as num).toDouble(),
+      rates: (json['rate'] as num).toDouble(),
       sent: json['sent'] as int,
       operator: json['operator'] as int,
       limit: json['limit'] as int,
@@ -110,7 +112,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
     String? wid,
     int? srId,
     int? rrId,
-    double? rates,
+    double? rate,
     int? sent,
     int? operator,
     int? limit,
@@ -123,7 +125,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
       wid: wid ?? this.wid,
       srId: srId ?? this.srId,
       rrId: rrId ?? this.rrId,
-      rates: rates ?? this.rates,
+      rates: rate ?? this.rates,
       sent: sent ?? this.sent,
       operator: operator ?? this.operator,
       limit: limit ?? this.limit,

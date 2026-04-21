@@ -6,7 +6,6 @@ import '../../core/math.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/mixins/controllers/rateable.dart';
-import '../rates/service.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -15,17 +14,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
         CoreMixinsControllersIdGenerator<TransactionsModel, TransactionsRepository>,
         CoreMixinsControllersExportable<TransactionsModel, TransactionsRepository>,
         CoreMixinsControllersRateable<TransactionsModel, TransactionsRepository> {
-  final RatesService _ratesService;
-
-  TransactionsController(super.repo, this._ratesService);
-
-  @override
-  Future<void> remove(TransactionsModel tx) async {
-    await _ratesService.delete(tx.srId, tx.rrId);
-    await _ratesService.delete(tx.rrId, tx.srId);
-    await repo.remove(tx);
-    load();
-  }
+  TransactionsController(super.repo);
 
   Future<void> closeLeaf(TransactionsModel tx) async {
     await repo.close(tx);
@@ -280,7 +269,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
 
   double getCapitalBalance(TransactionsModel tx) {
     final children = repo.getLeaf(tx);
-    final double spent = children.fold<double>(0.0, (sum, leaf) => Math.add(sum,leaf.srAmount));
+    final double spent = children.fold<double>(0.0, (sum, leaf) => Math.add(sum, leaf.srAmount));
     final double balance = Math.subtract(tx.rrAmount, spent);
 
     return balance;
