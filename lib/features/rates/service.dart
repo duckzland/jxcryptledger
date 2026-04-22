@@ -163,8 +163,15 @@ class RatesService {
     }
 
     for (final (sourceId, targetId) in cleaned) {
-      wb[sourceId] = (wb[sourceId] ?? 1) + 1;
+      wb[sourceId] = (wb[sourceId] ?? 0) + 1;
       wb[targetId] = (wb[targetId] ?? 0) + 1;
+    }
+
+    for (final (sourceId, targetId) in cleaned) {
+      if (wb[sourceId] == wb[targetId]) {
+        wb[sourceId] = (wb[sourceId] ?? 0) + 1;
+        wb[targetId] = (wb[targetId] ?? 0) - 1;
+      }
     }
 
     for (final (rawSource, rawTarget) in cleaned) {
@@ -175,7 +182,7 @@ class RatesService {
       var source = rawSource;
       var target = rawTarget;
 
-      if ((wb[target] ?? 0) > (wb[source] ?? 1)) {
+      if ((wb[target] ?? 0) > (wb[source] ?? 0)) {
         final tmp = source;
         source = target;
         target = tmp;
