@@ -72,7 +72,7 @@ class _AppLayoutState extends State<AppLayout> {
       "ordering": 3,
     },
     {
-      "icon": Icons.candlestick_chart,
+      "icon": Icons.settings,
       "title": "Settings",
       "target": "/settings",
       "evaluator": (location) => (location == "/settings"),
