@@ -16,7 +16,7 @@ class TickersDisplay extends StatefulWidget {
 class _TickersDisplayState extends State<TickersDisplay> {
   Color _currentColor = AppTheme.darkGrey;
 
-  Color _resolveBackground(Color currentColor) {
+  Color _resolveBackground() {
     final rawValue = widget.tix.value;
     final oldRawValue = widget.tix.meta['oldValue'] as String?;
 
@@ -28,12 +28,12 @@ class _TickersDisplayState extends State<TickersDisplay> {
         case TickerType.marketCap:
           if (current > old) return AppTheme.green;
           if (current < old) return AppTheme.red;
-          return currentColor;
+          return _currentColor;
 
         case TickerType.cmc100:
           if (current > old) return AppTheme.green;
           if (current < old) return AppTheme.red;
-          return currentColor;
+          return _currentColor;
 
         case TickerType.rsi:
           final index = double.tryParse(rawValue) ?? 0;
@@ -52,7 +52,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
         case TickerType.etf:
           if (current > 0) return AppTheme.green;
           if (current < 0) return AppTheme.red;
-          return currentColor;
+          return _currentColor;
 
         case TickerType.dominance:
           final dom = double.tryParse(rawValue) ?? 0;
@@ -85,21 +85,16 @@ class _TickersDisplayState extends State<TickersDisplay> {
   Widget build(BuildContext context) {
     final tix = widget.tix;
 
-    final targetColor = _resolveBackground(_currentColor);
+    final targetColor = _resolveBackground();
     final hsl = HSLColor.fromColor(targetColor);
-    final startColor = hsl.withLightness((hsl.lightness + 0.3).clamp(0.0, 1.0)).toColor();
+    final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
     final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
-
-    if (targetColor != _currentColor) {
-      setState(() {
-        _currentColor = targetColor;
-      });
-    }
+    _currentColor = targetColor;
 
     return TweenAnimationBuilder<Color?>(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 300),
       tween: ColorTween(begin: startColor, end: targetColor),
-      curve: Curves.easeOutQuart,
+      curve: Curves.easeInOut,
       builder: (context, Color? animatedBgColor, child) {
         return WidgetsPanel(
           padding: const EdgeInsets.all(0),

@@ -38,7 +38,7 @@ class PanelsButtons extends StatelessWidget with MixinsActions {
             if (wix == null) {
               s.normal();
             } else {
-              wix.isSpent() ? s.error() : s.action();
+              wix.isSpent ? s.error() : s.action();
             }
           },
           buildForm: (dialogContext) {

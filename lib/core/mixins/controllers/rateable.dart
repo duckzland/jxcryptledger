@@ -57,8 +57,10 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
 
     for (final tx in items) {
       final rx = tx as CoreModelRateable;
-      ids.add("${rx.srId}-${rx.rrId}");
-      ids.add("${rx.rrId}-${rx.srId}");
+      if (rx.isRateable) {
+        ids.add("${rx.srId}-${rx.rrId}");
+        ids.add("${rx.rrId}-${rx.srId}");
+      }
     }
 
     return ids;
