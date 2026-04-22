@@ -145,11 +145,7 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
     }
   }
 
-  bool isLinked() {
-    return meta.containsKey('txLink');
-  }
-
-  int getStatus() {
+  int get status {
     if (rate == -9999) {
       return 0;
     }
@@ -160,5 +156,14 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
     if (rate > prevRate) return 1;
     if (rate < prevRate) return -1;
     return 0;
+  }
+
+  @override
+  bool get isRateable {
+    return true;
+  }
+
+  bool get isLinked {
+    return meta.containsKey('txLink');
   }
 }

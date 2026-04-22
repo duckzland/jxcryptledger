@@ -70,7 +70,7 @@ class _PanelsFormState extends State<PanelsForm> {
 
     _srAmountText = Utils.sanitizeNumber((widget.initialSrAmount ?? data?.srAmount ?? "").toString());
 
-    if (widget.linkedToTx != null || (data != null && data.isLinked())) {
+    if (widget.linkedToTx != null || (data != null && data.isLinked)) {
       _sourceSymbol = _selectedSrId != null ? _cryptosController.getSymbol(_selectedSrId!) : "";
     }
   }
@@ -172,7 +172,7 @@ class _PanelsFormState extends State<PanelsForm> {
                 child: WidgetsFieldsAmount(
                   title: 'Amount',
                   suffixText: _sourceSymbol,
-                  enabled: widget.initialData == null ? widget.initialSrAmount == null : !widget.initialData!.isLinked(),
+                  enabled: widget.initialData == null ? widget.initialSrAmount == null : !widget.initialData!.isLinked,
                   helperText: 'e.g., 65000',
                   initialValue: _srAmountText,
                   allowClean: _sourceSymbol == null,
@@ -185,7 +185,7 @@ class _PanelsFormState extends State<PanelsForm> {
                   flex: 2,
                   child: WidgetsFieldsCryptoSearch(
                     labelText: 'Coin',
-                    enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked(),
+                    enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
                     initialValue: _selectedSrId,
                     onSelected: (id) => setState(() => _selectedSrId = id),
                   ),
@@ -207,7 +207,7 @@ class _PanelsFormState extends State<PanelsForm> {
           const Text("To", style: TextStyle(fontWeight: FontWeight.w600)),
           WidgetsFieldsCryptoSearch(
             labelText: 'Target Coin',
-            enabled: widget.initialData == null ? widget.initialRrId == null : !widget.initialData!.isLinked(),
+            enabled: widget.initialData == null ? widget.initialRrId == null : !widget.initialData!.isLinked,
             initialValue: _selectedRrId,
             onSelected: (id) => setState(() => _selectedRrId = id),
           ),

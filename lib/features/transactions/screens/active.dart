@@ -199,14 +199,15 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   void _calculateProfitLoss() {
+    final atxs = txs.where((tx) => tx.isActive || tx.isPartial).toList();
     _averageRate = _calc.averageExchangedRate(txs, reverse: _isReversed);
     _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
     _totalSourceBalance = _calc.totalSourceBalance(txs);
     _totalBalance = _calc.totalBalance(txs);
-    _totalPL = _calc.totalProfitLoss(txs, _currentRate, reverse: _isReversed);
-    _totalProfit = _calc.totalProfit(txs, _currentRate, reverse: _isReversed);
-    _totalLoss = _calc.totalLoss(txs, _currentRate, reverse: _isReversed);
-    _plPercentage = _calc.profitLossPercentage(txs, _currentRate, reverse: _isReversed);
+    _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed);
+    _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed);
+    _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed);
+    _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed);
   }
 
   void _onControllerChanged() {
@@ -381,7 +382,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 if (_linkedWatcher == null) {
                   s.normal();
                 } else {
-                  _linkedWatcher!.isSpent() ? s.error() : s.action();
+                  _linkedWatcher!.isSpent ? s.error() : s.action();
                 }
               },
               buildForm: (dialogContext) {
@@ -580,16 +581,18 @@ class _TransactionsActiveState extends State<TransactionsActive>
     final rows = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
+      double rowRate = currentRate;
       double currentValue = 0;
       double profitLoss = 0;
       double profitLevel = 0;
 
-      if (currentRate != 0 && tx.balance != 0 && !tx.isClosed) {
+      if (tx.isFinalized) {
+        profitLoss = 0;
+        profitLevel = 0;
+        rowRate = tx.rateDouble;
+        currentValue = tx.balance;
+      } else if (currentRate != 0 && tx.balance != 0 && !tx.isClosed) {
         currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
-
-        if (tx.isFinalized) {
-          currentValue = tx.balance;
-        }
 
         profitLoss = Math.subtract(currentValue, tx.srAmount);
 
@@ -604,7 +607,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         'from': tx.srAmountText,
         'to': tx.balanceText,
         'exchangedRate': _isReversed ? tx.rateReversedText : tx.rateText,
-        'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(currentRate),
+        'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(rowRate),
         'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
         'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
         'profitLevel': profitLevel,

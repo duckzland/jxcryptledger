@@ -95,7 +95,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
   }
 
   Color _resolveBackground() {
-    final status = widget.tix.getStatus();
+    final status = widget.tix.status;
     switch (status) {
       case 1:
         return AppTheme.green;
@@ -180,11 +180,11 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
                     child: Icon(
                       Icons.add_alarm,
                       size: 16,
-                      color: _linkedWatcher!.isSpent() ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
+                      color: _linkedWatcher!.isSpent ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
                     ),
                   ),
 
-                if (tix.isLinked())
+                if (tix.isLinked)
                   Positioned(
                     top: 8,
                     left: _linkedWatcher != null ? 24 : 6,

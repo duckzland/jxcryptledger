@@ -38,7 +38,7 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
   Future<void> processNewRate(WatchersModel tx, double newRate) async {
     logln("[WATCHERS] Evaluating ${tx.srId}-${tx.rrId}");
 
-    if (tx.isSpent()) return;
+    if (tx.isSpent) return;
 
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
     final last = Utils.sanitizeTimestamp(tx.timestamp);

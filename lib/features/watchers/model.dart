@@ -169,11 +169,16 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
     }
   }
 
-  bool isLinked() {
-    return meta.containsKey('txLink');
+  @override
+  bool get isRateable {
+    return !isSpent;
   }
 
-  bool isSpent() {
+  bool get isSpent {
     return sent > 0 && limit > 0 && sent >= limit;
+  }
+
+  bool get isLinked {
+    return meta.containsKey('txLink');
   }
 }

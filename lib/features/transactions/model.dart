@@ -349,6 +349,11 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     return r.isFinite ? r : 0.0;
   }
 
+  @override
+  bool get isRateable {
+    return isTradable;
+  }
+
   bool get isActive {
     return statusEnum == TransactionStatus.active;
   }

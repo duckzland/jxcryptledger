@@ -176,7 +176,7 @@ class _WatchersFormState extends State<WatchersForm> {
           WidgetsFieldsCryptoSearch(
             labelText: 'Coin',
             initialValue: _selectedSrId,
-            enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked(),
+            enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
             onSelected: (id) => setState(() => _selectedSrId = id),
           ),
         ],
@@ -195,7 +195,7 @@ class _WatchersFormState extends State<WatchersForm> {
           WidgetsFieldsCryptoSearch(
             labelText: 'Coin',
             initialValue: _selectedRrId,
-            enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked(),
+            enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
             onSelected: (id) => setState(() => _selectedRrId = id),
           ),
         ],
