@@ -96,8 +96,6 @@ class WidgetsButtonState extends State<WidgetsButton> {
           return AppTheme.buttonFg;
         }),
         shadowColor: WidgetStateProperty.all(br),
-        shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
-        elevation: WidgetStateProperty.all(0),
         padding: WidgetStateProperty.all(widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
         minimumSize: WidgetStateProperty.all(widget.minimumSize ?? Size.zero),
         mouseCursor: WidgetStateProperty.resolveWith(
