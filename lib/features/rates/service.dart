@@ -167,29 +167,24 @@ class RatesService {
       wb[targetId] = (wb[targetId] ?? 0) + 1;
     }
 
-    for (final (sourceId, targetId) in cleaned) {
-      if (wb[sourceId] == wb[targetId]) {
-        wb[sourceId] = (wb[sourceId] ?? 0) + 1;
-        wb[targetId] = (wb[targetId] ?? 0) - 1;
-      }
-    }
-
     for (final (rawSource, rawTarget) in cleaned) {
       if (!ids.contains(rawSource) || !ids.contains(rawTarget)) {
         continue;
       }
 
-      var source = rawSource;
-      var target = rawTarget;
+      var sourceId = rawSource;
+      var targetId = rawTarget;
 
-      if ((wb[target] ?? 0) > (wb[source] ?? 0)) {
-        final tmp = source;
-        source = target;
-        target = tmp;
+      if ((wb[targetId] ?? 0) >= (wb[sourceId] ?? 0)) {
+        final tmp = sourceId;
+        sourceId = targetId;
+        targetId = tmp;
+        wb[sourceId] = (wb[sourceId] ?? 0) - 1;
+        wb[targetId] = (wb[targetId] ?? 0) + 1;
       }
 
-      grouped.putIfAbsent(source, () => <int>{});
-      grouped[source]!.add(target);
+      grouped.putIfAbsent(sourceId, () => <int>{});
+      grouped[sourceId]!.add(targetId);
     }
 
     for (final sid in grouped.keys.toList()) {
@@ -197,10 +192,10 @@ class RatesService {
 
       if (uniq.length == 1) {
         final nv = uniq.first;
-
-        grouped.putIfAbsent(nv, () => <int>{});
-        grouped[nv]!.add(sid);
-        grouped.remove(sid);
+        if (grouped[nv] != null) {
+          grouped[nv]!.add(sid);
+          grouped.remove(sid);
+        }
       }
     }
 

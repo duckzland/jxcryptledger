@@ -119,7 +119,7 @@ class AppTheme {
         focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: textInactive)),
         hintStyle: TextStyle(color: textHalfInactive, fontFamily: 'Inter'),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       ),
 
       dividerTheme: const DividerThemeData(color: AppTheme.separator, thickness: 1),
@@ -134,8 +134,9 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: buttonBg,
-          foregroundColor: text,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+          foregroundColor: buttonFg,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: text, fontFamily: 'Inter'),
         ),
       ),

@@ -112,7 +112,7 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   void _onControllerChanged() {
-    if (mounted) {
+    if (mounted && (_isFetchingRates != _ratesController.isFetching || _isFetchingCryptos != _cryptosController.isFetching)) {
       setState(() {
         _isFetchingRates = _ratesController.isFetching;
         _isFetchingCryptos = _cryptosController.isFetching;
