@@ -99,9 +99,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
       rows.add({
         'date': tx.timestampAsFormattedDate,
         'balance': '${tx.balanceText} $resultSymbol',
-        'source': '${tx.srAmountText} $sourceSymbol',
-        'result': '${tx.rrAmountText} $resultSymbol',
-        'rate': '${tx.rateText} $resultSymbol/$sourceSymbol',
+        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceSymbol',
+        'result': tx.isCapital ? ' - ' : '${tx.rrAmountText} $resultSymbol',
+        'rate': tx.isCapital ? ' - ' : '${tx.rateText} $resultSymbol/$sourceSymbol',
         'status': tx.statusText,
         'tx': tx,
 

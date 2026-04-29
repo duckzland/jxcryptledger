@@ -54,6 +54,8 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   late AnimationController _controller;
   late Animation<double> _fade;
 
+  bool get isCapital => (widget.tx.isCapital);
+
   @override
   bool get wantKeepAlive => true;
 
@@ -235,8 +237,10 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
           children: [
             WidgetsHeader(
               titleColor: _fgColor,
-              title: "${_tx.srAmountText} → ${_tx.rrAmountText}",
-              subtitle: "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
+              title: _tx.isCapital ? "${_tx.srAmountText} $srSymbol" : "${_tx.srAmountText} → ${_tx.rrAmountText}",
+              subtitle: _tx.isCapital
+                  ? "${_tx.timestampAsFormattedDate} | Capital"
+                  : "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
               reversed: true,
             ),
 
@@ -266,7 +270,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   }
 
   Widget _buildRightGroup() {
-    if (!_hasLeaf || _balance <= 0) return const SizedBox.shrink();
+    if (!_hasLeaf || _balance <= 0 || isCapital) return const SizedBox.shrink();
 
     Color plColor = _fgColor;
     if (_profitPercentage > 0) {
