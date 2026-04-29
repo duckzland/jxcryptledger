@@ -95,6 +95,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
     return _calc.averageExchangedRate(txs, reverse: false);
   }
 
+  bool get isCapital => (widget.srid == widget.rrid);
+
   WatchersModel? _linkedWatcher;
   PanelsModel? _linkedPanel;
 
@@ -264,8 +266,13 @@ class _TransactionsActiveState extends State<TransactionsActive>
       crossAxisAlignment: align,
       children: [
         const SizedBox(height: 5),
-        Text('$_sourceSymbol to $_resultSymbol Trades', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        isCapital
+            ? Text('$_sourceSymbol Capital', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))
+            : Text('$_sourceSymbol to $_resultSymbol Trades', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+
+        isCapital
+            ? Text('Coin ID: ${widget.srid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted))
+            : Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
       ],
     );
   }
@@ -282,152 +289,156 @@ class _TransactionsActiveState extends State<TransactionsActive>
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            SizedBox(
-              width: 180,
-              height: 40,
-              child: WidgetsFieldsAmount(
-                title: "Custom Rates",
-                suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
-                helperText: _averageRate.toStringAsFixed(8),
-                allowCopy: false,
-                onChanged: (value) {
-                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+        if (!isCapital)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              SizedBox(
+                width: 180,
+                height: 40,
+                child: WidgetsFieldsAmount(
+                  title: "Custom Rates",
+                  suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
+                  helperText: _averageRate.toStringAsFixed(8),
+                  allowCopy: false,
+                  onChanged: (value) {
+                    if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-                  _debounce = Timer(const Duration(milliseconds: 100), () {
-                    setState(() {
-                      _customRate = double.tryParse(value);
-                      _calculateProfitLoss();
-                      rows = _buildRows();
-                      applySorting();
+                    _debounce = Timer(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        _customRate = double.tryParse(value);
+                        _calculateProfitLoss();
+                        rows = _buildRows();
+                        applySorting();
+                      });
                     });
+                  },
+                ),
+              ),
+
+              WidgetsButton(
+                icon: Icons.swap_horiz,
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
+                evaluator: (s) {
+                  if (_isReversed) {
+                    s.action();
+                  } else {
+                    s.normal();
+                  }
+                },
+                onPressed: (_) {
+                  setState(() {
+                    _isReversed = !_isReversed;
+                    rows = _buildRows();
                   });
                 },
               ),
-            ),
-
-            WidgetsButton(
-              icon: Icons.swap_horiz,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
-              evaluator: (s) {
-                if (_isReversed) {
-                  s.action();
-                } else {
-                  s.normal();
-                }
-              },
-              onPressed: (_) {
-                setState(() {
-                  _isReversed = !_isReversed;
-                  rows = _buildRows();
-                });
-              },
-            ),
-          ],
-        ),
+            ],
+          ),
         Row(
           mainAxisSize: MainAxisSize.min,
           spacing: 8,
           children: [
-            WidgetsDialogsShowForm(
-              key: const Key("add-watchboard-button"),
-              icon: Icons.candlestick_chart_outlined,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
-              persistBg: true,
-              evaluator: (s) {
-                if (_linkedPanel == null) {
-                  s.normal();
-                } else {
-                  s.action();
-                }
-              },
-              buildForm: (dialogContext) {
-                return PanelsForm(
-                  initialData: _linkedPanel,
-                  initialSrId: _linkedPanel == null ? widget.srid : null,
-                  initialRrId: _linkedPanel == null ? widget.rrid : null,
-                  initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(txs) : null,
-                  linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                  onSave: (e) => doFormSave<PanelsModel>(
-                    context,
-                    dialogContext: dialogContext,
-                    onComplete: () => setState(() {
-                      _linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                    }),
-                    successMessage: _linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
-                    error: e,
-                  ),
-                );
-              },
-            ),
+            if (!isCapital)
+              WidgetsDialogsShowForm(
+                key: const Key("add-watchboard-button"),
+                icon: Icons.candlestick_chart_outlined,
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
+                persistBg: true,
+                evaluator: (s) {
+                  if (_linkedPanel == null) {
+                    s.normal();
+                  } else {
+                    s.action();
+                  }
+                },
+                buildForm: (dialogContext) {
+                  return PanelsForm(
+                    initialData: _linkedPanel,
+                    initialSrId: _linkedPanel == null ? widget.srid : null,
+                    initialRrId: _linkedPanel == null ? widget.rrid : null,
+                    initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(txs) : null,
+                    linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+                    onSave: (e) => doFormSave<PanelsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      onComplete: () => setState(() {
+                        _linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                      }),
+                      successMessage: _linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
 
-            WidgetsDialogsShowForm(
-              key: const Key("add-watcher-button"),
-              icon: Icons.add_alarm,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
-              persistBg: true,
-              evaluator: (s) {
-                if (_linkedWatcher == null) {
-                  s.normal();
-                } else {
-                  _linkedWatcher!.isSpent ? s.error() : s.action();
-                }
-              },
-              buildForm: (dialogContext) {
-                return WatchersForm(
-                  initialData: _linkedWatcher,
-                  initialSrId: _linkedWatcher == null ? widget.srid : null,
-                  initialRrId: _linkedWatcher == null ? widget.rrid : null,
-                  initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
-                  linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                  onSave: (e) => doFormSave<PanelsModel>(
-                    context,
-                    dialogContext: dialogContext,
-                    onComplete: () => setState(() {
-                      _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                    }),
-                    successMessage: _linkedWatcher == null ? "Created rate watcher." : "Rate watcher updated",
-                    error: e,
-                  ),
-                );
-              },
-            ),
+            if (!isCapital)
+              WidgetsDialogsShowForm(
+                key: const Key("add-watcher-button"),
+                icon: Icons.add_alarm,
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
+                persistBg: true,
+                evaluator: (s) {
+                  if (_linkedWatcher == null) {
+                    s.normal();
+                  } else {
+                    _linkedWatcher!.isSpent ? s.error() : s.action();
+                  }
+                },
+                buildForm: (dialogContext) {
+                  return WatchersForm(
+                    initialData: _linkedWatcher,
+                    initialSrId: _linkedWatcher == null ? widget.srid : null,
+                    initialRrId: _linkedWatcher == null ? widget.rrid : null,
+                    initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
+                    linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+                    onSave: (e) => doFormSave<PanelsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      onComplete: () => setState(() {
+                        _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                      }),
+                      successMessage: _linkedWatcher == null ? "Created rate watcher." : "Rate watcher updated",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.close,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              initialState: WidgetsButtonActionState.warning,
-              tooltip: "Close all closable transactions found in this group",
-              evaluator: (s) {
-                if (!isClosable) {
-                  s.disable();
-                } else {
-                  s.warning();
-                }
-              },
-              dialogTitle: "Close Transactions",
-              dialogMessage:
-                  "Are you sure you want to close all closable transactions found in this group?\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Close",
-              actionStartCallback: closeTransactions,
-              actionSuccessMessage: "All transactions closed.",
-              actionErrorMessage: "Failed to close transactions.",
-            ),
+            if (!isCapital)
+              WidgetsDialogsAlert(
+                icon: Icons.close,
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                initialState: WidgetsButtonActionState.warning,
+                tooltip: "Close all closable transactions found in this group",
+                evaluator: (s) {
+                  if (!isClosable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                dialogTitle: "Close Transactions",
+                dialogMessage:
+                    "Are you sure you want to close all closable transactions found in this group?\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Close",
+                actionStartCallback: closeTransactions,
+                actionSuccessMessage: "All transactions closed.",
+                actionErrorMessage: "Failed to close transactions.",
+              ),
 
             WidgetsDialogsAlert(
               icon: Icons.close_fullscreen,
@@ -502,24 +513,26 @@ class _TransactionsActiveState extends State<TransactionsActive>
             DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sorters[0]),
             DataColumn2(
               size: ColumnSize.S,
-              label: WidgetsHeader(title: 'From ', subtitle: _sourceSymbol),
+              label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount', subtitle: _sourceSymbol),
               onSort: sorters[1],
             ),
-            DataColumn2(
-              size: ColumnSize.S,
-              label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-              onSort: sorters[2],
-            ),
-            DataColumn2(
-              size: ColumnSize.S,
-              label: WidgetsHeader(
-                title: 'Exchanged Rate ',
-                subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+            if (!isCapital)
+              DataColumn2(
+                size: ColumnSize.S,
+                label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
+                onSort: sorters[2],
               ),
-              onSort: sorters[3],
-            ),
+            if (!isCapital)
+              DataColumn2(
+                size: ColumnSize.S,
+                label: WidgetsHeader(
+                  title: 'Exchanged Rate ',
+                  subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+                ),
+                onSort: sorters[3],
+              ),
 
-            if (_currentRate != 0.0) ...[
+            if (_currentRate != 0.0 && !isCapital) ...[
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(
@@ -548,10 +561,10 @@ class _TransactionsActiveState extends State<TransactionsActive>
               cells: [
                 DataCell(Text(r['date'] ?? '0.0')),
                 DataCell(Text(r['from'] ?? '0.0')),
-                DataCell(Text(r['to'] ?? '0.0')),
-                DataCell(Text(r['exchangedRate'] ?? '0.0')),
+                if (!isCapital) DataCell(Text(r['to'] ?? '0.0')),
+                if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),
 
-                if (_currentRate != 0) ...[
+                if (_currentRate != 0 && !isCapital) ...[
                   DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
                   DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
                   DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
@@ -643,15 +656,17 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 children: [
                   _buildPanelItem(
                     title: 'Total Balance',
-                    subtitle:
-                        '${Utils.formatSmartDouble(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(_totalBalance)} $_resultSymbol',
+                    subtitle: isCapital
+                        ? '${Utils.formatSmartDouble(_totalBalance)} $_sourceSymbol'
+                        : '${Utils.formatSmartDouble(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(_totalBalance)} $_resultSymbol',
                     value: 0,
                     comparator: 0,
                   ),
 
-                  _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(_averageRate), value: 0, comparator: 0),
+                  if (!isCapital)
+                    _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(_averageRate), value: 0, comparator: 0),
 
-                  if (_plPercentage != 0 && _plPercentage.isFinite) ...[
+                  if (_plPercentage != 0 && _plPercentage.isFinite && !isCapital) ...[
                     if (_totalProfit != 0.0 && _totalLoss != 0.0)
                       _buildPanelItem(title: 'Profit', subtitle: Utils.formatSmartDouble(_totalProfit), value: _totalProfit, comparator: 0),
 

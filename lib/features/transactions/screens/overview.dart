@@ -140,8 +140,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
 
       rows.add({
         'balance': '${tx.balanceText} $_resultSymbol',
-        'source': '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
-        'exchangedRate': '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
+        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
+        'exchangedRate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
         'status': tx.statusText,
         'date': tx.timestampAsFormattedDate,
         'tx': tx,
@@ -324,14 +324,14 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                       value: 0,
                       comparator: 0,
                     ),
-                  if (_totalCapital > 0)
+                  if (_totalCapital > 0 && _profitLossPercentage != 0)
                     _buildPanelItem(
                       title: "Profit/Loss",
                       subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
                       value: _profitLossPercentage,
                       comparator: 0,
                     ),
-                  if (_totalCapital > 0)
+                  if (_totalCapital > 0 && _profitLossPercentage != 0)
                     _buildPanelItem(
                       title: "Profit/Loss %",
                       subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",

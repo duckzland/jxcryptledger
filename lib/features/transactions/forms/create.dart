@@ -26,6 +26,7 @@ class TransactionFormCreate extends StatefulWidget {
 class _TransactionFormCreateState extends State<TransactionFormCreate> {
   TransactionsController get _txController => locator<TransactionsController>();
 
+  bool _isCapital = false;
   int? _selectedSrId;
   int? _selectedRrId;
   DateTime? _selectedDate;
@@ -52,6 +53,11 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_isCapital) {
+      _rrAmount = _srAmount;
+      _selectedRrId = _selectedSrId;
+    }
+
     try {
       final tx = TransactionsModel(
         tid: generateTid(),
@@ -71,7 +77,6 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
       await _txController.add(tx);
       widget.onSave?.call(null, tx);
     } on ValidationException catch (e) {
-      // TODO: Improve this by analyzing the error code and set the form field error state!
       widget.onSave?.call(e, null);
     } catch (e) {
       widget.onSave?.call(e, null);
@@ -105,13 +110,12 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
 
                             Expanded(child: _buildFromPanel()),
 
-                            Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
-
-                            Expanded(child: _buildToPanel()),
+                            if (!_isCapital) Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
+                            if (!_isCapital) Expanded(child: _buildToPanel()),
                           ],
                         );
                       } else {
-                        return Column(spacing: 20, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
+                        return Column(spacing: 20, children: [_buildDatePanel(), _buildFromPanel(), if (!_isCapital) _buildToPanel()]);
                       }
                     },
                   ),
@@ -147,7 +151,23 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
         spacing: 16,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
+              const Spacer(),
+              SizedBox(
+                height: 20,
+                child: Checkbox(
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  value: _isCapital,
+                  onChanged: (v) => setState(() => _isCapital = v!),
+                ),
+              ),
+              const Text("Set as capital"),
+            ],
+          ),
           Row(
             spacing: 12,
             children: [

@@ -98,7 +98,7 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     if (rrId <= 0) {
       throw ValidationException(AppErrorCode.txBasicInvalidRrId, "rrId must be > 0 (rrId=$rrId).", "Please select a valid target account.");
     }
-    if (srId == rrId) {
+    if (srId == rrId && !isCapital) {
       throw ValidationException(
         AppErrorCode.txBasicSrIdEqualsRrId,
         "srId must not equal rrId (srId=$srId, rrId=$rrId).",
@@ -368,6 +368,10 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
 
   bool get isFinalized {
     return statusEnum == TransactionStatus.finalized;
+  }
+
+  bool get isCapital {
+    return isRoot && srId == rrId && srAmount == rrAmount;
   }
 
   bool get isRoot {

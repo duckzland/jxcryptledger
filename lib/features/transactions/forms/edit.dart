@@ -47,6 +47,8 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
   bool get isLeaf => !isRoot;
 
+  bool _isCapital = false;
+
   String generateTid() => _txController.generateId();
 
   @override
@@ -55,6 +57,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
     final data = widget.initialData!;
 
+    _isCapital = data.isCapital;
     _selectedSrId = data.srId;
     _selectedRrId = data.rrId;
     _selectedDate = DateTime.fromMicrosecondsSinceEpoch(widget.initialData!.sanitizedTimestamp, isUtc: true).toLocal();
@@ -79,6 +82,11 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_isCapital) {
+      _rrAmount = _srAmount;
+      _selectedRrId = _selectedSrId;
+    }
 
     try {
       final data = widget.initialData!;
@@ -180,9 +188,9 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
                             Expanded(child: _buildFromPanel()),
 
-                            Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
+                            if (!isRoot || !_isCapital) Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
 
-                            Expanded(child: _buildToPanel()),
+                            if (!isRoot || !_isCapital) Expanded(child: _buildToPanel()),
                           ],
                         );
                       } else {
@@ -222,7 +230,29 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
         spacing: 16,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
+          isRoot
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    SizedBox(
+                      height: 20,
+                      child: Checkbox(
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        value: _isCapital,
+                        onChanged: (v) => setState(() {
+                          _isCapital = v!;
+                          _selectedRrId = null;
+                          _rrAmount = null;
+                        }),
+                      ),
+                    ),
+                    const Text("Set as capital"),
+                  ],
+                )
+              : const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
           Row(
             spacing: 12,
             children: [

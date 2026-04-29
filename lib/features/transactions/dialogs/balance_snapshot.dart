@@ -132,8 +132,10 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol',
-        'rate': rate == -9999 ? "" : "1 $resultSymbol = ${Utils.formatSmartDouble(rate)} $tradeSourceSymbol",
+        'transaction': tx.rrId == tradeSourceId
+            ? 'Balance ${tx.balanceText} $resultSymbol'
+            : '${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol',
+        'rate': rate == -9999 || tx.rrId == tradeSourceId ? "-" : "1 $resultSymbol = ${Utils.formatSmartDouble(rate)} $tradeSourceSymbol",
         'amount': rate == -9999 ? "" : "${Utils.formatSmartDouble(amount)} $tradeSourceSymbol",
         'tx': tx,
       });
