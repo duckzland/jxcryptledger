@@ -52,13 +52,20 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
 
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (_isCapital) {
-      _rrAmount = _srAmount;
-      _selectedRrId = _selectedSrId;
-    }
-
     try {
+      if (_isCapital) {
+        _rrAmount = _srAmount;
+        _selectedRrId = _selectedSrId;
+      } else {
+        if (_rrAmount == _srAmount && _selectedRrId == _selectedSrId) {
+          throw ValidationException(
+            AppErrorCode.txBasicSrIdEqualsRrId,
+            "srId must not equal rrId (srId=$_selectedSrId, rrId=$_selectedRrId).",
+            "Source and target coin must be different.",
+          );
+        }
+      }
+
       final tx = TransactionsModel(
         tid: generateTid(),
         rid: '0',
