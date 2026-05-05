@@ -6,6 +6,7 @@ enum SettingKey {
   dataEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'Cryptos Endpoint',
     defaultValue: "https://s3.coinmarketcap.com/generated/core/crypto/cryptos.json",
     validator: _validateUrl,
@@ -15,6 +16,7 @@ enum SettingKey {
   exchangeEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'Exchange Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/tools/price-conversion",
     validator: _validateUrl,
@@ -24,6 +26,7 @@ enum SettingKey {
   altSeasonEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'Alt Season Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/altcoin-season/chart",
     validator: _validateUrl,
@@ -33,6 +36,7 @@ enum SettingKey {
   fearGreedEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'Fear & Greed Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/fear-greed/chart",
     validator: _validateUrl,
@@ -42,6 +46,7 @@ enum SettingKey {
   cmc100Endpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'CMC Top 100 Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/top100/supplement",
     validator: _validateUrl,
@@ -51,6 +56,7 @@ enum SettingKey {
   marketCapEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'Market Cap Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v4/global-metrics/quotes/historical",
     validator: _validateUrl,
@@ -60,6 +66,7 @@ enum SettingKey {
   rsiEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'RSI Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/rsi/heatmap/overall",
     validator: _validateUrl,
@@ -69,6 +76,7 @@ enum SettingKey {
   etfEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'ETF Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/etf/overview/netflow/chart",
     validator: _validateUrl,
@@ -78,6 +86,7 @@ enum SettingKey {
   dominanceEndpoint(
     type: SettingType.string,
     isUserEditable: true,
+    required: true,
     label: 'Dominance Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/global-metrics/dominance/overview",
     validator: _validateUrl,
@@ -87,13 +96,22 @@ enum SettingKey {
   authorizationKey(
     type: SettingType.string,
     isUserEditable: true,
+    required: false,
     label: 'Authorization Key',
     defaultValue: "",
     validator: null,
     hintText: "Will be added to the request authorization header",
   ),
 
-  vaultInitialized(type: SettingType.string, isUserEditable: false, label: 'Vault Status', defaultValue: "", validator: null, hintText: "");
+  vaultInitialized(
+    type: SettingType.string,
+    isUserEditable: false,
+    label: 'Vault Status',
+    defaultValue: "",
+    validator: null,
+    hintText: "",
+    required: true,
+  );
 
   final SettingType type;
   final bool isUserEditable;
@@ -101,6 +119,7 @@ enum SettingKey {
   final String defaultValue;
   final Validator? validator;
   final String hintText;
+  final bool required;
 
   const SettingKey({
     required this.type,
@@ -109,6 +128,7 @@ enum SettingKey {
     required this.defaultValue,
     required this.validator,
     required this.hintText,
+    required this.required,
   });
 
   String get id => name;

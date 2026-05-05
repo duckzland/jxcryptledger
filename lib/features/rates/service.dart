@@ -23,8 +23,10 @@ class RatesService {
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
+  bool get isPaused => _paused != null;
   bool get hasRates => !ratesRepo.isEmpty();
   Timer? _watchdog;
+  Timer? _paused;
 
   final List<(int sourceId, int targetId)> _queue = [];
   Timer? _debounce;
@@ -83,8 +85,19 @@ class RatesService {
     });
   }
 
+  void _pauseOperation() {
+    logln('[RATES] Pausing operation.');
+    _paused?.cancel();
+    _paused = Timer(const Duration(seconds: 60), () {
+      logln('[RATES] Resuming operation.');
+      _paused?.cancel();
+      _paused = null;
+    });
+  }
+
   Future<void> _processQueue() async {
-    if (_isFetching) return;
+    if (isFetching) return;
+    if (isPaused) return;
     if (_queue.isEmpty) return;
 
     _isFetching = true;
@@ -220,6 +233,7 @@ class RatesService {
           logln('[RATES] Unexpected worker error for ${job.key}: $e');
 
           jobQueue.clear();
+          _pauseOperation();
           return;
         }
 

@@ -102,16 +102,16 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           keyboardType: key.type == SettingType.integer ? TextInputType.number : TextInputType.text,
           validator: (value) {
-            if (value == null || value.isEmpty) {
+            if (key.required && (value == null || value.isEmpty)) {
               return "This field is required";
             }
 
             if (key.validator != null) {
-              final err = key.validator!(value);
+              final err = key.validator!(value ?? "");
               if (err != null) return err;
             }
 
-            if (key.type == SettingType.integer && int.tryParse(value) == null) {
+            if (key.type == SettingType.integer && int.tryParse(value ?? "") == null) {
               return "Must be a valid number";
             }
 
