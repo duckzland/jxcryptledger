@@ -9,6 +9,7 @@ import '../../../core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../mixins/actions.dart';
+import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
@@ -25,6 +26,7 @@ import '../../rates/controller.dart';
 import '../../watchers/controller.dart';
 import '../../watchers/form.dart';
 import '../../watchers/model.dart';
+import '../dialogs/trade_snapshot.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -45,7 +47,12 @@ class TransactionsActive extends StatefulWidget {
 }
 
 class _TransactionsActiveState extends State<TransactionsActive>
-    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsActive>, TransactionsMixinsActions {
+    with
+        AutomaticKeepAliveClientMixin,
+        MixinsActions,
+        MixinsSelectableTable,
+        MixinsSortableTable<TransactionsActive>,
+        TransactionsMixinsActions {
   final _calc = TransactionCalculation();
 
   late final CryptosController _cryptosController;
@@ -201,11 +208,19 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   void _calculateProfitLoss() {
-    final atxs = txs.where((tx) => tx.isActive || tx.isPartial).toList();
-    _averageRate = _calc.averageExchangedRate(txs, reverse: _isReversed);
+    final stxs = [...txs];
+
+    if (hasSelectedRows()) {
+      final selectedTxIds = getSelectedRows();
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
+    final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+
+    _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
     _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
-    _totalSourceBalance = _calc.totalSourceBalance(txs);
-    _totalBalance = _calc.totalBalance(txs);
+    _totalSourceBalance = _calc.totalSourceBalance(stxs);
+    _totalBalance = _calc.totalBalance(stxs);
     _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed);
     _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed);
     _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed);
@@ -440,6 +455,31 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 actionErrorMessage: "Failed to close transactions.",
               ),
 
+            WidgetsDialogsShowForm(
+              key: const Key("trade-snapshot-button"),
+              icon: Icons.insights,
+              tooltip: "Show trade snapshots of this transaction",
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              buildForm: (dialogContext) {
+                final stxs = [...txs];
+
+                if (hasSelectedRows()) {
+                  final selectedTxIds = getSelectedRows();
+                  stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+                }
+
+                final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+
+                return TransactionsDialogsTradeSnapshots(
+                  srId: widget.rrid,
+                  totalAmount: _totalBalance,
+                  transactions: atxs,
+                );
+              },
+            ),
+
             WidgetsDialogsAlert(
               icon: Icons.close_fullscreen,
               padding: btnPadding,
@@ -500,12 +540,15 @@ class _TransactionsActiveState extends State<TransactionsActive>
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
+          headingCheckboxTheme: Theme.of(context).checkboxTheme,
+          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+          showHeadingCheckBox: !isCapital,
+          showCheckboxColumn: !isCapital,
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
-          showCheckboxColumn: false,
           sortColumnIndex: (_currentRate == 0.0 && sortColumnIndex > 4) ? null : sortColumnIndex,
           sortAscending: sortAscending,
           isHorizontalScrollBarVisible: false,
@@ -558,6 +601,14 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
           rows: rows.map((r) {
             return DataRow(
+              selected: isSelected(r['uuid']),
+              onSelectChanged: (v) {
+                setState(() {
+                  setSelected(r['uuid'], v!);
+                  _calculateProfitLoss();
+                  applySorting();
+                });
+              },
               cells: [
                 DataCell(Text(r['date'] ?? '0.0')),
                 DataCell(Text(r['from'] ?? '0.0')),
@@ -627,6 +678,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         'status': tx.statusText,
         'date': tx.timestampAsFormattedDate,
         'tx': tx,
+        'uuid': tx.uuid,
 
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,

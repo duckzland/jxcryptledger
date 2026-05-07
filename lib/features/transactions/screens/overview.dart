@@ -8,12 +8,15 @@ import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/actions.dart';
+import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
+import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../dialogs/trade_snapshot.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -32,7 +35,12 @@ class TransactionsOverview extends StatefulWidget {
 }
 
 class _TransactionsOverviewState extends State<TransactionsOverview>
-    with AutomaticKeepAliveClientMixin, MixinsActions, MixinsSortableTable<TransactionsOverview>, TransactionsMixinsActions {
+    with
+        AutomaticKeepAliveClientMixin,
+        MixinsActions,
+        MixinsSelectableTable,
+        MixinsSortableTable<TransactionsOverview>,
+        TransactionsMixinsActions {
   final TransactionCalculation _calc = TransactionCalculation();
 
   late final CryptosController _cryptosController;
@@ -111,6 +119,13 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
       return;
     }
 
+    final stxs = [...txs];
+
+    if (hasSelectedRows()) {
+      final selectedTxIds = getSelectedRows();
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
     // Extract all roots for the same srId as this group!
     double capital = 0;
     final roots = txController.collectAllRoots();
@@ -120,8 +135,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
       }
     }
 
-    final finalizedBalance = _calc.totalFinalizedBalance(txs);
-    final balance = _calc.totalActiveBalance(txs);
+    final finalizedBalance = _calc.totalFinalizedBalance(stxs);
+    final balance = _calc.totalActiveBalance(stxs);
     final totalBalance = Math.add(balance, finalizedBalance);
     final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(totalBalance, capital), capital) * 100);
 
@@ -130,30 +145,6 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     _finalizedBalance = finalizedBalance;
     _profitLoss = Math.subtract(totalBalance, capital);
     _profitLossPercentage = profitPercentage;
-  }
-
-  List<Map<String, dynamic>> _buildRows() {
-    final rows = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
-
-      rows.add({
-        'balance': '${tx.balanceText} $_resultSymbol',
-        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
-        'exchangedRate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
-        'status': tx.statusText,
-        'date': tx.timestampAsFormattedDate,
-        'tx': tx,
-
-        '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.balance,
-        '_sourceValue': tx.srAmount,
-        '_exchangedRateValue': tx.rateDouble,
-      });
-    }
-
-    return rows;
   }
 
   @override
@@ -215,6 +206,26 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
           mainAxisSize: MainAxisSize.min,
           spacing: 8,
           children: [
+            WidgetsDialogsShowForm(
+              key: const Key("trade-snapshot-button"),
+              icon: Icons.insights,
+              tooltip: "Show trade snapshots of this transaction",
+              padding: const EdgeInsets.all(0),
+              iconSize: 18,
+              buildForm: (dialogContext) {
+                final stxs = [...txs];
+
+                if (hasSelectedRows()) {
+                  final selectedTxIds = getSelectedRows();
+                  stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+                }
+
+                final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+
+                return TransactionsDialogsTradeSnapshots(srId: widget.id, totalAmount: _currentHolding, transactions: atxs);
+              },
+            ),
+
             WidgetsDialogsAlert(
               icon: Icons.close,
               initialState: WidgetsButtonActionState.warning,
@@ -365,12 +376,15 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
+          headingCheckboxTheme: Theme.of(context).checkboxTheme,
+          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+          showHeadingCheckBox: true,
+          showCheckboxColumn: true,
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
-          showCheckboxColumn: false,
           sortColumnIndex: sortColumnIndex,
           sortAscending: sortAscending,
           isHorizontalScrollBarVisible: false,
@@ -384,6 +398,14 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
           ],
           rows: rows.map((r) {
             return DataRow(
+              selected: isSelected(r['uuid']),
+              onSelectChanged: (v) {
+                setState(() {
+                  setSelected(r['uuid'], v!);
+                  _calculateProfitLoss();
+                  applySorting();
+                });
+              },
               cells: [
                 DataCell(Text(r['date'])),
                 DataCell(Text(r['balance'])),
@@ -406,5 +428,30 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
         ),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _buildRows() {
+    final rows = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
+
+      rows.add({
+        'balance': '${tx.balanceText} $_resultSymbol',
+        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
+        'exchangedRate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
+        'status': tx.statusText,
+        'date': tx.timestampAsFormattedDate,
+        'tx': tx,
+        'uuid': tx.uuid,
+
+        '_timestamp': tx.sanitizedTimestamp,
+        '_balanceValue': tx.balance,
+        '_sourceValue': tx.srAmount,
+        '_exchangedRateValue': tx.rateDouble,
+      });
+    }
+
+    return rows;
   }
 }
