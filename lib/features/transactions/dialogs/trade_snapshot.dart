@@ -119,12 +119,13 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
                 ),
                 WidgetsPanel(
                   padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 0,
-                    children: [_buildCalculator(), if (widget.transactions != null && widget.transactions!.isNotEmpty) _buildTable()],
-                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildCalculator()]),
                 ),
+                if (widget.transactions != null && widget.transactions!.isNotEmpty)
+                  WidgetsPanel(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildTable()]),
+                  ),
                 WidgetsPanel(
                   padding: const EdgeInsets.all(12),
                   child: Row(
@@ -156,7 +157,7 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
 
     return SizedBox(
       width: double.infinity,
-      height: (2 * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: ((rows.length + 1) * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
@@ -194,19 +195,23 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 800) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+            return SizedBox(
+              width: double.infinity,
+              height: 90,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
 
-                const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.clear, size: 24)),
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 50), child: Icon(Icons.clear, size: 24)),
 
-                Expanded(child: _buildCryptoInputColumn("Rate:", _buildRatesAmountField())),
+                  Expanded(child: _buildCryptoInputColumn("Rate:", _buildRatesAmountField())),
 
-                const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.arrow_forward, size: 24)),
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 50), child: Icon(Icons.arrow_forward, size: 24)),
 
-                Expanded(child: _buildCalculatedResult()),
-              ],
+                  Expanded(child: _buildCalculatedResult()),
+                ],
+              ),
             );
           } else {
             return Wrap(
@@ -220,7 +225,6 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
                 Row(children: [Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField()))]),
                 Row(children: [Expanded(child: _buildCryptoInputColumn("Rate:", _buildRatesAmountField()))]),
                 Row(children: [Expanded(child: _buildCalculatedResult())]),
-                SizedBox(height: 10),
               ],
             );
           }
