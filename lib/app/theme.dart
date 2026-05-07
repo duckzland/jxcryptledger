@@ -178,6 +178,23 @@ class AppTheme {
         headingRowHeight: tableHeadingRowHeight,
         dataRowMinHeight: tableDataRowMinHeight,
       ),
+
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return mutedBg;
+          }
+          if (states.contains(WidgetState.selected)) {
+            return primary;
+          }
+          return inputBg;
+        }),
+        checkColor: WidgetStateProperty.all(text),
+        side: const BorderSide(color: separator, width: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+      ),
     );
   }
 }
