@@ -430,7 +430,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 },
               ),
 
-            if (!isCapital)
+            if (!isCapital && isClosable)
               WidgetsDialogsAlert(
                 icon: Icons.close,
                 padding: btnPadding,
@@ -455,78 +455,77 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 actionErrorMessage: "Failed to close transactions.",
               ),
 
-            WidgetsDialogsShowForm(
-              key: const Key("trade-snapshot-button"),
-              icon: Icons.insights,
-              tooltip: "Show trade snapshots of this transaction",
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              buildForm: (dialogContext) {
-                final stxs = [...txs];
+            if (isActive)
+              WidgetsDialogsShowForm(
+                key: const Key("trade-snapshot-button"),
+                icon: Icons.insights,
+                tooltip: "Show trade snapshots of this transaction",
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                buildForm: (dialogContext) {
+                  final stxs = [...txs];
 
-                if (hasSelectedRows()) {
-                  final selectedTxIds = getSelectedRows();
-                  stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-                }
+                  if (hasSelectedRows()) {
+                    final selectedTxIds = getSelectedRows();
+                    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+                  }
 
-                final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+                  final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
-                return TransactionsDialogsTradeSnapshots(
-                  srId: widget.rrid,
-                  totalAmount: _totalBalance,
-                  transactions: atxs,
-                );
-              },
-            ),
+                  return TransactionsDialogsTradeSnapshots(srId: widget.rrid, totalAmount: _totalBalance, transactions: atxs);
+                },
+              ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.close_fullscreen,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              initialState: WidgetsButtonActionState.warning,
-              tooltip: "Finalize all finalizable transactions found in this group",
-              evaluator: (s) {
-                if (!isFinalizable) {
-                  s.disable();
-                } else {
-                  s.warning();
-                }
-              },
-              dialogTitle: "Finalize Transactions",
-              dialogMessage:
-                  "Are you sure you want to finalize all finalizable transactions found in this group?\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Finalize",
-              actionStartCallback: finalizeTransactions,
-              actionSuccessMessage: "All transactions finalized.",
-              actionErrorMessage: "Failed to finalize transactions.",
-            ),
+            if (isFinalizable)
+              WidgetsDialogsAlert(
+                icon: Icons.close_fullscreen,
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                initialState: WidgetsButtonActionState.warning,
+                tooltip: "Finalize all finalizable transactions found in this group",
+                evaluator: (s) {
+                  if (!isFinalizable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                dialogTitle: "Finalize Transactions",
+                dialogMessage:
+                    "Are you sure you want to finalize all finalizable transactions found in this group?\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Finalize",
+                actionStartCallback: finalizeTransactions,
+                actionSuccessMessage: "All transactions finalized.",
+                actionErrorMessage: "Failed to finalize transactions.",
+              ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.delete,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              initialState: WidgetsButtonActionState.error,
-              tooltip: "Delete all transactions",
-              evaluator: (s) {
-                if (!isDeletable) {
-                  s.disable();
-                } else {
-                  s.error();
-                }
-              },
-              dialogTitle: "Delete Transactions",
-              dialogMessage:
-                  "This will delete all transactions in this group and all of its history.\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Delete",
-              actionStartCallback: deleteTransactions,
-              actionSuccessMessage: "All transactions deleted.",
-              actionErrorMessage: "Failed to delete transactions.",
-            ),
+            if (isDeletable)
+              WidgetsDialogsAlert(
+                icon: Icons.delete,
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                initialState: WidgetsButtonActionState.error,
+                tooltip: "Delete all transactions",
+                evaluator: (s) {
+                  if (!isDeletable) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+                dialogTitle: "Delete Transactions",
+                dialogMessage:
+                    "This will delete all transactions in this group and all of its history.\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Delete",
+                actionStartCallback: deleteTransactions,
+                actionSuccessMessage: "All transactions deleted.",
+                actionErrorMessage: "Failed to delete transactions.",
+              ),
           ],
         ),
       ],
@@ -534,6 +533,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   Widget _buildTable() {
+    final canSelect = !isCapital && rows.length > 1;
     return SizedBox(
       width: double.infinity,
       height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
@@ -542,8 +542,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
         child: DataTable2(
           headingCheckboxTheme: Theme.of(context).checkboxTheme,
           datarowCheckboxTheme: Theme.of(context).checkboxTheme,
-          showHeadingCheckBox: !isCapital,
-          showCheckboxColumn: !isCapital,
+          showHeadingCheckBox: canSelect,
+          showCheckboxColumn: canSelect,
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
@@ -600,15 +600,19 @@ class _TransactionsActiveState extends State<TransactionsActive>
           ],
 
           rows: rows.map((r) {
+            final tx = r['tx'] as TransactionsModel;
+            final canSelect = tx.isActive || tx.isPartial;
             return DataRow(
-              selected: isSelected(r['uuid']),
-              onSelectChanged: (v) {
-                setState(() {
-                  setSelected(r['uuid'], v!);
-                  _calculateProfitLoss();
-                  applySorting();
-                });
-              },
+              selected: canSelect ? isSelected(r['uuid']) : false,
+              onSelectChanged: canSelect
+                  ? (v) {
+                      setState(() {
+                        setSelected(r['uuid'], v!);
+                        _calculateProfitLoss();
+                        applySorting();
+                      });
+                    }
+                  : null,
               cells: [
                 DataCell(Text(r['date'] ?? '0.0')),
                 DataCell(Text(r['from'] ?? '0.0')),

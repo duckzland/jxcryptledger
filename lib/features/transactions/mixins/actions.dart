@@ -8,6 +8,7 @@ mixin TransactionsMixinsActions {
   bool isDeletable = false;
   bool isClosable = false;
   bool isFinalizable = false;
+  bool get isActive => txs.any((tx) => tx.isActive || tx.isPartial);
 
   void checkForClosable() {
     isClosable = false;
