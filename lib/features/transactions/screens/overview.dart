@@ -206,94 +206,98 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
           mainAxisSize: MainAxisSize.min,
           spacing: 8,
           children: [
-            WidgetsDialogsShowForm(
-              key: const Key("trade-snapshot-button"),
-              icon: Icons.insights,
-              tooltip: "Show trade snapshots of this transaction",
-              padding: const EdgeInsets.all(0),
-              iconSize: 18,
-              buildForm: (dialogContext) {
-                final stxs = [...txs];
+            if (isActive)
+              WidgetsDialogsShowForm(
+                key: const Key("trade-snapshot-button"),
+                icon: Icons.insights,
+                tooltip: "Show trade snapshots of this transaction",
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                buildForm: (dialogContext) {
+                  final stxs = [...txs];
 
-                if (hasSelectedRows()) {
-                  final selectedTxIds = getSelectedRows();
-                  stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-                }
+                  if (hasSelectedRows()) {
+                    final selectedTxIds = getSelectedRows();
+                    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+                  }
 
-                final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+                  final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
-                return TransactionsDialogsTradeSnapshots(srId: widget.id, totalAmount: _currentHolding, transactions: atxs);
-              },
-            ),
+                  return TransactionsDialogsTradeSnapshots(srId: widget.id, totalAmount: _currentHolding, transactions: atxs);
+                },
+              ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.close,
-              initialState: WidgetsButtonActionState.warning,
-              tooltip: "Close all closable transactions found in this group",
-              padding: const EdgeInsets.all(0),
-              iconSize: 18,
-              evaluator: (s) {
-                if (!isClosable) {
-                  s.disable();
-                } else {
-                  s.warning();
-                }
-              },
-              dialogTitle: "Close Transactions",
-              dialogMessage:
-                  "Are you sure you want to close all closable transactions found in this group?\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Close",
-              actionStartCallback: closeTransactions,
-              actionSuccessMessage: "All transactions closed.",
-              actionErrorMessage: "Failed to close transactions.",
-            ),
+            if (isClosable)
+              WidgetsDialogsAlert(
+                icon: Icons.close,
+                initialState: WidgetsButtonActionState.warning,
+                tooltip: "Close all closable transactions found in this group",
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                evaluator: (s) {
+                  if (!isClosable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                dialogTitle: "Close Transactions",
+                dialogMessage:
+                    "Are you sure you want to close all closable transactions found in this group?\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Close",
+                actionStartCallback: closeTransactions,
+                actionSuccessMessage: "All transactions closed.",
+                actionErrorMessage: "Failed to close transactions.",
+              ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.close_fullscreen,
-              padding: const EdgeInsets.all(0),
-              iconSize: 18,
-              initialState: WidgetsButtonActionState.warning,
-              tooltip: "Finalize all finalizable transactions found in this group",
-              evaluator: (s) {
-                if (!isFinalizable) {
-                  s.disable();
-                } else {
-                  s.warning();
-                }
-              },
-              dialogTitle: "Finalize Transactions",
-              dialogMessage:
-                  "Are you sure you want to finalize all finalizable transactions found in this group?\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Finalize",
-              actionStartCallback: finalizeTransactions,
-              actionSuccessMessage: "All transactions finalized.",
-              actionErrorMessage: "Failed to finalize transactions.",
-            ),
+            if (isFinalizable)
+              WidgetsDialogsAlert(
+                icon: Icons.close_fullscreen,
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                initialState: WidgetsButtonActionState.warning,
+                tooltip: "Finalize all finalizable transactions found in this group",
+                evaluator: (s) {
+                  if (!isFinalizable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                dialogTitle: "Finalize Transactions",
+                dialogMessage:
+                    "Are you sure you want to finalize all finalizable transactions found in this group?\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Finalize",
+                actionStartCallback: finalizeTransactions,
+                actionSuccessMessage: "All transactions finalized.",
+                actionErrorMessage: "Failed to finalize transactions.",
+              ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.delete,
-              initialState: WidgetsButtonActionState.error,
-              tooltip: "Delete all transactions",
-              padding: const EdgeInsets.all(0),
-              iconSize: 18,
-              evaluator: (s) {
-                if (!isDeletable) {
-                  s.disable();
-                } else {
-                  s.error();
-                }
-              },
-              dialogTitle: "Delete Transactions",
-              dialogMessage:
-                  "This will delete all transactions in this group and all of its history.\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Delete",
-              actionStartCallback: deleteTransactions,
-              actionSuccessMessage: "All transactions deleted.",
-              actionErrorMessage: "Failed to delete transactions.",
-            ),
+            if (isDeletable)
+              WidgetsDialogsAlert(
+                icon: Icons.delete,
+                initialState: WidgetsButtonActionState.error,
+                tooltip: "Delete all transactions",
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                evaluator: (s) {
+                  if (!isDeletable) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+                dialogTitle: "Delete Transactions",
+                dialogMessage:
+                    "This will delete all transactions in this group and all of its history.\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Delete",
+                actionStartCallback: deleteTransactions,
+                actionSuccessMessage: "All transactions deleted.",
+                actionErrorMessage: "Failed to delete transactions.",
+              ),
           ],
         ),
       ],
@@ -370,6 +374,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   }
 
   Widget _buildTable() {
+    final canSelect = isActive && rows.length > 1;
     return SizedBox(
       width: double.infinity,
       height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
@@ -378,8 +383,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
         child: DataTable2(
           headingCheckboxTheme: Theme.of(context).checkboxTheme,
           datarowCheckboxTheme: Theme.of(context).checkboxTheme,
-          showHeadingCheckBox: true,
-          showCheckboxColumn: true,
+          showHeadingCheckBox: canSelect,
+          showCheckboxColumn: canSelect,
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
@@ -397,15 +402,20 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
             const DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
           rows: rows.map((r) {
+            final tx = r['tx'] as TransactionsModel;
+            final canSelect = tx.isActive || tx.isPartial;
+
             return DataRow(
-              selected: isSelected(r['uuid']),
-              onSelectChanged: (v) {
-                setState(() {
-                  setSelected(r['uuid'], v!);
-                  _calculateProfitLoss();
-                  applySorting();
-                });
-              },
+              selected: canSelect ? isSelected(r['uuid']) : false,
+              onSelectChanged: canSelect
+                  ? (v) {
+                      setState(() {
+                        setSelected(r['uuid'], v!);
+                        _calculateProfitLoss();
+                        applySorting();
+                      });
+                    }
+                  : null,
               cells: [
                 DataCell(Text(r['date'])),
                 DataCell(Text(r['balance'])),
