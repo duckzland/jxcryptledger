@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
-import '../../../mixins/rates.dart';
+import '../../../mixins/rateable.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/panel.dart';
@@ -19,7 +19,7 @@ class ToolsCalculatorView extends StatefulWidget {
   State<ToolsCalculatorView> createState() => _ToolsCalculatorViewState();
 }
 
-class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRates<ToolsCalculatorView> {
+class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRateable<ToolsCalculatorView> {
   late final CryptosController _cryptosController;
 
   String? _sourceAmount;
@@ -158,22 +158,22 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       title: 'Rate',
       helperText: 'e.g., 10.5',
       allowReverse: true,
-      allowRate: ratesAllow,
+      allowRate: rateableAllow,
       onRetrievingRate: (void Function(String value, String helperText) updateState) {
         // Store the callback to act as promise contract!
-        ratesStateUpdater = updateState;
-        ratesStateUpdater?.call("", "Retrieving rate...");
-        ratesGetRate();
+        rateableStateUpdater = updateState;
+        rateableStateUpdater?.call("", "Retrieving rate...");
+        rateableGetRate();
       },
       onChanged: (value) {
         // Nullify the promise contract!
-        ratesStateUpdater = null;
+        rateableStateUpdater = null;
 
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(const Duration(milliseconds: 100), () {
           setState(() {
-            ratesAmount = value;
+            rateableAmount = value;
           });
         });
       },
@@ -197,19 +197,19 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   }
 
   Widget _buildSourceCryptoField() {
-    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => ratesSource = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => rateableSource = id));
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => ratesTarget = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => rateableTarget = id));
   }
 
   Widget _buildCalculatedResult() {
     final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
-    final double entryRate = ratesAmount == null ? 0.0 : double.tryParse(ratesAmount!) ?? 0;
+    final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
     final double returnRate = _ratesRevertAmount == null ? 0.0 : double.tryParse(_ratesRevertAmount!) ?? 0;
-    final String sourceSymbol = ratesSource != null ? _cryptosController.getSymbol(ratesSource!) ?? "" : "";
-    final String targetSymbol = ratesTarget != null ? _cryptosController.getSymbol(ratesTarget!) ?? "" : "";
+    final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
+    final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
 
     if (source <= 0 || entryRate <= 0 || targetSymbol == "" || sourceSymbol == "") {
       return Text("");

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
-import '../../../mixins/rates.dart';
+import '../../../mixins/rateable.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
@@ -27,7 +27,7 @@ class TransactionsDialogsTradeSnapshots extends StatefulWidget {
 }
 
 class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsTradeSnapshots>
-    with MixinsRates<TransactionsDialogsTradeSnapshots> {
+    with MixinsRateable<TransactionsDialogsTradeSnapshots> {
   CryptosController get _cryptoController => locator<CryptosController>();
 
   late String _selectedSymbol;
@@ -38,7 +38,7 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
   @override
   void initState() {
     super.initState();
-    ratesSource = widget.srId;
+    rateableSource = widget.srId;
 
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
     _sourceAmount = widget.totalAmount;
@@ -199,22 +199,22 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
       title: 'Rate',
       helperText: 'e.g., 10.5',
       allowReverse: true,
-      allowRate: ratesAllow,
+      allowRate: rateableAllow,
       onRetrievingRate: (void Function(String value, String helperText) updateState) {
         // Store the callback to act as promise contract!
-        ratesStateUpdater = updateState;
-        ratesStateUpdater?.call("", "Retrieving rate...");
-        ratesGetRate();
+        rateableStateUpdater = updateState;
+        rateableStateUpdater?.call("", "Retrieving rate...");
+        rateableGetRate();
       },
       onChanged: (value) {
         // Nullify the promise contract!
-        ratesStateUpdater = null;
+        rateableStateUpdater = null;
 
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(const Duration(milliseconds: 100), () {
           setState(() {
-            ratesAmount = value;
+            rateableAmount = value;
           });
         });
       },
@@ -226,17 +226,17 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
       labelText: 'Coin',
       initialValue: null,
       onSelected: (id) => setState(() {
-        ratesTarget = id;
+        rateableTarget = id;
       }),
     );
   }
 
   Widget _buildCalculatedResult() {
     final double source = _sourceAmount;
-    final double entryRate = ratesAmount == null ? 0.0 : double.tryParse(ratesAmount!) ?? 0;
+    final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
     double resultValue = source * entryRate;
 
-    final String targetSymbol = ratesTarget != null ? _cryptoController.getSymbol(ratesTarget!) ?? "" : "";
+    final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
     return _buildCryptoInputColumn(
       "Result:",

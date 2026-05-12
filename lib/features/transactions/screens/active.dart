@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:jxledger/mixins/rates.dart';
+import 'package:jxledger/mixins/rateable.dart';
 
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
@@ -52,7 +52,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         MixinsActions,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsActive>,
-        MixinsRates<TransactionsActive>,
+        MixinsRateable<TransactionsActive>,
         TransactionsMixinsActions {
   final _calc = TransactionCalculation();
 
@@ -86,7 +86,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   double? get nonReversedEffectiveRate {
-    final c = ratesValue;
+    final c = rateableValue;
     if (c != null) {
       return _isReversed ? Math.divide(1, c) : c;
     }
@@ -111,9 +111,9 @@ class _TransactionsActiveState extends State<TransactionsActive>
   void initState() {
     super.initState();
 
-    ratesIsTemporary = false;
-    ratesSource = widget.srid;
-    ratesTarget = widget.rrid;
+    rateableIsTemporary = false;
+    rateableSource = widget.srid;
+    rateableTarget = widget.rrid;
 
     txs = widget.transactions;
     txController = locator<TransactionsController>();
@@ -142,7 +142,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
       7: (col, asc) => onSort((d) => d['status'] as String, col, asc),
     };
 
-    ratesGetRate(refresh: false);
+    rateableGetRate(refresh: false);
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
@@ -188,8 +188,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   @override
-  void ratesUpdated() {
-    ratesGetRate();
+  void rateableUpdateRate() {
+    rateableGetRate();
   }
 
   void _calculateProfitLoss() {
@@ -203,7 +203,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
     _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
-    _currentRate = ratesValue ?? effectiveMarketRate ?? 0.0;
+    _currentRate = rateableValue ?? effectiveMarketRate ?? 0.0;
     _totalSourceBalance = _calc.totalSourceBalance(stxs);
     _totalBalance = _calc.totalBalance(stxs);
     _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed);
@@ -219,10 +219,10 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   @override
-  void ratesGetCallback() {
-    rateDefaultHelper = _averageRate.toStringAsFixed(8);
+  void rateableGetCallback() {
+    rateableDefaultHelper = _averageRate.toStringAsFixed(8);
     rows = _buildRows();
-    _marketRate = ratesValue;
+    _marketRate = rateableValue;
     _calculateProfitLoss();
     applySorting();
   }
@@ -304,19 +304,19 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   allowRate: true,
                   onRetrievingRate: (void Function(String value, String helperText) updateState) {
                     // Store the callback to act as promise contract!
-                    ratesStateUpdater = updateState;
-                    ratesStateUpdater?.call("", "Retrieving rate...");
-                    ratesGetRate(reversed: _isReversed);
+                    rateableStateUpdater = updateState;
+                    rateableStateUpdater?.call("", "Retrieving rate...");
+                    rateableGetRate(reversed: _isReversed);
                   },
                   onChanged: (value) {
                     // Nullify the promise contract!
-                    ratesStateUpdater = null;
+                    rateableStateUpdater = null;
 
                     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
                     _debounce = Timer(const Duration(milliseconds: 100), () {
                       setState(() {
-                        ratesValue = double.tryParse(value);
+                        rateableValue = double.tryParse(value);
                         _calculateProfitLoss();
                         rows = _buildRows();
                         applySorting();
@@ -639,7 +639,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   List<Map<String, dynamic>> _buildRows() {
-    final currentRate = ratesValue ?? effectiveMarketRate ?? 0.0;
+    final currentRate = rateableValue ?? effectiveMarketRate ?? 0.0;
     final rows = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
