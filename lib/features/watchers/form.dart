@@ -8,6 +8,7 @@ import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/panel.dart';
 import '../../app/exceptions.dart';
+import '../../mixins/rates.dart';
 import 'controller.dart';
 import 'model.dart';
 
@@ -33,15 +34,12 @@ class WatchersForm extends StatefulWidget {
   State<WatchersForm> createState() => _WatchersFormState();
 }
 
-class _WatchersFormState extends State<WatchersForm> {
+class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersForm> {
   WatchersController get _controller => locator<WatchersController>();
 
   String? _wid;
-  int? _selectedSrId;
-  int? _selectedRrId;
   int? _sent;
   String? _operator;
-  String? _rateAmount;
   String? _limitCount;
   String? _durationMinutes;
   String? _message;
@@ -56,54 +54,27 @@ class _WatchersFormState extends State<WatchersForm> {
 
     final data = widget.initialData;
 
+    ratesSource = data?.srId;
+    ratesTarget = data?.rrId;
+    ratesAmount = Utils.sanitizeNumber(data?.rates.toString() ?? "");
+
     _wid = data?.wid ?? generateWid();
-    _selectedSrId = data?.srId;
-    _selectedRrId = data?.rrId;
     _sent = 0;
     _operator = data?.operator.toString() ?? WatchersOperator.greaterThan.index.toString();
-    _rateAmount = Utils.sanitizeNumber(data?.rates.toString() ?? "");
     _limitCount = Utils.sanitizeNumber(data?.limit.toString() ?? "3");
     _durationMinutes = Utils.sanitizeNumber(data?.duration.toString() ?? "60");
     _message = data?.message ?? "";
 
     if (widget.initialSrId != null) {
-      _selectedSrId = widget.initialSrId;
+      ratesSource = widget.initialSrId;
     }
 
     if (widget.initialRrId != null) {
-      _selectedRrId = widget.initialRrId;
+      ratesTarget = widget.initialRrId;
     }
 
     if (widget.initialRate != null && widget.initialRate! > 0) {
-      _rateAmount = Utils.sanitizeNumber(widget.initialRate.toString());
-    }
-  }
-
-  void _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    try {
-      final model = WatchersModel(
-        wid: _wid!,
-        srId: _selectedSrId!,
-        rrId: _selectedRrId!,
-        rates: double.tryParse(Utils.sanitizeNumber(_rateAmount ?? "0")) ?? 0,
-        sent: _sent!,
-        operator: int.tryParse(_operator ?? "2") ?? 2,
-        limit: int.tryParse(_limitCount ?? "0") ?? 0,
-        duration: int.tryParse(_durationMinutes ?? "0") ?? 0,
-        message: _message!,
-        timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
-        meta: widget.linkedToTx != null ? {"txLink": widget.linkedToTx} : {},
-      );
-
-      await _controller.update(model);
-      widget.onSave?.call(null);
-    } on ValidationException catch (e) {
-      // TODO: Improve this by analyzing the error code and set the form field error state!
-      widget.onSave?.call(e);
-    } catch (e) {
-      widget.onSave?.call(e);
+      ratesAmount = Utils.sanitizeNumber(widget.initialRate.toString());
     }
   }
 
@@ -175,9 +146,9 @@ class _WatchersFormState extends State<WatchersForm> {
           const Text("From", style: TextStyle(fontWeight: FontWeight.w600)),
           WidgetsFieldsCryptoSearch(
             labelText: 'Coin',
-            initialValue: _selectedSrId,
+            initialValue: ratesSource,
             enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-            onSelected: (id) => setState(() => _selectedSrId = id),
+            onSelected: (id) => setState(() => ratesSource = id),
           ),
         ],
       ),
@@ -194,9 +165,9 @@ class _WatchersFormState extends State<WatchersForm> {
           const Text("To", style: TextStyle(fontWeight: FontWeight.w600)),
           WidgetsFieldsCryptoSearch(
             labelText: 'Coin',
-            initialValue: _selectedRrId,
+            initialValue: ratesTarget,
             enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-            onSelected: (id) => setState(() => _selectedRrId = id),
+            onSelected: (id) => setState(() => ratesTarget = id),
           ),
         ],
       ),
@@ -245,8 +216,20 @@ class _WatchersFormState extends State<WatchersForm> {
           WidgetsFieldsAmount(
             title: 'Rate',
             helperText: 'e.g., 65000',
-            initialValue: _rateAmount,
-            onChanged: (value) => _rateAmount = value,
+            initialValue: ratesAmount,
+            allowReverse: true,
+            allowRate: ratesAllow,
+            onRetrievingRate: (void Function(String value, String helperText) updateState) {
+              // Store the callback to act as promise contract!
+              ratesStateUpdater = updateState;
+              ratesStateUpdater?.call("", "Retrieving rate...");
+              ratesGetRate();
+            },
+            onChanged: (value) {
+              // Nullify the promise contract!
+              ratesStateUpdater = null;
+              ratesAmount = value;
+            },
           ),
         ],
       ),
@@ -333,5 +316,33 @@ class _WatchersFormState extends State<WatchersForm> {
         WidgetsButton(label: isEdit ? "Save" : "Create", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
+  }
+
+  void _handleSave() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      final model = WatchersModel(
+        wid: _wid!,
+        srId: ratesSource!,
+        rrId: ratesTarget!,
+        rates: double.tryParse(Utils.sanitizeNumber(ratesAmount ?? "0")) ?? 0,
+        sent: _sent!,
+        operator: int.tryParse(_operator ?? "2") ?? 2,
+        limit: int.tryParse(_limitCount ?? "0") ?? 0,
+        duration: int.tryParse(_durationMinutes ?? "0") ?? 0,
+        message: _message!,
+        timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+        meta: widget.linkedToTx != null ? {"txLink": widget.linkedToTx} : {},
+      );
+
+      await _controller.update(model);
+      widget.onSave?.call(null);
+    } on ValidationException catch (e) {
+      // TODO: Improve this by analyzing the error code and set the form field error state!
+      widget.onSave?.call(e);
+    } catch (e) {
+      widget.onSave?.call(e);
+    }
   }
 }

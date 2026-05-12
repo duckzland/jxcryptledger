@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
+import '../../../mixins/rates.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../../rates/controller.dart';
 import '../model.dart';
 
 class TransactionsDialogsTradeSnapshots extends StatefulWidget {
@@ -26,78 +26,28 @@ class TransactionsDialogsTradeSnapshots extends StatefulWidget {
   State<TransactionsDialogsTradeSnapshots> createState() => _TransactionsDialogsTradeSnapshotsState();
 }
 
-class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsTradeSnapshots> {
+class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsTradeSnapshots>
+    with MixinsRates<TransactionsDialogsTradeSnapshots> {
   CryptosController get _cryptoController => locator<CryptosController>();
-  RatesController get _rateController => locator<RatesController>();
-
-  final List<(int source, int target)> _temporaryRates = [];
 
   late String _selectedSymbol;
   late double _sourceAmount;
-  late int _selectedSource;
-
-  int? _selectedTarget;
-  String? _selectedRate;
-  double? _marketRate;
 
   Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _rateController.addListener(_onControllerChanged);
+    ratesSource = widget.srId;
 
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
-    _selectedSource = widget.srId;
     _sourceAmount = widget.totalAmount;
-
-    _selectedTarget = null;
-    _marketRate = null;
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    _cleanTemporaryRates();
-    _rateController.removeListener(_onControllerChanged);
-
     super.dispose();
-  }
-
-  void _onControllerChanged() {
-    if (!mounted) return;
-    setState(_getRate);
-  }
-
-  void _getRate() {
-    try {
-      final int source = _selectedSource;
-      final int target = _selectedTarget ?? 0;
-
-      if (source == 0 || target == 0) {
-        return;
-      }
-
-      final rate = _rateController.getStoredRate(source, target);
-      if (rate == -9999) {
-        _rateController.addQueue(source, target);
-        _temporaryRates.add((source, target));
-
-        return;
-      }
-      print("Got rate: $rate");
-      _marketRate = rate;
-    } catch (e) {
-      _marketRate = null;
-    }
-  }
-
-  Future<void> _cleanTemporaryRates() async {
-    for (final (source, target) in _temporaryRates) {
-      await _rateController.delete(source, target);
-      await _rateController.delete(target, source);
-    }
-    _temporaryRates.clear();
   }
 
   @override
@@ -247,12 +197,24 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
   Widget _buildRatesAmountField() {
     return WidgetsFieldsAmount(
       title: 'Rate',
-      helperText: (_marketRate != null && _marketRate! > 0) ? Utils.formatSmartDouble(_marketRate!) : 'e.g., 10.5',
+      helperText: 'e.g., 10.5',
+      allowReverse: true,
+      allowRate: ratesAllow,
+      onRetrievingRate: (void Function(String value, String helperText) updateState) {
+        // Store the callback to act as promise contract!
+        ratesStateUpdater = updateState;
+        ratesStateUpdater?.call("", "Retrieving rate...");
+        ratesGetRate();
+      },
       onChanged: (value) {
+        // Nullify the promise contract!
+        ratesStateUpdater = null;
+
         if (_debounce?.isActive ?? false) _debounce!.cancel();
+
         _debounce = Timer(const Duration(milliseconds: 100), () {
           setState(() {
-            _selectedRate = value;
+            ratesAmount = value;
           });
         });
       },
@@ -264,18 +226,17 @@ class _TransactionsDialogsTradeSnapshotsState extends State<TransactionsDialogsT
       labelText: 'Coin',
       initialValue: null,
       onSelected: (id) => setState(() {
-        _selectedTarget = id;
-        _getRate();
+        ratesTarget = id;
       }),
     );
   }
 
   Widget _buildCalculatedResult() {
     final double source = _sourceAmount;
-    final double entryRate = _selectedRate == null ? 0.0 : double.tryParse(_selectedRate!) ?? 0;
+    final double entryRate = ratesAmount == null ? 0.0 : double.tryParse(ratesAmount!) ?? 0;
     double resultValue = source * entryRate;
 
-    final String targetSymbol = _selectedTarget != null ? _cryptoController.getSymbol(_selectedTarget!) ?? "" : "";
+    final String targetSymbol = ratesTarget != null ? _cryptoController.getSymbol(ratesTarget!) ?? "" : "";
 
     return _buildCryptoInputColumn(
       "Result:",

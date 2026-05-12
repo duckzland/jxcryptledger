@@ -8,6 +8,8 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
   void suffixOnUseMax() {}
   void suffixOnClean() {}
   void suffixOnCopy() {}
+  void suffixOnReverse() {}
+  void suffixOnRate() {}
 
   ButtonStyle _suffixButtonStyling(Color hoverColor) {
     return ButtonStyle(
@@ -64,6 +66,32 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
       tooltip: tooltip,
       style: _suffixButtonStyling(AppTheme.error),
       onPressed: suffixOnClean,
+    );
+  }
+
+  Widget suffixIconReverse(String tooltip) {
+    return IconButton(
+      icon: const Icon(Icons.swap_horiz),
+      iconSize: 16,
+      constraints: const BoxConstraints(),
+      visualDensity: VisualDensity.compact,
+      mouseCursor: SystemMouseCursors.click,
+      tooltip: tooltip,
+      style: _suffixButtonStyling(AppTheme.action),
+      onPressed: suffixOnReverse,
+    );
+  }
+
+  Widget suffixIconRate(String tooltip) {
+    return IconButton(
+      icon: const Icon(Icons.download),
+      iconSize: 16,
+      constraints: const BoxConstraints(),
+      visualDensity: VisualDensity.compact,
+      mouseCursor: SystemMouseCursors.click,
+      tooltip: tooltip,
+      style: _suffixButtonStyling(AppTheme.action),
+      onPressed: suffixOnRate,
     );
   }
 }
