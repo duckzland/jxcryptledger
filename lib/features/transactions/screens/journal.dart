@@ -90,13 +90,13 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   }
 
   List<Map<String, dynamic>> _buildRows() {
-    final rows = <Map<String, dynamic>>[];
+    final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
       final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
-      rows.add({
+      rx.add({
         'date': tx.timestampAsFormattedDate,
         'balance': '${tx.balanceText} $resultSymbol',
         'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceSymbol',
@@ -115,7 +115,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         '_resultSymbol': resultSymbol,
       });
     }
-    return rows;
+    return rx;
   }
 
   @override

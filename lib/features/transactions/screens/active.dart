@@ -645,7 +645,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   List<Map<String, dynamic>> _buildRows() {
     final currentRate = rateableValue ?? effectiveMarketRate ?? 0.0;
-    final rows = <Map<String, dynamic>>[];
+    final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
       double rowRate = currentRate;
@@ -670,7 +670,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         }
       }
 
-      rows.add({
+      rx.add({
         'from': tx.srAmountText,
         'to': tx.balanceText,
         'exchangedRate': _isReversed ? tx.rateReversedText : tx.rateText,
@@ -692,7 +692,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
       });
     }
 
-    return rows;
+    return rx;
   }
 
   Widget _buildPanels() {

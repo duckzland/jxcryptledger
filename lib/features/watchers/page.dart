@@ -288,13 +288,13 @@ class _WatchersPageState extends State<WatchersPage>
   }
 
   List<Map<String, dynamic>> _buildRows() {
-    final rows = <Map<String, dynamic>>[];
+    final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
       final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
-      rows.add({
+      rx.add({
         'from': sourceSymbol,
         'to': resultSymbol,
         'ops': tx.operatorText,
@@ -315,6 +315,7 @@ class _WatchersPageState extends State<WatchersPage>
         '_duration': tx.duration,
       });
     }
-    return rows;
+
+    return rx;
   }
 }
