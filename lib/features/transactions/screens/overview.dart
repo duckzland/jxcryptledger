@@ -441,12 +441,12 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   }
 
   List<Map<String, dynamic>> _buildRows() {
-    final rows = <Map<String, dynamic>>[];
+    final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
       final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
 
-      rows.add({
+      rx.add({
         'balance': '${tx.balanceText} $_resultSymbol',
         'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
         'exchangedRate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
@@ -462,6 +462,6 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
       });
     }
 
-    return rows;
+    return rx;
   }
 }
