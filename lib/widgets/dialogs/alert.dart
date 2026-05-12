@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../mixins/actions.dart';
+import '../../mixins/actionable.dart';
 import '../button.dart';
 
-class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActions {
+class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final String? label;
   final String tooltip;
   final IconData icon;
@@ -57,7 +57,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActions {
   State<WidgetsDialogsAlert<T>> createState() => _WidgetsDialogsAlertState<T>();
 }
 
-class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with MixinsActions {
+class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with MixinsActionable {
   Future<void> _showDialog(BuildContext context) async {
     final screenWidth = MediaQuery.of(context).size.width;
     double dialogWidth;
@@ -92,7 +92,7 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
                   WidgetsButton(
                     label: widget.dialogConfirmLabel,
                     initialState: widget.initialState,
-                    onPressed: (_) => doAction<T>(
+                    onPressed: (_) => actionableAction<T>(
                       context,
                       dialogContext: dialogContext,
                       data: widget.actionData,

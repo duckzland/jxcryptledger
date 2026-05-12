@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../mixins/actions.dart';
+import '../../../mixins/actionable.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
@@ -11,7 +11,7 @@ import '../forms/edit.dart';
 import '../forms/trade.dart';
 import '../model.dart';
 
-class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
+class TransactionsWidgetsButtons extends StatelessWidget with MixinsActionable {
   final TransactionsModel tx;
   final CryptosController cryptosController;
   final TransactionsController txController;
@@ -97,7 +97,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
               return TransactionFormEdit(
                 initialData: tx,
                 parent: ptx,
-                onSave: (e, stx) => doFormSave<TransactionsModel>(
+                onSave: (e, stx) => actionableFormSave<TransactionsModel>(
                   context,
                   dialogContext: dialogContext,
                   onComplete: onAction,
@@ -124,7 +124,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActions {
               return TransactionFormTrade(
                 initialData: tx,
                 parent: ptx,
-                onSave: (e, stx) => doFormSave<TransactionsModel>(
+                onSave: (e, stx) => actionableFormSave<TransactionsModel>(
                   context,
                   dialogContext: dialogContext,
                   onComplete: onAction,

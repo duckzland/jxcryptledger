@@ -5,9 +5,10 @@ import '../app/theme.dart';
 import '../core/abstracts/models/with_id.dart';
 
 mixin MixinsScrollToTable<T extends StatefulWidget, K extends CoreModelWithId> {
-  ScrollTo get scrollUtil;
+  ScrollTo get scrollToUtil;
 
-  late List<Map<String, dynamic>> rows;
+  List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
+
   double scrollToRowHeight = AppTheme.tableDataRowMinHeight;
   String scrollToRowIndexKey = 'uuid';
 
@@ -27,10 +28,10 @@ mixin MixinsScrollToTable<T extends StatefulWidget, K extends CoreModelWithId> {
 
     double offset = 0.0;
     if (index == 0) {
-      scrollUtil.toStart();
+      scrollToUtil.toStart();
     } else {
-      double currentScrollTop = scrollUtil.controller.offset;
-      double currentScrollBottom = currentScrollTop + scrollUtil.controller.position.viewportDimension;
+      double currentScrollTop = scrollToUtil.controller.offset;
+      double currentScrollBottom = currentScrollTop + scrollToUtil.controller.position.viewportDimension;
       offset = index * scrollToRowHeight;
 
       final targetBottom = offset + scrollToRowHeight;
@@ -39,9 +40,9 @@ mixin MixinsScrollToTable<T extends StatefulWidget, K extends CoreModelWithId> {
         offset = currentScrollTop;
       }
 
-      offset = offset.clamp(0.0, scrollUtil.controller.position.maxScrollExtent);
+      offset = offset.clamp(0.0, scrollToUtil.controller.position.maxScrollExtent);
 
-      scrollUtil.toOffset(offset);
+      scrollToUtil.toOffset(offset);
     }
   }
 }

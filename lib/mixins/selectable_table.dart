@@ -1,31 +1,31 @@
 mixin MixinsSelectableTable {
-  List<String> selectedRows = [];
+  List<String> selectableSelectedRows = [];
 
-  void toggleSelected(String key) {
-    if (isSelected(key)) {
-      selectedRows.remove(key);
+  void selectableToggleSelected(String key) {
+    if (selectableIsSelected(key)) {
+      selectableSelectedRows.remove(key);
     } else {
-      selectedRows.add(key);
+      selectableSelectedRows.add(key);
     }
   }
 
-  void setSelected(String key, bool selected) {
+  void selectableSetSelected(String key, bool selected) {
     if (selected) {
-      selectedRows.add(key);
+      selectableSelectedRows.add(key);
     } else {
-      selectedRows.remove(key);
+      selectableSelectedRows.remove(key);
     }
   }
 
-  bool isSelected(String key) {
-    return selectedRows.contains(key);
+  bool selectableIsSelected(String key) {
+    return selectableSelectedRows.contains(key);
   }
 
-  bool hasSelectedRows() {
-    return selectedRows.isNotEmpty;
+  bool selectableHasSelectedRows() {
+    return selectableSelectedRows.isNotEmpty;
   }
 
-  List<String> getSelectedRows() {
-    return selectedRows;
+  List<String> selectableGetSelectedRows() {
+    return selectableSelectedRows;
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../mixins/actions.dart';
+import '../../../mixins/actionable.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
@@ -10,7 +10,7 @@ import 'controller.dart';
 import 'form.dart';
 import 'model.dart';
 
-class PanelsButtons extends StatelessWidget with MixinsActions {
+class PanelsButtons extends StatelessWidget with MixinsActionable {
   final PanelsModel tix;
   final PanelsController tixController;
   final WatchersModel? linkedWatcher;
@@ -48,7 +48,7 @@ class PanelsButtons extends StatelessWidget with MixinsActions {
               initialRrId: wix == null ? tix.rrId : null,
               initialRate: wix == null ? tix.rate : null,
               linkedToTx: "panels-${tix.tid}",
-              onSave: (e) => doFormSave<WatchersModel>(
+              onSave: (e) => actionableFormSave<WatchersModel>(
                 context,
                 dialogContext: dialogContext,
                 successMessage: wix == null ? "Created notification watcher." : "Notification watcher updated",
@@ -70,7 +70,7 @@ class PanelsButtons extends StatelessWidget with MixinsActions {
             return PanelsForm(
               initialData: tix,
               linkedToTx: tix.meta["txLink"],
-              onSave: (e) => doFormSave<WatchersModel>(
+              onSave: (e) => actionableFormSave<WatchersModel>(
                 context,
                 dialogContext: dialogContext,
                 onComplete: onAction,

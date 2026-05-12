@@ -9,7 +9,7 @@ import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
-import '../../../mixins/actions.dart';
+import '../../../mixins/actionable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../widgets/balance_text.dart';
@@ -49,7 +49,7 @@ class TransactionsActive extends StatefulWidget {
 class _TransactionsActiveState extends State<TransactionsActive>
     with
         AutomaticKeepAliveClientMixin,
-        MixinsActions,
+        MixinsActionable,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsActive>,
         MixinsRateable<TransactionsActive>,
@@ -130,19 +130,24 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _pxController.start();
     _pxController.addListener(_onControllerChanged);
 
-    rows = _buildRows();
-    sorters = {
-      0: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
-      2: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
-      3: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      4: (col, asc) => onSort((d) => d['status'] as String, col, asc),
-      5: (col, asc) => onSort((d) => d['_currentValue'] as double, col, asc),
-      6: (col, asc) => onSort((d) => d['_profitLossValue'] as double, col, asc),
-      7: (col, asc) => onSort((d) => d['status'] as String, col, asc),
+    sortableSorters = {
+      0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
+      1: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
+      2: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
+      3: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
+      4: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      5: (col, asc) => sortableOnSort((d) => d['_currentValue'] as double, col, asc),
+      6: (col, asc) => sortableOnSort((d) => d['_profitLossValue'] as double, col, asc),
+      7: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
+    // Rateable callback will try to build rows
     rateableGetRate(refresh: false);
+
+    if (rows.isEmpty && txs.isNotEmpty) {
+      rows = _buildRows();
+    }
+
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
@@ -175,7 +180,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     setState(() {
       txs = widget.transactions;
       rows = _buildRows();
-      applySorting();
+      sortableApplySorting();
 
       _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
       _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
@@ -195,8 +200,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
   void _calculateProfitLoss() {
     final stxs = [...txs];
 
-    if (hasSelectedRows()) {
-      final selectedTxIds = getSelectedRows();
+    if (selectableHasSelectedRows()) {
+      final selectedTxIds = selectableGetSelectedRows();
       stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
     }
 
@@ -224,7 +229,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     rows = _buildRows();
     _marketRate = rateableValue;
     _calculateProfitLoss();
-    applySorting();
+    sortableApplySorting();
   }
 
   @override
@@ -319,7 +324,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                         rateableValue = double.tryParse(value);
                         _calculateProfitLoss();
                         rows = _buildRows();
-                        applySorting();
+                        sortableApplySorting();
                       });
                     });
                   },
@@ -375,7 +380,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     initialRrId: _linkedPanel == null ? widget.rrid : null,
                     initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(txs) : null,
                     linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                    onSave: (e) => doFormSave<PanelsModel>(
+                    onSave: (e) => actionableFormSave<PanelsModel>(
                       context,
                       dialogContext: dialogContext,
                       onComplete: () => setState(() {
@@ -411,7 +416,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     initialRrId: _linkedWatcher == null ? widget.rrid : null,
                     initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
                     linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                    onSave: (e) => doFormSave<PanelsModel>(
+                    onSave: (e) => actionableFormSave<PanelsModel>(
                       context,
                       dialogContext: dialogContext,
                       onComplete: () => setState(() {
@@ -460,8 +465,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 buildForm: (dialogContext) {
                   final stxs = [...txs];
 
-                  if (hasSelectedRows()) {
-                    final selectedTxIds = getSelectedRows();
+                  if (selectableHasSelectedRows()) {
+                    final selectedTxIds = selectableGetSelectedRows();
                     stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
                   }
 
@@ -543,21 +548,21 @@ class _TransactionsActiveState extends State<TransactionsActive>
           horizontalMargin: 12,
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
-          sortColumnIndex: (_currentRate == 0.0 && sortColumnIndex > 4) ? null : sortColumnIndex,
-          sortAscending: sortAscending,
+          sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
+          sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sorters[0]),
+            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
             DataColumn2(
               size: ColumnSize.S,
               label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount', subtitle: _sourceSymbol),
-              onSort: sorters[1],
+              onSort: sortableSorters[1],
             ),
             if (!isCapital)
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-                onSort: sorters[2],
+                onSort: sortableSorters[2],
               ),
             if (!isCapital)
               DataColumn2(
@@ -566,7 +571,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   title: 'Exchanged Rate ',
                   subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
                 ),
-                onSort: sorters[3],
+                onSort: sortableSorters[3],
               ),
 
             if (_currentRate != 0.0 && !isCapital) ...[
@@ -580,16 +585,16 @@ class _TransactionsActiveState extends State<TransactionsActive>
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
-                onSort: sorters[5],
+                onSort: sortableSorters[5],
               ),
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
-                onSort: sorters[6],
+                onSort: sortableSorters[6],
               ),
             ],
 
-            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sorters[4] : sorters[7]),
+            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sortableSorters[4] : sortableSorters[7]),
             DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
 
@@ -597,13 +602,13 @@ class _TransactionsActiveState extends State<TransactionsActive>
             final tx = r['tx'] as TransactionsModel;
             final canSelect = tx.isActive || tx.isPartial;
             return DataRow(
-              selected: canSelect ? isSelected(r['uuid']) : false,
+              selected: canSelect ? selectableIsSelected(r['uuid']) : false,
               onSelectChanged: canSelect
                   ? (v) {
                       setState(() {
-                        setSelected(r['uuid'], v!);
+                        selectableSetSelected(r['uuid'], v!);
                         _calculateProfitLoss();
-                        applySorting();
+                        sortableApplySorting();
                       });
                     }
                   : null,

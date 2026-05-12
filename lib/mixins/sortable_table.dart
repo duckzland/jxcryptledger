@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 mixin MixinsSortableTable<T extends StatefulWidget> on State<T> {
-  late List<Map<String, dynamic>> rows;
-  int sortColumnIndex = 0;
-  bool sortAscending = false;
+  List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
+  int sortableColumnIndex = 0;
+  bool sortableAscending = false;
 
-  late Map<int, Function(int col, bool asc)> sorters = {};
+  late Map<int, Function(int col, bool asc)> sortableSorters = {};
 
-  void onSort<U>(U Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
+  void sortableOnSort<U>(U Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
     rows.sort((a, b) {
       final aField = getField(a);
       final bField = getField(b);
@@ -25,18 +25,18 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T> {
           : Comparable.compare(bField as Comparable, aField as Comparable);
     });
 
-    sortColumnIndex = columnIndex;
-    sortAscending = ascending;
+    sortableColumnIndex = columnIndex;
+    sortableAscending = ascending;
 
     if (mounted) {
       setState(() {});
     }
   }
 
-  void applySorting() {
-    final sorter = sorters[sortColumnIndex];
+  void sortableApplySorting() {
+    final sorter = sortableSorters[sortableColumnIndex];
     if (sorter != null) {
-      sorter(sortColumnIndex, sortAscending);
+      sorter(sortableColumnIndex, sortableAscending);
     }
   }
 }
