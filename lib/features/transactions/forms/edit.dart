@@ -406,11 +406,15 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   }
 
   Widget _buildButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      direction: Axis.horizontal,
+      runSpacing: 20,
+      spacing: 10,
+      runAlignment: WrapAlignment.center,
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        const SizedBox(width: 12),
         WidgetsButton(label: "Update", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
