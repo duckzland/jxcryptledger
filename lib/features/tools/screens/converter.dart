@@ -294,7 +294,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
       final int source = _selectedSource ?? 0;
       final int target = _selectedTarget ?? 0;
 
-      if (source == 0 || target == 0) {
+      if (source < 0 || target < 0) {
         return;
       }
 

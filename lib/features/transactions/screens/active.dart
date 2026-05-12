@@ -60,8 +60,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
   late final WatchersController _wxController;
   late final PanelsController _pxController;
 
-  late TextEditingController _customRateController;
-
   late String _sourceSymbol;
   late String _resultSymbol;
 
@@ -73,6 +71,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
   late double _totalProfit;
   late double _totalLoss;
   late double _plPercentage;
+
+  late void Function(String value, String helperText)? _updateRateState;
 
   bool _isReversed = false;
 
@@ -132,9 +132,9 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _pxController.start();
     _pxController.addListener(_onControllerChanged);
 
-    _loadMarketRate();
+    _updateRateState = null;
 
-    _customRateController = TextEditingController();
+    _loadMarketRate();
 
     sorters = {
       0: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc),
@@ -161,7 +161,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   @override
   void dispose() {
-    _customRateController.dispose();
+    _updateRateState = null;
     _ratesController.removeListener(_onRatesUpdated);
     _wxController.removeListener(_onControllerChanged);
     _pxController.removeListener(_onControllerChanged);
@@ -241,6 +241,18 @@ class _TransactionsActiveState extends State<TransactionsActive>
     }
 
     _marketRate = rate;
+
+    if (_updateRateState != null) {
+      _updateRateState?.call(Utils.formatSmartDouble(rate).replaceAll(",", ""), _averageRate.toStringAsFixed(8));
+      _updateRateState = null;
+
+      setState(() {
+        _customRate = rate;
+        _calculateProfitLoss();
+        rows = _buildRows();
+        applySorting();
+      });
+    }
   }
 
   @override
@@ -317,7 +329,17 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
                   helperText: _averageRate.toStringAsFixed(8),
                   allowCopy: false,
+                  allowRate: true,
+                  onRetrievingRate: (void Function(String value, String helperText) updateState) {
+                    // Store the callback to act as promise contract!
+                    _updateRateState = updateState;
+                    _updateRateState?.call("", "Retrieving rate...");
+                    _loadMarketRate();
+                  },
                   onChanged: (value) {
+                    // Nullify the promise contract!
+                    _updateRateState = null;
+
                     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
                     _debounce = Timer(const Duration(milliseconds: 100), () {

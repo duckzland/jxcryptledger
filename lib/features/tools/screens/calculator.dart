@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
+import '../../../mixins/rates.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/panel.dart';
@@ -18,14 +19,10 @@ class ToolsCalculatorView extends StatefulWidget {
   State<ToolsCalculatorView> createState() => _ToolsCalculatorViewState();
 }
 
-class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
+class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRates<ToolsCalculatorView> {
   late final CryptosController _cryptosController;
 
-  int? _selectedSource;
-  int? _selectedTarget;
-
   String? _sourceAmount;
-  String? _ratesAmount;
   String? _ratesRevertAmount;
 
   Timer? _debounce;
@@ -34,18 +31,13 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   void initState() {
     super.initState();
     _cryptosController = locator<CryptosController>();
-
-    _selectedSource = null;
-    _selectedTarget = null;
     _sourceAmount = null;
-    _ratesAmount = null;
     _ratesRevertAmount = null;
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-
     super.dispose();
   }
 
@@ -148,6 +140,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
     return WidgetsFieldsAmount(
       title: 'Rate',
       helperText: 'e.g., 10.5',
+      allowReverse: true,
       onChanged: (value) {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
@@ -164,12 +157,23 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
     return WidgetsFieldsAmount(
       title: 'Rate',
       helperText: 'e.g., 10.5',
+      allowReverse: true,
+      allowRate: ratesAllow,
+      onRetrievingRate: (void Function(String value, String helperText) updateState) {
+        // Store the callback to act as promise contract!
+        ratesStateUpdater = updateState;
+        ratesStateUpdater?.call("", "Retrieving rate...");
+        ratesGetRate();
+      },
       onChanged: (value) {
+        // Nullify the promise contract!
+        ratesStateUpdater = null;
+
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(const Duration(milliseconds: 100), () {
           setState(() {
-            _ratesAmount = value;
+            ratesAmount = value;
           });
         });
       },
@@ -193,19 +197,21 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
   }
 
   Widget _buildSourceCryptoField() {
-    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedSource = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => ratesSource = id));
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => _selectedTarget = id));
+    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => ratesTarget = id));
   }
 
   Widget _buildCalculatedResult() {
     final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
-    final double entryRate = _ratesAmount == null ? 0.0 : double.tryParse(_ratesAmount!) ?? 0;
+    final double entryRate = ratesAmount == null ? 0.0 : double.tryParse(ratesAmount!) ?? 0;
     final double returnRate = _ratesRevertAmount == null ? 0.0 : double.tryParse(_ratesRevertAmount!) ?? 0;
+    final String sourceSymbol = ratesSource != null ? _cryptosController.getSymbol(ratesSource!) ?? "" : "";
+    final String targetSymbol = ratesTarget != null ? _cryptosController.getSymbol(ratesTarget!) ?? "" : "";
 
-    if (source <= 0 || entryRate <= 0) {
+    if (source <= 0 || entryRate <= 0 || targetSymbol == "" || sourceSymbol == "") {
       return Text("");
     }
 
@@ -218,8 +224,6 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> {
       profit = resultValue - source;
     }
 
-    final String sourceSymbol = _selectedSource != null ? _cryptosController.getSymbol(_selectedSource!) ?? "" : "";
-    final String targetSymbol = _selectedTarget != null ? _cryptosController.getSymbol(_selectedTarget!) ?? "" : "";
     final String currentSymbol = (returnRate > 0) ? sourceSymbol : targetSymbol;
 
     return Column(

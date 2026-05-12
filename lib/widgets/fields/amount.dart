@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/math.dart';
 import '../../mixins/suffix.dart';
 import '../notify.dart';
 import '../../core/utils.dart';
@@ -15,22 +16,31 @@ class WidgetsFieldsAmount extends StatefulWidget {
   final bool allowNegative;
   final bool allowClean;
   final bool allowCopy;
+  final bool allowReverse;
+  final bool allowRate;
   final double? useMax;
 
+  final TextEditingController? controller;
+
   final void Function(String value)? onChanged;
+  final void Function(void Function(String value, String helperText))? onRetrievingRate;
 
   const WidgetsFieldsAmount({
     super.key,
     required this.title,
     required this.helperText,
+    this.controller,
     this.suffixText,
     this.initialValue,
     this.enabled = true,
     this.allowNegative = false,
     this.allowClean = true,
     this.allowCopy = true,
+    this.allowReverse = false,
+    this.allowRate = false,
     this.useMax,
     this.onChanged,
+    this.onRetrievingRate,
   });
 
   @override
@@ -38,11 +48,14 @@ class WidgetsFieldsAmount extends StatefulWidget {
 }
 
 class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSuffix<WidgetsFieldsAmount> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller;
   Timer? _debounce;
 
+  String _helperText = "";
+
   bool get _shouldShowSuffix =>
-      widget.suffixText != null || widget.enabled && (widget.useMax != null || widget.allowClean || widget.allowCopy);
+      widget.suffixText != null ||
+      widget.enabled && (widget.useMax != null || widget.allowClean || widget.allowCopy || widget.allowReverse || widget.allowRate);
 
   @override
   String get suffixText => widget.suffixText ?? "";
@@ -50,10 +63,15 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
   @override
   void initState() {
     super.initState();
+
+    _controller = widget.controller ?? TextEditingController();
+
     if (widget.initialValue != null) {
       final val = widget.initialValue!;
       _controller.text = val == "" ? val : Utils.formatSmartDouble(double.parse(val));
     }
+
+    _helperText = widget.helperText;
   }
 
   @override
@@ -86,12 +104,31 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
   }
 
   @override
+  void suffixOnReverse() {
+    try {
+      final sanitized = Utils.sanitizeNumber(_controller.text);
+      final parsed = double.parse(sanitized);
+      final reversed = Math.divide(1, parsed);
+      _controller.text = Utils.formatSmartDouble(reversed).replaceAll(",", "");
+      widget.onChanged?.call(reversed.toString());
+      setState(() {});
+    } catch (e) {
+      widgetsNotifyError('Failed to reverse "${_controller.text}"');
+    }
+  }
+
+  @override
+  void suffixOnRate() {
+    widget.onRetrievingRate?.call(updateState);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _controller,
       decoration: InputDecoration(
         labelText: widget.title,
-        hintText: widget.helperText,
+        hintText: _helperText,
         enabled: widget.enabled,
         suffixIcon: _shouldShowSuffix
             ? Row(
@@ -101,6 +138,10 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
                   if (widget.suffixText != null) suffixIconText(),
 
                   if (widget.useMax != null) suffixIconUseMax('Use maximum amount'),
+
+                  if (widget.allowRate) suffixIconRate('Retrieve current rate'),
+
+                  if (widget.allowReverse && _controller.text != "") suffixIconReverse('Reverse amount'),
 
                   if (widget.allowCopy && _controller.text != "") suffixIconCopy('Copy to clipboard'),
 
@@ -152,5 +193,13 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
     }
 
     return null;
+  }
+
+  void updateState(String value, String helperText) {
+    if (value != _controller.text || helperText != _helperText) {
+      _controller.text = value;
+      _helperText = helperText;
+      setState(() {});
+    }
   }
 }
