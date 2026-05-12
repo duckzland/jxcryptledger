@@ -63,14 +63,14 @@ class _TransactionsActiveState extends State<TransactionsActive>
   late String _sourceSymbol;
   late String _resultSymbol;
 
-  late double _currentRate;
-  late double _averageRate;
-  late double _totalSourceBalance;
-  late double _totalBalance;
-  late double _totalPL;
-  late double _totalProfit;
-  late double _totalLoss;
-  late double _plPercentage;
+  double _currentRate = 0;
+  double _averageRate = 0;
+  double _totalSourceBalance = 0;
+  double _totalBalance = 0;
+  double _totalPL = 0;
+  double _totalProfit = 0;
+  double _totalLoss = 0;
+  double _plPercentage = 0;
 
   bool _isReversed = false;
 
@@ -121,14 +121,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _cryptosController = locator<CryptosController>();
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
     _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
-    _currentRate = 0;
-    _averageRate = 0;
-    _totalSourceBalance = 0;
-    _totalBalance = 0;
-    _totalPL = 0;
-    _totalProfit = 0;
-    _totalLoss = 0;
-    _plPercentage = 0;
 
     _wxController = locator<WatchersController>();
     _wxController.start();
