@@ -4,12 +4,13 @@ import '../core/scrollto.dart';
 import '../core/abstracts/models/with_id.dart';
 
 mixin MixinsScrollToGroup<T extends StatefulWidget, K extends CoreModelWithId> {
-  ScrollTo get scrollUtil;
+  ScrollTo get scrollToUtil;
+  
   double scrollToGroupGetGroupHeight(List<K> txs, double currentWidth);
   double scrollToGroupGetSeparatorHeight();
 
   void scrollToGroup(String groupKey, Map<String, List<K>> grouped, BuildContext context) {
-    if (!scrollUtil.controller.hasClients) {
+    if (!scrollToUtil.controller.hasClients) {
       return;
     }
 
@@ -17,10 +18,10 @@ mixin MixinsScrollToGroup<T extends StatefulWidget, K extends CoreModelWithId> {
     double currentWidth = MediaQuery.of(context).size.width;
 
     if (grouped.keys.first == groupKey) {
-      scrollUtil.toStart();
+      scrollToUtil.toStart();
     } else {
-      double currentScrollTop = scrollUtil.controller.offset;
-      double currentScrollBottom = currentScrollTop + scrollUtil.controller.position.viewportDimension;
+      double currentScrollTop = scrollToUtil.controller.offset;
+      double currentScrollBottom = currentScrollTop + scrollToUtil.controller.position.viewportDimension;
 
       for (var id in grouped.keys) {
         if (id == groupKey) break;
@@ -36,7 +37,7 @@ mixin MixinsScrollToGroup<T extends StatefulWidget, K extends CoreModelWithId> {
         offset = currentScrollTop;
       }
 
-      scrollUtil.toOffset(offset);
+      scrollToUtil.toOffset(offset);
     }
   }
 

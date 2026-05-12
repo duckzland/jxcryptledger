@@ -5,7 +5,7 @@ import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
-import '../../mixins/actions.dart';
+import '../../mixins/actionable.dart';
 import '../../mixins/scrollto_group.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -35,7 +35,7 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class _TransactionsPageState extends State<TransactionsPage>
-    with MixinsActions, MixinsActionBar<TransactionsPage>, MixinsScrollToGroup<TransactionsPage, TransactionsModel> {
+    with MixinsActionable, MixinsActionBar<TransactionsPage>, MixinsScrollToGroup<TransactionsPage, TransactionsModel> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
   late List<TransactionsModel> txs;
@@ -53,7 +53,7 @@ class _TransactionsPageState extends State<TransactionsPage>
   int _txbuild = 0;
 
   @override
-  final scrollUtil = ScrollTo();
+  final scrollToUtil = ScrollTo();
 
   @override
   void initState() {
@@ -69,12 +69,12 @@ class _TransactionsPageState extends State<TransactionsPage>
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
 
-    registerBars("Trading View");
+    actionbarRegister("Trading View");
   }
 
   @override
   void dispose() {
-    scrollUtil.dispose();
+    scrollToUtil.dispose();
 
     _txController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onCryptoControllerChanged);
@@ -349,7 +349,7 @@ class _TransactionsPageState extends State<TransactionsPage>
   }
 
   @override
-  Widget buildLeftAction() {
+  Widget actionbarLeftAction() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
@@ -570,7 +570,7 @@ class _TransactionsPageState extends State<TransactionsPage>
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
-      removeBars();
+      actionbarRemove();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
@@ -579,7 +579,7 @@ class _TransactionsPageState extends State<TransactionsPage>
     }
 
     if (txs.isEmpty) {
-      removeBars();
+      actionbarRemove();
       return Column(
         children: [
           Expanded(
@@ -614,7 +614,7 @@ class _TransactionsPageState extends State<TransactionsPage>
     return Center(
       child: TransactionFormCreate(
         onSave: (e, stx) =>
-            doFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
+            actionableFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
       ),
     );
   }
@@ -674,22 +674,22 @@ class _TransactionsPageState extends State<TransactionsPage>
   Widget _buildScreen() {
     switch (_viewMode) {
       case TransactionsViewMode.overview:
-        registerBars("Transaction Balance");
+        actionbarRegister("Transaction Balance");
 
         return _buildOverviewList(_getOverviewTransactions());
 
       case TransactionsViewMode.active:
-        registerBars("Trading View");
+        actionbarRegister("Trading View");
 
         return _buildActiveTradingList(_getActiveTransactions());
 
       case TransactionsViewMode.journal:
-        registerBars("Transaction Overview");
+        actionbarRegister("Transaction Overview");
 
         return TransactionsJournalView(key: ValueKey(_txbuild), transactions: _getJournalTransactions(), onStatusChanged: () {});
 
       case TransactionsViewMode.history:
-        registerBars("Transaction History");
+        actionbarRegister("Transaction History");
 
         return TransactionHistory(key: ValueKey(_txbuild), sortMode: _sortMode, transactions: _getHistoryTransactions());
     }
@@ -698,7 +698,7 @@ class _TransactionsPageState extends State<TransactionsPage>
   Widget _buildOverviewList(Map<String, List<TransactionsModel>> grouped) {
     return ListView.separated(
       key: ValueKey(_txbuild),
-      controller: scrollUtil.controller,
+      controller: scrollToUtil.controller,
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
@@ -719,7 +719,7 @@ class _TransactionsPageState extends State<TransactionsPage>
   Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
     return ListView.separated(
       key: ValueKey(_txbuild),
-      controller: scrollUtil.controller,
+      controller: scrollToUtil.controller,
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),

@@ -26,7 +26,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
   void initState() {
     super.initState();
     _cryptosController.addListener(_onControllerChanged);
-    registerBars("Calculator");
+    actionbarRegister("Calculator");
   }
 
   @override
@@ -43,7 +43,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
-      removeBars();
+      actionbarRemove();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.')),
@@ -59,7 +59,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
   }
 
   @override
-  Widget buildLeftAction() {
+  Widget actionbarLeftAction() {
     return Wrap(
       spacing: 4,
       children: [
@@ -129,17 +129,17 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
   Widget _buildScreen() {
     switch (_viewMode) {
       case ToolsViewMode.calculator:
-        registerBars("Calculator");
+        actionbarRegister("Calculator");
 
         return ToolsCalculatorView();
 
       case ToolsViewMode.converter:
-        registerBars("Converter");
+        actionbarRegister("Converter");
 
         return ToolsConverterView();
 
       case ToolsViewMode.qrcode:
-        registerBars("QR Code Generator");
+        actionbarRegister("QR Code Generator");
 
         return ToolsQRGeneratorView();
     }

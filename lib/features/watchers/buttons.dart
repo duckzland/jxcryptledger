@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../widgets/button.dart';
-import '../../mixins/actions.dart';
+import '../../mixins/actionable.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import 'controller.dart';
 import 'form.dart';
 import 'model.dart';
 
-class WatchersButtons extends StatelessWidget with MixinsActions {
+class WatchersButtons extends StatelessWidget with MixinsActionable {
   final WatchersModel tx;
   final WatchersController wxController;
   final void Function() onAction;
@@ -33,7 +33,7 @@ class WatchersButtons extends StatelessWidget with MixinsActions {
             return WatchersForm(
               initialData: tx,
               linkedToTx: tx.meta["txLink"],
-              onSave: (e) => doFormSave<WatchersModel>(
+              onSave: (e) => actionableFormSave<WatchersModel>(
                 context,
                 dialogContext: dialogContext,
                 onComplete: onAction,

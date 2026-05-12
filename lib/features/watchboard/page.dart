@@ -68,7 +68,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
 
     txs = _pxController.items;
 
-    registerBars("Crypto Watchboard");
+    actionbarRegister("Crypto Watchboard");
   }
 
   @override
@@ -98,7 +98,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
   }
 
   @override
-  Widget buildLeftAction() {
+  Widget actionbarLeftAction() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
@@ -260,7 +260,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
-      removeBars();
+      actionbarRemove();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.')),
@@ -269,7 +269,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
     }
 
     if (_pxController.isEmpty()) {
-      removeBars();
+      actionbarRemove();
       return Column(
         children: [
           Expanded(
@@ -293,7 +293,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
       );
     }
 
-    registerBars("Crypto Watchboard");
+    actionbarRegister("Crypto Watchboard");
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),

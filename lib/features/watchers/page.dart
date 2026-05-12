@@ -44,7 +44,7 @@ class _WatchersPageState extends State<WatchersPage>
   late List<WatchersModel> txs;
 
   @override
-  final scrollUtil = ScrollTo();
+  final scrollToUtil = ScrollTo();
 
   @override
   void initState() {
@@ -55,24 +55,24 @@ class _WatchersPageState extends State<WatchersPage>
     _cryptosController.addListener(_onControllerChanged);
 
     txs = _wxController.items;
-    sorters = {
-      0: (col, asc) => onSort((d) => d['_srId'] as int, col, asc),
-      1: (col, asc) => onSort((d) => d['_rrId'] as int, col, asc),
-      2: (col, asc) => onSort((d) => d['_ops'] as int, col, asc),
-      3: (col, asc) => onSort((d) => d['_rate'] as double, col, asc),
-      5: (col, asc) => onSort((d) => d['_sent'] as int, col, asc),
-      6: (col, asc) => onSort((d) => d['_limit'] as int, col, asc),
-      7: (col, asc) => onSort((d) => d['_duration'] as int, col, asc),
+    sortableSorters = {
+      0: (col, asc) => sortableOnSort((d) => d['_srId'] as int, col, asc),
+      1: (col, asc) => sortableOnSort((d) => d['_rrId'] as int, col, asc),
+      2: (col, asc) => sortableOnSort((d) => d['_ops'] as int, col, asc),
+      3: (col, asc) => sortableOnSort((d) => d['_rate'] as double, col, asc),
+      5: (col, asc) => sortableOnSort((d) => d['_sent'] as int, col, asc),
+      6: (col, asc) => sortableOnSort((d) => d['_limit'] as int, col, asc),
+      7: (col, asc) => sortableOnSort((d) => d['_duration'] as int, col, asc),
     };
 
     rows = _buildRows();
 
-    registerBars("Rate Watchers");
+    actionbarRegister("Rate Watchers");
   }
 
   @override
   void dispose() {
-    scrollUtil.dispose();
+    scrollToUtil.dispose();
 
     _wxController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onControllerChanged);
@@ -81,7 +81,7 @@ class _WatchersPageState extends State<WatchersPage>
   }
 
   @override
-  Widget buildLeftAction() {
+  Widget actionbarLeftAction() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
@@ -157,7 +157,7 @@ class _WatchersPageState extends State<WatchersPage>
   @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
-      removeBars();
+      actionbarRemove();
       return Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
@@ -166,7 +166,7 @@ class _WatchersPageState extends State<WatchersPage>
     }
 
     if (_wxController.items.isEmpty) {
-      removeBars();
+      actionbarRemove();
       return Column(
         children: [
           Expanded(
@@ -186,7 +186,7 @@ class _WatchersPageState extends State<WatchersPage>
       );
     }
 
-    registerBars("Rate Watchers");
+    actionbarRegister("Rate Watchers");
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
@@ -206,7 +206,7 @@ class _WatchersPageState extends State<WatchersPage>
       final ntx = _wxController.findNew(txs);
       txs = _wxController.items;
       rows = _buildRows();
-      applySorting();
+      sortableApplySorting();
       if (ntx != null) {
         scrollToTableNewRow(ntx);
       }
@@ -240,24 +240,24 @@ class _WatchersPageState extends State<WatchersPage>
       behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
       child: WidgetsPanel(
         child: DataTable2(
-          scrollController: scrollUtil.controller,
+          scrollController: scrollToUtil.controller,
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
           showCheckboxColumn: false,
-          sortColumnIndex: sortColumnIndex,
-          sortAscending: sortAscending,
+          sortColumnIndex: sortableColumnIndex,
+          sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn(label: const Text("From"), onSort: sorters[0]),
-            DataColumn(label: const Text("To"), onSort: sorters[1]),
-            DataColumn(label: const Text("Ops"), onSort: sorters[2]),
-            DataColumn(label: const Text("Rate"), onSort: sorters[3]),
-            DataColumn(label: const Text("Sent"), onSort: sorters[5]),
-            DataColumn(label: const Text("Limit"), onSort: sorters[6]),
-            DataColumn(label: const Text("Duration"), onSort: sorters[7]),
+            DataColumn(label: const Text("From"), onSort: sortableSorters[0]),
+            DataColumn(label: const Text("To"), onSort: sortableSorters[1]),
+            DataColumn(label: const Text("Ops"), onSort: sortableSorters[2]),
+            DataColumn(label: const Text("Rate"), onSort: sortableSorters[3]),
+            DataColumn(label: const Text("Sent"), onSort: sortableSorters[5]),
+            DataColumn(label: const Text("Limit"), onSort: sortableSorters[6]),
+            DataColumn(label: const Text("Duration"), onSort: sortableSorters[7]),
             const DataColumn(label: Text("Action")),
           ],
           rows: table.map((r) {

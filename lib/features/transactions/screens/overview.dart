@@ -7,7 +7,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
-import '../../../mixins/actions.dart';
+import '../../../mixins/actionable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../widgets/balance_text.dart';
@@ -37,7 +37,7 @@ class TransactionsOverview extends StatefulWidget {
 class _TransactionsOverviewState extends State<TransactionsOverview>
     with
         AutomaticKeepAliveClientMixin,
-        MixinsActions,
+        MixinsActionable,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsOverview>,
         TransactionsMixinsActions {
@@ -66,17 +66,17 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     _cryptosController = locator<CryptosController>();
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
-    sorters = {
-      0: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => onSort((d) => d['_balanceValue'] as double, col, asc),
-      2: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
-      3: (col, asc) => onSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      4: (col, asc) => onSort((d) => d['status'] as String, col, asc),
+    sortableSorters = {
+      0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
+      1: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
+      2: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
+      3: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
+      4: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
     rows = _buildRows();
 
-    applySorting();
+    sortableApplySorting();
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
@@ -103,7 +103,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
     setState(() {
       txs = widget.transactions;
       rows = _buildRows();
-      applySorting();
+      sortableApplySorting();
 
       _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
@@ -121,8 +121,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
 
     final stxs = [...txs];
 
-    if (hasSelectedRows()) {
-      final selectedTxIds = getSelectedRows();
+    if (selectableHasSelectedRows()) {
+      final selectedTxIds = selectableGetSelectedRows();
       stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
     }
 
@@ -216,8 +216,8 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                 buildForm: (dialogContext) {
                   final stxs = [...txs];
 
-                  if (hasSelectedRows()) {
-                    final selectedTxIds = getSelectedRows();
+                  if (selectableHasSelectedRows()) {
+                    final selectedTxIds = selectableGetSelectedRows();
                     stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
                   }
 
@@ -390,15 +390,15 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
           horizontalMargin: 12,
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
-          sortColumnIndex: sortColumnIndex,
-          sortAscending: sortAscending,
+          sortColumnIndex: sortableColumnIndex,
+          sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sorters[0]),
-            DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sorters[1]),
-            DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sorters[2]),
-            DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sorters[3]),
-            DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sorters[4]),
+            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+            DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
+            DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
+            DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
+            DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sortableSorters[4]),
             const DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
           rows: rows.map((r) {
@@ -406,13 +406,13 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
             final canSelect = tx.isActive || tx.isPartial;
 
             return DataRow(
-              selected: canSelect ? isSelected(r['uuid']) : false,
+              selected: canSelect ? selectableIsSelected(r['uuid']) : false,
               onSelectChanged: canSelect
                   ? (v) {
                       setState(() {
-                        setSelected(r['uuid'], v!);
+                        selectableSetSelected(r['uuid'], v!);
                         _calculateProfitLoss();
-                        applySorting();
+                        sortableApplySorting();
                       });
                     }
                   : null,
