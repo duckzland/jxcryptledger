@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
+import 'package:jxledger/mixins/rates.dart';
 
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
@@ -22,7 +23,6 @@ import '../../cryptos/controller.dart';
 import '../../watchboard/panels/controller.dart';
 import '../../watchboard/panels/form.dart';
 import '../../watchboard/panels/model.dart';
-import '../../rates/controller.dart';
 import '../../watchers/controller.dart';
 import '../../watchers/form.dart';
 import '../../watchers/model.dart';
@@ -52,11 +52,11 @@ class _TransactionsActiveState extends State<TransactionsActive>
         MixinsActions,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsActive>,
+        MixinsRates<TransactionsActive>,
         TransactionsMixinsActions {
   final _calc = TransactionCalculation();
 
   late final CryptosController _cryptosController;
-  late final RatesController _ratesController;
   late final WatchersController _wxController;
   late final PanelsController _pxController;
 
@@ -72,11 +72,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
   late double _totalLoss;
   late double _plPercentage;
 
-  late void Function(String value, String helperText)? _updateRateState;
-
   bool _isReversed = false;
 
-  double? _customRate;
   double? _marketRate;
 
   Timer? _debounce;
@@ -89,7 +86,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   double? get nonReversedEffectiveRate {
-    final c = _customRate;
+    final c = ratesValue;
     if (c != null) {
       return _isReversed ? Math.divide(1, c) : c;
     }
@@ -114,15 +111,24 @@ class _TransactionsActiveState extends State<TransactionsActive>
   void initState() {
     super.initState();
 
+    ratesIsTemporary = false;
+    ratesSource = widget.srid;
+    ratesTarget = widget.rrid;
+
     txs = widget.transactions;
     txController = locator<TransactionsController>();
 
     _cryptosController = locator<CryptosController>();
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
     _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
-
-    _ratesController = locator<RatesController>();
-    _ratesController.addListener(_onRatesUpdated);
+    _currentRate = 0;
+    _averageRate = 0;
+    _totalSourceBalance = 0;
+    _totalBalance = 0;
+    _totalPL = 0;
+    _totalProfit = 0;
+    _totalLoss = 0;
+    _plPercentage = 0;
 
     _wxController = locator<WatchersController>();
     _wxController.start();
@@ -132,10 +138,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     _pxController.start();
     _pxController.addListener(_onControllerChanged);
 
-    _updateRateState = null;
-
-    _loadMarketRate();
-
+    rows = _buildRows();
     sorters = {
       0: (col, asc) => onSort((d) => d['_timestamp'] as int, col, asc),
       1: (col, asc) => onSort((d) => d['_sourceValue'] as double, col, asc),
@@ -147,13 +150,10 @@ class _TransactionsActiveState extends State<TransactionsActive>
       7: (col, asc) => onSort((d) => d['status'] as String, col, asc),
     };
 
-    rows = _buildRows();
-
-    applySorting();
+    ratesGetRate(refresh: false);
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
-    _calculateProfitLoss();
 
     _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
     _linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
@@ -161,13 +161,10 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   @override
   void dispose() {
-    _updateRateState = null;
-    _ratesController.removeListener(_onRatesUpdated);
     _wxController.removeListener(_onControllerChanged);
     _pxController.removeListener(_onControllerChanged);
 
     _debounce?.cancel();
-
     super.dispose();
   }
 
@@ -198,13 +195,9 @@ class _TransactionsActiveState extends State<TransactionsActive>
     });
   }
 
-  void _onRatesUpdated() {
-    setState(() {
-      _loadMarketRate();
-      _calculateProfitLoss();
-      rows = _buildRows();
-      applySorting();
-    });
+  @override
+  void ratesUpdated() {
+    ratesGetRate();
   }
 
   void _calculateProfitLoss() {
@@ -218,7 +211,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
     _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
-    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    _currentRate = ratesValue ?? effectiveMarketRate ?? 0.0;
     _totalSourceBalance = _calc.totalSourceBalance(stxs);
     _totalBalance = _calc.totalBalance(stxs);
     _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed);
@@ -233,26 +226,13 @@ class _TransactionsActiveState extends State<TransactionsActive>
     }
   }
 
-  void _loadMarketRate() {
-    final rate = _ratesController.getStoredRate(widget.srid, widget.rrid);
-    if (rate == -9999) {
-      _ratesController.addQueue(widget.srid, widget.rrid);
-      return;
-    }
-
-    _marketRate = rate;
-
-    if (_updateRateState != null) {
-      _updateRateState?.call(Utils.formatSmartDouble(rate).replaceAll(",", ""), _averageRate.toStringAsFixed(8));
-      _updateRateState = null;
-
-      setState(() {
-        _customRate = rate;
-        _calculateProfitLoss();
-        rows = _buildRows();
-        applySorting();
-      });
-    }
+  @override
+  void ratesGetCallback() {
+    rateDefaultHelper = _averageRate.toStringAsFixed(8);
+    rows = _buildRows();
+    _marketRate = ratesValue;
+    _calculateProfitLoss();
+    applySorting();
   }
 
   @override
@@ -332,19 +312,19 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   allowRate: true,
                   onRetrievingRate: (void Function(String value, String helperText) updateState) {
                     // Store the callback to act as promise contract!
-                    _updateRateState = updateState;
-                    _updateRateState?.call("", "Retrieving rate...");
-                    _loadMarketRate();
+                    ratesStateUpdater = updateState;
+                    ratesStateUpdater?.call("", "Retrieving rate...");
+                    ratesGetRate(reversed: _isReversed);
                   },
                   onChanged: (value) {
                     // Nullify the promise contract!
-                    _updateRateState = null;
+                    ratesStateUpdater = null;
 
                     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
                     _debounce = Timer(const Duration(milliseconds: 100), () {
                       setState(() {
-                        _customRate = double.tryParse(value);
+                        ratesValue = double.tryParse(value);
                         _calculateProfitLoss();
                         rows = _buildRows();
                         applySorting();
@@ -667,7 +647,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   List<Map<String, dynamic>> _buildRows() {
-    final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    final currentRate = ratesValue ?? effectiveMarketRate ?? 0.0;
     final rows = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
