@@ -13,10 +13,13 @@ mixin MixinsRates<T extends StatefulWidget> on State<T> {
 
   int? ratesSource;
   int? ratesTarget;
+  double? ratesValue;
   String? ratesAmount;
 
   bool get ratesAllow => (ratesSource ?? 0) > 0 && (ratesTarget ?? 0) > 0;
   RatesController get ratesController => locator<RatesController>();
+
+  void ratesGetCallback() {}
 
   @override
   void initState() {
@@ -24,6 +27,7 @@ mixin MixinsRates<T extends StatefulWidget> on State<T> {
     ratesSource = null;
     ratesTarget = null;
     ratesAmount = null;
+    ratesValue = null;
     ratesStateUpdater = null;
     ratesController.addListener(ratesUpdated);
   }
@@ -46,7 +50,7 @@ mixin MixinsRates<T extends StatefulWidget> on State<T> {
     ratesGetRate();
   }
 
-  void ratesGetRate() {
+  void ratesGetRate({bool refresh = true, bool reversed = false}) {
     try {
       final int source = ratesSource ?? 0;
       final int target = ratesTarget ?? 0;
@@ -55,7 +59,7 @@ mixin MixinsRates<T extends StatefulWidget> on State<T> {
         return;
       }
 
-      final rate = ratesController.getStoredRate(source, target);
+      final rate = ratesController.getStoredRate(reversed ? target : source, reversed ? source : target);
       if (rate == -9999) {
         ratesController.addQueue(source, target);
         if (ratesIsTemporary) {
@@ -63,12 +67,18 @@ mixin MixinsRates<T extends StatefulWidget> on State<T> {
         }
         return;
       }
-      if (mounted) {
-        ratesAmount = Utils.formatSmartDouble(rate).replaceAll(",", "");
-        if (ratesStateUpdater != null) {
-          ratesStateUpdater?.call(ratesAmount ?? "", rateDefaultHelper);
-          ratesStateUpdater = null;
-        }
+
+      ratesAmount = Utils.formatSmartDouble(rate).replaceAll(",", "");
+      ratesValue = rate;
+
+      ratesGetCallback.call();
+
+      if (ratesStateUpdater != null) {
+        ratesStateUpdater?.call(ratesAmount ?? "", rateDefaultHelper);
+        ratesStateUpdater = null;
+      }
+
+      if (refresh && mounted) {
         setState(() {});
       }
     } catch (e) {
