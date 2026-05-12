@@ -1,0 +1,97 @@
+import 'package:flutter/material.dart';
+
+import '../core/locator.dart';
+import '../core/utils.dart';
+import '../features/rates/controller.dart';
+
+mixin MixinsRateable<T extends StatefulWidget> on State<T> {
+  late void Function(String value, String helperText)? rateableStateUpdater;
+  final List<(int source, int target)> rateableTemporary = [];
+
+  bool rateableIsTemporary = true;
+  bool rateableWithField = true;
+  String rateableDefaultHelper = "e.g., 10.5";
+
+  int? rateableSource;
+  int? rateableTarget;
+  double? rateableValue;
+  String? rateableAmount;
+
+  bool get rateableAllow => (rateableSource ?? 0) > 0 && (rateableTarget ?? 0) > 0;
+  RatesController get rateableController => locator<RatesController>();
+
+  void rateableGetCallback() {}
+
+  @override
+  void initState() {
+    super.initState();
+    rateableSource = null;
+    rateableTarget = null;
+    rateableAmount = null;
+    rateableValue = null;
+    rateableStateUpdater = null;
+    rateableController.addListener(rateableUpdateRate);
+  }
+
+  @override
+  void dispose() {
+    rateableStateUpdater = null;
+    rateableController.removeListener(rateableUpdateRate);
+    if (rateableIsTemporary) {
+      rateableCleanTemporary();
+    }
+    super.dispose();
+  }
+
+  void rateableUpdateRate() {
+    if (!mounted || (rateableWithField && rateableStateUpdater == null)) {
+      return;
+    }
+
+    rateableGetRate();
+  }
+
+  void rateableGetRate({bool refresh = true, bool reversed = false}) {
+    try {
+      final int source = rateableSource ?? 0;
+      final int target = rateableTarget ?? 0;
+
+      if (source < 0 || target < 0) {
+        return;
+      }
+
+      final rate = rateableController.getStoredRate(reversed ? target : source, reversed ? source : target);
+      if (rate == -9999) {
+        rateableController.addQueue(source, target);
+        if (rateableIsTemporary) {
+          rateableTemporary.add((source, target));
+        }
+        return;
+      }
+
+      rateableAmount = Utils.formatSmartDouble(rate).replaceAll(",", "");
+      rateableValue = rate;
+
+      rateableGetCallback.call();
+
+      if (rateableStateUpdater != null) {
+        rateableStateUpdater?.call(rateableAmount ?? "", rateableDefaultHelper);
+        rateableStateUpdater = null;
+      }
+
+      if (refresh && mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      // Do something to process the error message?
+    }
+  }
+
+  Future<void> rateableCleanTemporary() async {
+    for (final (source, target) in rateableTemporary) {
+      await rateableController.delete(source, target);
+      await rateableController.delete(target, source);
+    }
+    rateableTemporary.clear();
+  }
+}
