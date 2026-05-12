@@ -8,7 +8,7 @@ import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/panel.dart';
 import '../../app/exceptions.dart';
-import '../../mixins/rates.dart';
+import '../../mixins/rateable.dart';
 import 'controller.dart';
 import 'model.dart';
 
@@ -34,7 +34,7 @@ class WatchersForm extends StatefulWidget {
   State<WatchersForm> createState() => _WatchersFormState();
 }
 
-class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersForm> {
+class _WatchersFormState extends State<WatchersForm> with MixinsRateable<WatchersForm> {
   WatchersController get _controller => locator<WatchersController>();
 
   String? _wid;
@@ -54,9 +54,9 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersFo
 
     final data = widget.initialData;
 
-    ratesSource = data?.srId;
-    ratesTarget = data?.rrId;
-    ratesAmount = Utils.sanitizeNumber(data?.rates.toString() ?? "");
+    rateableSource = data?.srId;
+    rateableTarget = data?.rrId;
+    rateableAmount = Utils.sanitizeNumber(data?.rates.toString() ?? "");
 
     _wid = data?.wid ?? generateWid();
     _sent = 0;
@@ -66,15 +66,15 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersFo
     _message = data?.message ?? "";
 
     if (widget.initialSrId != null) {
-      ratesSource = widget.initialSrId;
+      rateableSource = widget.initialSrId;
     }
 
     if (widget.initialRrId != null) {
-      ratesTarget = widget.initialRrId;
+      rateableTarget = widget.initialRrId;
     }
 
     if (widget.initialRate != null && widget.initialRate! > 0) {
-      ratesAmount = Utils.sanitizeNumber(widget.initialRate.toString());
+      rateableAmount = Utils.sanitizeNumber(widget.initialRate.toString());
     }
   }
 
@@ -146,9 +146,9 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersFo
           const Text("From", style: TextStyle(fontWeight: FontWeight.w600)),
           WidgetsFieldsCryptoSearch(
             labelText: 'Coin',
-            initialValue: ratesSource,
+            initialValue: rateableSource,
             enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-            onSelected: (id) => setState(() => ratesSource = id),
+            onSelected: (id) => setState(() => rateableSource = id),
           ),
         ],
       ),
@@ -165,9 +165,9 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersFo
           const Text("To", style: TextStyle(fontWeight: FontWeight.w600)),
           WidgetsFieldsCryptoSearch(
             labelText: 'Coin',
-            initialValue: ratesTarget,
+            initialValue: rateableTarget,
             enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-            onSelected: (id) => setState(() => ratesTarget = id),
+            onSelected: (id) => setState(() => rateableTarget = id),
           ),
         ],
       ),
@@ -216,19 +216,19 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersFo
           WidgetsFieldsAmount(
             title: 'Rate',
             helperText: 'e.g., 65000',
-            initialValue: ratesAmount,
+            initialValue: rateableAmount,
             allowReverse: true,
-            allowRate: ratesAllow,
+            allowRate: rateableAllow,
             onRetrievingRate: (void Function(String value, String helperText) updateState) {
               // Store the callback to act as promise contract!
-              ratesStateUpdater = updateState;
-              ratesStateUpdater?.call("", "Retrieving rate...");
-              ratesGetRate();
+              rateableStateUpdater = updateState;
+              rateableStateUpdater?.call("", "Retrieving rate...");
+              rateableGetRate();
             },
             onChanged: (value) {
               // Nullify the promise contract!
-              ratesStateUpdater = null;
-              ratesAmount = value;
+              rateableStateUpdater = null;
+              rateableAmount = value;
             },
           ),
         ],
@@ -324,9 +324,9 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRates<WatchersFo
     try {
       final model = WatchersModel(
         wid: _wid!,
-        srId: ratesSource!,
-        rrId: ratesTarget!,
-        rates: double.tryParse(Utils.sanitizeNumber(ratesAmount ?? "0")) ?? 0,
+        srId: rateableSource!,
+        rrId: rateableTarget!,
+        rates: double.tryParse(Utils.sanitizeNumber(rateableAmount ?? "0")) ?? 0,
         sent: _sent!,
         operator: int.tryParse(_operator ?? "2") ?? 2,
         limit: int.tryParse(_limitCount ?? "0") ?? 0,

@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/math.dart';
+import '../../../mixins/rateable.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/fields/amount.dart';
-import '../../rates/controller.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
@@ -19,17 +20,10 @@ class ToolsConverterView extends StatefulWidget {
   State<ToolsConverterView> createState() => _ToolsConverterViewState();
 }
 
-class _ToolsConverterViewState extends State<ToolsConverterView> {
+class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRateable<ToolsConverterView> {
   late final CryptosController _cryptosController;
-  late final RatesController _ratesController;
 
-  final List<(int source, int target)> _temporaryRates = [];
-
-  int? _selectedSource;
-  int? _selectedTarget;
   String? _sourceAmount;
-
-  double? _rate;
   double? _reversedRate;
 
   Timer? _debounce;
@@ -38,24 +32,15 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
   void initState() {
     super.initState();
     _cryptosController = locator<CryptosController>();
-    _ratesController = locator<RatesController>();
-
-    _selectedSource = null;
-    _selectedTarget = null;
     _sourceAmount = null;
-
-    _rate = null;
     _reversedRate = null;
 
-    _ratesController.addListener(_onRatesUpdated);
+    rateableWithField = false;
   }
 
   @override
   void dispose() {
-    _ratesController.removeListener(_onRatesUpdated);
     _debounce?.cancel();
-    _cleanTemporaryRates();
-
     super.dispose();
   }
 
@@ -97,8 +82,8 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
                               iconSize: 24,
                               minimumSize: const Size(54, 54),
                               evaluator: (s) {
-                                final int source = _selectedSource ?? -1;
-                                final int target = _selectedTarget ?? -1;
+                                final int source = rateableSource ?? -1;
+                                final int target = rateableTarget ?? -1;
                                 final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
 
                                 if (source < 0 || target < 0 || amount < 0) {
@@ -108,9 +93,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
                                 }
                               },
                               onPressed: (_) {
-                                setState(() {
-                                  _getRate();
-                                });
+                                rateableGetRate();
                               },
                             ),
                           ),
@@ -152,8 +135,8 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
                               iconSize: 24,
                               minimumSize: const Size(54, 54),
                               evaluator: (s) {
-                                final int source = _selectedSource ?? -1;
-                                final int target = _selectedTarget ?? -1;
+                                final int source = rateableSource ?? -1;
+                                final int target = rateableTarget ?? -1;
                                 final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
 
                                 if (source < 0 || target < 0 || amount < 0) {
@@ -163,9 +146,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
                                 }
                               },
                               onPressed: (_) {
-                                setState(() {
-                                  _getRate();
-                                });
+                                rateableGetRate();
                               },
                             ),
                           ),
@@ -203,7 +184,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
       helperText: 'e.g., 1.5',
       onChanged: (value) {
         _sourceAmount = value;
-        _getRate();
+        rateableGetRate();
       },
     );
   }
@@ -213,16 +194,16 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
       labelText: 'Coin',
       initialValue: null,
       onSelected: (id) => setState(() {
-        int source = _selectedSource ?? -1;
+        int source = rateableSource ?? -1;
 
         if (id != source) {
-          _rate = null;
+          rateableValue = null;
           _reversedRate = null;
         }
 
-        _selectedSource = id;
+        rateableSource = id;
 
-        _getRate();
+        rateableGetRate(refresh: false);
       }),
     );
   }
@@ -232,31 +213,30 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
       labelText: 'Coin',
       initialValue: null,
       onSelected: (id) => setState(() {
-        int target = _selectedTarget ?? -1;
+        int target = rateableTarget ?? -1;
 
         if (id != target) {
-          _rate = null;
+          rateableValue = null;
           _reversedRate = null;
         }
 
-        _selectedTarget = id;
+        rateableTarget = id;
 
-        _getRate();
+        rateableGetRate(refresh: false);
       }),
     );
   }
 
   Widget _buildCalculatedResult() {
     final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
-    final double rate = _rate ?? -1;
+    final double rate = rateableValue ?? -1;
     final double reversedRate = _reversedRate ?? -1;
+    final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
+    final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
 
-    if (source <= 0 || rate < 0 || reversedRate < 0) {
+    if (source <= 0 || rate < 0 || reversedRate < 0 || sourceSymbol == "" || targetSymbol == "") {
       return Text("");
     }
-
-    final String sourceSymbol = _selectedSource != null ? _cryptosController.getSymbol(_selectedSource!) ?? "" : "";
-    final String targetSymbol = _selectedTarget != null ? _cryptosController.getSymbol(_selectedTarget!) ?? "" : "";
 
     final double resultValue = source * rate;
 
@@ -285,42 +265,11 @@ class _ToolsConverterViewState extends State<ToolsConverterView> {
     );
   }
 
-  void _onRatesUpdated() {
-    _getRate();
-  }
-
-  void _getRate() {
-    try {
-      final int source = _selectedSource ?? 0;
-      final int target = _selectedTarget ?? 0;
-
-      if (source < 0 || target < 0) {
-        return;
-      }
-
-      final rate = _ratesController.getStoredRate(source, target);
-      if (rate == -9999) {
-        _ratesController.addQueue(source, target);
-        _temporaryRates.add((source, target));
-
-        return;
-      }
-      if (mounted) {
-        setState(() {
-          _rate = rate;
-          _reversedRate = 1 / rate;
-        });
-      }
-    } catch (e) {
-      // Do something to process the error message?
+  @override
+  void rateableGetCallback() {
+    print("got rate: $rateableAmount, $rateableValue");
+    if (rateableValue != null && rateableValue! > 0) {
+      _reversedRate = Math.divide(1, rateableValue!);
     }
-  }
-
-  Future<void> _cleanTemporaryRates() async {
-    for (final (source, target) in _temporaryRates) {
-      await _ratesController.delete(source, target);
-      await _ratesController.delete(target, source);
-    }
-    _temporaryRates.clear();
   }
 }
