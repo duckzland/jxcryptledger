@@ -26,7 +26,7 @@ import '../../watchboard/panels/model.dart';
 import '../../watchers/controller.dart';
 import '../../watchers/form.dart';
 import '../../watchers/model.dart';
-import '../dialogs/trade_snapshot.dart';
+import '../forms/trade_multiple.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -456,9 +456,9 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
             if (isActive)
               WidgetsDialogsShowForm(
-                key: const Key("trade-snapshot-button"),
-                icon: Icons.insights,
-                tooltip: "Show trade snapshots of this transaction",
+                key: const Key("trade-multiple-button"),
+                icon: Icons.edit,
+                tooltip: "Show batch trade action for the selected transactions",
                 padding: btnPadding,
                 iconSize: btnIconSize,
                 minimumSize: btnSize,
@@ -472,7 +472,17 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
                   final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
-                  return TransactionsDialogsTradeSnapshots(srId: widget.rrid, totalAmount: _totalBalance, transactions: atxs);
+                  return TransactionsFormsTradeMultiple(
+                    srId: widget.rrid,
+                    totalAmount: _totalBalance,
+                    transactions: atxs,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      successMessage: "Trade completed successfully.",
+                      error: e,
+                    ),
+                  );
                 },
               ),
 

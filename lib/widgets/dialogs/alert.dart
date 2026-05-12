@@ -5,7 +5,7 @@ import '../button.dart';
 class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final String? label;
   final String tooltip;
-  final IconData icon;
+  final IconData? icon;
   final double iconSize;
   final EdgeInsets padding;
   final Size? minimumSize;
@@ -31,7 +31,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
 
     this.label,
     this.tooltip = "Confirm action",
-    this.icon = Icons.warning_amber_rounded,
+    this.icon,
     this.iconSize = 20,
     this.padding = const EdgeInsets.all(8),
     this.minimumSize = const Size(40, 40),

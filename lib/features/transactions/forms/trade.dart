@@ -65,51 +65,6 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
     _rrAmount = null;
   }
 
-  void _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final parent = widget.initialData!;
-    try {
-      final child = TransactionsModel(
-        tid: generateTid(),
-        rid: _saveRidField(),
-        pid: parent.tid,
-        srId: parent.rrId,
-        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
-        rrId: _selectedRrId ?? 0,
-        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-        status: TransactionStatus.active.index,
-        timestamp: Utils.dateToTimestamp(_selectedDate),
-        closable: false,
-        meta: _saveNotesField(),
-      );
-      await _txController.add(child);
-      widget.onSave?.call(null, child);
-    } on ValidationException catch (e) {
-      // TODO: Improve this by analyzing the error code and set the form field error state!
-      widget.onSave?.call(e, null);
-    } catch (e) {
-      widget.onSave?.call(e, null);
-    }
-  }
-
-  String _saveRidField() {
-    final data = widget.initialData!;
-    if (data.isRoot) {
-      return data.tid;
-    }
-    return data.rid;
-  }
-
-  Map<String, dynamic> _saveNotesField() {
-    final data = widget.initialData!;
-    final meta = Map<String, dynamic>.from(data.meta);
-
-    meta['trading_notes'] = _noteEntry;
-    return meta;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -297,13 +252,62 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   Widget _buildButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      direction: Axis.horizontal,
+      runSpacing: 20,
+      spacing: 10,
+      runAlignment: WrapAlignment.center,
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        const SizedBox(width: 12),
         WidgetsButton(label: "Trade", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
+  }
+
+  void _handleSave() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final parent = widget.initialData!;
+    try {
+      final child = TransactionsModel(
+        tid: generateTid(),
+        rid: _saveRidField(),
+        pid: parent.tid,
+        srId: parent.rrId,
+        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
+        rrId: _selectedRrId ?? 0,
+        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        status: TransactionStatus.active.index,
+        timestamp: Utils.dateToTimestamp(_selectedDate),
+        closable: false,
+        meta: _saveNotesField(),
+      );
+      await _txController.add(child);
+      widget.onSave?.call(null, child);
+    } on ValidationException catch (e) {
+      // TODO: Improve this by analyzing the error code and set the form field error state!
+      widget.onSave?.call(e, null);
+    } catch (e) {
+      widget.onSave?.call(e, null);
+    }
+  }
+
+  String _saveRidField() {
+    final data = widget.initialData!;
+    if (data.isRoot) {
+      return data.tid;
+    }
+    return data.rid;
+  }
+
+  Map<String, dynamic> _saveNotesField() {
+    final data = widget.initialData!;
+    final meta = Map<String, dynamic>.from(data.meta);
+
+    meta['trading_notes'] = _noteEntry;
+    return meta;
   }
 }
