@@ -28,7 +28,15 @@ class TransactionsOverview extends StatefulWidget {
   final List<TransactionsModel> transactions;
   final VoidCallback onStatusChanged;
 
-  const TransactionsOverview({super.key, required this.id, required this.transactions, required this.onStatusChanged});
+  final BuildContext parentContext;
+
+  const TransactionsOverview({
+    super.key,
+    required this.parentContext,
+    required this.id,
+    required this.transactions,
+    required this.onStatusChanged,
+  });
 
   @override
   State<TransactionsOverview> createState() => _TransactionsOverviewState();
@@ -208,9 +216,9 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
           children: [
             if (isActive)
               WidgetsDialogsShowForm(
-                key: const Key("trade-snapshot-button"),
-                icon: Icons.insights,
-                tooltip: "Show trade snapshots of this transaction",
+                key: const Key("trade-multiple-button"),
+                icon: Icons.swap_vert,
+                tooltip: "Show batch trade action for the selected transactions",
                 padding: const EdgeInsets.all(0),
                 iconSize: 18,
                 buildForm: (dialogContext) {
@@ -228,7 +236,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
                     totalAmount: _currentHolding,
                     transactions: atxs,
                     onSave: (e) => actionableFormSave<TransactionsModel>(
-                      context,
+                      widget.parentContext,
                       dialogContext: dialogContext,
                       successMessage: "Trade completed successfully.",
                       error: e,
