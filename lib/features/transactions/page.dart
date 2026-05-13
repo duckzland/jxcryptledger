@@ -31,10 +31,10 @@ class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
 
   @override
-  State<TransactionsPage> createState() => _TransactionsPageState();
+  State<TransactionsPage> createState() => TransactionsPageState();
 }
 
-class _TransactionsPageState extends State<TransactionsPage>
+class TransactionsPageState extends State<TransactionsPage>
     with MixinsActionable, MixinsActionBar<TransactionsPage>, MixinsScrollToGroup<TransactionsPage, TransactionsModel> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
@@ -723,7 +723,7 @@ class _TransactionsPageState extends State<TransactionsPage>
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
-      itemBuilder: (context, idx) {
+      itemBuilder: (itemContext, idx) {
         final key = grouped.keys.elementAt(idx);
         final parts = key.split('-');
 
@@ -738,6 +738,7 @@ class _TransactionsPageState extends State<TransactionsPage>
           rrid: rrId,
           transactions: txs,
           onStatusChanged: () {},
+          parentContext: context,
         );
       },
     );

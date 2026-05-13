@@ -26,7 +26,7 @@ import '../../watchboard/panels/model.dart';
 import '../../watchers/controller.dart';
 import '../../watchers/form.dart';
 import '../../watchers/model.dart';
-import '../forms/trade_multiple.dart';
+import '../forms/batch_trade.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -40,7 +40,16 @@ class TransactionsActive extends StatefulWidget {
   final List<TransactionsModel> transactions;
   final VoidCallback onStatusChanged;
 
-  const TransactionsActive({super.key, required this.srid, required this.rrid, required this.transactions, required this.onStatusChanged});
+  final BuildContext parentContext;
+
+  const TransactionsActive({
+    super.key,
+    required this.parentContext,
+    required this.srid,
+    required this.rrid,
+    required this.transactions,
+    required this.onStatusChanged,
+  });
 
   @override
   State<TransactionsActive> createState() => _TransactionsActiveState();
@@ -285,6 +294,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     final btnIconSize = 18.0;
     final btnSize = const Size(40, 40);
     final btnPadding = const EdgeInsets.all(0);
+
     return Wrap(
       direction: Axis.horizontal,
       runSpacing: 14,
@@ -457,7 +467,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
             if (isActive)
               WidgetsDialogsShowForm(
                 key: const Key("trade-multiple-button"),
-                icon: Icons.edit,
+                icon: Icons.swap_vert,
                 tooltip: "Show batch trade action for the selected transactions",
                 padding: btnPadding,
                 iconSize: btnIconSize,
@@ -472,12 +482,12 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
                   final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
-                  return TransactionsFormsTradeMultiple(
+                  return TransactionsFormsBatchTrade(
                     srId: widget.rrid,
                     totalAmount: _totalBalance,
                     transactions: atxs,
                     onSave: (e) => actionableFormSave<TransactionsModel>(
-                      context,
+                      widget.parentContext,
                       dialogContext: dialogContext,
                       successMessage: "Trade completed successfully.",
                       error: e,

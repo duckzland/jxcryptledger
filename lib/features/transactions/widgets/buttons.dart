@@ -111,7 +111,7 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActionable {
         if (isTradable)
           WidgetsDialogsShowForm(
             key: Key("trade-button-${tx.tid}"),
-            icon: Icons.swap_horiz,
+            icon: Icons.swap_vert,
             initialState: WidgetsButtonActionState.action,
             tooltip: "Trade this transaction",
             padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),

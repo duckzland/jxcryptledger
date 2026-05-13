@@ -16,7 +16,7 @@ import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../forms/trade_multiple.dart';
+import '../forms/batch_trade.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -223,7 +223,7 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
 
                   final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
-                  return TransactionsFormsTradeMultiple(
+                  return TransactionsFormsBatchTrade(
                     srId: widget.id,
                     totalAmount: _currentHolding,
                     transactions: atxs,
