@@ -12,6 +12,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonState s)? evaluator;
   final bool persistBg;
+  final bool showMessage;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -38,6 +39,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     this.initialState = WidgetsButtonActionState.error,
     this.evaluator,
     this.persistBg = false,
+    this.showMessage = true,
 
     this.dialogTitle = "Are you sure?",
     this.dialogMessage = "This action cannot be undone.",
@@ -101,6 +103,7 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
                       onComplete: widget.actionCompleteCallback,
                       successMessage: widget.actionSuccessMessage,
                       errorMessage: widget.actionErrorMessage,
+                      showMessage: widget.showMessage,
                     ),
                   ),
                 ],
