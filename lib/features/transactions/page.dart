@@ -702,7 +702,7 @@ class TransactionsPageState extends State<TransactionsPage>
       padding: EdgeInsets.only(bottom: 24),
       itemCount: grouped.length,
       separatorBuilder: (_, _) => const SizedBox(height: 24),
-      itemBuilder: (context, idx) {
+      itemBuilder: (itemContext, idx) {
         final rrId = grouped.keys.elementAt(idx);
         final txs = grouped[rrId]!;
 
@@ -711,6 +711,7 @@ class TransactionsPageState extends State<TransactionsPage>
           id: int.parse(rrId),
           transactions: txs,
           onStatusChanged: () {},
+          parentContext: context,
         );
       },
     );
