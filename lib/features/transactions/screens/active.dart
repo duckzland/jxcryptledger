@@ -83,24 +83,24 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   bool _isReversed = false;
 
-  double? _marketRate;
+  double? _customRate;
 
   Timer? _debounce;
 
   double? get effectiveMarketRate {
-    final m = _marketRate;
+    final m = rateableValue;
     if (m == null) return null;
 
     return _isReversed ? (m == 0 ? null : Math.divide(1, m)) : m;
   }
 
   double? get nonReversedEffectiveRate {
-    final c = rateableValue;
+    final c = _customRate;
     if (c != null) {
       return _isReversed ? Math.divide(1, c) : c;
     }
 
-    final m = _marketRate;
+    final m = rateableValue;
     if (m != null) {
       return m;
     }
@@ -217,7 +217,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
     _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
-    _currentRate = rateableValue ?? effectiveMarketRate ?? 0.0;
+    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
     _totalSourceBalance = _calc.totalSourceBalance(stxs);
     _totalBalance = _calc.totalBalance(stxs);
     _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed);
@@ -234,9 +234,15 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   @override
   void rateableGetCallback() {
+    if (rateableStateUpdater != null) {
+      _customRate = rateableValue;
+    } else {
+      if (_customRate != null) {
+        rateableValue = _customRate;
+      }
+    }
     rateableDefaultHelper = _averageRate.toStringAsFixed(8);
     rows = _buildRows();
-    _marketRate = rateableValue;
     _calculateProfitLoss();
     sortableApplySorting();
   }
@@ -331,7 +337,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
                     _debounce = Timer(const Duration(milliseconds: 100), () {
                       setState(() {
-                        rateableValue = double.tryParse(value);
+                        _customRate = double.tryParse(value);
                         _calculateProfitLoss();
                         rows = _buildRows();
                         sortableApplySorting();
@@ -664,7 +670,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   }
 
   List<Map<String, dynamic>> _buildRows() {
-    final currentRate = rateableValue ?? effectiveMarketRate ?? 0.0;
+    final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
     final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
