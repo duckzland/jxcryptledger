@@ -84,6 +84,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
   bool _isReversed = false;
 
   double? _customRate;
+  double? _marketRate;
 
   Timer? _debounce;
 
@@ -234,6 +235,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   @override
   void rateableGetCallback() {
+    _marketRate = rateableValue;
+
     if (rateableStateUpdater != null) {
       _customRate = rateableValue;
     } else {
@@ -318,9 +321,11 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 width: 180,
                 height: 40,
                 child: WidgetsFieldsAmount(
+                  key: Key(_isReversed ? "Reversed" : "Normal"),
                   title: "Custom Rates",
                   suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
                   helperText: _averageRate.toStringAsFixed(8),
+                  initialValue: _customRate != null ? Utils.formatSmartDouble(_customRate!) : "",
                   allowCopy: false,
                   allowRate: true,
                   onRetrievingRate: (void Function(String value, String helperText) updateState) {
@@ -338,9 +343,13 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     _debounce = Timer(const Duration(milliseconds: 100), () {
                       setState(() {
                         _customRate = double.tryParse(value);
+                        if (_customRate == null && _marketRate != null) {
+                          rateableValue = _marketRate;
+                        }
                         _calculateProfitLoss();
                         rows = _buildRows();
                         sortableApplySorting();
+                        rateableDefaultHelper = _averageRate.toStringAsFixed(8);
                       });
                     });
                   },
@@ -363,7 +372,13 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 onPressed: (_) {
                   setState(() {
                     _isReversed = !_isReversed;
+                    if (_customRate != null) {
+                      _customRate = Math.divide(1, _customRate!);
+                    }
+                    _calculateProfitLoss();
                     rows = _buildRows();
+                    sortableApplySorting();
+                    rateableDefaultHelper = _averageRate.toStringAsFixed(8);
                   });
                 },
               ),
