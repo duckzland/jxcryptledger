@@ -624,7 +624,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
               ),
               DataColumn2(
                 fixedWidth: 100,
-                label: WidgetsHeader(title: 'P/L %', subtitle: _sourceSymbol),
+                label: WidgetsHeader(title: 'P/L', subtitle: "%"),
                 onSort: sortableSorters[7],
               ),
             ],
@@ -715,7 +715,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(rowRate),
         'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
         'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
-        'profitLossPercentage': currentRate == 0 ? null : "${Utils.formatSmartDouble(profitLossPercentage, maxDecimals: 2)}%",
+        'profitLossPercentage': currentRate == 0 ? null : Utils.formatSmartDouble(profitLossPercentage, maxDecimals: 2),
         'profitLevel': profitLevel,
         'status': tx.statusText,
         'date': tx.timestampAsFormattedDate,
