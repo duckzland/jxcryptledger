@@ -84,7 +84,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
   bool _isReversed = false;
 
   double? _customRate;
-  double? _marketRate;
 
   Timer? _debounce;
 
@@ -148,7 +147,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
       4: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
       5: (col, asc) => sortableOnSort((d) => d['_currentValue'] as double, col, asc),
       6: (col, asc) => sortableOnSort((d) => d['_profitLossValue'] as double, col, asc),
-      7: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      7: (col, asc) => sortableOnSort((d) => d['_profitLossPercentage'] as double, col, asc),
+      8: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
     // Rateable callback will try to build rows
@@ -189,6 +189,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
     setState(() {
       txs = widget.transactions;
+      _calculateProfitLoss();
       rows = _buildRows();
       sortableApplySorting();
 
@@ -198,7 +199,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
       checkForClosable();
       checkForDeletable();
       checkForFinalizable();
-      _calculateProfitLoss();
     });
   }
 
@@ -235,8 +235,6 @@ class _TransactionsActiveState extends State<TransactionsActive>
 
   @override
   void rateableGetCallback() {
-    _marketRate = rateableValue;
-
     if (rateableStateUpdater != null) {
       _customRate = rateableValue;
     } else {
@@ -245,8 +243,8 @@ class _TransactionsActiveState extends State<TransactionsActive>
       }
     }
     rateableDefaultHelper = _averageRate.toStringAsFixed(8);
-    rows = _buildRows();
     _calculateProfitLoss();
+    rows = _buildRows();
     sortableApplySorting();
   }
 
@@ -343,13 +341,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     _debounce = Timer(const Duration(milliseconds: 100), () {
                       setState(() {
                         _customRate = double.tryParse(value);
-                        if (_customRate == null && _marketRate != null) {
-                          rateableValue = _marketRate;
-                        }
-                        _calculateProfitLoss();
-                        rows = _buildRows();
-                        sortableApplySorting();
-                        rateableDefaultHelper = _averageRate.toStringAsFixed(8);
+                        rateableGetRate();
                       });
                     });
                   },
@@ -375,10 +367,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     if (_customRate != null) {
                       _customRate = Math.divide(1, _customRate!);
                     }
-                    _calculateProfitLoss();
-                    rows = _buildRows();
-                    sortableApplySorting();
-                    rateableDefaultHelper = _averageRate.toStringAsFixed(8);
+                    rateableGetRate(reversed: _isReversed);
                   });
                 },
               ),
@@ -633,9 +622,14 @@ class _TransactionsActiveState extends State<TransactionsActive>
                 label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
                 onSort: sortableSorters[6],
               ),
+              DataColumn2(
+                fixedWidth: 100,
+                label: WidgetsHeader(title: 'P/L %', subtitle: _sourceSymbol),
+                onSort: sortableSorters[7],
+              ),
             ],
 
-            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sortableSorters[4] : sortableSorters[7]),
+            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sortableSorters[4] : sortableSorters[8]),
             DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
 
@@ -663,6 +657,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                   DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
                   DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
                   DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
+                  DataCell(WidgetsBalanceText(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'], comparator: 0)),
                 ],
 
                 DataCell(Text(r['status'])),
@@ -693,6 +688,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
       double currentValue = 0;
       double profitLoss = 0;
       double profitLevel = 0;
+      double profitLossPercentage = 0;
 
       if (tx.isFinalized) {
         profitLoss = 0;
@@ -703,6 +699,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
 
         profitLoss = Math.subtract(currentValue, tx.srAmount);
+        profitLossPercentage = Math.multiply(Math.divide(profitLoss, tx.srAmount), 100);
 
         if (profitLoss > 0) {
           profitLevel = 1;
@@ -718,6 +715,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(rowRate),
         'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
         'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
+        'profitLossPercentage': currentRate == 0 ? null : "${Utils.formatSmartDouble(profitLossPercentage, maxDecimals: 2)}%",
         'profitLevel': profitLevel,
         'status': tx.statusText,
         'date': tx.timestampAsFormattedDate,
@@ -730,6 +728,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
         '_exchangedRateValue': tx.rateDouble,
         '_currentValue': currentValue,
         '_profitLossValue': profitLoss,
+        '_profitLossPercentage': profitLossPercentage,
       });
     }
 
