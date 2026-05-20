@@ -30,8 +30,8 @@ class RatesController extends ChangeNotifier {
     return service.getStoredRate(sourceId, targetId);
   }
 
-  void addQueue(int sourceId, int targetId) {
-    service.addQueue(sourceId, targetId);
+  void addQueue(int sourceId, int targetId, {bool force = true}) {
+    service.addQueue(sourceId, targetId, force: force);
   }
 
   Future<void> refreshRates() async {

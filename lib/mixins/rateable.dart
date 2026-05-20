@@ -10,6 +10,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
 
   bool rateableIsTemporary = true;
   bool rateableWithField = true;
+  bool rateableForceFetch = true;
   String rateableDefaultHelper = "e.g., 10.5";
 
   int? rateableSource;
@@ -62,7 +63,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
 
       final rate = rateableController.getStoredRate(reversed ? target : source, reversed ? source : target);
       if (rate == -9999) {
-        rateableController.addQueue(source, target);
+        rateableController.addQueue(source, target, force: rateableForceFetch);
         if (rateableIsTemporary) {
           rateableTemporary.add((source, target));
         }
@@ -88,10 +89,11 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
   }
 
   Future<void> rateableCleanTemporary() async {
-    for (final (source, target) in rateableTemporary) {
+    final needToRemove = [...rateableTemporary];
+    rateableTemporary.clear();
+    for (final (source, target) in needToRemove) {
       await rateableController.delete(source, target);
       await rateableController.delete(target, source);
     }
-    rateableTemporary.clear();
   }
 }

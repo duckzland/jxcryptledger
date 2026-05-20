@@ -65,7 +65,7 @@ class RatesService {
     return existing?.rate.toDouble() ?? -9999;
   }
 
-  void addQueue(int sourceId, int targetId) {
+  void addQueue(int sourceId, int targetId, {bool force = false}) {
     if (!_isValidPair(sourceId, targetId)) return;
     if (_queue.contains((sourceId, targetId))) return;
 
@@ -74,7 +74,7 @@ class RatesService {
     _queue.add((sourceId, targetId));
 
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 10), _processQueue);
+    _debounce = Timer(const Duration(milliseconds: 10), () => _processQueue(force));
   }
 
   void _startWatchdog() {
@@ -95,12 +95,12 @@ class RatesService {
     });
   }
 
-  Future<void> _processQueue() async {
+  Future<void> _processQueue(bool force) async {
     if (isFetching) return;
     if (isPaused) return;
     if (_queue.isEmpty) return;
 
-    _isFetching = true;
+    _isFetching = force ? false : true;
     _startWatchdog();
 
     onStart?.call();
@@ -132,7 +132,7 @@ class RatesService {
       }
     }
 
-    await _processQueue();
+    await _processQueue(false);
   }
 
   bool _isValidPair(int sourceId, int targetId) {
@@ -317,6 +317,7 @@ class RatesService {
     for (final rate in parsed.rates) {
       if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
         await ratesRepo.add(rate);
+        // logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
       }
     }
   }

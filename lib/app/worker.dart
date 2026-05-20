@@ -22,7 +22,7 @@ class AppWorker {
     final watchers = locator<WatchersController>();
     final tickers = locator<TickersController>();
     final transactions = locator<TransactionsController>();
-    
+
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       bool mustAlwaysFetchRate = false;
       final current = AppRouter.router.routerDelegate.currentConfiguration.uri.toString();
