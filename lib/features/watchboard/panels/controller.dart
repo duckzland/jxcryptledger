@@ -1,4 +1,5 @@
 import '../../../core/abstracts/controller.dart';
+import '../../../core/math.dart';
 import '../../../core/mixins/controllers/exportable.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
 import '../../../core/mixins/controllers/rateable.dart';
@@ -72,8 +73,11 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
     int updateCount = 0;
 
     for (final tx in txs) {
+      if (!tx.isActive && !tx.isPartial) {
+        continue;
+      }
       final pairKey = "${tx.srId}-${tx.rrId}";
-      grouped[pairKey] = (grouped[pairKey] ?? 0.0) + tx.srAmount;
+      grouped[pairKey] = Math.add(grouped[pairKey] ?? 0.0, tx.srAmount);
     }
 
     for (final wx in items) {
@@ -92,7 +96,13 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
           final pairKey = "$srid-$rrid";
           final totalAmount = grouped[pairKey] ?? 0.0;
 
-          if (wx.srAmount != totalAmount) {
+          if (totalAmount == 0.0) {
+            final meta = {...wx.meta};
+            meta.remove('txLink');
+            final nwx = wx.copyWith(meta: meta);
+            await update(nwx);
+            updateCount += 1;
+          } else if (wx.srAmount != totalAmount) {
             final nwx = wx.copyWith(srAmount: totalAmount);
             await update(nwx);
             updateCount += 1;

@@ -710,7 +710,10 @@ class TransactionsPageState extends State<TransactionsPage>
           key: Key("$rrId-$_filterMode-$_sortMode"),
           id: int.parse(rrId),
           transactions: txs,
-          onStatusChanged: () {},
+          onStatusChanged: () {
+            // BugFix: without this button action will not refresh table
+            setState(() {});
+          },
           parentContext: context,
         );
       },
@@ -738,7 +741,10 @@ class TransactionsPageState extends State<TransactionsPage>
           srid: srId,
           rrid: rrId,
           transactions: txs,
-          onStatusChanged: () {},
+          onStatusChanged: () {
+            // BugFix: without this button action will not refresh table
+            setState(() {});
+          },
           parentContext: context,
         );
       },

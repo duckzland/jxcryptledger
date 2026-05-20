@@ -37,6 +37,10 @@ class TransactionCalculation {
     return txs.fold<double>(0, (sum, tx) => Math.add(sum, tx.srAmount));
   }
 
+  double totalActiveSourceBalance(List<TransactionsModel> txs) {
+    return txs.fold<double>(0, (sum, tx) => Math.add(sum, (tx.isActive || tx.isPartial) ? tx.srAmount : 0.0));
+  }
+
   double totalBalance(List<TransactionsModel> txs) {
     return txs.fold<double>(0, (sum, tx) => Math.add(sum, tx.balance));
   }
