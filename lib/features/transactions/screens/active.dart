@@ -401,7 +401,7 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     initialData: _linkedPanel,
                     initialSrId: _linkedPanel == null ? widget.srid : null,
                     initialRrId: _linkedPanel == null ? widget.rrid : null,
-                    initialSrAmount: _linkedPanel == null ? _calc.totalSourceBalance(txs) : null,
+                    initialSrAmount: _linkedPanel == null ? _calc.totalActiveSourceBalance(txs) : null,
                     linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
                     onSave: (e) => actionableFormSave<PanelsModel>(
                       context,
