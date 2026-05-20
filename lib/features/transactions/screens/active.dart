@@ -151,12 +151,15 @@ class _TransactionsActiveState extends State<TransactionsActive>
       8: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
+    _calculateProfitLoss();
+
     // Rateable callback will try to build rows
     rateableGetRate(refresh: false);
-
     if (rows.isEmpty && txs.isNotEmpty) {
       rows = _buildRows();
     }
+
+    sortableApplySorting();
 
     checkForClosable();
     checkForDeletable();
