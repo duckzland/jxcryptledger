@@ -93,7 +93,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                                 }
                               },
                               onPressed: (_) {
-                                rateableGetRate();
+                                rateableGetRate(refresh: true);
                               },
                             ),
                           ),
