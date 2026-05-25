@@ -10,10 +10,12 @@ import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
+import '../../../mixins/selectable_table.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
+import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
@@ -31,7 +33,8 @@ class TransactionsFormsBatchTrade extends StatefulWidget {
   State<TransactionsFormsBatchTrade> createState() => _TransactionsFormsBatchTradeState();
 }
 
-class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrade> with MixinsRateable<TransactionsFormsBatchTrade> {
+class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrade>
+    with MixinsSelectableTable, MixinsRateable<TransactionsFormsBatchTrade> {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
@@ -51,6 +54,10 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
     _sourceAmount = widget.totalAmount;
     txs = List.from(widget.transactions ?? []);
+
+    for (final tx in txs) {
+      selectableSetSelected(tx.uuid, true);
+    }
   }
 
   @override
@@ -74,7 +81,9 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
               children: [
                 if (txs.isNotEmpty)
                   Text(
-                    "Trade For ${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol",
+                    selectableHasSelectedRows()
+                        ? "Trade For ${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol"
+                        : "No transaction selected",
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
                   ),
                 if (txs.isNotEmpty)
@@ -112,7 +121,13 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
                           showMessage: false,
                           initialState: WidgetsButtonActionState.action,
                           tooltip: "Trade all selected transactions",
-                          evaluator: (s) {},
+                          evaluator: (s) {
+                            if (selectableHasSelectedRows()) {
+                              s.action();
+                            } else {
+                              s.disable();
+                            }
+                          },
                           actionCompleteCallback: _handleSave,
                         ),
                     ],
@@ -147,6 +162,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
         'rate': rateableAmount,
         'amount': amount,
         'tx': tx,
+        'uuid': tx.uuid,
       });
     }
 
@@ -156,12 +172,15 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
+          headingCheckboxTheme: Theme.of(context).checkboxTheme,
+          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+          showHeadingCheckBox: true,
+          showCheckboxColumn: true,
           minWidth: 800,
           columnSpacing: 12,
           horizontalMargin: 12,
           headingRowHeight: AppTheme.tableHeadingRowHeight,
           dataRowHeight: AppTheme.tableDataRowMinHeight,
-          showCheckboxColumn: false,
           isHorizontalScrollBarVisible: false,
           columns: [
             DataColumn2(label: Text('Date '), fixedWidth: 100),
@@ -171,7 +190,18 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
           ],
           rows: [
             ...rows.map((r) {
+              final tx = r['tx'] as TransactionsModel;
+              final canSelect = tx.isActive || tx.isPartial;
               return DataRow(
+                selected: canSelect ? selectableIsSelected(r['uuid']) : false,
+                onSelectChanged: canSelect
+                    ? (v) {
+                        setState(() {
+                          selectableSetSelected(r['uuid'], v!);
+                          _buildCalculatedResult();
+                        });
+                      }
+                    : null,
                 cells: [
                   DataCell(Text(r['date'] ?? '')),
                   DataCell(Text(r['transaction'] ?? '')),
@@ -182,6 +212,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
             }),
 
             DataRow(
+              selected: false,
               color: WidgetStateProperty.all(AppTheme.headerBg),
               cells: [
                 DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -294,9 +325,16 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
   }
 
   Widget _buildCalculatedResult() {
-    final double source = _sourceAmount;
+    final stxs = [...txs];
+
+    final selectedTxIds = selectableGetSelectedRows();
+    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+
+    final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+    _sourceAmount = atxs.fold(0, (sum, tx) => Math.add(sum, tx.rrAmount));
+
     final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
-    double resultValue = Math.multiply(source, entryRate);
+    double resultValue = Math.multiply(_sourceAmount, entryRate);
 
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
@@ -304,7 +342,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
       "Result:",
       TextField(
         controller: TextEditingController(
-          text: (source <= 0 || entryRate <= 0) ? "" : "${Utils.formatSmartDouble(resultValue)} $targetSymbol",
+          text: (_sourceAmount <= 0 || entryRate <= 0) ? "" : "${Utils.formatSmartDouble(resultValue)} $targetSymbol",
         ),
         readOnly: true,
         style: const TextStyle(fontSize: 16),
@@ -317,9 +355,16 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
 
     final double rate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
 
-    if (txs.isEmpty || rate <= 0) return;
+    final stxs = [...txs];
 
-    for (final tx in List.from(txs)) {
+    final selectedTxIds = selectableGetSelectedRows();
+    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+
+    if (stxs.isEmpty || rate <= 0) return;
+
+    final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+
+    for (final tx in atxs) {
       final double amount = Math.multiply(tx.rrAmount, rate);
       try {
         final child = TransactionsModel(
@@ -350,6 +395,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
     if (txs.isEmpty) {
       widget.onSave?.call(null);
     } else {
+      widgetsNotifySuccess("Trade completed successfully.");
       setState(() {});
     }
   }
