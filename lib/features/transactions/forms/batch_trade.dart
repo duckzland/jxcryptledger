@@ -94,7 +94,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
                 if (txs.isNotEmpty)
                   WidgetsPanel(
                     padding: const EdgeInsets.all(12),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildTable()]),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildTable(), _buildTotal()]),
                   ),
                 if (txs.isEmpty) Text("No transactions to trade", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
@@ -144,9 +144,6 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
   Widget _buildTable() {
     final rows = <Map<String, dynamic>>[];
     final double rate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
-    final double source = _sourceAmount;
-    final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
-    double resultValue = Math.multiply(source, entryRate);
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
     final bool showRate = rate > 0 && targetSymbol.isNotEmpty;
@@ -168,7 +165,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
 
     return SizedBox(
       width: double.infinity,
-      height: ((rows.length + 1) * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 4,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
@@ -210,20 +207,38 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
                 ],
               );
             }),
-
-            DataRow(
-              selected: false,
-              color: WidgetStateProperty.all(AppTheme.headerBg),
-              cells: [
-                DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text('${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol', style: TextStyle(fontWeight: FontWeight.bold))),
-                if (showRate) DataCell(Text('')),
-                if (showRate)
-                  DataCell(Text('${Utils.formatSmartDouble(resultValue)} $targetSymbol', style: TextStyle(fontWeight: FontWeight.bold))),
-              ],
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTotal() {
+    final double rate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
+    final double source = _sourceAmount;
+    final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
+    final double resultValue = Math.multiply(source, entryRate);
+    final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
+
+    final bool showRate = rate > 0 && targetSymbol.isNotEmpty;
+
+    return SizedBox(
+      width: double.infinity,
+      height: AppTheme.tableDataRowMinHeight,
+      child: DataTable2(
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: AppTheme.tableDataRowMinHeight,
+        dataRowHeight: AppTheme.tableDataRowMinHeight,
+        isHorizontalScrollBarVisible: false,
+        columns: [
+          DataColumn2(label: Text('        Total'), fixedWidth: 130),
+          DataColumn2(label: Text('${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol'), size: ColumnSize.M),
+          if (showRate) DataColumn2(label: Text(''), size: ColumnSize.M),
+          if (showRate) DataColumn2(label: Text('${Utils.formatSmartDouble(resultValue)} $targetSymbol'), size: ColumnSize.M),
+        ],
+        rows: [],
       ),
     );
   }
