@@ -104,7 +104,9 @@ class TransactionsRulesImport {
             );
           }
         } else {
-          if (tx.status != TransactionStatus.active.index && tx.status != TransactionStatus.finalized.index) {
+          if (tx.status != TransactionStatus.active.index &&
+              tx.status != TransactionStatus.partial.index &&
+              tx.status != TransactionStatus.finalized.index) {
             throw ValidationException(
               AppErrorCode.txImportNonZeroBalanceNotActive,
               "Non-zero balance without active children must be active or finalized for ${tx.tid}",
