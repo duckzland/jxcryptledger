@@ -7,7 +7,6 @@ import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actionable.dart';
 import '../../mixins/scrollto_group.dart';
-import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
@@ -18,6 +17,7 @@ import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
 import '../cryptos/controller.dart';
 import 'controller.dart';
+import 'dialogs/batch_action.dart';
 import 'model.dart';
 import 'forms/create.dart';
 import 'screens/active.dart';
@@ -446,11 +446,11 @@ class TransactionsPageState extends State<TransactionsPage>
         Wrap(
           spacing: 4,
           children: [
-            WidgetsDialogsAlert(
-              key: Key("delete-button-batch"),
+            WidgetsDialogsShowForm(
+              key: const Key("delete-multiple-button"),
               icon: Icons.delete,
+              tooltip: "Delete all transactions",
               initialState: WidgetsButtonActionState.error,
-              tooltip: "Remove deletable transactions",
               evaluator: (s) {
                 final bool isDeletable = _txController.hasDeletableRoot();
                 if (!isDeletable) {
@@ -459,20 +459,24 @@ class TransactionsPageState extends State<TransactionsPage>
                   s.error();
                 }
               },
-              dialogTitle: "Delete All Transactions",
-              dialogMessage:
-                  "This will delete all transactions and all of its history.\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Delete",
-              actionStartCallback: _txController.deleteAll,
-              actionSuccessMessage: "All transactions deleted.",
-              actionErrorMessage: "Failed to delete transactions.",
+              buildForm: (dialogContext) {
+                return TransactionsDialogsBatchAction(
+                  transactions: txs,
+                  mode: TransactionsBatchActionMode.delete,
+                  onSave: (e) => actionableFormSave<TransactionsModel>(
+                    context,
+                    dialogContext: dialogContext,
+                    successMessage: "All transactions deleted.",
+                    error: e,
+                  ),
+                );
+              },
             ),
-            WidgetsDialogsAlert(
-              key: Key("close-button-batch"),
+            WidgetsDialogsShowForm(
+              key: const Key("close-multiple-button"),
               icon: Icons.close,
-              initialState: WidgetsButtonActionState.warning,
               tooltip: "Close all closable transactions",
+              initialState: WidgetsButtonActionState.warning,
               evaluator: (s) {
                 final bool isClosable = _txController.hasClosableLeaf();
                 if (!isClosable) {
@@ -481,20 +485,24 @@ class TransactionsPageState extends State<TransactionsPage>
                   s.warning();
                 }
               },
-              dialogTitle: "Close All Transactions",
-              dialogMessage:
-                  "Are you sure you want to close all closable transactions?\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Close",
-              actionStartCallback: _txController.closeAll,
-              actionSuccessMessage: "All transactions closed.",
-              actionErrorMessage: "Failed to close transactions.",
+              buildForm: (dialogContext) {
+                return TransactionsDialogsBatchAction(
+                  transactions: txs,
+                  mode: TransactionsBatchActionMode.close,
+                  onSave: (e) => actionableFormSave<TransactionsModel>(
+                    context,
+                    dialogContext: dialogContext,
+                    successMessage: "Transactions closed successfully.",
+                    error: e,
+                  ),
+                );
+              },
             ),
-            WidgetsDialogsAlert(
-              key: Key("finalize-button-batch"),
+            WidgetsDialogsShowForm(
+              key: const Key("finalize-multiple-button"),
               icon: Icons.close_fullscreen,
-              initialState: WidgetsButtonActionState.warning,
               tooltip: "Finalize all finalizable transactions",
+              initialState: WidgetsButtonActionState.warning,
               evaluator: (s) {
                 final bool isFinalizable = _txController.hasFinalizable();
                 if (!isFinalizable) {
@@ -503,15 +511,20 @@ class TransactionsPageState extends State<TransactionsPage>
                   s.warning();
                 }
               },
-              dialogTitle: "Finalize All Transactions",
-              dialogMessage:
-                  "Are you sure you want to finalize all finalizable transactions?\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Finalize",
-              actionStartCallback: _txController.finalizeAll,
-              actionSuccessMessage: "All transactions finalized.",
-              actionErrorMessage: "Failed to finalize transactions.",
+              buildForm: (dialogContext) {
+                return TransactionsDialogsBatchAction(
+                  transactions: txs,
+                  mode: TransactionsBatchActionMode.finalize,
+                  onSave: (e) => actionableFormSave<TransactionsModel>(
+                    context,
+                    dialogContext: dialogContext,
+                    successMessage: "All transactions finalized.",
+                    error: e,
+                  ),
+                );
+              },
             ),
+
             WidgetsDialogsShowForm(
               key: const Key("add-button"),
               tooltip: "Add new transaction",
@@ -696,58 +709,66 @@ class TransactionsPageState extends State<TransactionsPage>
   }
 
   Widget _buildOverviewList(Map<String, List<TransactionsModel>> grouped) {
-    return ListView.separated(
-      key: ValueKey(_txbuild),
-      controller: scrollToUtil.controller,
-      padding: EdgeInsets.only(bottom: 24),
-      itemCount: grouped.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 24),
-      itemBuilder: (itemContext, idx) {
-        final rrId = grouped.keys.elementAt(idx);
-        final txs = grouped[rrId]!;
+    return grouped.isEmpty
+        ? Center(
+            child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          )
+        : ListView.separated(
+            key: ValueKey(_txbuild),
+            controller: scrollToUtil.controller,
+            padding: EdgeInsets.only(bottom: 24),
+            itemCount: grouped.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 24),
+            itemBuilder: (itemContext, idx) {
+              final rrId = grouped.keys.elementAt(idx);
+              final txs = grouped[rrId]!;
 
-        return TransactionsOverview(
-          key: Key("$rrId-$_filterMode-$_sortMode"),
-          id: int.parse(rrId),
-          transactions: txs,
-          onStatusChanged: () {
-            // BugFix: without this button action will not refresh table
-            setState(() {});
-          },
-          parentContext: context,
-        );
-      },
-    );
+              return TransactionsOverview(
+                key: Key("$rrId-$_filterMode-$_sortMode"),
+                id: int.parse(rrId),
+                transactions: txs,
+                onStatusChanged: () {
+                  // BugFix: without this button action will not refresh table
+                  setState(() {});
+                },
+                parentContext: context,
+              );
+            },
+          );
   }
 
   Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
-    return ListView.separated(
-      key: ValueKey(_txbuild),
-      controller: scrollToUtil.controller,
-      padding: EdgeInsets.only(bottom: 24),
-      itemCount: grouped.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 24),
-      itemBuilder: (itemContext, idx) {
-        final key = grouped.keys.elementAt(idx);
-        final parts = key.split('-');
+    return grouped.isEmpty
+        ? Center(
+            child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          )
+        : ListView.separated(
+            key: ValueKey(_txbuild),
+            controller: scrollToUtil.controller,
+            padding: EdgeInsets.only(bottom: 24),
+            itemCount: grouped.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 24),
+            itemBuilder: (itemContext, idx) {
+              final key = grouped.keys.elementAt(idx);
+              final parts = key.split('-');
 
-        final srId = int.parse(parts[0]);
-        final rrId = int.parse(parts[1]);
+              final srId = int.parse(parts[0]);
+              final rrId = int.parse(parts[1]);
 
-        final txs = grouped[key]!;
+              final txs = grouped[key]!;
 
-        return TransactionsActive(
-          key: Key("$srId-$rrId-$_filterMode-$_sortMode"),
-          srid: srId,
-          rrid: rrId,
-          transactions: txs,
-          onStatusChanged: () {
-            // BugFix: without this button action will not refresh table
-            setState(() {});
-          },
-          parentContext: context,
-        );
-      },
-    );
+              return TransactionsActive(
+                key: Key("$srId-$rrId-$_filterMode-$_sortMode"),
+                srid: srId,
+                rrid: rrId,
+                transactions: txs,
+                onStatusChanged: () {
+                  // BugFix: without this button action will not refresh table
+                  setState(() {});
+                },
+                parentContext: context,
+              );
+            },
+          );
   }
 }

@@ -21,20 +21,20 @@ import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
 
-class TransactionsFormsBatchTrade extends StatefulWidget {
+class TransactionsDialogsBatchTrade extends StatefulWidget {
   final int srId;
   final double totalAmount;
   final List<TransactionsModel>? transactions;
   final void Function(Object? error)? onSave;
 
-  const TransactionsFormsBatchTrade({super.key, required this.srId, required this.totalAmount, required this.onSave, this.transactions});
+  const TransactionsDialogsBatchTrade({super.key, required this.srId, required this.totalAmount, required this.onSave, this.transactions});
 
   @override
-  State<TransactionsFormsBatchTrade> createState() => _TransactionsFormsBatchTradeState();
+  State<TransactionsDialogsBatchTrade> createState() => _TransactionsDialogsBatchTradeState();
 }
 
-class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrade>
-    with MixinsSelectableTable, MixinsRateable<TransactionsFormsBatchTrade> {
+class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatchTrade>
+    with MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchTrade> {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
@@ -54,6 +54,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
     _sourceAmount = widget.totalAmount;
     txs = List.from(widget.transactions ?? []);
+    txs.retainWhere((tx) => tx.isActive || tx.isPartial);
 
     for (final tx in txs) {
       selectableSetSelected(tx.uuid, true);
@@ -79,13 +80,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
-                if (txs.isNotEmpty)
-                  Text(
-                    selectableHasSelectedRows()
-                        ? "Trade For ${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol"
-                        : "No transaction selected",
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-                  ),
+                if (txs.isNotEmpty) Text("Trading Transactions", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
                 if (txs.isNotEmpty)
                   WidgetsPanel(
                     padding: const EdgeInsets.all(12),
@@ -259,11 +254,15 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+                  Expanded(child: _buildCryptoInputColumn("From:", _buildFromAmountField())),
 
                   const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 50), child: Icon(Icons.clear, size: 24)),
 
-                  Expanded(child: _buildCryptoInputColumn("Rate:", _buildRatesAmountField())),
+                  Expanded(child: _buildCryptoInputColumn("To:", _buildRatesAmountField())),
+
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 50)),
+
+                  Expanded(child: _buildCryptoInputColumn(" ", _buildResultCryptoField())),
 
                   const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 50), child: Icon(Icons.arrow_forward, size: 24)),
 
@@ -280,8 +279,9 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Row(children: [Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField()))]),
-                Row(children: [Expanded(child: _buildCryptoInputColumn("Rate:", _buildRatesAmountField()))]),
+                Row(children: [Expanded(child: _buildCryptoInputColumn("From:", _buildFromAmountField()))]),
+                Row(children: [Expanded(child: _buildCryptoInputColumn("To:", _buildRatesAmountField()))]),
+                Row(children: [Expanded(child: _buildResultCryptoField())]),
                 Row(children: [Expanded(child: _buildCalculatedResult())]),
               ],
             );
@@ -299,6 +299,16 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
         amountField,
       ],
+    );
+  }
+
+  Widget _buildFromAmountField() {
+    return TextField(
+      controller: TextEditingController(
+        text: selectableHasSelectedRows() ? "${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol" : "No transaction selected",
+      ),
+      readOnly: true,
+      style: const TextStyle(fontSize: 16),
     );
   }
 
@@ -373,13 +383,11 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
     final stxs = [...txs];
 
     final selectedTxIds = selectableGetSelectedRows();
-    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid) && (tx.isActive || tx.isPartial));
 
     if (stxs.isEmpty || rate <= 0) return;
 
-    final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
-
-    for (final tx in atxs) {
+    for (final tx in stxs) {
       final double amount = Math.multiply(tx.rrAmount, rate);
       try {
         final child = TransactionsModel(
@@ -398,6 +406,7 @@ class _TransactionsFormsBatchTradeState extends State<TransactionsFormsBatchTrad
         );
         await _txController.add(child);
         txs.remove(tx);
+        selectableSetSelected(tx.uuid, false);
       } on ValidationException catch (e) {
         widget.onSave?.call(e);
         return;
