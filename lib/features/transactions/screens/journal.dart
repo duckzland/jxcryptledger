@@ -140,6 +140,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                 sortColumnIndex: sortableColumnIndex,
                 sortAscending: sortableAscending,
                 isHorizontalScrollBarVisible: false,
+                empty: Center(
+                  child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                ),
                 columns: [
                   DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
                   DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),

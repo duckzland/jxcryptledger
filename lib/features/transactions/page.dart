@@ -171,6 +171,8 @@ class TransactionsPageState extends State<TransactionsPage>
   }
 
   void _detectFilterAndSortOptions() {
+    _sortableOptions = {};
+    _filterableOptions = {};
     switch (_viewMode) {
       case TransactionsViewMode.active:
         _sortableOptions = {0: "Alphabetically", 1: "Oldest Trades", 2: "Latest Trades"};
@@ -373,6 +375,8 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.active;
+                  _filterMode = 0;
+                  _sortMode = 0;
                   _detectFilterAndSortOptions();
                 });
               },
@@ -393,6 +397,8 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.overview;
+                  _filterMode = 0;
+                  _sortMode = 0;
                   _detectFilterAndSortOptions();
                 });
               },
@@ -413,6 +419,8 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.journal;
+                  _filterMode = 0;
+                  _sortMode = 0;
                   _detectFilterAndSortOptions();
                 });
               },
@@ -433,6 +441,8 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.history;
+                  _filterMode = 0;
+                  _sortMode = 0;
                   _detectFilterAndSortOptions();
                 });
               },
@@ -544,7 +554,7 @@ class TransactionsPageState extends State<TransactionsPage>
           spacing: 4,
           children: [
             WidgetsDialogsImport(
-              key: Key("import-button-batch"),
+              key: const Key("import-button-batch"),
               tooltip: "Import transactions to database",
               iconSize: 20,
               minimumSize: const Size(40, 40),
@@ -711,7 +721,10 @@ class TransactionsPageState extends State<TransactionsPage>
   Widget _buildOverviewList(Map<String, List<TransactionsModel>> grouped) {
     return grouped.isEmpty
         ? Center(
-            child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            child: Text(
+              _filterMode == 0 ? "No active transactions available" : "No transactions available",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
           )
         : ListView.separated(
             key: ValueKey(_txbuild),
@@ -740,7 +753,10 @@ class TransactionsPageState extends State<TransactionsPage>
   Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
     return grouped.isEmpty
         ? Center(
-            child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            child: Text(
+              _filterMode == 0 ? "No active transactions available" : "No transactions available",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
           )
         : ListView.separated(
             key: ValueKey(_txbuild),
