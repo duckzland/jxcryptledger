@@ -14,7 +14,6 @@ import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
-import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/header.dart';
@@ -26,7 +25,8 @@ import '../../watchboard/panels/model.dart';
 import '../../watchers/controller.dart';
 import '../../watchers/form.dart';
 import '../../watchers/model.dart';
-import '../forms/batch_trade.dart';
+import '../dialogs/batch_action.dart';
+import '../dialogs/batch_trade.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -453,13 +453,11 @@ class _TransactionsActiveState extends State<TransactionsActive>
               ),
 
             if (!isCapital && isClosable)
-              WidgetsDialogsAlert(
+              WidgetsDialogsShowForm(
+                key: const Key("close-multiple-button"),
                 icon: Icons.close,
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                initialState: WidgetsButtonActionState.warning,
                 tooltip: "Close all closable transactions found in this group",
+                initialState: WidgetsButtonActionState.warning,
                 evaluator: (s) {
                   if (!isClosable) {
                     s.disable();
@@ -467,14 +465,21 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     s.warning();
                   }
                 },
-                dialogTitle: "Close Transactions",
-                dialogMessage:
-                    "Are you sure you want to close all closable transactions found in this group?\n"
-                    "This action cannot be undone.",
-                dialogConfirmLabel: "Close",
-                actionStartCallback: closeTransactions,
-                actionSuccessMessage: "All transactions closed.",
-                actionErrorMessage: "Failed to close transactions.",
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.close,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "Transactions closed successfully.",
+                      error: e,
+                    ),
+                  );
+                },
               ),
 
             if (isActive)
@@ -493,12 +498,10 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
                   }
 
-                  final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
-
-                  return TransactionsFormsBatchTrade(
+                  return TransactionsDialogsBatchTrade(
                     srId: widget.rrid,
                     totalAmount: _totalBalance,
-                    transactions: atxs,
+                    transactions: stxs,
                     onSave: (e) => actionableFormSave<TransactionsModel>(
                       widget.parentContext,
                       dialogContext: dialogContext,
@@ -510,13 +513,11 @@ class _TransactionsActiveState extends State<TransactionsActive>
               ),
 
             if (isFinalizable)
-              WidgetsDialogsAlert(
+              WidgetsDialogsShowForm(
+                key: const Key("finalize-multiple-button"),
                 icon: Icons.close_fullscreen,
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                initialState: WidgetsButtonActionState.warning,
                 tooltip: "Finalize all finalizable transactions found in this group",
+                initialState: WidgetsButtonActionState.warning,
                 evaluator: (s) {
                   if (!isFinalizable) {
                     s.disable();
@@ -524,24 +525,29 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     s.warning();
                   }
                 },
-                dialogTitle: "Finalize Transactions",
-                dialogMessage:
-                    "Are you sure you want to finalize all finalizable transactions found in this group?\n"
-                    "This action cannot be undone.",
-                dialogConfirmLabel: "Finalize",
-                actionStartCallback: finalizeTransactions,
-                actionSuccessMessage: "All transactions finalized.",
-                actionErrorMessage: "Failed to finalize transactions.",
-              ),
-
-            if (isDeletable)
-              WidgetsDialogsAlert(
-                icon: Icons.delete,
                 padding: btnPadding,
                 iconSize: btnIconSize,
                 minimumSize: btnSize,
-                initialState: WidgetsButtonActionState.error,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.finalize,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "All transactions finalized.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+
+            if (isDeletable)
+              WidgetsDialogsShowForm(
+                key: const Key("delete-multiple-button"),
+                icon: Icons.delete,
                 tooltip: "Delete all transactions",
+                initialState: WidgetsButtonActionState.error,
                 evaluator: (s) {
                   if (!isDeletable) {
                     s.disable();
@@ -549,14 +555,21 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     s.error();
                   }
                 },
-                dialogTitle: "Delete Transactions",
-                dialogMessage:
-                    "This will delete all transactions in this group and all of its history.\n"
-                    "This action cannot be undone.",
-                dialogConfirmLabel: "Delete",
-                actionStartCallback: deleteTransactions,
-                actionSuccessMessage: "All transactions deleted.",
-                actionErrorMessage: "Failed to delete transactions.",
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.delete,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "All transactions deleted.",
+                      error: e,
+                    ),
+                  );
+                },
               ),
           ],
         ),
