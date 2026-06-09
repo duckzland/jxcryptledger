@@ -254,7 +254,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       }
     }
 
-    if (txs.isEmpty) {
+    if (txs.isEmpty && widget.onSave != null) {
       widget.onSave?.call(null);
     } else {
       widgetsNotifySuccess(successMessage);
