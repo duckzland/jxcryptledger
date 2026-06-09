@@ -370,7 +370,12 @@ class _TransactionsActiveState extends State<TransactionsActive>
                     if (_customRate != null) {
                       _customRate = Math.divide(1, _customRate!);
                     }
-                    rateableGetRate(reversed: _isReversed);
+
+                    // BugFix: Dont link to rateable to prevent double inversing!
+                    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+                    _calculateProfitLoss();
+                    rows = _buildRows();
+                    sortableApplySorting();
                   });
                 },
               ),
