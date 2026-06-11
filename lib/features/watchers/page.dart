@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
+import '../../app/state.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
@@ -44,7 +45,7 @@ class _WatchersPageState extends State<WatchersPage>
   late List<WatchersModel> txs;
 
   @override
-  final scrollToUtil = ScrollTo();
+  final scrollToUtil = ScrollTo('wx-offset');
 
   @override
   void initState() {
@@ -128,6 +129,7 @@ class _WatchersPageState extends State<WatchersPage>
               showDialogBeforeImport: true,
               onImport: (String json) async {
                 await _wxController.importDatabase(json);
+                AppState.instance.remove('wx-offset');
               },
               evaluator: (s) {},
             ),
@@ -145,7 +147,10 @@ class _WatchersPageState extends State<WatchersPage>
               dialogMessage:
                   "This will delete all rate watcher.\n"
                   "This action cannot be undone.",
-              onWipe: _wxController.clear,
+              onWipe: () {
+                AppState.instance.remove('wx-offset');
+                return _wxController.clear();
+              },
               isEmpty: _wxController.isEmpty,
             ),
           ],

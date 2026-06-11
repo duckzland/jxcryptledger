@@ -35,7 +35,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   late List<TransactionsModel> txs;
 
   @override
-  final scrollToUtil = ScrollTo();
+  final scrollToUtil = ScrollTo('tx-offset-journal');
 
   @override
   bool get wantKeepAlive => true;

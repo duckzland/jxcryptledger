@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
+import '../../app/state.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
@@ -53,7 +54,7 @@ class TransactionsPageState extends State<TransactionsPage>
   int _txbuild = 0;
 
   @override
-  final scrollToUtil = ScrollTo();
+  ScrollTo scrollToUtil = ScrollTo();
 
   @override
   void initState() {
@@ -565,6 +566,7 @@ class TransactionsPageState extends State<TransactionsPage>
                 setState(() {
                   _txbuild++;
                 });
+                AppState.instance.removeByPrefix('tx-offset');
               },
             ),
             WidgetsDialogsExport(
@@ -581,7 +583,10 @@ class TransactionsPageState extends State<TransactionsPage>
               dialogMessage:
                   "This will delete all transactions and all of its history.\n"
                   "This action cannot be undone.",
-              onWipe: _txController.wipe,
+              onWipe: () {
+                AppState.instance.removeByPrefix('tx-offset');
+                return _txController.wipe();
+              },
               isEmpty: _txController.isEmpty,
             ),
           ],
@@ -695,23 +700,29 @@ class TransactionsPageState extends State<TransactionsPage>
   }
 
   Widget _buildScreen() {
+    scrollToUtil.dispose();
+
     switch (_viewMode) {
       case TransactionsViewMode.overview:
+        scrollToUtil = ScrollTo('tx-offset-overview');
         actionbarRegister("Transaction Balance");
 
         return _buildOverviewList(_getOverviewTransactions());
 
       case TransactionsViewMode.active:
+        scrollToUtil = ScrollTo('tx-offset-overview');
         actionbarRegister("Trading View");
 
         return _buildActiveTradingList(_getActiveTransactions());
 
       case TransactionsViewMode.journal:
+        scrollToUtil = ScrollTo();
         actionbarRegister("Transaction Overview");
 
         return TransactionsJournalView(key: ValueKey(_txbuild), transactions: _getJournalTransactions(), onStatusChanged: () {});
 
       case TransactionsViewMode.history:
+        scrollToUtil = ScrollTo();
         actionbarRegister("Transaction History");
 
         return TransactionHistory(key: ValueKey(_txbuild), sortMode: _sortMode, transactions: _getHistoryTransactions());
@@ -727,7 +738,7 @@ class TransactionsPageState extends State<TransactionsPage>
             ),
           )
         : ListView.separated(
-            key: ValueKey(_txbuild),
+            key: ValueKey("overview-list-$_txbuild"),
             controller: scrollToUtil.controller,
             padding: EdgeInsets.only(bottom: 24),
             itemCount: grouped.length,
@@ -759,7 +770,7 @@ class TransactionsPageState extends State<TransactionsPage>
             ),
           )
         : ListView.separated(
-            key: ValueKey(_txbuild),
+            key: ValueKey("active-list-$_txbuild"),
             controller: scrollToUtil.controller,
             padding: EdgeInsets.only(bottom: 24),
             itemCount: grouped.length,
