@@ -2,11 +2,27 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../app/state.dart';
+
 class ScrollTo {
-  final ScrollController controller = ScrollController();
+  String? storeKey;
+
+  late ScrollController controller;
   Timer? _debounce;
 
-  ScrollTo();
+  ScrollTo([this.storeKey]) {
+    controller = ScrollController(initialScrollOffset: AppState.instance.get(storeKey ?? "", defaultValue: 0.0));
+
+    if (storeKey != null) {
+      controller.addListener(storeOffset);
+    }
+  }
+
+  void storeOffset() {
+    if (storeKey != null) {
+      AppState.instance.set(storeKey!, controller.offset);
+    }
+  }
 
   void toOffset(double offset) {
     if (!controller.hasClients) {
@@ -39,6 +55,10 @@ class ScrollTo {
   }
 
   void dispose() {
+    if (storeKey != null) {
+      controller.removeListener(storeOffset);
+    }
+    _debounce?.cancel();
     controller.dispose();
   }
 }

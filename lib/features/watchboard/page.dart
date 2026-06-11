@@ -5,6 +5,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
+import '../../app/state.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
@@ -39,7 +40,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
   late final TickersController _tixController;
   late final CryptosController _cryptosController;
 
-  final scrollUtil = ScrollTo();
+  final scrollUtil = ScrollTo('px-offset');
   late List<PanelsModel> txs;
 
   bool _enableDrag = false;
@@ -226,6 +227,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                 await _pxController.importDatabase(json);
                 _pxController.scheduleRates();
                 await _tixController.refreshRates();
+                AppState.instance.remove('px-offset');
               },
               evaluator: (s) {},
             ),
@@ -248,6 +250,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                 await _tixController.wipe();
 
                 await _tixController.populate();
+                AppState.instance.remove('px-offset');
               },
               isEmpty: _pxController.isEmpty,
             ),
@@ -285,6 +288,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                 await _pxController.importDatabase(json);
                 _pxController.scheduleRates();
                 await _tixController.refreshRates();
+                AppState.instance.remove('px-offset');
               },
               addForm: _buildForm,
             ),

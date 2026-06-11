@@ -1,6 +1,7 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/state.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/panel.dart';
@@ -27,11 +28,20 @@ class _TransactionHistoryState extends State<TransactionHistory> {
   late Map<String, IndexedTreeNode<TransactionsModel>> _nodes;
   late int _sortMode = widget.sortMode;
   TreeViewController<TransactionsModel, IndexedTreeNode<TransactionsModel>>? scrollController;
+  late AutoScrollController _autoScrollController;
 
   @override
   void initState() {
     super.initState();
     _root = _treeBuildNodes(widget.transactions);
+    _autoScrollController = AutoScrollController(axis: Axis.vertical);
+  }
+
+  @override
+  void dispose() {
+    _autoScrollController.removeListener(_saveOffset);
+    _autoScrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -79,14 +89,14 @@ class _TransactionHistoryState extends State<TransactionHistory> {
         child: WidgetsPanel(
           padding: const EdgeInsets.only(top: 16, bottom: 16),
           child: TreeView.indexed(
-            key: ValueKey(_sortMode),
+            key: PageStorageKey(_sortMode),
             tree: _root,
             padding: const EdgeInsets.only(left: 16),
             showRootNode: false,
             indentation: const Indentation(style: IndentStyle.roundJoint),
             expansionBehavior: ExpansionBehavior.scrollToLastChild,
             animation: kAlwaysCompleteAnimation,
-
+            scrollController: _autoScrollController,
             expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
               tree: node,
               color: AppTheme.text,
@@ -101,6 +111,15 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                 for (final child in _root.childrenAsList) {
                   controller.expandAllChildren(child as IndexedTreeNode<TransactionsModel>, recursive: true);
                 }
+
+                // Must be done this way, impossible to use initialOffset.
+                final initalOffset = AppState.instance.get('tx-offset-history', defaultValue: 0.0);
+                if (initalOffset != 0.0) {
+                  _autoScrollController.jumpTo(initalOffset);
+                }
+
+                // AddListener late to prevent corrupting stored data.
+                _autoScrollController.addListener(_saveOffset);
               });
             },
             builder: (context, node) {
@@ -112,6 +131,10 @@ class _TransactionHistoryState extends State<TransactionHistory> {
         ),
       ),
     );
+  }
+
+  void _saveOffset() {
+    AppState.instance.set('tx-offset-history', _autoScrollController.offset);
   }
 
   void _treeRemoveTxs(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
