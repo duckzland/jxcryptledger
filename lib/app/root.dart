@@ -1,5 +1,8 @@
+import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
+import '../core/log.dart';
 import 'router.dart';
 import 'state.dart';
 import 'theme.dart';
@@ -11,27 +14,46 @@ class AppRoot extends StatefulWidget {
   State<AppRoot> createState() => _AppRootState();
 }
 
-class _AppRootState extends State<AppRoot> with WidgetsBindingObserver {
+class _AppRootState extends State<AppRoot> {
+  late final AppLifecycleListener _lifecycleListener;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    AppState.instance.load();
+
+    _lifecycleListener = AppLifecycleListener(onExitRequested: _handleWindowsWindowClose);
+
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      ProcessSignal.sigint.watch().listen((signal) async {
+        await _handleTerminalExit();
+      });
+    }
+  }
+
+  Future<AppExitResponse> _handleWindowsWindowClose() async {
+    try {
+      await AppState.instance.save();
+      return AppExitResponse.exit;
+    } catch (e) {
+      logln("Failed to save state on exit: $e");
+      return AppExitResponse.exit;
+    }
+  }
+
+  Future<void> _handleTerminalExit() async {
+    try {
+      await AppState.instance.save();
+    } catch (e) {
+      logln("Failed to save state on exit: $e");
+    } finally {
+      exit(0);
+    }
   }
 
   @override
   void dispose() {
-    AppState.instance.save();
-    WidgetsBinding.instance.removeObserver(this);
+    _lifecycleListener.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
-      // Save settings when app goes to background or is detached
-      AppState.instance.save();
-    }
   }
 
   @override

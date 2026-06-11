@@ -111,6 +111,16 @@ enum SettingKey {
     validator: null,
     hintText: "",
     required: true,
+  ),
+
+  appState(
+    type: SettingType.string,
+    isUserEditable: false,
+    label: 'App State',
+    defaultValue: "{}",
+    validator: null,
+    hintText: "",
+    required: false,
   );
 
   final SettingType type;
