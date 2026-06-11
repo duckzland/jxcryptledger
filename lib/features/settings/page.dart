@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
 import '../../core/locator.dart';
+import '../../core/scrollto.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';
 import '../../widgets/notify.dart';
@@ -19,6 +20,8 @@ class _SettingsPageState extends State<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
   late Map<SettingKey, dynamic> _buffer = {};
   late final SettingsController _controller;
+
+  final scrollToUtil = ScrollTo('sx-offset');
 
   int _buildCount = 0;
 
@@ -58,6 +61,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Form(
           key: _formKey,
           child: ListView.separated(
+            controller: scrollToUtil.controller,
             padding: const EdgeInsets.only(bottom: 20),
             itemCount: editableKeys.length + 1,
             separatorBuilder: (context, index) => const SizedBox(height: 20),

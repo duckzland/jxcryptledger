@@ -65,6 +65,8 @@ class TransactionsPageState extends State<TransactionsPage>
     _txController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onCryptoControllerChanged);
 
+    _viewMode = AppState.instance.get('tx-view-mode', defaultValue: TransactionsViewMode.active);
+
     txs = _txController.items;
 
     _detectFilterAndSortOptions();
@@ -152,21 +154,21 @@ class TransactionsPageState extends State<TransactionsPage>
   void _setFilterAndSortDefault() {
     switch (_viewMode) {
       case TransactionsViewMode.active:
-        _sortMode = 2;
-        _filterMode = 0;
+        _sortMode = AppState.instance.get('tx-sort-active', defaultValue: 2);
+        _filterMode = AppState.instance.get('tx-filter-active', defaultValue: 0);
         break;
 
       case TransactionsViewMode.overview:
-        _sortMode = 2;
-        _filterMode = 0;
+        _sortMode = AppState.instance.get('tx-sort-overview', defaultValue: 2);
+        _filterMode = AppState.instance.get('tx-filter-overview', defaultValue: 0);
         break;
       case TransactionsViewMode.journal:
-        _sortMode = 0;
-        _filterMode = 0;
+        _sortMode = AppState.instance.get('tx-sort-journal', defaultValue: 0);
+        _filterMode = AppState.instance.get('tx-filter-journal', defaultValue: 0);
         break;
       case TransactionsViewMode.history:
-        _sortMode = 2;
-        _filterMode = 0;
+        _sortMode = AppState.instance.get('tx-sort-history', defaultValue: 2);
+        _filterMode = AppState.instance.get('tx-filter-history', defaultValue: 0);
         break;
     }
   }
@@ -376,9 +378,10 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.active;
-                  _filterMode = 0;
-                  _sortMode = 0;
+                  _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
+
+                  AppState.instance.set('tx-view-mode', TransactionsViewMode.active);
                 });
               },
             ),
@@ -398,9 +401,10 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.overview;
-                  _filterMode = 0;
-                  _sortMode = 0;
+                  _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
+
+                  AppState.instance.set('tx-view-mode', TransactionsViewMode.overview);
                 });
               },
             ),
@@ -420,9 +424,10 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.journal;
-                  _filterMode = 0;
-                  _sortMode = 0;
+                  _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
+
+                  AppState.instance.set('tx-view-mode', TransactionsViewMode.journal);
                 });
               },
             ),
@@ -442,9 +447,10 @@ class TransactionsPageState extends State<TransactionsPage>
               onPressed: (_) {
                 setState(() {
                   _viewMode = TransactionsViewMode.history;
-                  _filterMode = 0;
-                  _sortMode = 0;
+                  _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
+
+                  AppState.instance.set('tx-view-mode', TransactionsViewMode.history);
                 });
               },
             ),
@@ -667,6 +673,22 @@ class TransactionsPageState extends State<TransactionsPage>
           onChanged: (value) {
             if (value == null) return;
             setState(() => _sortMode = value);
+
+            switch (_viewMode) {
+              case TransactionsViewMode.active:
+                AppState.instance.set('tx-sort-active', value);
+                break;
+
+              case TransactionsViewMode.overview:
+                AppState.instance.set('tx-sort-overview', value);
+                break;
+              case TransactionsViewMode.journal:
+                AppState.instance.set('tx-sort-journal', value);
+                break;
+              case TransactionsViewMode.history:
+                AppState.instance.set('tx-sort-history', value);
+                break;
+            }
           },
         ),
       ),
@@ -683,7 +705,7 @@ class TransactionsPageState extends State<TransactionsPage>
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
-          value: _filterMode,
+          value: _filterableOptions.containsKey(_filterMode) ? _filterMode : _filterableOptions.keys.first,
           isExpanded: false,
           icon: const Icon(Icons.arrow_drop_down),
           style: const TextStyle(fontSize: 14),
@@ -693,6 +715,22 @@ class TransactionsPageState extends State<TransactionsPage>
           onChanged: (value) {
             if (value == null) return;
             setState(() => _filterMode = value);
+
+            switch (_viewMode) {
+              case TransactionsViewMode.active:
+                AppState.instance.set('tx-filter-active', value);
+                break;
+
+              case TransactionsViewMode.overview:
+                AppState.instance.set('tx-filter-overview', value);
+                break;
+              case TransactionsViewMode.journal:
+                AppState.instance.set('tx-filter-journal', value);
+                break;
+              case TransactionsViewMode.history:
+                AppState.instance.set('tx-filter-history', value);
+                break;
+            }
           },
         ),
       ),

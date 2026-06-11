@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/state.dart';
 import '../../core/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../widgets/button.dart';
@@ -26,6 +27,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
   void initState() {
     super.initState();
     _cryptosController.addListener(_onControllerChanged);
+    _viewMode = AppState.instance.get('to-view-mode', defaultValue: ToolsViewMode.calculator);
     actionbarRegister("Calculator");
   }
 
@@ -80,6 +82,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
             setState(() {
               _viewMode = ToolsViewMode.calculator;
             });
+            AppState.instance.set('to-view-mode', _viewMode);
           },
         ),
 
@@ -100,6 +103,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
             setState(() {
               _viewMode = ToolsViewMode.converter;
             });
+            AppState.instance.set('to-view-mode', _viewMode);
           },
         ),
 
@@ -120,6 +124,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
             setState(() {
               _viewMode = ToolsViewMode.qrcode;
             });
+            AppState.instance.set('to-view-mode', _viewMode);
           },
         ),
       ],

@@ -67,6 +67,9 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
 
     _hasLinked = _pxController.hasLinked();
 
+    _enableDrag = AppState.instance.get('px-enable-drag', defaultValue: false);
+    _enableTickers = AppState.instance.get('px-enable-tickers', defaultValue: true);
+
     txs = _pxController.items;
 
     actionbarRegister("Crypto Watchboard");
@@ -125,6 +128,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                     _enableTickers = !_enableTickers;
                   });
                   AppLayout.refreshBar?.call();
+                  AppState.instance.set('px-enable-tickers', _enableTickers);
                 });
               },
             ),
@@ -155,6 +159,8 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
 
                   widgetsNotifyClear();
                   widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
+
+                  AppState.instance.set('px-enable-drag', _enableDrag);
                 });
               },
             ),
