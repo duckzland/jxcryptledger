@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 
+import '../../app/state.dart';
 import '../../features/cryptos/controller.dart';
 import '../../features/rates/controller.dart';
 import '../../features/rates/model.dart';
@@ -49,6 +50,8 @@ class UnlockController extends ChangeNotifier {
     _tickersController.init();
     _cryptosController.init();
     _appWorker.start();
+
+    AppState.instance.load();
   }
 
   Future<bool> unlock(String password) async {
