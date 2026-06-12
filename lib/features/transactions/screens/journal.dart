@@ -83,7 +83,10 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     if (widget.filterMode != oldWidget.filterMode) {
       setState(() {
         _filterMode = widget.filterMode;
+        txs = widget.transactions;
         txs = _processTx();
+        rows = _buildRows();
+        sortableApplySorting();
       });
       return;
     }
