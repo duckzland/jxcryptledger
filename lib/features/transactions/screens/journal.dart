@@ -38,7 +38,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   int _filterMode = 0;
 
   @override
-  final scrollToUtil = ScrollTo('tx-offset-journal');
+  final scrollToUtil = ScrollTo('tx-group-offset-journal');
 
   @override
   bool get wantKeepAlive => true;

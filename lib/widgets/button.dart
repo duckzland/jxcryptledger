@@ -4,7 +4,19 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-enum WidgetsButtonActionState { allowActions, disallowActions, disabled, inProgress, active, error, normal, primary, action, warning }
+enum WidgetsButtonActionState {
+  transparent,
+  allowActions,
+  disallowActions,
+  disabled,
+  inProgress,
+  active,
+  error,
+  normal,
+  primary,
+  action,
+  warning,
+}
 
 class WidgetsButton extends StatefulWidget {
   final String? label;
@@ -185,6 +197,9 @@ class WidgetsButtonState extends State<WidgetsButton> {
             return AppTheme.buttonBgProgress;
         }
 
+      case WidgetsButtonActionState.transparent:
+        return Colors.transparent;
+
       case WidgetsButtonActionState.active:
         return AppTheme.buttonBgActive;
 
@@ -230,6 +245,7 @@ class WidgetsButtonState extends State<WidgetsButton> {
       case WidgetsButtonActionState.error:
         return AppTheme.buttonFgError;
 
+      case WidgetsButtonActionState.transparent:
       case WidgetsButtonActionState.allowActions:
       case WidgetsButtonActionState.normal:
         return AppTheme.buttonFg;

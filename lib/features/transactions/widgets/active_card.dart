@@ -5,6 +5,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:jxledger/mixins/rateable.dart';
 
+import '../../../app/state.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../app/theme.dart';
@@ -42,6 +43,8 @@ class TransactionsActiveCard extends StatefulWidget {
 
   final BuildContext parentContext;
 
+  final bool isOpen;
+
   const TransactionsActiveCard({
     super.key,
     required this.parentContext,
@@ -49,6 +52,7 @@ class TransactionsActiveCard extends StatefulWidget {
     required this.rrid,
     required this.transactions,
     required this.onStatusChanged,
+    required this.isOpen,
   });
 
   @override
@@ -82,6 +86,8 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
   double _plPercentage = 0;
 
   bool _isReversed = false;
+
+  bool _isOpen = true;
 
   double? _customRate;
 
@@ -123,6 +129,8 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     rateableIsTemporary = false;
     rateableSource = widget.srid;
     rateableTarget = widget.rrid;
+
+    _isOpen = widget.isOpen;
 
     txs = widget.transactions;
     txController = locator<TransactionsController>();
@@ -184,6 +192,12 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
     if (!mounted) {
       return;
+    }
+
+    if (oldWidget.isOpen != widget.isOpen) {
+      setState(() {
+        _isOpen = widget.isOpen;
+      });
     }
 
     if (txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
@@ -254,7 +268,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return WidgetsPanel(child: Column(spacing: 20, children: [_buildHeader(), _buildTable()]));
+    return WidgetsPanel(child: Column(spacing: 20, children: [_buildHeader(), if (_isOpen) _buildTable()]));
   }
 
   Widget _buildHeader() {
@@ -576,6 +590,21 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                   );
                 },
               ),
+
+            WidgetsButton(
+              key: const Key("toggle-show-button"),
+              icon: _isOpen ? Icons.expand_less : Icons.expand_more,
+              padding: btnPadding,
+              iconSize: btnIconSize,
+              minimumSize: btnSize,
+              tooltip: _isOpen ? "Hide table" : "Show table",
+              onPressed: (_) {
+                setState(() {
+                  _isOpen = !_isOpen;
+                  AppState.instance.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
+                });
+              },
+            ),
           ],
         ),
       ],

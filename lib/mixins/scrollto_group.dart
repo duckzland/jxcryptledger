@@ -5,8 +5,8 @@ import '../core/abstracts/models/with_id.dart';
 
 mixin MixinsScrollToGroup<T extends StatefulWidget, K extends CoreModelWithId> {
   ScrollTo get scrollToUtil;
-  
-  double scrollToGroupGetGroupHeight(List<K> txs, double currentWidth);
+
+  double scrollToGroupGetGroupHeight(String id, List<K> txs, double currentWidth);
   double scrollToGroupGetSeparatorHeight();
 
   void scrollToGroup(String groupKey, Map<String, List<K>> grouped, BuildContext context) {
@@ -27,10 +27,10 @@ mixin MixinsScrollToGroup<T extends StatefulWidget, K extends CoreModelWithId> {
         if (id == groupKey) break;
 
         final txs = grouped[id]!;
-        offset += scrollToGroupGetGroupHeight(txs, currentWidth) + scrollToGroupGetSeparatorHeight();
+        offset += scrollToGroupGetGroupHeight(id, txs, currentWidth) + scrollToGroupGetSeparatorHeight();
       }
 
-      final targetBottom = offset + scrollToGroupGetGroupHeight(grouped[groupKey]!, currentWidth);
+      final targetBottom = offset + scrollToGroupGetGroupHeight(groupKey, grouped[groupKey]!, currentWidth);
       final isAlreadyVisible = targetBottom > currentScrollTop && offset < currentScrollBottom;
 
       if (isAlreadyVisible) {

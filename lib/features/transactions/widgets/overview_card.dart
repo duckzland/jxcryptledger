@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/state.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/math.dart';
@@ -30,12 +31,15 @@ class TransactionsOverviewCard extends StatefulWidget {
 
   final BuildContext parentContext;
 
+  final bool isOpen;
+
   const TransactionsOverviewCard({
     super.key,
     required this.parentContext,
     required this.id,
     required this.transactions,
     required this.onStatusChanged,
+    required this.isOpen,
   });
 
   @override
@@ -61,12 +65,16 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
   double _profitLoss = 0;
   double _profitLossPercentage = 0;
 
+  bool _isOpen = true;
+
   @override
   bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
+
+    _isOpen = widget.isOpen;
 
     txs = widget.transactions;
     txController = locator<TransactionsController>();
@@ -102,6 +110,12 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
 
     if (!mounted) {
       return;
+    }
+
+    if (oldWidget.isOpen != widget.isOpen) {
+      setState(() {
+        _isOpen = widget.isOpen;
+      });
     }
 
     if (txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
@@ -158,7 +172,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return WidgetsPanel(child: Column(children: [_buildHeader(), const SizedBox(height: 20), _buildTable()]));
+    return WidgetsPanel(child: Column(children: [_buildHeader(), if (_isOpen) const SizedBox(height: 20), if (_isOpen) _buildTable()]));
   }
 
   Widget _buildHeader() {
@@ -331,6 +345,21 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                   );
                 },
               ),
+
+            WidgetsButton(
+              key: const Key("toggle-show-button"),
+              icon: _isOpen ? Icons.expand_less : Icons.expand_more,
+              padding: const EdgeInsets.all(0),
+              iconSize: 18,
+              minimumSize: const Size(40, 40),
+              tooltip: _isOpen ? "Hide table" : "Show table",
+              onPressed: (_) {
+                setState(() {
+                  _isOpen = !_isOpen;
+                  AppState.instance.set("tx-group-open-${widget.id}", _isOpen);
+                });
+              },
+            ),
           ],
         ),
       ],
