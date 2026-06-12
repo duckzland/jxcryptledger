@@ -1,65 +1,44 @@
-import 'dart:ui';
-
-import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
-import '../../../core/math.dart';
-import '../../../core/utils.dart';
-import '../../../mixins/actionable.dart';
-import '../../../mixins/selectable_table.dart';
-import '../../../mixins/sortable_table.dart';
-import '../../../widgets/balance_text.dart';
-import '../../../widgets/button.dart';
-import '../../../widgets/dialogs/show_form.dart';
-import '../../../widgets/panel.dart';
+import '../../../core/scrollto.dart';
+import '../../../mixins/scrollto_group.dart';
 import '../../cryptos/controller.dart';
-import '../dialogs/batch_action.dart';
-import '../dialogs/batch_trade.dart';
-import '../mixins/actions.dart';
-import '../widgets/buttons.dart';
-import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
+import '../widgets/overview_card.dart';
 
-class TransactionsOverview extends StatefulWidget {
-  final int id;
+class TransactionsOverviewView extends StatefulWidget {
   final List<TransactionsModel> transactions;
+  final int filterMode;
+  final int sortMode;
   final VoidCallback onStatusChanged;
 
-  final BuildContext parentContext;
-
-  const TransactionsOverview({
+  const TransactionsOverviewView({
     super.key,
-    required this.parentContext,
-    required this.id,
     required this.transactions,
+    required this.filterMode,
+    required this.sortMode,
     required this.onStatusChanged,
   });
 
   @override
-  State<TransactionsOverview> createState() => _TransactionsOverviewState();
+  State<TransactionsOverviewView> createState() => _TransactionsOverviewViewState();
 }
 
-class _TransactionsOverviewState extends State<TransactionsOverview>
-    with
-        AutomaticKeepAliveClientMixin,
-        MixinsActionable,
-        MixinsSelectableTable,
-        MixinsSortableTable<TransactionsOverview>,
-        TransactionsMixinsActions {
-  final TransactionCalculation _calc = TransactionCalculation();
-
+class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
+    with AutomaticKeepAliveClientMixin, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
+  late final TransactionsController _txController;
   late final CryptosController _cryptosController;
+  late List<TransactionsModel> txs;
 
-  late String _resultSymbol;
+  Map<String, List<TransactionsModel>> groups = {};
+  int _filterMode = 0;
+  int _sortMode = 0;
 
-  double _totalCapital = 0;
-  double _currentHolding = 0;
-  double _finalizedBalance = 0;
-  double _profitLoss = 0;
-  double _profitLossPercentage = 0;
+  @override
+  final scrollToUtil = ScrollTo('tx-offset-overview');
 
   @override
   bool get wantKeepAlive => true;
@@ -67,434 +46,149 @@ class _TransactionsOverviewState extends State<TransactionsOverview>
   @override
   void initState() {
     super.initState();
+    _txController = locator<TransactionsController>();
+    _cryptosController = locator<CryptosController>();
 
     txs = widget.transactions;
-    txController = locator<TransactionsController>();
-
-    _cryptosController = locator<CryptosController>();
-    _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
-
-    sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
-      2: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
-      3: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
-    };
-
-    rows = _buildRows();
-
-    sortableApplySorting();
-    checkForClosable();
-    checkForDeletable();
-    checkForFinalizable();
-    _calculateProfitLoss();
+    _filterMode = widget.filterMode;
+    _sortMode = widget.sortMode;
+    groups = _processTx();
   }
 
   @override
   void dispose() {
+    scrollToUtil.dispose();
     super.dispose();
   }
 
   @override
-  void didUpdateWidget(covariant TransactionsOverview oldWidget) {
+  void didUpdateWidget(covariant TransactionsOverviewView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (!mounted) {
       return;
     }
 
-    if (txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
+    if (widget.filterMode != oldWidget.filterMode || widget.sortMode != oldWidget.sortMode) {
+      setState(() {
+        _filterMode = widget.filterMode;
+        _sortMode = widget.sortMode;
+        groups = _processTx();
+      });
       return;
     }
 
-    setState(() {
-      txs = widget.transactions;
-      rows = _buildRows();
-      sortableApplySorting();
+    if (!_txController.isEqualToItems(txs)) {
+      setState(() {
+        final tx = _txController.findNew(txs);
+        txs = widget.transactions;
 
-      _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
+        String key = "";
+        Map<String, List<TransactionsModel>> oldGroups = groups;
 
-      checkForClosable();
-      checkForDeletable();
-      checkForFinalizable();
-      _calculateProfitLoss();
-    });
+        groups = _processTx();
+        key = (tx != null) ? tx.rrId.toString() : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
+
+        if (key != "") {
+          scrollToGroup(key, groups, context);
+        }
+      });
+    }
   }
 
-  void _calculateProfitLoss() {
-    if (txs.isEmpty) {
-      return;
-    }
+  @override
+  double scrollToGroupGetGroupHeight(List<TransactionsModel> txs, double currentWidth) {
+    double height = 0.0;
 
-    final stxs = [...txs];
+    height += 16 + 20 + 16;
+    height += (currentWidth > 560) ? 40 : 90;
 
-    if (selectableHasSelectedRows()) {
-      final selectedTxIds = selectableGetSelectedRows();
-      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-    }
+    height += (txs.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12;
 
-    // Extract all roots for the same srId as this group!
-    double capital = 0;
-    final roots = txController.collectAllRoots();
-    for (final rtx in roots) {
-      if (rtx.srId == widget.id) {
-        capital = Math.add(capital, rtx.srAmount);
-      }
-    }
+    return height;
+  }
 
-    final finalizedBalance = _calc.totalFinalizedBalance(stxs);
-    final balance = _calc.totalActiveBalance(stxs);
-    final totalBalance = Math.add(balance, finalizedBalance);
-    final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(totalBalance, capital), capital) * 100);
-
-    _totalCapital = capital;
-    _currentHolding = balance;
-    _finalizedBalance = finalizedBalance;
-    _profitLoss = Math.subtract(totalBalance, capital);
-    _profitLossPercentage = profitPercentage;
+  @override
+  double scrollToGroupGetSeparatorHeight() {
+    return 24;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return WidgetsPanel(child: Column(children: [_buildHeader(), const SizedBox(height: 20), _buildTable()]));
-  }
 
-  Widget _buildHeader() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth > 560) {
-          return Row(
-            spacing: 20,
-            children: [
-              _buildTitle(CrossAxisAlignment.start),
-              Expanded(child: _buildPanels()),
-              _buildActions(),
-            ],
-          );
-        } else {
-          return Wrap(
-            direction: Axis.horizontal,
-            runSpacing: 14,
-            spacing: 10,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_buildTitle(CrossAxisAlignment.start), _buildActions()]),
-              _buildPanels(),
-            ],
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildTitle(CrossAxisAlignment align) {
-    return Column(
-      crossAxisAlignment: align,
-      children: [
-        const SizedBox(height: 5),
-        Text(_cryptosController.getSymbol(widget.id) ?? 'Unknown Coin', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        Text('Coin ID: ${widget.id}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-      ],
-    );
-  }
-
-  Widget _buildActions() {
-    return Wrap(
-      direction: Axis.horizontal,
-      runSpacing: 14,
-      spacing: 8,
-      runAlignment: WrapAlignment.center,
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            if (isActive)
-              WidgetsDialogsShowForm(
-                key: const Key("trade-multiple-button"),
-                icon: Icons.swap_vert,
-                tooltip: "Show batch trade action for the selected transactions",
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  final stxs = [...txs];
-
-                  if (selectableHasSelectedRows()) {
-                    final selectedTxIds = selectableGetSelectedRows();
-                    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-                  }
-
-                  final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
-
-                  return TransactionsDialogsBatchTrade(
-                    srId: widget.id,
-                    totalAmount: _currentHolding,
-                    transactions: atxs,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Trade completed successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isClosable)
-              WidgetsDialogsShowForm(
-                key: const Key("close-multiple-button"),
-                icon: Icons.close,
-                tooltip: "Close all closable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isClosable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.close,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Transactions closed successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isFinalizable)
-              WidgetsDialogsShowForm(
-                key: const Key("finalize-multiple-button"),
-                icon: Icons.close_fullscreen,
-                tooltip: "Finalize all finalizable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isFinalizable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.finalize,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions finalized.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isDeletable)
-              WidgetsDialogsShowForm(
-                key: const Key("delete-multiple-button"),
-                icon: Icons.delete,
-                tooltip: "Delete all transactions",
-                initialState: WidgetsButtonActionState.error,
-                evaluator: (s) {
-                  if (!isDeletable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.delete,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions deleted.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPanels() {
-    return SizedBox(
-      height: 38,
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-        child: CustomScrollView(
-          scrollDirection: Axis.horizontal,
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                spacing: 16,
-                children: [
-                  if (_totalCapital > 0)
-                    _buildPanelItem(
-                      title: "Total Capital",
-                      subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
-                      value: 0,
-                      comparator: 0,
-                    ),
-                  if (_currentHolding > 0)
-                    _buildPanelItem(
-                      title: "Current Balance",
-                      subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
-                      value: 0,
-                      comparator: 0,
-                    ),
-                  if (_finalizedBalance > 0)
-                    _buildPanelItem(
-                      title: "Finalized Balance",
-                      subtitle: "${Utils.formatSmartDouble(_finalizedBalance)} $_resultSymbol",
-                      value: 0,
-                      comparator: 0,
-                    ),
-                  if (_totalCapital > 0 && _profitLossPercentage != 0)
-                    _buildPanelItem(
-                      title: "Profit/Loss",
-                      subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
-                      value: _profitLossPercentage,
-                      comparator: 0,
-                    ),
-                  if (_totalCapital > 0 && _profitLossPercentage != 0)
-                    _buildPanelItem(
-                      title: "Profit/Loss %",
-                      subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
-                      value: _profitLossPercentage,
-                      comparator: 0,
-                    ),
-                ],
-              ),
+    return groups.isEmpty
+        ? Center(
+            child: Text(
+              _filterMode == 0 ? "No active transactions available" : "No transactions available",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-          ],
-        ),
-      ),
-    );
+          )
+        : ListView.separated(
+            controller: scrollToUtil.controller,
+            padding: EdgeInsets.only(bottom: 24),
+            itemCount: groups.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 24),
+            itemBuilder: (itemContext, idx) {
+              final rrId = groups.keys.elementAt(idx);
+              final stxs = groups[rrId]!;
+
+              return TransactionsOverviewCard(
+                id: int.parse(rrId),
+                transactions: stxs,
+                onStatusChanged: widget.onStatusChanged,
+                parentContext: context,
+              );
+            },
+          );
   }
 
-  Widget _buildPanelItem({required String title, required String subtitle, required double value, required double comparator}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(title, style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-        const SizedBox(height: 1),
-        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
-      ],
-    );
-  }
+  Map<String, List<TransactionsModel>> _processTx() {
+    List<TransactionsModel> filtered;
 
-  Widget _buildTable() {
-    final canSelect = isActive && rows.length > 1;
-    return SizedBox(
-      width: double.infinity,
-      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-        child: DataTable2(
-          headingCheckboxTheme: Theme.of(context).checkboxTheme,
-          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
-          showHeadingCheckBox: canSelect,
-          showCheckboxColumn: canSelect,
-          minWidth: 1200,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: AppTheme.tableHeadingRowHeight,
-          dataRowHeight: AppTheme.tableDataRowMinHeight,
-          sortColumnIndex: sortableColumnIndex,
-          sortAscending: sortableAscending,
-          isHorizontalScrollBarVisible: false,
-          columns: [
-            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-            DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
-            DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
-            DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
-            DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sortableSorters[4]),
-            const DataColumn2(label: Text('Actions'), fixedWidth: 160),
-          ],
-          rows: rows.map((r) {
-            final tx = r['tx'] as TransactionsModel;
-            final canSelect = tx.isActive || tx.isPartial;
+    switch (_filterMode) {
+      case 0:
+        filtered = txs.where((t) => t.status == 1 || t.status == 2).toList();
+        break;
 
-            return DataRow(
-              selected: canSelect ? selectableIsSelected(r['uuid']) : false,
-              onSelectChanged: canSelect
-                  ? (v) {
-                      setState(() {
-                        selectableSetSelected(r['uuid'], v!);
-                        _calculateProfitLoss();
-                        sortableApplySorting();
-                      });
-                    }
-                  : null,
-              cells: [
-                DataCell(Text(r['date'])),
-                DataCell(Text(r['balance'])),
-                DataCell(Text(r['source'])),
-                DataCell(Text(r['exchangedRate'])),
-                DataCell(Text(r['status'])),
-                DataCell(
-                  TransactionsWidgetsButtons(
-                    tx: r['tx'],
-                    cryptosController: _cryptosController,
-                    txController: txController,
-                    onAction: () {
-                      widget.onStatusChanged();
-                    },
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  List<Map<String, dynamic>> _buildRows() {
-    final rx = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
-
-      rx.add({
-        'balance': '${tx.balanceText} $_resultSymbol',
-        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
-        'exchangedRate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
-        'status': tx.statusText,
-        'date': tx.timestampAsFormattedDate,
-        'tx': tx,
-        'uuid': tx.uuid,
-
-        '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.balance,
-        '_sourceValue': tx.srAmount,
-        '_exchangedRateValue': tx.rateDouble,
-      });
+      default:
+        filtered = txs.toList();
     }
 
-    return rx;
+    final grouped = <String, List<TransactionsModel>>{};
+    for (final tx in filtered) {
+      grouped.putIfAbsent(tx.rrId.toString(), () => <TransactionsModel>[]);
+      grouped[tx.rrId.toString()]!.add(tx);
+    }
+
+    final entries = grouped.entries.toList();
+
+    switch (_sortMode) {
+      case 0:
+        entries.sort((a, b) {
+          final symbolA = _cryptosController.getSymbol(int.parse(a.key)) ?? a.key;
+          final symbolB = _cryptosController.getSymbol(int.parse(b.key)) ?? b.key;
+          return symbolA.compareTo(symbolB);
+        });
+        break;
+
+      case 1:
+        entries.sort((a, b) {
+          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
+          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
+          return aDate.compareTo(bDate);
+        });
+        break;
+
+      case 2:
+        entries.sort((a, b) {
+          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
+          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
+          return bDate.compareTo(aDate);
+        });
+        break;
+    }
+
+    return Map<String, List<TransactionsModel>>.fromEntries(entries);
   }
 }

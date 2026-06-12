@@ -4,10 +4,8 @@ import '../../app/layout.dart';
 import '../../app/state.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
-import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actionable.dart';
-import '../../mixins/scrollto_group.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
@@ -35,8 +33,7 @@ class TransactionsPage extends StatefulWidget {
   State<TransactionsPage> createState() => TransactionsPageState();
 }
 
-class TransactionsPageState extends State<TransactionsPage>
-    with MixinsActionable, MixinsActionBar<TransactionsPage>, MixinsScrollToGroup<TransactionsPage, TransactionsModel> {
+class TransactionsPageState extends State<TransactionsPage> with MixinsActionable, MixinsActionBar<TransactionsPage> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
   late List<TransactionsModel> txs;
@@ -47,14 +44,8 @@ class TransactionsPageState extends State<TransactionsPage>
 
   TransactionsViewMode _viewMode = TransactionsViewMode.active;
 
-  Map<String, List<TransactionsModel>> groups = {};
-
   int _sortMode = 0;
   int _filterMode = 0;
-  int _txbuild = 0;
-
-  @override
-  ScrollTo scrollToUtil = ScrollTo();
 
   @override
   void initState() {
@@ -77,41 +68,10 @@ class TransactionsPageState extends State<TransactionsPage>
 
   @override
   void dispose() {
-    scrollToUtil.dispose();
-
     _txController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onCryptoControllerChanged);
 
     super.dispose();
-  }
-
-  @override
-  double scrollToGroupGetGroupHeight(List<TransactionsModel> txs, double currentWidth) {
-    double height = 0.0;
-
-    switch (_viewMode) {
-      case TransactionsViewMode.overview:
-        height += 16 + 20 + 16;
-        height += (currentWidth > 560) ? 40 : 90;
-        break;
-
-      case TransactionsViewMode.active:
-        height += 16 + 20 + 16;
-        height += (currentWidth > 1000) ? 40 : 120;
-        break;
-
-      default:
-        break;
-    }
-
-    height += (txs.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12;
-
-    return height;
-  }
-
-  @override
-  double scrollToGroupGetSeparatorHeight() {
-    return 24;
   }
 
   void _onCryptoControllerChanged() {
@@ -122,29 +82,7 @@ class TransactionsPageState extends State<TransactionsPage>
   void _onControllerChanged() {
     if (!_txController.isEqualToItems(txs)) {
       setState(() {
-        final tx = _txController.findNew(txs);
         txs = _txController.items;
-
-        String key = "";
-        Map<String, List<TransactionsModel>> oldGroups = groups;
-
-        switch (_viewMode) {
-          case TransactionsViewMode.overview:
-            groups = _getOverviewTransactions();
-            key = (tx != null) ? tx.rrId.toString() : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
-            break;
-
-          case TransactionsViewMode.active:
-            groups = _getActiveTransactions();
-            key = (tx != null) ? "${tx.srId}-${tx.rrId}" : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
-            break;
-
-          default:
-            break;
-        }
-        if (key != "") {
-          scrollToGroup(key, groups, context);
-        }
       });
     }
 
@@ -201,155 +139,6 @@ class TransactionsPageState extends State<TransactionsPage>
         _sortableOptions = {0: "Alphabetically", 1: "Oldest Trades", 2: "Latest Trades"};
         _filterableOptions = {};
         break;
-    }
-  }
-
-  Map<String, List<TransactionsModel>> _getOverviewTransactions() {
-    List<TransactionsModel> filtered;
-
-    switch (_filterMode) {
-      case 0:
-        filtered = txs.where((t) => t.status == 1 || t.status == 2).toList();
-        break;
-
-      default:
-        filtered = txs.toList();
-    }
-
-    final grouped = <String, List<TransactionsModel>>{};
-    for (final tx in filtered) {
-      grouped.putIfAbsent(tx.rrId.toString(), () => <TransactionsModel>[]);
-      grouped[tx.rrId.toString()]!.add(tx);
-    }
-
-    final entries = grouped.entries.toList();
-
-    switch (_sortMode) {
-      case 0:
-        entries.sort((a, b) {
-          final symbolA = _cryptosController.getSymbol(int.parse(a.key)) ?? a.key;
-          final symbolB = _cryptosController.getSymbol(int.parse(b.key)) ?? b.key;
-          return symbolA.compareTo(symbolB);
-        });
-        break;
-
-      case 1:
-        entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
-          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
-          return aDate.compareTo(bDate);
-        });
-        break;
-
-      case 2:
-        entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
-          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
-          return bDate.compareTo(aDate);
-        });
-        break;
-    }
-
-    return Map<String, List<TransactionsModel>>.fromEntries(entries);
-  }
-
-  Map<String, List<TransactionsModel>> _getActiveTransactions() {
-    List<TransactionsModel> filtered;
-
-    switch (_filterMode) {
-      case 0:
-        filtered = txs.where((t) => t.status == TransactionStatus.active.index || t.status == TransactionStatus.partial.index).toList();
-        break;
-
-      default:
-        filtered = txs;
-    }
-
-    final grouped = <String, List<TransactionsModel>>{};
-    for (final tx in filtered) {
-      final pairKey = "${tx.srId}-${tx.rrId}";
-      grouped.putIfAbsent(pairKey, () => []);
-      grouped[pairKey]!.add(tx);
-    }
-
-    final entries = grouped.entries.toList();
-    switch (_sortMode) {
-      case 0:
-        entries.sort((a, b) {
-          final aParts = a.key.split('-');
-          final bParts = b.key.split('-');
-
-          final aSr = _cryptosController.getSymbol(int.parse(aParts[0])) ?? aParts[0];
-          final bSr = _cryptosController.getSymbol(int.parse(bParts[0])) ?? bParts[0];
-          return aSr.compareTo(bSr);
-        });
-        break;
-
-      case 1:
-        entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
-          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x < y ? x : y);
-          return aDate.compareTo(bDate);
-        });
-        break;
-
-      case 2:
-        entries.sort((a, b) {
-          final aDate = a.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
-          final bDate = b.value.map((tx) => tx.sanitizedTimestamp).reduce((x, y) => x > y ? x : y);
-          return bDate.compareTo(aDate);
-        });
-        break;
-    }
-
-    return Map<String, List<TransactionsModel>>.fromEntries(entries);
-  }
-
-  List<TransactionsModel> _getJournalTransactions() {
-    List<TransactionsModel> filtered;
-
-    switch (_filterMode) {
-      case 1:
-        filtered = txs.where((t) => t.status == TransactionStatus.active.index).toList();
-        break;
-
-      case 2:
-        filtered = txs.where((t) => t.status == TransactionStatus.partial.index).toList();
-        break;
-
-      case 3:
-        filtered = txs.where((t) => t.status == TransactionStatus.inactive.index).toList();
-        break;
-
-      case 4:
-        filtered = txs.where((t) => t.status == TransactionStatus.closed.index).toList();
-        break;
-
-      case 5:
-        filtered = txs.where((t) => t.status == TransactionStatus.finalized.index).toList();
-        break;
-
-      default:
-        filtered = txs;
-    }
-
-    return filtered;
-  }
-
-  List<TransactionsModel> _getHistoryTransactions() {
-    switch (_sortMode) {
-      case 0:
-        return List<TransactionsModel>.from(txs)..sort((a, b) {
-          final aSr = _cryptosController.getSymbol(a.srId) ?? a.srId.toString();
-          final bSr = _cryptosController.getSymbol(b.srId) ?? b.srId.toString();
-          return aSr.compareTo(bSr);
-        });
-
-      case 1:
-        return List<TransactionsModel>.from(txs)..sort((a, b) => a.sanitizedTimestamp.compareTo(b.sanitizedTimestamp));
-
-      default:
-        return List<TransactionsModel>.from(txs)..sort((a, b) => b.sanitizedTimestamp.compareTo(a.sanitizedTimestamp));
     }
   }
 
@@ -569,9 +358,7 @@ class TransactionsPageState extends State<TransactionsPage>
               showDialogBeforeImport: true,
               onImport: (String json) async {
                 await _txController.importDatabase(json);
-                setState(() {
-                  _txbuild++;
-                });
+                setState(() {});
                 AppState.instance.removeByPrefix('tx-offset');
               },
             ),
@@ -738,102 +525,26 @@ class TransactionsPageState extends State<TransactionsPage>
   }
 
   Widget _buildScreen() {
-    scrollToUtil.dispose();
-
     switch (_viewMode) {
       case TransactionsViewMode.overview:
-        scrollToUtil = ScrollTo('tx-offset-overview');
         actionbarRegister("Transaction Balance");
 
-        return _buildOverviewList(_getOverviewTransactions());
+        return TransactionsOverviewView(transactions: [...txs], filterMode: _filterMode, sortMode: _sortMode, onStatusChanged: () {});
 
       case TransactionsViewMode.active:
-        scrollToUtil = ScrollTo('tx-offset-active');
         actionbarRegister("Trading View");
 
-        return _buildActiveTradingList(_getActiveTransactions());
+        return TransactionsActiveView(transactions: [...txs], filterMode: _filterMode, sortMode: _sortMode, onStatusChanged: () {});
 
       case TransactionsViewMode.journal:
-        scrollToUtil = ScrollTo();
         actionbarRegister("Transaction Overview");
 
-        return TransactionsJournalView(key: ValueKey(_txbuild), transactions: _getJournalTransactions(), onStatusChanged: () {});
+        return TransactionsJournalView(filterMode: _filterMode, transactions: [...txs], onStatusChanged: () {});
 
       case TransactionsViewMode.history:
-        scrollToUtil = ScrollTo();
         actionbarRegister("Transaction History");
 
-        return TransactionHistory(key: ValueKey(_txbuild), sortMode: _sortMode, transactions: _getHistoryTransactions());
+        return TransactionHistory(sortMode: _sortMode, transactions: [...txs], onStatusChanged: () {});
     }
-  }
-
-  Widget _buildOverviewList(Map<String, List<TransactionsModel>> grouped) {
-    return grouped.isEmpty
-        ? Center(
-            child: Text(
-              _filterMode == 0 ? "No active transactions available" : "No transactions available",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          )
-        : ListView.separated(
-            key: ValueKey("overview-list-$_txbuild"),
-            controller: scrollToUtil.controller,
-            padding: EdgeInsets.only(bottom: 24),
-            itemCount: grouped.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 24),
-            itemBuilder: (itemContext, idx) {
-              final rrId = grouped.keys.elementAt(idx);
-              final txs = grouped[rrId]!;
-
-              return TransactionsOverview(
-                key: Key("$rrId-$_filterMode-$_sortMode"),
-                id: int.parse(rrId),
-                transactions: txs,
-                onStatusChanged: () {
-                  // BugFix: without this button action will not refresh table
-                  setState(() {});
-                },
-                parentContext: context,
-              );
-            },
-          );
-  }
-
-  Widget _buildActiveTradingList(Map<String, List<TransactionsModel>> grouped) {
-    return grouped.isEmpty
-        ? Center(
-            child: Text(
-              _filterMode == 0 ? "No active transactions available" : "No transactions available",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          )
-        : ListView.separated(
-            key: ValueKey("active-list-$_txbuild"),
-            controller: scrollToUtil.controller,
-            padding: EdgeInsets.only(bottom: 24),
-            itemCount: grouped.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 24),
-            itemBuilder: (itemContext, idx) {
-              final key = grouped.keys.elementAt(idx);
-              final parts = key.split('-');
-
-              final srId = int.parse(parts[0]);
-              final rrId = int.parse(parts[1]);
-
-              final txs = grouped[key]!;
-
-              return TransactionsActive(
-                key: Key("$srId-$rrId-$_filterMode-$_sortMode"),
-                srid: srId,
-                rrid: rrId,
-                transactions: txs,
-                onStatusChanged: () {
-                  // BugFix: without this button action will not refresh table
-                  setState(() {});
-                },
-                parentContext: context,
-              );
-            },
-          );
   }
 }

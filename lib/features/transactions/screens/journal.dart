@@ -16,9 +16,10 @@ import '../model.dart';
 
 class TransactionsJournalView extends StatefulWidget {
   final List<TransactionsModel> transactions;
+  final int filterMode;
   final VoidCallback onStatusChanged;
 
-  const TransactionsJournalView({super.key, required this.transactions, required this.onStatusChanged});
+  const TransactionsJournalView({super.key, required this.transactions, required this.filterMode, required this.onStatusChanged});
 
   @override
   State<TransactionsJournalView> createState() => _TransactionsJournalViewState();
@@ -34,6 +35,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
 
   late List<TransactionsModel> txs;
 
+  int _filterMode = 0;
+
   @override
   final scrollToUtil = ScrollTo('tx-offset-journal');
 
@@ -46,7 +49,10 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     _txController = locator<TransactionsController>();
     _cryptosController = locator<CryptosController>();
 
+    _filterMode = widget.filterMode;
+
     txs = widget.transactions;
+    txs = _processTx();
 
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
@@ -71,6 +77,14 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     super.didUpdateWidget(oldWidget);
 
     if (!mounted) {
+      return;
+    }
+
+    if (widget.filterMode != oldWidget.filterMode) {
+      setState(() {
+        _filterMode = widget.filterMode;
+        txs = _processTx();
+      });
       return;
     }
 
@@ -180,5 +194,36 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         ],
       ),
     );
+  }
+
+  List<TransactionsModel> _processTx() {
+    List<TransactionsModel> filtered;
+
+    switch (_filterMode) {
+      case 1:
+        filtered = txs.where((t) => t.status == TransactionStatus.active.index).toList();
+        break;
+
+      case 2:
+        filtered = txs.where((t) => t.status == TransactionStatus.partial.index).toList();
+        break;
+
+      case 3:
+        filtered = txs.where((t) => t.status == TransactionStatus.inactive.index).toList();
+        break;
+
+      case 4:
+        filtered = txs.where((t) => t.status == TransactionStatus.closed.index).toList();
+        break;
+
+      case 5:
+        filtered = txs.where((t) => t.status == TransactionStatus.finalized.index).toList();
+        break;
+
+      default:
+        filtered = txs;
+    }
+
+    return filtered;
   }
 }

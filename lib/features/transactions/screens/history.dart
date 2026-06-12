@@ -13,8 +13,9 @@ import '../widgets/tree_card.dart';
 class TransactionHistory extends StatefulWidget {
   final List<TransactionsModel> transactions;
   final int sortMode;
+  final VoidCallback onStatusChanged;
 
-  const TransactionHistory({super.key, required this.transactions, required this.sortMode});
+  const TransactionHistory({super.key, required this.transactions, required this.sortMode, required this.onStatusChanged});
 
   @override
   State<TransactionHistory> createState() => _TransactionHistoryState();
@@ -26,14 +27,19 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
   late IndexedTreeNode<TransactionsModel> _root;
   late Map<String, IndexedTreeNode<TransactionsModel>> _nodes;
-  late int _sortMode = widget.sortMode;
+  late int _sortMode;
   TreeViewController<TransactionsModel, IndexedTreeNode<TransactionsModel>>? scrollController;
   late AutoScrollController _autoScrollController;
+
+  late List<TransactionsModel> txs;
 
   @override
   void initState() {
     super.initState();
-    _root = _treeBuildNodes(widget.transactions);
+    _sortMode = widget.sortMode;
+    txs = widget.transactions;
+    txs = _processTx();
+    _root = _treeBuildNodes(txs);
     _autoScrollController = AutoScrollController(axis: Axis.vertical);
   }
 
@@ -52,12 +58,22 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       return;
     }
 
+    _sortMode = widget.sortMode;
+    txs = widget.transactions;
+    txs = _processTx();
+
+    if (oldWidget.sortMode != widget.sortMode) {
+      _root = _treeBuildNodes(txs);
+      setState(() {});
+      return;
+    }
+
     if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
     if (oldWidget.transactions.isEmpty && widget.transactions.isNotEmpty) {
-      _root = _treeBuildNodes(widget.transactions);
+      _root = _treeBuildNodes(txs);
       setState(() {});
       return;
     }
@@ -69,12 +85,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       return;
     }
 
-    if (oldWidget.sortMode != widget.sortMode) {
-      _sortMode = widget.sortMode;
-      _root = _treeBuildNodes(widget.transactions);
-      setState(() {});
-      return;
-    }
+    setState(() {});
 
     _treeRemoveTxs(oldWidget.transactions, widget.transactions);
     _treeAddTxs(oldWidget.transactions, widget.transactions);
@@ -125,7 +136,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             builder: (context, node) {
               final tx = node.data;
               if (tx == null) return const SizedBox.shrink();
-              return TransactionsTreeCard(key: ValueKey(tx.tid), tx: tx, node: node, onAction: () {});
+              return TransactionsTreeCard(key: ValueKey(tx.tid), tx: tx, node: node, onAction: widget.onStatusChanged);
             },
           ),
         ),
@@ -306,5 +317,22 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     }
 
     return root;
+  }
+
+  List<TransactionsModel> _processTx() {
+    switch (_sortMode) {
+      case 0:
+        return List<TransactionsModel>.from(txs)..sort((a, b) {
+          final aSr = _cryptosController.getSymbol(a.srId) ?? a.srId.toString();
+          final bSr = _cryptosController.getSymbol(b.srId) ?? b.srId.toString();
+          return aSr.compareTo(bSr);
+        });
+
+      case 1:
+        return List<TransactionsModel>.from(txs)..sort((a, b) => a.sanitizedTimestamp.compareTo(b.sanitizedTimestamp));
+
+      default:
+        return List<TransactionsModel>.from(txs)..sort((a, b) => b.sanitizedTimestamp.compareTo(a.sanitizedTimestamp));
+    }
   }
 }
