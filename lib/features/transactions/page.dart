@@ -748,7 +748,7 @@ class TransactionsPageState extends State<TransactionsPage>
         return _buildOverviewList(_getOverviewTransactions());
 
       case TransactionsViewMode.active:
-        scrollToUtil = ScrollTo('tx-offset-overview');
+        scrollToUtil = ScrollTo('tx-offset-active');
         actionbarRegister("Trading View");
 
         return _buildActiveTradingList(_getActiveTransactions());
