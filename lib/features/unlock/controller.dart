@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 
-import '../../app/state.dart';
 import '../../features/cryptos/controller.dart';
 import '../../features/rates/controller.dart';
 import '../../features/rates/model.dart';
@@ -11,6 +10,7 @@ import '../../app/storage.dart';
 import '../../app/worker.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
+import '../../mixins/state.dart';
 import '../cryptos/model.dart';
 import '../encryption/service.dart';
 import '../notification/service.dart';
@@ -23,7 +23,7 @@ import '../watchboard/tickers/model.dart';
 import '../watchers/controller.dart';
 import '../watchers/model.dart';
 
-class UnlockController extends ChangeNotifier {
+class UnlockController extends ChangeNotifier with MixinsState {
   bool isFirstRun = false;
   bool _unlocked = false;
   bool get unlocked => _unlocked;
@@ -51,7 +51,7 @@ class UnlockController extends ChangeNotifier {
     _cryptosController.init();
     _appWorker.start();
 
-    AppState.instance.load();
+    states.init();
   }
 
   Future<bool> unlock(String password) async {

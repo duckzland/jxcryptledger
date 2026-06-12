@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../app/state.dart';
 import '../../core/locator.dart';
 import '../../mixins/action_bar.dart';
+import '../../mixins/state.dart';
 import '../../widgets/button.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
@@ -19,7 +19,7 @@ class ToolsPage extends StatefulWidget {
   State<ToolsPage> createState() => _ToolsPageState();
 }
 
-class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
+class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, MixinsState {
   ToolsViewMode _viewMode = ToolsViewMode.calculator;
   final CryptosController _cryptosController = locator<CryptosController>();
 
@@ -27,7 +27,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
   void initState() {
     super.initState();
     _cryptosController.addListener(_onControllerChanged);
-    _viewMode = AppState.instance.get('to-view-mode', defaultValue: ToolsViewMode.calculator);
+    _viewMode = ToolsViewMode.values.byName(states.get('to-view-mode', defaultValue: "calculator"));
     actionbarRegister("Calculator");
   }
 
@@ -82,7 +82,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
             setState(() {
               _viewMode = ToolsViewMode.calculator;
             });
-            AppState.instance.set('to-view-mode', _viewMode);
+            states.set('to-view-mode', _viewMode.name);
           },
         ),
 
@@ -103,7 +103,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
             setState(() {
               _viewMode = ToolsViewMode.converter;
             });
-            AppState.instance.set('to-view-mode', _viewMode);
+            states.set('to-view-mode', _viewMode.name);
           },
         ),
 
@@ -124,7 +124,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage> {
             setState(() {
               _viewMode = ToolsViewMode.qrcode;
             });
-            AppState.instance.set('to-view-mode', _viewMode);
+            states.set('to-view-mode', _viewMode.name);
           },
         ),
       ],

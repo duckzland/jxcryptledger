@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../app/state.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/math.dart';
@@ -11,6 +10,7 @@ import '../../../core/utils.dart';
 import '../../../mixins/actionable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/show_form.dart';
@@ -50,6 +50,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
     with
         AutomaticKeepAliveClientMixin,
         MixinsActionable,
+        MixinsState,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsOverviewCard>,
         TransactionsMixinsActions {
@@ -66,6 +67,9 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
   double _profitLossPercentage = 0;
 
   bool _isOpen = true;
+
+  @override
+  String get sortableKey => "tx-group-overview-${widget.id}";
 
   @override
   bool get wantKeepAlive => true;
@@ -356,7 +360,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
               onPressed: (_) {
                 setState(() {
                   _isOpen = !_isOpen;
-                  AppState.instance.set("tx-group-open-${widget.id}", _isOpen);
+                  states.set("tx-group-overview-open-${widget.id}", _isOpen);
                 });
               },
             ),

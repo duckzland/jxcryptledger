@@ -1,9 +1,9 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
-import '../../../app/state.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
@@ -14,14 +14,21 @@ class TransactionHistory extends StatefulWidget {
   final List<TransactionsModel> transactions;
   final int sortMode;
   final VoidCallback onStatusChanged;
+  final String panelsAction;
 
-  const TransactionHistory({super.key, required this.transactions, required this.sortMode, required this.onStatusChanged});
+  const TransactionHistory({
+    super.key,
+    required this.transactions,
+    required this.sortMode,
+    required this.onStatusChanged,
+    required this.panelsAction,
+  });
 
   @override
   State<TransactionHistory> createState() => _TransactionHistoryState();
 }
 
-class _TransactionHistoryState extends State<TransactionHistory> {
+class _TransactionHistoryState extends State<TransactionHistory> with MixinsState {
   final CryptosController _cryptosController = locator<CryptosController>();
   final TransactionsController _txController = locator<TransactionsController>();
 
@@ -55,6 +62,20 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     super.didUpdateWidget(oldWidget);
 
     if (!mounted) {
+      return;
+    }
+
+    if (widget.panelsAction.isNotEmpty && oldWidget.panelsAction != widget.panelsAction) {
+      if (widget.panelsAction == "show") {
+        for (final child in _root.childrenAsList) {
+          scrollController?.expandAllChildren(child as IndexedTreeNode<TransactionsModel>, recursive: true);
+        }
+      }
+      if (widget.panelsAction == "close") {
+        for (final child in _root.childrenAsList) {
+          scrollController?.collapseNode(child as IndexedTreeNode<TransactionsModel>);
+        }
+      }
       return;
     }
 
@@ -124,7 +145,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                 }
 
                 // Must be done this way, impossible to use initialOffset.
-                final initalOffset = AppState.instance.get('tx-group-offset-history', defaultValue: 0.0);
+                final initalOffset = states.get('tx-group-offset-history', defaultValue: 0.0);
                 if (initalOffset != 0.0) {
                   _autoScrollController.jumpTo(initalOffset);
                 }
@@ -145,7 +166,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
   }
 
   void _saveOffset() {
-    AppState.instance.set('tx-group-offset-history', _autoScrollController.offset);
+    states.set('tx-group-offset-history', _autoScrollController.offset);
   }
 
   void _treeRemoveTxs(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {

@@ -113,7 +113,7 @@ enum SettingKey {
     required: true,
   ),
 
-  appState(
+  states(
     type: SettingType.string,
     isUserEditable: false,
     label: 'App State',

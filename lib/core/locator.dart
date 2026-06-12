@@ -10,6 +10,7 @@ import '../features/cryptos/service.dart';
 import '../features/cryptos/controller.dart';
 import '../features/settings/controller.dart';
 import '../features/settings/repository.dart';
+import '../features/settings/states.dart';
 import '../features/watchboard/panels/controller.dart';
 import '../features/watchboard/panels/repository.dart';
 import '../features/watchboard/tickers/controller.dart';
@@ -26,6 +27,9 @@ void setupLocator() {
   // Settings
   locator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
   locator.registerLazySingleton<SettingsController>(() => SettingsController(locator<SettingsRepository>()));
+
+  // States
+  locator.registerLazySingleton<StateService>(() => StateService(locator<SettingsController>()));
 
   // Transactions
   locator.registerLazySingleton<TransactionsRepository>(() => TransactionsRepository());

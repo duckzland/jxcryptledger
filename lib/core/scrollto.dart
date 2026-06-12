@@ -1,17 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../mixins/state.dart';
 
-import '../app/state.dart';
-
-class ScrollTo {
+class ScrollTo with MixinsState {
   String? storeKey;
 
   late ScrollController controller;
   Timer? _debounce;
 
   ScrollTo([this.storeKey]) {
-    controller = ScrollController(initialScrollOffset: AppState.instance.get(storeKey ?? "", defaultValue: 0.0));
+    controller = ScrollController(initialScrollOffset: states.get(storeKey ?? "", defaultValue: 0.0));
 
     if (storeKey != null) {
       controller.addListener(storeOffset);
@@ -20,7 +19,7 @@ class ScrollTo {
 
   void storeOffset() {
     if (storeKey != null) {
-      AppState.instance.set(storeKey!, controller.offset);
+      states.set(storeKey!, controller.offset);
     }
   }
 

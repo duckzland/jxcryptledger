@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
 
-mixin MixinsSortableTable<T extends StatefulWidget> on State<T> {
+import 'state.dart';
+
+mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsState {
   List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
   int sortableColumnIndex = 0;
   bool sortableAscending = false;
+  String get sortableKey => "";
 
   late Map<int, Function(int col, bool asc)> sortableSorters = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (sortableKey.isNotEmpty) {
+      sortableColumnIndex = states.get("$sortableKey-sortable-column-index", defaultValue: 0);
+      sortableAscending = states.get("$sortableKey-sortable-ascending", defaultValue: false);
+    }
+  }
 
   void sortableOnSort<U>(U Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
     rows.sort((a, b) {
@@ -27,6 +39,11 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T> {
 
     sortableColumnIndex = columnIndex;
     sortableAscending = ascending;
+
+    if (sortableKey.isNotEmpty) {
+      states.set("$sortableKey-sortable-column-index", sortableColumnIndex);
+      states.set("$sortableKey-sortable-ascending", sortableAscending);
+    }
 
     if (mounted) {
       setState(() {});

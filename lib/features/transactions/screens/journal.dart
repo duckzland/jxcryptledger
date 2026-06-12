@@ -8,6 +8,7 @@ import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
@@ -27,6 +28,7 @@ class TransactionsJournalView extends StatefulWidget {
 
 class _TransactionsJournalViewState extends State<TransactionsJournalView>
     with
+        MixinsState,
         AutomaticKeepAliveClientMixin,
         MixinsSortableTable<TransactionsJournalView>,
         MixinsScrollToTable<TransactionsJournalView, TransactionsModel> {
@@ -36,6 +38,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   late List<TransactionsModel> txs;
 
   int _filterMode = 0;
+
+  @override
+  String get sortableKey => "tx-group-journal";
 
   @override
   final scrollToUtil = ScrollTo('tx-group-offset-journal');

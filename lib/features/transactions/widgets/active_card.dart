@@ -5,7 +5,6 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:jxledger/mixins/rateable.dart';
 
-import '../../../app/state.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../app/theme.dart';
@@ -13,6 +12,7 @@ import '../../../core/locator.dart';
 import '../../../mixins/actionable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/show_form.dart';
@@ -63,6 +63,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     with
         AutomaticKeepAliveClientMixin,
         MixinsActionable,
+        MixinsState,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsActiveCard>,
         MixinsRateable<TransactionsActiveCard>,
@@ -118,6 +119,9 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   WatchersModel? _linkedWatcher;
   PanelsModel? _linkedPanel;
+
+  @override
+  String get sortableKey => "tx-group-active-${widget.srid}-${widget.rrid}";
 
   @override
   bool get wantKeepAlive => true;
@@ -601,7 +605,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
               onPressed: (_) {
                 setState(() {
                   _isOpen = !_isOpen;
-                  AppState.instance.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
+                  states.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
                 });
               },
             ),

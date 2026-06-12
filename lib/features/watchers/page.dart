@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
-import '../../app/state.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
@@ -12,6 +11,7 @@ import '../../core/utils.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/scrollto_table.dart';
 import '../../mixins/sortable_table.dart';
+import '../../mixins/state.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -37,7 +37,7 @@ class WatchersPage extends StatefulWidget {
 }
 
 class _WatchersPageState extends State<WatchersPage>
-    with MixinsSortableTable<WatchersPage>, MixinsActionBar<WatchersPage>, MixinsScrollToTable<WatchersPage, WatchersModel> {
+    with MixinsState, MixinsSortableTable<WatchersPage>, MixinsActionBar<WatchersPage>, MixinsScrollToTable<WatchersPage, WatchersModel> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
   late final WatchersController _wxController;
@@ -45,7 +45,10 @@ class _WatchersPageState extends State<WatchersPage>
   late List<WatchersModel> txs;
 
   @override
-  final scrollToUtil = ScrollTo('wx-offset');
+  String get sortableKey => "wx-group";
+
+  @override
+  final scrollToUtil = ScrollTo('wx-group-offset');
 
   @override
   void initState() {
@@ -129,7 +132,7 @@ class _WatchersPageState extends State<WatchersPage>
               showDialogBeforeImport: true,
               onImport: (String json) async {
                 await _wxController.importDatabase(json);
-                AppState.instance.remove('wx-offset');
+                states.removeByPrefix('wx-group');
               },
               evaluator: (s) {},
             ),
@@ -148,7 +151,7 @@ class _WatchersPageState extends State<WatchersPage>
                   "This will delete all rate watcher.\n"
                   "This action cannot be undone.",
               onWipe: () {
-                AppState.instance.remove('wx-offset');
+                states.removeByPrefix('wx-group');
                 return _wxController.clear();
               },
               isEmpty: _wxController.isEmpty,
