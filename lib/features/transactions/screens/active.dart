@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/state.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
@@ -14,6 +15,7 @@ class TransactionsActiveView extends StatefulWidget {
   final int filterMode;
   final int sortMode;
   final VoidCallback onStatusChanged;
+  final String panelsAction;
 
   const TransactionsActiveView({
     super.key,
@@ -21,6 +23,7 @@ class TransactionsActiveView extends StatefulWidget {
     required this.filterMode,
     required this.sortMode,
     required this.onStatusChanged,
+    required this.panelsAction,
   });
 
   @override
@@ -38,7 +41,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   int _sortMode = 0;
 
   @override
-  final scrollToUtil = ScrollTo('tx-offset-active');
+  final scrollToUtil = ScrollTo('tx-group-offset-active');
 
   @override
   bool get wantKeepAlive => true;
@@ -53,6 +56,13 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
     groups = _processTx();
+
+    if (widget.panelsAction.isNotEmpty) {
+      final open = widget.panelsAction == 'show' ? true : false;
+      for (final key in groups.keys) {
+        AppState.instance.set("tx-group-open-$key", open);
+      }
+    }
   }
 
   @override
@@ -67,6 +77,14 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
     if (!mounted) {
       return;
+    }
+
+    if (widget.panelsAction.isNotEmpty && oldWidget.panelsAction != widget.panelsAction) {
+      final open = widget.panelsAction == 'show' ? true : false;
+      for (final key in groups.keys) {
+        AppState.instance.set("tx-group-open-$key", open);
+      }
+      setState(() {});
     }
 
     if (widget.filterMode != oldWidget.filterMode || widget.sortMode != oldWidget.sortMode) {
@@ -97,13 +115,18 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   }
 
   @override
-  double scrollToGroupGetGroupHeight(List<TransactionsModel> txs, double currentWidth) {
+  double scrollToGroupGetGroupHeight(String id, List<TransactionsModel> txs, double currentWidth) {
+    final isOpen = AppState.instance.get("tx-group-open-$id", defaultValue: true);
+
     double height = 0.0;
 
-    height += 16 + 20 + 16;
+    height += 16 + 16;
     height += (currentWidth > 1000) ? 40 : 120;
 
-    height += (txs.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12;
+    if (isOpen) {
+      height += 20;
+      height += (txs.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12;
+    }
 
     return height;
   }
@@ -144,6 +167,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
                 transactions: stxs,
                 onStatusChanged: widget.onStatusChanged,
                 parentContext: context,
+                isOpen: AppState.instance.get("tx-group-open-$key", defaultValue: true),
               );
             },
           );

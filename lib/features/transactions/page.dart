@@ -248,7 +248,38 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) WidgetsSeparator(),
         if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty)
           Wrap(spacing: 4, children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()]),
-        WidgetsSeparator(),
+        if (_viewMode == TransactionsViewMode.active || _viewMode == TransactionsViewMode.overview) WidgetsSeparator(),
+        if (_viewMode == TransactionsViewMode.active || _viewMode == TransactionsViewMode.overview)
+          Wrap(
+            spacing: 4,
+            children: [
+              WidgetsButton(
+                key: const Key("toggle-hide-button"),
+                icon: Icons.expand_less,
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                minimumSize: const Size(40, 40),
+                tooltip: "Hide table",
+                onPressed: (_) {
+                  AppState.instance.set("tx-toggle-panels", 'close');
+                  setState(() {});
+                },
+              ),
+              WidgetsButton(
+                key: const Key("toggle-show-button"),
+                icon: Icons.expand_more,
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                minimumSize: const Size(40, 40),
+                tooltip: "Show table",
+                onPressed: (_) {
+                  AppState.instance.set("tx-toggle-panels", 'show');
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
+        if (_viewMode == TransactionsViewMode.active || _viewMode == TransactionsViewMode.overview) WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [
@@ -359,7 +390,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               onImport: (String json) async {
                 await _txController.importDatabase(json);
                 setState(() {});
-                AppState.instance.removeByPrefix('tx-offset');
+                AppState.instance.removeByPrefix('tx-group');
               },
             ),
             WidgetsDialogsExport(
@@ -377,7 +408,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                   "This will delete all transactions and all of its history.\n"
                   "This action cannot be undone.",
               onWipe: () {
-                AppState.instance.removeByPrefix('tx-offset');
+                AppState.instance.removeByPrefix('tx-group');
                 return _txController.wipe();
               },
               isEmpty: _txController.isEmpty,
@@ -528,13 +559,29 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
     switch (_viewMode) {
       case TransactionsViewMode.overview:
         actionbarRegister("Transaction Balance");
+        final toggleAction = AppState.instance.get("tx-toggle-panels", defaultValue: "");
+        AppState.instance.remove("tx-toggle-panels");
 
-        return TransactionsOverviewView(transactions: [...txs], filterMode: _filterMode, sortMode: _sortMode, onStatusChanged: () {});
+        return TransactionsOverviewView(
+          transactions: [...txs],
+          panelsAction: toggleAction,
+          filterMode: _filterMode,
+          sortMode: _sortMode,
+          onStatusChanged: () {},
+        );
 
       case TransactionsViewMode.active:
         actionbarRegister("Trading View");
+        final toggleAction = AppState.instance.get("tx-toggle-panels", defaultValue: "");
+        AppState.instance.remove("tx-toggle-panels");
 
-        return TransactionsActiveView(transactions: [...txs], filterMode: _filterMode, sortMode: _sortMode, onStatusChanged: () {});
+        return TransactionsActiveView(
+          transactions: [...txs],
+          panelsAction: toggleAction,
+          filterMode: _filterMode,
+          sortMode: _sortMode,
+          onStatusChanged: () {},
+        );
 
       case TransactionsViewMode.journal:
         actionbarRegister("Transaction Overview");

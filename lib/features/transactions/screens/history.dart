@@ -124,7 +124,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                 }
 
                 // Must be done this way, impossible to use initialOffset.
-                final initalOffset = AppState.instance.get('tx-offset-history', defaultValue: 0.0);
+                final initalOffset = AppState.instance.get('tx-group-offset-history', defaultValue: 0.0);
                 if (initalOffset != 0.0) {
                   _autoScrollController.jumpTo(initalOffset);
                 }
@@ -145,7 +145,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
   }
 
   void _saveOffset() {
-    AppState.instance.set('tx-offset-history', _autoScrollController.offset);
+    AppState.instance.set('tx-group-offset-history', _autoScrollController.offset);
   }
 
   void _treeRemoveTxs(List<TransactionsModel> oldTxs, List<TransactionsModel> newTxs) {
