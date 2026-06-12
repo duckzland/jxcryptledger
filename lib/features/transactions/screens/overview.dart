@@ -85,6 +85,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         AppState.instance.set("tx-group-overview-open-$key", open);
       }
       setState(() {});
+      return;
     }
 
     if (widget.filterMode != oldWidget.filterMode || widget.sortMode != oldWidget.sortMode) {
@@ -108,7 +109,10 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         key = (tx != null) ? tx.rrId.toString() : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
 
         if (key != "") {
-          scrollToGroup(key, groups, context);
+          AppState.instance.set("tx-group-overview-open-$key", true);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            scrollToGroup(key, groups, context);
+          });
         }
       });
     }

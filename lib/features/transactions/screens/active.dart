@@ -60,7 +60,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
       for (final key in groups.keys) {
-        AppState.instance.set("tx-group-open-$key", open);
+        AppState.instance.set("tx-group-active-open-$key", open);
       }
     }
   }
@@ -82,9 +82,10 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     if (widget.panelsAction.isNotEmpty && oldWidget.panelsAction != widget.panelsAction) {
       final open = widget.panelsAction == 'show' ? true : false;
       for (final key in groups.keys) {
-        AppState.instance.set("tx-group-open-$key", open);
+        AppState.instance.set("tx-group-active-open-$key", open);
       }
       setState(() {});
+      return;
     }
 
     if (widget.filterMode != oldWidget.filterMode || widget.sortMode != oldWidget.sortMode) {
@@ -106,9 +107,11 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
         groups = _processTx();
         key = (tx != null) ? "${tx.srId}-${tx.rrId}" : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
-
         if (key != "") {
-          scrollToGroup(key, groups, context);
+          AppState.instance.set("tx-group-active-open-$key", true);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            scrollToGroup(key, groups, context);
+          });
         }
       });
     }
@@ -116,12 +119,12 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
   @override
   double scrollToGroupGetGroupHeight(String id, List<TransactionsModel> txs, double currentWidth) {
-    final isOpen = AppState.instance.get("tx-group-open-$id", defaultValue: true);
+    final isOpen = AppState.instance.get("tx-group-active-open-$id", defaultValue: true);
 
     double height = 0.0;
 
     height += 16 + 16;
-    height += (currentWidth > 1000) ? 40 : 120;
+    height += (currentWidth > 1000) ? 45 : 120;
 
     if (isOpen) {
       height += 20;
@@ -167,7 +170,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
                 transactions: stxs,
                 onStatusChanged: widget.onStatusChanged,
                 parentContext: context,
-                isOpen: AppState.instance.get("tx-group-open-$key", defaultValue: true),
+                isOpen: AppState.instance.get("tx-group-active-open-$key", defaultValue: true),
               );
             },
           );
