@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../core/log.dart';
+import '../mixins/state.dart';
 import 'router.dart';
-import 'state.dart';
 import 'theme.dart';
 
 class AppRoot extends StatefulWidget {
@@ -14,7 +14,7 @@ class AppRoot extends StatefulWidget {
   State<AppRoot> createState() => _AppRootState();
 }
 
-class _AppRootState extends State<AppRoot> {
+class _AppRootState extends State<AppRoot> with MixinsState {
   late final AppLifecycleListener _lifecycleListener;
 
   @override
@@ -32,7 +32,7 @@ class _AppRootState extends State<AppRoot> {
 
   Future<AppExitResponse> _handleWindowsWindowClose() async {
     try {
-      await AppState.instance.save();
+      await states.save();
       return AppExitResponse.exit;
     } catch (e) {
       logln("Failed to save state on exit: $e");
@@ -42,7 +42,7 @@ class _AppRootState extends State<AppRoot> {
 
   Future<void> _handleTerminalExit() async {
     try {
-      await AppState.instance.save();
+      await states.save();
     } catch (e) {
       logln("Failed to save state on exit: $e");
     } finally {

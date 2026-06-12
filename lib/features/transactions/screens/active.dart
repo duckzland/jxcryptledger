@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/state.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/scrollto_group.dart';
+import '../../../mixins/state.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../widgets/active_card.dart';
@@ -31,7 +31,7 @@ class TransactionsActiveView extends StatefulWidget {
 }
 
 class _TransactionsActiveViewState extends State<TransactionsActiveView>
-    with AutomaticKeepAliveClientMixin, MixinsScrollToGroup<TransactionsActiveView, TransactionsModel> {
+    with AutomaticKeepAliveClientMixin, MixinsState, MixinsScrollToGroup<TransactionsActiveView, TransactionsModel> {
   late final TransactionsController _txController;
   late final CryptosController _cryptosController;
   late List<TransactionsModel> txs;
@@ -60,7 +60,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
       for (final key in groups.keys) {
-        AppState.instance.set("tx-group-active-open-$key", open);
+        states.set("tx-group-active-open-$key", open);
       }
     }
   }
@@ -82,7 +82,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     if (widget.panelsAction.isNotEmpty && oldWidget.panelsAction != widget.panelsAction) {
       final open = widget.panelsAction == 'show' ? true : false;
       for (final key in groups.keys) {
-        AppState.instance.set("tx-group-active-open-$key", open);
+        states.set("tx-group-active-open-$key", open);
       }
       setState(() {});
       return;
@@ -108,7 +108,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         groups = _processTx();
         key = (tx != null) ? "${tx.srId}-${tx.rrId}" : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
         if (key != "") {
-          AppState.instance.set("tx-group-active-open-$key", true);
+          states.set("tx-group-active-open-$key", true);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             scrollToGroup(key, groups, context);
           });
@@ -119,7 +119,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
   @override
   double scrollToGroupGetGroupHeight(String id, List<TransactionsModel> txs, double currentWidth) {
-    final isOpen = AppState.instance.get("tx-group-active-open-$id", defaultValue: true);
+    final isOpen = states.get("tx-group-active-open-$id", defaultValue: true);
 
     double height = 0.0;
 
@@ -170,7 +170,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
                 transactions: stxs,
                 onStatusChanged: widget.onStatusChanged,
                 parentContext: context,
-                isOpen: AppState.instance.get("tx-group-active-open-$key", defaultValue: true),
+                isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
               );
             },
           );

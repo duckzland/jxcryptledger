@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
-import '../../app/state.dart';
 import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actionable.dart';
+import '../../mixins/state.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
@@ -33,7 +33,7 @@ class TransactionsPage extends StatefulWidget {
   State<TransactionsPage> createState() => TransactionsPageState();
 }
 
-class TransactionsPageState extends State<TransactionsPage> with MixinsActionable, MixinsActionBar<TransactionsPage> {
+class TransactionsPageState extends State<TransactionsPage> with MixinsActionable, MixinsState, MixinsActionBar<TransactionsPage> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
   late List<TransactionsModel> txs;
@@ -56,7 +56,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
     _txController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onCryptoControllerChanged);
 
-    _viewMode = AppState.instance.get('tx-view-mode', defaultValue: TransactionsViewMode.active);
+    _viewMode = TransactionsViewMode.values.byName(states.get('tx-view-mode', defaultValue: "active"));
 
     txs = _txController.items;
 
@@ -92,21 +92,21 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
   void _setFilterAndSortDefault() {
     switch (_viewMode) {
       case TransactionsViewMode.active:
-        _sortMode = AppState.instance.get('tx-sort-active', defaultValue: 2);
-        _filterMode = AppState.instance.get('tx-filter-active', defaultValue: 0);
+        _sortMode = states.get('tx-sort-active', defaultValue: 2);
+        _filterMode = states.get('tx-filter-active', defaultValue: 0);
         break;
 
       case TransactionsViewMode.overview:
-        _sortMode = AppState.instance.get('tx-sort-overview', defaultValue: 2);
-        _filterMode = AppState.instance.get('tx-filter-overview', defaultValue: 0);
+        _sortMode = states.get('tx-sort-overview', defaultValue: 2);
+        _filterMode = states.get('tx-filter-overview', defaultValue: 0);
         break;
       case TransactionsViewMode.journal:
-        _sortMode = AppState.instance.get('tx-sort-journal', defaultValue: 0);
-        _filterMode = AppState.instance.get('tx-filter-journal', defaultValue: 0);
+        _sortMode = states.get('tx-sort-journal', defaultValue: 0);
+        _filterMode = states.get('tx-filter-journal', defaultValue: 0);
         break;
       case TransactionsViewMode.history:
-        _sortMode = AppState.instance.get('tx-sort-history', defaultValue: 2);
-        _filterMode = AppState.instance.get('tx-filter-history', defaultValue: 0);
+        _sortMode = states.get('tx-sort-history', defaultValue: 2);
+        _filterMode = states.get('tx-filter-history', defaultValue: 0);
         break;
     }
   }
@@ -170,7 +170,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                   _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
 
-                  AppState.instance.set('tx-view-mode', TransactionsViewMode.active);
+                  states.set('tx-view-mode', TransactionsViewMode.active.name);
                 });
               },
             ),
@@ -193,7 +193,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                   _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
 
-                  AppState.instance.set('tx-view-mode', TransactionsViewMode.overview);
+                  states.set('tx-view-mode', TransactionsViewMode.overview.name);
                 });
               },
             ),
@@ -216,7 +216,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                   _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
 
-                  AppState.instance.set('tx-view-mode', TransactionsViewMode.journal);
+                  states.set('tx-view-mode', TransactionsViewMode.journal.name);
                 });
               },
             ),
@@ -239,17 +239,26 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                   _setFilterAndSortDefault();
                   _detectFilterAndSortOptions();
 
-                  AppState.instance.set('tx-view-mode', TransactionsViewMode.history);
+                  states.set('tx-view-mode', TransactionsViewMode.history.name);
                 });
               },
             ),
           ],
         ),
+
         if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) WidgetsSeparator(),
+
         if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty)
           Wrap(spacing: 4, children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()]),
-        if (_viewMode == TransactionsViewMode.active || _viewMode == TransactionsViewMode.overview) WidgetsSeparator(),
-        if (_viewMode == TransactionsViewMode.active || _viewMode == TransactionsViewMode.overview)
+
+        if (_viewMode == TransactionsViewMode.active ||
+            _viewMode == TransactionsViewMode.overview ||
+            _viewMode == TransactionsViewMode.history)
+          WidgetsSeparator(),
+
+        if (_viewMode == TransactionsViewMode.active ||
+            _viewMode == TransactionsViewMode.overview ||
+            _viewMode == TransactionsViewMode.history)
           Wrap(
             spacing: 4,
             children: [
@@ -259,9 +268,9 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                 padding: const EdgeInsets.all(0),
                 iconSize: 18,
                 minimumSize: const Size(40, 40),
-                tooltip: "Hide table",
+                tooltip: "Hide content",
                 onPressed: (_) {
-                  AppState.instance.set("tx-toggle-panels", 'close');
+                  states.set("tx-toggle-panels", 'close');
                   setState(() {});
                 },
               ),
@@ -271,15 +280,19 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                 padding: const EdgeInsets.all(0),
                 iconSize: 18,
                 minimumSize: const Size(40, 40),
-                tooltip: "Show table",
+                tooltip: "Show content",
                 onPressed: (_) {
-                  AppState.instance.set("tx-toggle-panels", 'show');
+                  states.set("tx-toggle-panels", 'show');
                   setState(() {});
                 },
               ),
             ],
           ),
-        if (_viewMode == TransactionsViewMode.active || _viewMode == TransactionsViewMode.overview) WidgetsSeparator(),
+        if (_viewMode == TransactionsViewMode.active ||
+            _viewMode == TransactionsViewMode.overview ||
+            _viewMode == TransactionsViewMode.history)
+          WidgetsSeparator(),
+
         Wrap(
           spacing: 4,
           children: [
@@ -390,7 +403,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               onImport: (String json) async {
                 await _txController.importDatabase(json);
                 setState(() {});
-                AppState.instance.removeByPrefix('tx-group');
+                states.removeByPrefix('tx-group');
               },
             ),
             WidgetsDialogsExport(
@@ -408,7 +421,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                   "This will delete all transactions and all of its history.\n"
                   "This action cannot be undone.",
               onWipe: () {
-                AppState.instance.removeByPrefix('tx-group');
+                states.removeByPrefix('tx-group');
                 return _txController.wipe();
               },
               isEmpty: _txController.isEmpty,
@@ -494,17 +507,17 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
 
             switch (_viewMode) {
               case TransactionsViewMode.active:
-                AppState.instance.set('tx-sort-active', value);
+                states.set('tx-sort-active', value);
                 break;
 
               case TransactionsViewMode.overview:
-                AppState.instance.set('tx-sort-overview', value);
+                states.set('tx-sort-overview', value);
                 break;
               case TransactionsViewMode.journal:
-                AppState.instance.set('tx-sort-journal', value);
+                states.set('tx-sort-journal', value);
                 break;
               case TransactionsViewMode.history:
-                AppState.instance.set('tx-sort-history', value);
+                states.set('tx-sort-history', value);
                 break;
             }
           },
@@ -536,17 +549,17 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
 
             switch (_viewMode) {
               case TransactionsViewMode.active:
-                AppState.instance.set('tx-filter-active', value);
+                states.set('tx-filter-active', value);
                 break;
 
               case TransactionsViewMode.overview:
-                AppState.instance.set('tx-filter-overview', value);
+                states.set('tx-filter-overview', value);
                 break;
               case TransactionsViewMode.journal:
-                AppState.instance.set('tx-filter-journal', value);
+                states.set('tx-filter-journal', value);
                 break;
               case TransactionsViewMode.history:
-                AppState.instance.set('tx-filter-history', value);
+                states.set('tx-filter-history', value);
                 break;
             }
           },
@@ -559,8 +572,8 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
     switch (_viewMode) {
       case TransactionsViewMode.overview:
         actionbarRegister("Transaction Balance");
-        final toggleAction = AppState.instance.get("tx-toggle-panels", defaultValue: "");
-        AppState.instance.remove("tx-toggle-panels");
+        final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
+        states.remove("tx-toggle-panels");
 
         return TransactionsOverviewView(
           transactions: [...txs],
@@ -572,8 +585,8 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
 
       case TransactionsViewMode.active:
         actionbarRegister("Trading View");
-        final toggleAction = AppState.instance.get("tx-toggle-panels", defaultValue: "");
-        AppState.instance.remove("tx-toggle-panels");
+        final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
+        states.remove("tx-toggle-panels");
 
         return TransactionsActiveView(
           transactions: [...txs],
@@ -591,7 +604,10 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
       case TransactionsViewMode.history:
         actionbarRegister("Transaction History");
 
-        return TransactionHistory(sortMode: _sortMode, transactions: [...txs], onStatusChanged: () {});
+        final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
+        states.remove("tx-toggle-panels");
+
+        return TransactionHistory(sortMode: _sortMode, transactions: [...txs], panelsAction: toggleAction, onStatusChanged: () {});
     }
   }
 }

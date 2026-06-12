@@ -5,10 +5,10 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
-import '../../app/state.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
+import '../../mixins/state.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -35,7 +35,7 @@ class WatchboardPage extends StatefulWidget {
   State<WatchboardPage> createState() => _WatchboardPageState();
 }
 
-class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<WatchboardPage> {
+class _WatchboardPageState extends State<WatchboardPage> with MixinsState, MixinsActionBar<WatchboardPage> {
   late final PanelsController _pxController;
   late final TickersController _tixController;
   late final CryptosController _cryptosController;
@@ -67,8 +67,8 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
 
     _hasLinked = _pxController.hasLinked();
 
-    _enableDrag = AppState.instance.get('px-enable-drag', defaultValue: false);
-    _enableTickers = AppState.instance.get('px-enable-tickers', defaultValue: true);
+    _enableDrag = states.get('px-enable-drag', defaultValue: false);
+    _enableTickers = states.get('px-enable-tickers', defaultValue: true);
 
     txs = _pxController.items;
 
@@ -128,7 +128,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                     _enableTickers = !_enableTickers;
                   });
                   AppLayout.refreshBar?.call();
-                  AppState.instance.set('px-enable-tickers', _enableTickers);
+                  states.set('px-enable-tickers', _enableTickers);
                 });
               },
             ),
@@ -160,7 +160,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                   widgetsNotifyClear();
                   widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
 
-                  AppState.instance.set('px-enable-drag', _enableDrag);
+                  states.set('px-enable-drag', _enableDrag);
                 });
               },
             ),
@@ -233,7 +233,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                 await _pxController.importDatabase(json);
                 _pxController.scheduleRates();
                 await _tixController.refreshRates();
-                AppState.instance.remove('px-offset');
+                states.remove('px-offset');
               },
               evaluator: (s) {},
             ),
@@ -256,7 +256,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                 await _tixController.wipe();
 
                 await _tixController.populate();
-                AppState.instance.remove('px-offset');
+                states.remove('px-offset');
               },
               isEmpty: _pxController.isEmpty,
             ),
@@ -294,7 +294,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsActionBar<Wa
                 await _pxController.importDatabase(json);
                 _pxController.scheduleRates();
                 await _tixController.refreshRates();
-                AppState.instance.remove('px-offset');
+                states.remove('px-offset');
               },
               addForm: _buildForm,
             ),
