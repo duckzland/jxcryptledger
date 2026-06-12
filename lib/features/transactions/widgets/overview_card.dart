@@ -172,7 +172,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return WidgetsPanel(child: Column(children: [_buildHeader(), if (_isOpen) const SizedBox(height: 20), if (_isOpen) _buildTable()]));
+    return WidgetsPanel(child: Column(spacing: 20, children: [_buildHeader(), if (_isOpen) _buildTable()]));
   }
 
   Widget _buildHeader() {
