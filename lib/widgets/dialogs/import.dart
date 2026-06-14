@@ -95,6 +95,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
       evaluator: widget.evaluator,
+      persistBg: widget.persistBg,
       onPressed: widget.showDialogBeforeImport ? null : _handlePressed,
     );
   }

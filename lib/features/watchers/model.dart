@@ -73,6 +73,20 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
     if (operator < 0 || operator >= WatchersOperator.values.length) {
       throw ValidationException(AppErrorCode.watcherInvalidOperator, "invalid operator", "Invalid operator detected");
     }
+
+    final now = DateTime.now().toUtc().microsecondsSinceEpoch;
+
+    if (timestamp <= 0) {
+      throw ValidationException(AppErrorCode.watcherInvalidTimestamp, "Invalid timestamp", "Invalid timestamp");
+    }
+
+    if (timestamp > now) {
+      throw ValidationException(
+        AppErrorCode.watcherTimestampInFuture,
+        "timestamp cannot be in the future (timestamp=$timestamp, now=$now).",
+        "Date cannot be in the future.",
+      );
+    }
   }
 
   factory WatchersModel.fromJson(Map<String, dynamic> json) {

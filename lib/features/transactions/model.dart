@@ -64,7 +64,7 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
       throw ValidationException(
         AppErrorCode.txBasicInvalidRootRelation,
         "Invalid root relationship: rid=$rid pid=$pid",
-        "This transaction’s parent reference is incorrect.",
+        "This transaction's parent reference is incorrect.",
       );
     }
 
@@ -117,6 +117,7 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     if (timestamp <= 0) {
       throw ValidationException(AppErrorCode.txBasicInvalidTimestamp, "timestamp must be > 0 (timestamp=$timestamp).", "Invalid date.");
     }
+
     if (timestamp > now) {
       throw ValidationException(
         AppErrorCode.txBasicTimestampInFuture,

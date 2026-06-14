@@ -14,8 +14,12 @@ class WidgetsScreensEmpty extends StatelessWidget {
 
   final bool Function() addEvaluator;
   final bool Function() importEvaluator;
+
   final Widget Function(BuildContext context) addForm;
   final Future<void> Function(String json) importCallback;
+
+  final bool importShow;
+  final bool addShow;
 
   const WidgetsScreensEmpty({
     super.key,
@@ -24,10 +28,12 @@ class WidgetsScreensEmpty extends StatelessWidget {
     required this.addTooltip,
     required this.addEvaluator,
     required this.addForm,
+    this.addShow = true,
     required this.importTitle,
     required this.importTooltip,
     required this.importEvaluator,
     required this.importCallback,
+    this.importShow = true,
   });
 
   void _evaluateAddNew(WidgetsButtonState s) {
@@ -60,29 +66,32 @@ class WidgetsScreensEmpty extends StatelessWidget {
           Wrap(
             spacing: 20,
             children: [
-              WidgetsDialogsShowForm(
-                key: const Key("add-new-button"),
-                icon: Icons.add,
-                iconSize: 16,
-                label: addTitle,
-                tooltip: addTooltip,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                buildForm: addForm,
-                evaluator: _evaluateAddNew,
-                persistBg: true,
-              ),
-              WidgetsDialogsImport(
-                key: const Key("import-button-new"),
-                label: importTitle,
-                tooltip: importTooltip,
-                icon: Icons.arrow_downward,
-                iconSize: 16,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                showDialogBeforeImport: false,
-                onImport: importCallback,
-                evaluator: _evaluateImport,
-                persistBg: true,
-              ),
+              if (addShow)
+                WidgetsDialogsShowForm(
+                  key: const Key("add-new-button"),
+                  icon: Icons.add,
+                  iconSize: 16,
+                  label: addTitle,
+                  tooltip: addTooltip,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                  buildForm: addForm,
+                  evaluator: _evaluateAddNew,
+                  persistBg: true,
+                ),
+              if (importShow)
+                WidgetsDialogsImport(
+                  key: const Key("import-button-new"),
+                  label: importTitle,
+                  tooltip: importTooltip,
+                  icon: Icons.arrow_downward,
+                  iconSize: 16,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                  showDialogBeforeImport: false,
+                  initialState: WidgetsButtonActionState.action,
+                  onImport: importCallback,
+                  evaluator: _evaluateImport,
+                  persistBg: true,
+                ),
             ],
           ),
         ],

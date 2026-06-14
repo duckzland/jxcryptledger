@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/layout.dart';
+import '../features/archives/page.dart';
 import '../features/settings/page.dart';
 import '../features/watchboard/page.dart';
 import '../features/tools/page.dart';
@@ -59,6 +60,10 @@ class AppRouter {
             builder: (context, state) => const AppPage(child: WatchersPage()),
           ),
           GoRoute(
+            path: "/archives",
+            builder: (context, state) => const AppPage(child: ArchivesPage()),
+          ),
+          GoRoute(
             path: "/tools",
             builder: (context, state) => const AppPage(child: ToolsPage()),
           ),
@@ -75,6 +80,8 @@ class AppRouter {
     if (location.startsWith("/settings")) return "Settings";
     if (location.startsWith("/watchers")) return "Rate Watchers";
     if (location.startsWith("/watchboard")) return "Watchboard";
+    if (location.startsWith("/archives")) return "Data Archives";
+    if (location.startsWith("/tools")) return "Tools";
     return "Transactions";
   }
 }
