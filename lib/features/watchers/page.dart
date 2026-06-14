@@ -145,8 +145,8 @@ class _WatchersPageState extends State<WatchersPage>
             ),
             WidgetsDialogsReset(
               key: const Key("reset-button-batch"),
-              tooltip: "Delete All Rate Watcher",
-              dialogTitle: "Delete All Transactions",
+              tooltip: "Delete all rate watcher",
+              dialogTitle: "Delete All Rate Watchers",
               dialogMessage:
                   "This will delete all rate watcher.\n"
                   "This action cannot be undone.",
@@ -259,14 +259,14 @@ class _WatchersPageState extends State<WatchersPage>
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn(label: const Text("From"), onSort: sortableSorters[0]),
-            DataColumn(label: const Text("To"), onSort: sortableSorters[1]),
-            DataColumn(label: const Text("Ops"), onSort: sortableSorters[2]),
-            DataColumn(label: const Text("Rate"), onSort: sortableSorters[3]),
-            DataColumn(label: const Text("Sent"), onSort: sortableSorters[5]),
-            DataColumn(label: const Text("Limit"), onSort: sortableSorters[6]),
-            DataColumn(label: const Text("Duration"), onSort: sortableSorters[7]),
-            const DataColumn(label: Text("Action")),
+            DataColumn2(label: const Text("From"), onSort: sortableSorters[0]),
+            DataColumn2(label: const Text("To"), onSort: sortableSorters[1]),
+            DataColumn2(label: const Text("Ops"), onSort: sortableSorters[2]),
+            DataColumn2(label: const Text("Rate"), onSort: sortableSorters[3]),
+            DataColumn2(label: const Text("Sent"), onSort: sortableSorters[5]),
+            DataColumn2(label: const Text("Limit"), onSort: sortableSorters[6]),
+            DataColumn2(label: const Text("Duration"), onSort: sortableSorters[7]),
+            const DataColumn2(label: Text("Action")),
           ],
           rows: table.map((r) {
             return DataRow(

@@ -112,6 +112,8 @@ class AppErrorCode {
   static const int watcherDurationInvalid = 3007;
   static const int watcherMessageEmpty = 3008;
   static const int watcherInvalidOperator = 3009;
+  static const int watcherInvalidTimestamp = 3010;
+  static const int watcherTimestampInFuture = 3011;
 
   static const int tickerBasicInvalidType = 4001;
   static const int tickerBasicInvalidSrAmount = 4002;
@@ -126,6 +128,12 @@ class AppErrorCode {
   static const int tickerCannotRemoveStaticType = 4011;
   static const int tickerBasicInvalidTitle = 4012;
   static const int tickerBasicInvalidFormat = 4013;
+
+  static const int archiveAidEmpty = 5001;
+  static const int archiveDataEmpty = 5002;
+  static const int archiveInvalidType = 5003;
+  static const int archiveInvalidTimestamp = 5004;
+  static const int archiveTimestampInFuture = 5005;
 }
 
 class ValidationException extends CoreBaseException {

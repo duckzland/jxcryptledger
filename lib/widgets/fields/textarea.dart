@@ -6,6 +6,7 @@ class WidgetsFieldsTextarea extends StatefulWidget {
   final String helperText;
   final String? initialValue;
   final bool enabled;
+  final int maxLines;
   final void Function(String value)? onChanged;
 
   const WidgetsFieldsTextarea({
@@ -14,6 +15,7 @@ class WidgetsFieldsTextarea extends StatefulWidget {
     required this.helperText,
     this.initialValue,
     this.enabled = true,
+    this.maxLines = 4,
     this.onChanged,
   });
 
@@ -45,12 +47,8 @@ class _WidgetsFieldsTextareaState extends State<WidgetsFieldsTextarea> {
     return TextFormField(
       controller: _textareaController,
       textAlignVertical: TextAlignVertical.top,
-      decoration: InputDecoration(
-        labelText: widget.title,
-        hintText: widget.helperText,
-        alignLabelWithHint: true,
-      ),
-      maxLines: 4,
+      decoration: InputDecoration(labelText: widget.title, hintText: widget.helperText, alignLabelWithHint: true),
+      maxLines: widget.maxLines,
       onChanged: (value) {
         _debounce?.cancel();
         _debounce = Timer(const Duration(milliseconds: 100), () {

@@ -45,38 +45,45 @@ class _AppLayoutState extends State<AppLayout> {
   List<Map<String, Object>> menus = [
     {
       "icon": Icons.account_balance_wallet,
-      "title": "Manage Transactions",
+      "title": "Manage transactions",
       "target": "/transactions",
       "evaluator": (location) => (location == "/transactions" || location == "/"),
       "ordering": 0,
     },
     {
       "icon": Icons.candlestick_chart,
-      "title": "Display Watchboard",
+      "title": "Display watchboard",
       "target": "/watchboard",
       "evaluator": (location) => (location == "/watchboard"),
       "ordering": 1,
     },
     {
       "icon": Icons.add_alarm,
-      "title": "Manage Rate Watchers",
+      "title": "Manage rate watchers",
       "target": "/watchers",
       "evaluator": (location) => (location == "/watchers"),
       "ordering": 2,
     },
     {
+      "icon": Icons.archive,
+      "title": "Manage data archives",
+      "target": "/archives",
+      "evaluator": (location) => (location == "/archives"),
+      "ordering": 3,
+    },
+    {
       "icon": Icons.handyman,
-      "title": "Use Crypto Tools",
+      "title": "Use crypto tools",
       "target": "/tools",
       "evaluator": (location) => (location == "/tools"),
-      "ordering": 3,
+      "ordering": 4,
     },
     {
       "icon": Icons.settings,
       "title": "Settings",
       "target": "/settings",
       "evaluator": (location) => (location == "/settings"),
-      "ordering": 4,
+      "ordering": 5,
     },
   ];
 

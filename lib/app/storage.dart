@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/log.dart';
+import '../features/archives/adapter.dart';
+import '../features/archives/model.dart';
 import '../features/cryptos/adapter.dart';
 import '../features/cryptos/model.dart';
 import '../features/rates/adapter.dart';
@@ -56,6 +58,7 @@ class AppStorage {
         'transactions_box',
         'panels_box',
         'tickers_box',
+        'archives_box',
       ]);
     }
 
@@ -75,6 +78,7 @@ class AppStorage {
     Hive.registerAdapter<WatchersModel>(WatchersAdapter());
     Hive.registerAdapter<PanelsModel>(PanelsAdapter());
     Hive.registerAdapter<TickersModel>(TickersAdapter());
+    Hive.registerAdapter<ArchivesModel>(ArchivesAdapter());
 
     _initialized = true;
   }

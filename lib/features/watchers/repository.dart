@@ -10,11 +10,4 @@ class WatchersRepository extends CoreBaseRepository<WatchersModel>
 
   @override
   get fromJson => WatchersModel.fromJson;
-
-  Future<void> saveAll(List<WatchersModel> wx) async {
-    await box.clear();
-    for (final w in wx) {
-      await box.put(w.wid, w);
-    }
-  }
 }

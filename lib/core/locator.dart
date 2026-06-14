@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:jxledger/features/archives/controller.dart';
+import 'package:jxledger/features/archives/repository.dart';
 
 import '../app/worker.dart';
 import '../features/notification/service.dart';
@@ -67,4 +69,8 @@ void setupLocator() {
   locator.registerLazySingleton<TickersRepository>(() => TickersRepository());
   locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>(), locator<TickersService>()));
   locator.registerLazySingleton<TickersService>(() => TickersService(locator<TickersRepository>(), locator<SettingsRepository>()));
+
+  // Archives
+  locator.registerLazySingleton<ArchivesRepository>(() => ArchivesRepository());
+  locator.registerLazySingleton<ArchivesController>(() => ArchivesController(locator<ArchivesRepository>()));
 }

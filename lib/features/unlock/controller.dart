@@ -11,6 +11,8 @@ import '../../app/worker.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
 import '../../mixins/state.dart';
+import '../archives/controller.dart';
+import '../archives/model.dart';
 import '../cryptos/model.dart';
 import '../encryption/service.dart';
 import '../notification/service.dart';
@@ -34,6 +36,7 @@ class UnlockController extends ChangeNotifier with MixinsState {
   final PanelsController _panelsController = locator<PanelsController>();
   final TickersController _tickersController = locator<TickersController>();
   final CryptosController _cryptosController = locator<CryptosController>();
+  final ArchivesController _archivesController = locator<ArchivesController>();
   final NotificationService _notificationService = locator<NotificationService>();
   final AppWorker _appWorker = locator<AppWorker>();
 
@@ -49,6 +52,7 @@ class UnlockController extends ChangeNotifier with MixinsState {
     _panelsController.init();
     _tickersController.init();
     _cryptosController.init();
+    _archivesController.init();
     _appWorker.start();
 
     states.init();
@@ -64,6 +68,8 @@ class UnlockController extends ChangeNotifier with MixinsState {
       await AppStorage.instance.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
 
       await AppStorage.instance.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
+
+      await AppStorage.instance.openBox<ArchivesModel>('archives_box', encryptionCipher: cipher, crashRecovery: false);
     } catch (e) {
       logln("Failed to decrypt boxes (wrong password): ${e.toString()}");
       return false;
