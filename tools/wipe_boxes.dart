@@ -19,7 +19,16 @@ Future<void> main() async {
   final dir = getAppDocumentsDir();
   Hive.init(dir);
 
-  final boxes = ['settings_box', 'transactions_box', 'cryptos_box', 'rates_box', 'watchers_box', 'panels_box', 'tickers_box'];
+  final boxes = [
+    'settings_box',
+    'transactions_box',
+    'cryptos_box',
+    'rates_box',
+    'watchers_box',
+    'panels_box',
+    'tickers_box',
+    'archives_box',
+  ];
 
   for (final boxName in boxes) {
     try {

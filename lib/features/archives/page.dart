@@ -19,7 +19,9 @@ import '../../widgets/dialogs/reset.dart';
 import '../../widgets/notify.dart';
 import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
+import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
+import '../cryptos/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';
@@ -39,6 +41,7 @@ class _ArchivesPageState extends State<ArchivesPage>
     with MixinsState, MixinsSortableTable<ArchivesPage>, MixinsActionBar<ArchivesPage>, MixinsScrollToTable<ArchivesPage, ArchivesModel> {
   late final ArchivesController _controller;
 
+  final CryptosController _cryptosController = locator<CryptosController>();
   final TransactionsController _txController = locator<TransactionsController>();
   final PanelsController _pxController = locator<PanelsController>();
   final WatchersController _wxController = locator<WatchersController>();
@@ -58,6 +61,8 @@ class _ArchivesPageState extends State<ArchivesPage>
     _controller.start();
     _controller.addListener(_onControllerChanged);
 
+    _cryptosController.addListener(_onControllerChanged);
+
     txs = _controller.items;
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
@@ -65,6 +70,7 @@ class _ArchivesPageState extends State<ArchivesPage>
     };
 
     rows = _buildRows();
+    sortableApplySorting();
 
     actionbarRegister("Data Archives");
   }
@@ -74,6 +80,8 @@ class _ArchivesPageState extends State<ArchivesPage>
     scrollToUtil.dispose();
 
     _controller.removeListener(_onControllerChanged);
+    _cryptosController.removeListener(_onControllerChanged);
+
     super.dispose();
   }
 
@@ -143,6 +151,13 @@ class _ArchivesPageState extends State<ArchivesPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_cryptosController.isEmpty()) {
+      actionbarRemove();
+      return Column(
+        children: [Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before archiving.'))],
+      );
+    }
+
     if (_controller.items.isEmpty) {
       actionbarRemove();
 

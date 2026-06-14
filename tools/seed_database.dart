@@ -6,6 +6,9 @@ import 'package:cryptography/cryptography.dart';
 import 'package:decimal/decimal.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxledger/features/archives/adapter.dart';
+import 'package:jxledger/features/archives/model.dart';
+import 'package:jxledger/features/archives/repository.dart';
 import 'package:jxledger/features/cryptos/adapter.dart';
 import 'package:jxledger/features/cryptos/model.dart';
 import 'package:jxledger/features/cryptos/parser.dart';
@@ -161,6 +164,10 @@ Future<void> main(List<String> args) async {
 
   final bool seedWatchers = noArgs ? true : args.contains('--seed-watchers');
 
+  final bool seedArchives = noArgs ? true : args.contains('--seed-archives');
+
+  final bool useEnvSalt = noArgs ? false : args.contains('--use-env-salt');
+
   final dir = requireEnv('APP_DATA_DIR');
   final password = requireEnv('APP_DB_PASSWORD');
 
@@ -173,9 +180,10 @@ Future<void> main(List<String> args) async {
   Hive.registerAdapter(WatchersAdapter());
   Hive.registerAdapter(PanelsAdapter());
   Hive.registerAdapter(TickersAdapter());
+  Hive.registerAdapter(ArchivesAdapter());
 
   print("Wiping old boxes...");
-  final boxes = ['settings_box', 'watchers_box'];
+  final boxes = ['settings_box'];
 
   if (seedTx) {
     boxes.add('transactions_box');
@@ -197,6 +205,10 @@ Future<void> main(List<String> args) async {
     boxes.add('watchers_box');
   }
 
+  if (seedArchives) {
+    boxes.add('archives_box');
+  }
+
   for (final box in boxes) {
     try {
       await Hive.deleteBoxFromDisk(box);
@@ -206,8 +218,16 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  print("Preparing for encryption..");
-  final salt = env['APP_SALT'] ?? '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a';
+  String salt = '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a';
+  if (useEnvSalt && env['APP_SALT'] != null) {
+    final maybeSalt = env['APP_SALT'] ?? "";
+    if (maybeSalt.isNotEmpty) {
+      salt = maybeSalt;
+    }
+  }
+
+  print("Preparing for encryption using salt: $salt");
+
   final key = await derivePasswordKey(password, salt);
   final cipher = HiveAesCipher(key);
 
@@ -223,6 +243,9 @@ Future<void> main(List<String> args) async {
 
   await Hive.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
   final pxRepo = PanelsRepository();
+
+  await Hive.openBox<ArchivesModel>('archives_box', encryptionCipher: cipher, crashRecovery: false);
+  final axRepo = ArchivesRepository();
 
   await Hive.openBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
   final wxRepo = WatchersRepository();
@@ -393,6 +416,49 @@ Future<void> main(List<String> args) async {
           targetId: tx.rrId,
           targetAmount: Decimal.parse("0"),
           timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+        ),
+      );
+    }
+  }
+
+  if (seedArchives) {
+    print("Seeding archives");
+
+    if (seedTx) {
+      final data = await txRepo.export();
+      axRepo.add(
+        ArchivesModel(
+          aid: axRepo.generateId(),
+          type: ArchivesDataType.transactions.index,
+          data: data,
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+          meta: {'notes': "Transactions data archived from cli"},
+        ),
+      );
+    }
+
+    if (seedPanels) {
+      final data = await pxRepo.export();
+      axRepo.add(
+        ArchivesModel(
+          aid: axRepo.generateId(),
+          type: ArchivesDataType.watchboards.index,
+          data: data,
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+          meta: {'notes': "Watchboard data archived from cli"},
+        ),
+      );
+    }
+
+    if (seedWatchers) {
+      final data = await wxRepo.export();
+      axRepo.add(
+        ArchivesModel(
+          aid: axRepo.generateId(),
+          type: ArchivesDataType.watchers.index,
+          data: data,
+          timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
+          meta: {'notes': "Watchers data archived from cli"},
         ),
       );
     }

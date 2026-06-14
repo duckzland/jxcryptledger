@@ -70,6 +70,7 @@ class _WatchersPageState extends State<WatchersPage>
     };
 
     rows = _buildRows();
+    sortableApplySorting();
 
     actionbarRegister("Rate Watchers");
   }
