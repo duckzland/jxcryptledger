@@ -49,10 +49,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Timer? _debounce;
 
   @override
-  double get tableHeightOffset => 220;
+  double get tableHeightOffset => 260;
 
   @override
-  double get tableHeadingHeightOffset => 4;
+  double get tableHeadingHeightOffset => 0;
 
   @override
   void initState() {
@@ -97,7 +97,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 if (txs.isNotEmpty)
                   WidgetsPanel(
                     padding: const EdgeInsets.all(12),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildTable(), _buildTotal()]),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 4, children: [_buildTable(), _buildTotal()]),
                   ),
                 if (txs.isEmpty) const Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
@@ -167,8 +167,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       });
     }
 
-    // (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 4
-
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
@@ -182,8 +180,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           minWidth: 800,
           columnSpacing: 12,
           horizontalMargin: 12,
-          headingRowHeight: AppTheme.tableHeadingRowHeight,
-          dataRowHeight: AppTheme.tableDataRowMinHeight,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
           isHorizontalScrollBarVisible: false,
           columns: [
             const DataColumn2(label: Text('Date '), fixedWidth: 100),
