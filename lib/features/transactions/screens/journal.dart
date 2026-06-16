@@ -3,12 +3,12 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../mixins/state.dart';
+import '../../../mixins/table.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
@@ -29,6 +29,7 @@ class TransactionsJournalView extends StatefulWidget {
 class _TransactionsJournalViewState extends State<TransactionsJournalView>
     with
         MixinsState,
+        MixinsTable,
         AutomaticKeepAliveClientMixin,
         MixinsSortableTable<TransactionsJournalView>,
         MixinsScrollToTable<TransactionsJournalView, TransactionsModel> {
@@ -156,8 +157,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                 minWidth: 1200,
                 columnSpacing: 12,
                 horizontalMargin: 12,
-                headingRowHeight: AppTheme.tableHeadingRowHeight,
-                dataRowHeight: AppTheme.tableDataRowMinHeight,
+                headingRowHeight: tableHeadingHeight,
+                dataRowHeight: tableRowHeight,
                 showCheckboxColumn: false,
                 sortColumnIndex: sortableColumnIndex,
                 sortAscending: sortableAscending,

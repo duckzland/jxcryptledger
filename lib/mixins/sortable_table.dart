@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'state.dart';
+import 'table.dart';
 
-mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsState {
-  List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
+mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
   int sortableColumnIndex = 0;
   bool sortableAscending = false;
   String get sortableKey => "";

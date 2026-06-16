@@ -65,8 +65,13 @@ class _AppRootState extends State<AppRoot> with MixinsState {
       themeMode: ThemeMode.system,
       routerConfig: AppRouter.router,
       builder: (context, child) {
+        final mq = MediaQuery.of(context);
+
+        states.set('viewport-width', mq.size.width);
+        states.set('viewport-height', mq.size.height);
+
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+          data: mq.copyWith(textScaler: TextScaler.noScaling),
           child: child!,
         );
       },

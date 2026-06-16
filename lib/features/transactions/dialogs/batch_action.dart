@@ -8,6 +8,8 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
+import '../../../mixins/state.dart';
+import '../../../mixins/table.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/notify.dart';
@@ -30,7 +32,7 @@ class TransactionsDialogsBatchAction extends StatefulWidget {
 }
 
 class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatchAction>
-    with MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchAction> {
+    with MixinsState, MixinsTable, MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchAction> {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
@@ -45,6 +47,12 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   late String successMessage;
 
   late WidgetsButtonActionState buttonActionState;
+
+  @override
+  double get tableHeightOffset => 100;
+
+  @override
+  double get tableHeadingHeightOffset => 4;
 
   @override
   void initState() {
@@ -170,7 +178,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   }
 
   Widget _buildTable() {
-    final rows = <Map<String, dynamic>>[];
+    rows = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
       final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
@@ -186,7 +194,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
     return SizedBox(
       width: double.infinity,
-      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 4,
+      height: tableCalculateAdjustedMaxHeight(),
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(

@@ -3,16 +3,17 @@ import 'dart:ui';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:jxledger/mixins/rateable.dart';
 
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../mixins/actionable.dart';
+import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../mixins/state.dart';
+import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/show_form.dart';
@@ -64,6 +65,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
         AutomaticKeepAliveClientMixin,
         MixinsActionable,
         MixinsState,
+        MixinsTable,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsActiveCard>,
         MixinsRateable<TransactionsActiveCard>,
@@ -617,9 +619,10 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   Widget _buildTable() {
     final canSelect = !isCapital && rows.length > 1;
+
     return SizedBox(
       width: double.infinity,
-      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: tableCalculateHeight(),
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
@@ -630,8 +633,8 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
-          headingRowHeight: AppTheme.tableHeadingRowHeight,
-          dataRowHeight: AppTheme.tableDataRowMinHeight,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
           sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,

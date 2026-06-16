@@ -11,6 +11,7 @@ import '../../../mixins/actionable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../mixins/state.dart';
+import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/show_form.dart';
@@ -19,10 +20,10 @@ import '../../cryptos/controller.dart';
 import '../dialogs/batch_action.dart';
 import '../dialogs/batch_trade.dart';
 import '../mixins/actions.dart';
-import 'buttons.dart';
 import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
+import 'buttons.dart';
 
 class TransactionsOverviewCard extends StatefulWidget {
   final int id;
@@ -51,6 +52,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
         AutomaticKeepAliveClientMixin,
         MixinsActionable,
         MixinsState,
+        MixinsTable,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsOverviewCard>,
         TransactionsMixinsActions {
@@ -443,7 +445,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
     final canSelect = isActive && rows.length > 1;
     return SizedBox(
       width: double.infinity,
-      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
+      height: tableCalculateHeight(),
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
@@ -454,8 +456,8 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
-          headingRowHeight: AppTheme.tableHeadingRowHeight,
-          dataRowHeight: AppTheme.tableDataRowMinHeight,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
           sortColumnIndex: sortableColumnIndex,
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,

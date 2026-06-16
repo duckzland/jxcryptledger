@@ -6,9 +6,9 @@ import '../../../core/locator.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../widgets/tree_card.dart';
 import '../controller.dart';
 import '../model.dart';
-import '../widgets/tree_card.dart';
 
 class TransactionHistory extends StatefulWidget {
   final List<TransactionsModel> transactions;
