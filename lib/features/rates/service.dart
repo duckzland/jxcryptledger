@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
@@ -313,7 +314,7 @@ class RatesService {
     RatesParserResult parsed;
 
     try {
-      parsed = parseRatesJson(resp.body);
+      parsed = await compute(parseRatesJson, resp.body);
     } catch (e) {
       throw NetworkingException(
         AppErrorCode.netParseFailure,

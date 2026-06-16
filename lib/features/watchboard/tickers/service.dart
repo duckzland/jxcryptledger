@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../app/exceptions.dart';
@@ -38,7 +39,8 @@ class TickersService {
     logln('[TICKERS] Fetching from : $uri [${resp.statusCode}]');
 
     try {
-      return json.decode(resp.body) as Map<String, dynamic>;
+      return await compute(parseJson, resp.body);
+      // return json.decode(resp.body) as Map<String, dynamic>;
     } catch (e) {
       throw NetworkingException(
         AppErrorCode.netParseFailure,
@@ -178,5 +180,9 @@ class TickersService {
     await Future.wait(jobs);
 
     logln("[TICKERS] Fetching new ticker data completed");
+  }
+
+  Map<String, dynamic> parseJson(String body) {
+    return json.decode(body) as Map<String, dynamic>;
   }
 }
