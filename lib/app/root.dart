@@ -21,16 +21,16 @@ class _AppRootState extends State<AppRoot> with MixinsState {
   void initState() {
     super.initState();
 
-    _lifecycleListener = AppLifecycleListener(onExitRequested: _handleWindowsWindowClose);
+    _lifecycleListener = AppLifecycleListener(onExitRequested: _handleClose);
 
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       ProcessSignal.sigint.watch().listen((signal) async {
-        await _handleTerminalExit();
+        await _handleExit();
       });
     }
   }
 
-  Future<AppExitResponse> _handleWindowsWindowClose() async {
+  Future<AppExitResponse> _handleClose() async {
     try {
       await states.save();
       return AppExitResponse.exit;
@@ -40,7 +40,7 @@ class _AppRootState extends State<AppRoot> with MixinsState {
     }
   }
 
-  Future<void> _handleTerminalExit() async {
+  Future<void> _handleExit() async {
     try {
       await states.save();
     } catch (e) {

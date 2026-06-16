@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
-import '../../app/theme.dart';
 import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
@@ -233,8 +232,8 @@ class _ArchivesPageState extends State<ArchivesPage>
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
-          headingRowHeight: AppTheme.tableHeadingRowHeight,
-          dataRowHeight: AppTheme.tableDataRowMinHeight,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
           showCheckboxColumn: false,
           sortColumnIndex: sortableColumnIndex,
           sortAscending: sortableAscending,
