@@ -158,31 +158,23 @@ class _ArchivesPageState extends State<ArchivesPage>
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return Column(
-        children: [Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before archiving.'))],
-      );
+      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before archiving.');
     }
 
     if (_controller.items.isEmpty) {
       actionbarRemove();
 
-      return Column(
-        children: [
-          Expanded(
-            child: WidgetsScreensEmpty(
-              title: _canArchive() ? "Add Archive" : "Import Archived Data",
-              addTitle: "Add New",
-              addTooltip: "Create new archived entry",
-              addEvaluator: _canArchive,
-              addShow: _canArchive(),
-              importTitle: "Import",
-              importTooltip: "Import archives to database",
-              importEvaluator: () => true,
-              importCallback: (json) async => await _controller.importDatabase(json),
-              addForm: _buildForm,
-            ),
-          ),
-        ],
+      return WidgetsScreensEmpty(
+        title: _canArchive() ? "Add Archive" : "Import Archived Data",
+        addTitle: "Add New",
+        addTooltip: "Create new archived entry",
+        addEvaluator: _canArchive,
+        addShow: _canArchive(),
+        importTitle: "Import",
+        importTooltip: "Import archives to database",
+        importEvaluator: () => true,
+        importCallback: (json) async => await _controller.importDatabase(json),
+        addForm: _buildForm,
       );
     }
 

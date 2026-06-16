@@ -173,31 +173,21 @@ class _WatchersPageState extends State<WatchersPage>
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return Column(
-        children: [
-          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.')),
-        ],
-      );
+      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.');
     }
 
     if (_wxController.items.isEmpty) {
       actionbarRemove();
-      return Column(
-        children: [
-          Expanded(
-            child: WidgetsScreensEmpty(
-              title: "Add Rate Watcher",
-              addTitle: "Add New",
-              addTooltip: "Create new rate watcher entry",
-              addEvaluator: () => !_cryptosController.isEmpty(),
-              importTitle: "Import",
-              importTooltip: "Import rate watchers to database",
-              importEvaluator: () => true,
-              importCallback: (json) async => await _wxController.importDatabase(json),
-              addForm: _buildForm,
-            ),
-          ),
-        ],
+      return WidgetsScreensEmpty(
+        title: "Add Rate Watcher",
+        addTitle: "Add New",
+        addTooltip: "Create new rate watcher entry",
+        addEvaluator: () => !_cryptosController.isEmpty(),
+        importTitle: "Import",
+        importTooltip: "Import rate watchers to database",
+        importEvaluator: () => true,
+        importCallback: (json) async => await _wxController.importDatabase(json),
+        addForm: _buildForm,
       );
     }
 

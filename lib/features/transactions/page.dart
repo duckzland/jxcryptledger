@@ -440,37 +440,21 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return Column(
-        children: [
-          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.')),
-        ],
-      );
+      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.');
     }
 
     if (txs.isEmpty) {
       actionbarRemove();
-      return Column(
-        children: [
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: WidgetsScreensEmpty(
-                    title: "Add Transaction",
-                    addTitle: "Add New",
-                    addTooltip: "Create new transaction entry",
-                    addEvaluator: () => !_cryptosController.isEmpty(),
-                    importTitle: "Import",
-                    importTooltip: "Import transactions to database",
-                    importEvaluator: () => true,
-                    importCallback: (json) async => await _txController.importDatabase(json),
-                    addForm: _buildForm,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      return WidgetsScreensEmpty(
+        title: "Add Transaction",
+        addTitle: "Add New",
+        addTooltip: "Create new transaction entry",
+        addEvaluator: () => !_cryptosController.isEmpty(),
+        importTitle: "Import",
+        importTooltip: "Import transactions to database",
+        importEvaluator: () => true,
+        importCallback: (json) async => await _txController.importDatabase(json),
+        addForm: _buildForm,
       );
     }
 

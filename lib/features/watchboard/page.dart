@@ -270,36 +270,26 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return const Column(
-        children: [
-          Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.')),
-        ],
-      );
+      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.');
     }
 
     if (_pxController.isEmpty()) {
       actionbarRemove();
-      return Column(
-        children: [
-          Expanded(
-            child: WidgetsScreensEmpty(
-              title: "Add Watchboard",
-              addTitle: "Add New",
-              addTooltip: "Create new watchboard entry",
-              addEvaluator: () => !_cryptosController.isEmpty(),
-              importTitle: "Import",
-              importTooltip: "Import watchboard to database",
-              importEvaluator: () => true,
-              importCallback: (json) async {
-                await _pxController.importDatabase(json);
-                _pxController.scheduleRates();
-                await _tixController.refreshRates();
-                states.remove('px-offset');
-              },
-              addForm: _buildForm,
-            ),
-          ),
-        ],
+      return WidgetsScreensEmpty(
+        title: "Add Watchboard",
+        addTitle: "Add New",
+        addTooltip: "Create new watchboard entry",
+        addEvaluator: () => !_cryptosController.isEmpty(),
+        importTitle: "Import",
+        importTooltip: "Import watchboard to database",
+        importEvaluator: () => true,
+        importCallback: (json) async {
+          await _pxController.importDatabase(json);
+          _pxController.scheduleRates();
+          await _tixController.refreshRates();
+          states.remove('px-offset');
+        },
+        addForm: _buildForm,
       );
     }
 
