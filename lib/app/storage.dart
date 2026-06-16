@@ -43,7 +43,7 @@ class AppStorage {
     // Set as old dir first for checking and migrating
     _hivePath = dir.path;
 
-    if (kDebugMode) {
+    if (kDebugMode || kProfileMode) {
       _hivePath = '${dir.path}/jxledger_dev';
       newHivePath = '${dir.path}/jxledger/dev';
     }
