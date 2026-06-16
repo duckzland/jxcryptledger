@@ -124,7 +124,7 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
                   ),
                   Text(
                     suggestion.name,
-                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

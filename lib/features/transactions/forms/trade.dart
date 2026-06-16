@@ -180,7 +180,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   Widget _buildTitle() {
-    return Text('Trade Crypto', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return const Text('Trade Crypto', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildSourceAmountField() {

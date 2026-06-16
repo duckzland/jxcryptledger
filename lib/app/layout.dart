@@ -156,7 +156,7 @@ class _AppLayoutState extends State<AppLayout> {
                         children: [
                           (showMenu) ? _buildMenuToggler(context) : _buildNavigation(location),
 
-                          WidgetsSeparator(),
+                          const WidgetsSeparator(),
 
                           if (_actions != null) Expanded(key: Key("bid-$_barBuildId"), child: _actions!),
                         ],
@@ -166,7 +166,7 @@ class _AppLayoutState extends State<AppLayout> {
                 ),
                 actions: (!showMenu) ? [_buildActions()] : [],
               ),
-              body: Padding(padding: EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8), child: widget.child),
+              body: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8), child: widget.child),
             );
           },
         );
@@ -263,10 +263,10 @@ class _AppLayoutState extends State<AppLayout> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Container(
-          padding: EdgeInsets.only(left: 16.0),
-          decoration: BoxDecoration(
+          padding: const EdgeInsets.only(left: 16.0),
+          decoration: const BoxDecoration(
             color: AppTheme.panelBg,
-            borderRadius: const BorderRadius.only(topRight: Radius.circular(4), bottomRight: Radius.circular(4)),
+            borderRadius: BorderRadius.only(topRight: Radius.circular(4), bottomRight: Radius.circular(4)),
           ),
           child: SizedBox(
             height: 42,

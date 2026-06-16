@@ -246,7 +246,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
           ],
         ),
 
-        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) WidgetsSeparator(),
+        if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty) const WidgetsSeparator(),
 
         if (_sortableOptions.isNotEmpty || _filterableOptions.isNotEmpty)
           Wrap(spacing: 4, children: [if (_sortableOptions.isNotEmpty) _buildSorter(), if (_filterableOptions.isNotEmpty) _buildFilter()]),
@@ -254,7 +254,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         if (_viewMode == TransactionsViewMode.active ||
             _viewMode == TransactionsViewMode.overview ||
             _viewMode == TransactionsViewMode.history)
-          WidgetsSeparator(),
+          const WidgetsSeparator(),
 
         if (_viewMode == TransactionsViewMode.active ||
             _viewMode == TransactionsViewMode.overview ||
@@ -291,7 +291,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         if (_viewMode == TransactionsViewMode.active ||
             _viewMode == TransactionsViewMode.overview ||
             _viewMode == TransactionsViewMode.history)
-          WidgetsSeparator(),
+          const WidgetsSeparator(),
 
         Wrap(
           spacing: 4,
@@ -389,7 +389,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
             ),
           ],
         ),
-        WidgetsSeparator(),
+        const WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [

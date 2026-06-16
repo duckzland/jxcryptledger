@@ -201,8 +201,8 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
           dataRowHeight: AppTheme.tableDataRowMinHeight,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn2(label: Text('Date '), fixedWidth: 100),
-            DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+            DataColumn2(label: const Text('Date '), fixedWidth: 100),
+            DataColumn2(label: const Text('Transactions '), size: ColumnSize.M),
           ],
           rows: [
             ...rows.map((r) {

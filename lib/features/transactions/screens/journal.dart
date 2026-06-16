@@ -162,7 +162,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                 sortColumnIndex: sortableColumnIndex,
                 sortAscending: sortableAscending,
                 isHorizontalScrollBarVisible: false,
-                empty: Center(
+                empty: const Center(
                   child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                 ),
                 columns: [

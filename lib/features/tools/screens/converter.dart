@@ -231,11 +231,11 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
     final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
     final double rate = rateableValue ?? -1;
     final double reversedRate = _reversedRate ?? -1;
-    final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
-    final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
+    final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "UNK" : "UNK";
+    final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "UNK" : "UNK";
 
     if (source <= 0 || rate < 0 || reversedRate < 0 || sourceSymbol == "" || targetSymbol == "") {
-      return Text("");
+      return const Text("");
     }
 
     final double resultValue = source * rate;
@@ -246,20 +246,20 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
       children: [
         Text(
           "${Utils.formatSmartDouble(source)} $sourceSymbol to $targetSymbol",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
         Text(
           "${Utils.formatSmartDouble(resultValue)} $targetSymbol",
-          style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
         Text(
           "1 $targetSymbol = ${Utils.formatSmartDouble(rate)} $sourceSymbol",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         Text(
           "1 $sourceSymbol = ${Utils.formatSmartDouble(reversedRate)} $targetSymbol",
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
       ],
     );

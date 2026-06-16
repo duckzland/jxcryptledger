@@ -18,6 +18,6 @@ class WidgetsSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 24, color: AppTheme.separator);
+    return Container(width: width, height: height, color: color, padding: padding);
   }
 }

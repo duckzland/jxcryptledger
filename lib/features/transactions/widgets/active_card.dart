@@ -678,13 +678,17 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
               ),
               DataColumn2(
                 fixedWidth: 100,
-                label: WidgetsHeader(title: 'P/L', subtitle: "%"),
+                label: const WidgetsHeader(title: 'P/L', subtitle: "%"),
                 onSort: sortableSorters[7],
               ),
             ],
 
-            DataColumn2(label: Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sortableSorters[4] : sortableSorters[8]),
-            DataColumn2(label: Text('Actions'), fixedWidth: 160),
+            DataColumn2(
+              label: const Text('Status '),
+              fixedWidth: 100,
+              onSort: (_currentRate == 0.0) ? sortableSorters[4] : sortableSorters[8],
+            ),
+            const DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
 
           rows: rows.map((r) {
@@ -849,7 +853,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(title, style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
         const SizedBox(height: 1),
         WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
       ],

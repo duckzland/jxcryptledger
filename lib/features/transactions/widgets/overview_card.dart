@@ -214,7 +214,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
       children: [
         const SizedBox(height: 5),
         Text(_cryptosController.getSymbol(widget.id) ?? 'Unknown Coin', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        Text('Coin ID: ${widget.id}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+        Text('Coin ID: ${widget.id}', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
       ],
     );
   }
@@ -432,7 +432,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(title, style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
         const SizedBox(height: 1),
         WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
       ],

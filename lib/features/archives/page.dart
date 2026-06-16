@@ -109,12 +109,12 @@ class _ArchivesPageState extends State<ArchivesPage>
             ),
           ],
         ),
-        WidgetsSeparator(),
+        const WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [
             WidgetsDialogsImport(
-              key: Key("import-button-batch"),
+              key: const Key("import-button-batch"),
               tooltip: "Import archives to database",
               showDialogBeforeImport: true,
               onImport: (String json) async {

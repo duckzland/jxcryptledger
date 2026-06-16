@@ -80,7 +80,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
-                if (txs.isNotEmpty) Text("Trading Transactions", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                if (txs.isNotEmpty) const Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
                 if (txs.isNotEmpty)
                   WidgetsPanel(
                     padding: const EdgeInsets.all(12),
@@ -91,7 +91,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     padding: const EdgeInsets.all(12),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildTable(), _buildTotal()]),
                   ),
-                if (txs.isEmpty) Text("No transactions to trade", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                if (txs.isEmpty) const Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
                 WidgetsPanel(
                   padding: const EdgeInsets.all(12),
@@ -107,7 +107,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                       if (txs.isNotEmpty)
                         WidgetsDialogsAlert(
                           label: "Trade",
-                          padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                           persistBg: true,
                           dialogTitle: "Trade Confirmation",
                           dialogMessage: "This action cannot be undone.",
@@ -175,10 +175,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           dataRowHeight: AppTheme.tableDataRowMinHeight,
           isHorizontalScrollBarVisible: false,
           columns: [
-            DataColumn2(label: Text('Date '), fixedWidth: 100),
-            DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-            if (showRate) DataColumn2(label: Text('Rate '), size: ColumnSize.M),
-            if (showRate) DataColumn2(label: Text('Amount '), size: ColumnSize.M),
+            const DataColumn2(label: Text('Date '), fixedWidth: 100),
+            const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+            if (showRate) const DataColumn2(label: Text('Rate '), size: ColumnSize.M),
+            if (showRate) const DataColumn2(label: Text('Amount '), size: ColumnSize.M),
           ],
           rows: [
             ...rows.map((r) {
@@ -228,9 +228,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         dataRowHeight: AppTheme.tableDataRowMinHeight,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: Text('        Total'), fixedWidth: 130),
+          const DataColumn2(label: Text('        Total'), fixedWidth: 130),
           DataColumn2(label: Text('${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol'), size: ColumnSize.M),
-          if (showRate) DataColumn2(label: Text(''), size: ColumnSize.M),
+          if (showRate) const DataColumn2(label: Text(''), size: ColumnSize.M),
           if (showRate) DataColumn2(label: Text('${Utils.formatSmartDouble(resultValue)} $targetSymbol'), size: ColumnSize.M),
         ],
         rows: [],

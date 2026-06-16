@@ -312,7 +312,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   }
 
   Widget _buildTitle() {
-    return Text('Edit Transaction', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return const Text('Edit Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildSourceAmountField() {

@@ -185,8 +185,8 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
           DropdownButtonFormField<String>(
             initialValue: _operator,
             decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               labelText: "Operator",
             ),
             items: const [

@@ -46,7 +46,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return Column(
+      return const Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.')),
         ],
