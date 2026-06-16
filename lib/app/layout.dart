@@ -25,21 +25,19 @@ class AppLayout extends StatefulWidget {
 }
 
 class _AppLayoutState extends State<AppLayout> {
-  late String _title = widget.title;
-
-  late CryptosController _cryptosController;
-  late RatesController _ratesController;
+  CryptosController get _cryptosController => locator<CryptosController>();
+  RatesController get _ratesController => locator<RatesController>();
 
   void _setTitle(String newTitle) {
-    setState(() => _title = newTitle);
+    _title.value = newTitle;
   }
 
   void _setActions(Widget? actions) {
-    setState(() => _actions = actions);
+    _actions.value = actions;
   }
 
   void _refreshBar() {
-    setState(() => _barBuildId = _barBuildId + 1);
+    _actions.value = _actions.value;
   }
 
   List<Map<String, Object>> menus = [
@@ -87,88 +85,64 @@ class _AppLayoutState extends State<AppLayout> {
     },
   ];
 
-  Widget? _actions;
-  bool _isFetchingRates = false;
-  bool _isFetchingCryptos = false;
-  int _barBuildId = 1;
+  final ValueNotifier<Widget?> _actions = ValueNotifier(null);
+  final ValueNotifier<String?> _title = ValueNotifier(null);
 
   @override
   void initState() {
     super.initState();
-    _actions = null;
+
+    _title.value = widget.title;
 
     AppLayout.setTitle = _setTitle;
     AppLayout.setActions = _setActions;
     AppLayout.refreshBar = _refreshBar;
-
-    _cryptosController = locator<CryptosController>();
-    _ratesController = locator<RatesController>();
-
-    _ratesController.addListener(_onControllerChanged);
-    _cryptosController.addListener(_onControllerChanged);
-
-    _isFetchingRates = _ratesController.isFetching;
-    _isFetchingCryptos = _cryptosController.isFetching;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _ratesController.removeListener(_onControllerChanged);
-    _cryptosController.removeListener(_onControllerChanged);
-  }
-
-  void _onControllerChanged() {
-    if (mounted && (_isFetchingRates != _ratesController.isFetching || _isFetchingCryptos != _cryptosController.isFetching)) {
-      setState(() {
-        _isFetchingRates = _ratesController.isFetching;
-        _isFetchingCryptos = _cryptosController.isFetching;
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([locator<CryptosController>(), locator<RatesController>()]),
-      builder: (context, _) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
         final location = GoRouterState.of(context).uri.toString();
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final double leadingWidth = width < 800 ? 0 : 210;
-            final showMenu = width < 800;
+        final width = constraints.maxWidth;
+        final double leadingWidth = width < 800 ? 0 : 210;
+        final showMenu = width < 800;
 
-            return Scaffold(
-              drawer: (showMenu) ? _buildDrawer(location, context) : null,
-              appBar: AppBar(
-                backgroundColor: AppTheme.columnHeaderBg,
-                leadingWidth: leadingWidth,
-                leading: (showMenu) ? const SizedBox.shrink() : _buildLeading(leadingWidth),
-                title: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final width = constraints.maxWidth.isFinite ? constraints.maxWidth : MediaQuery.of(context).size.width;
-                    return SizedBox(
-                      width: width,
-                      child: Row(
-                        spacing: 8,
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          (showMenu) ? _buildMenuToggler(context) : _buildNavigation(location),
+        return Scaffold(
+          drawer: (showMenu) ? _buildDrawer(location, context) : null,
+          appBar: AppBar(
+            backgroundColor: AppTheme.columnHeaderBg,
+            leadingWidth: leadingWidth,
+            leading: (showMenu) ? const SizedBox.shrink() : _buildLeading(leadingWidth),
+            title: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth.isFinite ? constraints.maxWidth : MediaQuery.of(context).size.width;
+                return SizedBox(
+                  width: width,
+                  child: Row(
+                    spacing: 8,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      (showMenu) ? _buildMenuToggler(context) : _buildNavigation(location),
 
-                          const WidgetsSeparator(),
+                      const WidgetsSeparator(),
 
-                          if (_actions != null) Expanded(key: Key("bid-$_barBuildId"), child: _actions!),
-                        ],
+                      Expanded(
+                        child: ValueListenableBuilder<Widget?>(
+                          valueListenable: _actions,
+                          builder: (_, actions, _) {
+                            return actions ?? const SizedBox.shrink();
+                          },
+                        ),
                       ),
-                    );
-                  },
-                ),
-                actions: (!showMenu) ? [_buildActions()] : [],
-              ),
-              body: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8), child: widget.child),
-            );
-          },
+                    ],
+                  ),
+                );
+              },
+            ),
+            actions: (!showMenu) ? [_buildActions()] : [],
+          ),
+          body: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8), child: widget.child),
         );
       },
     );
@@ -206,7 +180,14 @@ class _AppLayoutState extends State<AppLayout> {
             color: AppTheme.menuHeaderBg,
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(_title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            child: ValueListenableBuilder<String?>(
+              valueListenable: _title,
+              builder: (_, title, _) {
+                return title != null
+                    ? Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16))
+                    : const SizedBox.shrink();
+              },
+            ),
           ),
 
           ...navigation,
@@ -214,6 +195,7 @@ class _AppLayoutState extends State<AppLayout> {
           const Divider(),
 
           ListTile(
+            key: Key('refresh-cryptos'),
             leading: const Icon(Icons.refresh),
             title: const Text("Refresh Cryptos"),
             onTap: () async {
@@ -230,6 +212,7 @@ class _AppLayoutState extends State<AppLayout> {
           ),
           if (hasRates)
             ListTile(
+              key: Key('refresh-rates'),
               leading: const Icon(Icons.autorenew),
               title: const Text("Refresh Rates"),
               onTap: () async {
@@ -248,6 +231,7 @@ class _AppLayoutState extends State<AppLayout> {
           const Divider(),
 
           ListTile(
+            key: Key('close-menu'),
             leading: const Icon(Icons.close),
             title: const Text("Close Menu"),
             onTap: () {
@@ -274,7 +258,12 @@ class _AppLayoutState extends State<AppLayout> {
             width: width - 16,
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(_title, style: TextStyle(fontWeight: FontWeight.w700)),
+              child: ValueListenableBuilder<String?>(
+                valueListenable: _title,
+                builder: (_, title, _) {
+                  return title != null ? Text(title, style: const TextStyle(fontWeight: FontWeight.w700)) : const SizedBox.shrink();
+                },
+              ),
             ),
           ),
         ),
@@ -294,54 +283,64 @@ class _AppLayoutState extends State<AppLayout> {
             spacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              WidgetsButton(
-                key: const Key("refresh-crypto"),
-                icon: Icons.refresh,
-                padding: const EdgeInsets.all(8),
-                iconSize: 20,
-                minimumSize: const Size(40, 40),
-                tooltip: "Refresh Cryptos",
-                evaluator: (s) {
-                  _isFetchingCryptos ? s.progress() : s.reset();
-                },
-                onPressed: (s) async {
-                  s.progress();
-                  try {
-                    await _cryptosController.fetch();
-                    widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-                  } catch (e) {
-                    if (e is NetworkingException) {
-                      widgetsNotifyError(e.userMessage);
-                    }
-                  } finally {
-                    s.reset();
-                  }
+              AnimatedBuilder(
+                animation: _cryptosController,
+                builder: (context, _) {
+                  return WidgetsButton(
+                    key: const Key("refresh-crypto"),
+                    icon: Icons.refresh,
+                    padding: const EdgeInsets.all(8),
+                    iconSize: 20,
+                    minimumSize: const Size(40, 40),
+                    tooltip: "Refresh Cryptos",
+                    evaluator: (s) {
+                      _cryptosController.isFetching ? s.progress() : s.reset();
+                    },
+                    onPressed: (s) async {
+                      s.progress();
+                      try {
+                        await _cryptosController.fetch();
+                        widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
+                      } catch (e) {
+                        if (e is NetworkingException) {
+                          widgetsNotifyError(e.userMessage);
+                        }
+                      } finally {
+                        s.reset();
+                      }
+                    },
+                  );
                 },
               ),
 
               if (hasRates)
-                WidgetsButton(
-                  key: const Key("refresh-rates"),
-                  icon: Icons.autorenew,
-                  padding: const EdgeInsets.all(8),
-                  iconSize: 20,
-                  minimumSize: const Size(40, 40),
-                  tooltip: "Refresh Rates",
-                  evaluator: (s) {
-                    _isFetchingRates ? s.progress() : s.reset();
-                  },
-                  onPressed: (s) async {
-                    s.progress();
-                    try {
-                      await _ratesController.refreshRates();
-                      widgetsNotifySuccess("Refreshed rates from exchange.");
-                    } catch (e) {
-                      if (e is NetworkingException) {
-                        widgetsNotifyError(e.userMessage);
-                      }
-                    } finally {
-                      s.reset();
-                    }
+                AnimatedBuilder(
+                  animation: _ratesController,
+                  builder: (context, _) {
+                    return WidgetsButton(
+                      key: const Key("refresh-rates"),
+                      icon: Icons.autorenew,
+                      padding: const EdgeInsets.all(8),
+                      iconSize: 20,
+                      minimumSize: const Size(40, 40),
+                      tooltip: "Refresh Rates",
+                      evaluator: (s) {
+                        _ratesController.isFetching ? s.progress() : s.reset();
+                      },
+                      onPressed: (s) async {
+                        s.progress();
+                        try {
+                          await _ratesController.refreshRates();
+                          widgetsNotifySuccess("Refreshed rates from exchange.");
+                        } catch (e) {
+                          if (e is NetworkingException) {
+                            widgetsNotifyError(e.userMessage);
+                          }
+                        } finally {
+                          s.reset();
+                        }
+                      },
+                    );
                   },
                 ),
             ],
