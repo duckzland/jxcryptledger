@@ -40,7 +40,6 @@ class TickersService {
 
     try {
       return await compute(parseJson, resp.body);
-      // return json.decode(resp.body) as Map<String, dynamic>;
     } catch (e) {
       throw NetworkingException(
         AppErrorCode.netParseFailure,
