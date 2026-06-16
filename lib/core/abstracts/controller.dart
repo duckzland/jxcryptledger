@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../log.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
 abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseRepository<T>> extends ChangeNotifier {
+  Timer? _notifyTimer;
+
   List<T> listItems = [];
   List<T> get items => listItems;
 
@@ -22,7 +25,12 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
 
   void load() {
     start();
-    notifyListeners();
+    _notifyTimer?.cancel();
+    // logln("Scheduling listener for: ${T.toString()}");
+    _notifyTimer = Timer(const Duration(milliseconds: 16), () {
+      logln("Firing listener for: ${T.toString()}");
+      notifyListeners();
+    });
   }
 
   T? get(String tid) {

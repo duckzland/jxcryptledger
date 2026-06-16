@@ -93,7 +93,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                                 }
                               },
                               onPressed: (_) {
-                                rateableGetRate(refresh: true);
+                                rateableGetRate(silent: true);
                               },
                             ),
                           ),
@@ -146,7 +146,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                                 }
                               },
                               onPressed: (_) {
-                                rateableGetRate();
+                                rateableGetRate(silent: true);
                               },
                             ),
                           ),
@@ -203,7 +203,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
 
         rateableSource = id;
 
-        rateableGetRate(refresh: false);
+        rateableGetRate(refresh: false, silent: true);
       }),
     );
   }
@@ -222,7 +222,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
 
         rateableTarget = id;
 
-        rateableGetRate(refresh: false);
+        rateableGetRate(refresh: false, silent: true);
       }),
     );
   }

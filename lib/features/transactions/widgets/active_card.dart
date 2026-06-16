@@ -166,7 +166,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     _calculateProfitLoss();
 
     // Rateable callback will try to build rows
-    rateableGetRate(refresh: false);
+    rateableGetRate(refresh: false, silent: true);
     if (rows.isEmpty && txs.isNotEmpty) {
       rows = _buildRows();
     }
@@ -225,7 +225,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   @override
   void rateableUpdateRate() {
-    rateableGetRate();
+    rateableGetRate(silent: true);
   }
 
   void _calculateProfitLoss() {
@@ -362,7 +362,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                     _debounce = Timer(const Duration(milliseconds: 100), () {
                       setState(() {
                         _customRate = double.tryParse(value);
-                        rateableGetRate();
+                        rateableGetRate(silent: true);
                       });
                     });
                   },

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../app/exceptions.dart';
 import '../core/locator.dart';
 import '../core/utils.dart';
 import '../features/rates/controller.dart';
+import '../widgets/notify.dart';
 
 mixin MixinsRateable<T extends StatefulWidget> on State<T> {
   late void Function(String value, String helperText)? rateableStateUpdater;
@@ -49,10 +51,10 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
       return;
     }
 
-    rateableGetRate();
+    rateableGetRate(silent: true);
   }
 
-  void rateableGetRate({bool refresh = true, bool reversed = false}) {
+  void rateableGetRate({bool refresh = true, bool reversed = false, bool silent = false}) {
     try {
       final int source = rateableSource ?? 0;
       final int target = rateableTarget ?? 0;
@@ -61,7 +63,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
         return;
       }
 
-      final rate = rateableController.getStoredRate(reversed ? target : source, reversed ? source : target);
+      final rate = rateableController.getStoredRate(reversed ? target : source, reversed ? source : target, throwable: true);
       if (rate == -9999) {
         rateableController.addQueue(source, target, force: rateableForceFetch);
         if (rateableIsTemporary) {
@@ -84,7 +86,12 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
         setState(() {});
       }
     } catch (e) {
-      // Do something to process the error message?
+      rateableStateUpdater?.call("", rateableDefaultHelper);
+      rateableStateUpdater = null;
+
+      if (!silent && e is NetworkingException) {
+        widgetsNotifyError(e.userMessage);
+      }
     }
   }
 

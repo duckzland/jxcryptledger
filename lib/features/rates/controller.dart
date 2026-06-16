@@ -26,8 +26,8 @@ class RatesController extends ChangeNotifier {
     return service.getAll();
   }
 
-  double getStoredRate(int sourceId, int targetId) {
-    return service.getStoredRate(sourceId, targetId);
+  double getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
+    return service.getStoredRate(sourceId, targetId, throwable: throwable);
   }
 
   void addQueue(int sourceId, int targetId, {bool force = true}) {

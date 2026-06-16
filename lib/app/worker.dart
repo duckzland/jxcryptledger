@@ -23,6 +23,11 @@ class AppWorker {
     final tickers = locator<TickersController>();
     final transactions = locator<TransactionsController>();
 
+    logln("[WORKER] Registering used rates.");
+    panels.scheduleRates();
+    watchers.scheduleRates();
+    transactions.scheduleRates();
+
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       bool mustAlwaysFetchRate = false;
       final current = AppRouter.router.routerDelegate.currentConfiguration.uri.toString();

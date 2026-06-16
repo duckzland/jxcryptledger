@@ -54,13 +54,18 @@ class RatesService {
     onStart = cb;
   }
 
-  double getStoredRate(int sourceId, int targetId) {
+  double getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
     // Source and target is the same coin the rate is always 1
     if (sourceId == targetId) {
       return 1;
     }
 
-    _validateIds(sourceId, targetId);
+    if (!throwable) {
+      if (!_isValidPair(sourceId, targetId)) return -9999;
+    } else {
+      validateIds(sourceId, targetId);
+    }
+
     final existing = ratesRepo.get("$sourceId-$targetId");
     return existing?.rate.toDouble() ?? -9999;
   }
@@ -144,12 +149,12 @@ class RatesService {
     return ids.contains(sourceId) && ids.contains(targetId);
   }
 
-  void _validateIds(int sourceId, int targetId) {
+  void validateIds(int sourceId, int targetId) {
     if (!_isValidPair(sourceId, targetId)) {
       throw NetworkingException(
         AppErrorCode.netInvalidRatePayload,
         'Invalid rate pair: $sourceId -> $targetId',
-        "Unable to retrieve rates from the server.",
+        "One of the selected cryptocurrencies is not valid.",
       );
     }
   }
@@ -166,6 +171,10 @@ class RatesService {
       final b = j.$2;
 
       final reversed = (b, a);
+
+      if (!_isValidPair(a, b)) {
+        continue;
+      }
 
       if (seen.contains(reversed)) {
         continue;
