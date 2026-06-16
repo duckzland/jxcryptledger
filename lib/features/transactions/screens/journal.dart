@@ -153,6 +153,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
               child: DataTable2(
+                key: const Key("table-journal"),
                 scrollController: scrollToUtil.controller,
                 minWidth: 1200,
                 columnSpacing: 12,
@@ -177,6 +178,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                 ],
                 rows: rows.map((r) {
                   return DataRow(
+                    key: ValueKey(r['uuid']),
                     cells: [
                       DataCell(Text(r['date'] ?? '')),
                       DataCell(Text(r['balance'] ?? '')),
