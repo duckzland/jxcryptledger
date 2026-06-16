@@ -4,7 +4,6 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
-import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
@@ -205,8 +204,8 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
           minWidth: 800,
           columnSpacing: 12,
           horizontalMargin: 12,
-          headingRowHeight: AppTheme.tableHeadingRowHeight,
-          dataRowHeight: AppTheme.tableDataRowMinHeight,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
           isHorizontalScrollBarVisible: false,
           columns: [
             DataColumn2(label: const Text('Date '), fixedWidth: 100),

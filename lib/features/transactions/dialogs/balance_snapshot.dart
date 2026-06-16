@@ -7,6 +7,8 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
+import '../../../mixins/state.dart';
+import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/panel.dart';
@@ -25,7 +27,7 @@ class TransactionsDialogsBalanceSnapshots extends StatefulWidget {
   State<TransactionsDialogsBalanceSnapshots> createState() => _TransactionsDialogsBalanceSnapshotsState();
 }
 
-class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialogsBalanceSnapshots> {
+class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialogsBalanceSnapshots> with MixinsState, MixinsTable {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
   RatesController get _rateController => locator<RatesController>();
@@ -60,6 +62,15 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
     return leaves;
   }
+
+  @override
+  double get tableHeightOffset {
+    final ttl = _getTotalAmount(tradableLeaves);
+    return ttl == null ? 100 : 100 + (2 * tableRowHeight);
+  }
+
+  @override
+  double get tableHeadingHeightOffset => 0;
 
   @override
   void initState() {
@@ -137,6 +148,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             : '${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol',
         'rate': rate == -9999 || tx.rrId == tradeSourceId ? "-" : "1 $resultSymbol = ${Utils.formatSmartDouble(rate)} $tradeSourceSymbol",
         'amount': rate == -9999 ? "" : "${Utils.formatSmartDouble(amount)} $tradeSourceSymbol",
+        'uuid': tx.uuid,
         'tx': tx,
       });
     }
@@ -165,83 +177,100 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   }
 
   Widget _buildTransactionsPanel() {
-    final table = _buildRows(tradableLeaves);
-    final ttl = _getTotalAmount(tradableLeaves);
-
-    int ttlRows = table.length;
-    String total = "";
-    double pl = 0.0;
-
-    if (ttl != null) {
-      total = '${Utils.formatSmartDouble(ttl)} $tradeSourceSymbol';
-      pl = Math.subtract(ttl, tradeCapital);
-      ttlRows += 2;
-    }
+    rows = _buildRows(tradableLeaves);
 
     return WidgetsPanel(
       padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 0,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: ((ttlRows) * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 12,
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-              child: DataTable2(
-                minWidth: 800,
-                columnSpacing: 12,
-                horizontalMargin: 12,
-                headingRowHeight: AppTheme.tableHeadingRowHeight,
-                dataRowHeight: AppTheme.tableDataRowMinHeight,
-                showCheckboxColumn: false,
-                isHorizontalScrollBarVisible: false,
-                columns: [
-                  const DataColumn2(label: Text('Date '), fixedWidth: 100),
-                  const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-                  const DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
-                  const DataColumn2(label: Text('Return '), size: ColumnSize.S),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 4, children: [_buildTable(), _buildTotal()]),
+    );
+  }
+
+  Widget _buildTable() {
+    return SizedBox(
+      width: double.infinity,
+      height: tableCalculateAdjustedMaxHeight(),
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
+        child: DataTable2(
+          minWidth: 800,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
+          showCheckboxColumn: false,
+          isHorizontalScrollBarVisible: false,
+          columns: [
+            const DataColumn2(label: Text('Date '), fixedWidth: 100),
+            const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+            const DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
+            const DataColumn2(label: Text('Return '), size: ColumnSize.S),
+          ],
+          rows: [
+            ...rows.map((r) {
+              return DataRow(
+                key: ValueKey(r['uuid']),
+                cells: [
+                  DataCell(Text(r['date'] ?? '')),
+                  DataCell(Text(r['transaction'] ?? '')),
+                  DataCell(Text(r['rate'] ?? '')),
+                  DataCell(Text(r['amount'] ?? '')),
                 ],
-                rows: [
-                  ...table.map((r) {
-                    return DataRow(
-                      cells: [
-                        DataCell(Text(r['date'] ?? '')),
-                        DataCell(Text(r['transaction'] ?? '')),
-                        DataCell(Text(r['rate'] ?? '')),
-                        DataCell(Text(r['amount'] ?? '')),
-                      ],
-                    );
-                  }),
-                  if (ttl != null)
-                    DataRow(
-                      color: WidgetStateProperty.all(AppTheme.headerBg),
-                      cells: [
-                        const DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataCell(
-                          Text(
-                            "${Utils.formatSmartDouble(tradeCapital)} $tradeSourceSymbol",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataCell(Text(total, style: const TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                    ),
-                  if (ttl != null)
-                    DataRow(
-                      color: WidgetStateProperty.all(AppTheme.headerBg),
-                      cells: [
-                        const DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDouble(pl)} $tradeSourceSymbol", value: pl, comparator: 0)),
-                        const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-                        const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                    ),
-                ],
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotal() {
+    final ttl = _getTotalAmount(tradableLeaves);
+
+    if (ttl == null) {
+      return SizedBox.shrink();
+    }
+
+    final total = '${Utils.formatSmartDouble(ttl)} $tradeSourceSymbol';
+    final pl = Math.subtract(ttl, tradeCapital);
+
+    return SizedBox(
+      width: double.infinity,
+      height: tableRowHeight * 2,
+      child: DataTable2(
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: 0,
+        dataRowHeight: tableRowHeight,
+        isHorizontalScrollBarVisible: false,
+        columns: [
+          const DataColumn2(label: SizedBox.shrink(), fixedWidth: 100),
+          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.M),
+          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
+          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
+        ],
+        rows: [
+          DataRow(
+            key: ValueKey('total-row'),
+            color: WidgetStateProperty.all(AppTheme.headerBg),
+            cells: [
+              const DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(
+                Text("${Utils.formatSmartDouble(tradeCapital)} $tradeSourceSymbol", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
-            ),
+              const DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text(total, style: const TextStyle(fontWeight: FontWeight.bold))),
+            ],
+          ),
+          DataRow(
+            key: ValueKey('profit-row'),
+            color: WidgetStateProperty.all(AppTheme.headerBg),
+            cells: [
+              const DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDouble(pl)} $tradeSourceSymbol", value: pl, comparator: 0)),
+              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+            ],
           ),
         ],
       ),

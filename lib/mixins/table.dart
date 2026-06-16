@@ -8,7 +8,7 @@ mixin MixinsTable on MixinsState {
   double get tableHeadingHeightOffset => 12;
   double get tableHeightPercentageFromViewport => 0.8;
   double get tableRowHeight => AppTheme.tableDataRowMinHeight;
-  double get tableHeadingHeight => AppTheme.tableHeadingRowHeight + 4;
+  double get tableHeadingHeight => AppTheme.tableHeadingRowHeight;
 
   int tableMinimumRowEntries = 5;
 
@@ -41,7 +41,7 @@ mixin MixinsTable on MixinsState {
 
       final maxRows = clampedRows.toDouble();
 
-      suggestedHeight = maxRows * AppTheme.tableDataRowMinHeight;
+      suggestedHeight = (maxRows * tableRowHeight);
     }
 
     return suggestedHeight;
