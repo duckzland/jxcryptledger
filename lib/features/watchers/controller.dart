@@ -65,8 +65,8 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
   Future<void> sendNotification(WatchersModel tx) async {
     String message = tx.message;
     if (message == "" || message.trim().isEmpty) {
-      final sourceSymbol = _cryptosService.getSymbol(tx.srId) ?? "";
-      final targetSymbol = _cryptosService.getSymbol(tx.rrId) ?? "";
+      final sourceSymbol = _cryptosService.getSymbol(tx.srId) ?? "UNK";
+      final targetSymbol = _cryptosService.getSymbol(tx.rrId) ?? "UNK";
 
       message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDouble(tx.rates)}.";
     }
