@@ -20,14 +20,14 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
         }
         return AppTheme.textMuted;
       }),
-      padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
+      padding: WidgetStateProperty.all(const EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
       minimumSize: WidgetStateProperty.all(const Size(16, 16)),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
   Widget suffixIconText() {
-    return Text("$suffixText ", style: TextStyle(color: AppTheme.textMuted));
+    return Text("$suffixText ", style: const TextStyle(color: AppTheme.textMuted));
   }
 
   Widget suffixIconUseMax(String tooltip) {

@@ -180,7 +180,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
               LayoutId(
                 id: 'trailing',
                 child: Padding(
-                  padding: EdgeInsets.only(right: 25, top: 6, left: 8),
+                  padding: const EdgeInsets.only(right: 25, top: 6, left: 8),
                   child: TransactionsWidgetsButtons(
                     tx: _tx,
                     cryptosController: _cryptosController,

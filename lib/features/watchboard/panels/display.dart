@@ -122,25 +122,22 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
     final text = tix.rate > 0
         ? [
-            Text(fromText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(fromText, style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600)),
             Flexible(
               child: Text(
                 toText,
                 softWrap: false,
                 overflow: TextOverflow.visible,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(height: 1.3, fontSize: 25, fontWeight: FontWeight.w700),
+                style: const TextStyle(height: 1.3, fontSize: 25, fontWeight: FontWeight.w700),
               ),
             ),
-            Text(rateText, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
-            Text(
-              inverseText,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400),
-            ),
+            Text(rateText, style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
+            Text(inverseText, style: const TextStyle(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400)),
           ]
         : [
             Text(
               tix.rate == -9999 ? "Fetching new rate..." : "Loading...",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ];
 

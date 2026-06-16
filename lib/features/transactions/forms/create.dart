@@ -226,7 +226,7 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
   }
 
   Widget _buildTitle() {
-    return Text('New Transaction', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return const Text('New Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildSourceAmountField() {

@@ -76,12 +76,12 @@ class _UnlockPageState extends State<UnlockPage> {
             TextField(
               controller: _password,
               obscureText: !showPassword,
-              decoration: InputDecoration(labelText: "Password"),
+              decoration: const InputDecoration(labelText: "Password"),
             ),
             TextField(
               controller: _confirm,
               obscureText: !showPassword,
-              decoration: InputDecoration(labelText: "Confirm Password"),
+              decoration: const InputDecoration(labelText: "Confirm Password"),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

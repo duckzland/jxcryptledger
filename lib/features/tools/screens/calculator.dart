@@ -212,7 +212,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
 
     if (source <= 0 || entryRate <= 0 || targetSymbol == "" || sourceSymbol == "") {
-      return Text("");
+      return const Text("");
     }
 
     final double stage1Balance = source * entryRate;
@@ -232,12 +232,12 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       children: [
         Text(
           returnRate > 0 ? "Returned amout" : "Calculated Amount",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
         Text(
           "${Utils.formatSmartDouble(resultValue)} $currentSymbol",
-          style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
 
         if (returnRate > 0 && profit != 0) ...[
@@ -254,7 +254,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
               crossAxisAlignment: CrossAxisAlignment.center,
 
               children: [
-                Text("Net Profit/Loss:", style: TextStyle(fontSize: 14, color: AppTheme.textMuted)),
+                Text("Net Profit/Loss:", style: const TextStyle(fontSize: 14, color: AppTheme.textMuted)),
                 const SizedBox(width: 8),
                 WidgetsBalanceText(
                   text: "${Utils.formatSmartDouble(profit)} $sourceSymbol",

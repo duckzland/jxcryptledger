@@ -61,7 +61,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
         children: [
           const Icon(Icons.add_circle_outline, size: 60, color: AppTheme.separator),
           const SizedBox(height: 16),
-          Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
           Wrap(
             spacing: 20,

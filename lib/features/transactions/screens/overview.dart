@@ -148,12 +148,12 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         ? Center(
             child: Text(
               _filterMode == 0 ? "No active transactions available" : "No transactions available",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
           )
         : ListView.separated(
             controller: scrollToUtil.controller,
-            padding: EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.only(bottom: 24),
             itemCount: groups.length,
             separatorBuilder: (_, _) => const SizedBox(height: 24),
             itemBuilder: (itemContext, idx) {

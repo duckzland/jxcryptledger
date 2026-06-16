@@ -198,10 +198,10 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
                 showCheckboxColumn: false,
                 isHorizontalScrollBarVisible: false,
                 columns: [
-                  DataColumn2(label: Text('Date '), fixedWidth: 100),
-                  DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-                  DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
-                  DataColumn2(label: Text('Return '), size: ColumnSize.S),
+                  const DataColumn2(label: Text('Date '), fixedWidth: 100),
+                  const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+                  const DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
+                  const DataColumn2(label: Text('Return '), size: ColumnSize.S),
                 ],
                 rows: [
                   ...table.map((r) {
@@ -218,25 +218,25 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
                     DataRow(
                       color: WidgetStateProperty.all(AppTheme.headerBg),
                       cells: [
-                        DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
                         DataCell(
                           Text(
                             "${Utils.formatSmartDouble(tradeCapital)} $tradeSourceSymbol",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                        DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataCell(Text(total, style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataCell(Text(total, style: const TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
                   if (ttl != null)
                     DataRow(
                       color: WidgetStateProperty.all(AppTheme.headerBg),
                       cells: [
-                        DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
                         DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDouble(pl)} $tradeSourceSymbol", value: pl, comparator: 0)),
-                        DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
                 ],
@@ -249,7 +249,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   }
 
   Widget _buildTitle() {
-    return Text("Balance Snapshot", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return const Text("Balance Snapshot", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildButtonPanel() {

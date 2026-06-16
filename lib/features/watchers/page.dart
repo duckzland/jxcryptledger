@@ -123,7 +123,7 @@ class _WatchersPageState extends State<WatchersPage>
             ),
           ],
         ),
-        WidgetsSeparator(),
+        const WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [

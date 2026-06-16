@@ -111,7 +111,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
           spacing: 4,
           children: [
             WidgetsButton(
-              key: _enableTickers ? Key("ticker-shown") : Key("ticker-hidden"),
+              key: _enableTickers ? const Key("ticker-shown") : const Key("ticker-hidden"),
               icon: Icons.remove_red_eye,
               padding: const EdgeInsets.all(8),
               initialState: WidgetsButtonActionState.normal,
@@ -133,7 +133,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               },
             ),
             WidgetsButton(
-              key: _enableDrag ? Key("panel-drag-allowed") : Key("panel-drag-disabled"),
+              key: _enableDrag ? const Key("panel-drag-allowed") : const Key("panel-drag-disabled"),
               icon: Icons.drag_indicator,
               padding: const EdgeInsets.all(8),
               initialState: WidgetsButtonActionState.normal,
@@ -172,7 +172,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
             ),
           ],
         ),
-        WidgetsSeparator(),
+        const WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [
@@ -221,12 +221,12 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
             ),
           ],
         ),
-        WidgetsSeparator(),
+        const WidgetsSeparator(),
         Wrap(
           spacing: 4,
           children: [
             WidgetsDialogsImport(
-              key: Key("import-button-batch"),
+              key: const Key("import-button-batch"),
               tooltip: "Import watchboard to database",
               showDialogBeforeImport: true,
               onImport: (String json) async {
@@ -270,7 +270,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return Column(
+      return const Column(
         children: [
           Expanded(child: WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.')),
         ],
@@ -323,7 +323,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
 
     return ReorderableGridView.builder(
       controller: scrollUtil.controller,
-      padding: EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
         itemHeight: 105,
@@ -332,7 +332,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         horizontalPadding: 12,
       ),
       dragEnabled: _enableDrag,
-      dragStartDelay: Duration(microseconds: 10),
+      dragStartDelay: const Duration(microseconds: 10),
       itemCount: txs.length,
       itemBuilder: (context, index) {
         final tx = txs[index];
@@ -391,7 +391,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               horizontalPadding: 8,
             ),
             dragEnabled: _enableDrag,
-            dragStartDelay: Duration(microseconds: 10),
+            dragStartDelay: const Duration(microseconds: 10),
             itemCount: items.length,
             itemBuilder: (context, index) {
               final tx = items[index];
