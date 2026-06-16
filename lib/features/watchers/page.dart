@@ -12,6 +12,7 @@ import '../../mixins/action_bar.dart';
 import '../../mixins/scrollto_table.dart';
 import '../../mixins/sortable_table.dart';
 import '../../mixins/state.dart';
+import '../../mixins/table.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -37,7 +38,12 @@ class WatchersPage extends StatefulWidget {
 }
 
 class _WatchersPageState extends State<WatchersPage>
-    with MixinsState, MixinsSortableTable<WatchersPage>, MixinsActionBar<WatchersPage>, MixinsScrollToTable<WatchersPage, WatchersModel> {
+    with
+        MixinsState,
+        MixinsTable,
+        MixinsSortableTable<WatchersPage>,
+        MixinsActionBar<WatchersPage>,
+        MixinsScrollToTable<WatchersPage, WatchersModel> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
   late final WatchersController _wxController;

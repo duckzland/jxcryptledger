@@ -11,6 +11,7 @@ import '../../mixins/action_bar.dart';
 import '../../mixins/scrollto_table.dart';
 import '../../mixins/sortable_table.dart';
 import '../../mixins/state.dart';
+import '../../mixins/table.dart';
 import '../../widgets/button.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
@@ -38,7 +39,12 @@ class ArchivesPage extends StatefulWidget {
 }
 
 class _ArchivesPageState extends State<ArchivesPage>
-    with MixinsState, MixinsSortableTable<ArchivesPage>, MixinsActionBar<ArchivesPage>, MixinsScrollToTable<ArchivesPage, ArchivesModel> {
+    with
+        MixinsState,
+        MixinsTable,
+        MixinsSortableTable<ArchivesPage>,
+        MixinsActionBar<ArchivesPage>,
+        MixinsScrollToTable<ArchivesPage, ArchivesModel> {
   late final ArchivesController _controller;
 
   final CryptosController _cryptosController = locator<CryptosController>();

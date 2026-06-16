@@ -1,8 +1,8 @@
 import 'package:get_it/get_it.dart';
-import 'package:jxledger/features/archives/controller.dart';
-import 'package:jxledger/features/archives/repository.dart';
 
 import '../app/worker.dart';
+import '../features/archives/controller.dart';
+import '../features/archives/repository.dart';
 import '../features/notification/service.dart';
 import '../features/rates/repository.dart';
 import '../features/rates/service.dart';

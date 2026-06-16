@@ -11,6 +11,8 @@ import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
+import '../../../mixins/state.dart';
+import '../../../mixins/table.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/fields/amount.dart';
@@ -34,7 +36,7 @@ class TransactionsDialogsBatchTrade extends StatefulWidget {
 }
 
 class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatchTrade>
-    with MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchTrade> {
+    with MixinsState, MixinsTable, MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchTrade> {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
@@ -45,6 +47,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   late List<TransactionsModel> txs;
 
   Timer? _debounce;
+
+  @override
+  double get tableHeightOffset => 220;
+
+  @override
+  double get tableHeadingHeightOffset => 4;
 
   @override
   void initState() {
@@ -137,7 +145,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   Widget _buildTable() {
-    final rows = <Map<String, dynamic>>[];
+    rows = <Map<String, dynamic>>[];
+
     final double rate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
@@ -158,9 +167,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       });
     }
 
+    // (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 4
+
     return SizedBox(
       width: double.infinity,
-      height: (rows.length * AppTheme.tableDataRowMinHeight) + AppTheme.tableHeadingRowHeight + 4,
+      height: tableCalculateAdjustedMaxHeight(),
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
