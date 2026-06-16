@@ -182,6 +182,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
                 child: Padding(
                   padding: const EdgeInsets.only(right: 25, top: 6, left: 8),
                   child: TransactionsWidgetsButtons(
+                    key: Key("action-${_tx.uuid}"),
                     tx: _tx,
                     cryptosController: _cryptosController,
                     txController: _txController,

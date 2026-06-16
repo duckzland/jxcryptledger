@@ -121,7 +121,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
         child: WidgetsPanel(
           padding: const EdgeInsets.only(top: 16, bottom: 16),
           child: TreeView.indexed(
-            key: PageStorageKey(_sortMode),
+            key: PageStorageKey('tree-history-$_sortMode'),
             tree: _root,
             padding: const EdgeInsets.only(left: 16),
             showRootNode: false,

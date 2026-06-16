@@ -184,6 +184,7 @@ class _AppLayoutState extends State<AppLayout> {
       final evaluator = menu['evaluator'] as bool Function(String);
       navigation.add(
         ListTile(
+          key: ValueKey(menu['target']),
           leading: Icon(menu['icon'] as IconData),
           title: Text(menu['title'] as String),
           selected: evaluator(location),
@@ -294,6 +295,7 @@ class _AppLayoutState extends State<AppLayout> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               WidgetsButton(
+                key: const Key("refresh-crypto"),
                 icon: Icons.refresh,
                 padding: const EdgeInsets.all(8),
                 iconSize: 20,
@@ -319,6 +321,7 @@ class _AppLayoutState extends State<AppLayout> {
 
               if (hasRates)
                 WidgetsButton(
+                  key: const Key("refresh-rates"),
                   icon: Icons.autorenew,
                   padding: const EdgeInsets.all(8),
                   iconSize: 20,
@@ -351,6 +354,7 @@ class _AppLayoutState extends State<AppLayout> {
   Widget _buildMenuToggler(BuildContext context) {
     return Builder(
       builder: (context) => WidgetsButton(
+        key: const Key("menu-toggler"),
         icon: Icons.menu,
         padding: const EdgeInsets.all(8),
         iconSize: 20,
@@ -371,6 +375,7 @@ class _AppLayoutState extends State<AppLayout> {
     for (var menu in menus) {
       navigation.add(
         WidgetsButton(
+          key: ValueKey(menu['target']),
           icon: menu['icon'] as IconData,
           padding: const EdgeInsets.all(8),
           iconSize: 20,

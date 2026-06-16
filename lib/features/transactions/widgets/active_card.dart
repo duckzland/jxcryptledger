@@ -279,6 +279,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   Widget _buildHeader() {
     return LayoutBuilder(
+      key: Key("header-${widget.srid}-${widget.rrid}"),
       builder: (context, constraints) {
         if (constraints.maxWidth > 1000) {
           return Row(
@@ -306,6 +307,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   Widget _buildTitle(CrossAxisAlignment align) {
     return Column(
+      key: Key("title-${widget.srid}-${widget.rrid}"),
       crossAxisAlignment: align,
       children: [
         const SizedBox(height: 5),
@@ -626,6 +628,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
+          key: Key("table-${widget.srid}-${widget.rrid}"),
           headingCheckboxTheme: Theme.of(context).checkboxTheme,
           datarowCheckboxTheme: Theme.of(context).checkboxTheme,
           showHeadingCheckBox: canSelect,
@@ -698,6 +701,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
             final tx = r['tx'] as TransactionsModel;
             final canSelect = tx.isActive || tx.isPartial;
             return DataRow(
+              key: ValueKey(r['uuid']),
               selected: canSelect ? selectableIsSelected(r['uuid']) : false,
               onSelectChanged: canSelect
                   ? (v) {
@@ -724,6 +728,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                 DataCell(Text(r['status'])),
                 DataCell(
                   TransactionsWidgetsButtons(
+                    key: Key("action-${tx.uuid}"),
                     tx: r['tx'],
                     cryptosController: _cryptosController,
                     txController: txController,
@@ -807,6 +812,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
             SliverFillRemaining(
               hasScrollBody: false,
               child: Row(
+                key: Key("panels-${widget.srid}-${widget.rrid}"),
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 spacing: 16,
                 children: [

@@ -183,6 +183,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
 
   Widget _buildHeader() {
     return LayoutBuilder(
+      key: Key("header-${widget.id}"),
       builder: (context, constraints) {
         if (constraints.maxWidth > 560) {
           return Row(
@@ -212,6 +213,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
 
   Widget _buildTitle(CrossAxisAlignment align) {
     return Column(
+      key: Key("title-${widget.id}"),
       crossAxisAlignment: align,
       children: [
         const SizedBox(height: 5),
@@ -383,6 +385,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
             SliverFillRemaining(
               hasScrollBody: false,
               child: Row(
+                key: Key("panels-${widget.id}"),
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 spacing: 16,
                 children: [
@@ -449,6 +452,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
+          key: Key("table-${widget.id}"),
           headingCheckboxTheme: Theme.of(context).checkboxTheme,
           datarowCheckboxTheme: Theme.of(context).checkboxTheme,
           showHeadingCheckBox: canSelect,
@@ -474,6 +478,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
             final canSelect = tx.isActive || tx.isPartial;
 
             return DataRow(
+              key: ValueKey(r['uuid']),
               selected: canSelect ? selectableIsSelected(r['uuid']) : false,
               onSelectChanged: canSelect
                   ? (v) {
@@ -492,6 +497,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                 DataCell(Text(r['status'])),
                 DataCell(
                   TransactionsWidgetsButtons(
+                    key: Key("action-${tx.uuid}"),
                     tx: r['tx'],
                     cryptosController: _cryptosController,
                     txController: txController,

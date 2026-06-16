@@ -147,7 +147,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         ? Center(
             child: Text(
               _filterMode == 0 ? "No active transactions available" : "No transactions available",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
           )
         : ListView.separated(
@@ -165,6 +165,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
               final stxs = groups[key]!;
 
               return TransactionsActiveCard(
+                key: ValueKey("card-$rrId"),
                 srid: srId,
                 rrid: rrId,
                 transactions: stxs,

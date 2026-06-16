@@ -161,6 +161,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
               final stxs = groups[rrId]!;
 
               return TransactionsOverviewCard(
+                key: ValueKey("card-$rrId"),
                 id: int.parse(rrId),
                 transactions: stxs,
                 onStatusChanged: widget.onStatusChanged,

@@ -152,6 +152,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
           spacing: 4,
           children: [
             WidgetsButton(
+              key: const Key("view-active"),
               icon: Icons.show_chart,
               padding: const EdgeInsets.all(8),
               iconSize: 20,
@@ -175,6 +176,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               },
             ),
             WidgetsButton(
+              key: const Key("view-balance"),
               icon: Icons.account_balance_wallet_outlined,
               padding: const EdgeInsets.all(8),
               iconSize: 20,
@@ -198,6 +200,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               },
             ),
             WidgetsButton(
+              key: const Key("view-journal"),
               icon: Icons.article_outlined,
               padding: const EdgeInsets.all(8),
               iconSize: 20,
@@ -221,6 +224,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               },
             ),
             WidgetsButton(
+              key: const Key("view-history"),
               icon: Icons.history,
               padding: const EdgeInsets.all(8),
               iconSize: 20,
