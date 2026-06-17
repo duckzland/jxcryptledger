@@ -25,8 +25,8 @@ class TransactionsTreeCard extends StatefulWidget {
 }
 
 class _TransactionsTreeCardState extends State<TransactionsTreeCard> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  final CryptosController _cryptosController = locator<CryptosController>();
-  final TransactionsController _txController = locator<TransactionsController>();
+  CryptosController get _cryptosController => locator<CryptosController>();
+  TransactionsController get _txController => locator<TransactionsController>();
 
   late TransactionsModel _tx;
 
@@ -65,8 +65,6 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
 
     _tx = widget.tx;
 
-    _txController.addListener(_onControllerChange);
-
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: 1.0);
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
 
@@ -77,18 +75,23 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   @override
   void dispose() {
     _controller.dispose();
-    _txController.removeListener(_onControllerChange);
     super.dispose();
   }
 
-  void _onControllerChange() {
-    final ntx = _txController.get(_tx.tid);
-    if (ntx == null) {
+  @override
+  void didUpdateWidget(covariant TransactionsTreeCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!mounted) {
+      return;
+    }
+
+    if (_txController.isBothEqual(oldWidget.tx, widget.tx)) {
       return;
     }
 
     setState(() {
-      _tx = ntx;
+      _tx = widget.tx;
       _calculateData();
       _calculateColor();
     });
@@ -141,7 +144,6 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   }
 
   void _onAction() {
-    _onControllerChange();
     widget.onAction();
   }
 

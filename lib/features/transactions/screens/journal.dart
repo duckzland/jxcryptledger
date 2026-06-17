@@ -33,8 +33,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         AutomaticKeepAliveClientMixin,
         MixinsSortableTable<TransactionsJournalView>,
         MixinsScrollToTable<TransactionsJournalView, TransactionsModel> {
-  late final TransactionsController _txController;
-  late final CryptosController _cryptosController;
+  TransactionsController get _txController => locator<TransactionsController>();
+  CryptosController get _cryptosController => locator<CryptosController>();
 
   late List<TransactionsModel> txs;
 
@@ -52,8 +52,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   @override
   void initState() {
     super.initState();
-    _txController = locator<TransactionsController>();
-    _cryptosController = locator<CryptosController>();
 
     _filterMode = widget.filterMode;
 
