@@ -151,13 +151,14 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
       1: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
-      2: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
-      3: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
-      5: (col, asc) => sortableOnSort((d) => d['_currentValue'] as double, col, asc),
-      6: (col, asc) => sortableOnSort((d) => d['_profitLossValue'] as double, col, asc),
-      7: (col, asc) => sortableOnSort((d) => d['_profitLossPercentage'] as double, col, asc),
-      8: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      2: (col, asc) => sortableOnSort((d) => d['_targetValue'] as double, col, asc),
+      3: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
+      4: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
+      5: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      6: (col, asc) => sortableOnSort((d) => d['_currentValue'] as double, col, asc),
+      7: (col, asc) => sortableOnSort((d) => d['_profitLossValue'] as double, col, asc),
+      8: (col, asc) => sortableOnSort((d) => d['_profitLossPercentage'] as double, col, asc),
+      9: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
     _calculateProfitLoss();
@@ -231,12 +232,12 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
     _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
     _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
-    _totalSourceBalance = _calc.totalSourceBalance(stxs);
+    _totalSourceBalance = _calc.totalSourceBalance(stxs, shrinkPartial: true);
     _totalBalance = _calc.totalBalance(stxs);
-    _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed);
-    _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed);
-    _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed);
-    _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed);
+    _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
+    _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
+    _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
+    _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
   }
 
   @override
@@ -646,11 +647,17 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
             if (!isCapital)
               DataColumn2(
                 size: ColumnSize.S,
+                label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
+                onSort: sortableSorters[3],
+              ),
+            if (!isCapital)
+              DataColumn2(
+                size: ColumnSize.S,
                 label: WidgetsHeader(
                   title: 'Exchanged Rate ',
                   subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
                 ),
-                onSort: sortableSorters[3],
+                onSort: sortableSorters[4],
               ),
 
             if (_currentRate != 0.0 && !isCapital) ...[
@@ -664,24 +671,24 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
-                onSort: sortableSorters[5],
+                onSort: sortableSorters[6],
               ),
               DataColumn2(
                 size: ColumnSize.S,
                 label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
-                onSort: sortableSorters[6],
+                onSort: sortableSorters[7],
               ),
               DataColumn2(
                 fixedWidth: 100,
                 label: const WidgetsHeader(title: 'P/L', subtitle: "%"),
-                onSort: sortableSorters[7],
+                onSort: sortableSorters[8],
               ),
             ],
 
             DataColumn2(
               label: const Text('Status '),
               fixedWidth: 100,
-              onSort: (_currentRate == 0.0) ? sortableSorters[4] : sortableSorters[8],
+              onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9],
             ),
             const DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
@@ -705,6 +712,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                 DataCell(Text(r['date'] ?? '0.0')),
                 DataCell(Text(r['from'] ?? '0.0')),
                 if (!isCapital) DataCell(Text(r['to'] ?? '0.0')),
+                if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),
                 if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),
 
                 if (_currentRate != 0 && !isCapital) ...[
@@ -744,6 +752,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
       double profitLoss = 0;
       double profitLevel = 0;
       double profitLossPercentage = 0;
+      double currentSrAmount = tx.srAmount;
 
       if (tx.isFinalized) {
         profitLoss = 0;
@@ -751,10 +760,13 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
         rowRate = tx.rateDouble;
         currentValue = tx.balance;
       } else if (currentRate != 0 && tx.balance != 0 && !tx.isClosed) {
-        currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+        if (tx.isPartial) {
+          currentSrAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
+        }
 
-        profitLoss = Math.subtract(currentValue, tx.srAmount);
-        profitLossPercentage = Math.multiply(Math.divide(profitLoss, tx.srAmount), 100);
+        currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+        profitLoss = Math.subtract(currentValue, currentSrAmount);
+        profitLossPercentage = Math.multiply(Math.divide(profitLoss, currentSrAmount), 100);
 
         if (profitLoss > 0) {
           profitLevel = 1;
@@ -765,7 +777,8 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
       rx.add({
         'from': tx.srAmountText,
-        'to': tx.balanceText,
+        'to': tx.rrAmountText,
+        'balance': tx.balanceText,
         'exchangedRate': _isReversed ? tx.rateReversedText : tx.rateText,
         'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(rowRate),
         'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
@@ -778,8 +791,9 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
         'uuid': tx.uuid,
 
         '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.rrAmount,
+        '_targetValue': tx.rrAmount,
         '_sourceValue': tx.srAmount,
+        '_balanceValue': tx.balance,
         '_exchangedRateValue': tx.rateDouble,
         '_currentValue': currentValue,
         '_profitLossValue': profitLoss,
