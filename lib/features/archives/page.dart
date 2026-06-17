@@ -214,14 +214,12 @@ class _ArchivesPageState extends State<ArchivesPage>
   }
 
   Widget _buildTable() {
-    final table = rows;
-
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
       child: WidgetsPanel(
         child: DataTable2(
           scrollController: scrollToUtil.controller,
-          minWidth: 1200,
+          minWidth: 460,
           columnSpacing: 12,
           horizontalMargin: 12,
           headingRowHeight: tableHeadingHeight,
@@ -232,11 +230,11 @@ class _ArchivesPageState extends State<ArchivesPage>
           isHorizontalScrollBarVisible: false,
           columns: [
             DataColumn2(label: const Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
-            DataColumn2(label: const Text("Data Type"), fixedWidth: 140, onSort: sortableSorters[1]),
+            DataColumn2(label: const Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
             DataColumn2(label: const Text("Notes")),
             const DataColumn2(label: Text("Action"), fixedWidth: 80),
           ],
-          rows: table.map((r) {
+          rows: rows.map((r) {
             return DataRow(
               cells: [
                 DataCell(Text(r['date'])),
