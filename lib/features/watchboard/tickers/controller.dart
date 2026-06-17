@@ -104,4 +104,15 @@ class TickersController extends CoreBaseController<TickersModel, TickersReposito
 
     load();
   }
+
+  bool isBothEqual(TickersModel a, TickersModel b) {
+    return a.tid == b.tid &&
+        a.type == b.type &&
+        a.format == b.format &&
+        a.title == b.title &&
+        a.order == b.order &&
+        a.value == b.value &&
+        a.meta.length == b.meta.length &&
+        a.meta.keys.every((k) => b.meta.containsKey(k) && a.meta[k] == b.meta[k]);
+  }
 }

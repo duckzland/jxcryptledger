@@ -24,10 +24,11 @@ class PanelsDisplay extends StatefulWidget {
 }
 
 class _PanelsDisplayState extends State<PanelsDisplay> {
-  late final PanelsController _tixController;
+  PanelsController get _controller => locator<PanelsController>();
+  CryptosController get _cryptosController => locator<CryptosController>();
+
   late final RatesController _ratesController;
   late final WatchersController _wxController;
-  late final CryptosController _cryptosController;
 
   static final List<StateSetter> _subscribers = [];
 
@@ -36,18 +37,22 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
   WatchersModel? _linkedWatcher;
 
   @override
+  void didUpdateWidget(covariant PanelsDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_controller.isBothEqual(oldWidget.tix, widget.tix)) {
+      setState(() {});
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
-    _tixController = locator<PanelsController>();
-    _tixController.addListener(_onControllerChanged);
 
     _ratesController = locator<RatesController>();
-    _ratesController.addListener(_onControllerChanged);
+    _ratesController.addListener(_onRatesChanged);
 
     _wxController = locator<WatchersController>();
     _wxController.addListener(_onWatcherChanged);
-
-    _cryptosController = locator<CryptosController>();
 
     _linkedWatcher = _wxController.getLinked("panels-${widget.tix.tid}");
 
@@ -56,8 +61,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
   @override
   void dispose() {
-    _tixController.removeListener(_onControllerChanged);
-    _cryptosController.removeListener(_onControllerChanged);
+    _ratesController.removeListener(_onRatesChanged);
     _wxController.removeListener(_onWatcherChanged);
     _subscribers.remove(setState);
 
@@ -67,13 +71,16 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
   void _onWatcherChanged() async {
     final tix = widget.tix;
     if (mounted) {
-      setState(() {
-        _linkedWatcher = _wxController.getLinked("panels-${tix.tid}");
-      });
+      final linked = _wxController.getLinked("panels-${tix.tid}");
+      if (linked != _linkedWatcher) {
+        setState(() {
+          _linkedWatcher = linked;
+        });
+      }
     }
   }
 
-  void _onControllerChanged() async {
+  void _onRatesChanged() async {
     final tix = widget.tix;
     final newRate = _ratesController.getStoredRate(tix.srId, tix.rrId);
 
@@ -194,7 +201,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
                     right: 8,
                     child: PanelsButtons(
                       tix: tix,
-                      tixController: _tixController,
+                      tixController: _controller,
                       linkedWatcher: _linkedWatcher,
                       onAction: () {
                         setState(() {});

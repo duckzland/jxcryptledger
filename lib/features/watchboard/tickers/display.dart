@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/locator.dart';
 import '../../../widgets/panel.dart';
+import 'controller.dart';
 import 'model.dart';
 
 class TickersDisplay extends StatefulWidget {
@@ -14,6 +16,8 @@ class TickersDisplay extends StatefulWidget {
 }
 
 class _TickersDisplayState extends State<TickersDisplay> {
+  TickersController get _controller => locator<TickersController>();
+
   Color _currentColor = AppTheme.darkGrey;
 
   Color _resolveBackground() {
@@ -78,6 +82,15 @@ class _TickersDisplayState extends State<TickersDisplay> {
       }
     } catch (_) {
       return AppTheme.darkGrey;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant TickersDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!_controller.isBothEqual(widget.tix, oldWidget.tix)) {
+      setState(() {});
     }
   }
 
