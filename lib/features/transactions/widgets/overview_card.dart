@@ -58,7 +58,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
         TransactionsMixinsActions {
   final TransactionCalculation _calc = TransactionCalculation();
 
-  late final CryptosController _cryptosController;
+  CryptosController get _cryptosController => locator<CryptosController>();
 
   late String _resultSymbol;
 
@@ -85,7 +85,6 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
     txs = widget.transactions;
     txController = locator<TransactionsController>();
 
-    _cryptosController = locator<CryptosController>();
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
     sortableSorters = {

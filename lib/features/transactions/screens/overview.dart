@@ -32,8 +32,9 @@ class TransactionsOverviewView extends StatefulWidget {
 
 class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     with AutomaticKeepAliveClientMixin, MixinsState, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
-  late final TransactionsController _txController;
-  late final CryptosController _cryptosController;
+  TransactionsController get _txController => locator<TransactionsController>();
+  CryptosController get _cryptosController => locator<CryptosController>();
+
   late List<TransactionsModel> txs;
 
   Map<String, List<TransactionsModel>> groups = {};
@@ -49,8 +50,6 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
   @override
   void initState() {
     super.initState();
-    _txController = locator<TransactionsController>();
-    _cryptosController = locator<CryptosController>();
 
     txs = widget.transactions;
     _filterMode = widget.filterMode;

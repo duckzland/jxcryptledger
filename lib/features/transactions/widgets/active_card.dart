@@ -119,9 +119,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   bool get isCapital => (widget.srid == widget.rrid);
 
-  WatchersModel? _linkedWatcher;
-  PanelsModel? _linkedPanel;
-
   @override
   String get sortableKey => "tx-group-active-${widget.srid}-${widget.rrid}";
 
@@ -147,11 +144,9 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
     _wxController = locator<WatchersController>();
     _wxController.start();
-    _wxController.addListener(_onControllerChanged);
 
     _pxController = locator<PanelsController>();
     _pxController.start();
-    _pxController.addListener(_onControllerChanged);
 
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
@@ -178,16 +173,10 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
-
-    _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-    _linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
   }
 
   @override
   void dispose() {
-    _wxController.removeListener(_onControllerChanged);
-    _pxController.removeListener(_onControllerChanged);
-
     _debounce?.cancel();
     super.dispose();
   }
@@ -248,12 +237,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed);
     _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed);
     _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed);
-  }
-
-  void _onControllerChanged() {
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   @override
@@ -408,73 +391,79 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
           spacing: 8,
           children: [
             if (!isCapital)
-              WidgetsDialogsShowForm(
-                key: const Key("add-watchboard-button"),
-                icon: Icons.candlestick_chart_outlined,
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                tooltip: _linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
-                persistBg: true,
-                evaluator: (s) {
-                  if (_linkedPanel == null) {
-                    s.normal();
-                  } else {
-                    s.action();
-                  }
-                },
-                buildForm: (dialogContext) {
-                  return PanelsForm(
-                    initialData: _linkedPanel,
-                    initialSrId: _linkedPanel == null ? widget.srid : null,
-                    initialRrId: _linkedPanel == null ? widget.rrid : null,
-                    initialSrAmount: _linkedPanel == null ? _calc.totalActiveSourceBalance(txs) : null,
-                    linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                    onSave: (e) => actionableFormSave<PanelsModel>(
-                      context,
-                      dialogContext: dialogContext,
-                      onComplete: () => setState(() {
-                        _linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                      }),
-                      successMessage: _linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
-                      error: e,
-                    ),
+              AnimatedBuilder(
+                animation: _pxController,
+                builder: (context, _) {
+                  final linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                  return WidgetsDialogsShowForm(
+                    key: const Key("add-watchboard-button"),
+                    icon: Icons.candlestick_chart_outlined,
+                    padding: btnPadding,
+                    iconSize: btnIconSize,
+                    minimumSize: btnSize,
+                    tooltip: linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
+                    persistBg: true,
+                    evaluator: (s) {
+                      if (linkedPanel == null) {
+                        s.normal();
+                      } else {
+                        s.action();
+                      }
+                    },
+                    buildForm: (dialogContext) {
+                      return PanelsForm(
+                        initialData: linkedPanel,
+                        initialSrId: linkedPanel == null ? widget.srid : null,
+                        initialRrId: linkedPanel == null ? widget.rrid : null,
+                        initialSrAmount: linkedPanel == null ? _calc.totalActiveSourceBalance(txs) : null,
+                        linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+                        onSave: (e) => actionableFormSave<PanelsModel>(
+                          context,
+                          dialogContext: dialogContext,
+                          successMessage: linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
+                          error: e,
+                        ),
+                      );
+                    },
                   );
                 },
               ),
 
             if (!isCapital)
-              WidgetsDialogsShowForm(
-                key: const Key("add-watcher-button"),
-                icon: Icons.add_alarm,
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                tooltip: _linkedWatcher == null ? "Add new watcher" : "Edit watcher",
-                persistBg: true,
-                evaluator: (s) {
-                  if (_linkedWatcher == null) {
-                    s.normal();
-                  } else {
-                    _linkedWatcher!.isSpent ? s.error() : s.action();
-                  }
-                },
-                buildForm: (dialogContext) {
-                  return WatchersForm(
-                    initialData: _linkedWatcher,
-                    initialSrId: _linkedWatcher == null ? widget.srid : null,
-                    initialRrId: _linkedWatcher == null ? widget.rrid : null,
-                    initialRate: _linkedWatcher == null ? nonReversedEffectiveRate : null,
-                    linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                    onSave: (e) => actionableFormSave<PanelsModel>(
-                      context,
-                      dialogContext: dialogContext,
-                      onComplete: () => setState(() {
-                        _linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                      }),
-                      successMessage: _linkedWatcher == null ? "Created rate watcher." : "Rate watcher updated",
-                      error: e,
-                    ),
+              AnimatedBuilder(
+                animation: _wxController,
+                builder: (context, _) {
+                  final linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
+                  return WidgetsDialogsShowForm(
+                    key: const Key("add-watcher-button"),
+                    icon: Icons.add_alarm,
+                    padding: btnPadding,
+                    iconSize: btnIconSize,
+                    minimumSize: btnSize,
+                    tooltip: linkedWatcher == null ? "Add new watcher" : "Edit watcher",
+                    persistBg: true,
+                    evaluator: (s) {
+                      if (linkedWatcher == null) {
+                        s.normal();
+                      } else {
+                        linkedWatcher.isSpent ? s.error() : s.action();
+                      }
+                    },
+                    buildForm: (dialogContext) {
+                      return WatchersForm(
+                        initialData: linkedWatcher,
+                        initialSrId: linkedWatcher == null ? widget.srid : null,
+                        initialRrId: linkedWatcher == null ? widget.rrid : null,
+                        initialRate: linkedWatcher == null ? nonReversedEffectiveRate : null,
+                        linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
+                        onSave: (e) => actionableFormSave<WatchersModel>(
+                          context,
+                          dialogContext: dialogContext,
+                          successMessage: linkedWatcher == null ? "Created rate watcher." : "Rate watcher updated",
+                          error: e,
+                        ),
+                      );
+                    },
                   );
                 },
               ),

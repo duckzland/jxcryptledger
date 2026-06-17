@@ -5,9 +5,7 @@ import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
-import '../../rates/controller.dart';
 import '../../watchers/controller.dart';
-import '../../watchers/model.dart';
 import 'controller.dart';
 import 'model.dart';
 import 'buttons.dart';
@@ -26,15 +24,11 @@ class PanelsDisplay extends StatefulWidget {
 class _PanelsDisplayState extends State<PanelsDisplay> {
   PanelsController get _controller => locator<PanelsController>();
   CryptosController get _cryptosController => locator<CryptosController>();
-
-  late final RatesController _ratesController;
-  late final WatchersController _wxController;
+  WatchersController get _wxController => locator<WatchersController>();
 
   static final List<StateSetter> _subscribers = [];
 
   static dynamic _activePanelId;
-
-  WatchersModel? _linkedWatcher;
 
   @override
   void didUpdateWidget(covariant PanelsDisplay oldWidget) {
@@ -47,49 +41,13 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
   @override
   void initState() {
     super.initState();
-
-    _ratesController = locator<RatesController>();
-    _ratesController.addListener(_onRatesChanged);
-
-    _wxController = locator<WatchersController>();
-    _wxController.addListener(_onWatcherChanged);
-
-    _linkedWatcher = _wxController.getLinked("panels-${widget.tix.tid}");
-
     _subscribers.add(setState);
   }
 
   @override
   void dispose() {
-    _ratesController.removeListener(_onRatesChanged);
-    _wxController.removeListener(_onWatcherChanged);
     _subscribers.remove(setState);
-
     super.dispose();
-  }
-
-  void _onWatcherChanged() async {
-    final tix = widget.tix;
-    if (mounted) {
-      final linked = _wxController.getLinked("panels-${tix.tid}");
-      if (linked != _linkedWatcher) {
-        setState(() {
-          _linkedWatcher = linked;
-        });
-      }
-    }
-  }
-
-  void _onRatesChanged() async {
-    final tix = widget.tix;
-    final newRate = _ratesController.getStoredRate(tix.srId, tix.rrId);
-
-    if (newRate != tix.rate) {
-      tix.setRate(newRate);
-      if (mounted) {
-        setState(() {});
-      }
-    }
   }
 
   void _handleToggle() {
@@ -177,37 +135,42 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
                     ),
                   ),
                 ),
-                if (_linkedWatcher != null)
-                  Positioned(
-                    top: 8,
-                    left: 6,
-                    child: Icon(
-                      Icons.add_alarm,
-                      size: 16,
-                      color: _linkedWatcher!.isSpent ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
-                    ),
-                  ),
 
-                if (tix.isLinked)
-                  Positioned(
-                    top: 8,
-                    left: _linkedWatcher != null ? 24 : 6,
-                    child: Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.text.withAlpha(205)),
-                  ),
+                AnimatedBuilder(
+                  animation: _wxController,
+                  builder: (context, _) {
+                    final linked = _wxController.getLinked("panels-${widget.tix.tid}");
 
-                if (isThisOneActive && !widget.isDragging)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: PanelsButtons(
-                      tix: tix,
-                      tixController: _controller,
-                      linkedWatcher: _linkedWatcher,
-                      onAction: () {
-                        setState(() {});
-                      },
-                    ),
-                  ),
+                    return Stack(
+                      children: [
+                        if (linked != null)
+                          Positioned(
+                            top: 8,
+                            left: 6,
+                            child: Icon(
+                              Icons.add_alarm,
+                              size: 16,
+                              color: linked.isSpent ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
+                            ),
+                          ),
+
+                        if (widget.tix.isLinked)
+                          Positioned(
+                            top: 8,
+                            left: linked != null ? 24 : 6,
+                            child: Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.text.withAlpha(205)),
+                          ),
+
+                        if (isThisOneActive && !widget.isDragging)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: PanelsButtons(tix: widget.tix, tixController: _controller, linkedWatcher: linked, onAction: () {}),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),

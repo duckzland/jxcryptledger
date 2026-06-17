@@ -564,7 +564,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         states.remove("tx-toggle-panels");
 
         return TransactionsOverviewView(
-          transactions: [...txs],
+          transactions: txs,
           panelsAction: toggleAction,
           filterMode: _filterMode,
           sortMode: _sortMode,
@@ -577,7 +577,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         states.remove("tx-toggle-panels");
 
         return TransactionsActiveView(
-          transactions: [...txs],
+          transactions: txs,
           panelsAction: toggleAction,
           filterMode: _filterMode,
           sortMode: _sortMode,
@@ -587,7 +587,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
       case TransactionsViewMode.journal:
         actionbarRegister("Transaction Overview");
 
-        return TransactionsJournalView(filterMode: _filterMode, transactions: [...txs], onStatusChanged: () {});
+        return TransactionsJournalView(filterMode: _filterMode, transactions: txs, onStatusChanged: () {});
 
       case TransactionsViewMode.history:
         actionbarRegister("Transaction History");
@@ -595,7 +595,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
         states.remove("tx-toggle-panels");
 
-        return TransactionHistory(sortMode: _sortMode, transactions: [...txs], panelsAction: toggleAction, onStatusChanged: () {});
+        return TransactionHistory(sortMode: _sortMode, transactions: txs, panelsAction: toggleAction, onStatusChanged: () {});
     }
   }
 }

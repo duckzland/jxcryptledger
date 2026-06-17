@@ -29,8 +29,8 @@ class TransactionHistory extends StatefulWidget {
 }
 
 class _TransactionHistoryState extends State<TransactionHistory> with MixinsState {
-  final CryptosController _cryptosController = locator<CryptosController>();
-  final TransactionsController _txController = locator<TransactionsController>();
+  CryptosController get _cryptosController => locator<CryptosController>();
+  TransactionsController get _txController => locator<TransactionsController>();
 
   late IndexedTreeNode<TransactionsModel> _root;
   late Map<String, IndexedTreeNode<TransactionsModel>> _nodes;
