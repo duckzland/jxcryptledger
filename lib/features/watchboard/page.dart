@@ -56,14 +56,13 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     super.initState();
     _pxController = locator<PanelsController>();
     _pxController.start();
-    _pxController.addListener(_onControllerChanged);
+    _pxController.addListener(_onPanelsControllerChanged);
 
     _tixController = locator<TickersController>();
     _tixController.start();
-    _tixController.addListener(_onControllerChanged);
 
     _cryptosController = locator<CryptosController>();
-    _cryptosController.addListener(_onControllerChanged);
+    _cryptosController.addListener(_onCryptosControllerChanged);
 
     _hasLinked = _pxController.hasLinked();
 
@@ -79,25 +78,29 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   void dispose() {
     scrollUtil.dispose();
 
-    _pxController.removeListener(_onControllerChanged);
-    _cryptosController.removeListener(_onControllerChanged);
-    _tixController.removeListener(_onControllerChanged);
+    _pxController.removeListener(_onPanelsControllerChanged);
+    _cryptosController.removeListener(_onCryptosControllerChanged);
 
     super.dispose();
   }
 
-  void _onControllerChanged() {
+  void _onCryptosControllerChanged() {
     if (mounted) {
-      setState(() {
-        final ntx = _pxController.findNew(txs);
-        txs = _pxController.items;
-        _hasLinked = _pxController.hasLinked();
-        if (ntx != null) {
-          scrollUtil.toEnd();
-        }
-      });
-
+      setState(() {});
       AppLayout.refreshBar?.call();
+    }
+  }
+
+  void _onPanelsControllerChanged() {
+    if (!mounted) return;
+    final oldEmpty = txs.isEmpty;
+    txs = _pxController.items;
+    _hasLinked = _pxController.hasLinked();
+
+    final nowEmpty = txs.isEmpty;
+    if (oldEmpty != nowEmpty) {
+      AppLayout.refreshBar?.call();
+      setState(() {});
     }
   }
 
@@ -300,8 +303,19 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         child: Column(
           spacing: 12,
           children: [
-            if (_enableTickers) Row(children: [Expanded(child: _buildTickers())]),
-            Flexible(flex: 10, fit: FlexFit.loose, child: _buildPanels()),
+            if (_enableTickers)
+              Row(
+                children: [
+                  Expanded(
+                    child: AnimatedBuilder(animation: _tixController, builder: (_, _) => _buildTickers()),
+                  ),
+                ],
+              ),
+            Flexible(
+              flex: 10,
+              fit: FlexFit.loose,
+              child: AnimatedBuilder(animation: _pxController, builder: (_, _) => _buildPanels()),
+            ),
           ],
         ),
       ),
