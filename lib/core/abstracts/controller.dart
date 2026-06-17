@@ -25,10 +25,11 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
 
   void load() {
     start();
-    _notifyTimer?.cancel();
     // logln("Scheduling listener for: ${T.toString()}");
+
+    _notifyTimer?.cancel();
     _notifyTimer = Timer(const Duration(milliseconds: 16), () {
-      logln("Firing listener for: ${T.toString()}");
+      logln("[CORE] Firing listener for: ${T.toString()}");
       notifyListeners();
     });
   }
