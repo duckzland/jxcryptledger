@@ -145,7 +145,8 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         'date': tx.timestampAsFormattedDate,
         'transaction': tx.rrId == tradeSourceId
             ? 'Balance ${tx.balanceText} $resultSymbol'
-            : '${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol',
+            : '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
+        'balance': '${tx.balanceText} $resultSymbol',
         'rate': rate == -9999 || tx.rrId == tradeSourceId ? "-" : "1 $resultSymbol = ${Utils.formatSmartDouble(rate)} $tradeSourceSymbol",
         'amount': rate == -9999 ? "" : "${Utils.formatSmartDouble(amount)} $tradeSourceSymbol",
         'uuid': tx.uuid,
@@ -202,6 +203,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
           columns: [
             const DataColumn2(label: Text('Date '), fixedWidth: 100),
             const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+            const DataColumn2(label: Text('Balance '), size: ColumnSize.S),
             const DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
             const DataColumn2(label: Text('Return '), size: ColumnSize.S),
           ],
@@ -212,6 +214,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
                 cells: [
                   DataCell(Text(r['date'] ?? '')),
                   DataCell(Text(r['transaction'] ?? '')),
+                  DataCell(Text(r['balance'] ?? '')),
                   DataCell(Text(r['rate'] ?? '')),
                   DataCell(Text(r['amount'] ?? '')),
                 ],
@@ -248,6 +251,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
           const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.M),
           const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
           const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
+          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
         ],
         rows: [
           DataRow(
@@ -255,6 +259,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             color: WidgetStateProperty.all(AppTheme.headerBg),
             cells: [
               const DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
+              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(
                 Text("${Utils.formatSmartDouble(tradeCapital)} $tradeSourceSymbol", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
@@ -267,6 +272,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             color: WidgetStateProperty.all(AppTheme.headerBg),
             cells: [
               const DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
+              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDouble(pl)} $tradeSourceSymbol", value: pl, comparator: 0)),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),

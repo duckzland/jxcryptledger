@@ -159,7 +159,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol',
+        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
+        'balance': '${tx.balanceText} $resultSymbol',
         'rate': rateableAmount,
         'amount': amount,
         'tx': tx,
@@ -186,6 +187,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           columns: [
             const DataColumn2(label: Text('Date '), fixedWidth: 100),
             const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+            const DataColumn2(label: Text('Balance '), size: ColumnSize.M),
             if (showRate) const DataColumn2(label: Text('Rate '), size: ColumnSize.M),
             if (showRate) const DataColumn2(label: Text('Amount '), size: ColumnSize.M),
           ],
@@ -206,6 +208,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 cells: [
                   DataCell(Text(r['date'] ?? '')),
                   DataCell(Text(r['transaction'] ?? '')),
+                  DataCell(Text(r['balance'] ?? '')),
                   if (showRate) DataCell(Text('${r['rate'] ?? ''}')),
                   if (showRate) DataCell(Text('${Utils.formatSmartDouble(r['amount'] ?? 0)} $targetSymbol')),
                 ],
@@ -238,6 +241,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         isHorizontalScrollBarVisible: false,
         columns: [
           const DataColumn2(label: Text('        Total'), fixedWidth: 130),
+          const DataColumn2(label: Text(' '), size: ColumnSize.M),
           DataColumn2(label: Text('${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol'), size: ColumnSize.M),
           if (showRate) const DataColumn2(label: Text(''), size: ColumnSize.M),
           if (showRate) DataColumn2(label: Text('${Utils.formatSmartDouble(resultValue)} $targetSymbol'), size: ColumnSize.M),

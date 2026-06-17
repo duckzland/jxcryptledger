@@ -47,7 +47,6 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   Color _fgColor = AppTheme.text;
 
   Map<int, double> _activeBranchAmounts = {};
-  Map<int, double> _finalizedBranchAmounts = {};
 
   double _panelHeight = 40;
 
@@ -86,6 +85,20 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
       return;
     }
 
+    bool showBalance = _hasLeaf && _rBalance > 0 && _rBalance != widget.tx.balance;
+    bool showAvailable = widget.tx.balance > 0;
+    bool showFinalized = _rFinalized != 0;
+
+    if (showBalance || showAvailable || showFinalized) {
+      if (_calculateData(onlyUpdateIfChanged: true, tx: widget.tx)) {
+        setState(() {
+          _tx = widget.tx;
+          _calculateColor();
+        });
+      }
+      return;
+    }
+
     if (_txController.isBothEqual(oldWidget.tx, widget.tx)) {
       return;
     }
@@ -120,27 +133,54 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
     }
   }
 
-  void _calculateData() {
-    _hasLeaf = _txController.hasLeaf(_tx);
-    _activeBranchAmounts = _txController.collectBranchActiveAmount(_tx);
-    _finalizedBranchAmounts = _txController.collectBranchFinalizedAmount(_tx);
+  bool _calculateData({bool onlyUpdateIfChanged = false, TransactionsModel? tx}) {
+    final atx = tx ?? _tx;
+    final hasLeaf = _txController.hasLeaf(atx);
+    final activeBranchAmounts = _txController.collectBranchActiveAmount(atx);
+    final finalizedBranchAmounts = _txController.collectBranchFinalizedAmount(atx);
 
-    _capital = _tx.srAmount;
-    _balance = _activeBranchAmounts[_tx.srId] ?? 0;
-    _finalized = _finalizedBranchAmounts[_tx.srId] ?? 0;
-    _profit = Math.subtract(Math.add(_balance, _finalized), _capital);
-    _profitPercentage = (_capital == 0 ? 0 : Math.multiply(Math.divide(_profit, _capital), 100)) as double;
+    final capital = atx.srAmount;
+    final balance = activeBranchAmounts[atx.srId] ?? 0;
+    final finalized = finalizedBranchAmounts[atx.srId] ?? 0;
+    final profit = Math.subtract(Math.add(balance, finalized), capital);
+    final profitPercentage = (capital == 0 ? 0 : Math.multiply(Math.divide(profit, capital), 100)) as double;
 
-    _rBalance = Math.add(_activeBranchAmounts[_tx.rrId] ?? 0, _tx.balance);
-    _rFinalized = _finalizedBranchAmounts[_tx.rrId] ?? 0;
+    final rBalance = Math.add(activeBranchAmounts[atx.rrId] ?? 0, atx.balance);
+    final rFinalized = finalizedBranchAmounts[atx.rrId] ?? 0;
+    final rProfit = Math.subtract(Math.add(rBalance, rFinalized), atx.rrAmount);
+    final rProfitPercentage = (atx.rrAmount == 0 ? 0 : Math.multiply(Math.divide(rProfit, atx.rrAmount), 100)) as double;
 
-    _rProfit = Math.subtract(Math.add(_rBalance, _rFinalized), _tx.rrAmount);
-    _rProfitPercentage = (_tx.rrAmount == 0 ? 0 : Math.multiply(Math.divide(_rProfit, _tx.rrAmount), 100)) as double;
+    final changed =
+        capital != _capital ||
+        balance != _balance ||
+        finalized != _finalized ||
+        profit != _profit ||
+        profitPercentage != _profitPercentage ||
+        rBalance != _rBalance ||
+        rFinalized != _rFinalized ||
+        rProfit != _rProfit ||
+        rProfitPercentage != _rProfitPercentage;
 
-    _leavesClosed = _txController.isClosedTerminals(_tx);
-    if (!_hasLeaf || !_tx.isActive) {
-      _leavesClosed = false;
+    if (!onlyUpdateIfChanged || changed) {
+      _capital = capital;
+      _balance = balance;
+      _finalized = finalized;
+      _profit = profit;
+      _profitPercentage = profitPercentage;
+      _rBalance = rBalance;
+      _rFinalized = rFinalized;
+      _rProfit = rProfit;
+      _rProfitPercentage = rProfitPercentage;
+      _activeBranchAmounts = activeBranchAmounts;
+
+      _hasLeaf = hasLeaf;
+      _leavesClosed = _txController.isClosedTerminals(atx);
+      if (!_hasLeaf || !atx.isActive) {
+        _leavesClosed = false;
+      }
     }
+
+    return changed;
   }
 
   void _onAction() {

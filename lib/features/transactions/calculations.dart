@@ -33,8 +33,16 @@ class TransactionCalculation {
     return count > 0 ? Math.divide(totalRate, count.toDouble()) : 0.0;
   }
 
-  double totalSourceBalance(List<TransactionsModel> txs) {
-    return txs.fold<double>(0, (sum, tx) => Math.add(sum, tx.srAmount));
+  double totalSourceBalance(List<TransactionsModel> txs, {bool shrinkPartial = false}) {
+    return txs.fold<double>(0, (sum, tx) {
+      double srAmount = tx.srAmount;
+
+      if (shrinkPartial && tx.isPartial) {
+        srAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
+      }
+
+      return Math.add(sum, srAmount);
+    });
   }
 
   double totalActiveSourceBalance(List<TransactionsModel> txs) {
@@ -53,14 +61,14 @@ class TransactionCalculation {
     return txs.fold<double>(0, (sum, tx) => Math.add(sum, (tx.isFinalized) ? tx.balance : 0.0));
   }
 
-  double averageProfitLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
+  double averageProfitLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false, bool shrinkPartial = false}) {
     if (txs.isEmpty) return 0.0;
+    double totalPL = totalProfitLoss(txs, currentRate, reverse: reverse, shrinkPartial: shrinkPartial);
 
-    double totalPL = totalProfitLoss(txs, currentRate, reverse: reverse);
     return Math.divide(totalPL, txs.length.toDouble());
   }
 
-  double totalProfitLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
+  double totalProfitLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false, bool shrinkPartial = false}) {
     if (txs.isEmpty) return 0.0;
 
     double totalPL = 0;
@@ -71,17 +79,24 @@ class TransactionCalculation {
       }
 
       double currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+
       if (tx.isFinalized) {
         currentValue = tx.balance;
       }
 
-      totalPL = Math.add(totalPL, Math.subtract(currentValue, tx.srAmount));
+      double srAmount = tx.srAmount;
+
+      if (shrinkPartial && tx.isPartial) {
+        srAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
+      }
+
+      totalPL = Math.add(totalPL, Math.subtract(currentValue, srAmount));
     }
 
     return totalPL;
   }
 
-  double totalProfit(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
+  double totalProfit(List<TransactionsModel> txs, double currentRate, {bool reverse = false, bool shrinkPartial = false}) {
     if (txs.isEmpty) return 0.0;
 
     double totalPL = 0;
@@ -92,11 +107,18 @@ class TransactionCalculation {
       }
 
       double currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+
       if (tx.isFinalized) {
         currentValue = tx.balance;
       }
 
-      final pol = Math.subtract(currentValue, tx.srAmount);
+      double srAmount = tx.srAmount;
+
+      if (shrinkPartial && tx.isPartial) {
+        srAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
+      }
+
+      final pol = Math.subtract(currentValue, srAmount);
       if (pol > 0) {
         totalPL = Math.add(totalPL, pol);
       }
@@ -105,7 +127,7 @@ class TransactionCalculation {
     return totalPL;
   }
 
-  double totalLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
+  double totalLoss(List<TransactionsModel> txs, double currentRate, {bool reverse = false, bool shrinkPartial = false}) {
     if (txs.isEmpty) return 0.0;
 
     double totalPL = 0;
@@ -116,11 +138,18 @@ class TransactionCalculation {
       }
 
       double currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+
       if (tx.isFinalized) {
         currentValue = tx.balance;
       }
 
-      final pol = Math.subtract(currentValue, tx.srAmount);
+      double srAmount = tx.srAmount;
+
+      if (shrinkPartial && tx.isPartial) {
+        srAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
+      }
+
+      final pol = Math.subtract(currentValue, srAmount);
       if (pol < 0) {
         totalPL = Math.add(totalPL, pol);
       }
@@ -129,13 +158,14 @@ class TransactionCalculation {
     return totalPL;
   }
 
-  double profitLossPercentage(List<TransactionsModel> txs, double currentRate, {bool reverse = false}) {
+  double profitLossPercentage(List<TransactionsModel> txs, double currentRate, {bool reverse = false, bool shrinkPartial = false}) {
     if (txs.isEmpty) return 0.0;
 
-    final totalBalance = totalSourceBalance(txs);
+    final totalBalance = totalSourceBalance(txs, shrinkPartial: shrinkPartial);
     if (totalBalance == 0) return 0.0;
 
-    final avgPL = averageProfitLoss(txs, currentRate, reverse: reverse);
+    final avgPL = averageProfitLoss(txs, currentRate, reverse: reverse, shrinkPartial: shrinkPartial);
+
     final totalPL = Math.multiply(avgPL, txs.length.toDouble());
 
     return Math.multiply(Math.divide(totalPL, totalBalance), 100);

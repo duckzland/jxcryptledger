@@ -466,8 +466,8 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
           isHorizontalScrollBarVisible: false,
           columns: [
             DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-            DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
             DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
+            DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
             DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
             DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sortableSorters[4]),
             const DataColumn2(label: Text('Actions'), fixedWidth: 160),
@@ -490,8 +490,8 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                   : null,
               cells: [
                 DataCell(Text(r['date'])),
-                DataCell(Text(r['balance'])),
                 DataCell(Text(r['source'])),
+                DataCell(Text(r['balance'])),
                 DataCell(Text(r['exchangedRate'])),
                 DataCell(Text(r['status'])),
                 DataCell(

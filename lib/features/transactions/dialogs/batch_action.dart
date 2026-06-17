@@ -185,7 +185,8 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.balanceText} $resultSymbol',
+        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.rrAmount} $resultSymbol',
+        'balance': '${tx.balanceText} $resultSymbol',
         'tx': tx,
         'uuid': tx.uuid,
       });
@@ -210,6 +211,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
           columns: [
             DataColumn2(label: const Text('Date '), fixedWidth: 100),
             DataColumn2(label: const Text('Transactions '), size: ColumnSize.M),
+            DataColumn2(label: const Text('Balance '), size: ColumnSize.M),
           ],
           rows: [
             ...rows.map((r) {
@@ -220,7 +222,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                     selectableSetSelected(r['uuid'], v!);
                   });
                 },
-                cells: [DataCell(Text(r['date'] ?? '')), DataCell(Text(r['transaction'] ?? ''))],
+                cells: [DataCell(Text(r['date'] ?? '')), DataCell(Text(r['transaction'] ?? '')), DataCell(Text(r['balance'] ?? ''))],
               );
             }),
           ],
