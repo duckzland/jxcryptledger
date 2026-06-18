@@ -8,6 +8,7 @@ mixin TransactionsMixinsActions {
   bool isDeletable = false;
   bool isClosable = false;
   bool isFinalizable = false;
+  bool isRefundable = false;
   bool get isActive => txs.any((tx) => tx.isActive || tx.isPartial);
 
   void checkForClosable() {
@@ -58,6 +59,22 @@ mixin TransactionsMixinsActions {
     }
   }
 
+  void checkForRefundable() {
+    isRefundable = false;
+
+    for (final tx in txs) {
+      try {
+        final refundable = txController.isRefundable(tx);
+        if (refundable) {
+          isRefundable = true;
+          break;
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
   Future<void> closeTransactions() async {
     for (final tx in txs) {
       try {
@@ -82,6 +99,16 @@ mixin TransactionsMixinsActions {
     for (final tx in txs) {
       try {
         await txController.remove(tx);
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
+  Future<void> refundTransactions() async {
+    for (final tx in txs) {
+      try {
+        await txController.removeLeaf(tx);
       } catch (_) {
         continue;
       }

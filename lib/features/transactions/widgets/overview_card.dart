@@ -101,6 +101,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
+    checkForRefundable();
     _calculateProfitLoss();
   }
 
@@ -137,6 +138,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
       checkForClosable();
       checkForDeletable();
       checkForFinalizable();
+      checkForRefundable();
       _calculateProfitLoss();
     });
   }
@@ -266,6 +268,64 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                 },
               ),
 
+            if (isDeletable)
+              WidgetsDialogsShowForm(
+                key: const Key("delete-multiple-button"),
+                icon: Icons.delete,
+                tooltip: "Delete all transactions",
+                initialState: WidgetsButtonActionState.error,
+                evaluator: (s) {
+                  if (!isDeletable) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.delete,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "All transactions deleted.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+
+            if (isRefundable)
+              WidgetsDialogsShowForm(
+                key: const Key("refund-multiple-button"),
+                icon: Icons.u_turn_left,
+                tooltip: "Refund all refundable transactions found in this group",
+                initialState: WidgetsButtonActionState.error,
+                evaluator: (s) {
+                  if (!isRefundable) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+                padding: const EdgeInsets.all(0),
+                iconSize: 18,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.refund,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "Transactions refunded successfully.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+
             if (isClosable)
               WidgetsDialogsShowForm(
                 key: const Key("close-multiple-button"),
@@ -318,35 +378,6 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                       widget.parentContext,
                       dialogContext: dialogContext,
                       successMessage: "All transactions finalized.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isDeletable)
-              WidgetsDialogsShowForm(
-                key: const Key("delete-multiple-button"),
-                icon: Icons.delete,
-                tooltip: "Delete all transactions",
-                initialState: WidgetsButtonActionState.error,
-                evaluator: (s) {
-                  if (!isDeletable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.delete,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions deleted.",
                       error: e,
                     ),
                   );

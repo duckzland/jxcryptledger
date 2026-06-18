@@ -174,6 +174,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
+    checkForRefundable();
   }
 
   @override
@@ -212,6 +213,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
       checkForClosable();
       checkForDeletable();
       checkForFinalizable();
+      checkForRefundable();
     });
   }
 
@@ -469,36 +471,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                 },
               ),
 
-            if (!isCapital && isClosable)
-              WidgetsDialogsShowForm(
-                key: const Key("close-multiple-button"),
-                icon: Icons.close,
-                tooltip: "Close all closable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isClosable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.close,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Transactions closed successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
             if (isActive)
               WidgetsDialogsShowForm(
                 key: const Key("trade-multiple-button"),
@@ -529,36 +501,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                 },
               ),
 
-            if (isFinalizable)
-              WidgetsDialogsShowForm(
-                key: const Key("finalize-multiple-button"),
-                icon: Icons.close_fullscreen,
-                tooltip: "Finalize all finalizable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isFinalizable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.finalize,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions finalized.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
             if (isDeletable)
               WidgetsDialogsShowForm(
                 key: const Key("delete-multiple-button"),
@@ -583,6 +525,96 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                       widget.parentContext,
                       dialogContext: dialogContext,
                       successMessage: "All transactions deleted.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+
+            if (isRefundable)
+              WidgetsDialogsShowForm(
+                key: const Key("refund-multiple-button"),
+                icon: Icons.u_turn_left,
+                tooltip: "Refund all refundable transactions found in this group",
+                initialState: WidgetsButtonActionState.error,
+                evaluator: (s) {
+                  if (!isRefundable) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.refund,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "Transactions refunded successfully.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+
+            if (isClosable)
+              WidgetsDialogsShowForm(
+                key: const Key("close-multiple-button"),
+                icon: Icons.close,
+                tooltip: "Close all closable transactions found in this group",
+                initialState: WidgetsButtonActionState.warning,
+                evaluator: (s) {
+                  if (!isClosable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.close,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "Transactions closed successfully.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+
+            if (isFinalizable)
+              WidgetsDialogsShowForm(
+                key: const Key("finalize-multiple-button"),
+                icon: Icons.close_fullscreen,
+                tooltip: "Finalize all finalizable transactions found in this group",
+                initialState: WidgetsButtonActionState.warning,
+                evaluator: (s) {
+                  if (!isFinalizable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.finalize,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      widget.parentContext,
+                      dialogContext: dialogContext,
+                      successMessage: "All transactions finalized.",
                       error: e,
                     ),
                   );

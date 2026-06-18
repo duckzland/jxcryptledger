@@ -17,7 +17,7 @@ import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
 
-enum TransactionsBatchActionMode { close, finalize, delete }
+enum TransactionsBatchActionMode { close, finalize, delete, refund }
 
 class TransactionsDialogsBatchAction extends StatefulWidget {
   final List<TransactionsModel>? transactions;
@@ -95,6 +95,18 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         tooltip = "Delete all selected transactions";
         buttonActionState = WidgetsButtonActionState.error;
         break;
+
+      case TransactionsBatchActionMode.refund:
+        txs.removeWhere((tx) => !_txController.isRefundable(tx));
+        title = "Refunding Transactions";
+        emptyMessage = "No transactions to refund";
+        buttonLabel = "Refund";
+        confirmTitle = "Refund Transactions";
+        confirmMessage = "Are you sure you want to refund the selected transactions?\nThis action cannot be undone.";
+        successMessage = "Transactions refunded successfully.";
+        tooltip = "Refund all selected transactions";
+        buttonActionState = WidgetsButtonActionState.error;
+        break;
     }
 
     for (final tx in txs) {
@@ -156,6 +168,9 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                                   s.warning();
                                   break;
                                 case TransactionsBatchActionMode.delete:
+                                  s.error();
+                                  break;
+                                case TransactionsBatchActionMode.refund:
                                   s.error();
                                   break;
                               }
@@ -250,6 +265,9 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
             break;
           case TransactionsBatchActionMode.delete:
             await _txController.remove(tx);
+            break;
+          case TransactionsBatchActionMode.refund:
+            await _txController.removeLeaf(tx);
             break;
         }
         txs.remove(tx);
