@@ -29,6 +29,7 @@ import '../../watchers/form.dart';
 import '../../watchers/model.dart';
 import '../dialogs/batch_action.dart';
 import '../dialogs/batch_trade.dart';
+import '../dialogs/note.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -724,11 +725,10 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
             ),
             const DataColumn2(label: Text('Actions'), fixedWidth: 160),
           ],
-
           rows: rows.map((r) {
             final tx = r['tx'] as TransactionsModel;
             final canSelect = tx.isActive || tx.isPartial;
-            return DataRow(
+            return DataRow2(
               key: ValueKey(r['uuid']),
               selected: canSelect ? selectableIsSelected(r['uuid']) : false,
               onSelectChanged: canSelect
@@ -740,6 +740,11 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                       });
                     }
                   : null,
+              onTap: () {
+                if (r['_note'] != null && r['_note'] != "") {
+                  TransactionsDialogsNote.show(context, note: r['_note']);
+                }
+              },
               cells: [
                 DataCell(Text(r['date'] ?? '0.0')),
                 DataCell(Text(r['from'] ?? '0.0')),
@@ -822,6 +827,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
         'tx': tx,
         'uuid': tx.uuid,
 
+        '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,
         '_targetValue': tx.rrAmount,
         '_sourceValue': tx.srAmount,

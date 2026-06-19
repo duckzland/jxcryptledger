@@ -332,6 +332,16 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     return Utils.sanitizeTimestamp(timestamp);
   }
 
+  String? get noteText {
+    if (meta['trading_notes'] != null) {
+      return meta['trading_notes'];
+    }
+    if (meta['purchase_notes'] != null) {
+      return meta['purchase_notes'];
+    }
+    return null;
+  }
+
   String get srAmountText => Utils.formatSmartDouble(srAmount);
   String get rrAmountText => Utils.formatSmartDouble(rrAmount);
   String get balanceText => Utils.formatSmartDouble(balance);
