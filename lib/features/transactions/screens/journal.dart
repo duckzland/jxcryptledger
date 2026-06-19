@@ -12,6 +12,7 @@ import '../../../mixins/table.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
+import '../dialogs/note.dart';
 import '../widgets/buttons.dart';
 import '../model.dart';
 
@@ -125,8 +126,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         'rate': tx.isCapital ? ' - ' : '${tx.rateText} $resultSymbol/$sourceSymbol',
         'status': tx.statusText,
         'tx': tx,
-
         'uuid': tx.uuid,
+
+        '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
@@ -175,8 +177,13 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                   const DataColumn2(label: Text('Actions'), fixedWidth: 160),
                 ],
                 rows: rows.map((r) {
-                  return DataRow(
+                  return DataRow2(
                     key: ValueKey(r['uuid']),
+                    onTap: () {
+                      if (r['_note'] != null && r['_note'] != "") {
+                        TransactionsDialogsNote.show(context, note: r['_note']);
+                      }
+                    },
                     cells: [
                       DataCell(Text(r['date'] ?? '')),
                       DataCell(Text(r['balance'] ?? '')),

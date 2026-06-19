@@ -19,6 +19,7 @@ import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../dialogs/batch_action.dart';
 import '../dialogs/batch_trade.dart';
+import '../dialogs/note.dart';
 import '../mixins/actions.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -507,7 +508,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
             final tx = r['tx'] as TransactionsModel;
             final canSelect = tx.isActive || tx.isPartial;
 
-            return DataRow(
+            return DataRow2(
               key: ValueKey(r['uuid']),
               selected: canSelect ? selectableIsSelected(r['uuid']) : false,
               onSelectChanged: canSelect
@@ -519,6 +520,11 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                       });
                     }
                   : null,
+              onTap: () {
+                if (r['_note'] != null && r['_note'] != "") {
+                  TransactionsDialogsNote.show(context, note: r['_note']);
+                }
+              },
               cells: [
                 DataCell(Text(r['date'])),
                 DataCell(Text(r['source'])),
@@ -559,6 +565,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
         'tx': tx,
         'uuid': tx.uuid,
 
+        '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.balance,
         '_sourceValue': tx.srAmount,
