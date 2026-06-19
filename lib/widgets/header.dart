@@ -23,17 +23,19 @@ class WidgetsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      Text(
-        title,
-        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: titleColor),
-      ),
-      const SizedBox(height: 1),
-      Text(
-        subtitle,
-        style: TextStyle(fontSize: 11, color: subtitleColor),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      if (title != "")
+        Text(
+          title,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: titleColor),
+        ),
+      if (title != "") const SizedBox(height: 1),
+      if (subtitle != "")
+        Text(
+          subtitle,
+          style: TextStyle(fontSize: 11, color: subtitleColor),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
     ];
 
     return Column(

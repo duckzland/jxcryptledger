@@ -19,7 +19,7 @@ import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../dialogs/batch_action.dart';
 import '../dialogs/batch_trade.dart';
-import '../dialogs/note.dart';
+import '../dialogs/details.dart';
 import '../mixins/actions.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -521,9 +521,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                     }
                   : null,
               onTap: () {
-                if (r['_note'] != null && r['_note'] != "") {
-                  TransactionsDialogsNote.show(context, note: r['_note']);
-                }
+                TransactionsDialogsDetails.show(context, r['tx']);
               },
               cells: [
                 DataCell(Text(r['date'])),

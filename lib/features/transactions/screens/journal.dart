@@ -12,7 +12,7 @@ import '../../../mixins/table.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
-import '../dialogs/note.dart';
+import '../dialogs/details.dart';
 import '../widgets/buttons.dart';
 import '../model.dart';
 
@@ -180,9 +180,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                   return DataRow2(
                     key: ValueKey(r['uuid']),
                     onTap: () {
-                      if (r['_note'] != null && r['_note'] != "") {
-                        TransactionsDialogsNote.show(context, note: r['_note']);
-                      }
+                      TransactionsDialogsDetails.show(context, r['tx']);
                     },
                     cells: [
                       DataCell(Text(r['date'] ?? '')),

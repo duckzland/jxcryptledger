@@ -29,7 +29,7 @@ import '../../watchers/form.dart';
 import '../../watchers/model.dart';
 import '../dialogs/batch_action.dart';
 import '../dialogs/batch_trade.dart';
-import '../dialogs/note.dart';
+import '../dialogs/details.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
@@ -741,9 +741,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                     }
                   : null,
               onTap: () {
-                if (r['_note'] != null && r['_note'] != "") {
-                  TransactionsDialogsNote.show(context, note: r['_note']);
-                }
+                TransactionsDialogsDetails.show(context, r['tx']);
               },
               cells: [
                 DataCell(Text(r['date'] ?? '0.0')),

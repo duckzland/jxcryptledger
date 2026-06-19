@@ -333,10 +333,10 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
   }
 
   String? get noteText {
-    if (meta['trading_notes'] != null) {
+    if (meta['trading_notes'] != null && meta['trading_notes'] != "") {
       return meta['trading_notes'];
     }
-    if (meta['purchase_notes'] != null) {
+    if (meta['purchase_notes'] != null && meta['purchase_notes'] != "") {
       return meta['purchase_notes'];
     }
     return null;

@@ -350,6 +350,31 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return tradableLeaves;
   }
 
+  List<TransactionsModel> collectBranchWithTarget(TransactionsModel target) {
+    final all = repo.extract();
+    final Map<String, TransactionsModel> lookup = {for (final tx in all) tx.tid: tx};
+    final List<TransactionsModel> branch = [];
+    TransactionsModel? current = target;
+
+    while (current != null) {
+      branch.insert(0, current);
+      if (current.isRoot) break;
+      current = lookup[current.pid];
+    }
+
+    final List<TransactionsModel> descendants = [];
+    void collectChildren(TransactionsModel node) {
+      for (final tx in all.where((t) => t.pid == node.tid)) {
+        descendants.add(tx);
+        collectChildren(tx);
+      }
+    }
+
+    collectChildren(target);
+
+    return [...branch, ...descendants];
+  }
+
   bool isBothEqual(TransactionsModel txA, TransactionsModel txB) {
     if (txA.tid != txB.tid ||
         txA.rid != txB.rid ||
