@@ -29,9 +29,9 @@ class AppRuntime {
 
   static String get ipcPipeName {
     if (Platform.isWindows) {
-      return r'\\.\pipe\com.jxledger_ipc_sync_pipe';
+      return kDebugMode ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_dev' : r'\\.\pipe\com.jxledger_ipc_sync_pipe';
     } else {
-      return 'com.jxledger_ipc_sync_pipe';
+      return kDebugMode ? 'com.jxledger_ipc_sync_pipe_dev' : 'com.jxledger_ipc_sync_pipe';
     }
   }
 
@@ -111,6 +111,7 @@ class AppRuntime {
       await socket.close();
       return true;
     } catch (e) {
+      logln("Cannot connect to server: $e");
       return false;
     }
   }
