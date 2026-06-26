@@ -1,7 +1,7 @@
 name: jxledger
 description: "JXLedger Transaction Manager."
 publish_to: "none"
-version: 1.0.29
+version: 1.0.30
 
 environment:
   sdk: ^3.11.0
@@ -38,6 +38,7 @@ dependencies:
   flutter_local_notifications_windows: ^3.0.0
   path: ^1.9.1
   reorderable_grid_view: ^2.2.8
+  dart_ipc: ^2.0.0
 
 dev_dependencies:
   dotenv: ^4.2.0

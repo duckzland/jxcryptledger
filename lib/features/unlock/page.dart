@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
+import '../../app/runtime.dart';
 import '../../app/theme.dart';
 import '../../widgets/button.dart';
 import 'controller.dart';
@@ -19,12 +20,15 @@ class _UnlockPageState extends State<UnlockPage> {
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
 
+  late bool isFirstRun;
+
   @override
   void initState() {
     super.initState();
     _password.addListener(() => setState(() {}));
     _confirm.addListener(() => setState(() {}));
     widget.controller.init();
+    isFirstRun = widget.controller.isFirstRun;
   }
 
   @override
@@ -39,7 +43,7 @@ class _UnlockPageState extends State<UnlockPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isFirstRun = widget.controller.isFirstRun;
+    final dbStatus = AppRuntime.instance.isMaster ? "Master" : "Slave";
 
     return Scaffold(
       body: Stack(
@@ -49,7 +53,7 @@ class _UnlockPageState extends State<UnlockPage> {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text('v$appVersion', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+              child: Text('v$appVersion - $dbStatus', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
             ),
           ),
         ],

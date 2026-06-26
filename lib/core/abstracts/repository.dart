@@ -1,11 +1,16 @@
 import 'dart:async';
-import 'package:hive_ce/hive_ce.dart';
 
+import '../ipc/box/standard.dart';
 import 'models/with_id.dart';
 
 abstract class CoreBaseRepository<T extends CoreModelWithId> {
   String get boxName;
-  Box<T> get box => Hive.box<T>(boxName);
+
+  late final CoreIpcBoxStandard<T> box = CoreIpcBoxStandard<T>(boxName);
+
+  Future<void> init() async {
+    await box.init();
+  }
 
   T? get(String id) {
     return box.get(id);
@@ -43,7 +48,7 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
   }
 
   List<T> extract() {
-    return box.values.cast<T>().toList();
+    return box.values.toList();
   }
 
   bool isEmpty() {
