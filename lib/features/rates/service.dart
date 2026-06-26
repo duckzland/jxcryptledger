@@ -4,7 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
+import '../../app/runtime.dart';
+import '../../core/abstracts/service.dart';
+import '../../core/ipc/event.dart';
 import '../../core/log.dart';
+import '../../core/mixins/broadcaster.dart';
+import '../../core/mixins/emitter.dart';
 import '../cryptos/repository.dart';
 import '../settings/keys.dart';
 import '../settings/repository.dart';
@@ -12,47 +17,51 @@ import 'model.dart';
 import 'parser.dart';
 import 'repository.dart';
 
-class RatesService {
-  final RatesRepository ratesRepo;
+class RatesService extends CoreBaseService<RatesModel, RatesRepository> with CoreMixinsEmitter, CoreMixinsBroadcaster {
   final CryptosRepository cryptosRepo;
   final SettingsRepository settingsRepo;
 
-  void Function()? onComplete;
-  void Function()? onStart;
-
-  RatesService(this.ratesRepo, this.cryptosRepo, this.settingsRepo);
+  RatesService(super.repo, this.cryptosRepo, this.settingsRepo);
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
   bool get isPaused => _paused != null;
-  bool get hasRates => !ratesRepo.isEmpty();
+  bool get hasRates => !repo.isEmpty();
   Timer? _watchdog;
   Timer? _paused;
 
   final List<(int sourceId, int targetId)> _queue = [];
   Timer? _debounce;
 
+  @override
   Future<void> init() async {
-    await ratesRepo.cleanupOldRates();
+    await repo.init();
+    await repo.cleanupOldRates();
+    broadcasterListen();
   }
 
-  List<RatesModel> getAll() {
-    return ratesRepo.extract();
+  @override
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    if (event.op == 0x10) {
+      if (event.boxName == "start") {
+        _isFetching = true;
+        emitterEmit("rates_refresh_start");
+      }
+
+      if (event.boxName == "complete") {
+        _isFetching = false;
+        emitterEmit("rates_refresh_complete");
+      }
+    }
+
+    if (event.boxName == repo.boxName) {
+      emitterEmit("rates_updated");
+    }
   }
 
-  Future<void> delete(int sourceId, int targetId) async {
+  Future<void> deleteById(int sourceId, int targetId) async {
     logln('[RATES] Deleting $sourceId-$targetId.');
-    await ratesRepo.delete("$sourceId-$targetId");
-  }
-
-  void registerOnComplete(void Function() cb) {
-    logln('[RATES] Registering on complete.');
-    onComplete = cb;
-  }
-
-  void registerOnStart(void Function() cb) {
-    logln('[RATES] Registering on start.');
-    onStart = cb;
+    await repo.delete("$sourceId-$targetId");
   }
 
   double getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
@@ -67,7 +76,7 @@ class RatesService {
       validateIds(sourceId, targetId);
     }
 
-    final existing = ratesRepo.get("$sourceId-$targetId");
+    final existing = repo.get("$sourceId-$targetId");
     return existing?.rate.toDouble() ?? -9999;
   }
 
@@ -109,7 +118,8 @@ class RatesService {
     _isFetching = force ? false : true;
     _startWatchdog();
 
-    onStart?.call();
+    broadcasterEmit(0x10, 'start', '', Uint8List(0));
+
     try {
       final jobs = List<(int, int)>.from(_queue);
       _queue.clear();
@@ -121,17 +131,23 @@ class RatesService {
     } finally {
       _watchdog?.cancel();
       _isFetching = false;
-      onComplete?.call();
+
+      broadcasterEmit(0x10, 'complete', '', Uint8List(0));
     }
   }
 
   Future<void> refreshRates() async {
+    if (!AppRuntime.instance.isServer()) {
+      await ipcClient.sendAction(op: 0x10, box: "action", key: "refresh_rates");
+      return;
+    }
+
     if (cryptosRepo.isEmpty()) {
       logln('[RATES] No cryptos available, skipping refresh.');
       return;
     }
 
-    final all = ratesRepo.extract();
+    final all = repo.extract();
     for (final r in all) {
       if (r.sourceId != 0 && r.targetId != 0) {
         addQueue(r.sourceId, r.targetId);
@@ -326,7 +342,7 @@ class RatesService {
 
     for (final rate in parsed.rates) {
       if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
-        await ratesRepo.add(rate);
+        await repo.add(rate);
         // logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
       }
     }

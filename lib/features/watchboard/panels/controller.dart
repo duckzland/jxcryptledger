@@ -17,7 +17,18 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   PanelsController(super.repo, this._txRepo);
 
   @override
-  void init() {
+  void emitterAction(String action) {
+    super.emitterAction(action);
+
+    if (action == "rates_updated") {
+      onRatesUpdated();
+      load();
+    }
+  }
+
+  @override
+  Future<void> init() async {
+    await super.init();
     scheduleRates();
   }
 

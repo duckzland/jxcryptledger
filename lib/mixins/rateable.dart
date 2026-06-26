@@ -99,8 +99,8 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     final needToRemove = [...rateableTemporary];
     rateableTemporary.clear();
     for (final (source, target) in needToRemove) {
-      await rateableController.delete(source, target);
-      await rateableController.delete(target, source);
+      await rateableController.deleteById(source, target);
+      await rateableController.deleteById(target, source);
     }
   }
 }

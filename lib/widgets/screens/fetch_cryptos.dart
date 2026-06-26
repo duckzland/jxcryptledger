@@ -37,6 +37,10 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
     }
   }
 
+  void _evaluator(WidgetsButtonState s) async {
+    _cryptosController.isFetching ? s.progress() : s.reset();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -54,15 +58,21 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          WidgetsButton(
-            icon: Icons.refresh,
-            iconSize: 16,
-            label: "Download",
-            initialState: WidgetsButtonActionState.action,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-            minimumSize: const Size(40, 40),
-            onPressed: _fetchCryptos,
-            persistBg: true,
+          AnimatedBuilder(
+            animation: _cryptosController,
+            builder: (context, _) {
+              return WidgetsButton(
+                icon: Icons.refresh,
+                iconSize: 16,
+                label: "Download",
+                initialState: WidgetsButtonActionState.action,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                minimumSize: const Size(40, 40),
+                onPressed: _fetchCryptos,
+                persistBg: true,
+                evaluator: _evaluator,
+              );
+            },
           ),
         ],
       ),

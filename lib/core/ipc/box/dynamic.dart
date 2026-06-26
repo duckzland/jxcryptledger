@@ -1,0 +1,104 @@
+import 'dart:typed_data';
+
+import 'package:hive_ce/hive_ce.dart';
+
+import '../../abstracts/box.dart';
+import '../../locator.dart';
+import '../../log.dart';
+import '../client.dart';
+import '../protocol/reader.dart';
+import '../protocol/writer.dart';
+import '../registry.dart';
+
+class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
+  CoreIpcBoxDynamic(super.boxName);
+
+  final CoreIpcClient ipc = locator<CoreIpcClient>();
+
+  @override
+  Future<void> init() async {
+    final adapter = CoreIpcRegistry.getAdapter(boxName);
+    final resultBytes = await ipc.sendAction(op: 0x06, box: boxName);
+    final reader = CoreIpcReader(resultBytes);
+
+    final count = reader.readInt();
+    final Map<String, dynamic> temporaryCache = {};
+
+    if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
+      if (count > 0) {
+        final dynamic decodedMap = reader.read(null, adapter);
+        if (decodedMap is Map) {
+          decodedMap.forEach((k, v) {
+            final String stringKey = k is Enum ? k.name : k.toString();
+            if (v is Map) {
+              if (v.containsKey(stringKey)) {
+                temporaryCache[stringKey] = v[stringKey];
+              }
+            } else {
+              temporaryCache[stringKey] = v;
+            }
+          });
+        }
+      }
+    } else {
+      for (var i = 0; i < count; i++) {
+        final dynamic decodedItem = reader.read(null, adapter);
+
+        if (decodedItem is Map) {
+          decodedItem.forEach((k, v) {
+            final String stringKey = k is Enum ? k.name : k.toString();
+            temporaryCache[stringKey] = v;
+          });
+        }
+      }
+    }
+
+    items.clear();
+    items.addAll(temporaryCache);
+
+    logln("[IPC] Initialized dynamic box: $boxName|${items.length}");
+  }
+
+  @override
+  Future<void> put(dynamic id, dynamic value) async {
+    final writer = CoreIpcWriter();
+    final adapter = CoreIpcRegistry.getAdapter(boxName);
+    final mapPayload = <dynamic, dynamic>{id: value};
+
+    adapter.write(writer, mapPayload);
+
+    await ipc.sendAction(op: 0x02, box: boxName, key: id, value: writer.toBytes());
+    items[id] = value;
+  }
+
+  @override
+  Future<int> clear() async {
+    final resultBytes = await ipc.sendAction(op: 0x04, box: boxName);
+    if (resultBytes.isEmpty || resultBytes.length < 4) {
+      items.clear();
+      return 0;
+    }
+    final count = ByteData.sublistView(resultBytes).getInt32(0, Endian.big);
+    items.clear();
+    return count;
+  }
+
+  @override
+  Future<void> delete(dynamic id) async {
+    await ipc.sendAction(op: 0x03, box: boxName, key: id);
+    items.remove(id);
+  }
+
+  @override
+  Future<void> flush() async {
+    await ipc.sendAction(op: 0x05, box: boxName);
+  }
+
+  Future<void> add(dynamic id, dynamic value) async {
+    await put(id, value);
+  }
+
+  Future<void> update(dynamic id, dynamic value) async {
+    await put(id, value);
+  }
+}

@@ -1,13 +1,17 @@
-import 'package:hive_ce/hive_ce.dart';
-
+import '../../core/ipc/box/dynamic.dart';
 import '../encryption/service.dart';
 import 'keys.dart';
 
 class SettingsRepository {
   static const String boxName = 'settings_box';
   final EncryptionService _encryption = EncryptionService.instance;
+  final CoreIpcBoxDynamic box;
 
-  Box<dynamic> get _box => Hive.box<dynamic>(boxName);
+  SettingsRepository() : box = CoreIpcBoxDynamic(boxName);
+
+  Future<void> init() async {
+    await box.init();
+  }
 
   Future<void> save(SettingKey key, dynamic value) async {
     if (value is String && key.validator != null) {
@@ -17,19 +21,32 @@ class SettingsRepository {
 
     if (key == SettingKey.vaultInitialized && value is String) {
       final encrypted = await _encryption.encrypt(value);
-      await _box.put(key.id, encrypted);
+      await box.put(key.id, encrypted);
     } else {
-      await _box.put(key.id, value);
+      await box.put(key.id, value);
     }
   }
 
   T? get<T>(SettingKey key, {T? defaultValue}) {
-    final value = _box.get(key.id, defaultValue: defaultValue ?? key.defaultValue);
+    final value = box.get(key.id);
+
+    if (value == null) {
+      return defaultValue ?? key.defaultValue as T?;
+    }
+
+    if (value is Map) {
+      final inner = value[key.id];
+      if (inner == null) {
+        return defaultValue ?? key.defaultValue as T?;
+      }
+      return inner as T?;
+    }
+
     return value as T?;
   }
 
   Future<String?> getDecryptedMarker() async {
-    final encrypted = _box.get(SettingKey.vaultInitialized.id);
+    final encrypted = box.get(SettingKey.vaultInitialized.id);
     if (encrypted == null) return null;
     try {
       return await _encryption.decrypt(encrypted);
@@ -38,13 +55,13 @@ class SettingsRepository {
     }
   }
 
-  bool has(SettingKey key) => _box.containsKey(key.id);
+  bool has(SettingKey key) => box.containsKey(key.id);
 
   Future<void> delete(SettingKey key) async {
-    await _box.delete(key.id);
+    await box.delete(key.id);
   }
 
   Map<String, dynamic> toMap() {
-    return Map<String, dynamic>.from(_box.toMap());
+    return Map<String, dynamic>.from(box.toMap());
   }
 }

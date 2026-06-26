@@ -1,20 +1,83 @@
 import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../app/exceptions.dart';
+import '../../../core/abstracts/service.dart';
 import '../../../core/log.dart';
 import '../../settings/keys.dart';
 import '../../settings/repository.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class TickersService {
-  final TickersRepository tickersRepo;
+class TickersService extends CoreBaseService<TickersModel, TickersRepository> {
   final SettingsRepository settingsRepo;
 
-  TickersService(this.tickersRepo, this.settingsRepo);
+  TickersService(super.repo, this.settingsRepo);
+
+  @override
+  Future<void> init() async {
+    repo.init();
+    if (repo.isEmpty()) {
+      populate();
+    }
+  }
+
+  Future<void> populate({bool fetchRate = true}) async {
+    final tickers = [
+      TickersModel(
+        tid: "market_cap",
+        type: TickerType.marketCap.index,
+        format: TickerFormat.shortCurrency.index,
+        title: "Market Cap",
+        order: 0,
+      ),
+      TickersModel(
+        tid: "market_bias",
+        type: TickerType.pulse.index,
+        format: TickerFormat.shortPercentageWithSign.index,
+        title: "Market Bias",
+        order: 1,
+      ),
+      TickersModel(tid: "cmc100", type: TickerType.cmc100.index, format: TickerFormat.normalCurrency.index, title: "CMC100", order: 2),
+      TickersModel(
+        tid: "altcoin_index",
+        type: TickerType.altcoinIndex.index,
+        format: TickerFormat.percentage.index,
+        title: "Altcoin Index",
+        order: 3,
+      ),
+      TickersModel(
+        tid: "fear_greed",
+        type: TickerType.fearGreed.index,
+        format: TickerFormat.percentage.index,
+        title: "Fear & Greed",
+        order: 4,
+      ),
+      TickersModel(tid: "crypto_rsi", type: TickerType.rsi.index, format: TickerFormat.normalNumber.index, title: "Crypto RSI", order: 5),
+      TickersModel(
+        tid: "etf_flow",
+        type: TickerType.etf.index,
+        format: TickerFormat.shortCurrencyWithSign.index,
+        title: "ETF Flow",
+        order: 6,
+      ),
+      TickersModel(
+        tid: "dominance",
+        type: TickerType.dominance.index,
+        format: TickerFormat.shortPercentage.index,
+        title: "Dominance",
+        order: 7,
+      ),
+    ];
+
+    for (final tx in tickers) {
+      await repo.add(tx);
+    }
+
+    if (fetchRate) {
+      refreshRates();
+    }
+  }
 
   Future<Map<String, dynamic>> _fetchJson(SettingKey key, {Map<String, String>? query}) async {
     final endpoint = settingsRepo.get<String>(key) ?? key.defaultValue;
@@ -30,7 +93,7 @@ class TickersService {
     if (resp.statusCode != 200) {
       throw NetworkingException(
         AppErrorCode.netHttpFailure,
-        "Ticker fetch failed: HTTP ${resp.statusCode}",
+        "Ticker fetch failed: HTTP [${resp.statusCode}][$uri]",
         "Unable to retrieve data from the server.",
         details: resp.statusCode,
       );
@@ -39,8 +102,9 @@ class TickersService {
     logln('[TICKERS] Fetching from : $uri [${resp.statusCode}]');
 
     try {
-      return await compute(parseJson, resp.body);
+      return parseJson(resp.body);
     } catch (e) {
+      logln('[TICKERS] FAILURE : ${resp.body}');
       throw NetworkingException(
         AppErrorCode.netParseFailure,
         "Ticker fetch failed: parse error",
@@ -60,7 +124,7 @@ class TickersService {
     final nowObj = body["data"]["historicalValues"]["now"];
     final index = nowObj["altcoinIndex"].toString();
 
-    tickersRepo.updateByType(TickerType.altcoinIndex.index, index);
+    repo.updateByType(TickerType.altcoinIndex.index, index);
 
     return true;
   }
@@ -75,7 +139,7 @@ class TickersService {
     final nowObj = body["data"]["historicalValues"]["now"];
     final score = nowObj["score"].toString();
 
-    tickersRepo.updateByType(TickerType.fearGreed.index, score);
+    repo.updateByType(TickerType.fearGreed.index, score);
 
     return true;
   }
@@ -90,7 +154,7 @@ class TickersService {
     final summary = body["data"]["summaryData"]["currentValue"];
     final value = summary["value"].toString();
 
-    tickersRepo.updateByType(TickerType.cmc100.index, value);
+    repo.updateByType(TickerType.cmc100.index, value);
 
     return true;
   }
@@ -100,7 +164,7 @@ class TickersService {
 
     final nowCap = body["data"]["historicalValues"]["now"]["marketCap"].toString();
 
-    tickersRepo.updateByType(TickerType.marketCap.index, nowCap);
+    repo.updateByType(TickerType.marketCap.index, nowCap);
 
     return true;
   }
@@ -118,8 +182,8 @@ class TickersService {
 
     final pulse = overBought - overSold;
 
-    tickersRepo.updateByType(TickerType.rsi.index, avgRsi);
-    tickersRepo.updateByType(TickerType.pulse.index, pulse.toString());
+    repo.updateByType(TickerType.rsi.index, avgRsi);
+    repo.updateByType(TickerType.pulse.index, pulse.toString());
 
     return true;
   }
@@ -131,7 +195,7 @@ class TickersService {
     // final btcValue = body["data"]["totalBtcValue"].toString();
     final ethValue = body["data"]["totalEthValue"].toString();
 
-    tickersRepo.updateByType(TickerType.etf.index, ethValue);
+    repo.updateByType(TickerType.etf.index, ethValue);
 
     return true;
   }
@@ -142,13 +206,13 @@ class TickersService {
     final dominanceList = body["data"]["dominance"] as List<dynamic>;
     final btc = dominanceList[0]["mcProportion"].toString();
 
-    tickersRepo.updateByType(TickerType.dominance.index, btc);
+    repo.updateByType(TickerType.dominance.index, btc);
 
     return true;
   }
 
   Future<void> refreshRates() async {
-    final all = tickersRepo.extract();
+    final all = repo.extract();
 
     final types = all.map((tix) => TickerType.values[tix.type]).toSet();
 

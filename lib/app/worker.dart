@@ -3,11 +3,11 @@ import 'dart:async';
 import '../app/router.dart';
 import '../core/locator.dart';
 import '../core/log.dart';
-import '../features/rates/controller.dart';
-import '../features/transactions/controller.dart';
-import '../features/watchboard/panels/controller.dart';
-import '../features/watchboard/tickers/controller.dart';
-import '../features/watchers/controller.dart';
+import '../features/rates/service.dart';
+import '../features/transactions/service.dart';
+import '../features/watchboard/panels/service.dart';
+import '../features/watchboard/tickers/service.dart';
+import '../features/watchers/service.dart';
 
 class AppWorker {
   Timer? _timer;
@@ -17,11 +17,11 @@ class AppWorker {
     if (_started) return;
     _started = true;
 
-    final rates = locator<RatesController>();
-    final panels = locator<PanelsController>();
-    final watchers = locator<WatchersController>();
-    final tickers = locator<TickersController>();
-    final transactions = locator<TransactionsController>();
+    final rates = locator<RatesService>();
+    final panels = locator<PanelsService>();
+    final watchers = locator<WatchersService>();
+    final tickers = locator<TickersService>();
+    final transactions = locator<TransactionsService>();
 
     logln("[WORKER] Registering used rates.");
     panels.scheduleRates();
@@ -42,11 +42,11 @@ class AppWorker {
 
       if (uxs.isNotEmpty) {
         logln("[WORKER] Trying to clean old rates");
-        final rxs = rates.getAll();
+        final rxs = rates.extract();
         for (final rx in rxs) {
           final key = '${rx.sourceId}-${rx.targetId}';
           if (!uxs.contains(key)) {
-            await rates.delete(rx.sourceId, rx.targetId);
+            await rates.deleteById(rx.sourceId, rx.targetId);
           }
         }
       }

@@ -2,9 +2,12 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+import '../core/ipc/client.dart';
+import '../core/locator.dart';
 import '../core/log.dart';
 import '../mixins/state.dart';
 import 'router.dart';
+import 'runtime.dart';
 import 'theme.dart';
 
 class AppRoot extends StatefulWidget {
@@ -32,21 +35,34 @@ class _AppRootState extends State<AppRoot> with MixinsState {
 
   Future<AppExitResponse> _handleClose() async {
     try {
-      await states.save();
+      await _cleanup();
       return AppExitResponse.exit;
     } catch (e) {
-      logln("Failed to save state on exit: $e");
+      logln("Failed to clean exit: $e");
       return AppExitResponse.exit;
     }
   }
 
   Future<void> _handleExit() async {
     try {
-      await states.save();
+      await _cleanup();
     } catch (e) {
       logln("Failed to save state on exit: $e");
     } finally {
       exit(0);
+    }
+  }
+
+  Future<void> _cleanup() async {
+    if (!AppRuntime.instance.isServer()) {
+      // @todo: figure out on how to save multiple app state!
+      if (AppRuntime.instance.isMain()) {
+        await states.save();
+      }
+
+      final client = locator<CoreIpcClient>();
+      await client.unregister();
+      client.dispose();
     }
   }
 

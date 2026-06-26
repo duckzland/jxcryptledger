@@ -1,29 +1,31 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
+import '../../core/abstracts/controller.dart';
 import 'model.dart';
+import 'repository.dart';
 import 'service.dart';
 
-class RatesController extends ChangeNotifier {
+class RatesController extends CoreBaseController<RatesModel, RatesRepository> {
   final RatesService service;
 
-  RatesController(this.service) {
-    service.registerOnStart(() {
-      notifyListeners();
-    });
-    service.registerOnComplete(() {
-      notifyListeners();
-    });
-  }
+  RatesController(super.repo, this.service);
 
   bool get isFetching => service.isFetching;
   bool get hasRates => service.hasRates;
 
-  Future<void> init() async {
-    await service.init();
-    notifyListeners();
+  @override
+  void emitterAction(String action) {
+    if (action == service.repo.boxName || action == "rates_refresh_start" || action == "rates_refresh_complete") {
+      load();
+    }
   }
 
-  List<RatesModel> getAll() {
-    return service.getAll();
+  @override
+  Future<void> init() async {
+    await repo.init();
+    await service.init();
+    load();
+    emitterListen();
   }
 
   double getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
@@ -36,10 +38,10 @@ class RatesController extends ChangeNotifier {
 
   Future<void> refreshRates() async {
     await service.refreshRates();
-    notifyListeners();
+    load();
   }
 
-  Future<void> delete(int sourceId, int targetId) async {
-    await service.delete(sourceId, targetId);
+  Future<void> deleteById(int sourceId, int targetId) async {
+    await service.deleteById(sourceId, targetId);
   }
 }

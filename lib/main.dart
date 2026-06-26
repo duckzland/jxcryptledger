@@ -5,10 +5,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app/constants.dart';
 import 'app/root.dart';
-import 'app/storage.dart';
+import 'app/runtime.dart';
 import 'core/locator.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (File('.env').existsSync()) {
@@ -17,9 +17,12 @@ Future<void> main() async {
     dotenv.loadFromString(envString: "APP_SALT=$appSalt");
   }
 
-  await AppStorage.instance.init();
-
   setupLocator();
 
-  runApp(const AppRoot());
+  AppRuntime.instance.setArgs(args);
+  await AppRuntime.instance.init();
+
+  if (!args.contains('--server')) {
+    runApp(const AppRoot());
+  }
 }

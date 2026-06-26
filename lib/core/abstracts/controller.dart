@@ -1,89 +1,54 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../../app/runtime.dart';
 import '../log.dart';
+import '../mixins/emitter.dart';
+import '../mixins/box.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
-abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseRepository<T>> extends ChangeNotifier {
+abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseRepository<T>> extends ChangeNotifier
+    with CoreMixinsBox<T>, CoreMixinsEmitter {
   Timer? _notifyTimer;
 
   List<T> listItems = [];
   List<T> get items => listItems;
 
+  @override
   final R repo;
 
   CoreBaseController(this.repo);
 
-  void init() {
+  Future<void> init() async {
+    await repo.init();
     load();
+    emitterListen();
+  }
+
+  @override
+  void emitterAction(String action) {
+    if (action == repo.boxName) {
+      load();
+    }
   }
 
   void start() {
     listItems = repo.extract();
   }
 
+  @override
   void load() {
     start();
     // logln("Scheduling listener for: ${T.toString()}");
 
-    _notifyTimer?.cancel();
-    _notifyTimer = Timer(const Duration(milliseconds: 16), () {
-      logln("[CORE] Firing listener for: ${T.toString()}");
-      notifyListeners();
-    });
-  }
-
-  T? get(String tid) {
-    return repo.get(tid);
-  }
-
-  List<T> extract() {
-    return repo.extract();
-  }
-
-  Future<void> add(T tx) async {
-    await repo.add(tx);
-    load();
-  }
-
-  Future<void> update(T tx) async {
-    await repo.update(tx);
-    load();
-  }
-
-  Future<void> remove(T tx) async {
-    await repo.remove(tx);
-    load();
-  }
-
-  Future<void> delete(String id) async {
-    await repo.delete(id);
-    load();
-  }
-
-  Future<void> flush() async {
-    await repo.flush();
-    load();
-  }
-
-  Future<void> clear() async {
-    await repo.clear();
-    load();
-  }
-
-  Future<bool> wipe() async {
-    try {
-      final removed = await repo.clear();
-      load();
-      return removed != 0;
-    } catch (e) {
-      return false;
+    if (!AppRuntime.instance.isServer()) {
+      _notifyTimer?.cancel();
+      _notifyTimer = Timer(const Duration(milliseconds: 32), () {
+        logln("[CORE] Firing listener for: ${T.toString()}");
+        notifyListeners();
+      });
     }
-  }
-
-  bool isEmpty() {
-    return repo.isEmpty();
   }
 
   T? findNew(List<T> oldItems) {
@@ -95,5 +60,12 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
     }
 
     return items.firstWhere((el) => el.uuid == addedIds.first);
+  }
+
+  @override
+  void dispose() {
+    emitterDispose();
+    _notifyTimer?.cancel();
+    super.dispose();
   }
 }
