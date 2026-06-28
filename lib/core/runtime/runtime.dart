@@ -5,19 +5,19 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../features/settings/states.dart';
 import '../../features/archives/adapter.dart';
 import '../../features/cryptos/adapter.dart';
 import '../../features/rates/adapter.dart';
 import '../../features/settings/adapter.dart';
+import '../../features/settings/states.dart';
 import '../../features/transactions/adapter.dart';
 import '../../features/watchboard/panels/adapter.dart';
 import '../../features/watchboard/tickers/adapter.dart';
 import '../../features/watchers/adapter.dart';
-import '../ipc/client.dart';
-import '../ipc/registry.dart';
 import '../bootstrap/client.dart';
 import '../bootstrap/server.dart';
+import '../ipc/client.dart';
+import '../ipc/registry.dart';
 import '../locator.dart';
 import '../log.dart';
 import 'process.dart';
@@ -37,7 +37,7 @@ class CoreRuntime {
     if (Platform.isWindows) {
       return kDebugMode ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_dev' : r'\\.\pipe\com.jxledger_ipc_sync_pipe';
     } else {
-      return kDebugMode ? 'com.jxledger_ipc_sync_pipe_dev' : 'com.jxledger_ipc_sync_pipe';
+      return kDebugMode ? '/tmp/jxledger.sock' : '/tmp/jxledger.sock';
     }
   }
 
@@ -124,6 +124,16 @@ class CoreRuntime {
     initialized = true;
   }
 
+  bool hasOtherClient() {
+    final List<int> activeClients = CoreProcessDetector.getActiveUiClientPids();
+
+    if (activeClients.isEmpty || activeClients.length == 1) {
+      return false;
+    }
+
+    return true;
+  }
+
   bool shouldSpawn() {
     final List<int> activeClients = CoreProcessDetector.getActiveUiClientPids();
 
@@ -139,8 +149,25 @@ class CoreRuntime {
     return activeClients.first == pid;
   }
 
+  void cleanSocketFile() {
+    if (Platform.isLinux) {
+      final socketFile = File(ipcPipeName);
+
+      if (socketFile.existsSync()) {
+        try {
+          socketFile.deleteSync();
+          logln("Cleaned up stale Linux socket file prior to server spawn.");
+        } catch (e) {
+          logln("Warning: Failed to clear stale socket file: $e");
+        }
+      }
+    }
+  }
+
   Future<void> spawnServer() async {
     try {
+      cleanSocketFile();
+
       final proc = await Process.start(Platform.resolvedExecutable, ['--server'], mode: ProcessStartMode.inheritStdio);
       serverPid = proc.pid;
       logln("Spawned detached IPC server process (pid=${proc.pid})");
