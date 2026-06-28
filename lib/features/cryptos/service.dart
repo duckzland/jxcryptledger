@@ -39,6 +39,10 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> wi
         emitterEmit("cryptos_refresh_complete");
       }
     }
+
+    if (event.op == 0x14 && event.boxName == repo.boxName) {
+      emitterEmit("cryptos_refresh_complete");
+    }
   }
 
   String? getSymbol(int id) {
@@ -96,10 +100,11 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> wi
       }
 
       await repo.clear();
-      for (final m in parsed) {
-        final model = CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]);
-        await repo.add(model);
-      }
+      final List<CryptosModel> models = parsed
+          .map((m) => CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]))
+          .toList();
+
+      await repo.addAll(models);
 
       await repo.flush();
 

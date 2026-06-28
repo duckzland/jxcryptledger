@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:typed_data';
 
 import '../ipc/event.dart';
 import '../mixins/broadcaster.dart';
 import '../ipc/protocol/reader.dart';
 import '../ipc/registry.dart';
 import '../mixins/emitter.dart';
+import 'models/with_id.dart';
 
 abstract class CoreBaseBox<V> with CoreMixinsEmitter, CoreMixinsBroadcaster {
   final String boxName;
@@ -88,6 +90,14 @@ abstract class CoreBaseBox<V> with CoreMixinsEmitter, CoreMixinsBroadcaster {
     await init();
   }
 
+  Future<void> addAll(List<V> values) async {
+    for (final entry in values.asMap().entries) {
+      final value = entry.value;
+      final index = entry.key;
+      items[index] = value;
+    }
+  }
+
   @override
   void broadcasterAction(CoreIpcBroadcastEvent event) {
     if (event.boxName != boxName) {
@@ -106,9 +116,27 @@ abstract class CoreBaseBox<V> with CoreMixinsEmitter, CoreMixinsBroadcaster {
       items.remove(event.key);
     } else if (event.op == 0x04) {
       items.clear();
+    } else if (event.op == 0x14) {
+      unpackBytes(event.valueBytes);
     }
 
     emitterEmit(boxName);
+  }
+
+  void unpackBytes(Uint8List resultBytes) {
+    final adapter = CoreIpcRegistry.getAdapter(boxName);
+    final reader = CoreIpcReader(resultBytes);
+
+    final int totalItems = reader.readInt();
+    for (int i = 0; i < totalItems; i++) {
+      final decoded = reader.read(null, adapter);
+      final dynamic item = (decoded is MapEntry) ? decoded.value : decoded;
+      final dynamic key = (item is CoreModelWithId) ? item.uuid : i;
+
+      if (item is V) {
+        items[key] = item;
+      }
+    }
   }
 
   void dispose() {

@@ -18,24 +18,7 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
   @override
   Future<void> init() async {
     final resultBytes = await ipc.send(op: 0x06, box: boxName);
-    if (resultBytes.isEmpty) {
-      items.clear();
-      return;
-    }
-
-    final reader = CoreIpcReader(resultBytes);
-    final int count = reader.readInt();
-    final adapter = CoreIpcRegistry.getAdapter(boxName);
-
-    items.clear();
-
-    for (var i = 0; i < count; i++) {
-      final dynamic decodedItem = reader.read(null, adapter);
-      if (decodedItem is T) {
-        items[decodedItem.uuid] = decodedItem;
-      }
-    }
-
+    unpackBytes(resultBytes);
     logln("[IPC] Initialized standard box: $boxName|${items.length}");
   }
 
@@ -72,6 +55,43 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
   @override
   Future<void> flush() async {
     await ipc.send(op: 0x05, box: boxName);
+  }
+
+  @override
+  Future<void> addAll(List<T> values) async {
+    if (values.isEmpty) return;
+
+    final writer = CoreIpcWriter();
+    final boxAdapter = CoreIpcRegistry.getAdapter(boxName);
+
+    writer.writeInt(values.length);
+
+    for (final value in values) {
+      boxAdapter.write(writer, value);
+    }
+
+    final bytes = writer.toBytes();
+    await ipc.send(op: 0x14, box: boxName, value: bytes);
+
+    for (final value in values) {
+      items[value.uuid] = value;
+    }
+  }
+
+  @override
+  unpackBytes(Uint8List resultBytes) {
+    final reader = CoreIpcReader(resultBytes);
+    final int count = reader.readInt();
+    final adapter = CoreIpcRegistry.getAdapter(boxName);
+
+    items.clear();
+
+    for (var i = 0; i < count; i++) {
+      final dynamic decodedItem = reader.read(null, adapter);
+      if (decodedItem is T) {
+        items[decodedItem.uuid] = decodedItem;
+      }
+    }
   }
 
   Future<void> add(T tx) async {
