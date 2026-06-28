@@ -1,13 +1,6 @@
-import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
-
-import '../core/ipc/client.dart';
-import '../core/locator.dart';
-import '../core/log.dart';
 import '../mixins/state.dart';
 import 'router.dart';
-import 'runtime.dart';
 import 'theme.dart';
 
 class AppRoot extends StatefulWidget {
@@ -18,60 +11,6 @@ class AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<AppRoot> with MixinsState {
-  late final AppLifecycleListener _lifecycleListener;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _lifecycleListener = AppLifecycleListener(onExitRequested: _handleClose);
-
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      ProcessSignal.sigint.watch().listen((signal) async {
-        await _handleExit();
-      });
-    }
-  }
-
-  Future<AppExitResponse> _handleClose() async {
-    try {
-      await _cleanup();
-      return AppExitResponse.exit;
-    } catch (e) {
-      logln("Failed to clean exit: $e");
-      return AppExitResponse.exit;
-    }
-  }
-
-  Future<void> _handleExit() async {
-    try {
-      await _cleanup();
-    } catch (e) {
-      logln("Failed to save state on exit: $e");
-    } finally {
-      exit(0);
-    }
-  }
-
-  Future<void> _cleanup() async {
-    if (!AppRuntime.instance.isServer()) {
-      // @todo: figure out on how to save multiple app state!
-      if (AppRuntime.instance.isMain()) {
-        await states.save();
-      }
-
-      final client = locator<CoreIpcClient>();
-      await client.unregister();
-      client.dispose();
-    }
-  }
-
-  @override
-  void dispose() {
-    _lifecycleListener.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(

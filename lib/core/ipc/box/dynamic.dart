@@ -13,12 +13,12 @@ import '../registry.dart';
 class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
   CoreIpcBoxDynamic(super.boxName);
 
-  final CoreIpcClient ipc = locator<CoreIpcClient>();
+  CoreIpcClient get ipc => locator<CoreIpcClient>();
 
   @override
   Future<void> init() async {
     final adapter = CoreIpcRegistry.getAdapter(boxName);
-    final resultBytes = await ipc.sendAction(op: 0x06, box: boxName);
+    final resultBytes = await ipc.send(op: 0x06, box: boxName);
     final reader = CoreIpcReader(resultBytes);
 
     final count = reader.readInt();
@@ -67,13 +67,13 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
     adapter.write(writer, mapPayload);
 
-    await ipc.sendAction(op: 0x02, box: boxName, key: id, value: writer.toBytes());
+    await ipc.send(op: 0x02, box: boxName, key: id, value: writer.toBytes());
     items[id] = value;
   }
 
   @override
   Future<int> clear() async {
-    final resultBytes = await ipc.sendAction(op: 0x04, box: boxName);
+    final resultBytes = await ipc.send(op: 0x04, box: boxName);
     if (resultBytes.isEmpty || resultBytes.length < 4) {
       items.clear();
       return 0;
@@ -85,13 +85,13 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
   @override
   Future<void> delete(dynamic id) async {
-    await ipc.sendAction(op: 0x03, box: boxName, key: id);
+    await ipc.send(op: 0x03, box: boxName, key: id);
     items.remove(id);
   }
 
   @override
   Future<void> flush() async {
-    await ipc.sendAction(op: 0x05, box: boxName);
+    await ipc.send(op: 0x05, box: boxName);
   }
 
   Future<void> add(dynamic id, dynamic value) async {

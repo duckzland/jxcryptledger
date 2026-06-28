@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import '../app/runtime.dart';
+import 'runtime/runtime.dart';
 
 class CoreEvent {
   CoreEvent._();
@@ -11,7 +11,7 @@ class CoreEvent {
 
   static void emit(String action) {
     // Dont allow server to emit!
-    bool isEmittable = !AppRuntime.instance.isServer();
+    bool isEmittable = !CoreRuntime.instance.isServer();
     if (isEmittable && !_controller.isClosed && _controller.hasListener) {
       _controller.add(action);
     }

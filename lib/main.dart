@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app/constants.dart';
 import 'app/root.dart';
-import 'app/runtime.dart';
+import 'core/runtime/runtime.dart';
 import 'core/locator.dart';
 
 Future<void> main(List<String> args) async {
@@ -19,8 +19,8 @@ Future<void> main(List<String> args) async {
 
   setupLocator();
 
-  AppRuntime.instance.setArgs(args);
-  await AppRuntime.instance.init();
+  CoreRuntime.instance.setArgs(args);
+  await CoreRuntime.instance.init();
 
   if (!args.contains('--server')) {
     runApp(const AppRoot());

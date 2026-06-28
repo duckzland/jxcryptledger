@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../../app/runtime.dart';
+import '../../core/runtime/runtime.dart';
 import 'repository.dart';
 import 'keys.dart';
 
@@ -17,7 +17,7 @@ class SettingsController extends ChangeNotifier {
   }
 
   void load() {
-    if (!AppRuntime.instance.isServer()) {
+    if (!CoreRuntime.instance.isServer()) {
       notifyListeners();
     }
   }

@@ -9,6 +9,10 @@ class CoreIpcBuffer {
   void add(Uint8List frame) => _builder.add(frame);
   int get length => _builder.length;
 
+  void clear() {
+    _builder.clear();
+  }
+
   CoreIpcPacket? parseNextAction() {
     if (_builder.length < 8) return null;
 

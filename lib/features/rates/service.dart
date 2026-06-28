@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
-import '../../app/runtime.dart';
+import '../../core/runtime/runtime.dart';
 import '../../core/abstracts/service.dart';
 import '../../core/ipc/event.dart';
 import '../../core/log.dart';
@@ -137,8 +137,8 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
   }
 
   Future<void> refreshRates() async {
-    if (!AppRuntime.instance.isServer()) {
-      await ipcClient.sendAction(op: 0x10, box: "action", key: "refresh_rates");
+    if (!CoreRuntime.instance.isServer()) {
+      await ipcClient.send(op: 0x10, box: "action", key: "refresh_rates");
       return;
     }
 
