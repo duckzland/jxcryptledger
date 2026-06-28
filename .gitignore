@@ -47,3 +47,5 @@ app.*.symbols
 app.*.map.json
 
 test/database/
+
+com.jxledger*

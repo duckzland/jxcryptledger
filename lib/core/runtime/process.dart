@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
+
 import 'package:ffi/ffi.dart';
 
 typedef _NativeGetPids = Int32 Function(Pointer<Int32> outPids, Int32 maxCount);
@@ -20,7 +21,8 @@ class CoreProcessDetector {
       .asFunction();
 
   static List<int> getActiveUiClientPids() {
-    if (!Platform.isWindows) return [];
+    // FIX: Support both platform binaries
+    if (!Platform.isWindows && !Platform.isLinux) return [];
 
     final Pointer<Int32> pidsArrayPtr = calloc<Int32>(128);
     final List<int> uiClientPids = [];
@@ -37,7 +39,8 @@ class CoreProcessDetector {
   }
 
   static bool isServerInstanceRunning() {
-    if (!Platform.isWindows) return false;
+    // FIX: Support both platform binaries
+    if (!Platform.isWindows && !Platform.isLinux) return false;
     return _nativeIsServerRunning() == 1;
   }
 }
