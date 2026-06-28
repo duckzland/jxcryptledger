@@ -17,45 +17,8 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
   @override
   Future<void> init() async {
-    final adapter = CoreIpcRegistry.getAdapter(boxName);
     final resultBytes = await ipc.send(op: 0x06, box: boxName);
-    final reader = CoreIpcReader(resultBytes);
-
-    final count = reader.readInt();
-    final Map<String, dynamic> temporaryCache = {};
-
-    if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
-      if (count > 0) {
-        final dynamic decodedMap = reader.read(null, adapter);
-        if (decodedMap is Map) {
-          decodedMap.forEach((k, v) {
-            final String stringKey = k is Enum ? k.name : k.toString();
-            if (v is Map) {
-              if (v.containsKey(stringKey)) {
-                temporaryCache[stringKey] = v[stringKey];
-              }
-            } else {
-              temporaryCache[stringKey] = v;
-            }
-          });
-        }
-      }
-    } else {
-      for (var i = 0; i < count; i++) {
-        final dynamic decodedItem = reader.read(null, adapter);
-
-        if (decodedItem is Map) {
-          decodedItem.forEach((k, v) {
-            final String stringKey = k is Enum ? k.name : k.toString();
-            temporaryCache[stringKey] = v;
-          });
-        }
-      }
-    }
-
-    items.clear();
-    items.addAll(temporaryCache);
-
+    unpackBytes(resultBytes);
     logln("[IPC] Initialized dynamic box: $boxName|${items.length}");
   }
 
@@ -100,5 +63,46 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
   Future<void> update(dynamic id, dynamic value) async {
     await put(id, value);
+  }
+
+  @override
+  void unpackBytes(Uint8List resultBytes) {
+    final adapter = CoreIpcRegistry.getAdapter(boxName);
+    final reader = CoreIpcReader(resultBytes);
+
+    final count = reader.readInt();
+    final Map<String, dynamic> temporaryCache = {};
+
+    if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
+      if (count > 0) {
+        final dynamic decodedMap = reader.read(null, adapter);
+        if (decodedMap is Map) {
+          decodedMap.forEach((k, v) {
+            final String stringKey = k is Enum ? k.name : k.toString();
+            if (v is Map) {
+              if (v.containsKey(stringKey)) {
+                temporaryCache[stringKey] = v[stringKey];
+              }
+            } else {
+              temporaryCache[stringKey] = v;
+            }
+          });
+        }
+      }
+    } else {
+      for (var i = 0; i < count; i++) {
+        final dynamic decodedItem = reader.read(null, adapter);
+
+        if (decodedItem is Map) {
+          decodedItem.forEach((k, v) {
+            final String stringKey = k is Enum ? k.name : k.toString();
+            temporaryCache[stringKey] = v;
+          });
+        }
+      }
+    }
+
+    items.clear();
+    items.addAll(temporaryCache);
   }
 }

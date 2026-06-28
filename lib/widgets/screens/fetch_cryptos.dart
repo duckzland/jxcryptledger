@@ -25,7 +25,7 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
     try {
       await _cryptosController.fetch();
       widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-      _cryptosController.getSymbolMap();
+      _cryptosController.generateSymbolMap();
       s.action();
       setState(() {});
     } catch (e) {

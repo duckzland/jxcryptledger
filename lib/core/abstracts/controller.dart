@@ -40,8 +40,11 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   @override
   void load() {
     start();
-    // logln("Scheduling listener for: ${T.toString()}");
+    debounceNotify();
+  }
 
+  void debounceNotify() {
+    // logln("Scheduling listener for: ${T.toString()}");
     if (!CoreRuntime.instance.isServer()) {
       _notifyTimer?.cancel();
       _notifyTimer = Timer(const Duration(milliseconds: 32), () {

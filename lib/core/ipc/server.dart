@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:dart_ipc/dart_ipc.dart';
 
+import '../abstracts/models/with_id.dart';
 import '../runtime/runtime.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
@@ -245,12 +246,45 @@ class CoreIpcServer {
             }
             break;
 
+          case 0x14: // multi put (addAll)
+            final box = CoreIpcRegistry.getBox(boxName);
+            final adapter = CoreIpcRegistry.getAdapter(boxName);
+            final batchReader = CoreIpcReader(valueBytes);
+            final int totalItems = batchReader.readInt();
+
+            for (int i = 0; i < totalItems; i++) {
+              dynamic nativeHiveKey;
+              dynamic finalValue;
+
+              if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
+                final dynamic decoded = adapter.read(batchReader);
+                if (decoded is MapEntry) {
+                  nativeHiveKey = decoded.key;
+                  finalValue = decoded.value;
+                } else if (decoded is Map && decoded.isNotEmpty) {
+                  nativeHiveKey = decoded.keys.first;
+                  finalValue = decoded.values.first;
+                } else {
+                  finalValue = decoded;
+                }
+              } else {
+                finalValue = adapter.read(batchReader);
+                nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
+              }
+
+              await box.put(nativeHiveKey, finalValue);
+            }
+
+            broadcast(op, boxName, "batch", valueBytes, exclude: client);
+            break;
+
           default:
             break;
         }
 
         response(client, activeReqId, result);
       } catch (e) {
+        logln("Failed to process action: $e");
         error(client, activeReqId);
       }
     }

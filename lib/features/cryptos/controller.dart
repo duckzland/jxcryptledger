@@ -12,8 +12,12 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
   bool get isFetching => service.isFetching;
 
   @override
-  void emitterAction(String action) {
-    if (action == repo.boxName || action == "cryptos_refresh_start" || action == "cryptos_refresh_complete") {
+  void emitterAction(String action) async {
+    if (action == "cryptos_refresh_start") {
+      debounceNotify();
+    }
+
+    if (action == "cryptos_refresh_complete" || action == repo.boxName) {
       load();
     }
   }
@@ -24,6 +28,11 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
 
   Map<int, String> getSymbolMap() {
     return repo.getSymbolMap();
+  }
+
+  void generateSymbolMap() {
+    repo.onAction();
+    repo.getSymbolMap();
   }
 
   String? getSymbol(int id) {

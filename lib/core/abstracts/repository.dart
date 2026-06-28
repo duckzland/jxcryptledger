@@ -1,15 +1,23 @@
 import 'dart:async';
 
 import '../ipc/box/standard.dart';
+import 'box.dart';
 import 'models/with_id.dart';
 
 abstract class CoreBaseRepository<T extends CoreModelWithId> {
   String get boxName;
 
-  late final CoreIpcBoxStandard<T> box = CoreIpcBoxStandard<T>(boxName);
+  CoreBaseBox<T>? _box;
+  CoreBaseBox<T> get box {
+    if (_box == null) {
+      _box = CoreIpcBoxStandard<T>(boxName);
+    }
+    return _box!;
+  }
 
   Future<void> init() async {
     await box.init();
+    onAction();
   }
 
   T? get(String id) {
@@ -44,6 +52,11 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
 
   Future<void> flush() async {
     await box.flush();
+    onAction();
+  }
+
+  Future<void> addAll(List<T> values) async {
+    await box.addAll(values);
     onAction();
   }
 
