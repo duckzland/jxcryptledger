@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../app/constants.dart';
+import '../runtime/runtime.dart';
 import '../../app/worker.dart';
 import '../../features/archives/service.dart';
 import '../../features/cryptos/service.dart';
@@ -38,7 +39,7 @@ class CoreBootstrapServer {
 
   late CoreIpcDatabase database;
   late CoreIpcMigration migrator;
-  late IpcServer server;
+  late CoreIpcServer server;
 
   Future<void> start() async {
     if (initialized) return;
@@ -47,9 +48,10 @@ class CoreBootstrapServer {
     migrator = CoreIpcMigration();
     database = CoreIpcDatabase();
 
-    server = locator<IpcServer>();
+    server = locator<CoreIpcServer>();
     server.database = database;
     server.unlocker = unlock;
+    server.shutdown = CoreRuntime.instance.shutdown;
 
     await database.init();
     await server.start();
@@ -71,8 +73,12 @@ class CoreBootstrapServer {
     appWorker.start();
   }
 
-  Future<bool> unlock(String password) async {
-    final state = await database.unlock(password);
+  Future<void> stopServices() async {
+    appWorker.stop();
+  }
+
+  Future<bool> unlock(String password, [Uint8List? keyBytes]) async {
+    final state = await database.unlock(password, keyBytes);
 
     if (state == unlockError) {
       return false;

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
-import '../../app/runtime.dart';
+import '../../core/runtime/runtime.dart';
 import '../../core/abstracts/service.dart';
 import '../../core/ipc/event.dart';
 import '../../core/mixins/broadcaster.dart';
@@ -54,7 +54,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> wi
   }
 
   Future<bool> fetch() async {
-    if (!AppRuntime.instance.isServer()) {
+    if (!CoreRuntime.instance.isServer()) {
       await broadcasterSend(op: 0x11, box: "action");
       return true;
     }

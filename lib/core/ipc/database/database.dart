@@ -20,6 +20,7 @@ import '../../../features/watchboard/tickers/adapter.dart';
 import '../../../features/watchboard/tickers/model.dart';
 import '../../../features/watchers/adapter.dart';
 import '../../../features/watchers/model.dart';
+import '../../runtime/locker.dart';
 import '../../log.dart';
 import '../registry.dart';
 
@@ -66,6 +67,7 @@ class CoreIpcDatabase {
     }
 
     logln("Initializing Hive at $newHivePath");
+    CoreLocker.lockAndCleanHive(hivePath!);
     Hive.init(hivePath!);
 
     Hive.registerAdapter<TransactionsModel>(TransactionsAdapter());
@@ -79,13 +81,22 @@ class CoreIpcDatabase {
     initialized = true;
   }
 
-  Future<int> unlock(String password) async {
+  Future<int> unlock(String password, [Uint8List? keyBytes]) async {
     isFirstRun = !await exists();
 
     if (!unlocked) {
       try {
-        final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
-        final cipher = HiveAesCipher(encryptionKey);
+        HiveAesCipher cipher;
+        // final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
+        // final cipher = HiveAesCipher(encryptionKey);
+        if (keyBytes != null && keyBytes.length == 32) {
+          logln("[DB UNLOCK] Raw recovery keyBytes detected. Refreshing EncryptionService...");
+          await EncryptionService.instance.loadKey(keyBytes);
+          cipher = HiveAesCipher(keyBytes);
+        } else {
+          final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
+          cipher = HiveAesCipher(encryptionKey);
+        }
 
         await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
 

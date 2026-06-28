@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
-import '../../app/runtime.dart';
 import '../../app/theme.dart';
 import '../../widgets/button.dart';
 import 'controller.dart';
@@ -43,8 +42,6 @@ class _UnlockPageState extends State<UnlockPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dbStatus = AppRuntime.instance.isMaster ? "Master" : "Slave";
-
     return Scaffold(
       body: Stack(
         children: [
@@ -53,7 +50,7 @@ class _UnlockPageState extends State<UnlockPage> {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text('v$appVersion - $dbStatus', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+              child: Text('v$appVersion', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
             ),
           ),
         ],

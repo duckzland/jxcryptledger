@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../app/runtime.dart';
+import '../runtime/runtime.dart';
 import '../log.dart';
 import '../mixins/emitter.dart';
 import '../mixins/box.dart';
@@ -42,7 +42,7 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
     start();
     // logln("Scheduling listener for: ${T.toString()}");
 
-    if (!AppRuntime.instance.isServer()) {
+    if (!CoreRuntime.instance.isServer()) {
       _notifyTimer?.cancel();
       _notifyTimer = Timer(const Duration(milliseconds: 32), () {
         logln("[CORE] Firing listener for: ${T.toString()}");

@@ -13,11 +13,11 @@ import '../protocol/reader.dart';
 class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
   CoreIpcBoxStandard(super.boxName);
 
-  final CoreIpcClient ipc = locator<CoreIpcClient>();
+  CoreIpcClient get ipc => locator<CoreIpcClient>();
 
   @override
   Future<void> init() async {
-    final resultBytes = await ipc.sendAction(op: 0x06, box: boxName);
+    final resultBytes = await ipc.send(op: 0x06, box: boxName);
     if (resultBytes.isEmpty) {
       items.clear();
       return;
@@ -46,14 +46,14 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
     boxAdapter.write(writer, value);
 
     final bytes = writer.toBytes();
-    await ipc.sendAction(op: 0x02, box: boxName, key: id, value: bytes);
+    await ipc.send(op: 0x02, box: boxName, key: id, value: bytes);
 
     items[id] = value;
   }
 
   @override
   Future<int> clear() async {
-    final resultBytes = await ipc.sendAction(op: 0x04, box: boxName);
+    final resultBytes = await ipc.send(op: 0x04, box: boxName);
     if (resultBytes.isEmpty || resultBytes.length < 4) {
       items.clear();
       return 0;
@@ -65,13 +65,13 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
 
   @override
   Future<void> delete(dynamic id) async {
-    await ipc.sendAction(op: 0x03, box: boxName, key: id);
+    await ipc.send(op: 0x03, box: boxName, key: id);
     items.remove(id);
   }
 
   @override
   Future<void> flush() async {
-    await ipc.sendAction(op: 0x05, box: boxName);
+    await ipc.send(op: 0x05, box: boxName);
   }
 
   Future<void> add(T tx) async {

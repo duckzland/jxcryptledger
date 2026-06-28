@@ -76,7 +76,7 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
   Future<bool> unlock(String password) async {
     final pwBytes = utf8.encode(password);
 
-    final Uint8List responseBytes = await ipcClient.sendAction(op: 0x07, box: "auth", key: "unlocking", value: pwBytes);
+    final Uint8List responseBytes = await ipcClient.send(op: 0x07, box: "auth", key: "unlocking", value: pwBytes);
     final bool isUnlocked = responseBytes.isNotEmpty && responseBytes.first == 1;
 
     if (!isUnlocked) {

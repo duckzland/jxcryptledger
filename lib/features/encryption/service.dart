@@ -77,4 +77,16 @@ class EncryptionService {
     final bytes = await secretKey.extractBytes();
     return Uint8List.fromList(bytes);
   }
+
+  Future<Uint8List> getRawKeyBytes() async {
+    if (_secretKey == null) {
+      throw Exception('Encryption key not initialized in memory.');
+    }
+    final bytes = await _secretKey!.extractBytes();
+    return Uint8List.fromList(bytes);
+  }
+
+  bool isUnlocked() {
+    return _secretKey != null;
+  }
 }

@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:dart_ipc/dart_ipc.dart';
 
-import '../../app/runtime.dart';
+import '../runtime/runtime.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
@@ -15,31 +15,25 @@ import 'database/database.dart';
 import 'protocol/packet.dart';
 import 'protocol/reader.dart';
 import 'protocol/writer.dart';
-import 'client.dart';
 import 'registry.dart';
 
-class IpcServer {
+class CoreIpcServer {
   final String pipeId;
   final List<Socket> _slaves = [];
   final Set<String> _activeSessions = {};
   ServerSocket? socket;
   bool _isShuttingDown = false;
 
-  IpcServer(this.pipeId);
+  CoreIpcServer(this.pipeId);
 
   late final CoreIpcDatabase database;
-  late final Future<bool> Function(String password) unlocker;
+  Future<bool> Function(String password, [Uint8List? keyBytes])? unlocker;
+  Future<void> Function()? shutdown;
 
-  Future<void> shutdown() async {
+  Future<void> dispose() async {
     if (_isShuttingDown) return;
     _isShuttingDown = true;
-
     _activeSessions.clear();
-
-    try {
-      final serverInternalClient = locator<CoreIpcClient>();
-      serverInternalClient.dispose();
-    } catch (_) {}
 
     for (var slave in List.from(_slaves)) {
       try {
@@ -50,18 +44,15 @@ class IpcServer {
 
     if (socket != null) {
       try {
-        socket!.close();
+        await socket!.close();
         socket = null;
       } catch (_) {}
     }
-
-    await database.dispose();
-    exit(0);
   }
 
   Future<void> start() async {
-    final socket = await bind(AppRuntime.ipcPipeName);
-    logln("[IPC] Server running via Named Pipe");
+    final socket = await bind(CoreRuntime.ipcPipeName);
+    logln("[IPC] Server running: ${CoreRuntime.ipcPipeName}");
 
     socket.listen((client) {
       String? socketClientId;
@@ -80,7 +71,7 @@ class IpcServer {
         if (socketClientId != null) {
           _activeSessions.remove(socketClientId!);
           if (_activeSessions.length <= 1) {
-            await shutdown();
+            await shutdown?.call();
           }
         }
       }
@@ -197,7 +188,7 @@ class IpcServer {
           case 0x07: // unlock
             final pw = utf8.decode(valueBytes);
             try {
-              final success = await unlocker(pw);
+              final success = await unlocker?.call(pw) ?? false;
               result = success;
             } catch (e) {
               logln("Failed to unlock: $e");
@@ -222,7 +213,7 @@ class IpcServer {
               response(client, activeReqId, result);
 
               Future.delayed(const Duration(milliseconds: 50), () async {
-                await shutdown();
+                await shutdown?.call();
               });
               break;
             }
@@ -242,6 +233,16 @@ class IpcServer {
             final service = locator<NotificationService>();
             final message = utf8.decode(valueBytes);
             await service.show(message);
+            break;
+
+          case 0x13: // unlock with key
+            try {
+              final success = await unlocker?.call("", valueBytes) ?? false;
+              result = success;
+            } catch (e) {
+              logln("Failed to unlock: $e");
+              result = false;
+            }
             break;
 
           default:

@@ -45,7 +45,7 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
       message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDouble(tx.rates)}.";
     }
 
-    await ipcClient.sendAction(op: 0x12, box: 'action', key: "notification", value: utf8.encode(message));
+    await ipcClient.send(op: 0x12, box: 'action', key: "notification", value: utf8.encode(message));
   }
 
   Future<void> restart() async {
