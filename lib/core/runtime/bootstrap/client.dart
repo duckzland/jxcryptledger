@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../../app/worker.dart';
+import '../../worker.dart';
 import '../../../mixins/state.dart';
 import '../../../features/archives/controller.dart';
 import '../../../features/cryptos/controller.dart';
@@ -33,7 +33,7 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
   final CryptosController _cryptosController = locator<CryptosController>();
   final ArchivesController _archivesController = locator<ArchivesController>();
 
-  final AppWorker appWorker = locator<AppWorker>();
+  final CoreWorker appWorker = locator<CoreWorker>();
 
   Future<void> start() async {
     if (initialized) return;
