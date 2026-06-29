@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../app/constants.dart';
 import '../runtime.dart';
-import '../../../app/worker.dart';
+import '../../worker.dart';
 import '../../../features/archives/service.dart';
 import '../../../features/cryptos/service.dart';
 import '../../../features/notification/service.dart';
@@ -35,7 +35,7 @@ class CoreBootstrapServer {
   final ArchivesService _archivesService = locator<ArchivesService>();
   final NotificationService _notificationService = locator<NotificationService>();
 
-  final AppWorker appWorker = locator<AppWorker>();
+  final CoreWorker appWorker = locator<CoreWorker>();
 
   late CoreIpcDatabase database;
   late CoreIpcMigration migrator;

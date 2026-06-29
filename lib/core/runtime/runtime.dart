@@ -249,4 +249,17 @@ class CoreRuntime {
       exit(0);
     }
   }
+
+  void hotReloadCleanup() {
+    try {
+      if (locator.isRegistered<CoreIpcClient>()) {
+        locator<CoreIpcClient>().destroy();
+      }
+      if (isServer() && locator.isRegistered<CoreBootstrapServer>()) {
+        locator<CoreBootstrapServer>().server.dispose();
+      }
+    } catch (e) {
+      logln("Error cleaning sockets during reload: $e");
+    }
+  }
 }

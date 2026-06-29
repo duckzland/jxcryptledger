@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/runtime/runtime.dart';
 import '../mixins/state.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -11,6 +12,12 @@ class AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<AppRoot> with MixinsState {
+  @override
+  void reassemble() {
+    CoreRuntime.instance.hotReloadCleanup();
+    super.reassemble();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(

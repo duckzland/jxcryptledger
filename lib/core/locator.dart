@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:jxledger/core/ipc/server.dart';
 
-import '../app/worker.dart';
+import 'worker.dart';
 import '../features/archives/controller.dart';
 import '../features/archives/repository.dart';
 import '../features/archives/service.dart';
@@ -67,7 +67,7 @@ void setupLocator() {
   locator.registerLazySingleton<RatesController>(() => RatesController(locator<RatesRepository>(), locator<RatesService>()));
 
   // Workers
-  locator.registerLazySingleton<AppWorker>(() => AppWorker());
+  locator.registerLazySingleton<CoreWorker>(() => CoreWorker());
 
   // Watchers
   locator.registerLazySingleton<WatchersRepository>(() => WatchersRepository());
