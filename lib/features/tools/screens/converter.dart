@@ -234,7 +234,13 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "UNK" : "UNK";
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "UNK" : "UNK";
 
-    if (source <= 0 || rate < 0 || reversedRate < 0 || sourceSymbol == "" || targetSymbol == "") {
+    if (source <= 0 ||
+        rate < 0 ||
+        reversedRate < 0 ||
+        sourceSymbol == "UNK" ||
+        targetSymbol == "UNK" ||
+        targetSymbol == "" ||
+        sourceSymbol == "") {
       return const Text("");
     }
 

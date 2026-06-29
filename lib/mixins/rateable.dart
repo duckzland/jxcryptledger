@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:jxledger/core/event.dart';
 
 import '../app/exceptions.dart';
 import '../core/locator.dart';
@@ -10,6 +13,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
   late void Function(String value, String helperText)? rateableStateUpdater;
   final List<(int source, int target)> rateableTemporary = [];
 
+  StreamSubscription? _emitter;
   bool rateableIsTemporary = true;
   bool rateableWithField = true;
   bool rateableForceFetch = true;
@@ -34,6 +38,12 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     rateableValue = null;
     rateableStateUpdater = null;
     rateableController.addListener(rateableUpdateRate);
+
+    _emitter = CoreEvent.stream.listen((action) {
+      if (action == "rates_updated" || action == rateableController.repo.boxName) {
+        rateableUpdateRate();
+      }
+    });
   }
 
   @override
@@ -43,6 +53,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     if (rateableIsTemporary) {
       rateableCleanTemporary();
     }
+    _emitter?.cancel();
     super.dispose();
   }
 

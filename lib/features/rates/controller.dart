@@ -15,7 +15,10 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> {
 
   @override
   void emitterAction(String action) {
-    if (action == service.repo.boxName || action == "rates_refresh_start" || action == "rates_refresh_complete") {
+    if (action == service.repo.boxName ||
+        action == "rates_refresh_start" ||
+        action == "rates_refresh_complete" ||
+        action == "rates_updated") {
       load();
     }
   }

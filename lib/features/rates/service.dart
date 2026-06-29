@@ -343,8 +343,10 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
     for (final rate in parsed.rates) {
       if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
         await repo.add(rate);
-        // logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
+        logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
       }
     }
+
+    emitterEmit("rates_updated");
   }
 }
