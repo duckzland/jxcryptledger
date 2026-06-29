@@ -1,4 +1,5 @@
 #include "my_application.h"
+#include <string>
 
 bool g_IsDevelopmentMode = false;
 
