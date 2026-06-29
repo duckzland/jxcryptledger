@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:jxledger/core/event.dart';
 
 import '../app/exceptions.dart';
 import '../core/locator.dart';
@@ -37,13 +36,8 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     rateableAmount = null;
     rateableValue = null;
     rateableStateUpdater = null;
+    rateableController.init();
     rateableController.addListener(rateableUpdateRate);
-
-    _emitter = CoreEvent.stream.listen((action) {
-      if (action == "rates_updated" || action == rateableController.repo.boxName) {
-        rateableUpdateRate();
-      }
-    });
   }
 
   @override

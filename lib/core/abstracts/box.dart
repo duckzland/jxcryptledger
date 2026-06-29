@@ -12,7 +12,6 @@ import 'models/with_id.dart';
 abstract class CoreBaseBox<V> with CoreMixinsEmitter, CoreMixinsBroadcaster {
   final String boxName;
   final LinkedHashMap<dynamic, V> items = LinkedHashMap();
-  StreamSubscription? ipcBus;
 
   CoreBaseBox(this.boxName) {
     broadcasterListen();
@@ -70,15 +69,18 @@ abstract class CoreBaseBox<V> with CoreMixinsEmitter, CoreMixinsBroadcaster {
 
   Future<void> put(dynamic id, V value) async {
     items[id] = value;
+    emitterEmit(boxName);
   }
 
   Future<void> delete(dynamic id) async {
     items.remove(id);
+    emitterEmit(boxName);
   }
 
   Future<int> clear() async {
     final int count = items.length;
     items.clear();
+    emitterEmit(boxName);
     return count;
   }
 
@@ -88,6 +90,7 @@ abstract class CoreBaseBox<V> with CoreMixinsEmitter, CoreMixinsBroadcaster {
 
   Future<void> refresh() async {
     await init();
+    emitterEmit(boxName);
   }
 
   Future<void> addAll(List<V> values) async {
@@ -96,6 +99,7 @@ abstract class CoreBaseBox<V> with CoreMixinsEmitter, CoreMixinsBroadcaster {
       final index = entry.key;
       items[index] = value;
     }
+    emitterEmit(boxName);
   }
 
   @override

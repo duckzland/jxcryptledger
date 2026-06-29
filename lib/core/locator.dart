@@ -28,8 +28,8 @@ import '../features/transactions/repository.dart';
 import '../features/watchers/controller.dart';
 import '../features/watchers/repository.dart';
 import '../features/watchers/service.dart';
-import 'bootstrap/client.dart';
-import 'bootstrap/server.dart';
+import 'runtime/bootstrap/client.dart';
+import 'runtime/bootstrap/server.dart';
 import 'ipc/client.dart';
 
 final GetIt locator = GetIt.instance;

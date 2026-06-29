@@ -4,20 +4,20 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../app/worker.dart';
-import '../../mixins/state.dart';
-import '../../features/archives/controller.dart';
-import '../../features/cryptos/controller.dart';
-import '../../features/encryption/service.dart';
-import '../../features/rates/controller.dart';
-import '../../features/settings/controller.dart';
-import '../../features/transactions/controller.dart';
-import '../../features/watchboard/panels/controller.dart';
-import '../../features/watchboard/tickers/controller.dart';
-import '../../features/watchers/controller.dart';
-import '../mixins/broadcaster.dart';
-import '../locator.dart';
-import '../log.dart';
+import '../../../app/worker.dart';
+import '../../../mixins/state.dart';
+import '../../../features/archives/controller.dart';
+import '../../../features/cryptos/controller.dart';
+import '../../../features/encryption/service.dart';
+import '../../../features/rates/controller.dart';
+import '../../../features/settings/controller.dart';
+import '../../../features/transactions/controller.dart';
+import '../../../features/watchboard/panels/controller.dart';
+import '../../../features/watchboard/tickers/controller.dart';
+import '../../../features/watchers/controller.dart';
+import '../../mixins/broadcaster.dart';
+import '../../locator.dart';
+import '../../log.dart';
 
 class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
   bool initialized = false;

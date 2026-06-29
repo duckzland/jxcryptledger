@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core/bootstrap/client.dart';
+import '../../core/runtime/bootstrap/client.dart';
 import '../../core/locator.dart';
 import '../../core/log.dart';
 

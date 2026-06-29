@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:dart_ipc/dart_ipc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -14,8 +15,8 @@ import '../../features/transactions/adapter.dart';
 import '../../features/watchboard/panels/adapter.dart';
 import '../../features/watchboard/tickers/adapter.dart';
 import '../../features/watchers/adapter.dart';
-import '../bootstrap/client.dart';
-import '../bootstrap/server.dart';
+import 'bootstrap/client.dart';
+import 'bootstrap/server.dart';
 import '../ipc/client.dart';
 import '../ipc/registry.dart';
 import '../locator.dart';
@@ -208,10 +209,15 @@ class CoreRuntime {
 
   Future<bool> waitForServer() async {
     for (var retries = 0; retries < 30; retries++) {
-      if (isServerAvailable()) {
-        return true;
+      try {
+        if (isServerAvailable()) {
+          final socket = await connect(CoreRuntime.ipcPipeName);
+          socket.destroy();
+          return true;
+        }
+      } catch (_) {
+        await Future.delayed(const Duration(milliseconds: 150));
       }
-      await Future.delayed(const Duration(milliseconds: 150));
     }
 
     return false;

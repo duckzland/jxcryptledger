@@ -346,7 +346,5 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
         logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
       }
     }
-
-    emitterEmit("rates_updated");
   }
 }

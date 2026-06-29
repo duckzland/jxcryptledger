@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/service.dart';
 import '../../../core/log.dart';
+import '../../../core/runtime/runtime.dart';
 import '../../settings/keys.dart';
 import '../../settings/repository.dart';
 import 'model.dart';
@@ -75,7 +76,9 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> {
     }
 
     if (fetchRate) {
-      refreshRates();
+      if (CoreRuntime.instance.isServer()) {
+        refreshRates();
+      }
     }
   }
 
