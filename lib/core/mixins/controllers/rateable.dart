@@ -3,7 +3,7 @@ import '../../abstracts/controller.dart';
 import '../../abstracts/models/with_id.dart';
 import '../../abstracts/models/rateable.dart';
 import '../../abstracts/repository.dart';
-import '../../locator.dart';
+import '../../runtime/locator.dart';
 
 mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBaseRepository<T>> on CoreBaseController<T, R> {
   final RatesService rateableService = locator<RatesService>();

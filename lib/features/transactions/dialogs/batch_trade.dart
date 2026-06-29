@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
-import '../../../core/locator.dart';
+import '../../../core/runtime/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';

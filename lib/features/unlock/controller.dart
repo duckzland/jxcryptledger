@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/runtime/bootstrap/client.dart';
-import '../../core/locator.dart';
+import '../../core/runtime/locator.dart';
 import '../../core/log.dart';
 
 class UnlockController extends ChangeNotifier {

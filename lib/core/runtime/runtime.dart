@@ -17,7 +17,7 @@ import '../../features/watchboard/tickers/adapter.dart';
 import '../../features/watchers/adapter.dart';
 import '../ipc/client.dart';
 import '../ipc/registry.dart';
-import '../locator.dart';
+import 'locator.dart';
 import '../log.dart';
 import 'bootstrap/client.dart';
 import 'bootstrap/server.dart';

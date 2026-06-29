@@ -5,7 +5,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
-import '../../core/locator.dart';
+import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/state.dart';

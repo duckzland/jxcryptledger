@@ -4,12 +4,13 @@ import 'dart:convert';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:dart_ipc/dart_ipc.dart';
 
+import '../../features/watchboard/tickers/service.dart';
 import '../abstracts/models/with_id.dart';
 import '../runtime/runtime.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
-import '../locator.dart';
+import '../runtime/locator.dart';
 import '../log.dart';
 import 'protocol/buffer.dart';
 import 'database/database.dart';
@@ -287,6 +288,11 @@ class CoreIpcServer {
 
             final service = locator<RatesService>();
             service.addQueue(sourceId, targetId, force: force);
+            break;
+
+          case 0x16: // refresh tickers
+            final service = locator<TickersService>();
+            await service.refreshRates();
             break;
 
           default:

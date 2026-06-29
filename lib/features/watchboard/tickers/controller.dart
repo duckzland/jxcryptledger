@@ -1,18 +1,18 @@
+import 'package:jxledger/features/watchboard/tickers/mixins/helper.dart';
+
 import '../../../core/abstracts/controller.dart';
+import '../../../core/mixins/broadcaster.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
 import 'model.dart';
 import 'repository.dart';
-import 'service.dart';
 
 class TickersController extends CoreBaseController<TickersModel, TickersRepository>
-    with CoreMixinsControllersIdGenerator<TickersModel, TickersRepository> {
-  final TickersService service;
-
-  TickersController(super.repo, this.service);
+    with CoreMixinsControllersIdGenerator<TickersModel, TickersRepository>, CoreMixinsBroadcaster, TickersMixinsHelper {
+  TickersController(super.repo);
 
   @override
   Future<void> init() async {
-    await service.init();
+    repo.init();
     load();
     emitterListen();
   }
@@ -23,15 +23,21 @@ class TickersController extends CoreBaseController<TickersModel, TickersReposito
   }
 
   Future<void> populate({bool refresh = true, bool fetchRate = true}) async {
-    await service.populate(fetchRate: fetchRate);
+    for (final tx in defaultTickers) {
+      await repo.add(tx);
+    }
 
     if (refresh) {
       load();
     }
+
+    if (fetchRate) {
+      refreshRates();
+    }
   }
 
   Future<void> refreshRates() async {
-    await service.refreshRates();
+    await ipcClient.send(op: 0x16, box: "action");
     load();
   }
 

@@ -1,36 +1,36 @@
 import 'package:get_it/get_it.dart';
 import 'package:jxledger/core/ipc/server.dart';
 
-import 'worker.dart';
-import '../features/archives/controller.dart';
-import '../features/archives/repository.dart';
-import '../features/archives/service.dart';
-import '../features/notification/service.dart';
-import '../features/rates/repository.dart';
-import '../features/rates/service.dart';
-import '../features/rates/controller.dart';
-import '../features/cryptos/repository.dart';
-import '../features/cryptos/service.dart';
-import '../features/cryptos/controller.dart';
-import '../features/settings/controller.dart';
-import '../features/settings/repository.dart';
-import '../features/settings/service.dart';
-import '../features/settings/states.dart';
-import '../features/transactions/service.dart';
-import '../features/watchboard/panels/controller.dart';
-import '../features/watchboard/panels/repository.dart';
-import '../features/watchboard/panels/service.dart';
-import '../features/watchboard/tickers/controller.dart';
-import '../features/watchboard/tickers/repository.dart';
-import '../features/watchboard/tickers/service.dart';
-import '../features/transactions/controller.dart';
-import '../features/transactions/repository.dart';
-import '../features/watchers/controller.dart';
-import '../features/watchers/repository.dart';
-import '../features/watchers/service.dart';
-import 'runtime/bootstrap/client.dart';
-import 'runtime/bootstrap/server.dart';
-import 'ipc/client.dart';
+import '../worker.dart';
+import '../../../features/archives/controller.dart';
+import '../../features/archives/repository.dart';
+import '../../features/archives/service.dart';
+import '../../features/notification/service.dart';
+import '../../features/rates/repository.dart';
+import '../../features/rates/service.dart';
+import '../../../features/rates/controller.dart';
+import '../../features/cryptos/repository.dart';
+import '../../features/cryptos/service.dart';
+import '../../../features/cryptos/controller.dart';
+import '../../features/settings/controller.dart';
+import '../../features/settings/repository.dart';
+import '../../features/settings/service.dart';
+import '../../features/settings/states.dart';
+import '../../features/transactions/service.dart';
+import '../../../features/watchboard/panels/controller.dart';
+import '../../features/watchboard/panels/repository.dart';
+import '../../features/watchboard/panels/service.dart';
+import '../../../features/watchboard/tickers/controller.dart';
+import '../../features/watchboard/tickers/repository.dart';
+import '../../features/watchboard/tickers/service.dart';
+import '../../../features/transactions/controller.dart';
+import '../../features/transactions/repository.dart';
+import '../../../features/watchers/controller.dart';
+import '../../features/watchers/repository.dart';
+import '../../features/watchers/service.dart';
+import 'bootstrap/client.dart';
+import 'bootstrap/server.dart';
+import '../ipc/client.dart';
 
 final GetIt locator = GetIt.instance;
 
@@ -57,21 +57,19 @@ void setupLocator() {
   // Cryptos
   locator.registerLazySingleton<CryptosRepository>(() => CryptosRepository());
   locator.registerLazySingleton<CryptosService>(() => CryptosService(locator<CryptosRepository>(), locator<SettingsRepository>()));
-  locator.registerLazySingleton<CryptosController>(() => CryptosController(locator<CryptosRepository>(), locator<CryptosService>()));
+  locator.registerLazySingleton<CryptosController>(() => CryptosController(locator<CryptosRepository>()));
 
   // Rates
   locator.registerLazySingleton<RatesRepository>(() => RatesRepository());
-  locator.registerLazySingleton<RatesService>(
-    () => RatesService(locator<RatesRepository>(), locator<CryptosRepository>(), locator<SettingsRepository>()),
-  );
-  locator.registerLazySingleton<RatesController>(() => RatesController(locator<RatesRepository>(), locator<RatesService>()));
+  locator.registerLazySingleton<RatesService>(() => RatesService(locator<RatesRepository>(), locator<SettingsRepository>()));
+  locator.registerLazySingleton<RatesController>(() => RatesController(locator<RatesRepository>()));
 
   // Workers
   locator.registerLazySingleton<CoreWorker>(() => CoreWorker());
 
   // Watchers
   locator.registerLazySingleton<WatchersRepository>(() => WatchersRepository());
-  locator.registerLazySingleton<WatchersController>(() => WatchersController(locator<WatchersRepository>(), locator<CryptosService>()));
+  locator.registerLazySingleton<WatchersController>(() => WatchersController(locator<WatchersRepository>(), locator<CryptosController>()));
   locator.registerLazySingleton<WatchersService>(
     () => WatchersService(locator<WatchersRepository>(), locator<NotificationService>(), locator<CryptosService>()),
   );
@@ -86,7 +84,7 @@ void setupLocator() {
 
   // Tickers
   locator.registerLazySingleton<TickersRepository>(() => TickersRepository());
-  locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>(), locator<TickersService>()));
+  locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>()));
   locator.registerLazySingleton<TickersService>(() => TickersService(locator<TickersRepository>(), locator<SettingsRepository>()));
 
   // Archives

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
-import '../../core/locator.dart';
+import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../widgets/button.dart';
 import '../../widgets/panel.dart';

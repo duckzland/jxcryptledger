@@ -4,24 +4,20 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
-import '../../core/runtime/runtime.dart';
 import '../../core/abstracts/service.dart';
-import '../../core/ipc/event.dart';
 import '../../core/log.dart';
 import '../../core/mixins/broadcaster.dart';
-import '../../core/mixins/emitter.dart';
-import '../cryptos/repository.dart';
 import '../settings/keys.dart';
 import '../settings/repository.dart';
+import 'mixins/helper.dart';
 import 'model.dart';
 import 'parser.dart';
 import 'repository.dart';
 
-class RatesService extends CoreBaseService<RatesModel, RatesRepository> with CoreMixinsEmitter, CoreMixinsBroadcaster {
-  final CryptosRepository cryptosRepo;
+class RatesService extends CoreBaseService<RatesModel, RatesRepository> with CoreMixinsBroadcaster, RatesMixinsHelper {
   final SettingsRepository settingsRepo;
 
-  RatesService(super.repo, this.cryptosRepo, this.settingsRepo);
+  RatesService(super.repo, this.settingsRepo);
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
@@ -37,22 +33,6 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
   Future<void> init() async {
     await repo.init();
     await repo.cleanupOldRates();
-    broadcasterListen();
-  }
-
-  @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
-    if (event.op == 0x10) {
-      if (event.boxName == "start") {
-        _isFetching = true;
-        emitterEmit(repo.boxName);
-      }
-
-      if (event.boxName == "complete") {
-        _isFetching = false;
-        emitterEmit(repo.boxName);
-      }
-    }
   }
 
   Future<void> deleteById(int sourceId, int targetId) async {
@@ -67,7 +47,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
     }
 
     if (!throwable) {
-      if (!_isValidPair(sourceId, targetId)) return -9999;
+      if (!isValidPair(sourceId, targetId)) return -9999;
     } else {
       validateIds(sourceId, targetId);
     }
@@ -77,12 +57,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
   }
 
   void addQueue(int sourceId, int targetId, {bool force = false}) {
-    if (!_isValidPair(sourceId, targetId)) return;
-
-    if (!CoreRuntime.instance.isServer()) {
-      ipcClient.send(op: 0x15, box: "$sourceId-$targetId", key: force);
-      return;
-    }
+    if (!isValidPair(sourceId, targetId)) return;
 
     if (_queue.contains((sourceId, targetId))) return;
 
@@ -139,11 +114,6 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
   }
 
   Future<void> refreshRates() async {
-    if (!CoreRuntime.instance.isServer()) {
-      await ipcClient.send(op: 0x10, box: "action", key: "refresh_rates");
-      return;
-    }
-
     if (cryptosRepo.isEmpty()) {
       logln('[RATES] No cryptos available, skipping refresh.');
       return;
@@ -159,25 +129,6 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
     await _processQueue(false);
   }
 
-  bool _isValidPair(int sourceId, int targetId) {
-    if (sourceId == 0 || targetId == 0) return false;
-    if (cryptosRepo.isEmpty()) return false;
-    if (sourceId == targetId) return false;
-
-    final ids = cryptosRepo.extract().map((c) => c.uuid).toSet();
-    return ids.contains(sourceId) && ids.contains(targetId);
-  }
-
-  void validateIds(int sourceId, int targetId) {
-    if (!_isValidPair(sourceId, targetId)) {
-      throw NetworkingException(
-        AppErrorCode.netInvalidRatePayload,
-        'Invalid rate pair: $sourceId -> $targetId',
-        "One of the selected cryptocurrencies is not valid.",
-      );
-    }
-  }
-
   Map<int, Set<int>> _groupJobs(List<(int, int)> jobs) {
     final ids = cryptosRepo.extract().map((c) => c.uuid).toSet();
     final grouped = <int, Set<int>>{};
@@ -191,7 +142,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
 
       final reversed = (b, a);
 
-      if (!_isValidPair(a, b)) {
+      if (!isValidPair(a, b)) {
         continue;
       }
 

@@ -1,15 +1,25 @@
-import '../../app/exceptions.dart';
 import '../../core/abstracts/controller.dart';
+import '../../core/ipc/event.dart';
+import '../../core/mixins/broadcaster.dart';
 import 'model.dart';
 import 'repository.dart';
-import 'service.dart';
 
-class CryptosController extends CoreBaseController<CryptosModel, CryptosRepository> {
-  final CryptosService service;
+class CryptosController extends CoreBaseController<CryptosModel, CryptosRepository> with CoreMixinsBroadcaster {
+  CryptosController(super.repo);
 
-  CryptosController(super.repo, this.service);
+  late bool isFetching;
+  late bool hasRates;
 
-  bool get isFetching => service.isFetching;
+  @override
+  Future<void> init() async {
+    await repo.init();
+
+    isFetching = false;
+
+    load();
+    emitterListen();
+    broadcasterListen();
+  }
 
   @override
   void emitterAction(String action) async {
@@ -19,6 +29,25 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
 
     if (action == repo.boxName) {
       load();
+    }
+  }
+
+  @override
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    if (event.op == 0x11) {
+      if (event.boxName == "start") {
+        isFetching = true;
+        emitterEmit("cryptos_refresh_start");
+      }
+
+      if (event.boxName == "complete") {
+        isFetching = false;
+        emitterEmit(repo.boxName);
+      }
+    }
+
+    if (event.op == 0x14 && event.boxName == repo.boxName) {
+      emitterEmit(repo.boxName);
     }
   }
 
@@ -39,24 +68,9 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
     return repo.getSymbol(id);
   }
 
-  Future<bool> fetch() async {
-    try {
-      final success = await service.fetch();
-
-      if (success) {
-        load();
-      }
-
-      return success;
-    } on NetworkingException {
-      rethrow;
-    } catch (e) {
-      throw NetworkingException(
-        AppErrorCode.netUnknownFailure,
-        "CryptosController fetch failed unexpectedly: $e",
-        "Unable to update crypto data due to an unexpected error.",
-        details: e,
-      );
-    }
+  Future<void> fetch() async {
+    isFetching = true;
+    await ipcClient.send(op: 0x11, box: "action");
+    isFetching = false;
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/rates/controller.dart';
-import '../core/locator.dart';
+import '../core/runtime/locator.dart';
 import '../features/cryptos/controller.dart';
 import '../widgets/button.dart';
 import '../widgets/notify.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
 import '../../app/theme.dart';
-import '../../core/locator.dart';
+import '../../core/runtime/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actionable.dart';
 import '../../mixins/state.dart';

@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/locator.dart';
+import '../../../core/runtime/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';

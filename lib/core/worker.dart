@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import '../app/router.dart';
-import 'locator.dart';
+import 'runtime/locator.dart';
 import 'log.dart';
 import '../features/rates/service.dart';
 import '../features/transactions/service.dart';
