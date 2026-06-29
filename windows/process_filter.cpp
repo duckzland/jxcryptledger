@@ -1,3 +1,8 @@
+#include "runner/utils.h"
+#include <windows.h>
+#include <string.h>
+#include <wchar.h>
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -39,28 +44,35 @@ extern "C"
     __declspec(dllimport) void *__stdcall OpenProcess(unsigned long dwDesiredAccess, int bInheritHandle, unsigned long dwProcessId);
     __declspec(dllimport) int __stdcall CloseHandle(void *hObject);
     __declspec(dllimport) int __stdcall ReadProcessMemory(void *hProcess, const void *lpBaseAddress, void *lpBuffer, unsigned long long nSize, unsigned long long *lpNumberOfBytesRead);
-    __declspec(dllimport) void *__stdcall GetModuleHandleA(const char *lpModuleName);
-    __declspec(dllimport) void *__stdcall GetProcAddress(void *hModule, const char *lpProcName);
-    __declspec(dllimport) wchar_t *__stdcall GetCommandLineW();
-    __declspec(dllimport) unsigned long __stdcall GetCurrentProcessId();
-
-    int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2);
-    wchar_t *__cdecl wcsstr(const wchar_t *str, const wchar_t *strSearch);
 }
 
-bool check_if_process_has_server_arg(unsigned long pid)
+bool check_process(unsigned long pid, bool as_server = false)
 {
     if (pid == GetCurrentProcessId())
     {
         wchar_t *myCmd = GetCommandLineW();
-        return (myCmd != NULL && wcsstr(myCmd, L"--server") != NULL);
+        if (as_server)
+        {
+            return (myCmd != NULL && wcsstr(myCmd, L"--server") != NULL);
+        }
+
+        if (g_IsDevelopmentMode)
+        {
+            if (myCmd != NULL && wcsstr(myCmd, L"--development") == NULL)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    void *hModule = GetModuleHandleA("ntdll.dll");
+    HMODULE hModule = GetModuleHandleA("ntdll.dll");
     if (!hModule)
         return false;
 
-    pfnNtQueryInformationProcess NtQueryInformationProcess = (pfnNtQueryInformationProcess)GetProcAddress(hModule, "NtQueryInformationProcess");
+    pfnNtQueryInformationProcess NtQueryInformationProcess =
+        (pfnNtQueryInformationProcess)GetProcAddress(hModule, "NtQueryInformationProcess");
     if (!NtQueryInformationProcess)
         return false;
 
@@ -72,7 +84,7 @@ bool check_if_process_has_server_arg(unsigned long pid)
     if (!hProcess)
         return false;
 
-    bool hasServerArg = false;
+    bool isValid = false;
     PROCESS_BASIC_INFORMATION_MIN pbi;
     unsigned long retLen = 0;
 
@@ -82,27 +94,61 @@ bool check_if_process_has_server_arg(unsigned long pid)
         unsigned long long processParametersAddress = 0;
         unsigned long long bytesRead = 0;
 
-        if (ReadProcessMemory(hProcess, (const void *)(pebAddress + 0x20), &processParametersAddress, sizeof(processParametersAddress), &bytesRead))
+        if (ReadProcessMemory(hProcess, (const void *)(pebAddress + 0x20),
+                              &processParametersAddress, sizeof(processParametersAddress), &bytesRead))
         {
             UNICODE_STRING_MIN cmdLine;
-            if (ReadProcessMemory(hProcess, (const void *)(processParametersAddress + 0x70), &cmdLine, sizeof(cmdLine), &bytesRead))
+            if (ReadProcessMemory(hProcess, (const void *)(processParametersAddress + 0x70),
+                                  &cmdLine, sizeof(cmdLine), &bytesRead))
             {
-
-                wchar_t *cmdLineBuffer = new wchar_t[cmdLine.Length / 2 + 1];
-                if (ReadProcessMemory(hProcess, cmdLine.Buffer, cmdLineBuffer, cmdLine.Length, &bytesRead))
+                size_t charactersToRead = cmdLine.Length / sizeof(wchar_t);
+                if (charactersToRead > 0)
                 {
-                    cmdLineBuffer[cmdLine.Length / 2] = L'\0';
-                    if (wcsstr(cmdLineBuffer, L"--server") != NULL)
+                    wchar_t *cmdLineBuffer = new wchar_t[charactersToRead + 1];
+                    if (ReadProcessMemory(hProcess, cmdLine.Buffer,
+                                          cmdLineBuffer, cmdLine.Length, &bytesRead))
                     {
-                        hasServerArg = true;
+                        size_t charactersRead = bytesRead / sizeof(wchar_t);
+                        cmdLineBuffer[charactersRead] = L'\0';
+
+                        bool hasServer = (wcsstr(cmdLineBuffer, L"--server") != NULL);
+                        bool hasDevelopment = (wcsstr(cmdLineBuffer, L"--development") != NULL);
+
+                        // IMPROVED LOGIC PROCESSING MATRIX:
+                        if (as_server)
+                        {
+                            if (g_IsDevelopmentMode)
+                            {
+                                // Logic #2 Dev: Server must strictly carry BOTH arguments
+                                isValid = (hasServer && hasDevelopment);
+                            }
+                            else
+                            {
+                                // Logic #2 Production: Must match --server and strictly FORBID --development
+                                isValid = (hasServer && !hasDevelopment);
+                            }
+                        }
+                        else
+                        {
+                            if (g_IsDevelopmentMode)
+                            {
+                                // Logic #1 Dev: Skip process from UI list if it contains --development
+                                isValid = hasDevelopment;
+                            }
+                            else
+                            {
+                                // Logic #1 Production: Skip process from UI list if it contains --server and lacks --development
+                                isValid = (hasServer && !hasDevelopment);
+                            }
+                        }
                     }
+                    delete[] cmdLineBuffer;
                 }
-                delete[] cmdLineBuffer;
             }
         }
     }
     CloseHandle(hProcess);
-    return hasServerArg;
+    return isValid;
 }
 
 extern "C"
@@ -124,7 +170,7 @@ extern "C"
                 {
                     if (_wcsicmp(procName, L"jxledger.exe") == 0)
                     {
-                        if (check_if_process_has_server_arg(targetPid))
+                        if (check_process(targetPid, false))
                         {
                             continue;
                         }
@@ -158,7 +204,7 @@ extern "C"
                 {
                     if (_wcsicmp(procName, L"jxledger.exe") == 0)
                     {
-                        if (check_if_process_has_server_arg(targetPid))
+                        if (check_process(targetPid, true))
                         {
                             serverFound = 1;
                             break;
