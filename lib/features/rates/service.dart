@@ -45,17 +45,13 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
     if (event.op == 0x10) {
       if (event.boxName == "start") {
         _isFetching = true;
-        emitterEmit("rates_refresh_start");
+        emitterEmit(repo.boxName);
       }
 
       if (event.boxName == "complete") {
         _isFetching = false;
-        emitterEmit("rates_refresh_complete");
+        emitterEmit(repo.boxName);
       }
-    }
-
-    if (event.boxName == repo.boxName) {
-      emitterEmit("rates_updated");
     }
   }
 

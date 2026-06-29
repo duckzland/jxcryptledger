@@ -27,6 +27,7 @@ import 'panels/controller.dart';
 import 'panels/form.dart';
 import 'panels/display.dart';
 import 'tickers/display.dart';
+import 'tickers/model.dart';
 
 class WatchboardPage extends StatefulWidget {
   const WatchboardPage({super.key});
@@ -42,6 +43,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
 
   final scrollUtil = ScrollTo('px-offset');
   late List<PanelsModel> txs;
+  late List<TickersModel> tickers;
 
   bool _enableDrag = false;
   bool _enableTickers = true;
@@ -60,6 +62,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
 
     _tixController = locator<TickersController>();
     _tixController.start();
+    _tixController.addListener(_onTickersControllerChanged);
 
     _cryptosController = locator<CryptosController>();
     _cryptosController.addListener(_onCryptosControllerChanged);
@@ -70,6 +73,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     _enableTickers = states.get('px-enable-tickers', defaultValue: true);
 
     txs = _pxController.items;
+    tickers = _tixController.items;
 
     actionbarRegister("Crypto Watchboard");
   }
@@ -79,6 +83,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     scrollUtil.dispose();
 
     _pxController.removeListener(_onPanelsControllerChanged);
+    _tixController.removeListener(_onTickersControllerChanged);
     _cryptosController.removeListener(_onCryptosControllerChanged);
 
     super.dispose();
@@ -102,6 +107,13 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
       AppLayout.refreshBar?.call();
       setState(() {});
     }
+  }
+
+  void _onTickersControllerChanged() {
+    if (!mounted) return;
+    setState(() {
+      tickers = _tixController.items;
+    });
   }
 
   @override
@@ -358,8 +370,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   }
 
   Widget _buildTickers() {
-    final items = _tixController.items.toList()..sort((a, b) => a.order.compareTo(b.order));
-
+    final items = tickers;
     return LayoutBuilder(
       builder: (context, constraints) {
         const baseWidth = 140.0;

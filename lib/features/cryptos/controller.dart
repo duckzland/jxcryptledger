@@ -17,7 +17,7 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
       debounceNotify();
     }
 
-    if (action == "cryptos_refresh_complete" || action == repo.boxName) {
+    if (action == repo.boxName) {
       load();
     }
   }

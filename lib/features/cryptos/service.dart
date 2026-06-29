@@ -36,12 +36,12 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> wi
 
       if (event.boxName == "complete") {
         _isFetching = false;
-        emitterEmit("cryptos_refresh_complete");
+        emitterEmit(repo.boxName);
       }
     }
 
     if (event.op == 0x14 && event.boxName == repo.boxName) {
-      emitterEmit("cryptos_refresh_complete");
+      emitterEmit(repo.boxName);
     }
   }
 
