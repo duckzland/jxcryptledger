@@ -62,19 +62,21 @@ bool evaluate_matrix_rules(bool g_IsDevelopmentMode, bool as_server, bool hasSer
     else
     {
         if (g_IsDevelopmentMode)
-        { // FIX: Added missing opening curly brace
+        {
             if (hasDevelopment && hasServer) {
-                return true; // Skip dev server
+                return true;
             }
             if (!hasDevelopment) {
-                return true; // Skip foreign prod process
+                return true;
             }
-
-            return false; // Keep companion dev client
-        } // FIX: Cleanly closes the active g_IsDevelopmentMode scope block
+            return false;
+        }
         else
         {
-            return (hasServer && !hasDevelopment);
+            if (hasServer || hasDevelopment) {
+                return true;
+            }
+            return false;
         }
     }
 }
@@ -84,20 +86,12 @@ bool check_process(unsigned long pid, bool as_server = false)
     if (pid == GetCurrentProcessId())
     {
         wchar_t *myCmd = GetCommandLineW();
-        if (as_server)
-        {
-            return (myCmd != NULL && wcsstr(myCmd, L"--server") != NULL);
-        }
+        if (myCmd == NULL) return false;
 
-        if (g_IsDevelopmentMode)
-        {
-            if (myCmd != NULL && wcsstr(myCmd, L"--development") == NULL)
-            {
-                return false;
-            }
-        }
+        bool selfHasServer = (wcsstr(myCmd, L"--server") != NULL);
+        bool selfHasDevelopment = (wcsstr(myCmd, L"--development") != NULL);
 
-        return true;
+        return evaluate_matrix_rules(g_IsDevelopmentMode, as_server, selfHasServer, selfHasDevelopment);
     }
 
     HMODULE hModule = GetModuleHandleA("ntdll.dll");

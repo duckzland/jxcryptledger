@@ -13,34 +13,45 @@ bool evaluate_matrix_rules(bool g_IsDevelopmentMode, bool as_server, bool hasSer
 {
     if (as_server)
     {
+        // LOGIC #2: Finding a running background IPC Server instance
         if (g_IsDevelopmentMode)
         {
+            // Dev Mode: Target server must strictly carry BOTH arguments
             return (hasServer && hasDevelopment);
         }
         else
         {
+            // Production Mode: Target server must match --server and strictly FORBID --development
             return (hasServer && !hasDevelopment);
         }
     }
     else
     {
+        // LOGIC #1: Finding other conflicting active UI Client windows
         if (g_IsDevelopmentMode)
-        { // FIX: Added missing opening brace
+        {
+            // Dev Mode Client Rules:
             if (hasDevelopment && hasServer) {
-                return true; // Skip dev server
+                return true; // Skip dev server from UI list
             }
             if (!hasDevelopment) {
-                return true;
+                return true; // Skip foreign prod windows/servers completely
             }
-
-            return false;
-        } // FIX: Now cleanly closes the active g_IsDevelopmentMode block
+            return false; // Keep alternative companion dev clients!
+        }
         else
         {
-            return (hasServer && !hasDevelopment);
+            // Production Mode Client Rules:
+            // Skip the process if it's a server (hasServer) OR if it belongs to the dev environment (hasDevelopment)
+            // This leaves only plain, standard production UI windows to be registered as conflicts.
+            if (hasServer || hasDevelopment) {
+                return true; // Skip servers and dev instances from the production client conflict check
+            }
+            return false; // Register as a true conflicting production UI client instance!
         }
     }
 }
+
 
 bool check_process(const std::string &pidStr, bool as_server = false)
 {
@@ -63,20 +74,9 @@ bool check_process(const std::string &pidStr, bool as_server = false)
             selfCmdFile.close();
         }
 
-        if (as_server)
-        {
-            return selfHasServer;
-        }
-
-        if (g_IsDevelopmentMode)
-        {
-            if (!selfHasDevelopment)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        // FIX: Route through the exact same logic matrix function to ensure 
+        // that local and remote processes evaluate with absolute rule parity
+        return evaluate_matrix_rules(g_IsDevelopmentMode, as_server, selfHasServer, selfHasDevelopment);
     }
 
     std::string cmdlinePath = "/proc/" + pidStr + "/cmdline";
