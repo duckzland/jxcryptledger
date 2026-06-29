@@ -20,7 +20,7 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   void emitterAction(String action) {
     super.emitterAction(action);
 
-    if (action == "rates_updated") {
+    if (action == "rates_box") {
       onRatesUpdated();
       load();
     }

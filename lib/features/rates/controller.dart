@@ -14,13 +14,6 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> {
   bool get hasRates => service.hasRates;
 
   @override
-  void emitterAction(String action) {
-    if (action == repo.boxName || action == "rates_refresh_start" || action == "rates_refresh_complete" || action == "rates_updated") {
-      load();
-    }
-  }
-
-  @override
   Future<void> init() async {
     await repo.init();
     await service.init();

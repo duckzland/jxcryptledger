@@ -4,24 +4,18 @@ import 'package:http/http.dart' as http;
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/service.dart';
 import '../../../core/log.dart';
+import '../../../core/mixins/broadcaster.dart';
+import '../../../core/mixins/emitter.dart';
 import '../../../core/runtime/runtime.dart';
 import '../../settings/keys.dart';
 import '../../settings/repository.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class TickersService extends CoreBaseService<TickersModel, TickersRepository> {
+class TickersService extends CoreBaseService<TickersModel, TickersRepository> with CoreMixinsEmitter, CoreMixinsBroadcaster {
   final SettingsRepository settingsRepo;
 
   TickersService(super.repo, this.settingsRepo);
-
-  @override
-  Future<void> init() async {
-    repo.init();
-    if (repo.isEmpty()) {
-      populate();
-    }
-  }
 
   Future<void> populate({bool fetchRate = true}) async {
     final tickers = [
@@ -78,6 +72,8 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> {
     if (fetchRate) {
       if (CoreRuntime.instance.isServer()) {
         refreshRates();
+      } else {
+        repo.init();
       }
     }
   }
