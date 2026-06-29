@@ -71,7 +71,7 @@ class CoreIpcServer {
         if (_isShuttingDown) return;
         if (socketClientId != null) {
           _activeSessions.remove(socketClientId!);
-          if (_activeSessions.length <= 1 && !CoreRuntime.instance.hasClient()) {
+          if (_activeSessions.length <= 1) {
             await shutdown?.call();
           }
         }

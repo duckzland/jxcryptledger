@@ -15,12 +15,12 @@ import '../../features/transactions/adapter.dart';
 import '../../features/watchboard/panels/adapter.dart';
 import '../../features/watchboard/tickers/adapter.dart';
 import '../../features/watchers/adapter.dart';
-import 'bootstrap/client.dart';
-import 'bootstrap/server.dart';
 import '../ipc/client.dart';
 import '../ipc/registry.dart';
 import '../locator.dart';
 import '../log.dart';
+import 'bootstrap/client.dart';
+import 'bootstrap/server.dart';
 import 'process.dart';
 
 class CoreRuntime {
@@ -149,7 +149,6 @@ class CoreRuntime {
 
   bool hasClient() {
     final List<int> activeClients = CoreProcessDetector.getActiveUiClientPids();
-
     if (activeClients.isEmpty) {
       return false;
     }
