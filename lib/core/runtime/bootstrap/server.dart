@@ -1,23 +1,23 @@
 import 'package:flutter/foundation.dart';
 
-import '../../app/constants.dart';
-import '../runtime/runtime.dart';
-import '../../app/worker.dart';
-import '../../features/archives/service.dart';
-import '../../features/cryptos/service.dart';
-import '../../features/notification/service.dart';
-import '../../features/rates/service.dart';
-import '../../features/settings/keys.dart';
-import '../../features/settings/service.dart';
-import '../../features/transactions/service.dart';
-import '../../features/watchboard/panels/service.dart';
-import '../../features/watchboard/tickers/service.dart';
-import '../../features/watchers/service.dart';
-import '../locator.dart';
-import '../log.dart';
-import '../ipc/database/database.dart';
-import '../ipc/database/migration.dart';
-import '../ipc/server.dart';
+import '../../../app/constants.dart';
+import '../runtime.dart';
+import '../../../app/worker.dart';
+import '../../../features/archives/service.dart';
+import '../../../features/cryptos/service.dart';
+import '../../../features/notification/service.dart';
+import '../../../features/rates/service.dart';
+import '../../../features/settings/keys.dart';
+import '../../../features/settings/service.dart';
+import '../../../features/transactions/service.dart';
+import '../../../features/watchboard/panels/service.dart';
+import '../../../features/watchboard/tickers/service.dart';
+import '../../../features/watchers/service.dart';
+import '../../locator.dart';
+import '../../log.dart';
+import '../../ipc/database/database.dart';
+import '../../ipc/database/migration.dart';
+import '../../ipc/server.dart';
 
 class CoreBootstrapServer {
   bool initialized = false;

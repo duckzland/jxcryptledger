@@ -32,6 +32,7 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
     await ipc.send(op: 0x02, box: boxName, key: id, value: writer.toBytes());
     items[id] = value;
+    emitterEmit(boxName);
   }
 
   @override
@@ -43,6 +44,7 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
     }
     final count = ByteData.sublistView(resultBytes).getInt32(0, Endian.big);
     items.clear();
+    emitterEmit(boxName);
     return count;
   }
 
@@ -50,6 +52,7 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
   Future<void> delete(dynamic id) async {
     await ipc.send(op: 0x03, box: boxName, key: id);
     items.remove(id);
+    emitterEmit(boxName);
   }
 
   @override

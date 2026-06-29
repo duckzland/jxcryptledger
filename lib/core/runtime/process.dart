@@ -38,9 +38,7 @@ class CoreProcessDetector {
   }
 
   static bool isServerInstanceRunning() {
-    // FIX: Support both platform binaries
     if (!Platform.isWindows && !Platform.isLinux) return false;
-    // print("IsServerRunning: ${_nativeIsServerRunning()}");
     return _nativeIsServerRunning() == 1;
   }
 }

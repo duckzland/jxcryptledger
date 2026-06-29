@@ -32,6 +32,7 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
     await ipc.send(op: 0x02, box: boxName, key: id, value: bytes);
 
     items[id] = value;
+    emitterEmit(boxName);
   }
 
   @override
@@ -43,6 +44,7 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
     }
     final count = ByteData.sublistView(resultBytes).getInt32(0, Endian.big);
     items.clear();
+    emitterEmit(boxName);
     return count;
   }
 
@@ -50,6 +52,7 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
   Future<void> delete(dynamic id) async {
     await ipc.send(op: 0x03, box: boxName, key: id);
     items.remove(id);
+    emitterEmit(boxName);
   }
 
   @override
@@ -76,6 +79,8 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
     for (final value in values) {
       items[value.uuid] = value;
     }
+
+    emitterEmit(boxName);
   }
 
   @override

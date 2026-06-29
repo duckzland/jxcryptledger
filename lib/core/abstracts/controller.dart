@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../runtime/runtime.dart';
-import '../log.dart';
 import '../mixins/emitter.dart';
 import '../mixins/box.dart';
 import 'models/with_id.dart';
@@ -44,11 +43,9 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   }
 
   void debounceNotify() {
-    // logln("Scheduling listener for: ${T.toString()}");
     if (!CoreRuntime.instance.isServer()) {
       _notifyTimer?.cancel();
       _notifyTimer = Timer(const Duration(milliseconds: 32), () {
-        logln("[CORE] Firing listener for: ${T.toString()}");
         notifyListeners();
       });
     }

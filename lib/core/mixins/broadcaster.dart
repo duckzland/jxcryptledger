@@ -9,21 +9,33 @@ import '../ipc/server.dart';
 import '../locator.dart';
 
 mixin CoreMixinsBroadcaster {
-  StreamSubscription? broadcaster;
+  StreamSubscription? _broadcaster;
 
   CoreIpcClient get ipcClient => locator<CoreIpcClient>();
   CoreIpcServer get ipcServer => locator<CoreIpcServer>();
 
   bool isBroadcastable = CoreRuntime.instance.isServer();
 
+  static final List<CoreIpcBroadcastEvent> _pendingEvents = [];
+  static Timer? _debounceTimer;
+
   void broadcasterAction(CoreIpcBroadcastEvent event) {}
 
   void broadcasterListen() {
     try {
-      broadcaster = ipcClient.onBroadcast.listen((event) {
-        broadcasterAction(event);
+      _broadcaster = ipcClient.onBroadcast.listen((event) {
+        if (!_pendingEvents.any((e) => e.isEqual(event))) {
+          _pendingEvents.add(event);
+        }
+
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(milliseconds: 32), _flushQueue);
       });
     } catch (_) {}
+  }
+
+  static void _flushQueue() {
+    _pendingEvents.clear();
   }
 
   Future<void> broadcasterSend({required int op, required String box, dynamic key, List<int>? value}) async {
@@ -39,6 +51,6 @@ mixin CoreMixinsBroadcaster {
   }
 
   void broadcasterDispose() {
-    broadcaster?.cancel();
+    _broadcaster?.cancel();
   }
 }
