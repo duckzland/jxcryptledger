@@ -46,11 +46,12 @@ extern "C"
     __declspec(dllimport) int __stdcall ReadProcessMemory(void *hProcess, const void *lpBaseAddress, void *lpBuffer, unsigned long long nSize, unsigned long long *lpNumberOfBytesRead);
 }
 
-bool evaluate_matrix_rules(bool g_IsDevelopmentMode, bool as_server, bool hasServer, bool hasDevelopment)
+// FIX: Renamed first parameter to 'is_dev_mode' to resolve global variable shadowing name conflicts (C4459)
+bool evaluate_matrix_rules(bool is_dev_mode, bool as_server, bool hasServer, bool hasDevelopment)
 {
     if (as_server)
     {
-        if (g_IsDevelopmentMode)
+        if (is_dev_mode)
         {
             return (hasServer && hasDevelopment);
         }
@@ -61,19 +62,22 @@ bool evaluate_matrix_rules(bool g_IsDevelopmentMode, bool as_server, bool hasSer
     }
     else
     {
-        if (g_IsDevelopmentMode)
+        if (is_dev_mode)
         {
-            if (hasDevelopment && hasServer) {
+            if (hasDevelopment && hasServer)
+            {
                 return true;
             }
-            if (!hasDevelopment) {
+            if (!hasDevelopment)
+            {
                 return true;
             }
             return false;
         }
         else
         {
-            if (hasServer || hasDevelopment) {
+            if (hasServer || hasDevelopment)
+            {
                 return true;
             }
             return false;
@@ -86,11 +90,13 @@ bool check_process(unsigned long pid, bool as_server = false)
     if (pid == GetCurrentProcessId())
     {
         wchar_t *myCmd = GetCommandLineW();
-        if (myCmd == NULL) return false;
+        if (myCmd == NULL)
+            return false;
 
         bool selfHasServer = (wcsstr(myCmd, L"--server") != NULL);
         bool selfHasDevelopment = (wcsstr(myCmd, L"--development") != NULL);
 
+        // Uses your preferred matrix evaluation bypass routing completely
         return evaluate_matrix_rules(g_IsDevelopmentMode, as_server, selfHasServer, selfHasDevelopment);
     }
 
@@ -152,7 +158,7 @@ bool check_process(unsigned long pid, bool as_server = false)
             }
         }
     }
-    
+
     CloseHandle(hProcess);
     return isValid;
 }
