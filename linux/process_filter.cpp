@@ -1,4 +1,4 @@
-#include "my_application.h" // Gives access to your global: g_IsDevelopmentMode
+#include "runner/my_application.h" // Gives access to your global: g_IsDevelopmentMode
 #include <iostream>
 #include <fstream>
 #include <string>
