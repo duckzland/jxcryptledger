@@ -36,7 +36,6 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     rateableAmount = null;
     rateableValue = null;
     rateableStateUpdater = null;
-    rateableController.init();
     rateableController.addListener(rateableUpdateRate);
   }
 

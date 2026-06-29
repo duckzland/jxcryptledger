@@ -1,5 +1,6 @@
 import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
+import '../../core/runtime/runtime.dart';
 import 'model.dart';
 
 class RatesRepository extends CoreBaseRepository<RatesModel> {
@@ -7,6 +8,10 @@ class RatesRepository extends CoreBaseRepository<RatesModel> {
   String get boxName => 'rates_box';
 
   Future<void> cleanupOldRates({Duration olderThan = const Duration(days: 1)}) async {
+    if (!CoreRuntime.instance.isServer()) {
+      return;
+    }
+
     logln('[RATES] Cleaning old rates.');
 
     final nowEpoch = DateTime.now().microsecondsSinceEpoch;
