@@ -211,7 +211,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
 
-    if (source <= 0 || entryRate <= 0 || targetSymbol == "" || sourceSymbol == "") {
+    if (source <= 0 || entryRate <= 0 || targetSymbol == "UNK" || sourceSymbol == "UNK" || targetSymbol == "" || sourceSymbol == "") {
       return const Text("");
     }
 
