@@ -21,7 +21,6 @@ class CoreProcessDetector {
       .asFunction();
 
   static List<int> getActiveUiClientPids() {
-    // FIX: Support both platform binaries
     if (!Platform.isWindows && !Platform.isLinux) return [];
 
     final Pointer<Int32> pidsArrayPtr = calloc<Int32>(128);
@@ -41,6 +40,7 @@ class CoreProcessDetector {
   static bool isServerInstanceRunning() {
     // FIX: Support both platform binaries
     if (!Platform.isWindows && !Platform.isLinux) return false;
+    // print("IsServerRunning: ${_nativeIsServerRunning()}");
     return _nativeIsServerRunning() == 1;
   }
 }

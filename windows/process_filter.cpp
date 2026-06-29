@@ -46,6 +46,39 @@ extern "C"
     __declspec(dllimport) int __stdcall ReadProcessMemory(void *hProcess, const void *lpBaseAddress, void *lpBuffer, unsigned long long nSize, unsigned long long *lpNumberOfBytesRead);
 }
 
+bool evaluate_matrix_rules(bool g_IsDevelopmentMode, bool as_server, bool hasServer, bool hasDevelopment)
+{
+    if (as_server)
+    {
+        if (g_IsDevelopmentMode)
+        {
+            return (hasServer && hasDevelopment);
+        }
+        else
+        {
+            return (hasServer && !hasDevelopment);
+        }
+    }
+    else
+    {
+        if (g_IsDevelopmentMode)
+        { // FIX: Added missing opening curly brace
+            if (hasDevelopment && hasServer) {
+                return true; // Skip dev server
+            }
+            if (!hasDevelopment) {
+                return true; // Skip foreign prod process
+            }
+
+            return false; // Keep companion dev client
+        } // FIX: Cleanly closes the active g_IsDevelopmentMode scope block
+        else
+        {
+            return (hasServer && !hasDevelopment);
+        }
+    }
+}
+
 bool check_process(unsigned long pid, bool as_server = false)
 {
     if (pid == GetCurrentProcessId())
@@ -114,39 +147,18 @@ bool check_process(unsigned long pid, bool as_server = false)
                         bool hasServer = (wcsstr(cmdLineBuffer, L"--server") != NULL);
                         bool hasDevelopment = (wcsstr(cmdLineBuffer, L"--development") != NULL);
 
-                        // IMPROVED LOGIC PROCESSING MATRIX:
-                        if (as_server)
-                        {
-                            if (g_IsDevelopmentMode)
-                            {
-                                // Logic #2 Dev: Server must strictly carry BOTH arguments
-                                isValid = (hasServer && hasDevelopment);
-                            }
-                            else
-                            {
-                                // Logic #2 Production: Must match --server and strictly FORBID --development
-                                isValid = (hasServer && !hasDevelopment);
-                            }
-                        }
-                        else
-                        {
-                            if (g_IsDevelopmentMode)
-                            {
-                                // Logic #1 Dev: Skip process from UI list if it contains --development
-                                isValid = hasDevelopment;
-                            }
-                            else
-                            {
-                                // Logic #1 Production: Skip process from UI list if it contains --server and lacks --development
-                                isValid = (hasServer && !hasDevelopment);
-                            }
-                        }
+                        isValid = evaluate_matrix_rules(g_IsDevelopmentMode, as_server, hasServer, hasDevelopment);
+                    }
+                    else
+                    {
+                        isValid = false;
                     }
                     delete[] cmdLineBuffer;
                 }
             }
         }
     }
+    
     CloseHandle(hProcess);
     return isValid;
 }

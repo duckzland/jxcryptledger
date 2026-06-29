@@ -35,9 +35,31 @@ class CoreRuntime {
 
   static String get ipcPipeName {
     if (Platform.isWindows) {
-      return kDebugMode ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_devel' : r'\\.\pipe\com.jxledger_ipc_sync_pipe';
+      final String username = Platform.environment['USERNAME'] ?? 'shared';
+      final String safeUser = username.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+
+      return kDebugMode
+          // ignore: prefer_interpolation_to_compose_strings
+          ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_' + safeUser + '_devel'
+          : r'\\.\pipe\com.jxledger_ipc_sync_pipe_' + safeUser;
+    } else if (Platform.isLinux) {
+      final String? xdgRuntime = Platform.environment['XDG_RUNTIME_DIR'];
+
+      if (xdgRuntime != null && Directory(xdgRuntime).existsSync()) {
+        return kDebugMode ? '$xdgRuntime/jxledger_devel.sock' : '$xdgRuntime/jxledger.sock';
+      } else {
+        final String username = Platform.environment['USER'] ?? Platform.environment['LOGNAME'] ?? 'shared';
+        final String fallbackFolder = '/tmp/jxledger-$username';
+
+        final Directory dir = Directory(fallbackFolder);
+        if (!dir.existsSync()) {
+          dir.createSync(recursive: true);
+        }
+
+        return kDebugMode ? '$fallbackFolder/jxledger_devel.sock' : '$fallbackFolder/jxledger.sock';
+      }
     } else {
-      return kDebugMode ? '/tmp/jxledger.sock' : '/tmp/jxledger.sock';
+      return kDebugMode ? '/tmp/jxledger_devel.sock' : '/tmp/jxledger.sock';
     }
   }
 
@@ -101,11 +123,7 @@ class CoreRuntime {
 
     if (!isServer()) {
       if (!isServerAvailable() && shouldSpawn()) {
-        try {
-          await spawnServer();
-        } catch (e) {
-          logln("Failed to spawn server: $e");
-        }
+        await spawnServer();
       }
 
       final serverReady = await waitForServer();
@@ -150,20 +168,20 @@ class CoreRuntime {
     }
 
     activeClients.sort();
+
     return activeClients.first == pid;
   }
 
   void cleanSocketFile() {
     if (Platform.isLinux) {
-      final socketFile = File(ipcPipeName);
-
-      if (socketFile.existsSync()) {
-        try {
+      try {
+        final socketFile = File(ipcPipeName);
+        if (socketFile.existsSync()) {
           socketFile.deleteSync();
           logln("Cleaned up stale Linux socket file prior to server spawn.");
-        } catch (e) {
-          logln("Warning: Failed to clear stale socket file: $e");
         }
+      } catch (e) {
+        logln("Warning: Failed to clear stale socket file: $e");
       }
     }
   }
