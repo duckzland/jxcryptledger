@@ -71,7 +71,7 @@ class CoreIpcServer {
         if (_isShuttingDown) return;
         if (socketClientId != null) {
           _activeSessions.remove(socketClientId!);
-          if (_activeSessions.length <= 1) {
+          if (_activeSessions.length <= 1 && !CoreRuntime.instance.hasClient()) {
             await shutdown?.call();
           }
         }
@@ -276,6 +276,16 @@ class CoreIpcServer {
             }
 
             broadcast(op, boxName, "batch", valueBytes, exclude: client);
+            break;
+
+          case 0x15: // add rate queue
+            final parts = boxName.split("-");
+            final sourceId = int.parse(parts[0]);
+            final targetId = int.parse(parts[1]);
+            final force = rawKeyStr == "true";
+
+            final service = locator<RatesService>();
+            service.addQueue(sourceId, targetId, force: force);
             break;
 
           default:

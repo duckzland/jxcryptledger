@@ -78,6 +78,12 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
 
   void addQueue(int sourceId, int targetId, {bool force = false}) {
     if (!_isValidPair(sourceId, targetId)) return;
+
+    if (!CoreRuntime.instance.isServer()) {
+      ipcClient.send(op: 0x15, box: "$sourceId-$targetId", key: force);
+      return;
+    }
+
     if (_queue.contains((sourceId, targetId))) return;
 
     // logln("[RATES] Adding to queue $sourceId - $targetId");
@@ -339,7 +345,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Cor
     for (final rate in parsed.rates) {
       if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
         await repo.add(rate);
-        logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
+        // logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
       }
     }
   }
