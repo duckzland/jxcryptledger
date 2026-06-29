@@ -1,3 +1,4 @@
+#include "my_application.h" // Gives access to your global: g_IsDevelopmentMode
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -6,53 +7,76 @@
 #include <unistd.h>
 #include <cstring>
 
-// EXPORT macro for statically embedded compilation inside the primary binary
 #define EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
-// Helper to check if a Linux process was started with the "--server" flag
-bool check_if_process_has_server_arg(const std::string &pidStr)
+bool check_process(const std::string &pidStr, bool as_server = false)
 {
-    // Current application instance checking shortcut
+    std::string cmdlinePath;
+
     if (std::stoll(pidStr) == getpid())
     {
-        // Read our own arguments securely from /proc/self/cmdline
-        std::ifstream cmdFile("/proc/self/cmdline");
-        std::string arg;
-        while (std::getline(cmdFile, arg, '\0'))
-        {
-            if (arg == "--server")
-            {
-                return true;
-            }
-        }
-        return false;
+        cmdlinePath = "/proc/self/cmdline";
+    }
+    else
+    {
+        cmdlinePath = "/proc/" + pidStr + "/cmdline";
     }
 
-    // Remote process inspection
-    std::string cmdlinePath = "/proc/" + pidStr + "/cmdline";
     std::ifstream infile(cmdlinePath);
     if (!infile.is_open())
     {
-        return false; // Process closed or access denied
+        return false;
     }
 
+    bool hasServer = false;
+    bool hasDevelopment = false;
     std::string argument;
-    // Linux cmdline segments arguments with null terminators ('\0')
+
     while (std::getline(infile, argument, '\0'))
     {
         if (argument == "--server")
         {
-            return true;
+            hasServer = true;
+        }
+        else if (argument == "--development")
+        {
+            hasDevelopment = true;
         }
     }
-    return false;
+    infile.close();
+
+    bool isValid = false;
+
+    if (as_server)
+    {
+        if (g_IsDevelopmentMode)
+        {
+            isValid = (hasServer && hasDevelopment);
+        }
+        else
+        {
+            isValid = (hasServer && !hasDevelopment);
+        }
+    }
+    else
+    {
+        if (g_IsDevelopmentMode)
+        {
+            isValid = hasDevelopment;
+        }
+        else
+        {
+            isValid = (hasServer && !hasDevelopment);
+        }
+    }
+
+    return isValid;
 }
 
 EXPORT int get_active_process_pids(int *outPids, int maxCount)
 {
     int foundCount = 0;
 
-    // Open the /proc directory to iterate over all active system processes
     DIR *procDir = opendir("/proc");
     if (!procDir)
     {
@@ -62,7 +86,6 @@ EXPORT int get_active_process_pids(int *outPids, int maxCount)
     struct dirent *entry;
     while ((entry = readdir(procDir)) != nullptr)
     {
-        // We only care about directories that are numbers (PIDs)
         if (entry->d_type == DT_DIR && entry->d_name[0] >= '0' && entry->d_name[0] <= '9')
         {
             std::string pidStr(entry->d_name);
@@ -74,11 +97,9 @@ EXPORT int get_active_process_pids(int *outPids, int maxCount)
                 std::string procName;
                 std::getline(commFile, procName);
 
-                // Match your binary name (Linux apps drop the ".exe" suffix)
                 if (procName == "jxledger")
                 {
-                    // If it contains '--server', exclude it from UI list matching your logic
-                    if (check_if_process_has_server_arg(pidStr))
+                    if (check_process(pidStr, false))
                     {
                         continue;
                     }
@@ -119,10 +140,10 @@ EXPORT int is_server_instance_running()
 
                 if (procName == "jxledger")
                 {
-                    if (check_if_process_has_server_arg(pidStr))
+                    if (check_process(pidStr, true))
                     {
                         closedir(procDir);
-                        return 1; // Server instance matched!
+                        return 1;
                     }
                 }
             }

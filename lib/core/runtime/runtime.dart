@@ -35,7 +35,7 @@ class CoreRuntime {
 
   static String get ipcPipeName {
     if (Platform.isWindows) {
-      return kDebugMode ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_dev' : r'\\.\pipe\com.jxledger_ipc_sync_pipe';
+      return kDebugMode ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_devel' : r'\\.\pipe\com.jxledger_ipc_sync_pipe';
     } else {
       return kDebugMode ? '/tmp/jxledger.sock' : '/tmp/jxledger.sock';
     }
@@ -101,7 +101,11 @@ class CoreRuntime {
 
     if (!isServer()) {
       if (!isServerAvailable() && shouldSpawn()) {
-        await spawnServer();
+        try {
+          await spawnServer();
+        } catch (e) {
+          logln("Failed to spawn server: $e");
+        }
       }
 
       final serverReady = await waitForServer();
@@ -168,7 +172,15 @@ class CoreRuntime {
     try {
       cleanSocketFile();
 
-      final proc = await Process.start(Platform.resolvedExecutable, ['--server'], mode: ProcessStartMode.inheritStdio);
+      final List<String> serverArgs = ['--server'];
+      if (kDebugMode || kProfileMode) {
+        serverArgs.add('--development');
+      }
+
+      logln("Launching server with flags: ${serverArgs.join(' ')}");
+
+      final proc = await Process.start(Platform.resolvedExecutable, serverArgs, mode: ProcessStartMode.inheritStdio);
+
       serverPid = proc.pid;
       logln("Spawned detached IPC server process (pid=${proc.pid})");
     } catch (e) {

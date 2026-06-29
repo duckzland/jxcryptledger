@@ -16,6 +16,8 @@ G_DECLARE_FINAL_TYPE(MyApplication,
  *
  * Returns: a new #MyApplication.
  */
-MyApplication* my_application_new();
+MyApplication *my_application_new();
 
-#endif  // FLUTTER_MY_APPLICATION_H_
+extern bool g_IsDevelopmentMode;
+
+#endif // FLUTTER_MY_APPLICATION_H_
