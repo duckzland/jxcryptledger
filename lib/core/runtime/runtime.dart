@@ -147,10 +147,10 @@ class CoreRuntime {
     initialized = true;
   }
 
-  bool hasOtherClient() {
+  bool hasClient() {
     final List<int> activeClients = CoreProcessDetector.getActiveUiClientPids();
 
-    if (activeClients.isEmpty || activeClients.length == 1) {
+    if (activeClients.isEmpty) {
       return false;
     }
 
