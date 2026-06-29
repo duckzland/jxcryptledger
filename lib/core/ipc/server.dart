@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:dart_ipc/dart_ipc.dart';
 
-import '../../features/watchboard/tickers/service.dart';
 import '../abstracts/models/with_id.dart';
 import '../runtime/runtime.dart';
 import '../../features/cryptos/service.dart';
