@@ -370,7 +370,8 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   }
 
   Widget _buildTickers() {
-    final items = tickers;
+    final items = tickers.toList()..sort((a, b) => a.order.compareTo(b.order));
+
     return LayoutBuilder(
       builder: (context, constraints) {
         const baseWidth = 140.0;
