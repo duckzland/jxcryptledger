@@ -4,7 +4,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
-import '../../../core/locator.dart';
+import '../../../core/runtime/locator.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/state.dart';

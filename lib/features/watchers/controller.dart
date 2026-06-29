@@ -6,7 +6,7 @@ import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/mixins/controllers/rateable.dart';
 import '../../core/utils.dart';
-import '../cryptos/service.dart';
+import '../cryptos/controller.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -16,9 +16,9 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
         CoreMixinsControllersIdGenerator<WatchersModel, WatchersRepository>,
         CoreMixinsControllersExportable<WatchersModel, WatchersRepository>,
         CoreMixinsControllersRateable<WatchersModel, WatchersRepository> {
-  final CryptosService _cryptosService;
+  final CryptosController _cryptosController;
 
-  WatchersController(super.repo, this._cryptosService);
+  WatchersController(super.repo, this._cryptosController);
 
   @override
   Future<void> init() async {
@@ -39,8 +39,8 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
   Future<void> sendNotification(WatchersModel tx) async {
     String message = tx.message;
     if (message == "" || message.trim().isEmpty) {
-      final sourceSymbol = _cryptosService.getSymbol(tx.srId) ?? "UNK";
-      final targetSymbol = _cryptosService.getSymbol(tx.rrId) ?? "UNK";
+      final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "UNK";
+      final targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "UNK";
 
       message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDouble(tx.rates)}.";
     }

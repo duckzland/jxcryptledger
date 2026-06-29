@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import '../../abstracts/models/with_id.dart';
 import '../../abstracts/box.dart';
-import '../../locator.dart';
+import '../../runtime/locator.dart';
 import '../../log.dart';
 
 import '../client.dart';

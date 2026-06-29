@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
-import '../../core/runtime/runtime.dart';
 import '../../core/abstracts/service.dart';
-import '../../core/ipc/event.dart';
 import '../../core/mixins/broadcaster.dart';
 import '../../core/mixins/emitter.dart';
 import '../settings/repository.dart';
@@ -22,28 +20,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> wi
   bool _isFetching = false;
   bool get isFetching => _isFetching;
 
-  CryptosService(super.repo, this.settingsRepo) {
-    broadcasterListen();
-  }
-
-  @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
-    if (event.op == 0x11) {
-      if (event.boxName == "start") {
-        _isFetching = true;
-        emitterEmit("cryptos_refresh_start");
-      }
-
-      if (event.boxName == "complete") {
-        _isFetching = false;
-        emitterEmit(repo.boxName);
-      }
-    }
-
-    if (event.op == 0x14 && event.boxName == repo.boxName) {
-      emitterEmit(repo.boxName);
-    }
-  }
+  CryptosService(super.repo, this.settingsRepo);
 
   String? getSymbol(int id) {
     return repo.getSymbol(id);
@@ -58,11 +35,6 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> wi
   }
 
   Future<bool> fetch() async {
-    if (!CoreRuntime.instance.isServer()) {
-      await broadcasterSend(op: 0x11, box: "action");
-      return true;
-    }
-
     if (_isFetching) return false;
 
     _isFetching = true;

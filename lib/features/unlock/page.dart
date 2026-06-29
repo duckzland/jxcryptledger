@@ -175,6 +175,7 @@ class _UnlockPageState extends State<UnlockPage> {
           onPressed: (s) async {
             final ok = await widget.controller.unlock(_password.text);
             if (ok) {
+              s.progress();
               if (!mounted) return;
               context.go("/transactions");
             } else {

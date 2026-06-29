@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:hive_ce/hive_ce.dart';
 
 import '../../abstracts/box.dart';
-import '../../locator.dart';
+import '../../runtime/locator.dart';
 import '../../log.dart';
 import '../client.dart';
 import '../protocol/reader.dart';

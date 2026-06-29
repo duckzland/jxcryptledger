@@ -4,7 +4,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/locator.dart';
+import '../../../core/runtime/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/state.dart';

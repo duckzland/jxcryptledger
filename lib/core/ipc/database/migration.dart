@@ -1,6 +1,6 @@
 import '../../../app/constants.dart';
 import '../../../features/watchboard/tickers/service.dart';
-import '../../locator.dart';
+import '../../runtime/locator.dart';
 
 class CoreIpcMigration {
   final TickersService _tickersService = locator<TickersService>();

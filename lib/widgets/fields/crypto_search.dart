@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 import '../../app/theme.dart';
-import '../../core/locator.dart';
+import '../../core/runtime/locator.dart';
 import '../../features/cryptos/model.dart';
 import '../../features/cryptos/controller.dart';
 import '../../mixins/suffix.dart';

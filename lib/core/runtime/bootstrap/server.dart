@@ -13,7 +13,7 @@ import '../../../features/transactions/service.dart';
 import '../../../features/watchboard/panels/service.dart';
 import '../../../features/watchboard/tickers/service.dart';
 import '../../../features/watchers/service.dart';
-import '../../locator.dart';
+import '../locator.dart';
 import '../../log.dart';
 import '../../ipc/database/database.dart';
 import '../../ipc/database/migration.dart';

@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app/constants.dart';
 import 'app/root.dart';
 import 'core/runtime/runtime.dart';
-import 'core/locator.dart';
+import 'core/runtime/locator.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();

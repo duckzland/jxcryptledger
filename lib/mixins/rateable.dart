@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../app/exceptions.dart';
-import '../core/locator.dart';
+import '../core/runtime/locator.dart';
 import '../core/utils.dart';
 import '../features/rates/controller.dart';
 import '../widgets/notify.dart';

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
-import '../../core/locator.dart';
+import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/scrollto_table.dart';

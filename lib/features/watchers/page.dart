@@ -5,7 +5,7 @@ import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/exceptions.dart';
 import '../../app/theme.dart';
-import '../../core/locator.dart';
+import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../core/utils.dart';
 import '../../mixins/action_bar.dart';

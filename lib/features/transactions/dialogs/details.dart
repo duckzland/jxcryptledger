@@ -2,7 +2,7 @@ import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/locator.dart';
+import '../../../core/runtime/locator.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';

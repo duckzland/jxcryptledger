@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/locator.dart';
+import '../../../core/runtime/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';

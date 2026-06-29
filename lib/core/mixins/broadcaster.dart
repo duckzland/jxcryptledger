@@ -6,7 +6,7 @@ import '../runtime/runtime.dart';
 import '../ipc/client.dart';
 import '../ipc/event.dart';
 import '../ipc/server.dart';
-import '../locator.dart';
+import '../runtime/locator.dart';
 
 mixin CoreMixinsBroadcaster {
   StreamSubscription? _broadcaster;

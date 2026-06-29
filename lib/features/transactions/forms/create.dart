@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
-import '../../../core/locator.dart';
+import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/fields/amount.dart';

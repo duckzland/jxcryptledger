@@ -16,7 +16,7 @@ import '../../../features/watchboard/panels/controller.dart';
 import '../../../features/watchboard/tickers/controller.dart';
 import '../../../features/watchers/controller.dart';
 import '../../mixins/broadcaster.dart';
-import '../../locator.dart';
+import '../locator.dart';
 import '../../log.dart';
 
 class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
