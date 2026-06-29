@@ -6,6 +6,7 @@ import 'models/with_id.dart';
 
 abstract class CoreBaseRepository<T extends CoreModelWithId> {
   String get boxName;
+  bool initialized = false;
 
   CoreBaseBox<T>? _box;
   CoreBaseBox<T> get box {
@@ -16,8 +17,14 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
   }
 
   Future<void> init() async {
+    if (initialized) {
+      return;
+    }
+
     await box.init();
     onAction();
+
+    initialized = true;
   }
 
   T? get(String id) {

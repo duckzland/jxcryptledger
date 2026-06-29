@@ -72,6 +72,7 @@ class CoreIpcServer {
         if (socketClientId != null) {
           _activeSessions.remove(socketClientId!);
           if (_activeSessions.length <= 1) {
+            // It is better to kill and respawn than having a zombie that cant be killed.
             await shutdown?.call();
           }
         }
