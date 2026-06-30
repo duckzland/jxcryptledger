@@ -10,11 +10,9 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
   bool initialized = false;
 
   CoreBaseBox<T>? _box;
+
   CoreBaseBox<T> get box {
-    if (_box == null) {
-      _box = CoreIpcBoxStandard<T>(boxName);
-    }
-    return _box!;
+    return _box ??= CoreIpcBoxStandard<T>(boxName);
   }
 
   Future<void> init() async {

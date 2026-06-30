@@ -6,6 +6,7 @@ import '../../abstracts/box.dart';
 import '../../runtime/locator.dart';
 import '../../log.dart';
 import '../client.dart';
+import '../event.dart';
 import '../protocol/reader.dart';
 import '../protocol/writer.dart';
 import '../registry.dart';
@@ -67,6 +68,35 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
   }
 
   @override
+  void receive(CoreIpcBroadcastEvent event) {
+    if (event.boxName != boxName) {
+      return;
+    }
+
+    if (event.op == 0x02) {
+      final adapter = CoreIpcRegistry.getAdapter(boxName);
+      final reader = CoreIpcReader(event.valueBytes);
+      final decoded = adapter.read(reader);
+
+      if (decoded is MapEntry) {
+        items[event.key] = decoded.value;
+      } else if (decoded is Map) {
+        items[event.key] = decoded[event.key];
+      } else {
+        items[event.key] = decoded;
+      }
+    } else if (event.op == 0x03) {
+      items.remove(event.key);
+    } else if (event.op == 0x04) {
+      items.clear();
+    } else if (event.op == 0x14) {
+      unpackBytes(event.valueBytes);
+    } else if (event.op == 0x17) {
+      unpackBytes(event.valueBytes);
+    }
+  }
+
+  @override
   void unpackBytes(Uint8List resultBytes) {
     final adapter = CoreIpcRegistry.getAdapter(boxName);
     final reader = CoreIpcReader(resultBytes);
@@ -102,7 +132,6 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
         }
       }
     }
-
     items.clear();
     items.addAll(temporaryCache);
   }

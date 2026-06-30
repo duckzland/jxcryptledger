@@ -1,15 +1,27 @@
 import 'package:flutter/foundation.dart';
-import '../../core/runtime/runtime.dart';
+import '../../core/ipc/event.dart';
+import '../../core/mixins/broadcaster.dart';
 import 'repository.dart';
 import 'keys.dart';
 
-class SettingsController extends ChangeNotifier {
+class SettingsController extends ChangeNotifier with CoreMixinsBroadcaster {
   final SettingsRepository repo;
 
   SettingsController(this.repo);
 
   Future<void> init() async {
     await repo.init();
+    broadcasterListen();
+  }
+
+  @override
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    if (event.boxName != repo.boxName) {
+      return;
+    }
+
+    repo.receive(event);
+    load();
   }
 
   T get<T>(SettingKey key, {T? defaultValue}) {
@@ -17,9 +29,7 @@ class SettingsController extends ChangeNotifier {
   }
 
   void load() {
-    if (!CoreRuntime.instance.isServer()) {
-      notifyListeners();
-    }
+    notifyListeners();
   }
 
   Future<void> update(SettingKey key, dynamic value) async {

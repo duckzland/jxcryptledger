@@ -19,7 +19,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
   late Map<SettingKey, dynamic> _buffer = {};
-  late final SettingsController _controller;
+  SettingsController get _controller => locator<SettingsController>();
 
   final scrollToUtil = ScrollTo('sx-offset');
 
@@ -28,6 +28,9 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isDirty() {
     final userKeys = SettingKey.values.where((k) => k.isUserEditable);
     for (var key in userKeys) {
+      if (!_buffer.containsKey(key)) {
+        continue;
+      }
       final current = _buffer[key];
       final original = _controller.get<dynamic>(key);
       if (current != original) return true;
@@ -38,17 +41,17 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _controller = locator<SettingsController>();
-    final userKeys = SettingKey.values.where((k) => k.isUserEditable);
-
-    for (var key in userKeys) {
-      _buffer[key] = _controller.get<dynamic>(key);
-    }
-
+    _controller.addListener(_onControllerChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLayout.setTitle?.call("Settings");
       AppLayout.setActions?.call(null);
     });
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChange);
+    super.dispose();
   }
 
   @override
@@ -72,6 +75,12 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  void _onControllerChange() {
+    setState(() {
+      _buildCount++;
+    });
   }
 
   Widget _buildItem(int index, List<SettingKey> editableKeys) {
@@ -99,7 +108,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Text(key.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
         TextFormField(
           key: ValueKey("${key.name}-$_buildCount"),
-          initialValue: _buffer[key]?.toString(),
+          initialValue: _buffer[key]?.toString() ?? _controller.get(key),
           decoration: InputDecoration(
             hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
