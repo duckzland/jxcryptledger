@@ -1,13 +1,25 @@
+import '../../core/ipc/event.dart';
+import '../../core/mixins/broadcaster.dart';
 import 'repository.dart';
 import 'keys.dart';
 
-class SettingsService {
+class SettingsService with CoreMixinsBroadcaster {
   final SettingsRepository repo;
 
   SettingsService(this.repo);
 
   Future<void> init() async {
     await repo.init();
+    broadcasterListen();
+  }
+
+  @override
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    if (event.boxName != repo.boxName) {
+      return;
+    }
+
+    repo.receive(event);
   }
 
   T get<T>(SettingKey key, {T? defaultValue}) {
