@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core/runtime/bootstrap/client.dart';
-import '../../core/runtime/locator.dart';
-import '../../core/log.dart';
+import '../../../core/runtime/bootstrap/client.dart';
+import '../../../core/runtime/locator.dart';
+import '../../../core/log.dart';
 
-class UnlockController extends ChangeNotifier {
+class SystemUnlockController extends ChangeNotifier {
   bool _unlocked = false;
   bool get unlocked => _unlocked;
   bool get isFirstRun => client.isFirstRun;

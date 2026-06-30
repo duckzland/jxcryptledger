@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/constants.dart';
-import '../../app/theme.dart';
-import '../../widgets/button.dart';
+import '../../../app/constants.dart';
+import '../../../app/theme.dart';
+import '../../../widgets/button.dart';
 import 'controller.dart';
 
-class UnlockPage extends StatefulWidget {
-  final UnlockController controller;
+class SystemUnlockPage extends StatefulWidget {
+  final SystemUnlockController controller;
 
-  const UnlockPage({super.key, required this.controller});
+  const SystemUnlockPage({super.key, required this.controller});
 
   @override
-  State<UnlockPage> createState() => _UnlockPageState();
+  State<SystemUnlockPage> createState() => _SystemUnlockPageState();
 }
 
-class _UnlockPageState extends State<UnlockPage> {
+class _SystemUnlockPageState extends State<SystemUnlockPage> {
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
 
@@ -129,8 +129,9 @@ class _UnlockPageState extends State<UnlockPage> {
             if (!mounted) return;
 
             if (ok) {
-              s.active();
-              context.go("/transactions");
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.go("/transactions");
+              });
             } else {
               s.error();
             }
@@ -173,12 +174,17 @@ class _UnlockPageState extends State<UnlockPage> {
             }
           },
           onPressed: (s) async {
+            s.progress();
             final ok = await widget.controller.unlock(_password.text);
+
+            if (!mounted) return;
+
             if (ok) {
-              s.progress();
-              if (!mounted) return;
-              context.go("/transactions");
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.go("/transactions");
+              });
             } else {
+              s.action();
               setState(() => error = "Invalid password");
             }
           },

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:dart_ipc/dart_ipc.dart';
 
 import '../../features/encryption/service.dart';
@@ -16,6 +17,7 @@ class CoreIpcClient {
   final CoreIpcBuffer _incomingBuffer = CoreIpcBuffer();
   final StreamController<CoreIpcBroadcastEvent> _broadcastController = StreamController<CoreIpcBroadcastEvent>.broadcast();
 
+  VoidCallback? onExit;
   Socket? _socket;
   int _nextReqId = 0;
 
@@ -68,11 +70,10 @@ class CoreIpcClient {
         final keyBytes = await EncryptionService.instance.getRawKeyBytes();
         await send(op: 0x13, box: "auth", key: "unlock", value: keyBytes);
       }
-
       return;
     }
 
-    // @todo: Final fallback all failed!, redirect to error page?
+    onExit?.call();
   }
 
   Future<void> dispose() async {

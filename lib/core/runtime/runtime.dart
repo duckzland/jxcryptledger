@@ -6,6 +6,7 @@ import 'package:dart_ipc/dart_ipc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/router.dart';
 import '../../features/archives/adapter.dart';
 import '../../features/cryptos/adapter.dart';
 import '../../features/rates/adapter.dart';
@@ -130,8 +131,8 @@ class CoreRuntime {
 
       final serverReady = await waitForServer();
       if (!serverReady) {
-        // @todo: Redirect to error instead?
-        throw Exception("Failed to spawn IPC server (Named Pipe: $ipcPipeName timeout)");
+        logln("Failed to spawn IPC server (Named Pipe: $ipcPipeName timeout)");
+        AppRouter.router.go('/error');
       }
     } else {
       final serverStrap = locator<CoreBootstrapServer>();
