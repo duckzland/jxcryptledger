@@ -313,36 +313,37 @@ class _AppLayoutState extends State<AppLayout> {
                 },
               ),
 
-              if (hasRates)
-                AnimatedBuilder(
-                  animation: _ratesController,
-                  builder: (context, _) {
-                    return WidgetsButton(
-                      key: const Key("refresh-rates"),
-                      icon: Icons.autorenew,
-                      padding: const EdgeInsets.all(8),
-                      iconSize: 20,
-                      minimumSize: const Size(40, 40),
-                      tooltip: "Refresh Rates",
-                      evaluator: (s) {
-                        _ratesController.isFetching ? s.progress() : s.reset();
-                      },
-                      onPressed: (s) async {
-                        s.progress();
-                        try {
-                          await _ratesController.refreshRates();
-                          widgetsNotifySuccess("Refreshed rates from exchange.");
-                        } catch (e) {
-                          if (e is NetworkingException) {
-                            widgetsNotifyError(e.userMessage);
-                          }
-                        } finally {
-                          s.reset();
-                        }
-                      },
-                    );
-                  },
-                ),
+              AnimatedBuilder(
+                animation: _ratesController,
+                builder: (context, _) {
+                  return hasRates
+                      ? WidgetsButton(
+                          key: const Key("refresh-rates"),
+                          icon: Icons.autorenew,
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 20,
+                          minimumSize: const Size(40, 40),
+                          tooltip: "Refresh Rates",
+                          evaluator: (s) {
+                            _ratesController.isFetching ? s.progress() : s.reset();
+                          },
+                          onPressed: (s) async {
+                            s.progress();
+                            try {
+                              await _ratesController.refreshRates();
+                              widgetsNotifySuccess("Refreshed rates from exchange.");
+                            } catch (e) {
+                              if (e is NetworkingException) {
+                                widgetsNotifyError(e.userMessage);
+                              }
+                            } finally {
+                              s.reset();
+                            }
+                          },
+                        )
+                      : SizedBox.shrink();
+                },
+              ),
             ],
           ),
         ],

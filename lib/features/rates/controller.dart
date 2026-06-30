@@ -2,13 +2,12 @@ import 'dart:async';
 
 import '../../core/abstracts/controller.dart';
 import '../../core/ipc/event.dart';
-import '../../core/mixins/broadcaster.dart';
 
 import 'mixins/helper.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class RatesController extends CoreBaseController<RatesModel, RatesRepository> with CoreMixinsBroadcaster, RatesMixinsHelper {
+class RatesController extends CoreBaseController<RatesModel, RatesRepository> with RatesMixinsHelper {
   RatesController(super.repo);
 
   late bool isFetching;
@@ -16,30 +15,38 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
 
   @override
   Future<void> init() async {
-    await repo.init();
-
+    super.init();
     isFetching = false;
     hasRates = !repo.isEmpty();
-
-    load();
-    emitterListen();
-    broadcasterListen();
   }
 
   @override
   void broadcasterAction(CoreIpcBroadcastEvent event) {
+    super.broadcasterAction(event);
+
+    if (event.boxName == repo.boxName) {
+      if (hasRates != !repo.isEmpty()) {
+        hasRates = !repo.isEmpty();
+        debounceNotify();
+      }
+    }
+
     if (event.op == 0x10) {
       if (event.boxName == "start") {
-        isFetching = true;
-        emitterEmit(repo.boxName);
-        hasRates = !repo.isEmpty();
+        if (!isFetching) {
+          isFetching = true;
+          hasRates = !repo.isEmpty();
+          debounceNotify();
+        }
       }
 
       if (event.boxName == "complete") {
         isFetching = false;
-        emitterEmit(repo.boxName);
         hasRates = !repo.isEmpty();
+        debounceNotify();
       }
+
+      return;
     }
   }
 

@@ -1,4 +1,5 @@
 import '../../../core/abstracts/controller.dart';
+import '../../../core/ipc/event.dart';
 import '../../../core/math.dart';
 import '../../../core/mixins/controllers/exportable.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
@@ -17,19 +18,14 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   PanelsController(super.repo, this._txRepo);
 
   @override
-  void emitterAction(String action) {
-    super.emitterAction(action);
-
-    if (action == "rates_box") {
-      onRatesUpdated();
-      load();
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    super.broadcasterAction(event);
+    if (event.op == 0x10) {
+      if (event.boxName == "complete") {
+        onRatesUpdated();
+        load();
+      }
     }
-  }
-
-  @override
-  Future<void> init() async {
-    await super.init();
-    scheduleRates();
   }
 
   @override

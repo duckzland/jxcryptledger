@@ -1,21 +1,13 @@
 import 'package:jxledger/features/watchboard/tickers/mixins/helper.dart';
 
 import '../../../core/abstracts/controller.dart';
-import '../../../core/mixins/broadcaster.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
 import 'model.dart';
 import 'repository.dart';
 
 class TickersController extends CoreBaseController<TickersModel, TickersRepository>
-    with CoreMixinsControllersIdGenerator<TickersModel, TickersRepository>, CoreMixinsBroadcaster, TickersMixinsHelper {
+    with CoreMixinsControllersIdGenerator<TickersModel, TickersRepository>, TickersMixinsHelper {
   TickersController(super.repo);
-
-  @override
-  Future<void> init() async {
-    repo.init();
-    load();
-    emitterListen();
-  }
 
   Future<void> updateByType(int type, String newVal) async {
     await repo.updateByType(type, newVal);

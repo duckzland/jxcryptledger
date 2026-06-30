@@ -1,54 +1,50 @@
 import '../../core/abstracts/controller.dart';
 import '../../core/ipc/event.dart';
-import '../../core/mixins/broadcaster.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class CryptosController extends CoreBaseController<CryptosModel, CryptosRepository> with CoreMixinsBroadcaster {
+class CryptosController extends CoreBaseController<CryptosModel, CryptosRepository> {
   CryptosController(super.repo);
 
   late bool isFetching;
-  late bool hasRates;
+  late bool hasCryptos;
 
   @override
   Future<void> init() async {
-    await repo.init();
+    super.init();
 
     isFetching = false;
-
-    load();
-    emitterListen();
-    broadcasterListen();
-  }
-
-  @override
-  void emitterAction(String action) async {
-    if (action == "cryptos_refresh_start") {
-      debounceNotify();
-    }
-
-    if (action == repo.boxName) {
-      load();
-    }
+    hasCryptos = !repo.isEmpty();
   }
 
   @override
   void broadcasterAction(CoreIpcBroadcastEvent event) {
+    super.broadcasterAction(event);
+
+    if (event.boxName == repo.boxName) {
+      if (hasCryptos != !repo.isEmpty()) {
+        hasCryptos = !repo.isEmpty();
+        debounceNotify();
+      }
+    }
+
     if (event.op == 0x11) {
       if (event.boxName == "start") {
-        isFetching = true;
-        emitterEmit("cryptos_refresh_start");
+        if (!isFetching) {
+          isFetching = true;
+          debounceNotify();
+        }
       }
 
       if (event.boxName == "complete") {
-        isFetching = false;
-        emitterEmit(repo.boxName);
+        if (isFetching) {
+          isFetching = false;
+          debounceNotify();
+        }
       }
     }
 
-    if (event.op == 0x14 && event.boxName == repo.boxName) {
-      emitterEmit(repo.boxName);
-    }
+    super.broadcasterAction(event);
   }
 
   List<CryptosModel> filter(String query) {
