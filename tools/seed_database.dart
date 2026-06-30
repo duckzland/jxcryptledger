@@ -1,33 +1,29 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:decimal/decimal.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxledger/core/abstracts/models/exportable.dart';
 import 'package:jxledger/features/archives/adapter.dart';
 import 'package:jxledger/features/archives/model.dart';
-import 'package:jxledger/features/archives/repository.dart';
 import 'package:jxledger/features/cryptos/adapter.dart';
 import 'package:jxledger/features/cryptos/model.dart';
 import 'package:jxledger/features/cryptos/parser.dart';
 import 'package:jxledger/features/rates/adapter.dart';
 import 'package:jxledger/features/rates/model.dart';
-import 'package:jxledger/features/rates/repository.dart';
 import 'package:jxledger/features/transactions/adapter.dart';
 import 'package:jxledger/features/transactions/model.dart';
-import 'package:jxledger/features/transactions/repository.dart';
 import 'package:jxledger/features/watchboard/panels/adapter.dart';
 import 'package:jxledger/features/watchboard/panels/model.dart';
-import 'package:jxledger/features/watchboard/panels/repository.dart';
 import 'package:jxledger/features/watchboard/tickers/adapter.dart';
 import 'package:jxledger/features/watchers/adapter.dart';
 import 'package:jxledger/features/watchers/model.dart';
-import 'package:jxledger/features/watchers/repository.dart';
 
 final env = DotEnv()..load();
-final txRepo = TransactionsRepository();
 final AesGcm aes = AesGcm.with256bits();
 
 final List<int> staticCmcIds = [1, 2, 52, 1831, 2010, 6636, 5426, 5805, 3890, 1975, 512, 1958, 1321, 328, 3794];
@@ -117,14 +113,8 @@ Future<Uint8List> derivePasswordKey(String password, String salt) async {
   return Uint8List.fromList(await secretKey.extractBytes());
 }
 
-Future<TransactionsModel> createChild(
-  String label,
-  TransactionsRepository repo,
-  TransactionsModel parent,
-  double srAmount,
-  int rrId,
-) async {
-  final tid = repo.generateId();
+Future<TransactionsModel> createChild(String label, Box repo, TransactionsModel parent, double srAmount, int rrId) async {
+  final tid = generateId();
   final rrAmount = srAmount * 2;
 
   if (parent.rrId == rrId) {
@@ -149,6 +139,26 @@ Future<TransactionsModel> createChild(
   await repo.add(tx);
 
   return tx;
+}
+
+String generateId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  final random = Random();
+
+  while (true) {
+    final now = DateTime.now().microsecondsSinceEpoch;
+    final timePart = now.toRadixString(36).padLeft(4, '0');
+    final timeSuffix = timePart.substring(timePart.length - 4);
+    final randomPart = String.fromCharCodes(Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+
+    return '$timeSuffix$randomPart';
+  }
+}
+
+Future<String> export<T>(Box box) async {
+  final items = box.values.toList();
+  final jsonList = items.cast<T>().map((e) => (e as CoreModelExportable).toJson()).toList();
+  return jsonEncode(jsonList);
 }
 
 Future<void> main(List<String> args) async {
@@ -238,20 +248,15 @@ Future<void> main(List<String> args) async {
 
   final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');
 
-  await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
-  final txRepo = TransactionsRepository();
+  final txRepo = await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
 
-  await Hive.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
-  final pxRepo = PanelsRepository();
+  final pxRepo = await Hive.openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
 
-  await Hive.openBox<ArchivesModel>('archives_box', encryptionCipher: cipher, crashRecovery: false);
-  final axRepo = ArchivesRepository();
+  final axRepo = await Hive.openBox<ArchivesModel>('archives_box', encryptionCipher: cipher, crashRecovery: false);
 
-  await Hive.openBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
-  final wxRepo = WatchersRepository();
+  final wxRepo = await Hive.openBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
 
-  await Hive.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
-  final rtRepo = RatesRepository();
+  final rtRepo = await Hive.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
 
   if (seedCryptos) {
     print("Seeding cryptos...");
@@ -263,7 +268,7 @@ Future<void> main(List<String> args) async {
     final List<TransactionsModel> roots = [];
 
     for (int r = 0; r < 5; r++) {
-      final rootTid = txRepo.generateId();
+      final rootTid = generateId();
       final root = TransactionsModel(
         tid: rootTid,
         pid: '0',
@@ -330,11 +335,11 @@ Future<void> main(List<String> args) async {
   if (seedWatchers) {
     print("Seeding watchers...");
 
-    final txs = txRepo.extract();
+    final txs = txRepo.values.toList();
     for (final tx in txs) {
       await wxRepo.add(
         WatchersModel(
-          wid: wxRepo.generateId(),
+          wid: generateId(),
           srId: tx.srId,
           rrId: tx.rrId,
           rates: (tx.rrAmount / tx.srAmount) * 1.5,
@@ -352,12 +357,12 @@ Future<void> main(List<String> args) async {
 
   if (seedPanels) {
     print("Seeding panels...");
-    final txs = txRepo.extract();
+    final txs = txRepo.values.toList();
     int i = 0;
     for (final tx in txs) {
       await pxRepo.add(
         PanelsModel(
-          tid: pxRepo.generateId(),
+          tid: generateId(),
           srId: tx.srId,
           srAmount: tx.srAmount,
           rrId: tx.rrId,
@@ -373,7 +378,7 @@ Future<void> main(List<String> args) async {
 
   if (seedRates) {
     print("Seeding rates from transactions");
-    final txs = txRepo.extract();
+    final txs = txRepo.values.toList();
     for (final tx in txs) {
       await rtRepo.add(
         RatesModel(
@@ -389,7 +394,7 @@ Future<void> main(List<String> args) async {
     }
 
     print("Seeding rates from panels");
-    final pxs = pxRepo.extract();
+    final pxs = pxRepo.values.toList();
     for (final tx in pxs) {
       await rtRepo.add(
         RatesModel(
@@ -405,7 +410,7 @@ Future<void> main(List<String> args) async {
     }
 
     print("Seeding rates from watchers");
-    final wxs = wxRepo.extract();
+    final wxs = wxRepo.values.toList();
     for (final tx in wxs) {
       await rtRepo.add(
         RatesModel(
@@ -425,10 +430,10 @@ Future<void> main(List<String> args) async {
     print("Seeding archives");
 
     if (seedTx) {
-      final data = await txRepo.export();
+      final data = await export<TransactionsModel>(txRepo);
       axRepo.add(
         ArchivesModel(
-          aid: axRepo.generateId(),
+          aid: generateId(),
           type: ArchivesDataType.transactions.index,
           data: data,
           timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
@@ -438,10 +443,10 @@ Future<void> main(List<String> args) async {
     }
 
     if (seedPanels) {
-      final data = await pxRepo.export();
+      final data = await export<PanelsModel>(pxRepo);
       axRepo.add(
         ArchivesModel(
-          aid: axRepo.generateId(),
+          aid: generateId(),
           type: ArchivesDataType.watchboards.index,
           data: data,
           timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
@@ -451,10 +456,10 @@ Future<void> main(List<String> args) async {
     }
 
     if (seedWatchers) {
-      final data = await wxRepo.export();
+      final data = await export<WatchersModel>(wxRepo);
       axRepo.add(
         ArchivesModel(
-          aid: axRepo.generateId(),
+          aid: generateId(),
           type: ArchivesDataType.watchers.index,
           data: data,
           timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,

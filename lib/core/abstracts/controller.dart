@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../ipc/event.dart';
 import '../mixins/broadcaster.dart';
-import '../runtime/runtime.dart';
+import '../mode.dart';
 import '../mixins/box.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
@@ -47,7 +47,7 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   }
 
   void debounceNotify() {
-    if (!CoreRuntime.instance.isServer()) {
+    if (!CoreMode.isServer) {
       _notifyTimer?.cancel();
       _notifyTimer = Timer(const Duration(milliseconds: 32), () {
         notifyListeners();

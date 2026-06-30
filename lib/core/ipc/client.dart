@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:dart_ipc/dart_ipc.dart';
 
 import '../../features/encryption/service.dart';
+import '../mode.dart';
 import '../runtime/runtime.dart';
 import '../log.dart';
 import 'protocol/buffer.dart';
@@ -27,7 +28,7 @@ class CoreIpcClient {
     if (_socket != null) return;
 
     try {
-      _socket = await connect(CoreRuntime.ipcPipeName);
+      _socket = await connect(CoreMode.ipcPipeName);
 
       _socket!.listen(
         (Uint8List chunk) => _receive(chunk),
@@ -41,7 +42,7 @@ class CoreIpcClient {
         },
         cancelOnError: true,
       );
-      logln("[IPC] Socket connected to: ${CoreRuntime.ipcPipeName}");
+      logln("[IPC] Socket connected to: ${CoreMode.ipcPipeName}");
     } catch (e) {
       logln("[IPC] connection failed: $e");
       await reconnect();
@@ -51,7 +52,7 @@ class CoreIpcClient {
   Future<void> reconnect() async {
     await destroy();
 
-    if (!CoreRuntime.instance.isServer()) {
+    if (!CoreMode.isServer) {
       await Future.delayed(const Duration(milliseconds: 500));
 
       if (CoreRuntime.instance.shouldSpawn() && !CoreRuntime.instance.isServerAvailable()) {

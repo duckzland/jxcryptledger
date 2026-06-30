@@ -6,7 +6,7 @@ import 'package:dart_ipc/dart_ipc.dart';
 
 import '../../features/watchboard/tickers/service.dart';
 import '../abstracts/models/with_id.dart';
-import '../runtime/runtime.dart';
+import '../mode.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
@@ -47,8 +47,8 @@ class CoreIpcServer {
   }
 
   Future<void> start() async {
-    final socket = await bind(CoreRuntime.ipcPipeName);
-    logln("[IPC] Server running: ${CoreRuntime.ipcPipeName}");
+    final socket = await bind(CoreMode.ipcPipeName);
+    logln("[IPC] Server running: ${CoreMode.ipcPipeName}");
 
     socket.listen((client) {
       _slaves.add(client);
