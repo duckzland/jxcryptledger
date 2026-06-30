@@ -8,6 +8,7 @@ import '../features/transactions/service.dart';
 import '../features/watchboard/panels/service.dart';
 import '../features/watchboard/tickers/service.dart';
 import '../features/watchers/service.dart';
+import 'runtime/runtime.dart';
 
 class CoreWorker {
   Timer? _timer;
@@ -69,6 +70,14 @@ class CoreWorker {
       if (!panels.isEmpty()) {
         logln("[WORKER] Refreshing tickers rates");
         await tickers.refreshRates();
+      }
+
+      final hasClient = CoreRuntime.instance.hasClient();
+      if (hasClient) {
+        logln("[WORKER] Server still has connected client");
+      } else {
+        logln("[WORKER] Server has no more connected client");
+        CoreRuntime.instance.shutdown();
       }
     });
   }

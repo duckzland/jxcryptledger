@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:dart_ipc/dart_ipc.dart';
@@ -65,10 +64,6 @@ class CoreIpcClient {
 
       await Future.delayed(const Duration(milliseconds: 100));
 
-      await register();
-
-      await Future.delayed(const Duration(milliseconds: 100));
-
       if (EncryptionService.instance.isUnlocked()) {
         final keyBytes = await EncryptionService.instance.getRawKeyBytes();
         await send(op: 0x13, box: "auth", key: "unlock", value: keyBytes);
@@ -102,14 +97,6 @@ class CoreIpcClient {
 
   Future<Uint8List> send({required int op, required String box, dynamic key, List<int>? value}) async {
     return await _send(op: op, box: box, key: key, value: value);
-  }
-
-  Future<Uint8List> register() async {
-    return await send(op: 0x08, box: "auth", key: "register", value: utf8.encode(uuid));
-  }
-
-  Future<Uint8List> unregister() async {
-    return await send(op: 0x09, box: "auth", key: "unregister", value: utf8.encode(uuid));
   }
 
   Future<dynamic> _send({required int op, required String box, dynamic key, List<int>? value}) {

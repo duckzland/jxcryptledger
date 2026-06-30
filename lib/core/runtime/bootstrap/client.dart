@@ -40,7 +40,6 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
     if (kIsWeb) return;
 
     await ipcClient.start();
-    await ipcClient.register();
 
     initialized = true;
   }
