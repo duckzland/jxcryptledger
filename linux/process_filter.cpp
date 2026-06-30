@@ -1,4 +1,4 @@
-#include "runner/my_application.h" // Gives access to your global: g_IsDevelopmentMode
+#include "runner/my_application.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,45 +13,39 @@ bool evaluate_matrix_rules(bool g_IsDevelopmentMode, bool as_server, bool hasSer
 {
     if (as_server)
     {
-        // LOGIC #2: Finding a running background IPC Server instance
         if (g_IsDevelopmentMode)
         {
-            // Dev Mode: Target server must strictly carry BOTH arguments
             return (hasServer && hasDevelopment);
         }
         else
         {
-            // Production Mode: Target server must match --server and strictly FORBID --development
             return (hasServer && !hasDevelopment);
         }
     }
     else
     {
-        // LOGIC #1: Finding other conflicting active UI Client windows
         if (g_IsDevelopmentMode)
         {
-            // Dev Mode Client Rules:
-            if (hasDevelopment && hasServer) {
-                return true; // Skip dev server from UI list
+            if (hasDevelopment && hasServer)
+            {
+                return true;
             }
-            if (!hasDevelopment) {
-                return true; // Skip foreign prod windows/servers completely
+            if (!hasDevelopment)
+            {
+                return true;
             }
-            return false; // Keep alternative companion dev clients!
+            return false;
         }
         else
         {
-            // Production Mode Client Rules:
-            // Skip the process if it's a server (hasServer) OR if it belongs to the dev environment (hasDevelopment)
-            // This leaves only plain, standard production UI windows to be registered as conflicts.
-            if (hasServer || hasDevelopment) {
-                return true; // Skip servers and dev instances from the production client conflict check
+            if (hasServer || hasDevelopment)
+            {
+                return true;
             }
-            return false; // Register as a true conflicting production UI client instance!
+            return false;
         }
     }
 }
-
 
 bool check_process(const std::string &pidStr, bool as_server = false)
 {
@@ -62,20 +56,22 @@ bool check_process(const std::string &pidStr, bool as_server = false)
         bool selfHasDevelopment = false;
         std::string selfArg;
 
-        if (selfCmdFile.is_open()) {
-            while (std::getline(selfCmdFile, selfArg, '\0')) {
-                if (selfArg.find("--server") != std::string::npos) {
+        if (selfCmdFile.is_open())
+        {
+            while (std::getline(selfCmdFile, selfArg, '\0'))
+            {
+                if (selfArg.find("--server") != std::string::npos)
+                {
                     selfHasServer = true;
                 }
-                if (selfArg.find("--development") != std::string::npos) {
+                if (selfArg.find("--development") != std::string::npos)
+                {
                     selfHasDevelopment = true;
                 }
             }
             selfCmdFile.close();
         }
 
-        // FIX: Route through the exact same logic matrix function to ensure 
-        // that local and remote processes evaluate with absolute rule parity
         return evaluate_matrix_rules(g_IsDevelopmentMode, as_server, selfHasServer, selfHasDevelopment);
     }
 

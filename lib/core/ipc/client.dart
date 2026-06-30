@@ -19,6 +19,8 @@ class CoreIpcClient {
   final StreamController<CoreIpcBroadcastEvent> _broadcastController = StreamController<CoreIpcBroadcastEvent>.broadcast();
 
   bool _isDisposing = false;
+  bool _isReconnecting = false;
+  StreamSubscription<Uint8List>? _socketSubscription;
   VoidCallback? onExit;
   Socket? _socket;
   int _nextReqId = 0;
@@ -26,58 +28,72 @@ class CoreIpcClient {
   Stream<CoreIpcBroadcastEvent> get onBroadcast => _broadcastController.stream;
 
   Future<void> start() async {
-    if (_socket != null) return;
+    if (_socket != null || _isDisposing) return;
 
     _isDisposing = false;
+    _isReconnecting = false;
 
     try {
       _socket = await connect(CoreMode.ipcPipeName);
 
-      _socket!.listen(
+      _socketSubscription = _socket!.listen(
         (Uint8List chunk) => _receive(chunk),
         onError: (err) async {
           logln("[IPC] socket error: $err");
-          await reconnect();
+          if (!_isDisposing) {
+            await reconnect();
+          }
         },
         onDone: () async {
           logln("[IPC] socket disconnected cleanly.");
-          await reconnect();
+          if (!_isDisposing) {
+            await reconnect();
+          }
         },
         cancelOnError: true,
       );
       logln("[IPC] Socket connected to: ${CoreMode.ipcPipeName}");
     } catch (e) {
       logln("[IPC] connection failed: $e");
-      await reconnect();
+      if (!_isDisposing) {
+        await reconnect();
+      }
     }
   }
 
   Future<void> reconnect() async {
-    await destroy();
+    if (_isDisposing || _isReconnecting) return;
+    _isReconnecting = true;
 
-    if (!CoreMode.isServer) {
-      await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await destroy();
 
-      if (CoreRuntime.instance.shouldSpawn() && !CoreRuntime.instance.isServerAvailable()) {
-        await CoreRuntime.instance.spawnServer();
+      if (!CoreMode.isServer) {
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (CoreRuntime.instance.shouldSpawn() && !CoreRuntime.instance.isServerAvailable()) {
+          await CoreRuntime.instance.spawnServer();
+        }
       }
-    }
 
-    await CoreRuntime.instance.waitForServer();
+      await CoreRuntime.instance.waitForServer();
 
-    if (CoreRuntime.instance.isServerAvailable()) {
-      await start();
+      if (CoreRuntime.instance.isServerAvailable()) {
+        await start();
 
-      await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 100));
 
-      if (EncryptionService.instance.isUnlocked()) {
-        final keyBytes = await EncryptionService.instance.getRawKeyBytes();
-        await send(op: 0x13, box: "auth", key: "unlock", value: keyBytes);
+        if (EncryptionService.instance.isUnlocked()) {
+          final keyBytes = await EncryptionService.instance.getRawKeyBytes();
+          await send(op: 0x13, box: "auth", key: "unlock", value: keyBytes);
+        }
+        return;
       }
-      return;
-    }
 
-    onExit?.call();
+      onExit?.call();
+    } finally {
+      _isReconnecting = false;
+    }
   }
 
   Future<void> dispose() async {
@@ -88,6 +104,11 @@ class CoreIpcClient {
 
   Future<void> destroy() async {
     try {
+      await _socketSubscription?.cancel();
+    } catch (_) {}
+    _socketSubscription = null;
+
+    try {
       await _socket?.close();
     } catch (_) {}
     _socket = null;
@@ -96,7 +117,9 @@ class CoreIpcClient {
     _nextReqId = 0;
 
     for (final completer in _pending.values) {
-      if (!completer.isCompleted) completer.complete(Uint8List(0));
+      if (!completer.isCompleted) {
+        completer.complete(Uint8List(0));
+      }
     }
     _pending.clear();
   }
@@ -107,9 +130,13 @@ class CoreIpcClient {
 
   Future<dynamic> _send({required int op, required String box, dynamic key, List<int>? value}) {
     final completer = Completer<dynamic>();
+    final reqId = _nextReqId++;
+    _pending[reqId] = completer;
+
     try {
-      final reqId = _nextReqId++;
-      _pending[reqId] = completer;
+      if (_socket == null) {
+        throw StateError('[IPC] socket is not connected');
+      }
 
       final packet = CoreIpcPacket(
         reqId: reqId,
@@ -118,9 +145,13 @@ class CoreIpcClient {
         key: key?.toString() ?? "",
         valueBytes: value != null ? Uint8List.fromList(value) : Uint8List(0),
       );
-      _socket?.add(packet.toBytes());
+      _socket!.add(packet.toBytes());
     } catch (e) {
       logln("[IPC] Send failed: $e");
+      _pending.remove(reqId);
+      if (!completer.isCompleted) {
+        completer.completeError(e);
+      }
     }
     return completer.future;
   }
