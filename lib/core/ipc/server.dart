@@ -61,6 +61,9 @@ class CoreIpcServer {
         }
 
         _slaves.remove(client);
+        try {
+          client.destroy();
+        } catch (_) {}
       }
 
       client.listen(
