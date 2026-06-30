@@ -1,9 +1,10 @@
+import '../ipc/event.dart';
 import '../mixins/box.dart';
 import '../mixins/broadcaster.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
-abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>> with CoreMixinsBox<T>, CoreMixinsBroadcaster{
+abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>> with CoreMixinsBox<T>, CoreMixinsBroadcaster {
   @override
   final R repo;
 
@@ -11,6 +12,16 @@ abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepo
 
   Future<void> init() async {
     repo.init();
+    broadcasterListen();
+  }
+
+  @override
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    if (event.boxName != repo.boxName) {
+      return;
+    }
+
+    repo.receive(event);
   }
 
   T? findNew(List<T> oldItems) {
