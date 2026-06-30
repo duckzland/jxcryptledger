@@ -1,8 +1,9 @@
 import '../mixins/box.dart';
+import '../mixins/broadcaster.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
-abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>> with CoreMixinsBox<T> {
+abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>> with CoreMixinsBox<T>, CoreMixinsBroadcaster{
   @override
   final R repo;
 

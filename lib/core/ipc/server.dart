@@ -295,6 +295,40 @@ class CoreIpcServer {
             await service.refreshRates();
             break;
 
+          case 0x17: // replace
+            final box = CoreIpcRegistry.getBox(boxName);
+            final adapter = CoreIpcRegistry.getAdapter(boxName);
+            final batchReader = CoreIpcReader(valueBytes);
+            final int totalItems = batchReader.readInt();
+
+            await box.clear();
+
+            for (int i = 0; i < totalItems; i++) {
+              dynamic nativeHiveKey;
+              dynamic finalValue;
+
+              if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
+                final dynamic decoded = adapter.read(batchReader);
+                if (decoded is MapEntry) {
+                  nativeHiveKey = decoded.key;
+                  finalValue = decoded.value;
+                } else if (decoded is Map && decoded.isNotEmpty) {
+                  nativeHiveKey = decoded.keys.first;
+                  finalValue = decoded.values.first;
+                } else {
+                  finalValue = decoded;
+                }
+              } else {
+                finalValue = adapter.read(batchReader);
+                nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
+              }
+
+              await box.put(nativeHiveKey, finalValue);
+            }
+
+            broadcast(op, boxName, "replace", valueBytes, exclude: client);
+            break;
+
           default:
             break;
         }

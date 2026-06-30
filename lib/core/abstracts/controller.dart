@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../ipc/event.dart';
+import '../mixins/broadcaster.dart';
 import '../runtime/runtime.dart';
-import '../mixins/emitter.dart';
 import '../mixins/box.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
 abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseRepository<T>> extends ChangeNotifier
-    with CoreMixinsBox<T>, CoreMixinsEmitter {
+    with CoreMixinsBox<T>, CoreMixinsBroadcaster {
   Timer? _notifyTimer;
 
   List<T> listItems = [];
@@ -22,14 +23,17 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   Future<void> init() async {
     await repo.init();
     load();
-    emitterListen();
+    broadcasterListen();
   }
 
   @override
-  void emitterAction(String action) {
-    if (action == repo.boxName) {
-      load();
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    if (event.boxName != repo.boxName) {
+      return;
     }
+
+    repo.receive(event);
+    load();
   }
 
   void start() {
@@ -64,7 +68,7 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
 
   @override
   void dispose() {
-    emitterDispose();
+    broadcasterDispose();
     _notifyTimer?.cancel();
     super.dispose();
   }

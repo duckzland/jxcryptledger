@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import '../../core/abstracts/controller.dart';
-import '../../core/mixins/broadcaster.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/mixins/controllers/rateable.dart';
@@ -12,7 +11,6 @@ import 'repository.dart';
 
 class WatchersController extends CoreBaseController<WatchersModel, WatchersRepository>
     with
-        CoreMixinsBroadcaster,
         CoreMixinsControllersIdGenerator<WatchersModel, WatchersRepository>,
         CoreMixinsControllersExportable<WatchersModel, WatchersRepository>,
         CoreMixinsControllersRateable<WatchersModel, WatchersRepository> {

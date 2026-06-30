@@ -1,4 +1,4 @@
-import '../../../features/rates/service.dart';
+import '../../../features/rates/controller.dart';
 import '../../abstracts/controller.dart';
 import '../../abstracts/models/with_id.dart';
 import '../../abstracts/models/rateable.dart';
@@ -6,12 +6,12 @@ import '../../abstracts/repository.dart';
 import '../../runtime/locator.dart';
 
 mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBaseRepository<T>> on CoreBaseController<T, R> {
-  final RatesService rateableService = locator<RatesService>();
+  final RatesController rateableController = locator<RatesController>();
 
   @override
   Future<void> add(T tx) async {
     final rx = tx as CoreModelRateable;
-    rateableService.addQueue(rx.srId, rx.rrId);
+    rateableController.addQueue(rx.srId, rx.rrId);
     await repo.add(tx);
     load();
   }
@@ -19,7 +19,7 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
   @override
   Future<void> update(T tx) async {
     final rx = tx as CoreModelRateable;
-    rateableService.addQueue(rx.srId, rx.rrId);
+    rateableController.addQueue(rx.srId, rx.rrId);
     await repo.update(tx);
     load();
   }
@@ -28,16 +28,16 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
     load();
     for (final tx in items) {
       final rx = tx as CoreModelRateable;
-      rateableService.addQueue(rx.srId, rx.rrId);
+      rateableController.addQueue(rx.srId, rx.rrId);
     }
   }
 
   Future<void> onRatesUpdated() async {
     for (final tx in items) {
       final rx = tx as CoreModelRateable;
-      final current = rateableService.getStoredRate(rx.srId, rx.rrId);
+      final current = rateableController.getStoredRate(rx.srId, rx.rrId);
       if (current == -9999) {
-        rateableService.addQueue(rx.srId, rx.rrId);
+        rateableController.addQueue(rx.srId, rx.rrId);
         continue;
       }
 
@@ -48,7 +48,7 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
   Future<void> processNewRate(T tx, double newRate) async {}
 
   Future<void> refreshRates() async {
-    await rateableService.refreshRates();
+    await rateableController.refreshRates();
     load();
   }
 

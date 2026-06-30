@@ -4,16 +4,13 @@ import 'package:http/http.dart' as http;
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/service.dart';
 import '../../../core/log.dart';
-import '../../../core/mixins/broadcaster.dart';
-import '../../../core/mixins/emitter.dart';
 import '../../settings/keys.dart';
 import '../../settings/repository.dart';
 import 'mixins/helper.dart';
 import 'model.dart';
 import 'repository.dart';
 
-class TickersService extends CoreBaseService<TickersModel, TickersRepository>
-    with CoreMixinsEmitter, CoreMixinsBroadcaster, TickersMixinsHelper {
+class TickersService extends CoreBaseService<TickersModel, TickersRepository> with TickersMixinsHelper {
   final SettingsRepository settingsRepo;
 
   TickersService(super.repo, this.settingsRepo);

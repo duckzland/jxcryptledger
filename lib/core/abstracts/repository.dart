@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../ipc/box/standard.dart';
+import '../ipc/event.dart';
 import 'box.dart';
 import 'models/with_id.dart';
 
@@ -67,12 +68,21 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
     onAction();
   }
 
+  Future<void> replace(List<T> values) async {
+    await box.replace(values);
+    onAction();
+  }
+
   List<T> extract() {
     return box.values.toList();
   }
 
   bool isEmpty() {
     return box.isEmpty;
+  }
+
+  void receive(CoreIpcBroadcastEvent event) {
+    box.receive(event);
   }
 
   void onAction() {}

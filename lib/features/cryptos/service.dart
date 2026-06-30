@@ -5,8 +5,6 @@ import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
-import '../../core/mixins/broadcaster.dart';
-import '../../core/mixins/emitter.dart';
 import '../settings/repository.dart';
 import '../settings/keys.dart';
 import '../../core/log.dart';
@@ -14,7 +12,7 @@ import 'model.dart';
 import 'parser.dart';
 import 'repository.dart';
 
-class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> with CoreMixinsEmitter, CoreMixinsBroadcaster {
+class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
   final SettingsRepository settingsRepo;
 
   bool _isFetching = false;
@@ -71,12 +69,11 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> wi
         );
       }
 
-      await repo.clear();
       final List<CryptosModel> models = parsed
           .map((m) => CryptosModel(id: m["id"], name: m["name"], symbol: m["symbol"], status: m["status"], active: m["active"]))
           .toList();
 
-      await repo.addAll(models);
+      await repo.replace(models);
 
       await repo.flush();
 

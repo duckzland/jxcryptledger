@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
 import '../../core/log.dart';
-import '../../core/mixins/broadcaster.dart';
 import '../settings/keys.dart';
 import '../settings/repository.dart';
 import 'mixins/helper.dart';
@@ -14,7 +13,7 @@ import 'model.dart';
 import 'parser.dart';
 import 'repository.dart';
 
-class RatesService extends CoreBaseService<RatesModel, RatesRepository> with CoreMixinsBroadcaster, RatesMixinsHelper {
+class RatesService extends CoreBaseService<RatesModel, RatesRepository> with RatesMixinsHelper {
   final SettingsRepository settingsRepo;
 
   RatesService(super.repo, this.settingsRepo);
