@@ -73,14 +73,6 @@ class CoreRuntime {
     args = modeArgs;
   }
 
-  bool isServer() {
-    return args.contains("--server");
-  }
-
-  bool isMain() {
-    return serverPid != 0;
-  }
-
   bool isServerAvailable() {
     return CoreProcessDetector.isServerInstanceRunning();
   }
@@ -91,15 +83,12 @@ class CoreRuntime {
     // Not supporting web!
     if (kIsWeb) return;
 
-    CoreMode.isServer = isServer();
-    CoreMode.ipcPipeName = ipcPipeName;
-    CoreMode.isMain = isMain();
-
     states = locator<StateService>();
     lifecycleListener = AppLifecycleListener(
       onExitRequested: () async {
         try {
           await shutdown();
+          await Future.delayed(const Duration(milliseconds: 50));
           return AppExitResponse.exit;
         } catch (e) {
           logln("Failed to clean exit: $e");
@@ -129,7 +118,11 @@ class CoreRuntime {
     CoreIpcRegistry.registerAdapter('archives_box', ArchivesAdapter());
     CoreIpcRegistry.registerAdapter('settings_box', SettingsAdapter());
 
-    if (!isServer()) {
+    CoreMode.isServer = args.contains("--server");
+    CoreMode.ipcPipeName = ipcPipeName;
+    CoreMode.isMain = serverPid != 0;
+
+    if (!CoreMode.isServer) {
       if (!isServerAvailable() && shouldSpawn()) {
         await spawnServer();
       }
@@ -232,7 +225,7 @@ class CoreRuntime {
   }
 
   Future<void> shutdown() async {
-    if (!isServer()) {
+    if (!CoreMode.isServer) {
       // @todo: figure out on how to save multiple app state!
       if (CoreMode.isMain) {
         await states.save();
@@ -257,19 +250,6 @@ class CoreRuntime {
       locator<CoreWorker>().stop();
 
       exit(0);
-    }
-  }
-
-  void hotReloadCleanup() {
-    try {
-      if (locator.isRegistered<CoreIpcClient>()) {
-        locator<CoreIpcClient>().destroy();
-      }
-      if (isServer() && locator.isRegistered<CoreBootstrapServer>()) {
-        locator<CoreBootstrapServer>().server.dispose();
-      }
-    } catch (e) {
-      logln("Error cleaning sockets during reload: $e");
     }
   }
 }

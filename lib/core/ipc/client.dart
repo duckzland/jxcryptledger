@@ -18,6 +18,7 @@ class CoreIpcClient {
   final CoreIpcBuffer _incomingBuffer = CoreIpcBuffer();
   final StreamController<CoreIpcBroadcastEvent> _broadcastController = StreamController<CoreIpcBroadcastEvent>.broadcast();
 
+  bool _isDisposing = false;
   VoidCallback? onExit;
   Socket? _socket;
   int _nextReqId = 0;
@@ -26,6 +27,8 @@ class CoreIpcClient {
 
   Future<void> start() async {
     if (_socket != null) return;
+
+    _isDisposing = false;
 
     try {
       _socket = await connect(CoreMode.ipcPipeName);
@@ -78,6 +81,7 @@ class CoreIpcClient {
   }
 
   Future<void> dispose() async {
+    _isDisposing = true;
     await destroy();
     await _broadcastController.close();
   }
@@ -122,6 +126,7 @@ class CoreIpcClient {
   }
 
   void _receive(Uint8List chunk) {
+    if (_isDisposing) return;
     CoreIpcPacket? packet;
     _incomingBuffer.add(chunk);
 
