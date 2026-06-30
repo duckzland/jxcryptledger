@@ -3,12 +3,14 @@ import 'package:go_router/go_router.dart';
 
 import '../app/layout.dart';
 import '../features/archives/page.dart';
+import '../features/system/error/controller.dart';
+import '../features/system/error/page.dart';
 import '../features/settings/page.dart';
 import '../features/watchboard/page.dart';
 import '../features/tools/page.dart';
 import '../features/transactions/page.dart';
-import '../features/unlock/controller.dart';
-import '../features/unlock/page.dart';
+import '../features/system/unlock/controller.dart';
+import '../features/system/unlock/page.dart';
 import '../features/watchers/page.dart';
 import 'page.dart';
 
@@ -24,14 +26,29 @@ class AppRouter {
       GoRoute(
         path: "/unlock",
         builder: (context, state) {
-          final c = UnlockController();
+          final c = SystemUnlockController();
           return FutureBuilder(
             future: c.init(),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
                 return const Scaffold(body: Center(child: CircularProgressIndicator()));
               }
-              return UnlockPage(controller: c);
+              return SystemUnlockPage(controller: c);
+            },
+          );
+        },
+      ),
+      GoRoute(
+        path: "/error",
+        builder: (context, state) {
+          final c = SystemErrorController();
+          return FutureBuilder(
+            future: c.init(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              return SystemErrorPage(controller: c);
             },
           );
         },

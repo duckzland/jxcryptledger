@@ -10,23 +10,15 @@ const bool isProd = bool.fromEnvironment('dart.vm.product');
 void logln(String message) {
   if (isProd) return;
 
-  if (CoreRuntime.instance.isServer()) {
-    logpn(message);
-    return;
-  }
-
   String prefix = CoreRuntime.instance.isServer() ? "[SRV]" : "[CLT]";
   final ts = _fmt.format(DateTime.now());
-  stdout.writeln('[JX]$prefix $ts - $message');
-}
 
-void logpn(String message) {
-  if (isProd) return;
-  try {
-    final file = File('server_log.txt');
-    String prefix = CoreRuntime.instance.isServer() ? "[SRV]" : "[CLT]";
-    final ts = _fmt.format(DateTime.now());
-
-    file.writeAsStringSync('[JX]$prefix $ts - $message\n', mode: FileMode.append, flush: true);
-  } catch (e) {}
+  if (CoreRuntime.instance.isServer()) {
+    try {
+      final file = File('server_log.txt');
+      file.writeAsStringSync('[JX]$prefix $ts - $message\n', mode: FileMode.append, flush: true);
+    } catch (e) {}
+  } else {
+    stdout.writeln('[JX]$prefix $ts - $message');
+  }
 }

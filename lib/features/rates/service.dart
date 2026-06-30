@@ -267,8 +267,8 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
     final resp = await http.get(uri, headers: headers);
 
-    logln('[RATES] Fetching rates : ${sourceId.toString()} ${validTargets.join(',')}');
-    // logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
+    // logln('[RATES] Fetching rates : ${sourceId.toString()} ${validTargets.join(',')}');
+    logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
 
     if (resp.statusCode != 200) {
       throw NetworkingException(

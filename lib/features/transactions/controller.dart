@@ -16,6 +16,12 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
         CoreMixinsControllersRateable<TransactionsModel, TransactionsRepository> {
   TransactionsController(super.repo);
 
+  @override
+  Future<void> init() async {
+    await super.init();
+    scheduleRates();
+  }
+
   Future<void> closeLeaf(TransactionsModel tx) async {
     await repo.close(tx);
     load();
