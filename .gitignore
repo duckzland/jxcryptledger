@@ -49,3 +49,4 @@ app.*.map.json
 test/database/
 
 com.jxledger*
+server_log.txt

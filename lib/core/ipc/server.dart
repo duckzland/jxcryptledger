@@ -22,9 +22,7 @@ import 'registry.dart';
 class CoreIpcServer {
   final String pipeId;
   final List<Socket> _slaves = [];
-  final Set<String> _activeSessions = {};
   ServerSocket? socket;
-  bool _isShuttingDown = false;
 
   CoreIpcServer(this.pipeId);
 
@@ -33,10 +31,6 @@ class CoreIpcServer {
   Future<void> Function()? shutdown;
 
   Future<void> dispose() async {
-    if (_isShuttingDown) return;
-    _isShuttingDown = true;
-    _activeSessions.clear();
-
     for (var slave in List.from(_slaves)) {
       try {
         slave.destroy();
@@ -57,8 +51,6 @@ class CoreIpcServer {
     logln("[IPC] Server running: ${CoreRuntime.ipcPipeName}");
 
     socket.listen((client) {
-      String? socketClientId;
-
       _slaves.add(client);
 
       final CoreIpcBuffer incomingBuffer = CoreIpcBuffer();
@@ -69,22 +61,11 @@ class CoreIpcServer {
         }
 
         _slaves.remove(client);
-        if (_isShuttingDown) return;
-        if (socketClientId != null) {
-          _activeSessions.remove(socketClientId!);
-          if (_activeSessions.length <= 1) {
-            // It is better to kill and respawn than having a zombie that cant be killed.
-            await shutdown?.call();
-          }
-        }
       }
 
       client.listen(
         (frame) async {
-          final registeredId = await processFrames(frame, incomingBuffer, client);
-          if (registeredId != null) {
-            socketClientId = registeredId;
-          }
+          await processFrames(frame, incomingBuffer, client);
         },
         onDone: disconnect,
         onError: disconnect,
@@ -93,9 +74,8 @@ class CoreIpcServer {
     });
   }
 
-  Future<String?> processFrames(Uint8List frame, CoreIpcBuffer incomingBuffer, dynamic client) async {
+  Future<void> processFrames(Uint8List frame, CoreIpcBuffer incomingBuffer, dynamic client) async {
     incomingBuffer.add(frame);
-    String? registeredClientId;
 
     CoreIpcPacket? packet;
     while ((packet = incomingBuffer.parseNextAction()) != null) {
@@ -196,29 +176,6 @@ class CoreIpcServer {
             } catch (e) {
               logln("Failed to unlock: $e");
               result = false;
-            }
-            break;
-
-          case 0x08: // register
-            final String clientId = utf8.decode(valueBytes);
-            registeredClientId = clientId;
-
-            _activeSessions.add(clientId);
-            result = true;
-            break;
-
-          case 0x09: // unregister
-            final String clientId = utf8.decode(valueBytes);
-            _activeSessions.remove(clientId);
-            result = true;
-
-            if (_activeSessions.length <= 1) {
-              response(client, activeReqId, result);
-
-              Future.delayed(const Duration(milliseconds: 50), () async {
-                await shutdown?.call();
-              });
-              break;
             }
             break;
 
@@ -339,8 +296,6 @@ class CoreIpcServer {
         error(client, activeReqId);
       }
     }
-
-    return registeredClientId;
   }
 
   void response(Socket client, int reqId, dynamic result) {

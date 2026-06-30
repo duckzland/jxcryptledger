@@ -17,11 +17,12 @@ import '../../features/watchboard/tickers/adapter.dart';
 import '../../features/watchers/adapter.dart';
 import '../ipc/client.dart';
 import '../ipc/registry.dart';
-import 'locator.dart';
 import '../log.dart';
+import '../worker.dart';
 import 'bootstrap/client.dart';
 import 'bootstrap/server.dart';
 import 'process.dart';
+import 'locator.dart';
 
 class CoreRuntime {
   CoreRuntime._();
@@ -190,14 +191,16 @@ class CoreRuntime {
     try {
       cleanSocketFile();
 
+      ProcessStartMode detachmode = ProcessStartMode.detachedWithStdio;
       final List<String> serverArgs = ['--server'];
       if (kDebugMode || kProfileMode) {
         serverArgs.add('--development');
+        detachmode = ProcessStartMode.detached;
       }
 
       logln("Launching server with flags: ${serverArgs.join(' ')}");
 
-      final proc = await Process.start(Platform.resolvedExecutable, serverArgs, mode: ProcessStartMode.inheritStdio);
+      final proc = await Process.start(Platform.resolvedExecutable, serverArgs, mode: detachmode);
 
       serverPid = proc.pid;
       logln("Spawned detached IPC server process (pid=${proc.pid})");
@@ -230,7 +233,6 @@ class CoreRuntime {
       }
 
       final clt = locator<CoreIpcClient>();
-      await clt.unregister();
       await clt.dispose();
     } else {
       final clt = locator<CoreIpcClient>();
@@ -245,6 +247,8 @@ class CoreRuntime {
       await stderr.close();
 
       lifecycleListener.dispose();
+
+      locator<CoreWorker>().stop();
 
       exit(0);
     }
