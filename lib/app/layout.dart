@@ -272,7 +272,6 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   Widget _buildActions() {
-    final hasRates = _ratesController.hasRates;
     return Padding(
       padding: EdgeInsets.only(right: 16.0),
       child: Row(
@@ -316,7 +315,7 @@ class _AppLayoutState extends State<AppLayout> {
               AnimatedBuilder(
                 animation: _ratesController,
                 builder: (context, _) {
-                  return hasRates
+                  return _ratesController.hasRates
                       ? WidgetsButton(
                           key: const Key("refresh-rates"),
                           icon: Icons.autorenew,
