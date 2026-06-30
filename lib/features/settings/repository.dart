@@ -1,16 +1,31 @@
 import '../../core/ipc/box/dynamic.dart';
+import '../../core/ipc/event.dart';
 import '../encryption/service.dart';
 import 'keys.dart';
 
 class SettingsRepository {
-  static const String boxName = 'settings_box';
-  final EncryptionService _encryption = EncryptionService.instance;
-  final CoreIpcBoxDynamic box;
+  String get boxName => 'settings_box';
+  bool initialized = false;
 
-  SettingsRepository() : box = CoreIpcBoxDynamic(boxName);
+  final EncryptionService _encryption = EncryptionService.instance;
+
+  CoreIpcBoxDynamic? _box;
+  CoreIpcBoxDynamic get box {
+    return _box ??= CoreIpcBoxDynamic(boxName);
+  }
+
+  SettingsRepository();
 
   Future<void> init() async {
+    if (initialized) {
+      return;
+    }
     await box.init();
+    initialized = true;
+  }
+
+  void receive(CoreIpcBroadcastEvent event) {
+    box.receive(event);
   }
 
   Future<void> save(SettingKey key, dynamic value) async {

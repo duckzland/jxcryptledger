@@ -122,7 +122,6 @@ abstract class CoreBaseBox<V> {
     } else if (event.op == 0x14) {
       unpackBytes(event.valueBytes);
     } else if (event.op == 0x17) {
-      items.clear();
       unpackBytes(event.valueBytes);
     }
   }
