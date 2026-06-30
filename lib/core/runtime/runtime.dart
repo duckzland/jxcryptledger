@@ -19,6 +19,7 @@ import '../../features/watchers/adapter.dart';
 import '../ipc/client.dart';
 import '../ipc/registry.dart';
 import '../log.dart';
+import '../mode.dart';
 import '../worker.dart';
 import 'bootstrap/client.dart';
 import 'bootstrap/server.dart';
@@ -89,6 +90,10 @@ class CoreRuntime {
 
     // Not supporting web!
     if (kIsWeb) return;
+
+    CoreMode.isServer = isServer();
+    CoreMode.ipcPipeName = ipcPipeName;
+    CoreMode.isMain = isMain();
 
     states = locator<StateService>();
     lifecycleListener = AppLifecycleListener(
@@ -214,7 +219,7 @@ class CoreRuntime {
     for (var retries = 0; retries < 30; retries++) {
       try {
         if (isServerAvailable()) {
-          final socket = await connect(CoreRuntime.ipcPipeName);
+          final socket = await connect(CoreMode.ipcPipeName);
           socket.destroy();
           return true;
         }
@@ -229,7 +234,7 @@ class CoreRuntime {
   Future<void> shutdown() async {
     if (!isServer()) {
       // @todo: figure out on how to save multiple app state!
-      if (CoreRuntime.instance.isMain()) {
+      if (CoreMode.isMain) {
         await states.save();
       }
 

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../runtime/runtime.dart';
+import '../mode.dart';
 import '../ipc/client.dart';
 import '../ipc/event.dart';
 import '../ipc/server.dart';
@@ -14,7 +14,7 @@ mixin CoreMixinsBroadcaster {
   CoreIpcClient get ipcClient => locator<CoreIpcClient>();
   CoreIpcServer get ipcServer => locator<CoreIpcServer>();
 
-  bool isBroadcastable = CoreRuntime.instance.isServer();
+  bool isBroadcastable = CoreMode.isServer;
 
   void broadcasterAction(CoreIpcBroadcastEvent event) {}
 
