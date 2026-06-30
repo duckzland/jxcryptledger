@@ -15,6 +15,12 @@ class SettingsController extends ChangeNotifier with CoreMixinsBroadcaster {
   }
 
   @override
+  void dispose() {
+    broadcasterDispose();
+    super.dispose();
+  }
+
+  @override
   void broadcasterAction(CoreIpcBroadcastEvent event) {
     if (event.boxName != repo.boxName) {
       return;

@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../app/constants.dart';
-import '../runtime.dart';
-import '../../worker.dart';
 import '../../../features/archives/service.dart';
 import '../../../features/cryptos/service.dart';
 import '../../../features/notification/service.dart';
@@ -13,11 +11,13 @@ import '../../../features/transactions/service.dart';
 import '../../../features/watchboard/panels/service.dart';
 import '../../../features/watchboard/tickers/service.dart';
 import '../../../features/watchers/service.dart';
-import '../locator.dart';
-import '../../log.dart';
 import '../../ipc/database/database.dart';
 import '../../ipc/database/migration.dart';
 import '../../ipc/server.dart';
+import '../../log.dart';
+import '../../worker.dart';
+import '../runtime.dart';
+import '../locator.dart';
 
 class CoreBootstrapServer {
   bool initialized = false;

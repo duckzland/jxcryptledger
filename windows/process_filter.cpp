@@ -13,6 +13,20 @@
 
 typedef long(__stdcall *pfnNtQueryInformationProcess)(void *, unsigned long, void *, unsigned long, unsigned long *);
 
+static pfnNtQueryInformationProcess g_NtQueryInformationProcess = nullptr;
+
+void initialize_ntdll_functions()
+{
+    if (g_NtQueryInformationProcess == nullptr)
+    {
+        HMODULE hModule = GetModuleHandleA("ntdll.dll");
+        if (hModule)
+        {
+            g_NtQueryInformationProcess = (pfnNtQueryInformationProcess)GetProcAddress(hModule, "NtQueryInformationProcess");
+        }
+    }
+}
+
 struct WTS_PROCESS_INFOW
 {
     unsigned long SessionId;
@@ -46,7 +60,6 @@ extern "C"
     __declspec(dllimport) int __stdcall ReadProcessMemory(void *hProcess, const void *lpBaseAddress, void *lpBuffer, unsigned long long nSize, unsigned long long *lpNumberOfBytesRead);
 }
 
-// FIX: Renamed first parameter to 'is_dev_mode' to resolve global variable shadowing name conflicts (C4459)
 bool evaluate_matrix_rules(bool is_dev_mode, bool as_server, bool hasServer, bool hasDevelopment)
 {
     if (as_server)
@@ -96,17 +109,10 @@ bool check_process(unsigned long pid, bool as_server = false)
         bool selfHasServer = (wcsstr(myCmd, L"--server") != NULL);
         bool selfHasDevelopment = (wcsstr(myCmd, L"--development") != NULL);
 
-        // Uses your preferred matrix evaluation bypass routing completely
         return evaluate_matrix_rules(g_IsDevelopmentMode, as_server, selfHasServer, selfHasDevelopment);
     }
 
-    HMODULE hModule = GetModuleHandleA("ntdll.dll");
-    if (!hModule)
-        return false;
-
-    pfnNtQueryInformationProcess NtQueryInformationProcess =
-        (pfnNtQueryInformationProcess)GetProcAddress(hModule, "NtQueryInformationProcess");
-    if (!NtQueryInformationProcess)
+    if (!g_NtQueryInformationProcess)
         return false;
 
     void *hProcess = OpenProcess(0x1000 /* PROCESS_QUERY_LIMITED_INFORMATION */ | 0x0010 /* PROCESS_VM_READ */, 0, pid);
@@ -121,7 +127,7 @@ bool check_process(unsigned long pid, bool as_server = false)
     PROCESS_BASIC_INFORMATION_MIN pbi;
     unsigned long retLen = 0;
 
-    if (NtQueryInformationProcess(hProcess, 0, &pbi, sizeof(pbi), &retLen) == 0)
+    if (g_NtQueryInformationProcess(hProcess, 0, &pbi, sizeof(pbi), &retLen) == 0)
     {
         unsigned long long pebAddress = (unsigned long long)pbi.PebBaseAddress;
         unsigned long long processParametersAddress = 0;
@@ -138,10 +144,16 @@ bool check_process(unsigned long pid, bool as_server = false)
                 if (charactersToRead > 0)
                 {
                     wchar_t *cmdLineBuffer = new wchar_t[charactersToRead + 1];
+                    memset(cmdLineBuffer, 0, (charactersToRead + 1) * sizeof(wchar_t));
+
                     if (ReadProcessMemory(hProcess, cmdLine.Buffer,
                                           cmdLineBuffer, cmdLine.Length, &bytesRead))
                     {
                         size_t charactersRead = bytesRead / sizeof(wchar_t);
+                        if (charactersRead > charactersToRead)
+                        {
+                            charactersRead = charactersToRead;
+                        }
                         cmdLineBuffer[charactersRead] = L'\0';
 
                         bool hasServer = (wcsstr(cmdLineBuffer, L"--server") != NULL);
@@ -167,6 +179,8 @@ extern "C"
 {
     __declspec(dllexport) int get_active_process_pids(int *outPids, int maxCount)
     {
+        initialize_ntdll_functions();
+
         WTS_PROCESS_INFOW *pProcesses = NULL;
         unsigned long processCount = 0;
         int foundCount = 0;
@@ -201,6 +215,8 @@ extern "C"
 
     __declspec(dllexport) int is_server_instance_running()
     {
+        initialize_ntdll_functions();
+
         WTS_PROCESS_INFOW *pProcesses = NULL;
         unsigned long processCount = 0;
         int serverFound = 0;
