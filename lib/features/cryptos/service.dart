@@ -41,8 +41,8 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
     broadcasterEmit(CoreIpcAction.refreshCryptos, 'start', '', Uint8List(0));
 
     try {
-      final endpoint = settingsRepo.get<String>(SettingKey.dataEndpoint) ?? SettingKey.dataEndpoint.defaultValue;
-      final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
+      final endpoint = settingsRepo.getByKey<String>(SettingKey.dataEndpoint) ?? SettingKey.dataEndpoint.defaultValue;
+      final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
 
       final headers = <String, String>{};
       if (authKey != null && authKey.isNotEmpty) {

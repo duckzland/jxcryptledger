@@ -6,6 +6,7 @@ import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/panel.dart';
 import '../../app/exceptions.dart';
 import '../../mixins/rateable.dart';
+import '../settings/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';
@@ -27,6 +28,7 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
   final TransactionsController _txController = locator<TransactionsController>();
   final PanelsController _pxController = locator<PanelsController>();
   final WatchersController _wxController = locator<WatchersController>();
+  final SettingsController _sxController = locator<SettingsController>();
 
   String? _type;
   String? _notes;
@@ -76,6 +78,7 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
               if (_txController.items.isNotEmpty) const DropdownMenuItem(value: "transactions", child: Text("Transactions Data")),
               if (_pxController.items.isNotEmpty) const DropdownMenuItem(value: "watchboards", child: Text("Watchboards Data")),
               if (_wxController.items.isNotEmpty) const DropdownMenuItem(value: "watchers", child: Text("Rate Watchers Data")),
+              if (_sxController.items.isNotEmpty) const DropdownMenuItem(value: "settings", child: Text("Settings Data")),
             ],
             onChanged: (String? newValue) {
               setState(() {
@@ -137,7 +140,10 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
   }
 
   bool _canArchive() {
-    return _txController.items.isNotEmpty || _pxController.items.isNotEmpty || _wxController.items.isNotEmpty;
+    return _txController.items.isNotEmpty ||
+        _pxController.items.isNotEmpty ||
+        _wxController.items.isNotEmpty ||
+        _sxController.items.isNotEmpty;
   }
 
   void _handleSave() async {

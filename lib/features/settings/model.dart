@@ -1,7 +1,8 @@
+import '../../core/abstracts/models/exportable.dart';
 import '../../core/abstracts/models/with_id.dart';
 import 'keys.dart';
 
-class SettingsModel implements CoreModelWithId {
+class SettingsModel implements CoreModelWithId, CoreModelExportable {
   final String keyId;
   final SettingType type;
   final dynamic value;
@@ -10,6 +11,20 @@ class SettingsModel implements CoreModelWithId {
 
   @override
   String get uuid => keyId;
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {'keyId': keyId, 'type': type.index, 'value': value};
+  }
+
+  factory SettingsModel.fromJson(Map<String, dynamic> json) {
+    final keyId = json['keyId'] as String;
+    final typeIndex = json['type'] as int;
+    final type = SettingType.values[typeIndex];
+    final value = json['value'];
+
+    return SettingsModel(keyId: keyId, type: type, value: value);
+  }
 
   static SettingsModel fromLegacy(String keyId, dynamic value) {
     final key = SettingKey.values.where((entry) => entry.id == keyId).firstOrNull;

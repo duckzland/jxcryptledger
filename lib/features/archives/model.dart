@@ -4,11 +4,12 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/models/exportable.dart';
 import '../../core/abstracts/models/with_id.dart';
 import '../../core/utils.dart';
+import '../settings/model.dart';
 import '../transactions/model.dart';
 import '../watchboard/panels/model.dart';
 import '../watchers/model.dart';
 
-enum ArchivesDataType { transactions, watchboards, watchers }
+enum ArchivesDataType { transactions, watchboards, watchers, settings }
 
 class ArchivesModel implements CoreModelWithId, CoreModelExportable {
   final String aid;
@@ -73,6 +74,10 @@ class ArchivesModel implements CoreModelWithId, CoreModelExportable {
       case ArchivesDataType.watchers:
         (decoded as List).map((e) => WatchersModel.fromJson(e as Map<String, dynamic>)).toList();
         break;
+
+      case ArchivesDataType.settings:
+        (decoded as List).map((e) => SettingsModel.fromJson(e as Map<String, dynamic>)).toList();
+        break;
     }
 
     return ArchivesModel(aid: aid, type: type, data: data, timestamp: timestamp, meta: meta);
@@ -101,6 +106,8 @@ class ArchivesModel implements CoreModelWithId, CoreModelExportable {
         return ArchivesDataType.watchboards;
       case 2:
         return ArchivesDataType.watchers;
+      case 3:
+        return ArchivesDataType.settings;
     }
 
     throw ValidationException(AppErrorCode.archiveInvalidType, "Invalid type", "Invalid archive type detected");
@@ -114,6 +121,8 @@ class ArchivesModel implements CoreModelWithId, CoreModelExportable {
         return "Watchboards";
       case ArchivesDataType.watchers:
         return "Watchers";
+      case ArchivesDataType.settings:
+        return "Settings";
     }
   }
 

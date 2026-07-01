@@ -1,39 +1,18 @@
-import '../../core/abstracts/box.dart';
-import '../../core/ipc/box/standard.dart';
-import '../../core/ipc/event.dart';
+import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
+import '../../core/mixins/repositories/exportable.dart';
 import '../system/encryption/service.dart';
 import 'keys.dart';
 import 'model.dart';
 
-class SettingsRepository {
+class SettingsRepository extends CoreBaseRepository<SettingsModel> with CoreMixinsRepositoriesExportable<SettingsModel> {
+  @override
   String get boxName => 'settings_box';
-  bool initialized = false;
+
+  @override
+  get fromJson => SettingsModel.fromJson;
 
   final SystemEncryptionService _encryption = SystemEncryptionService.instance;
-
-  CoreBaseBox<SettingsModel>? _box;
-  CoreBaseBox<SettingsModel> get box {
-    return _box ??= CoreIpcBoxStandard<SettingsModel>(boxName);
-  }
-
-  set box(CoreBaseBox<SettingsModel> box) {
-    _box = box;
-  }
-
-  SettingsRepository();
-
-  Future<void> init() async {
-    if (initialized) {
-      return;
-    }
-    await box.init();
-    initialized = true;
-  }
-
-  void receive(CoreIpcBroadcastEvent event) {
-    box.receive(event);
-  }
 
   Future<void> save(SettingKey key, dynamic value) async {
     if (value is String && key.validator != null) {
@@ -45,7 +24,7 @@ class SettingsRepository {
     await box.put(key.id, SettingsModel(keyId: key.id, type: key.type, value: storedValue));
   }
 
-  T? get<T>(SettingKey key, {T? defaultValue}) {
+  T? getByKey<T>(SettingKey key, {T? defaultValue}) {
     final entry = box.get(key.id);
     final dynamic value = entry?.value;
 
@@ -80,7 +59,7 @@ class SettingsRepository {
 
   bool has(SettingKey key) => box.containsKey(key.id);
 
-  Future<void> delete(SettingKey key) async {
+  Future<void> deleteByKey(SettingKey key) async {
     await box.delete(key.id);
   }
 

@@ -9,14 +9,14 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
   String get boxName;
   bool initialized = false;
 
-  CoreBaseBox<T>? _box;
+  CoreBaseBox<T>? repoBox;
 
   CoreBaseBox<T> get box {
-    return _box ??= CoreIpcBoxStandard<T>(boxName);
+    return repoBox ??= CoreIpcBoxStandard<T>(boxName);
   }
 
   set box(CoreBaseBox<T> box) {
-    _box = box;
+    repoBox = box;
   }
 
   Future<void> init() async {

@@ -254,8 +254,8 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       );
     }
 
-    final endpoint = settingsRepo.get<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
-    final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
+    final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
 
     final headers = <String, String>{};
     if (authKey != null && authKey.isNotEmpty) {

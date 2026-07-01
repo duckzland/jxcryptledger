@@ -22,6 +22,7 @@ import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
 import '../cryptos/controller.dart';
+import '../settings/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';
@@ -50,6 +51,7 @@ class _ArchivesPageState extends State<ArchivesPage>
   final TransactionsController _txController = locator<TransactionsController>();
   final PanelsController _pxController = locator<PanelsController>();
   final WatchersController _wxController = locator<WatchersController>();
+  final SettingsController _sxController = locator<SettingsController>();
 
   late List<ArchivesModel> txs;
 
@@ -288,6 +290,9 @@ class _ArchivesPageState extends State<ArchivesPage>
   }
 
   bool _canArchive() {
-    return _txController.items.isNotEmpty || _pxController.items.isNotEmpty || _wxController.items.isNotEmpty;
+    return _txController.items.isNotEmpty ||
+        _pxController.items.isNotEmpty ||
+        _wxController.items.isNotEmpty ||
+        _sxController.items.isNotEmpty;
   }
 }
