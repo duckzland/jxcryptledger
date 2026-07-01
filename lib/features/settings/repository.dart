@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
 import '../../core/mixins/repositories/exportable.dart';
@@ -11,6 +13,71 @@ class SettingsRepository extends CoreBaseRepository<SettingsModel> with CoreMixi
 
   @override
   get fromJson => SettingsModel.fromJson;
+
+  @override
+  Future<String> export() async {
+    final items = extract();
+    final jsonList = items
+        .cast<SettingsModel>()
+        .where((e) {
+          SettingKey? key;
+          try {
+            key = SettingKey.values.firstWhere((k) => k.id == e.keyId);
+          } catch (_) {
+            key = null;
+          }
+          return key?.isUserEditable ?? false;
+        })
+        .map((e) => e.toJson())
+        .toList();
+    return jsonEncode(jsonList);
+  }
+
+  @override
+  Future<int> clear() async {
+    final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
+    for (var key in editableKeys) {
+      final def = key.defaultValue;
+      await save(key, def);
+    }
+
+    onAction();
+    return 0;
+  }
+
+  @override
+  bool isEmpty() {
+    final items = extract();
+    final filtered = items.where((item) {
+      SettingKey? key;
+      try {
+        key = SettingKey.values.firstWhere((k) => k.id == item.keyId);
+        return item.value != key.defaultValue && key.isUserEditable;
+      } catch (_) {}
+      return false;
+    }).toList();
+
+    return filtered.isEmpty;
+  }
+
+  @override
+  Future<void> import(String rawJson) async {
+    final decoded = jsonDecode(rawJson) as List<dynamic>;
+    final txs = decoded.map((e) => SettingsModel.fromJson(e as Map<String, dynamic>)).where((tx) {
+      SettingKey? key;
+      try {
+        key = SettingKey.values.firstWhere((k) => k.id == tx.keyId);
+      } catch (_) {
+        key = null;
+      }
+      return key?.isUserEditable ?? false;
+    }).toList();
+
+    await box.clear();
+    for (final tx in txs) {
+      await box.put(tx.uuid, tx);
+    }
+  }
 
   final SystemEncryptionService _encryption = SystemEncryptionService.instance;
 
@@ -60,7 +127,10 @@ class SettingsRepository extends CoreBaseRepository<SettingsModel> with CoreMixi
   bool has(SettingKey key) => box.containsKey(key.id);
 
   Future<void> deleteByKey(SettingKey key) async {
-    await box.delete(key.id);
+    // Dont really allow to delete!
+    if (key.isUserEditable) {
+      await save(key, key.defaultValue);
+    }
   }
 
   Map<String, dynamic> toMap() {
