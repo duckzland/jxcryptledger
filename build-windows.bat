@@ -1,6 +1,18 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: Guard: handle Ctrl-C
+:: Define a handler that will run on break
+if not defined BREAK_HANDLER (
+    set BREAK_HANDLER=1
+    break >nul
+    if errorlevel 1 (
+        echo Ctrl-C pressed, resetting Git state...
+        git reset --hard HEAD
+        exit /b 1
+    )
+)
+
 if not exist version.txt (
     echo Error: version.txt not found!
     pause
