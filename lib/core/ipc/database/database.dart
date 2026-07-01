@@ -12,6 +12,8 @@ import '../../../features/cryptos/model.dart';
 import '../../../features/encryption/service.dart';
 import '../../../features/rates/adapter.dart';
 import '../../../features/rates/model.dart';
+import '../../../features/settings/adapter.dart';
+import '../../../features/settings/model.dart';
 import '../../../features/transactions/adapter.dart';
 import '../../../features/transactions/model.dart';
 import '../../../features/watchboard/panels/adapter.dart';
@@ -77,28 +79,22 @@ class CoreIpcDatabase {
     Hive.registerAdapter<PanelsModel>(PanelsAdapter());
     Hive.registerAdapter<TickersModel>(TickersAdapter());
     Hive.registerAdapter<ArchivesModel>(ArchivesAdapter());
+    Hive.registerAdapter<SettingsModel>(SettingsAdapter());
 
     initialized = true;
   }
 
-  Future<int> unlock(String password, [Uint8List? keyBytes]) async {
+  Future<int> unlock(Uint8List keyBytes) async {
     isFirstRun = !await exists();
 
     if (!unlocked) {
       try {
         HiveAesCipher cipher;
-        // final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
-        // final cipher = HiveAesCipher(encryptionKey);
-        if (keyBytes != null && keyBytes.length == 32) {
-          logln("[DB UNLOCK] Raw recovery keyBytes detected. Refreshing EncryptionService...");
-          await EncryptionService.instance.loadKey(keyBytes);
-          cipher = HiveAesCipher(keyBytes);
-        } else {
-          final Uint8List encryptionKey = await EncryptionService.instance.loadPasswordKey(password);
-          cipher = HiveAesCipher(encryptionKey);
-        }
+        await EncryptionService.instance.loadKey(keyBytes);
+        cipher = HiveAesCipher(keyBytes);
 
-        await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
+        final settingsBox = await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
+        await _migrateSettingsBoxEntries(settingsBox);
 
         await openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
 
@@ -221,5 +217,26 @@ class CoreIpcDatabase {
   Future<void> dispose() async {
     await Hive.close();
     initialized = false;
+  }
+
+  Future<void> _migrateSettingsBoxEntries(Box<dynamic>? box) async {
+    if (box == null) {
+      return;
+    }
+
+    final entries = Map<dynamic, dynamic>.from(box.toMap());
+    for (final entry in entries.entries) {
+      final dynamic rawValue = entry.value;
+      if (rawValue is SettingsModel) {
+        continue;
+      }
+
+      final String keyId = entry.key.toString();
+      final dynamic legacyValue = rawValue is Map && rawValue.isNotEmpty ? rawValue[keyId] ?? rawValue.values.first : rawValue;
+      final SettingsModel model = SettingsModel.fromLegacy(keyId, legacyValue);
+      await box.put(keyId, model);
+    }
+
+    await box.flush();
   }
 }

@@ -1,7 +1,10 @@
-import '../../core/ipc/box/dynamic.dart';
+import '../../core/abstracts/box.dart';
+import '../../core/ipc/box/standard.dart';
 import '../../core/ipc/event.dart';
+import '../../core/log.dart';
 import '../encryption/service.dart';
 import 'keys.dart';
+import 'model.dart';
 
 class SettingsRepository {
   String get boxName => 'settings_box';
@@ -9,9 +12,13 @@ class SettingsRepository {
 
   final EncryptionService _encryption = EncryptionService.instance;
 
-  CoreIpcBoxDynamic? _box;
-  CoreIpcBoxDynamic get box {
-    return _box ??= CoreIpcBoxDynamic(boxName);
+  CoreBaseBox<SettingsModel>? _box;
+  CoreBaseBox<SettingsModel> get box {
+    return _box ??= CoreIpcBoxStandard<SettingsModel>(boxName);
+  }
+
+  set box(CoreBaseBox<SettingsModel> box) {
+    _box = box;
   }
 
   SettingsRepository();
@@ -34,38 +41,39 @@ class SettingsRepository {
       if (error != null) return;
     }
 
-    if (key == SettingKey.vaultInitialized && value is String) {
-      final encrypted = await _encryption.encrypt(value);
-      await box.put(key.id, encrypted);
-    } else {
-      await box.put(key.id, value);
-    }
+    final storedValue = key == SettingKey.vaultInitialized && value is String ? await _encryption.encrypt(value) : value;
+    await box.put(key.id, SettingsModel(keyId: key.id, type: key.type, value: storedValue));
   }
 
   T? get<T>(SettingKey key, {T? defaultValue}) {
-    final value = box.get(key.id);
+    final entry = box.get(key.id);
+    final dynamic value = entry?.value;
 
     if (value == null) {
       return defaultValue ?? key.defaultValue as T?;
-    }
-
-    if (value is Map) {
-      final inner = value[key.id];
-      if (inner == null) {
-        return defaultValue ?? key.defaultValue as T?;
-      }
-      return inner as T?;
     }
 
     return value as T?;
   }
 
   Future<String?> getDecryptedMarker() async {
-    final encrypted = box.get(SettingKey.vaultInitialized.id);
+    final entry = box.get(SettingKey.vaultInitialized.id);
+    final encrypted = entry?.value;
     if (encrypted == null) return null;
     try {
       return await _encryption.decrypt(encrypted);
     } catch (_) {
+      try {
+        if (encrypted is List<int>) {
+          final tryStr = String.fromCharCodes(encrypted);
+          return await _encryption.decrypt(tryStr);
+        }
+      } catch (_) {}
+
+      try {
+        logln("[SettingsRepository] Failed to decrypt marker. Stored type: ${encrypted.runtimeType}");
+      } catch (_) {}
+
       return null;
     }
   }
@@ -77,6 +85,11 @@ class SettingsRepository {
   }
 
   Map<String, dynamic> toMap() {
-    return Map<String, dynamic>.from(box.toMap());
+    final values = <String, dynamic>{};
+    for (final entry in box.items.entries) {
+      final model = entry.value as SettingsModel?;
+      values[entry.key.toString()] = model?.value;
+    }
+    return values;
   }
 }

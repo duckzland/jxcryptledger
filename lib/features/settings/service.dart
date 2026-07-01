@@ -15,7 +15,7 @@ class SettingsService with CoreMixinsBroadcaster {
 
   @override
   void broadcasterAction(CoreIpcBroadcastEvent event) {
-    if (event.boxName != repo.boxName) {
+    if (event.action != repo.boxName) {
       return;
     }
 

@@ -24,7 +24,6 @@ class SystemUnlockController extends ChangeNotifier {
   Future<bool> unlock(String password) async {
     try {
       _unlocked = await client.unlock(password);
-      _unlocked = true;
       notifyListeners();
 
       return true;

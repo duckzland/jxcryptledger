@@ -15,6 +15,10 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
     return _box ??= CoreIpcBoxStandard<T>(boxName);
   }
 
+  set box(CoreBaseBox<T> box) {
+    _box = box;
+  }
+
   Future<void> init() async {
     if (initialized) {
       return;

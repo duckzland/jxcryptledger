@@ -1,4 +1,5 @@
 import '../../core/abstracts/controller.dart';
+import '../../core/ipc/action.dart';
 import '../../core/ipc/event.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -21,22 +22,22 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
   void broadcasterAction(CoreIpcBroadcastEvent event) {
     super.broadcasterAction(event);
 
-    if (event.boxName == repo.boxName) {
+    if (event.action == repo.boxName) {
       if (hasCryptos != !repo.isEmpty()) {
         hasCryptos = !repo.isEmpty();
         debounceNotify();
       }
     }
 
-    if (event.op == 0x11) {
-      if (event.boxName == "start") {
+    if (event.actionCode == CoreIpcAction.refreshCryptos) {
+      if (event.action == "start") {
         if (!isFetching) {
           isFetching = true;
           debounceNotify();
         }
       }
 
-      if (event.boxName == "complete") {
+      if (event.action == "complete") {
         if (isFetching) {
           isFetching = false;
           debounceNotify();
@@ -66,7 +67,7 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
 
   Future<void> fetch() async {
     isFetching = true;
-    await ipcClient.send(op: 0x11, box: "action");
+    await ipcClient.send(op: CoreIpcAction.refreshCryptos, action: "action");
     isFetching = false;
   }
 }

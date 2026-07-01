@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
 
+import '../ipc/action.dart';
 import '../ipc/event.dart';
 import '../ipc/protocol/reader.dart';
 import '../ipc/registry.dart';
@@ -103,26 +104,26 @@ abstract class CoreBaseBox<V> {
   }
 
   void receive(CoreIpcBroadcastEvent event) {
-    if (event.boxName != boxName) {
+    if (event.action != boxName) {
       return;
     }
 
-    if (event.op == 0x02) {
+    if (event.actionCode == CoreIpcAction.put) {
       final adapter = CoreIpcRegistry.getAdapter(boxName);
-      final reader = CoreIpcReader(event.valueBytes);
+      final reader = CoreIpcReader(event.payload);
       final dynamic decodedItem = reader.read(null, adapter);
 
       if (decodedItem is V) {
         items[event.key] = decodedItem;
       }
-    } else if (event.op == 0x03) {
+    } else if (event.actionCode == CoreIpcAction.delete) {
       items.remove(event.key);
-    } else if (event.op == 0x04) {
+    } else if (event.actionCode == CoreIpcAction.clear) {
       items.clear();
-    } else if (event.op == 0x14) {
-      unpackBytes(event.valueBytes);
-    } else if (event.op == 0x17) {
-      unpackBytes(event.valueBytes);
+    } else if (event.actionCode == CoreIpcAction.multiPut) {
+      unpackBytes(event.payload);
+    } else if (event.actionCode == CoreIpcAction.replace) {
+      unpackBytes(event.payload);
     }
   }
 

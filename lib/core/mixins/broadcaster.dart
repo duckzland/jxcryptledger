@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../ipc/action.dart';
 import '../mode.dart';
 import '../ipc/client.dart';
 import '../ipc/event.dart';
@@ -24,13 +25,13 @@ mixin CoreMixinsBroadcaster {
     });
   }
 
-  Future<void> broadcasterSend({required int op, required String box, dynamic key, List<int>? value}) async {
-    await ipcClient.send(op: op, box: box, key: key, value: value);
+  Future<void> broadcasterSend({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) async {
+    await ipcClient.send(op: op, action: action, key: key, payload: payload);
   }
 
-  bool broadcasterEmit(int op, String? action, String? key, Uint8List? valueBytes, {Socket? exclude}) {
+  bool broadcasterEmit(CoreIpcAction op, String? action, String? key, Uint8List? payload, {Socket? exclude}) {
     if (isBroadcastable) {
-      ipcServer.broadcast(op, action ?? "", key ?? "", valueBytes ?? Uint8List(0), exclude: exclude);
+      ipcServer.broadcast(op, action ?? "", key ?? "", payload ?? Uint8List(0), exclude: exclude);
       return true;
     }
     return false;

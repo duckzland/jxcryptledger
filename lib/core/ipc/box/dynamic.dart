@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxledger/features/settings/model.dart';
 
 import '../../abstracts/box.dart';
 import '../../runtime/locator.dart';
 import '../../log.dart';
+import '../action.dart';
 import '../client.dart';
 import '../event.dart';
 import '../protocol/reader.dart';
@@ -18,7 +20,7 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
   @override
   Future<void> init() async {
-    final resultBytes = await ipc.send(op: 0x06, box: boxName);
+    final resultBytes = await ipc.send(op: CoreIpcAction.extract, action: boxName);
     unpackBytes(resultBytes);
     logln("[IPC] Initialized dynamic box: $boxName|${items.length}");
   }
@@ -29,15 +31,30 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
     final adapter = CoreIpcRegistry.getAdapter(boxName);
     final mapPayload = <dynamic, dynamic>{id: value};
 
-    adapter.write(writer, mapPayload);
+    // If this is the settings box and the UI passed raw/legacy values (string/map),
+    // convert them to `SettingsModel` so the SettingsAdapter can serialize them
+    // safely and the server receives typed models.
+    if (boxName == 'settings_box') {
+      final normalized = <dynamic, dynamic>{};
+      mapPayload.forEach((k, v) {
+        if (v is SettingsModel) {
+          normalized[k] = v;
+        } else {
+          normalized[k] = SettingsModel.fromLegacy(k.toString(), v);
+        }
+      });
+      adapter.write(writer, normalized);
+    } else {
+      adapter.write(writer, mapPayload);
+    }
 
-    await ipc.send(op: 0x02, box: boxName, key: id, value: writer.toBytes());
+    await ipc.send(op: CoreIpcAction.put, action: boxName, key: id, payload: writer.toBytes());
     items[id] = value;
   }
 
   @override
   Future<int> clear() async {
-    final resultBytes = await ipc.send(op: 0x04, box: boxName);
+    final resultBytes = await ipc.send(op: CoreIpcAction.clear, action: boxName);
     if (resultBytes.isEmpty || resultBytes.length < 4) {
       items.clear();
       return 0;
@@ -50,13 +67,13 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
   @override
   Future<void> delete(dynamic id) async {
-    await ipc.send(op: 0x03, box: boxName, key: id);
+    await ipc.send(op: CoreIpcAction.delete, action: boxName, key: id);
     items.remove(id);
   }
 
   @override
   Future<void> flush() async {
-    await ipc.send(op: 0x05, box: boxName);
+    await ipc.send(op: CoreIpcAction.flush, action: boxName);
   }
 
   Future<void> add(dynamic id, dynamic value) async {
@@ -69,13 +86,13 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
 
   @override
   void receive(CoreIpcBroadcastEvent event) {
-    if (event.boxName != boxName) {
+    if (event.action != boxName) {
       return;
     }
 
-    if (event.op == 0x02) {
+    if (event.actionCode == CoreIpcAction.put) {
       final adapter = CoreIpcRegistry.getAdapter(boxName);
-      final reader = CoreIpcReader(event.valueBytes);
+      final reader = CoreIpcReader(event.payload);
       final decoded = adapter.read(reader);
 
       if (decoded is MapEntry) {
@@ -85,14 +102,14 @@ class CoreIpcBoxDynamic extends CoreBaseBox<dynamic> {
       } else {
         items[event.key] = decoded;
       }
-    } else if (event.op == 0x03) {
+    } else if (event.actionCode == CoreIpcAction.delete) {
       items.remove(event.key);
-    } else if (event.op == 0x04) {
+    } else if (event.actionCode == CoreIpcAction.clear) {
       items.clear();
-    } else if (event.op == 0x14) {
-      unpackBytes(event.valueBytes);
-    } else if (event.op == 0x17) {
-      unpackBytes(event.valueBytes);
+    } else if (event.actionCode == CoreIpcAction.multiPut) {
+      unpackBytes(event.payload);
+    } else if (event.actionCode == CoreIpcAction.replace) {
+      unpackBytes(event.payload);
     }
   }
 

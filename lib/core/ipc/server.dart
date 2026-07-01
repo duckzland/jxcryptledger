@@ -5,13 +5,16 @@ import 'package:hive_ce/hive_ce.dart';
 import 'package:dart_ipc/dart_ipc.dart';
 
 import '../../features/watchboard/tickers/service.dart';
-import '../abstracts/models/with_id.dart';
-import '../mode.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
+import '../../features/settings/adapter.dart';
+import '../../features/settings/model.dart';
+import '../abstracts/models/with_id.dart';
+import '../mode.dart';
 import '../runtime/locator.dart';
 import '../log.dart';
+import 'action.dart';
 import 'protocol/buffer.dart';
 import 'database/database.dart';
 import 'protocol/packet.dart';
@@ -27,7 +30,7 @@ class CoreIpcServer {
   CoreIpcServer(this.pipeId);
 
   late final CoreIpcDatabase database;
-  Future<bool> Function(String password, [Uint8List? keyBytes])? unlocker;
+  Future<bool> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
 
   Future<void> dispose() async {
@@ -84,123 +87,65 @@ class CoreIpcServer {
     while ((packet = incomingBuffer.parseNextAction()) != null) {
       final currentPacket = packet!;
       final activeReqId = currentPacket.reqId;
-      final op = currentPacket.op;
-      final boxName = currentPacket.boxName;
+      final actionCode = currentPacket.actionCode;
+      final action = currentPacket.action;
       final rawKeyStr = currentPacket.key;
-      final valueBytes = currentPacket.valueBytes;
+      final payload = currentPacket.payload;
 
       try {
         dynamic result;
         final dynamic nativeHiveKey = int.tryParse(rawKeyStr) ?? rawKeyStr;
 
-        switch (op) {
-          case 0x02: // put
-            final box = CoreIpcRegistry.getBox(boxName);
-            final adapter = CoreIpcRegistry.getAdapter(boxName);
-            dynamic finalValue;
-
-            if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
-              final valReader = CoreIpcReader(valueBytes);
-              final dynamic decoded = adapter.read(valReader);
-              finalValue = decoded;
-              if (decoded is MapEntry) {
-                finalValue = decoded.value;
-              }
-              await box.put(nativeHiveKey, finalValue);
-            } else {
-              final valReader = CoreIpcReader(valueBytes);
-              final decoded = adapter.read(valReader);
-              await box.put(nativeHiveKey, decoded);
-            }
-
-            broadcast(op, boxName, rawKeyStr, valueBytes, exclude: client);
+        switch (actionCode) {
+          case CoreIpcAction.put:
+            final box = CoreIpcRegistry.getBox(action);
+            final adapter = CoreIpcRegistry.getAdapter(action);
+            await _writeValueToBox(box, adapter, nativeHiveKey, payload);
+            broadcast(actionCode, action, rawKeyStr, payload, exclude: client);
             break;
 
-          case 0x03: // delete
-            final box = CoreIpcRegistry.getBox(boxName);
+          case CoreIpcAction.delete:
+            final box = CoreIpcRegistry.getBox(action);
             await box.delete(nativeHiveKey);
-            broadcast(op, boxName, rawKeyStr, Uint8List(0), exclude: client);
+            broadcast(actionCode, action, rawKeyStr, Uint8List(0), exclude: client);
             break;
 
-          case 0x04: // clear
-            final box = CoreIpcRegistry.getBox(boxName);
+          case CoreIpcAction.clear:
+            final box = CoreIpcRegistry.getBox(action);
             await box.clear();
-            broadcast(op, boxName, '', Uint8List(0), exclude: client);
+            broadcast(actionCode, action, '', Uint8List(0), exclude: client);
             break;
 
-          case 0x05: // flush
-            final box = CoreIpcRegistry.getBox(boxName);
+          case CoreIpcAction.flush:
+            final box = CoreIpcRegistry.getBox(action);
             await box.flush();
             break;
 
-          case 0x06: // extract
-            final box = CoreIpcRegistry.getBox(boxName);
-            final adapter = CoreIpcRegistry.getAdapter(boxName);
-            final writer = CoreIpcWriter();
-
-            if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
-              writer.writeInt(1);
-
-              final mapPayload = <dynamic, dynamic>{};
-              for (var key in box.keys) {
-                final dynamic value = box.get(key);
-                if (value is Map) {
-                  if (value.containsKey(key)) {
-                    mapPayload[key] = value[key];
-                  }
-                } else {
-                  mapPayload[key] = value;
-                }
-              }
-              writer.write(mapPayload, adapter: adapter);
-            } else {
-              final int realCount = box.keys.length;
-              writer.writeInt(realCount);
-
-              for (var key in box.keys) {
-                final dynamic value = box.get(key);
-
-                if (value is Uint8List) {
-                  writer.writeByteList(value, writeLength: false);
-                } else if (value != null) {
-                  adapter.write(writer, value);
-                }
-              }
-            }
-
-            result = writer;
+          case CoreIpcAction.extract:
+            final box = CoreIpcRegistry.getBox(action);
+            final adapter = CoreIpcRegistry.getAdapter(action);
+            result = _extractBoxContents(box, adapter);
             break;
 
-          case 0x07: // unlock
-            final pw = utf8.decode(valueBytes);
-            try {
-              final success = await unlocker?.call(pw) ?? false;
-              result = success;
-            } catch (e) {
-              logln("Failed to unlock: $e");
-              result = false;
-            }
-            break;
-
-          case 0x10: // refresh rates
+          case CoreIpcAction.refreshRates:
             final service = locator<RatesService>();
             await service.refreshRates();
             break;
 
-          case 0x11: // refresh cryptos
+          case CoreIpcAction.refreshCryptos:
             final service = locator<CryptosService>();
             await service.fetch();
             break;
 
-          case 0x12: // notification
+          case CoreIpcAction.notification:
             final service = locator<NotificationService>();
-            final message = utf8.decode(valueBytes);
+            final message = utf8.decode(payload);
             await service.show(message);
             break;
 
-          case 0x13: // unlock with key
+          case CoreIpcAction.unlock:
             try {
-              final success = await unlocker?.call("", valueBytes) ?? false;
+              final success = await unlocker?.call(payload) ?? false;
               result = success;
             } catch (e) {
               logln("Failed to unlock: $e");
@@ -208,40 +153,15 @@ class CoreIpcServer {
             }
             break;
 
-          case 0x14: // multi put (addAll)
-            final box = CoreIpcRegistry.getBox(boxName);
-            final adapter = CoreIpcRegistry.getAdapter(boxName);
-            final batchReader = CoreIpcReader(valueBytes);
-            final int totalItems = batchReader.readInt();
-
-            for (int i = 0; i < totalItems; i++) {
-              dynamic nativeHiveKey;
-              dynamic finalValue;
-
-              if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
-                final dynamic decoded = adapter.read(batchReader);
-                if (decoded is MapEntry) {
-                  nativeHiveKey = decoded.key;
-                  finalValue = decoded.value;
-                } else if (decoded is Map && decoded.isNotEmpty) {
-                  nativeHiveKey = decoded.keys.first;
-                  finalValue = decoded.values.first;
-                } else {
-                  finalValue = decoded;
-                }
-              } else {
-                finalValue = adapter.read(batchReader);
-                nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
-              }
-
-              await box.put(nativeHiveKey, finalValue);
-            }
-
-            broadcast(op, boxName, "batch", valueBytes, exclude: client);
+          case CoreIpcAction.multiPut:
+            final box = CoreIpcRegistry.getBox(action);
+            final adapter = CoreIpcRegistry.getAdapter(action);
+            await _writeBatchToBox(box, adapter, payload);
+            broadcast(actionCode, action, "batch", payload, exclude: client);
             break;
 
-          case 0x15: // add rate queue
-            final parts = boxName.split("-");
+          case CoreIpcAction.addRateQueue:
+            final parts = action.split("-");
             final sourceId = int.parse(parts[0]);
             final targetId = int.parse(parts[1]);
             final force = rawKeyStr == "true";
@@ -250,43 +170,17 @@ class CoreIpcServer {
             service.addQueue(sourceId, targetId, force: force);
             break;
 
-          case 0x16: // refresh tickers
+          case CoreIpcAction.refreshTickers:
             final service = locator<TickersService>();
             await service.refreshRates();
             break;
 
-          case 0x17: // replace
-            final box = CoreIpcRegistry.getBox(boxName);
-            final adapter = CoreIpcRegistry.getAdapter(boxName);
-            final batchReader = CoreIpcReader(valueBytes);
-            final int totalItems = batchReader.readInt();
-
+          case CoreIpcAction.replace:
+            final box = CoreIpcRegistry.getBox(action);
+            final adapter = CoreIpcRegistry.getAdapter(action);
             await box.clear();
-
-            for (int i = 0; i < totalItems; i++) {
-              dynamic nativeHiveKey;
-              dynamic finalValue;
-
-              if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
-                final dynamic decoded = adapter.read(batchReader);
-                if (decoded is MapEntry) {
-                  nativeHiveKey = decoded.key;
-                  finalValue = decoded.value;
-                } else if (decoded is Map && decoded.isNotEmpty) {
-                  nativeHiveKey = decoded.keys.first;
-                  finalValue = decoded.values.first;
-                } else {
-                  finalValue = decoded;
-                }
-              } else {
-                finalValue = adapter.read(batchReader);
-                nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
-              }
-
-              await box.put(nativeHiveKey, finalValue);
-            }
-
-            broadcast(op, boxName, "replace", valueBytes, exclude: client);
+            await _writeBatchToBox(box, adapter, payload);
+            broadcast(actionCode, action, "replace", payload, exclude: client);
             break;
 
           default:
@@ -303,24 +197,106 @@ class CoreIpcServer {
 
   void response(Socket client, int reqId, dynamic result) {
     final Uint8List resultBytes = _encode(result);
-    final responsePacket = CoreIpcPacket(reqId: reqId, op: 0, boxName: '', key: '', valueBytes: resultBytes);
+    final responsePacket = CoreIpcPacket(reqId: reqId, op: 0, action: '', key: '', payload: resultBytes);
     client.add(responsePacket.toBytes());
   }
 
   void error(Socket client, int activeReqId) {
-    final errorPacket = CoreIpcPacket(reqId: activeReqId, op: 0xFF, boxName: '', key: '', valueBytes: Uint8List(0));
+    final errorPacket = CoreIpcPacket(reqId: activeReqId, op: CoreIpcAction.error.code, action: '', key: '', payload: Uint8List(0));
     client.add(errorPacket.toBytes());
   }
 
-  void broadcast(int op, String boxName, String key, Uint8List valueBytes, {Socket? exclude}) {
-    final packet = CoreIpcPacket(reqId: -1, op: op, boxName: boxName, key: key, valueBytes: valueBytes);
-    final Uint8List payload = packet.toBytes();
+  void broadcast(CoreIpcAction op, String action, String key, Uint8List payload, {Socket? exclude}) {
+    final packet = CoreIpcPacket(reqId: -1, op: op.code, action: action, key: key, payload: payload);
+    final Uint8List frame = packet.toBytes();
 
     for (var slave in _slaves) {
       if (slave != exclude) {
-        slave.add(payload);
+        slave.add(frame);
       }
     }
+  }
+
+  Future<void> _writeValueToBox(Box box, TypeAdapter adapter, dynamic id, Uint8List payload) async {
+    final reader = CoreIpcReader(payload);
+    final dynamic decoded = adapter.read(reader);
+    final dynamic finalValue = decoded is MapEntry ? decoded.value : decoded;
+    await box.put(id, finalValue);
+  }
+
+  Future<void> _writeBatchToBox(Box box, TypeAdapter adapter, Uint8List payload) async {
+    final batchReader = CoreIpcReader(payload);
+    final int totalItems = batchReader.readInt();
+
+    for (int i = 0; i < totalItems; i++) {
+      dynamic nativeHiveKey;
+      dynamic finalValue;
+
+      // @deprecated Settings expected to use SettingsModel from this version onwards.
+      if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
+        final dynamic decoded = adapter.read(batchReader);
+        if (decoded is MapEntry) {
+          nativeHiveKey = decoded.key;
+          finalValue = decoded.value;
+        } else if (decoded is Map && decoded.isNotEmpty) {
+          nativeHiveKey = decoded.keys.first;
+          finalValue = decoded.values.first;
+        } else {
+          finalValue = decoded;
+        }
+      } else {
+        finalValue = adapter.read(batchReader);
+        nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
+      }
+
+      await box.put(nativeHiveKey, finalValue);
+    }
+  }
+
+  CoreIpcWriter _extractBoxContents(Box box, TypeAdapter adapter) {
+    final writer = CoreIpcWriter();
+
+    // @deprecated Settings expected to use SettingsModel from this version onwards.
+    if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
+      writer.writeInt(1);
+      final mapPayload = <dynamic, dynamic>{};
+
+      for (var key in box.keys) {
+        final dynamic value = box.get(key);
+        if (value is Map) {
+          if (value.containsKey(key)) {
+            mapPayload[key] = value[key];
+          }
+        } else {
+          mapPayload[key] = value;
+        }
+      }
+
+      writer.write(mapPayload, adapter: adapter);
+    } else {
+      final int realCount = box.keys.length;
+      writer.writeInt(realCount);
+
+      for (var key in box.keys) {
+        final dynamic value = box.get(key);
+
+        if (value is Uint8List) {
+          writer.writeByteList(value, writeLength: false);
+        } else if (value != null) {
+          // @deprecated Settings expected to use SettingsModel from this version onwards.
+          if (adapter is SettingsAdapter && value is! SettingsModel) {
+            final String keyId = key.toString();
+            final dynamic legacyValue = value is Map && value.isNotEmpty ? value[keyId] ?? value.values.first : value;
+            final SettingsModel model = SettingsModel.fromLegacy(keyId, legacyValue);
+            adapter.write(writer, model);
+          } else {
+            adapter.write(writer, value);
+          }
+        }
+      }
+    }
+
+    return writer;
   }
 
   Uint8List _int32(int v) {
