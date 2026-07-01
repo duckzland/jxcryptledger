@@ -4,13 +4,13 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import '../../app/constants.dart';
-import '../../core/log.dart';
+import '../../../app/constants.dart';
+import '../../../core/log.dart';
 
-class EncryptionService {
-  EncryptionService._();
+class SystemEncryptionService {
+  SystemEncryptionService._();
 
-  static final EncryptionService instance = EncryptionService._();
+  static final SystemEncryptionService instance = SystemEncryptionService._();
 
   final AesGcm _cipher = AesGcm.with256bits();
   SecretKey? _secretKey;

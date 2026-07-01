@@ -11,6 +11,7 @@ import '../../../features/transactions/service.dart';
 import '../../../features/watchboard/panels/service.dart';
 import '../../../features/watchboard/tickers/service.dart';
 import '../../../features/watchers/service.dart';
+import '../../ipc/client.dart';
 import '../../ipc/database/database.dart';
 import '../../ipc/database/migration.dart';
 import '../../ipc/server.dart';
@@ -40,6 +41,7 @@ class CoreBootstrapServer {
   late CoreIpcDatabase database;
   late CoreIpcMigration migrator;
   late CoreIpcServer server;
+  late CoreIpcClient client;
 
   Future<void> start() async {
     if (initialized) return;
@@ -47,6 +49,8 @@ class CoreBootstrapServer {
 
     migrator = CoreIpcMigration();
     database = CoreIpcDatabase();
+
+    client = locator<CoreIpcClient>();
 
     server = locator<CoreIpcServer>();
     server.database = database;
@@ -85,6 +89,7 @@ class CoreBootstrapServer {
     }
 
     if (state > unlockError) {
+      client.sessionKey ??= server.sessionKey;
       await bootServices();
       await migrator.migrate();
     }
@@ -92,6 +97,7 @@ class CoreBootstrapServer {
     if (state == unlockFirstTime) {
       try {
         logln("First run detected, initializing vault");
+        client.sessionKey ??= server.sessionKey;
         await _settingsService.save(SettingKey.vaultInitialized, "initialized");
       } catch (e) {
         logln("Failed to initialize vault: $e");

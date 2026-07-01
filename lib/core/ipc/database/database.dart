@@ -9,7 +9,7 @@ import '../../../features/archives/adapter.dart';
 import '../../../features/archives/model.dart';
 import '../../../features/cryptos/adapter.dart';
 import '../../../features/cryptos/model.dart';
-import '../../../features/encryption/service.dart';
+import '../../../features/system/encryption/service.dart';
 import '../../../features/rates/adapter.dart';
 import '../../../features/rates/model.dart';
 import '../../../features/settings/adapter.dart';
@@ -90,7 +90,7 @@ class CoreIpcDatabase {
     if (!unlocked) {
       try {
         HiveAesCipher cipher;
-        await EncryptionService.instance.loadKey(keyBytes);
+        await SystemEncryptionService.instance.loadKey(keyBytes);
         cipher = HiveAesCipher(keyBytes);
 
         final settingsBox = await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);

@@ -31,6 +31,33 @@ class CoreIpcPacket {
     return builder.toBytes();
   }
 
+  static CoreIpcPacket fromBytes(Uint8List bytes) {
+    final byteData = ByteData.sublistView(bytes);
+    int offset = 0;
+
+    final reqId = byteData.getInt32(offset, Endian.big);
+    offset += 4;
+
+    final op = byteData.getUint8(offset);
+    offset += 1;
+
+    final actionLen = byteData.getInt16(offset, Endian.big);
+    offset += 2;
+    final action = utf8.decode(bytes.sublist(offset, offset + actionLen));
+    offset += actionLen;
+
+    final keyLen = byteData.getInt16(offset, Endian.big);
+    offset += 2;
+    final key = utf8.decode(bytes.sublist(offset, offset + keyLen));
+    offset += keyLen;
+
+    final valLen = byteData.getInt32(offset, Endian.big);
+    offset += 4;
+    final payload = bytes.sublist(offset, offset + valLen);
+
+    return CoreIpcPacket(reqId: reqId, op: op, action: action, key: key, payload: payload);
+  }
+
   CoreIpcAction get actionCode => CoreIpcAction.fromCode(op);
 
   static Uint8List _int32(int v) => (ByteData(4)..setInt32(0, v, Endian.big)).buffer.asUint8List();
