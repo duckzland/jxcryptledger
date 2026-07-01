@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:hive_ce/hive_ce.dart';
@@ -17,6 +18,7 @@ import '../log.dart';
 import 'action.dart';
 import 'protocol/buffer.dart';
 import 'database/database.dart';
+import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 import 'protocol/reader.dart';
 import 'protocol/writer.dart';
@@ -25,6 +27,9 @@ import 'registry.dart';
 class CoreIpcServer {
   final String pipeId;
   final List<Socket> _slaves = [];
+  final Uint8List sessionKey = _createSessionKey(32);
+  final CoreIpcCrypto _crypto = CoreIpcCrypto();
+
   ServerSocket? socket;
 
   CoreIpcServer(this.pipeId);
@@ -50,6 +55,8 @@ class CoreIpcServer {
   }
 
   Future<void> start() async {
+    _crypto.setSessionKey(sessionKey);
+
     final socket = await bind(CoreMode.ipcPipeName);
     logln("[IPC] Server running: ${CoreMode.ipcPipeName}");
 
@@ -90,30 +97,50 @@ class CoreIpcServer {
       final actionCode = currentPacket.actionCode;
       final action = currentPacket.action;
       final rawKeyStr = currentPacket.key;
-      final payload = currentPacket.payload;
+      Uint8List payload = currentPacket.payload;
 
       try {
-        dynamic result;
+        Uint8List serializedResult = await _crypto.encrypt(Uint8List(0));
         final dynamic nativeHiveKey = int.tryParse(rawKeyStr) ?? rawKeyStr;
+        CoreIpcAction sendOp = actionCode;
+
+        if (actionCode != CoreIpcAction.unlock) {
+          if (payload.length < 28) {
+            logln("[IPC] SECURITY VIOLATION: Received unauthenticated packet for op: $actionCode from reqId: $activeReqId. Rejecting.");
+            error(client, activeReqId);
+            continue;
+          }
+
+          try {
+            payload = await _crypto.decrypt(payload);
+          } catch (e) {
+            logln("[IPC] AUTHENTICATION FAILURE: Tampered or invalid signature block for op: $actionCode. Dropping.");
+            error(client, activeReqId);
+            continue;
+          }
+        }
 
         switch (actionCode) {
           case CoreIpcAction.put:
             final box = CoreIpcRegistry.getBox(action);
             final adapter = CoreIpcRegistry.getAdapter(action);
+            final encrypted = await _crypto.encrypt(payload);
             await _writeValueToBox(box, adapter, nativeHiveKey, payload);
-            broadcast(actionCode, action, rawKeyStr, payload, exclude: client);
+            broadcast(actionCode, action, rawKeyStr, encrypted, exclude: client);
             break;
 
           case CoreIpcAction.delete:
             final box = CoreIpcRegistry.getBox(action);
+            final encrypted = await _crypto.encrypt(Uint8List(0));
             await box.delete(nativeHiveKey);
-            broadcast(actionCode, action, rawKeyStr, Uint8List(0), exclude: client);
+            broadcast(actionCode, action, rawKeyStr, encrypted, exclude: client);
             break;
 
           case CoreIpcAction.clear:
             final box = CoreIpcRegistry.getBox(action);
+            final encrypted = await _crypto.encrypt(Uint8List(0));
             await box.clear();
-            broadcast(actionCode, action, '', Uint8List(0), exclude: client);
+            broadcast(actionCode, action, '', encrypted, exclude: client);
             break;
 
           case CoreIpcAction.flush:
@@ -124,7 +151,8 @@ class CoreIpcServer {
           case CoreIpcAction.extract:
             final box = CoreIpcRegistry.getBox(action);
             final adapter = CoreIpcRegistry.getAdapter(action);
-            result = _extractBoxContents(box, adapter);
+            final extracted = _extractBoxContents(box, adapter);
+            serializedResult = await _crypto.encrypt(_encode(extracted));
             break;
 
           case CoreIpcAction.refreshRates:
@@ -146,18 +174,27 @@ class CoreIpcServer {
           case CoreIpcAction.unlock:
             try {
               final success = await unlocker?.call(payload) ?? false;
-              result = success;
+              final builder = BytesBuilder();
+              if (success) {
+                builder.add([1]);
+                builder.add(sessionKey);
+                sendOp = CoreIpcAction.unlock;
+              } else {
+                builder.add([0]);
+                sendOp = CoreIpcAction.response;
+              }
+              serializedResult = builder.toBytes();
             } catch (e) {
-              logln("Failed to unlock: $e");
-              result = false;
+              serializedResult = Uint8List.fromList([0]);
             }
             break;
 
           case CoreIpcAction.multiPut:
             final box = CoreIpcRegistry.getBox(action);
             final adapter = CoreIpcRegistry.getAdapter(action);
+            final encrypted = await _crypto.encrypt(payload);
             await _writeBatchToBox(box, adapter, payload);
-            broadcast(actionCode, action, "batch", payload, exclude: client);
+            broadcast(actionCode, action, "batch", encrypted, exclude: client);
             break;
 
           case CoreIpcAction.addRateQueue:
@@ -178,16 +215,17 @@ class CoreIpcServer {
           case CoreIpcAction.replace:
             final box = CoreIpcRegistry.getBox(action);
             final adapter = CoreIpcRegistry.getAdapter(action);
+            final encrypted = await _crypto.encrypt(payload);
             await box.clear();
             await _writeBatchToBox(box, adapter, payload);
-            broadcast(actionCode, action, "replace", payload, exclude: client);
+            broadcast(actionCode, action, "replace", encrypted, exclude: client);
             break;
 
           default:
             break;
         }
 
-        response(client, activeReqId, result);
+        response(client, activeReqId, serializedResult, sendOp);
       } catch (e) {
         logln("Failed to process action: $e");
         error(client, activeReqId);
@@ -195,9 +233,8 @@ class CoreIpcServer {
     }
   }
 
-  void response(Socket client, int reqId, dynamic result) {
-    final Uint8List resultBytes = _encode(result);
-    final responsePacket = CoreIpcPacket(reqId: reqId, op: 0, action: '', key: '', payload: resultBytes);
+  void response(Socket client, int reqId, dynamic result, CoreIpcAction op) {
+    final responsePacket = CoreIpcPacket(reqId: reqId, op: op.code, action: '', key: '', payload: result);
     client.add(responsePacket.toBytes());
   }
 
@@ -208,6 +245,7 @@ class CoreIpcServer {
 
   void broadcast(CoreIpcAction op, String action, String key, Uint8List payload, {Socket? exclude}) {
     final packet = CoreIpcPacket(reqId: -1, op: op.code, action: action, key: key, payload: payload);
+
     final Uint8List frame = packet.toBytes();
 
     for (var slave in _slaves) {
@@ -316,5 +354,11 @@ class CoreIpcServer {
       return writer.toBytes();
     }
     return Uint8List(0);
+  }
+
+  static Uint8List _createSessionKey(int length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random.secure();
+    return utf8.encode(List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join());
   }
 }

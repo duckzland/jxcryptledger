@@ -4,11 +4,12 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:dart_ipc/dart_ipc.dart';
 
-import '../../features/encryption/service.dart';
+import '../../features/system/encryption/service.dart';
 import '../mode.dart';
 import '../runtime/runtime.dart';
 import '../log.dart';
 import 'protocol/buffer.dart';
+import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 import 'event.dart';
 import 'action.dart';
@@ -18,6 +19,7 @@ class CoreIpcClient {
   final String uuid = "client_${DateTime.now().millisecondsSinceEpoch}_${StackTrace.current.hashCode}";
   final CoreIpcBuffer _incomingBuffer = CoreIpcBuffer();
   final StreamController<CoreIpcBroadcastEvent> _broadcastController = StreamController<CoreIpcBroadcastEvent>.broadcast();
+  final CoreIpcCrypto _crypto = CoreIpcCrypto();
 
   bool _isDisposing = false;
   bool _isReconnecting = false;
@@ -25,6 +27,9 @@ class CoreIpcClient {
   VoidCallback? onExit;
   Socket? _socket;
   int _nextReqId = 0;
+
+  Uint8List? sessionKey;
+  Uint8List? localKey;
 
   Stream<CoreIpcBroadcastEvent> get onBroadcast => _broadcastController.stream;
 
@@ -84,9 +89,9 @@ class CoreIpcClient {
 
         await Future.delayed(const Duration(milliseconds: 100));
 
-        if (EncryptionService.instance.isUnlocked()) {
-          final keyBytes = await EncryptionService.instance.getRawKeyBytes();
-          await send(op: CoreIpcAction.unlock, action: "auth", key: "unlock", payload: keyBytes);
+        if (SystemEncryptionService.instance.isUnlocked()) {
+          localKey = await SystemEncryptionService.instance.getRawKeyBytes();
+          await send(op: CoreIpcAction.unlock, action: "auth", key: "unlock", payload: localKey);
         }
         return;
       }
@@ -129,7 +134,7 @@ class CoreIpcClient {
     return await _send(op: op, action: action, key: key, payload: payload);
   }
 
-  Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) {
+  Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) async {
     final completer = Completer<dynamic>();
     final reqId = _nextReqId++;
     _pending[reqId] = completer;
@@ -139,16 +144,23 @@ class CoreIpcClient {
         throw StateError('[IPC] socket is not connected');
       }
 
-      final packet = CoreIpcPacket(
-        reqId: reqId,
-        op: op.code,
-        action: action,
-        key: key?.toString() ?? "",
-        payload: payload != null ? Uint8List.fromList(payload) : Uint8List(0),
-      );
+      Uint8List rawPayload = payload != null ? Uint8List.fromList(payload) : Uint8List(0);
+
+      if (op != CoreIpcAction.unlock) {
+        if (sessionKey == null) {
+          throw StateError('[IPC] Cannot transmit database requests before completing secure handshake.');
+        }
+
+        if (!_crypto.hasActiveKey) {
+          _crypto.setSessionKey(sessionKey);
+        }
+        rawPayload = await _crypto.encrypt(rawPayload);
+      }
+
+      final packet = CoreIpcPacket(reqId: reqId, op: op.code, action: action, key: key?.toString() ?? "", payload: rawPayload);
+
       _socket!.add(packet.toBytes());
     } catch (e) {
-      logln("[IPC] Send failed: $e");
       _pending.remove(reqId);
       if (!completer.isCompleted) {
         completer.completeError(e);
@@ -157,26 +169,53 @@ class CoreIpcClient {
     return completer.future;
   }
 
-  void _receive(Uint8List chunk) {
+  Future<void> _receive(Uint8List chunk) async {
     if (_isDisposing) return;
     CoreIpcPacket? packet;
     _incomingBuffer.add(chunk);
 
+    if (sessionKey != null) {
+      _crypto.setSessionKey(sessionKey);
+    }
+
     while ((packet = _incomingBuffer.parseNextAction()) != null) {
       final currentPacket = packet!;
+      Uint8List responseBytes = currentPacket.payload;
 
-      if (currentPacket.reqId == -1) {
-        _broadcastController.add(
-          CoreIpcBroadcastEvent(op: currentPacket.op, action: currentPacket.action, key: currentPacket.key, payload: currentPacket.payload),
-        );
+      if (currentPacket.op != CoreIpcAction.unlock.code && sessionKey != null) {
+        try {
+          if (!_crypto.hasActiveKey) {
+            _crypto.setSessionKey(sessionKey);
+          }
+          responseBytes = await _crypto.decrypt(responseBytes);
+        } catch (e) {
+          continue;
+        }
+      }
+
+      if (currentPacket.op != CoreIpcAction.unlock.code && sessionKey == null) {
+        final completer = _pending[currentPacket.reqId];
+        if (completer != null) {
+          completer.complete(Uint8List(0));
+          _pending.remove(currentPacket.reqId);
+        }
         continue;
       }
 
-      final Uint8List responseBytes = currentPacket.payload;
-      final completer = _pending[currentPacket.reqId];
-      if (completer != null) {
-        completer.complete(responseBytes);
-        _pending.remove(currentPacket.reqId);
+      if (currentPacket.op == CoreIpcAction.unlock.code) {
+        sessionKey = responseBytes.sublist(1);
+      }
+
+      if (currentPacket.reqId == -1) {
+        _broadcastController.add(
+          CoreIpcBroadcastEvent(op: currentPacket.op, action: currentPacket.action, key: currentPacket.key, payload: responseBytes),
+        );
+      } else {
+        final completer = _pending[currentPacket.reqId];
+        if (completer != null) {
+          completer.complete(responseBytes);
+          _pending.remove(currentPacket.reqId);
+        }
       }
     }
   }

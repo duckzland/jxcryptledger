@@ -2,7 +2,7 @@ import '../../core/abstracts/box.dart';
 import '../../core/ipc/box/standard.dart';
 import '../../core/ipc/event.dart';
 import '../../core/log.dart';
-import '../encryption/service.dart';
+import '../system/encryption/service.dart';
 import 'keys.dart';
 import 'model.dart';
 
@@ -10,7 +10,7 @@ class SettingsRepository {
   String get boxName => 'settings_box';
   bool initialized = false;
 
-  final EncryptionService _encryption = EncryptionService.instance;
+  final SystemEncryptionService _encryption = SystemEncryptionService.instance;
 
   CoreBaseBox<SettingsModel>? _box;
   CoreBaseBox<SettingsModel> get box {
