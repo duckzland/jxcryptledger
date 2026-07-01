@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../app/layout.dart';
 import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
+import '../../mixins/action_bar.dart';
 import '../../widgets/button.dart';
+import '../../widgets/dialogs/export.dart';
+import '../../widgets/dialogs/import.dart';
+import '../../widgets/dialogs/reset.dart';
 import '../../widgets/panel.dart';
 import '../../widgets/notify.dart';
 import 'controller.dart';
@@ -16,7 +19,7 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
   late Map<SettingKey, dynamic> _buffer = {};
   SettingsController get _controller => locator<SettingsController>();
@@ -42,10 +45,56 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _controller.addListener(_onControllerChange);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppLayout.setTitle?.call("Settings");
-      AppLayout.setActions?.call(null);
-    });
+
+    actionbarRegister("Settings");
+  }
+
+  @override
+  Widget actionbarLeftAction() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return Wrap(
+              spacing: 4,
+              children: [
+                WidgetsDialogsImport(
+                  key: const Key("import-button-batch"),
+                  tooltip: "Import settings to database",
+                  showDialogBeforeImport: true,
+                  onImport: (String json) async {
+                    await _controller.importDatabase(json);
+                  },
+                  evaluator: (s) {},
+                ),
+                WidgetsDialogsExport(
+                  key: const Key("export-button-batch"),
+                  tooltip: "Export settings from database",
+                  suggestedPrefix: "settings_",
+                  onExport: _controller.exportDatabase,
+                  isEmpty: _controller.isEmpty,
+                ),
+                WidgetsDialogsReset(
+                  key: const Key("reset-button-batch"),
+                  tooltip: "Delete all settings data",
+                  dialogTitle: "Delete All Settings",
+                  dialogMessage:
+                      "This will delete all settings data.\n"
+                      "This action cannot be undone.",
+                  onWipe: () {
+                    return _controller.clear();
+                  },
+                  isEmpty: _controller.isEmpty,
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
   }
 
   @override
