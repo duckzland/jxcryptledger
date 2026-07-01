@@ -17,7 +17,7 @@ abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepo
 
   @override
   void broadcasterAction(CoreIpcBroadcastEvent event) {
-    if (event.boxName != repo.boxName) {
+    if (event.action != repo.boxName) {
       return;
     }
 

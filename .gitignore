@@ -47,6 +47,7 @@ app.*.symbols
 app.*.map.json
 
 test/database/
+test/widgets
 
 com.jxledger*
 server_log.txt

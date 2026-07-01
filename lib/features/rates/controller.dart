@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../core/abstracts/controller.dart';
+import '../../core/ipc/action.dart';
 import '../../core/ipc/event.dart';
 
 import 'mixins/helper.dart';
@@ -24,15 +25,15 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
   void broadcasterAction(CoreIpcBroadcastEvent event) {
     super.broadcasterAction(event);
 
-    if (event.boxName == repo.boxName) {
+    if (event.action == repo.boxName) {
       if (hasRates != !repo.isEmpty()) {
         hasRates = !repo.isEmpty();
         debounceNotify();
       }
     }
 
-    if (event.op == 0x10) {
-      if (event.boxName == "start") {
+    if (event.actionCode == CoreIpcAction.refreshRates) {
+      if (event.action == "start") {
         if (!isFetching) {
           isFetching = true;
           hasRates = !repo.isEmpty();
@@ -40,7 +41,7 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
         }
       }
 
-      if (event.boxName == "complete") {
+      if (event.action == "complete") {
         isFetching = false;
         hasRates = !repo.isEmpty();
         debounceNotify();
@@ -67,11 +68,11 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
 
   void addQueue(int sourceId, int targetId, {bool force = true}) {
     if (!isValidPair(sourceId, targetId)) return;
-    ipcClient.send(op: 0x15, box: "$sourceId-$targetId", key: force);
+    ipcClient.send(op: CoreIpcAction.addRateQueue, action: "$sourceId-$targetId", key: force);
   }
 
   Future<void> refreshRates() async {
-    await ipcClient.send(op: 0x10, box: "action", key: "refresh_rates");
+    await ipcClient.send(op: CoreIpcAction.refreshRates, action: "action", key: "refresh_rates");
   }
 
   Future<void> deleteById(int sourceId, int targetId) async {

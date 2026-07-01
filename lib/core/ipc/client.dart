@@ -11,6 +11,7 @@ import '../log.dart';
 import 'protocol/buffer.dart';
 import 'protocol/packet.dart';
 import 'event.dart';
+import 'action.dart';
 
 class CoreIpcClient {
   final Map<int, Completer<dynamic>> _pending = {};
@@ -85,7 +86,7 @@ class CoreIpcClient {
 
         if (EncryptionService.instance.isUnlocked()) {
           final keyBytes = await EncryptionService.instance.getRawKeyBytes();
-          await send(op: 0x13, box: "auth", key: "unlock", value: keyBytes);
+          await send(op: CoreIpcAction.unlock, action: "auth", key: "unlock", payload: keyBytes);
         }
         return;
       }
@@ -124,11 +125,11 @@ class CoreIpcClient {
     _pending.clear();
   }
 
-  Future<Uint8List> send({required int op, required String box, dynamic key, List<int>? value}) async {
-    return await _send(op: op, box: box, key: key, value: value);
+  Future<Uint8List> send({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) async {
+    return await _send(op: op, action: action, key: key, payload: payload);
   }
 
-  Future<dynamic> _send({required int op, required String box, dynamic key, List<int>? value}) {
+  Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) {
     final completer = Completer<dynamic>();
     final reqId = _nextReqId++;
     _pending[reqId] = completer;
@@ -140,10 +141,10 @@ class CoreIpcClient {
 
       final packet = CoreIpcPacket(
         reqId: reqId,
-        op: op,
-        boxName: box,
+        op: op.code,
+        action: action,
         key: key?.toString() ?? "",
-        valueBytes: value != null ? Uint8List.fromList(value) : Uint8List(0),
+        payload: payload != null ? Uint8List.fromList(payload) : Uint8List(0),
       );
       _socket!.add(packet.toBytes());
     } catch (e) {
@@ -166,17 +167,12 @@ class CoreIpcClient {
 
       if (currentPacket.reqId == -1) {
         _broadcastController.add(
-          CoreIpcBroadcastEvent(
-            op: currentPacket.op,
-            boxName: currentPacket.boxName,
-            key: currentPacket.key,
-            valueBytes: currentPacket.valueBytes,
-          ),
+          CoreIpcBroadcastEvent(op: currentPacket.op, action: currentPacket.action, key: currentPacket.key, payload: currentPacket.payload),
         );
         continue;
       }
 
-      final Uint8List responseBytes = currentPacket.valueBytes;
+      final Uint8List responseBytes = currentPacket.payload;
       final completer = _pending[currentPacket.reqId];
       if (completer != null) {
         completer.complete(responseBytes);

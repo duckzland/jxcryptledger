@@ -77,8 +77,8 @@ class CoreBootstrapServer {
     appWorker.stop();
   }
 
-  Future<bool> unlock(String password, [Uint8List? keyBytes]) async {
-    final state = await database.unlock(password, keyBytes);
+  Future<bool> unlock(Uint8List keyBytes) async {
+    final state = await database.unlock(keyBytes);
 
     if (state == unlockError) {
       return false;

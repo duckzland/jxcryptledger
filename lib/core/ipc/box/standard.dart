@@ -5,6 +5,7 @@ import '../../abstracts/box.dart';
 import '../../runtime/locator.dart';
 import '../../log.dart';
 
+import '../action.dart';
 import '../client.dart';
 import '../registry.dart';
 import '../protocol/writer.dart';
@@ -17,7 +18,7 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
 
   @override
   Future<void> init() async {
-    final resultBytes = await ipc.send(op: 0x06, box: boxName);
+    final resultBytes = await ipc.send(op: CoreIpcAction.extract, action: boxName);
     unpackBytes(resultBytes);
     logln("[IPC] Initialized standard box: $boxName|${items.length}");
   }
@@ -29,14 +30,14 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
     boxAdapter.write(writer, value);
 
     final bytes = writer.toBytes();
-    await ipc.send(op: 0x02, box: boxName, key: id, value: bytes);
+    await ipc.send(op: CoreIpcAction.put, action: boxName, key: id, payload: bytes);
 
     items[id] = value;
   }
 
   @override
   Future<int> clear() async {
-    final resultBytes = await ipc.send(op: 0x04, box: boxName);
+    final resultBytes = await ipc.send(op: CoreIpcAction.clear, action: boxName);
     if (resultBytes.isEmpty || resultBytes.length < 4) {
       items.clear();
       return 0;
@@ -49,13 +50,13 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
 
   @override
   Future<void> delete(dynamic id) async {
-    await ipc.send(op: 0x03, box: boxName, key: id);
+    await ipc.send(op: CoreIpcAction.delete, action: boxName, key: id);
     items.remove(id);
   }
 
   @override
   Future<void> flush() async {
-    await ipc.send(op: 0x05, box: boxName);
+    await ipc.send(op: CoreIpcAction.flush, action: boxName);
   }
 
   @override
@@ -72,7 +73,7 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
     }
 
     final bytes = writer.toBytes();
-    await ipc.send(op: 0x14, box: boxName, value: bytes);
+    await ipc.send(op: CoreIpcAction.multiPut, action: boxName, payload: bytes);
 
     for (final value in values) {
       items[value.uuid] = value;
@@ -91,7 +92,7 @@ class CoreIpcBoxStandard<T extends CoreModelWithId> extends CoreBaseBox<T> {
     }
 
     final bytes = writer.toBytes();
-    await ipc.send(op: 0x17, box: boxName, value: bytes);
+    await ipc.send(op: CoreIpcAction.replace, action: boxName, payload: bytes);
 
     items.clear();
     for (final value in values) {

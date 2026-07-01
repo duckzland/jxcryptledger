@@ -15,6 +15,9 @@ import 'package:jxledger/features/cryptos/model.dart';
 import 'package:jxledger/features/cryptos/parser.dart';
 import 'package:jxledger/features/rates/adapter.dart';
 import 'package:jxledger/features/rates/model.dart';
+import 'package:jxledger/features/settings/adapter.dart';
+import 'package:jxledger/features/settings/keys.dart';
+import 'package:jxledger/features/settings/model.dart';
 import 'package:jxledger/features/transactions/adapter.dart';
 import 'package:jxledger/features/transactions/model.dart';
 import 'package:jxledger/features/watchboard/panels/adapter.dart';
@@ -242,9 +245,13 @@ Future<void> main(List<String> args) async {
   final cipher = HiveAesCipher(key);
 
   print("Seeding settings...");
-  final settingsBox = await Hive.openBox('settings_box', encryptionCipher: cipher, crashRecovery: false);
+  Hive.registerAdapter<SettingsModel>(SettingsAdapter());
+  final settingsBox = await Hive.openBox<SettingsModel>('settings_box', encryptionCipher: cipher, crashRecovery: false);
   final encryptedMarker = await encryptValue("initialized", key);
-  await settingsBox.put('vaultInitialized', encryptedMarker);
+  await settingsBox.put(
+    SettingKey.vaultInitialized.id,
+    SettingsModel(keyId: SettingKey.vaultInitialized.id, type: SettingKey.vaultInitialized.type, value: encryptedMarker),
+  );
 
   final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');
 

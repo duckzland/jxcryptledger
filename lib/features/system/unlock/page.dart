@@ -96,7 +96,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> {
               Text(
                 error!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppTheme.buttonBgError),
               ),
           ],
         ),

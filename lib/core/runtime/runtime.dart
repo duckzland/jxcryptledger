@@ -194,7 +194,8 @@ class CoreRuntime {
       final List<String> serverArgs = ['--server'];
       if (kDebugMode || kProfileMode) {
         serverArgs.add('--development');
-        detachmode = ProcessStartMode.detached;
+        // Keep stdio attached in development so server logs are visible during debugging.
+        detachmode = ProcessStartMode.detachedWithStdio;
       }
 
       logln("Launching server with flags: ${serverArgs.join(' ')}");

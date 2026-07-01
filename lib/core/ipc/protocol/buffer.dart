@@ -31,7 +31,7 @@ class CoreIpcBuffer {
     offset += 2;
 
     if (currentBytes.length < offset + boxLen + 2) return null;
-    final boxName = utf8.decode(currentBytes.sublist(offset, offset + boxLen));
+    final action = utf8.decode(currentBytes.sublist(offset, offset + boxLen));
     offset += boxLen;
 
     final keyLen = headerReader.getInt16(offset, Endian.big);
@@ -47,12 +47,12 @@ class CoreIpcBuffer {
     final int expectedTotalFrameSize = offset + valLen;
     if (currentBytes.length < expectedTotalFrameSize) return null;
 
-    final valueBytes = currentBytes.sublist(offset, expectedTotalFrameSize);
+    final payload = currentBytes.sublist(offset, expectedTotalFrameSize);
 
     final remaining = _builder.takeBytes().sublist(expectedTotalFrameSize);
     _builder.clear();
     _builder.add(remaining);
 
-    return CoreIpcPacket(reqId: reqId, op: op, boxName: boxName, key: rawKeyStr, valueBytes: valueBytes);
+    return CoreIpcPacket(reqId: reqId, op: op, action: action, key: rawKeyStr, payload: payload);
   }
 }

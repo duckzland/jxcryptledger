@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -15,6 +14,7 @@ import '../../../features/transactions/controller.dart';
 import '../../../features/watchboard/panels/controller.dart';
 import '../../../features/watchboard/tickers/controller.dart';
 import '../../../features/watchers/controller.dart';
+import '../../ipc/action.dart';
 import '../../mixins/broadcaster.dart';
 import '../locator.dart';
 import '../../log.dart';
@@ -41,6 +41,8 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
     ipcClient.onExit = () {
       AppRouter.router.go('/error');
     };
+
+    isFirstRun = !await exists();
 
     initialized = true;
   }
@@ -74,16 +76,16 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
   }
 
   Future<bool> unlock(String password) async {
-    final pwBytes = utf8.encode(password);
+    final Uint8List keyBytes = await EncryptionService.instance.loadPasswordKey(password);
 
-    final Uint8List responseBytes = await ipcClient.send(op: 0x07, box: "auth", key: "unlocking", value: pwBytes);
+    final Uint8List responseBytes = await ipcClient.send(op: CoreIpcAction.unlock, action: "auth", key: "unlocking", payload: keyBytes);
     final bool isUnlocked = responseBytes.isNotEmpty && responseBytes.first == 1;
 
     if (!isUnlocked) {
       throw Exception("Failed to unlock vault due to marker mismatch");
     }
 
-    await EncryptionService.instance.loadPasswordKey(password);
+    await EncryptionService.instance.loadKey(keyBytes);
     await _settingsController.init();
     final decrypted = await _settingsController.getDecryptedMarker();
 
@@ -92,6 +94,8 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
     }
 
     logln("Password correct, vault unlocked");
+
+    isFirstRun = !await exists();
 
     await bootServices();
 

@@ -101,19 +101,81 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSettingField(SettingKey key) {
-    return Column(
-      spacing: 10,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(key.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-        TextFormField(
+    final dynamic current = _buffer.containsKey(key) ? _buffer[key] : _controller.get<dynamic>(key);
+
+    Widget field;
+
+    switch (key.type) {
+      case SettingType.boolean:
+        final boolVal = (current is bool) ? current : false;
+        field = Row(
+          children: [
+            Switch(
+              key: ValueKey("${key.name}-$_buildCount"),
+              value: boolVal,
+              onChanged: (v) {
+                setState(() {
+                  _buffer[key] = v;
+                });
+              },
+            ),
+            const SizedBox(width: 8),
+            Text(boolVal ? 'Enabled' : 'Disabled'),
+          ],
+        );
+
+        break;
+
+      case SettingType.list:
+        field = TextFormField(
           key: ValueKey("${key.name}-$_buildCount"),
-          initialValue: _buffer[key]?.toString() ?? _controller.get(key),
+          initialValue: (current is List) ? current.join(',') : (current?.toString() ?? ''),
+          decoration: InputDecoration(
+            hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label} (comma separated)...",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+          ),
+          maxLines: null,
+          onChanged: (val) {
+            setState(() {
+              _buffer[key] = val.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+            });
+          },
+        );
+
+        break;
+
+      case SettingType.integer:
+        field = TextFormField(
+          key: ValueKey("${key.name}-$_buildCount"),
+          initialValue: current?.toString() ?? '',
           decoration: InputDecoration(
             hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
           ),
-          keyboardType: key.type == SettingType.integer ? TextInputType.number : TextInputType.text,
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (key.required && (value == null || value.isEmpty)) return "This field is required";
+            if (value != null && int.tryParse(value) == null) return "Must be a valid number";
+            return null;
+          },
+          onChanged: (val) {
+            setState(() {
+              _buffer[key] = int.tryParse(val);
+            });
+          },
+        );
+
+        break;
+
+      default:
+        field = TextFormField(
+          key: ValueKey("${key.name}-$_buildCount"),
+          initialValue: current?.toString() ?? _controller.get(key),
+          decoration: InputDecoration(
+            hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+          ),
+          keyboardType: TextInputType.text,
           validator: (value) {
             if (key.required && (value == null || value.isEmpty)) {
               return "This field is required";
@@ -124,24 +186,29 @@ class _SettingsPageState extends State<SettingsPage> {
               if (err != null) return err;
             }
 
-            if (key.type == SettingType.integer && int.tryParse(value ?? "") == null) {
-              return "Must be a valid number";
-            }
-
             return null;
           },
           onChanged: (val) {
             setState(() {
-              _buffer[key] = key.type == SettingType.integer ? int.tryParse(val) : val;
+              _buffer[key] = val;
             });
           },
-        ),
+        );
+    }
+
+    return Column(
+      spacing: 10,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(key.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+        field,
       ],
     );
   }
 
   Widget _buildSaveButton() {
     return WidgetsButton(
+      key: const ValueKey('settings-save-button'),
       label: "Save Changes",
       initialState: WidgetsButtonActionState.action,
       evaluator: (s) {
@@ -155,10 +222,18 @@ class _SettingsPageState extends State<SettingsPage> {
         s.progress();
 
         if (_formKey.currentState!.validate()) {
-          for (var key in _buffer.keys) {
+          final savedKeys = _buffer.keys.toList();
+          for (var key in savedKeys) {
             final newValue = _buffer[key];
             await _controller.update(key, newValue);
           }
+
+          setState(() {
+            for (var k in savedKeys) {
+              _buffer.remove(k);
+            }
+            _buildCount++;
+          });
 
           if (!mounted) return;
           widgetsNotifySuccess("Securely saved to vault");
@@ -171,6 +246,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildResetButton(List<SettingKey> editableKeys) {
     return WidgetsButton(
+      key: const ValueKey('settings-reset-button'),
       initialState: WidgetsButtonActionState.error,
       label: "Reset to Default",
       onPressed: (s) async {
