@@ -132,8 +132,7 @@ void main() {
       final client = CoreIpcClient();
       final keyBytes = Uint8List.fromList([1, 2, 3]);
 
-      server.unlocker = (String password, [Uint8List? bytes]) async {
-        expect(password, isEmpty);
+      server.unlocker = (Uint8List bytes) async {
         expect(bytes, equals(keyBytes));
         return true;
       };
