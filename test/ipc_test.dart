@@ -7,6 +7,7 @@ import 'package:jxledger/core/ipc/action.dart';
 import 'package:jxledger/core/ipc/client.dart';
 import 'package:jxledger/core/ipc/event.dart';
 import 'package:jxledger/core/ipc/protocol/buffer.dart';
+import 'package:jxledger/core/ipc/protocol/crypto.dart';
 import 'package:jxledger/core/ipc/protocol/packet.dart';
 import 'package:jxledger/core/ipc/server.dart';
 import 'package:jxledger/core/mode.dart';
@@ -150,7 +151,8 @@ void main() {
       final response = await client.send(op: CoreIpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
 
       expect(response, isA<Uint8List>());
-      expect(response, Uint8List.fromList([1]));
+      expect(response.length, equals(33));
+      expect(response.first, equals(1));
     });
 
     test('broadcasts events to connected clients', () async {
@@ -161,6 +163,7 @@ void main() {
       final server = CoreIpcServer('test-broadcast');
       final client = CoreIpcClient();
       final completer = Completer<CoreIpcBroadcastEvent>();
+
       final subscription = client.onBroadcast.listen((event) {
         if (!completer.isCompleted) {
           completer.complete(event);
@@ -178,9 +181,23 @@ void main() {
         await server.dispose();
       });
 
-      server.broadcast(CoreIpcAction.put, 'transactions_box', '42', Uint8List.fromList([1, 2, 3]));
+      final keyBytes = Uint8List.fromList([1, 2, 3]);
+      server.unlocker = (bytes) async => true;
 
-      final event = await completer.future.timeout(const Duration(seconds: 2));
+      final handshakeBytes = await client.send(op: CoreIpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
+      expect(handshakeBytes.first, equals(1));
+
+      client.sessionKey = handshakeBytes;
+
+      await Future.delayed(const Duration(milliseconds: 150));
+
+      final testCrypto = CoreIpcCrypto(key: server.sessionKey);
+      final rawPayload = Uint8List.fromList([1, 2, 3]);
+      final encryptedPayload = await testCrypto.encrypt(rawPayload);
+
+      server.broadcast(CoreIpcAction.put, 'transactions_box', '42', encryptedPayload);
+
+      final event = await completer.future.timeout(const Duration(seconds: 20));
       expect(event.action, equals('transactions_box'));
       expect(event.key, equals('42'));
       expect(event.payload, equals(Uint8List.fromList([1, 2, 3])));
