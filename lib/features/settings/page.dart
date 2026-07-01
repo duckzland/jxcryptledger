@@ -32,7 +32,7 @@ class _SettingsPageState extends State<SettingsPage> {
         continue;
       }
       final current = _buffer[key];
-      final original = _controller.get<dynamic>(key);
+      final original = _controller.getByKey<dynamic>(key);
       if (current != original) return true;
     }
     return false;
@@ -101,7 +101,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSettingField(SettingKey key) {
-    final dynamic current = _buffer.containsKey(key) ? _buffer[key] : _controller.get<dynamic>(key);
+    final dynamic current = _buffer.containsKey(key) ? _buffer[key] : _controller.getByKey<dynamic>(key);
 
     Widget field;
 
@@ -170,7 +170,7 @@ class _SettingsPageState extends State<SettingsPage> {
       default:
         field = TextFormField(
           key: ValueKey("${key.name}-$_buildCount"),
-          initialValue: current?.toString() ?? _controller.get(key),
+          initialValue: current?.toString() ?? _controller.getByKey(key),
           decoration: InputDecoration(
             hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
@@ -225,7 +225,7 @@ class _SettingsPageState extends State<SettingsPage> {
           final savedKeys = _buffer.keys.toList();
           for (var key in savedKeys) {
             final newValue = _buffer[key];
-            await _controller.update(key, newValue);
+            await _controller.updateByKey(key, newValue);
           }
 
           setState(() {
@@ -276,7 +276,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Map<SettingKey, dynamic> newBuff = {};
         for (var key in editableKeys) {
           final def = key.defaultValue;
-          await _controller.update(key, def);
+          await _controller.updateByKey(key, def);
           newBuff[key] = def;
         }
 

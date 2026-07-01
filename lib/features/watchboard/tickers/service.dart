@@ -26,9 +26,9 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<Map<String, dynamic>> _fetchJson(SettingKey key, {Map<String, String>? query}) async {
-    final endpoint = settingsRepo.get<String>(key) ?? key.defaultValue;
+    final endpoint = settingsRepo.getByKey<String>(key) ?? key.defaultValue;
     final uri = Uri.parse(endpoint).replace(queryParameters: query);
-    final authKey = settingsRepo.get<String>(SettingKey.authorizationKey);
+    final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
 
     final headers = <String, String>{};
     if (authKey != null && authKey.isNotEmpty) {

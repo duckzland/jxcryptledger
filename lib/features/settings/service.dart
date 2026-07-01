@@ -1,43 +1,27 @@
-import '../../core/ipc/event.dart';
-import '../../core/mixins/broadcaster.dart';
+import '../../core/abstracts/service.dart';
+import 'model.dart';
 import 'repository.dart';
 import 'keys.dart';
 
-class SettingsService with CoreMixinsBroadcaster {
-  final SettingsRepository repo;
+class SettingsService extends CoreBaseService<SettingsModel, SettingsRepository> {
+  SettingsService(super.repo);
 
-  SettingsService(this.repo);
-
-  Future<void> init() async {
-    await repo.init();
-    broadcasterListen();
-  }
-
-  @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
-    if (event.action != repo.boxName) {
-      return;
-    }
-
-    repo.receive(event);
-  }
-
-  T get<T>(SettingKey key, {T? defaultValue}) {
-    return repo.get<T>(key, defaultValue: defaultValue) as T;
+  T getByKey<T>(SettingKey key, {T? defaultValue}) {
+    return repo.getByKey<T>(key, defaultValue: defaultValue) as T;
   }
 
   Future<void> save(SettingKey key, dynamic value) async {
     await repo.save(key, value);
   }
 
-  Future<void> update(SettingKey key, dynamic value) async {
+  Future<void> updateByKey(SettingKey key, dynamic value) async {
     await repo.save(key, value);
   }
 
   bool has(SettingKey key) => repo.has(key);
 
-  Future<void> delete(SettingKey key) async {
-    await repo.delete(key);
+  Future<void> deleteByKey(SettingKey key) async {
+    await repo.deleteByKey(key);
   }
 
   Future<String?> getDecryptedMarker() async {

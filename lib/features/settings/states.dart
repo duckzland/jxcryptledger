@@ -11,7 +11,7 @@ class StateService {
   final Map<String, dynamic> _state = {};
 
   void init() {
-    final jsonData = controller.get(SettingKey.states);
+    final jsonData = controller.getByKey(SettingKey.states);
     if (jsonData != null) {
       populate(jsonData);
     }
@@ -22,7 +22,7 @@ class StateService {
   Future<void> save() async {
     final jsonData = store();
 
-    await controller.update(SettingKey.states, jsonData);
+    await controller.updateByKey(SettingKey.states, jsonData);
 
     logln('Saved app state to database.');
   }
