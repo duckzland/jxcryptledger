@@ -1,0 +1,195 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../app/constants.dart';
+import '../../app/theme.dart';
+import '../../widgets/button.dart';
+import 'controller.dart';
+
+class SystemUnlockPage extends StatefulWidget {
+  final SystemUnlockController controller;
+
+  const SystemUnlockPage({super.key, required this.controller});
+
+  @override
+  State<SystemUnlockPage> createState() => _SystemUnlockPageState();
+}
+
+class _SystemUnlockPageState extends State<SystemUnlockPage> {
+  final TextEditingController _password = TextEditingController();
+  final TextEditingController _confirm = TextEditingController();
+
+  late bool isFirstRun;
+
+  @override
+  void initState() {
+    super.initState();
+    _password.addListener(() => setState(() {}));
+    _confirm.addListener(() => setState(() {}));
+    widget.controller.init();
+    isFirstRun = widget.controller.isFirstRun;
+  }
+
+  @override
+  void dispose() {
+    _password.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  bool showPassword = false;
+  String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('v$appVersion', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFirstRunUI() {
+    return Column(
+      spacing: 20,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Column(
+          spacing: 8,
+          children: [
+            const Text("Welcome!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text("Create a password to secure your vault.", textAlign: TextAlign.center),
+          ],
+        ),
+
+        Column(
+          spacing: 12,
+          children: [
+            TextField(
+              controller: _password,
+              obscureText: !showPassword,
+              decoration: const InputDecoration(labelText: "Password"),
+            ),
+            TextField(
+              controller: _confirm,
+              obscureText: !showPassword,
+              decoration: const InputDecoration(labelText: "Confirm Password"),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Checkbox(value: showPassword, onChanged: (v) => setState(() => showPassword = v!)),
+                const Text("Show password"),
+              ],
+            ),
+
+            if (error != null)
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.buttonBgError),
+              ),
+          ],
+        ),
+
+        WidgetsButton(
+          label: "Create Vault",
+          initialState: WidgetsButtonActionState.action,
+          evaluator: (s) {
+            if (_password.text.isEmpty || _confirm.text.isEmpty || _password.text != _confirm.text) {
+              s.disable();
+            } else {
+              s.action();
+            }
+          },
+          onPressed: (s) async {
+            if (_password.text.isEmpty) {
+              setState(() => error = "Password cannot be empty");
+              return;
+            }
+
+            if (_password.text != _confirm.text) {
+              setState(() => error = "Passwords do not match");
+              return;
+            }
+
+            s.progress();
+
+            final ok = await widget.controller.unlock(_password.text);
+
+            if (!mounted) return;
+
+            if (ok) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.go("/transactions");
+              });
+            } else {
+              s.error();
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnlockUI() {
+    return Column(
+      spacing: 20,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text("Please enter password to unlock", textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        TextField(
+          controller: _password,
+          obscureText: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) async {
+            final ok = await widget.controller.unlock(_password.text);
+            if (ok) {
+              if (!mounted) return;
+              context.go("/transactions");
+            } else {
+              setState(() => error = "Invalid password");
+            }
+          },
+          decoration: InputDecoration(labelText: "Password", errorText: error),
+        ),
+
+        WidgetsButton(
+          label: "Unlock",
+          initialState: WidgetsButtonActionState.action,
+          evaluator: (s) {
+            if (_password.text.isEmpty) {
+              s.disable();
+            } else {
+              s.action();
+            }
+          },
+          onPressed: (s) async {
+            s.progress();
+            final ok = await widget.controller.unlock(_password.text);
+
+            if (!mounted) return;
+
+            if (ok) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.go("/transactions");
+              });
+            } else {
+              s.action();
+              setState(() => error = "Invalid password");
+            }
+          },
+        ),
+      ],
+    );
+  }
+}
