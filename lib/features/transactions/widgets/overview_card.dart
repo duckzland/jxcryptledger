@@ -524,7 +524,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                 TransactionsDialogsDetails.show(context, r['tx']);
               },
               cells: [
-                DataCell(Text(r['date'])),
+                DataCell(r['note'] != null ? Tooltip(message: r['note'], child: Text(r['date'])) : Text(r['date'])),
                 DataCell(Text(r['source'])),
                 DataCell(Text(r['balance'])),
                 DataCell(Text(r['exchangedRate'])),
@@ -562,6 +562,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
         'date': tx.timestampAsFormattedDate,
         'tx': tx,
         'uuid': tx.uuid,
+        'note': tx.noteText,
 
         '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,

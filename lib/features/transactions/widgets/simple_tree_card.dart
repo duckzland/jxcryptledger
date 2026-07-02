@@ -132,6 +132,13 @@ class _TransactionsSimpleTreeCardState extends State<TransactionsSimpleTreeCard>
     double dragStartX = 0.0;
     double scrollStartX = 0.0;
 
+    final header = WidgetsHeader(
+      titleColor: _fgColor,
+      title: _tx.isCapital ? "${_tx.srAmountText} $srSymbol" : "${_tx.srAmountText} → ${_tx.rrAmountText}",
+      subtitle: _tx.isCapital ? "${_tx.timestampAsFormattedDate} | Capital" : "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
+      reversed: true,
+    );
+
     return Listener(
       onPointerDown: (event) {
         dragStartX = event.position.dx;
@@ -150,14 +157,7 @@ class _TransactionsSimpleTreeCardState extends State<TransactionsSimpleTreeCard>
           spacing: 20,
           mainAxisSize: MainAxisSize.max,
           children: [
-            WidgetsHeader(
-              titleColor: _fgColor,
-              title: _tx.isCapital ? "${_tx.srAmountText} $srSymbol" : "${_tx.srAmountText} → ${_tx.rrAmountText}",
-              subtitle: _tx.isCapital
-                  ? "${_tx.timestampAsFormattedDate} | Capital"
-                  : "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
-              reversed: true,
-            ),
+            _tx.noteText != null ? Tooltip(message: _tx.noteText, child: header) : header,
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 

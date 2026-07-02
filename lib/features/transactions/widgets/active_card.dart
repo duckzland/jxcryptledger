@@ -744,9 +744,9 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                 TransactionsDialogsDetails.show(context, r['tx']);
               },
               cells: [
-                DataCell(Text(r['date'] ?? '0.0')),
-                DataCell(Text(r['from'] ?? '0.0')),
-                if (!isCapital) DataCell(Text(r['to'] ?? '0.0')),
+                DataCell(r['note'] != null ? Tooltip(message: r['note'], child: Text(r['date'])) : Text(r['date'])),
+                DataCell(Text(r['from'])),
+                if (!isCapital) DataCell(Text(r['to'])),
                 if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),
                 if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),
 
@@ -823,6 +823,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
         'status': tx.statusText,
         'date': tx.timestampAsFormattedDate,
         'tx': tx,
+        'note': tx.noteText,
         'uuid': tx.uuid,
 
         '_note': tx.noteText,

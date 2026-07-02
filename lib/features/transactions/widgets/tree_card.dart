@@ -194,6 +194,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     return FadeTransition(
       opacity: _fade,
       child: Card(
@@ -260,6 +261,13 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
     double dragStartX = 0.0;
     double scrollStartX = 0.0;
 
+    final header = WidgetsHeader(
+      titleColor: _fgColor,
+      title: _tx.isCapital ? "${_tx.srAmountText} $srSymbol" : "${_tx.srAmountText} → ${_tx.rrAmountText}",
+      subtitle: _tx.isCapital ? "${_tx.timestampAsFormattedDate} | Capital" : "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
+      reversed: true,
+    );
+
     return Listener(
       onPointerDown: (event) {
         dragStartX = event.position.dx;
@@ -278,14 +286,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
           spacing: 20,
           mainAxisSize: MainAxisSize.min,
           children: [
-            WidgetsHeader(
-              titleColor: _fgColor,
-              title: _tx.isCapital ? "${_tx.srAmountText} $srSymbol" : "${_tx.srAmountText} → ${_tx.rrAmountText}",
-              subtitle: _tx.isCapital
-                  ? "${_tx.timestampAsFormattedDate} | Capital"
-                  : "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
-              reversed: true,
-            ),
+            _tx.noteText != null ? Tooltip(message: _tx.noteText, child: header) : header,
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 

@@ -126,9 +126,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         'rate': tx.isCapital ? ' - ' : '${tx.rateText} $resultSymbol/$sourceSymbol',
         'status': tx.statusText,
         'tx': tx,
+        'note': tx.noteText,
         'uuid': tx.uuid,
-
-        '_note': tx.noteText,
+        
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
@@ -183,7 +183,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                       TransactionsDialogsDetails.show(context, r['tx']);
                     },
                     cells: [
-                      DataCell(Text(r['date'] ?? '')),
+                      DataCell(r['note'] != null ? Tooltip(message: r['note'], child: Text(r['date'])) : Text(r['date'])),
                       DataCell(Text(r['balance'] ?? '')),
                       DataCell(Text(r['source'] ?? '')),
                       DataCell(Text(r['result'] ?? '')),
