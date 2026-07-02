@@ -4,9 +4,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:dart_ipc/dart_ipc.dart';
 
-import '../../features/system/encryption/service.dart';
-import '../mode.dart';
-import '../runtime/runtime.dart';
 import '../log.dart';
 import 'protocol/buffer.dart';
 import 'protocol/crypto.dart';
@@ -23,24 +20,33 @@ class CoreIpcClient {
 
   bool _isDisposing = false;
   bool _isReconnecting = false;
+
   StreamSubscription<Uint8List>? _socketSubscription;
   VoidCallback? onExit;
+  Future<bool> Function(CoreIpcClient client)? onReconnect;
+
   Socket? _socket;
   int _nextReqId = 0;
 
   Uint8List? sessionKey;
   Uint8List? localKey;
 
+  String pipeName = "";
+
   Stream<CoreIpcBroadcastEvent> get onBroadcast => _broadcastController.stream;
 
   Future<void> start() async {
+    if (pipeName.isEmpty) {
+      throw StateError('[IPC] Refused to start with bad pipename');
+    }
+
     if (_socket != null || _isDisposing) return;
 
     _isDisposing = false;
     _isReconnecting = false;
 
     try {
-      _socket = await connect(CoreMode.ipcPipeName);
+      _socket = await connect(pipeName);
 
       _socketSubscription = _socket!.listen(
         (Uint8List chunk) => _receive(chunk),
@@ -58,7 +64,7 @@ class CoreIpcClient {
         },
         cancelOnError: true,
       );
-      logln("[IPC] Socket connected to: ${CoreMode.ipcPipeName}");
+      logln("[IPC] Socket connected to: $pipeName");
     } catch (e) {
       logln("[IPC] connection failed: $e");
       if (!_isDisposing) {
@@ -73,29 +79,13 @@ class CoreIpcClient {
 
     try {
       await destroy();
+      final success = await (onReconnect?.call(this) ?? Future.value(true));
 
-      if (!CoreMode.isServer) {
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        if (CoreRuntime.instance.shouldSpawn() && !CoreRuntime.instance.isServerAvailable()) {
-          await CoreRuntime.instance.spawnServer();
-        }
+      if (!success) {
+        throw StateError('[IPC] Failed to perform clean reconnection');
       }
-
-      await CoreRuntime.instance.waitForServer();
-
-      if (CoreRuntime.instance.isServerAvailable()) {
-        await start();
-
-        await Future.delayed(const Duration(milliseconds: 100));
-
-        if (SystemEncryptionService.instance.isUnlocked()) {
-          localKey = await SystemEncryptionService.instance.getRawKeyBytes();
-          await send(op: CoreIpcAction.unlock, action: "auth", key: "unlock", payload: localKey);
-        }
-        return;
-      }
-
+    } catch (e) {
+      logln("[IPC] Failed to reconnect: $e");
       onExit?.call();
     } finally {
       _isReconnecting = false;

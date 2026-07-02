@@ -4,7 +4,7 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/models/exportable.dart';
 import '../../core/abstracts/models/with_id.dart';
 import '../../core/utils.dart';
-import '../settings/model.dart';
+import '../../system/settings/model.dart';
 import '../transactions/model.dart';
 import '../watchboard/panels/model.dart';
 import '../watchers/model.dart';

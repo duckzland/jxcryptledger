@@ -3,14 +3,14 @@ import 'package:go_router/go_router.dart';
 
 import '../app/layout.dart';
 import '../features/archives/page.dart';
-import '../features/system/error/controller.dart';
-import '../features/system/error/page.dart';
-import '../features/settings/page.dart';
+import '../system/error/controller.dart';
+import '../system/error/page.dart';
+import '../system/settings/page.dart';
 import '../features/watchboard/page.dart';
 import '../features/tools/page.dart';
 import '../features/transactions/page.dart';
-import '../features/system/unlock/controller.dart';
-import '../features/system/unlock/page.dart';
+import '../system/unlock/controller.dart';
+import '../system/unlock/page.dart';
 import '../features/watchers/page.dart';
 import 'page.dart';
 

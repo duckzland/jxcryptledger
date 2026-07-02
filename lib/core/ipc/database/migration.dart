@@ -1,7 +1,7 @@
 import 'package:hive_ce/hive_ce.dart';
 
 import '../../../app/constants.dart';
-import '../../../features/settings/model.dart';
+import '../../../system/settings/model.dart';
 import '../../../features/watchboard/tickers/service.dart';
 import '../../runtime/locator.dart';
 

@@ -1,8 +1,8 @@
 import 'package:jxledger/core/ipc/protocol/reader.dart';
 import 'package:jxledger/core/ipc/protocol/writer.dart';
-import 'package:jxledger/features/settings/adapter.dart';
-import 'package:jxledger/features/settings/keys.dart';
-import 'package:jxledger/features/settings/model.dart';
+import 'package:jxledger/system/settings/adapter.dart';
+import 'package:jxledger/system/settings/keys.dart';
+import 'package:jxledger/system/settings/model.dart';
 import 'package:test/test.dart';
 
 void main() {

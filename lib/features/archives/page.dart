@@ -22,7 +22,7 @@ import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
 import '../cryptos/controller.dart';
-import '../settings/controller.dart';
+import '../../system/settings/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';

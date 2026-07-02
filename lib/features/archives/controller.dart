@@ -3,7 +3,7 @@ import '../../core/abstracts/controller.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/runtime/locator.dart';
-import '../settings/controller.dart';
+import '../../system/settings/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';

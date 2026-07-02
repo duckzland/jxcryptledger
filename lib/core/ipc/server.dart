@@ -9,8 +9,6 @@ import '../../features/watchboard/tickers/service.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
-import '../../features/settings/adapter.dart';
-import '../../features/settings/model.dart';
 import '../abstracts/models/with_id.dart';
 import '../mode.dart';
 import '../runtime/locator.dart';
@@ -270,22 +268,8 @@ class CoreIpcServer {
       dynamic nativeHiveKey;
       dynamic finalValue;
 
-      // @deprecated Settings expected to use SettingsModel from this version onwards.
-      if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
-        final dynamic decoded = adapter.read(batchReader);
-        if (decoded is MapEntry) {
-          nativeHiveKey = decoded.key;
-          finalValue = decoded.value;
-        } else if (decoded is Map && decoded.isNotEmpty) {
-          nativeHiveKey = decoded.keys.first;
-          finalValue = decoded.values.first;
-        } else {
-          finalValue = decoded;
-        }
-      } else {
-        finalValue = adapter.read(batchReader);
-        nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
-      }
+      finalValue = adapter.read(batchReader);
+      nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
 
       await box.put(nativeHiveKey, finalValue);
     }
@@ -294,43 +278,16 @@ class CoreIpcServer {
   CoreIpcWriter _extractBoxContents(Box box, TypeAdapter adapter) {
     final writer = CoreIpcWriter();
 
-    // @deprecated Settings expected to use SettingsModel from this version onwards.
-    if (adapter is TypeAdapter<Map<dynamic, dynamic>>) {
-      writer.writeInt(1);
-      final mapPayload = <dynamic, dynamic>{};
+    final int realCount = box.keys.length;
+    writer.writeInt(realCount);
 
-      for (var key in box.keys) {
-        final dynamic value = box.get(key);
-        if (value is Map) {
-          if (value.containsKey(key)) {
-            mapPayload[key] = value[key];
-          }
-        } else {
-          mapPayload[key] = value;
-        }
-      }
+    for (var key in box.keys) {
+      final dynamic value = box.get(key);
 
-      writer.write(mapPayload, adapter: adapter);
-    } else {
-      final int realCount = box.keys.length;
-      writer.writeInt(realCount);
-
-      for (var key in box.keys) {
-        final dynamic value = box.get(key);
-
-        if (value is Uint8List) {
-          writer.writeByteList(value, writeLength: false);
-        } else if (value != null) {
-          // @deprecated Settings expected to use SettingsModel from this version onwards.
-          if (adapter is SettingsAdapter && value is! SettingsModel) {
-            final String keyId = key.toString();
-            final dynamic legacyValue = value is Map && value.isNotEmpty ? value[keyId] ?? value.values.first : value;
-            final SettingsModel model = SettingsModel.fromLegacy(keyId, legacyValue);
-            adapter.write(writer, model);
-          } else {
-            adapter.write(writer, value);
-          }
-        }
+      if (value is Uint8List) {
+        writer.writeByteList(value, writeLength: false);
+      } else if (value != null) {
+        adapter.write(writer, value);
       }
     }
 

@@ -1,5 +1,5 @@
 import '../core/runtime/locator.dart';
-import '../features/settings/states.dart';
+import '../system/settings/states.dart';
 
 mixin MixinsState {
   final StateService states = locator<StateService>();

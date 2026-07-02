@@ -3,7 +3,7 @@ import 'package:hive_ce/hive_ce.dart';
 import 'package:jxledger/app/exceptions.dart';
 import 'package:jxledger/features/transactions/adapter.dart';
 import 'package:jxledger/features/transactions/model.dart';
-import 'package:jxledger/core/ipc/box/hive.dart';
+import 'hive.dart';
 import 'package:jxledger/features/transactions/repository.dart';
 
 void main() async {

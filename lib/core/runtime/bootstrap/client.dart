@@ -7,17 +7,20 @@ import '../../../app/router.dart';
 import '../../../mixins/state.dart';
 import '../../../features/archives/controller.dart';
 import '../../../features/cryptos/controller.dart';
-import '../../../features/system/encryption/service.dart';
+import '../../../system/encryption/service.dart';
 import '../../../features/rates/controller.dart';
-import '../../../features/settings/controller.dart';
+import '../../../system/settings/controller.dart';
 import '../../../features/transactions/controller.dart';
 import '../../../features/watchboard/panels/controller.dart';
 import '../../../features/watchboard/tickers/controller.dart';
 import '../../../features/watchers/controller.dart';
 import '../../ipc/action.dart';
+import '../../ipc/client.dart';
 import '../../mixins/broadcaster.dart';
 import '../../log.dart';
+import '../../mode.dart';
 import '../locator.dart';
+import '../runtime.dart';
 
 class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
   bool initialized = false;
@@ -37,10 +40,41 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
     if (initialized) return;
     if (kIsWeb) return;
 
-    await ipcClient.start();
+    ipcClient.onReconnect = (CoreIpcClient client) async {
+      if (!CoreMode.isServer) {
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (CoreRuntime.instance.shouldSpawn() && !CoreRuntime.instance.isServerAvailable()) {
+          await CoreRuntime.instance.spawnServer();
+        }
+      }
+
+      await CoreRuntime.instance.waitForServer();
+
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      if (CoreRuntime.instance.isServerAvailable()) {
+        await client.start();
+
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        if (SystemEncryptionService.instance.isUnlocked()) {
+          client.localKey = await SystemEncryptionService.instance.getRawKeyBytes();
+          await client.send(op: CoreIpcAction.unlock, action: "auth", key: "unlock", payload: client.localKey);
+        }
+        return true;
+      }
+
+      return false;
+    };
+
     ipcClient.onExit = () {
       AppRouter.router.go('/error');
     };
+
+    ipcClient.pipeName = CoreMode.ipcPipeName;
+
+    await ipcClient.start();
 
     isFirstRun = !await exists();
 
@@ -79,7 +113,7 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
     final Uint8List keyBytes = await SystemEncryptionService.instance.loadPasswordKey(password);
     final Uint8List responseBytes = await ipcClient.send(op: CoreIpcAction.unlock, action: "auth", key: "unlocking", payload: keyBytes);
     final bool isUnlocked = responseBytes.isNotEmpty && responseBytes.first == 1;
-    
+
     if (!isUnlocked) {
       throw Exception("Failed to unlock vault due to marker mismatch");
     }

@@ -6,7 +6,7 @@ import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/panel.dart';
 import '../../app/exceptions.dart';
 import '../../mixins/rateable.dart';
-import '../settings/controller.dart';
+import '../../system/settings/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';
