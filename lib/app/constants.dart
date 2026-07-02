@@ -1,4 +1,4 @@
-const String appVersion = "1.0.30.2";
+const String appVersion = "1.0.30.3";
 const String appSalt = "7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a";
 const int unlockError = 0;
 const int unlockSuccess = 1;
