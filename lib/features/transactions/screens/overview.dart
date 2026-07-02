@@ -143,6 +143,8 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
   Widget build(BuildContext context) {
     super.build(context);
 
+    final groupKeys = groups.keys.toList();
+
     return groups.isEmpty
         ? Center(
             child: Text(
@@ -153,10 +155,10 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         : ListView.separated(
             controller: scrollToUtil.controller,
             padding: const EdgeInsets.only(bottom: 24),
-            itemCount: groups.length,
+            itemCount: groupKeys.length,
             separatorBuilder: (_, _) => const SizedBox(height: 24),
             itemBuilder: (itemContext, idx) {
-              final rrId = groups.keys.elementAt(idx);
+              final rrId = groupKeys[idx];
               final stxs = groups[rrId]!;
 
               return TransactionsOverviewCard(

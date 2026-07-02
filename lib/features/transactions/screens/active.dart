@@ -124,7 +124,16 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     double height = 0.0;
 
     height += 16 + 16;
-    height += (currentWidth > 1000) ? 45 : 120;
+    height += 16 + 16;
+    if (currentWidth > 1035) {
+      height += 50;
+    } else if (currentWidth > 800) {
+      height += 120;
+    } else if (currentWidth > 470) {
+      height += 160;
+    } else {
+      height += 200;
+    }
 
     if (isOpen) {
       height += 20;
@@ -143,6 +152,8 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   Widget build(BuildContext context) {
     super.build(context);
 
+    final groupKeys = groups.keys.toList();
+
     return groups.isEmpty
         ? Center(
             child: Text(
@@ -153,10 +164,10 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         : ListView.separated(
             controller: scrollToUtil.controller,
             padding: const EdgeInsets.only(bottom: 24),
-            itemCount: groups.length,
+            itemCount: groupKeys.length,
             separatorBuilder: (_, _) => const SizedBox(height: 24),
             itemBuilder: (itemContext, idx) {
-              final key = groups.keys.elementAt(idx);
+              final key = groupKeys[idx];
               final parts = key.split('-');
 
               final srId = int.parse(parts[0]);
