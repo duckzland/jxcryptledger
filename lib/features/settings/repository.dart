@@ -73,7 +73,6 @@ class SettingsRepository extends CoreBaseRepository<SettingsModel> with CoreMixi
       return key?.isUserEditable ?? false;
     }).toList();
 
-    await box.clear();
     for (final tx in txs) {
       await box.put(tx.uuid, tx);
     }
