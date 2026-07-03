@@ -37,7 +37,8 @@ final GetIt locator = GetIt.instance;
 
 void setupLocator() {
   // IpcClient
-  locator.registerLazySingleton<CoreIpcClient>(() => CoreIpcClient());
+  locator.registerLazySingleton<CoreIpcAdapters>(() => CoreIpcAdapters());
+  locator.registerLazySingleton<CoreIpcClient>(() => CoreIpcClient(locator<CoreIpcAdapters>()));
 
   // IpcServer
   locator.registerLazySingleton<CoreIpcServer>(() => CoreIpcServer('jxledger'));
@@ -96,6 +97,4 @@ void setupLocator() {
   // Higher level boots, this will most likely depends on the lower level to boot first.
   locator.registerLazySingleton<CoreBootstrapServer>(() => CoreBootstrapServer());
   locator.registerLazySingleton<CoreBootstrapClient>(() => CoreBootstrapClient());
-
-  locator.registerLazySingleton<CoreIpcAdapters>(() => CoreIpcAdapters());
 }

@@ -202,7 +202,7 @@ class CoreHiveBoxStandard<T extends CoreModelWithId> implements CoreIpcBox<T> {
   }
 
   @override
-  CoreIpcClient get ipc => throw UnimplementedError();
+  CoreIpcClient get client => throw UnimplementedError();
 
   @override
   Future<void> add(T tx) async {

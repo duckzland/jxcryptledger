@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../../core/abstracts/controller.dart';
 import '../../core/ipc/action.dart';
 import '../../core/mixins/controllers/exportable.dart';
@@ -44,7 +42,7 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
       message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDouble(tx.rates)}.";
     }
 
-    await ipcClient.send(op: CoreIpcAction.notification, action: 'action', key: "notification", payload: utf8.encode(message));
+    await ipcClient.send(op: CoreIpcAction.notification, action: 'action', key: "notification", payload: message);
   }
 
   Future<void> restart() async {

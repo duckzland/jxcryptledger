@@ -111,15 +111,14 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
 
   Future<bool> unlock(String password) async {
     final Uint8List keyBytes = await SystemEncryptionService.instance.loadPasswordKey(password);
-    final Uint8List responseBytes = await ipcClient.send(op: CoreIpcAction.unlock, action: "auth", key: "unlocking", payload: keyBytes);
-    final bool isUnlocked = responseBytes.isNotEmpty && responseBytes.first == 1;
+    final Uint8List? sessionKey = await ipcClient.send(op: CoreIpcAction.unlock, action: "auth", key: "unlocking", payload: keyBytes);
 
-    if (!isUnlocked) {
+    if (sessionKey == null) {
       throw Exception("Failed to unlock vault due to marker mismatch");
     }
 
     ipcClient.localKey = keyBytes;
-    ipcClient.sessionKey = responseBytes.sublist(1);
+    ipcClient.sessionKey = sessionKey;
 
     await SystemEncryptionService.instance.loadKey(keyBytes);
     await _settingsController.init();

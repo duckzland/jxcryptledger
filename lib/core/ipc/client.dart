@@ -1,17 +1,25 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:dart_ipc/dart_ipc.dart';
 
 import '../log.dart';
+import 'database/adapters.dart';
 import 'protocol/buffer.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 import 'event.dart';
 import 'action.dart';
+import 'protocol/reader.dart';
+import 'protocol/writer.dart';
 
 class CoreIpcClient {
+  final CoreIpcAdapters adapters;
+
+  CoreIpcClient(this.adapters);
+
   final Map<int, Completer<dynamic>> _pending = {};
   final String uuid = "client_${DateTime.now().millisecondsSinceEpoch}_${StackTrace.current.hashCode}";
   final CoreIpcBuffer _incomingBuffer = CoreIpcBuffer();
@@ -120,8 +128,63 @@ class CoreIpcClient {
     _pending.clear();
   }
 
-  Future<Uint8List> send({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) async {
-    return await _send(op: op, action: action, key: key, payload: payload);
+  Future<dynamic> send({required CoreIpcAction op, required String action, dynamic key, dynamic payload}) async {
+    List<int>? bytes;
+    switch (op) {
+      case CoreIpcAction.put:
+        final writer = CoreIpcWriter();
+        final boxAdapter = adapters.get(action);
+        boxAdapter.write(writer, payload);
+        bytes = writer.toBytes();
+        break;
+
+      case CoreIpcAction.replace:
+      case CoreIpcAction.multiPut:
+        final writer = CoreIpcWriter();
+        final boxAdapter = adapters.get(action);
+        writer.writeInt(payload.length);
+        for (final value in payload) {
+          boxAdapter.write(writer, value);
+        }
+
+        bytes = writer.toBytes();
+        break;
+
+      case CoreIpcAction.unlock:
+        bytes = payload;
+        break;
+
+      case CoreIpcAction.notification:
+        bytes = utf8.encode(payload);
+        break;
+
+      default:
+        break;
+    }
+
+    final resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
+
+    switch (op) {
+      case CoreIpcAction.extract:
+        List<dynamic> results = [];
+        final reader = CoreIpcReader(resultBytes);
+        final int count = reader.readInt();
+        final adapter = adapters.get(action);
+
+        for (var i = 0; i < count; i++) {
+          final dynamic decodedItem = reader.read(null, adapter);
+          results.add(decodedItem);
+        }
+        return results;
+
+      case CoreIpcAction.clear:
+        return ByteData.sublistView(resultBytes).getInt32(0, Endian.big);
+
+      case CoreIpcAction.unlock:
+        return resultBytes.isNotEmpty && resultBytes.first == 1 ? resultBytes.sublist(1) : null;
+      default:
+        return null;
+    }
   }
 
   Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) async {
