@@ -16,11 +16,9 @@ import '../../features/transactions/adapter.dart';
 import '../../features/watchboard/panels/adapter.dart';
 import '../../features/watchboard/tickers/adapter.dart';
 import '../../features/watchers/adapter.dart';
-import '../ipc/client.dart';
 import '../ipc/registry.dart';
 import '../log.dart';
 import '../mode.dart';
-import '../worker.dart';
 import 'bootstrap/client.dart';
 import 'bootstrap/server.dart';
 import 'process.dart';
@@ -194,7 +192,6 @@ class CoreRuntime {
       final List<String> serverArgs = ['--server'];
       if (kDebugMode || kProfileMode) {
         serverArgs.add('--development');
-        // Keep stdio attached in development so server logs are visible during debugging.
         detachmode = ProcessStartMode.detachedWithStdio;
       }
 
@@ -227,12 +224,7 @@ class CoreRuntime {
 
   Future<void> shutdown() async {
     if (!CoreMode.isServer) {
-      // @todo: figure out on how to save multiple app state!
-      if (CoreMode.isMain) {
-        await states.save();
-      }
-
-      final clt = locator<CoreIpcClient>();
+      final clt = locator<CoreBootstrapClient>();
       await clt.dispose();
     } else {
       final srv = locator<CoreBootstrapServer>();
@@ -242,8 +234,6 @@ class CoreRuntime {
       await stderr.close();
 
       lifecycleListener.dispose();
-
-      locator<CoreWorker>().stop();
 
       exit(0);
     }

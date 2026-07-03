@@ -8,12 +8,10 @@ import '../features/transactions/service.dart';
 import '../features/watchboard/panels/service.dart';
 import '../features/watchboard/tickers/service.dart';
 import '../features/watchers/service.dart';
-import 'runtime/runtime.dart';
 
 class CoreWorker {
   Timer? _timer;
   bool _started = false;
-  Timer? _watcherTimer;
 
   void start() {
     if (_started) return;
@@ -73,23 +71,11 @@ class CoreWorker {
         await tickers.refreshRates();
       }
     });
-
-    _watcherTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
-      final hasClient = CoreRuntime.instance.hasClient();
-      if (hasClient) {
-        logln("[WORKER] Server still has connected client");
-      } else {
-        logln("[WORKER] Server has no more connected client");
-        CoreRuntime.instance.shutdown();
-      }
-    });
   }
 
   void stop() {
     _timer?.cancel();
     _timer = null;
-    _watcherTimer?.cancel();
-    _watcherTimer = null;
     _started = false;
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../app/constants.dart';
@@ -43,6 +45,8 @@ class CoreBootstrapServer {
   late CoreIpcServer server;
   late CoreIpcClient client;
 
+  Timer? _serverWatchdog;
+
   Future<void> start() async {
     if (initialized) return;
     if (kIsWeb) return;
@@ -59,6 +63,16 @@ class CoreBootstrapServer {
 
     await database.init();
     await server.start();
+
+    _serverWatchdog = Timer.periodic(const Duration(seconds: 5), (_) async {
+      final hasClient = CoreRuntime.instance.hasClient();
+      if (hasClient) {
+        logln("Server still has connected client");
+      } else {
+        logln("Server has no more connected client");
+        CoreRuntime.instance.shutdown();
+      }
+    });
 
     initialized = true;
   }
@@ -112,5 +126,8 @@ class CoreBootstrapServer {
     await client.dispose();
     await stopServices();
     await server.dispose();
+
+    _serverWatchdog?.cancel();
+    _serverWatchdog = null;
   }
 }

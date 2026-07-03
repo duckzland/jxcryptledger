@@ -137,4 +137,13 @@ class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
 
     return true;
   }
+
+  Future<void> dispose() async {
+    // @todo: figure out on how to save multiple app state!
+    if (CoreMode.isMain) {
+      await states.save();
+    }
+
+    await ipcClient.dispose();
+  }
 }
