@@ -26,6 +26,10 @@ class NotificationService {
     await _plugin.initialize(settings: initSettings, onDidReceiveNotificationResponse: (details) {});
   }
 
+  Future<void> dispose() async {
+    await _plugin.cancelAll();
+  }
+
   Future<void> show(String message) async {
     const NotificationDetails notificationDetails = NotificationDetails(
       linux: LinuxNotificationDetails(urgency: LinuxNotificationUrgency.normal),

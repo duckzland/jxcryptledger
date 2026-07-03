@@ -92,6 +92,16 @@ class CoreBootstrapServer {
   }
 
   Future<void> stopServices() async {
+    await _settingsService.dispose();
+    await _notificationService.dispose();
+    await _ratesService.dispose();
+    await _watchersService.dispose();
+    await _panelsService.dispose();
+    await _tickersService.dispose();
+    await _cryptosService.dispose();
+    await _archivesService.dispose();
+    await _transactionsService.dispose();
+
     appWorker.stop();
   }
 

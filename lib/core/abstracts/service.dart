@@ -24,6 +24,10 @@ abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepo
     repo.receive(event);
   }
 
+  Future<void> dispose() async {
+    broadcasterDispose();
+  }
+
   T? findNew(List<T> oldItems) {
     final items = repo.extract();
     final oldIds = oldItems.map((t) => t.uuid).toSet();

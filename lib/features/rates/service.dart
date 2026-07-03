@@ -35,6 +35,14 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     await repo.cleanupOldRates();
   }
 
+  @override
+  Future<void> dispose() async {
+    _debounce?.cancel();
+    _watchdog?.cancel();
+    _paused?.cancel();
+    await super.dispose();
+  }
+
   Future<void> deleteById(int sourceId, int targetId) async {
     logln('[RATES] Deleting $sourceId-$targetId.');
     await repo.delete("$sourceId-$targetId");
