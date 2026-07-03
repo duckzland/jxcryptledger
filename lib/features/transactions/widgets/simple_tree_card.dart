@@ -5,6 +5,7 @@ import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/layouts/wrapped_two_columns.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../model.dart';
 import '../controller.dart';
@@ -157,7 +158,7 @@ class _TransactionsSimpleTreeCardState extends State<TransactionsSimpleTreeCard>
           spacing: 20,
           mainAxisSize: MainAxisSize.max,
           children: [
-            _tx.noteText != null ? Tooltip(message: _tx.noteText, child: header) : header,
+            WidgetsWithTooltip(header, _tx.noteText),
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 

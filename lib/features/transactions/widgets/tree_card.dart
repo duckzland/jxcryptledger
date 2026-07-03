@@ -8,6 +8,7 @@ import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/layouts/wrapped_two_columns.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../model.dart';
 import '../controller.dart';
@@ -286,7 +287,7 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
           spacing: 20,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _tx.noteText != null ? Tooltip(message: _tx.noteText, child: header) : header,
+            WidgetsWithTooltip(header, _tx.noteText),
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 

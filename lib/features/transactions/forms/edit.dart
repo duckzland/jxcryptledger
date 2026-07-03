@@ -58,13 +58,6 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     final data = widget.initialData!;
 
     _isCapital = data.isCapital;
-    _selectedSrId = data.srId;
-    _selectedRrId = data.rrId;
-    _selectedDate = DateTime.fromMicrosecondsSinceEpoch(widget.initialData!.sanitizedTimestamp, isUtc: true).toLocal();
-    _srAmount = Utils.formatSmartDouble(data.srAmount).replaceAll(',', '');
-    _rrAmount = Utils.formatSmartDouble(data.rrAmount).replaceAll(',', '');
-    _noteEntry = isRoot ? data.meta['purchase_notes'] ?? '' : data.meta['trading_notes'] ?? '';
-
     detectLeaf(data);
 
     _isActive = widget.initialData?.statusEnum == TransactionStatus.active;
@@ -83,30 +76,41 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final data = widget.initialData!;
+
     try {
+      final srId = _saveSourceCryptoField();
+      final srAmount = _saveSourceAmountField();
+      final balance = _saveBalanceField();
+      final timestamp = _selectedDate != null ? Utils.dateToTimestamp(_selectedDate) : data.timestamp;
+      final meta = _saveNotesField();
+
+      int rrId = _saveResultCryptoField();
+      double rrAmount = _saveResultAmountField();
+
       if (_isCapital) {
-        _rrAmount = _srAmount;
-        _selectedRrId = _selectedSrId;
+        rrAmount = srAmount;
+        rrId = srId;
       } else {
-        if (_rrAmount == _srAmount && _selectedRrId == _selectedSrId) {
+        if (rrAmount == srAmount && rrId == srId) {
           throw ValidationException(
             AppErrorCode.txBasicSrIdEqualsRrId,
-            "srId must not equal rrId (srId=$_selectedSrId, rrId=$_selectedRrId).",
+            "srId must not equal rrId (srId=$srId, rrId=$rrId).",
             "Source and target coin must be different.",
           );
         }
       }
 
-      final data = widget.initialData!;
       final tx = data.copyWith(
-        srId: _saveSourceCryptoField(),
-        srAmount: _saveSourceAmountField(),
-        rrId: _saveResultCryptoField(),
-        rrAmount: _saveResultAmountField(),
-        balance: _saveBalanceField(),
-        timestamp: _selectedDate != null ? Utils.dateToTimestamp(_selectedDate) : data.timestamp,
-        meta: _saveNotesField(),
+        srId: srId,
+        srAmount: srAmount,
+        rrId: rrId,
+        rrAmount: rrAmount,
+        balance: balance,
+        timestamp: timestamp,
+        meta: meta,
       );
+
       await _txController.update(tx);
       widget.onSave?.call(null, tx);
     } on ValidationException catch (e) {
@@ -117,56 +121,70 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   }
 
   double _saveBalanceField() {
-    final proposed = _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
-
     final data = widget.initialData!;
 
-    if (isRoot) return proposed;
-    if (isLeaf && _isActive) return proposed;
+    if (_rrAmount != null) {
+      final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
+      if (isRoot) return proposed;
+      if (isLeaf && _isActive) return proposed;
+    }
 
     return data.balance;
   }
 
   int _saveSourceCryptoField() {
     final data = widget.initialData!;
-    if (isRoot) return _selectedSrId ?? data.srId;
+    if (_selectedSrId != null) {
+      if (isRoot) return _selectedSrId!;
+    }
     return data.srId;
   }
 
   double _saveSourceAmountField() {
-    final proposed = _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0;
     final data = widget.initialData!;
-    if (isRoot) return proposed;
-    if (isLeaf && _isActive) return proposed;
+    if (_srAmount != null) {
+      final proposed = double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0;
+      if (isRoot) return proposed;
+      if (isLeaf && _isActive) return proposed;
+    }
     return data.srAmount;
   }
 
   int _saveResultCryptoField() {
     final data = widget.initialData!;
-    if (isRoot) return _selectedRrId ?? data.rrId;
-    if (isLeaf && _isActive) return _selectedRrId ?? data.rrId;
+    if (_selectedRrId != null) {
+      if (isRoot) return _selectedRrId!;
+      if (isLeaf && _isActive) return _selectedRrId!;
+    }
     return data.rrId;
   }
 
   double _saveResultAmountField() {
-    final proposed = _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
     final data = widget.initialData!;
-    if (isRoot) return proposed;
-    if (isLeaf && _isActive) return proposed;
+
+    if (_rrAmount != null) {
+      final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
+      if (isRoot) return proposed;
+      if (isLeaf && _isActive) return proposed;
+    }
+
     return data.rrAmount;
   }
 
   Map<String, dynamic> _saveNotesField() {
     final data = widget.initialData!;
-    final meta = Map<String, dynamic>.from(data.meta);
+    if (_noteEntry != null) {
+      final meta = Map<String, dynamic>.from(data.meta);
+      if (isRoot) {
+        meta['purchase_notes'] = _noteEntry;
+      } else {
+        meta['trading_notes'] = _noteEntry;
+      }
 
-    if (isRoot) {
-      meta['purchase_notes'] = _noteEntry;
-    } else {
-      meta['trading_notes'] = _noteEntry;
+      return meta;
     }
 
-    return meta;
+    return data.meta;
   }
 
   @override
@@ -326,7 +344,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
     return WidgetsFieldsAmount(
       title: 'Amount',
-      initialValue: _srAmount,
+      initialValue: data?.srAmountText.replaceAll(',', ''),
       suffixText: symbol,
       enabled: _isActive,
       helperText: 'e.g., 1.5',
@@ -337,9 +355,11 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   }
 
   Widget _buildSourceCryptoField() {
+    final data = widget.initialData;
+
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
-      initialValue: _selectedSrId,
+      initialValue: data?.srId,
       enabled: isRoot,
       onSelected: (id) => setState(() => _selectedSrId = id),
     );
@@ -347,15 +367,17 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
   Widget _buildResultAmountField() {
     String? symbol;
+
+    final data = widget.initialData;
+
     if (!isRoot && !_isActive) {
-      final data = widget.initialData;
       final rrid = data?.rrId ?? 0;
       symbol = _cryptoController.getSymbol(rrid);
     }
 
     return WidgetsFieldsAmount(
       title: 'Amount',
-      initialValue: _rrAmount,
+      initialValue: data?.rrAmountText.replaceAll(',', ''),
       suffixText: symbol,
       enabled: isRoot || _isActive,
       helperText: 'e.g., 10.5',
@@ -366,19 +388,23 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   }
 
   Widget _buildResultCryptoField() {
+    final data = widget.initialData;
+
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
-      initialValue: _selectedRrId,
+      initialValue: data?.rrId,
       enabled: !(!isRoot && !_isActive),
       onSelected: (id) => setState(() => _selectedRrId = id),
     );
   }
 
   Widget _buildNotesField() {
+    final data = widget.initialData;
+
     return WidgetsFieldsTextarea(
       title: isRoot ? 'Purchase Notes' : 'Trading Notes',
       helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
-      initialValue: _noteEntry,
+      initialValue: data?.noteText,
       onChanged: (value) {
         setState(() => _noteEntry = value);
       },

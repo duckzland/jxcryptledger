@@ -20,6 +20,7 @@ import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../../watchboard/panels/controller.dart';
 import '../../watchboard/panels/form.dart';
@@ -744,7 +745,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                 TransactionsDialogsDetails.show(context, r['tx']);
               },
               cells: [
-                DataCell(r['note'] != null ? Tooltip(message: r['note'], child: Text(r['date'])) : Text(r['date'])),
+                DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
                 DataCell(Text(r['from'])),
                 if (!isCapital) DataCell(Text(r['to'])),
                 if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),

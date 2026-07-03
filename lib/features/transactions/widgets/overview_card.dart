@@ -16,6 +16,7 @@ import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../dialogs/batch_action.dart';
 import '../dialogs/batch_trade.dart';
@@ -524,7 +525,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                 TransactionsDialogsDetails.show(context, r['tx']);
               },
               cells: [
-                DataCell(r['note'] != null ? Tooltip(message: r['note'], child: Text(r['date'])) : Text(r['date'])),
+                DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
                 DataCell(Text(r['source'])),
                 DataCell(Text(r['balance'])),
                 DataCell(Text(r['exchangedRate'])),

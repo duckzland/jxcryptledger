@@ -10,6 +10,7 @@ import '../../../mixins/sortable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../dialogs/details.dart';
@@ -128,7 +129,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         'tx': tx,
         'note': tx.noteText,
         'uuid': tx.uuid,
-        
+
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.rrAmount,
         '_balanceSymbol': resultSymbol,
@@ -183,7 +184,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                       TransactionsDialogsDetails.show(context, r['tx']);
                     },
                     cells: [
-                      DataCell(r['note'] != null ? Tooltip(message: r['note'], child: Text(r['date'])) : Text(r['date'])),
+                      DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
                       DataCell(Text(r['balance'] ?? '')),
                       DataCell(Text(r['source'] ?? '')),
                       DataCell(Text(r['result'] ?? '')),
