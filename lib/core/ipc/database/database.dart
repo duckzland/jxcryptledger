@@ -25,7 +25,6 @@ class CoreIpcDatabase {
   bool initialized = false;
   bool unlocked = false;
   bool isFirstRun = false;
-  String? hivePath;
 
   Future<void> init() async {
     if (initialized) return;
