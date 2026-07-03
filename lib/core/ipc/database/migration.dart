@@ -12,8 +12,6 @@ import '../../log.dart';
 import '../../runtime/locator.dart';
 
 class CoreIpcMigration {
-  final TickersService _tickersService = locator<TickersService>();
-
   Future<void> migrateBeforeUnlock() async {
     // @deprecated Remove this in the next minor version release.
     await _migrateOldFiles();
@@ -22,12 +20,12 @@ class CoreIpcMigration {
   Future<void> migrateAfterUnlock() async {
     if (isVersionLessThan(appVersion, "1.0.30.99")) {
       await _migrateSettingsBox();
-
-      final tickers = _tickersService.extract();
+      final TickersService tickersService = locator<TickersService>();
+      final tickers = tickersService.extract();
       final exists = tickers.any((ticker) => ticker.tid == "market_cap");
       if (!exists) {
-        await _tickersService.clear();
-        await _tickersService.populate();
+        await tickersService.clear();
+        await tickersService.populate();
       }
     }
   }

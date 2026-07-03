@@ -41,7 +41,7 @@ void setupLocator() {
   locator.registerLazySingleton<CoreIpcClient>(() => CoreIpcClient(locator<CoreIpcAdapters>()));
 
   // IpcServer
-  locator.registerLazySingleton<CoreIpcServer>(() => CoreIpcServer('jxledger'));
+  locator.registerLazySingleton<CoreIpcServer>(() => CoreIpcServer());
 
   // Settings
   locator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());

@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:typed_data';
 
 import 'package:hive_ce/hive_ce.dart';
 
@@ -9,7 +8,6 @@ import 'package:jxledger/core/ipc/box.dart';
 import 'package:jxledger/core/ipc/client.dart';
 import 'package:jxledger/core/ipc/database/adapters.dart';
 import 'package:jxledger/core/ipc/event.dart';
-import 'package:jxledger/core/ipc/protocol/reader.dart';
 import 'package:jxledger/core/log.dart';
 
 class CoreHiveBoxStandard<T extends CoreModelWithId> implements CoreIpcBox<T> {
@@ -165,39 +163,31 @@ class CoreHiveBoxStandard<T extends CoreModelWithId> implements CoreIpcBox<T> {
       return;
     }
 
-    if (event.actionCode == CoreIpcAction.put) {
-      final adapter = adapters.get(boxName);
-      final reader = CoreIpcReader(event.payload);
-      final dynamic decodedItem = reader.read(null, adapter);
+    switch (event.actionCode) {
+      case CoreIpcAction.put:
+        final data = event.payload as T;
+        items[data.uuid] = data;
+        break;
 
-      if (decodedItem is T) {
-        items[event.key] = decodedItem;
-      }
-    } else if (event.actionCode == CoreIpcAction.delete) {
-      items.remove(event.key);
-    } else if (event.actionCode == CoreIpcAction.clear) {
-      items.clear();
-    } else if (event.actionCode == CoreIpcAction.multiPut) {
-      unpackBytes(event.payload);
-    } else if (event.actionCode == CoreIpcAction.replace) {
-      unpackBytes(event.payload);
-    }
-  }
+      case CoreIpcAction.delete:
+        items.remove(event.key);
+        break;
 
-  @override
-  void unpackBytes(Uint8List resultBytes) {
-    final adapter = adapters.get(boxName);
-    final reader = CoreIpcReader(resultBytes);
+      case CoreIpcAction.clear:
+        items.clear();
+        break;
 
-    final int totalItems = reader.readInt();
-    for (int i = 0; i < totalItems; i++) {
-      final decoded = reader.read(null, adapter);
-      final dynamic item = (decoded is MapEntry) ? decoded.value : decoded;
-      final dynamic key = (item is CoreModelWithId) ? item.uuid : i;
+      case CoreIpcAction.multiPut:
+      case CoreIpcAction.replace:
+        items.clear();
+        for (final value in event.payload) {
+          final data = value as T;
+          items[data.uuid] = data;
+        }
+        break;
 
-      if (item is T) {
-        items[key] = item;
-      }
+      default:
+        break;
     }
   }
 

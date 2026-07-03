@@ -9,7 +9,7 @@ import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
 import '../abstracts/models/with_id.dart';
-import '../mode.dart';
+
 import '../runtime/locator.dart';
 import '../log.dart';
 
@@ -24,20 +24,21 @@ import 'database/database.dart';
 import 'action.dart';
 
 class CoreIpcServer {
-  final String pipeId;
   final List<Socket> _slaves = [];
   final Uint8List sessionKey = CoreIpcCrypto.createSessionKey(32);
   final CoreIpcCrypto _crypto = CoreIpcCrypto();
 
   ServerSocket? socket;
 
-  CoreIpcServer(this.pipeId);
+  CoreIpcServer();
 
   late final CoreIpcDatabase database;
   Future<bool> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
 
   bool _isDisposing = false;
+
+  String pipeName = "";
 
   Future<void> dispose() async {
     if (_isDisposing) return;
@@ -63,8 +64,8 @@ class CoreIpcServer {
   Future<void> start() async {
     _crypto.setSessionKey(sessionKey);
 
-    final socket = await bind(CoreMode.ipcPipeName);
-    logln("[IPC] Server running: ${CoreMode.ipcPipeName}");
+    final socket = await bind(pipeName);
+    logln("[IPC] Server running: $pipeName");
 
     socket.listen((client) {
       if (_isDisposing) return;
@@ -272,7 +273,7 @@ class CoreIpcServer {
     for (int i = 0; i < totalItems; i++) {
       dynamic nativeHiveKey;
       dynamic finalValue;
-      
+
       finalValue = adapter.read(batchReader);
       nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
       await database.put(boxName, nativeHiveKey, finalValue);

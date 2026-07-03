@@ -20,6 +20,7 @@ import '../../ipc/database/database.dart';
 import '../../ipc/database/migration.dart';
 import '../../ipc/server.dart';
 import '../../log.dart';
+import '../../mode.dart';
 import '../../worker.dart';
 import '../runtime.dart';
 import '../locator.dart';
@@ -57,6 +58,7 @@ class CoreBootstrapServer {
     client = locator<CoreIpcClient>();
     server = locator<CoreIpcServer>();
 
+    server.pipeName = CoreMode.ipcPipeName;
     server.database = database;
     server.unlocker = unlock;
     server.shutdown = CoreRuntime.instance.shutdown;
