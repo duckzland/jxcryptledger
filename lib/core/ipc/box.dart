@@ -1,14 +1,12 @@
 import 'dart:collection';
-import 'dart:typed_data';
 
 import '../abstracts/models/with_id.dart';
 import '../log.dart';
 
+import 'database/adapters.dart';
 import 'action.dart';
 import 'client.dart';
-import 'database/adapters.dart';
 import 'event.dart';
-import 'protocol/reader.dart';
 
 class CoreIpcBox<T extends CoreModelWithId> {
   final String boxName;
@@ -124,37 +122,31 @@ class CoreIpcBox<T extends CoreModelWithId> {
       return;
     }
 
-    if (event.actionCode == CoreIpcAction.put) {
-      final adapter = adapters.get(boxName);
-      final reader = CoreIpcReader(event.payload);
-      final dynamic decodedItem = reader.read(null, adapter);
+    switch (event.actionCode) {
+      case CoreIpcAction.put:
+        final data = event.payload as T;
+        items[data.uuid] = data;
+        break;
 
-      if (decodedItem is T) {
-        items[event.key] = decodedItem;
-      }
-    } else if (event.actionCode == CoreIpcAction.delete) {
-      items.remove(event.key);
-    } else if (event.actionCode == CoreIpcAction.clear) {
-      items.clear();
-    } else if (event.actionCode == CoreIpcAction.multiPut) {
-      unpackBytes(event.payload);
-    } else if (event.actionCode == CoreIpcAction.replace) {
-      unpackBytes(event.payload);
-    }
-  }
+      case CoreIpcAction.delete:
+        items.remove(event.key);
+        break;
 
-  void unpackBytes(Uint8List resultBytes) {
-    final reader = CoreIpcReader(resultBytes);
-    final int count = reader.readInt();
-    final adapter = adapters.get(boxName);
+      case CoreIpcAction.clear:
+        items.clear();
+        break;
 
-    items.clear();
+      case CoreIpcAction.multiPut:
+      case CoreIpcAction.replace:
+        items.clear();
+        for (final value in event.payload) {
+          final data = value as T;
+          items[data.uuid] = data;
+        }
+        break;
 
-    for (var i = 0; i < count; i++) {
-      final dynamic decodedItem = reader.read(null, adapter);
-      if (decodedItem is T) {
-        items[decodedItem.uuid] = decodedItem;
-      }
+      default:
+        break;
     }
   }
 

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -8,23 +7,27 @@ import 'package:dart_ipc/dart_ipc.dart';
 import '../log.dart';
 import 'database/adapters.dart';
 import 'protocol/buffer.dart';
+import 'protocol/converter.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 import 'event.dart';
 import 'action.dart';
-import 'protocol/reader.dart';
-import 'protocol/writer.dart';
 
 class CoreIpcClient {
   final CoreIpcAdapters adapters;
+  late CoreIpcConverter converter;
 
-  CoreIpcClient(this.adapters);
+  CoreIpcClient(this.adapters) {
+    converter = CoreIpcConverter(adapters);
+  }
 
   final Map<int, Completer<dynamic>> _pending = {};
   final String uuid = "client_${DateTime.now().millisecondsSinceEpoch}_${StackTrace.current.hashCode}";
   final CoreIpcBuffer _incomingBuffer = CoreIpcBuffer();
   final StreamController<CoreIpcBroadcastEvent> _broadcastController = StreamController<CoreIpcBroadcastEvent>.broadcast();
   final CoreIpcCrypto _crypto = CoreIpcCrypto();
+
+  // final CoreIpcConverter get converter => CoreIpcConverter(adapters);
 
   bool _isDisposing = false;
   bool _isReconnecting = false;
@@ -129,65 +132,13 @@ class CoreIpcClient {
   }
 
   Future<dynamic> send({required CoreIpcAction op, required String action, dynamic key, dynamic payload}) async {
-    List<int>? bytes;
-    switch (op) {
-      case CoreIpcAction.put:
-        final writer = CoreIpcWriter();
-        final boxAdapter = adapters.get(action);
-        boxAdapter.write(writer, payload);
-        bytes = writer.toBytes();
-        break;
-
-      case CoreIpcAction.replace:
-      case CoreIpcAction.multiPut:
-        final writer = CoreIpcWriter();
-        final boxAdapter = adapters.get(action);
-        writer.writeInt(payload.length);
-        for (final value in payload) {
-          boxAdapter.write(writer, value);
-        }
-
-        bytes = writer.toBytes();
-        break;
-
-      case CoreIpcAction.unlock:
-        bytes = payload;
-        break;
-
-      case CoreIpcAction.notification:
-        bytes = utf8.encode(payload);
-        break;
-
-      default:
-        break;
-    }
+    Uint8List? bytes = converter.toBytes(op, action, payload);
 
     final resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
-
-    switch (op) {
-      case CoreIpcAction.extract:
-        List<dynamic> results = [];
-        final reader = CoreIpcReader(resultBytes);
-        final int count = reader.readInt();
-        final adapter = adapters.get(action);
-
-        for (var i = 0; i < count; i++) {
-          final dynamic decodedItem = reader.read(null, adapter);
-          results.add(decodedItem);
-        }
-        return results;
-
-      case CoreIpcAction.clear:
-        return ByteData.sublistView(resultBytes).getInt32(0, Endian.big);
-
-      case CoreIpcAction.unlock:
-        return resultBytes.isNotEmpty && resultBytes.first == 1 ? resultBytes.sublist(1) : null;
-      default:
-        return null;
-    }
+    return converter.fromSenderBytes(op, action, resultBytes);
   }
 
-  Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) async {
+  Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, Uint8List? payload}) async {
     final completer = Completer<dynamic>();
     final reqId = _nextReqId++;
     _pending[reqId] = completer;
@@ -197,7 +148,7 @@ class CoreIpcClient {
         throw StateError('[IPC] socket is not connected');
       }
 
-      Uint8List rawPayload = payload != null ? Uint8List.fromList(payload) : Uint8List(0);
+      Uint8List rawPayload = payload ?? Uint8List(0);
 
       if (op != CoreIpcAction.unlock) {
         if (sessionKey == null) {
@@ -207,6 +158,7 @@ class CoreIpcClient {
         if (!_crypto.hasActiveKey) {
           _crypto.setSessionKey(sessionKey);
         }
+
         rawPayload = await _crypto.encrypt(rawPayload);
       }
 
@@ -261,7 +213,12 @@ class CoreIpcClient {
 
       if (currentPacket.reqId == -1) {
         _broadcastController.add(
-          CoreIpcBroadcastEvent(op: currentPacket.op, action: currentPacket.action, key: currentPacket.key, payload: responseBytes),
+          CoreIpcBroadcastEvent(
+            op: currentPacket.op,
+            action: currentPacket.action,
+            key: currentPacket.key,
+            payload: converter.fromBroadcasterBytes(CoreIpcAction.fromCode(currentPacket.op), currentPacket.action, responseBytes),
+          ),
         );
       } else {
         final completer = _pending[currentPacket.reqId];

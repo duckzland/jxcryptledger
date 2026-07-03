@@ -44,8 +44,6 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
         }
       }
     }
-
-    super.broadcasterAction(event);
   }
 
   List<CryptosModel> filter(String query) {

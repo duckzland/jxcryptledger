@@ -25,16 +25,14 @@ mixin CoreMixinsBroadcaster {
     });
   }
 
-  Future<void> broadcasterSend({required CoreIpcAction op, required String action, dynamic key, List<int>? payload}) async {
+  Future<void> broadcasterSend({required CoreIpcAction op, required String action, dynamic key, dynamic payload}) async {
     await ipcClient.send(op: op, action: action, key: key, payload: payload);
   }
 
   bool broadcasterEmit(CoreIpcAction op, String? action, String? key, Uint8List? payload, {Socket? exclude}) {
-    if (isBroadcastable) {
-      ipcServer.broadcast(op, action ?? "", key ?? "", payload ?? Uint8List(0), exclude: exclude);
-      return true;
-    }
-    return false;
+    if (!isBroadcastable) return false;
+    ipcServer.broadcast(op, action ?? "", key ?? "", payload ?? Uint8List(0), exclude: exclude);
+    return true;
   }
 
   void broadcasterDispose() {
