@@ -57,11 +57,14 @@ class CoreIpcConverter {
         return results;
 
       case CoreIpcAction.clear:
+        if (bytes.isEmpty || bytes.length < 4) {
+          return 0;
+        }
         return ByteData.sublistView(bytes).getInt32(0, Endian.big);
 
       case CoreIpcAction.unlock:
         return bytes.isNotEmpty && bytes.first == 1 ? bytes.sublist(1) : null;
-        
+
       default:
         return null;
     }
