@@ -7,14 +7,17 @@ import 'package:jxledger/core/abstracts/models/with_id.dart';
 import 'package:jxledger/core/ipc/action.dart';
 import 'package:jxledger/core/ipc/box.dart';
 import 'package:jxledger/core/ipc/client.dart';
+import 'package:jxledger/core/ipc/database/adapters.dart';
 import 'package:jxledger/core/ipc/event.dart';
 import 'package:jxledger/core/ipc/protocol/reader.dart';
-import 'package:jxledger/core/ipc/registry.dart';
 import 'package:jxledger/core/log.dart';
 
 class CoreHiveBoxStandard<T extends CoreModelWithId> implements CoreIpcBox<T> {
   @override
   final String boxName;
+
+  @override
+  final CoreIpcAdapters adapters = CoreIpcAdapters();
 
   @override
   final LinkedHashMap<dynamic, T> items = LinkedHashMap();
@@ -163,7 +166,7 @@ class CoreHiveBoxStandard<T extends CoreModelWithId> implements CoreIpcBox<T> {
     }
 
     if (event.actionCode == CoreIpcAction.put) {
-      final adapter = CoreIpcRegistry.getAdapter(boxName);
+      final adapter = adapters.get(boxName);
       final reader = CoreIpcReader(event.payload);
       final dynamic decodedItem = reader.read(null, adapter);
 
@@ -183,7 +186,7 @@ class CoreHiveBoxStandard<T extends CoreModelWithId> implements CoreIpcBox<T> {
 
   @override
   void unpackBytes(Uint8List resultBytes) {
-    final adapter = CoreIpcRegistry.getAdapter(boxName);
+    final adapter = adapters.get(boxName);
     final reader = CoreIpcReader(resultBytes);
 
     final int totalItems = reader.readInt();

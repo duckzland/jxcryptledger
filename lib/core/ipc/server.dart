@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
-import 'package:hive_ce/hive_ce.dart';
+
 import 'package:dart_ipc/dart_ipc.dart';
 
 import '../../features/watchboard/tickers/service.dart';
@@ -12,14 +12,16 @@ import '../abstracts/models/with_id.dart';
 import '../mode.dart';
 import '../runtime/locator.dart';
 import '../log.dart';
-import 'action.dart';
+
 import 'protocol/buffer.dart';
-import 'database/database.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 import 'protocol/reader.dart';
 import 'protocol/writer.dart';
-import 'registry.dart';
+
+import 'database/database.dart';
+
+import 'action.dart';
 
 class CoreIpcServer {
   final String pipeId;
@@ -131,36 +133,29 @@ class CoreIpcServer {
 
         switch (actionCode) {
           case CoreIpcAction.put:
-            final box = CoreIpcRegistry.getBox(action);
-            final adapter = CoreIpcRegistry.getAdapter(action);
+            await _writeToBox(action, nativeHiveKey, payload);
             final encrypted = await _crypto.encrypt(payload);
-            await _writeToBox(box, adapter, nativeHiveKey, payload);
             broadcast(actionCode, action, rawKeyStr, encrypted, exclude: client);
             break;
 
           case CoreIpcAction.delete:
-            final box = CoreIpcRegistry.getBox(action);
+            await database.delete(action, nativeHiveKey);
             final encrypted = await _crypto.encrypt(Uint8List(0));
-            await box.delete(nativeHiveKey);
             broadcast(actionCode, action, rawKeyStr, encrypted, exclude: client);
             break;
 
           case CoreIpcAction.clear:
-            final box = CoreIpcRegistry.getBox(action);
+            await database.clear(action);
             final encrypted = await _crypto.encrypt(Uint8List(0));
-            await box.clear();
             broadcast(actionCode, action, '', encrypted, exclude: client);
             break;
 
           case CoreIpcAction.flush:
-            final box = CoreIpcRegistry.getBox(action);
-            await box.flush();
+            await database.flush(action);
             break;
 
           case CoreIpcAction.extract:
-            final box = CoreIpcRegistry.getBox(action);
-            final adapter = CoreIpcRegistry.getAdapter(action);
-            final extracted = _extractFromBox(box, adapter);
+            final extracted = _extractFromBox(action);
             serializedResult = await _crypto.encrypt(extracted);
             break;
 
@@ -199,10 +194,8 @@ class CoreIpcServer {
             break;
 
           case CoreIpcAction.multiPut:
-            final box = CoreIpcRegistry.getBox(action);
-            final adapter = CoreIpcRegistry.getAdapter(action);
+            await _batchWriteToBox(action, payload);
             final encrypted = await _crypto.encrypt(payload);
-            await _batchWriteToBox(box, adapter, payload);
             broadcast(actionCode, action, "batch", encrypted, exclude: client);
             break;
 
@@ -221,11 +214,9 @@ class CoreIpcServer {
             break;
 
           case CoreIpcAction.replace:
-            final box = CoreIpcRegistry.getBox(action);
-            final adapter = CoreIpcRegistry.getAdapter(action);
+            await database.clear(action);
+            await _batchWriteToBox(action, payload);
             final encrypted = await _crypto.encrypt(payload);
-            await box.clear();
-            await _batchWriteToBox(box, adapter, payload);
             broadcast(actionCode, action, "replace", encrypted, exclude: client);
             break;
 
@@ -265,36 +256,38 @@ class CoreIpcServer {
     }
   }
 
-  Future<void> _writeToBox(Box box, TypeAdapter adapter, dynamic id, Uint8List payload) async {
+  Future<void> _writeToBox(String boxName, dynamic id, Uint8List payload) async {
     final reader = CoreIpcReader(payload);
+    final adapter = database.adapters.get(boxName);
     final dynamic decoded = adapter.read(reader);
     final dynamic finalValue = decoded is MapEntry ? decoded.value : decoded;
-    await box.put(id, finalValue);
+    await database.put(boxName, id, finalValue);
   }
 
-  Future<void> _batchWriteToBox(Box box, TypeAdapter adapter, Uint8List payload) async {
+  Future<void> _batchWriteToBox(String boxName, Uint8List payload) async {
     final batchReader = CoreIpcReader(payload);
     final int totalItems = batchReader.readInt();
+    final adapter = database.adapters.get(boxName);
 
     for (int i = 0; i < totalItems; i++) {
       dynamic nativeHiveKey;
       dynamic finalValue;
-
+      
       finalValue = adapter.read(batchReader);
       nativeHiveKey = (finalValue is CoreModelWithId) ? finalValue.uuid : i;
-
-      await box.put(nativeHiveKey, finalValue);
+      await database.put(boxName, nativeHiveKey, finalValue);
     }
   }
 
-  Uint8List _extractFromBox(Box box, TypeAdapter adapter) {
+  Uint8List _extractFromBox(String boxName) {
     final writer = CoreIpcWriter();
-
-    final int realCount = box.keys.length;
+    final adapter = database.adapters.get(boxName);
+    final keys = database.keys(boxName);
+    final int realCount = keys.length;
     writer.writeInt(realCount);
 
-    for (var key in box.keys) {
-      final dynamic value = box.get(key);
+    for (var key in keys) {
+      final dynamic value = database.get(boxName, key);
 
       if (value is Uint8List) {
         writer.writeByteList(value, writeLength: false);

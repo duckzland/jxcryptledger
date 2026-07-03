@@ -7,16 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/router.dart';
-import '../../features/archives/adapter.dart';
-import '../../features/cryptos/adapter.dart';
-import '../../features/rates/adapter.dart';
-import '../../system/settings/adapter.dart';
 import '../../system/settings/states.dart';
-import '../../features/transactions/adapter.dart';
-import '../../features/watchboard/panels/adapter.dart';
-import '../../features/watchboard/tickers/adapter.dart';
-import '../../features/watchers/adapter.dart';
-import '../ipc/registry.dart';
 import '../log.dart';
 import '../mode.dart';
 import 'bootstrap/client.dart';
@@ -106,15 +97,6 @@ class CoreRuntime {
         }
       });
     }
-
-    CoreIpcRegistry.registerAdapter('transactions_box', TransactionsAdapter());
-    CoreIpcRegistry.registerAdapter('cryptos_box', CryptosAdapter());
-    CoreIpcRegistry.registerAdapter('rates_box', RatesAdapter());
-    CoreIpcRegistry.registerAdapter('watchers_box', WatchersAdapter());
-    CoreIpcRegistry.registerAdapter('panels_box', PanelsAdapter());
-    CoreIpcRegistry.registerAdapter('tickers_box', TickersAdapter());
-    CoreIpcRegistry.registerAdapter('archives_box', ArchivesAdapter());
-    CoreIpcRegistry.registerAdapter('settings_box', SettingsAdapter());
 
     CoreMode.isServer = args.contains("--server");
     CoreMode.ipcPipeName = ipcPipeName;

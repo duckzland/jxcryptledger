@@ -7,16 +7,17 @@ import '../log.dart';
 
 import 'action.dart';
 import 'client.dart';
+import 'database/adapters.dart';
 import 'event.dart';
-import 'registry.dart';
 import 'protocol/writer.dart';
 import 'protocol/reader.dart';
 
 class CoreIpcBox<T extends CoreModelWithId> {
   final String boxName;
   final LinkedHashMap<dynamic, T> items = LinkedHashMap();
+  final CoreIpcAdapters adapters;
 
-  CoreIpcBox(this.boxName);
+  CoreIpcBox(this.boxName, this.adapters);
 
   CoreIpcClient get ipc => locator<CoreIpcClient>();
 
@@ -76,7 +77,7 @@ class CoreIpcBox<T extends CoreModelWithId> {
 
   Future<void> put(dynamic id, T value) async {
     final writer = CoreIpcWriter();
-    final boxAdapter = CoreIpcRegistry.getAdapter(boxName);
+    final boxAdapter = adapters.get(boxName);
     boxAdapter.write(writer, value);
 
     final bytes = writer.toBytes();
@@ -114,7 +115,7 @@ class CoreIpcBox<T extends CoreModelWithId> {
     if (values.isEmpty) return;
 
     final writer = CoreIpcWriter();
-    final boxAdapter = CoreIpcRegistry.getAdapter(boxName);
+    final boxAdapter = adapters.get(boxName);
 
     writer.writeInt(values.length);
 
@@ -132,7 +133,7 @@ class CoreIpcBox<T extends CoreModelWithId> {
 
   Future<void> replace(List<T> values) async {
     final writer = CoreIpcWriter();
-    final boxAdapter = CoreIpcRegistry.getAdapter(boxName);
+    final boxAdapter = adapters.get(boxName);
 
     writer.writeInt(values.length);
 
@@ -155,7 +156,7 @@ class CoreIpcBox<T extends CoreModelWithId> {
     }
 
     if (event.actionCode == CoreIpcAction.put) {
-      final adapter = CoreIpcRegistry.getAdapter(boxName);
+      final adapter = adapters.get(boxName);
       final reader = CoreIpcReader(event.payload);
       final dynamic decodedItem = reader.read(null, adapter);
 
@@ -176,7 +177,7 @@ class CoreIpcBox<T extends CoreModelWithId> {
   void unpackBytes(Uint8List resultBytes) {
     final reader = CoreIpcReader(resultBytes);
     final int count = reader.readInt();
-    final adapter = CoreIpcRegistry.getAdapter(boxName);
+    final adapter = adapters.get(boxName);
 
     items.clear();
 

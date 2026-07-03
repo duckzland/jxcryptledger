@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import '../ipc/box.dart';
+import '../ipc/database/adapters.dart';
 import '../ipc/event.dart';
+import '../runtime/locator.dart';
 import 'models/with_id.dart';
 
 abstract class CoreBaseRepository<T extends CoreModelWithId> {
@@ -11,7 +13,7 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
   CoreIpcBox<T>? repoBox;
 
   CoreIpcBox<T> get box {
-    return repoBox ??= CoreIpcBox<T>(boxName);
+    return repoBox ??= CoreIpcBox<T>(boxName, locator<CoreIpcAdapters>());
   }
 
   set box(CoreIpcBox<T> box) {

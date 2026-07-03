@@ -14,6 +14,8 @@ import '../../../features/watchboard/panels/service.dart';
 import '../../../features/watchboard/tickers/service.dart';
 import '../../../features/watchers/service.dart';
 import '../../ipc/client.dart';
+import '../../ipc/database/adapters.dart';
+import '../../ipc/database/boxes.dart';
 import '../../ipc/database/database.dart';
 import '../../ipc/database/migration.dart';
 import '../../ipc/server.dart';
@@ -41,7 +43,6 @@ class CoreBootstrapServer {
   final CoreWorker appWorker = locator<CoreWorker>();
 
   late CoreIpcDatabase database;
-  late CoreIpcMigration migrator;
   late CoreIpcServer server;
   late CoreIpcClient client;
 
@@ -51,12 +52,11 @@ class CoreBootstrapServer {
     if (initialized) return;
     if (kIsWeb) return;
 
-    migrator = CoreIpcMigration();
-    database = CoreIpcDatabase();
+    database = CoreIpcDatabase(CoreIpcBoxes(), locator<CoreIpcAdapters>(), CoreIpcMigration());
 
     client = locator<CoreIpcClient>();
-
     server = locator<CoreIpcServer>();
+
     server.database = database;
     server.unlocker = unlock;
     server.shutdown = CoreRuntime.instance.shutdown;
@@ -115,7 +115,6 @@ class CoreBootstrapServer {
     if (state > unlockError) {
       client.sessionKey ??= server.sessionKey;
       await bootServices();
-      await migrator.migrate();
     }
 
     if (state == unlockFirstTime) {
