@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:hive_ce/hive_ce.dart';
@@ -25,7 +24,7 @@ import 'registry.dart';
 class CoreIpcServer {
   final String pipeId;
   final List<Socket> _slaves = [];
-  final Uint8List sessionKey = _createSessionKey(32);
+  final Uint8List sessionKey = CoreIpcCrypto.createSessionKey(32);
   final CoreIpcCrypto _crypto = CoreIpcCrypto();
 
   ServerSocket? socket;
@@ -36,7 +35,12 @@ class CoreIpcServer {
   Future<bool> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
 
+  bool _isDisposing = false;
+
   Future<void> dispose() async {
+    if (_isDisposing) return;
+    _isDisposing = true;
+
     for (var slave in List.from(_slaves)) {
       try {
         slave.destroy();
@@ -50,6 +54,8 @@ class CoreIpcServer {
         socket = null;
       } catch (_) {}
     }
+
+    database.dispose();
   }
 
   Future<void> start() async {
@@ -59,6 +65,8 @@ class CoreIpcServer {
     logln("[IPC] Server running: ${CoreMode.ipcPipeName}");
 
     socket.listen((client) {
+      if (_isDisposing) return;
+
       _slaves.add(client);
 
       final CoreIpcBuffer incomingBuffer = CoreIpcBuffer();
@@ -76,6 +84,7 @@ class CoreIpcServer {
 
       client.listen(
         (frame) async {
+          if (_isDisposing) return;
           await processFrames(frame, incomingBuffer, client);
         },
         onDone: disconnect,
@@ -90,6 +99,8 @@ class CoreIpcServer {
 
     CoreIpcPacket? packet;
     while ((packet = incomingBuffer.parseNextAction()) != null) {
+      if (_isDisposing) return;
+
       final currentPacket = packet!;
       final activeReqId = currentPacket.reqId;
       final actionCode = currentPacket.actionCode;
@@ -123,7 +134,7 @@ class CoreIpcServer {
             final box = CoreIpcRegistry.getBox(action);
             final adapter = CoreIpcRegistry.getAdapter(action);
             final encrypted = await _crypto.encrypt(payload);
-            await _writeValueToBox(box, adapter, nativeHiveKey, payload);
+            await _writeToBox(box, adapter, nativeHiveKey, payload);
             broadcast(actionCode, action, rawKeyStr, encrypted, exclude: client);
             break;
 
@@ -149,8 +160,8 @@ class CoreIpcServer {
           case CoreIpcAction.extract:
             final box = CoreIpcRegistry.getBox(action);
             final adapter = CoreIpcRegistry.getAdapter(action);
-            final extracted = _extractBoxContents(box, adapter);
-            serializedResult = await _crypto.encrypt(_encode(extracted));
+            final extracted = _extractFromBox(box, adapter);
+            serializedResult = await _crypto.encrypt(extracted);
             break;
 
           case CoreIpcAction.refreshRates:
@@ -191,7 +202,7 @@ class CoreIpcServer {
             final box = CoreIpcRegistry.getBox(action);
             final adapter = CoreIpcRegistry.getAdapter(action);
             final encrypted = await _crypto.encrypt(payload);
-            await _writeBatchToBox(box, adapter, payload);
+            await _batchWriteToBox(box, adapter, payload);
             broadcast(actionCode, action, "batch", encrypted, exclude: client);
             break;
 
@@ -200,7 +211,6 @@ class CoreIpcServer {
             final sourceId = int.parse(parts[0]);
             final targetId = int.parse(parts[1]);
             final force = rawKeyStr == "true";
-
             final service = locator<RatesService>();
             service.addQueue(sourceId, targetId, force: force);
             break;
@@ -215,7 +225,7 @@ class CoreIpcServer {
             final adapter = CoreIpcRegistry.getAdapter(action);
             final encrypted = await _crypto.encrypt(payload);
             await box.clear();
-            await _writeBatchToBox(box, adapter, payload);
+            await _batchWriteToBox(box, adapter, payload);
             broadcast(actionCode, action, "replace", encrypted, exclude: client);
             break;
 
@@ -232,18 +242,20 @@ class CoreIpcServer {
   }
 
   void response(Socket client, int reqId, dynamic result, CoreIpcAction op) {
+    if (_isDisposing) return;
     final responsePacket = CoreIpcPacket(reqId: reqId, op: op.code, action: '', key: '', payload: result);
     client.add(responsePacket.toBytes());
   }
 
   void error(Socket client, int activeReqId) {
+    if (_isDisposing) return;
     final errorPacket = CoreIpcPacket(reqId: activeReqId, op: CoreIpcAction.error.code, action: '', key: '', payload: Uint8List(0));
     client.add(errorPacket.toBytes());
   }
 
   void broadcast(CoreIpcAction op, String action, String key, Uint8List payload, {Socket? exclude}) {
+    if (_isDisposing) return;
     final packet = CoreIpcPacket(reqId: -1, op: op.code, action: action, key: key, payload: payload);
-
     final Uint8List frame = packet.toBytes();
 
     for (var slave in _slaves) {
@@ -253,14 +265,14 @@ class CoreIpcServer {
     }
   }
 
-  Future<void> _writeValueToBox(Box box, TypeAdapter adapter, dynamic id, Uint8List payload) async {
+  Future<void> _writeToBox(Box box, TypeAdapter adapter, dynamic id, Uint8List payload) async {
     final reader = CoreIpcReader(payload);
     final dynamic decoded = adapter.read(reader);
     final dynamic finalValue = decoded is MapEntry ? decoded.value : decoded;
     await box.put(id, finalValue);
   }
 
-  Future<void> _writeBatchToBox(Box box, TypeAdapter adapter, Uint8List payload) async {
+  Future<void> _batchWriteToBox(Box box, TypeAdapter adapter, Uint8List payload) async {
     final batchReader = CoreIpcReader(payload);
     final int totalItems = batchReader.readInt();
 
@@ -275,7 +287,7 @@ class CoreIpcServer {
     }
   }
 
-  CoreIpcWriter _extractBoxContents(Box box, TypeAdapter adapter) {
+  Uint8List _extractFromBox(Box box, TypeAdapter adapter) {
     final writer = CoreIpcWriter();
 
     final int realCount = box.keys.length;
@@ -291,31 +303,6 @@ class CoreIpcServer {
       }
     }
 
-    return writer;
-  }
-
-  Uint8List _int32(int v) {
-    final b = ByteData(4)..setInt32(0, v, Endian.big);
-    return b.buffer.asUint8List();
-  }
-
-  Uint8List _encode(dynamic value) {
-    if (value == null) return Uint8List(0);
-    if (value is CoreIpcWriter) return value.toBytes();
-    if (value is int) return _int32(value);
-    if (value is bool) return Uint8List.fromList([value ? 1 : 0]);
-    if (value is String) return utf8.encode(value);
-    if (value is List) {
-      final writer = CoreIpcWriter();
-      writer.writeList(value);
-      return writer.toBytes();
-    }
-    return Uint8List(0);
-  }
-
-  static Uint8List _createSessionKey(int length) {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final rand = Random.secure();
-    return utf8.encode(List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join());
+    return writer.toBytes();
   }
 }

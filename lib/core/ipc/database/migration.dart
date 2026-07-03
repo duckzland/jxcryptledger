@@ -9,9 +9,10 @@ class CoreIpcMigration {
   final TickersService _tickersService = locator<TickersService>();
 
   Future<void> migrate() async {
-    await _migrateSettingsBox();
 
-    if (isVersionLessThan(appVersion, "1.3.0.0")) {
+    if (isVersionLessThan(appVersion, "1.0.30.99")) {
+      await _migrateSettingsBox();
+
       final tickers = _tickersService.extract();
       final exists = tickers.any((ticker) => ticker.tid == "market_cap");
       if (!exists) {

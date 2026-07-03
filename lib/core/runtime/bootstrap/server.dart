@@ -107,4 +107,10 @@ class CoreBootstrapServer {
 
     return true;
   }
+
+  Future<void> dispose() async {
+    await client.dispose();
+    await stopServices();
+    await server.dispose();
+  }
 }

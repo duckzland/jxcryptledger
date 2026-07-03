@@ -235,13 +235,8 @@ class CoreRuntime {
       final clt = locator<CoreIpcClient>();
       await clt.dispose();
     } else {
-      final clt = locator<CoreIpcClient>();
       final srv = locator<CoreBootstrapServer>();
-
-      await clt.dispose();
-      await srv.stopServices();
-      await srv.server.dispose();
-      await srv.database.dispose();
+      await srv.dispose();
 
       await stdout.close();
       await stderr.close();

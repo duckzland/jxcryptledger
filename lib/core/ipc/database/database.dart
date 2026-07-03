@@ -93,8 +93,7 @@ class CoreIpcDatabase {
         await SystemEncryptionService.instance.loadKey(keyBytes);
         cipher = HiveAesCipher(keyBytes);
 
-        final settingsBox = await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
-        await _migrateSettingsBoxEntries(settingsBox);
+        await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
 
         await openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
 
@@ -217,26 +216,5 @@ class CoreIpcDatabase {
   Future<void> dispose() async {
     await Hive.close();
     initialized = false;
-  }
-
-  Future<void> _migrateSettingsBoxEntries(Box<dynamic>? box) async {
-    if (box == null) {
-      return;
-    }
-
-    final entries = Map<dynamic, dynamic>.from(box.toMap());
-    for (final entry in entries.entries) {
-      final dynamic rawValue = entry.value;
-      if (rawValue is SettingsModel) {
-        continue;
-      }
-
-      final String keyId = entry.key.toString();
-      final dynamic legacyValue = rawValue is Map && rawValue.isNotEmpty ? rawValue[keyId] ?? rawValue.values.first : rawValue;
-      final SettingsModel model = SettingsModel.fromLegacy(keyId, legacyValue);
-      await box.put(keyId, model);
-    }
-
-    await box.flush();
   }
 }

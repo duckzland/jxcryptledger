@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 
@@ -10,6 +11,12 @@ class CoreIpcCrypto {
     if (key != null) {
       setSessionKey(key);
     }
+  }
+
+  static Uint8List createSessionKey(int length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random.secure();
+    return utf8.encode(List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join());
   }
 
   void setSessionKey(dynamic key) {
