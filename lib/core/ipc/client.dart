@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:dart_ipc/dart_ipc.dart';
 
 import '../log.dart';
+
 import 'database/adapters.dart';
 import 'protocol/buffer.dart';
 import 'protocol/converter.dart';
@@ -26,8 +27,6 @@ class CoreIpcClient {
   final CoreIpcBuffer _incomingBuffer = CoreIpcBuffer();
   final StreamController<CoreIpcBroadcastEvent> _broadcastController = StreamController<CoreIpcBroadcastEvent>.broadcast();
   final CoreIpcCrypto _crypto = CoreIpcCrypto();
-
-  // final CoreIpcConverter get converter => CoreIpcConverter(adapters);
 
   bool _isDisposing = false;
   bool _isReconnecting = false;

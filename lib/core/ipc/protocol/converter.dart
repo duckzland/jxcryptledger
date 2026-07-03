@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import '../database/adapters.dart';
 import '../protocol/writer.dart';
 import '../action.dart';
+
 import 'reader.dart';
 
 class CoreIpcConverter {
@@ -60,6 +61,7 @@ class CoreIpcConverter {
 
       case CoreIpcAction.unlock:
         return bytes.isNotEmpty && bytes.first == 1 ? bytes.sublist(1) : null;
+        
       default:
         return null;
     }
