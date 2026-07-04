@@ -19,6 +19,7 @@ import 'package:jxledger/core/ipc/protocol/writer.dart';
 import 'package:jxledger/core/ipc/server.dart';
 import 'package:jxledger/core/mode.dart';
 import 'package:jxledger/features/transactions/model.dart';
+import 'package:jxledger/system/unlock/status.dart';
 import 'package:test/test.dart';
 
 import 'faker/adapters.dart';
@@ -845,7 +846,7 @@ void main() {
 
       server.unlocker = (Uint8List bytes) async {
         expect(bytes, equals(keyBytes));
-        return true;
+        return SystemUnlockStatus.success;
       };
 
       // await server.database.init();
@@ -874,7 +875,7 @@ void main() {
       CoreMode.isServer = true;
       final server = CoreIpcServer();
       server.pipeName = pipeName;
-      server.unlocker = (bytes) async => true;
+      server.unlocker = (bytes) async => SystemUnlockStatus.success;
       server.database = DatabaseFaker(CoreIpcBoxes(), CoreIpcAdapters(), CoreIpcMigration());
       await server.start();
       final sessionKey = server.sessionKey;

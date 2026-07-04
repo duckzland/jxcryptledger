@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:jxledger/app/constants.dart';
 import 'package:jxledger/core/ipc/database/database.dart';
+import 'package:jxledger/system/unlock/status.dart';
 
 class DatabaseFaker extends CoreIpcDatabase {
   DatabaseFaker(super.boxes, super.adapters, super.migration);
@@ -12,9 +12,9 @@ class DatabaseFaker extends CoreIpcDatabase {
   }
 
   @override
-  Future<int> unlock(Uint8List keyBytes) async {
+  Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
     unlocked = true;
-    return unlockSuccess;
+    return SystemUnlockStatus.success;
   }
 
   @override
