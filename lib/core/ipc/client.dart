@@ -32,8 +32,8 @@ class CoreIpcClient {
   bool _isReconnecting = false;
 
   StreamSubscription<Uint8List>? _socketSubscription;
-  VoidCallback? onExit;
-  Future<bool> Function(CoreIpcClient client)? onReconnect;
+  VoidCallback? exited;
+  Future<bool> Function(CoreIpcClient client)? reconnecting;
 
   Socket? _socket;
   int _nextReqId = 0;
@@ -89,14 +89,14 @@ class CoreIpcClient {
 
     try {
       await destroy();
-      final success = await (onReconnect?.call(this) ?? Future.value(true));
+      final success = await (reconnecting?.call(this) ?? Future.value(true));
 
       if (!success) {
         throw StateError('[IPC] Failed to perform clean reconnection');
       }
     } catch (e) {
       logln("[IPC] Failed to reconnect: $e");
-      onExit?.call();
+      exited?.call();
     } finally {
       _isReconnecting = false;
     }

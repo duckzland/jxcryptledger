@@ -31,7 +31,7 @@ class CoreRuntime {
       final String username = Platform.environment['USERNAME'] ?? 'shared';
       final String safeUser = username.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
 
-      return kDebugMode
+      return (kDebugMode || kProfileMode)
           // ignore: prefer_interpolation_to_compose_strings
           ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_' + safeUser + '_devel'
           : r'\\.\pipe\com.jxledger_ipc_sync_pipe_' + safeUser;
@@ -39,7 +39,7 @@ class CoreRuntime {
       final String? xdgRuntime = Platform.environment['XDG_RUNTIME_DIR'];
 
       if (xdgRuntime != null && Directory(xdgRuntime).existsSync()) {
-        return kDebugMode ? '$xdgRuntime/jxledger_devel.sock' : '$xdgRuntime/jxledger.sock';
+        return (kDebugMode || kProfileMode) ? '$xdgRuntime/jxledger_devel.sock' : '$xdgRuntime/jxledger.sock';
       } else {
         final String username = Platform.environment['USER'] ?? Platform.environment['LOGNAME'] ?? 'shared';
         final String fallbackFolder = '/tmp/jxledger-$username';
@@ -49,10 +49,10 @@ class CoreRuntime {
           dir.createSync(recursive: true);
         }
 
-        return kDebugMode ? '$fallbackFolder/jxledger_devel.sock' : '$fallbackFolder/jxledger.sock';
+        return (kDebugMode || kProfileMode) ? '$fallbackFolder/jxledger_devel.sock' : '$fallbackFolder/jxledger.sock';
       }
     } else {
-      return kDebugMode ? '/tmp/jxledger_devel.sock' : '/tmp/jxledger.sock';
+      return (kDebugMode || kProfileMode) ? '/tmp/jxledger_devel.sock' : '/tmp/jxledger.sock';
     }
   }
 

@@ -13,19 +13,18 @@ import '../../../features/watchboard/panels/service.dart';
 import '../../../features/watchboard/tickers/service.dart';
 import '../../../features/watchers/service.dart';
 import '../../../system/unlock/status.dart';
-import '../../ipc/client.dart';
 import '../../ipc/database/adapters.dart';
 import '../../ipc/database/boxes.dart';
 import '../../ipc/database/database.dart';
 import '../../ipc/database/migration.dart';
-import '../../ipc/server.dart';
+import '../../ipc/mixins/broadcaster.dart';
 import '../../log.dart';
 import '../../mode.dart';
 import '../../worker.dart';
 import '../runtime.dart';
 import '../locator.dart';
 
-class CoreBootstrapServer {
+class CoreBootstrapServer with CoreIpcMixinsBroadcaster {
   bool initialized = false;
   bool unlocked = false;
   bool isFirstRun = false;
@@ -43,29 +42,20 @@ class CoreBootstrapServer {
 
   final CoreWorker appWorker = locator<CoreWorker>();
 
-  late CoreIpcDatabase database;
-  late CoreIpcServer server;
-  late CoreIpcClient client;
-
   Timer? _serverWatchdog;
 
   Future<void> start() async {
     if (initialized) return;
     if (kIsWeb) return;
 
-    database = CoreIpcDatabase(CoreIpcBoxes(), locator<CoreIpcAdapters>(), CoreIpcMigration());
+    ipcServer.pipeName = CoreMode.ipcPipeName;
+    ipcServer.database = CoreIpcDatabase(CoreIpcBoxes(), locator<CoreIpcAdapters>(), CoreIpcMigration());
+    ipcServer.unlocker = unlock;
+    ipcServer.shutdown = CoreRuntime.instance.shutdown;
+    ipcServer.disconnected = shutdownWhenNoClient;
 
-    client = locator<CoreIpcClient>();
-    server = locator<CoreIpcServer>();
-
-    server.pipeName = CoreMode.ipcPipeName;
-    server.database = database;
-    server.unlocker = unlock;
-    server.shutdown = CoreRuntime.instance.shutdown;
-    server.disconnected = shutdownWhenNoClient;
-
-    await database.init();
-    await server.start();
+    await ipcServer.database.init();
+    await ipcServer.start();
 
     _serverWatchdog = Timer.periodic(const Duration(seconds: 5), (_) async {
       shutdownWhenNoClient();
@@ -113,21 +103,21 @@ class CoreBootstrapServer {
   }
 
   Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
-    final SystemUnlockStatus state = await database.unlock(keyBytes);
+    final SystemUnlockStatus state = await ipcServer.database.unlock(keyBytes);
 
     if (!state.isUnlocked()) {
       return state;
     }
 
     if (!state.isFirstRun()) {
-      client.sessionKey ??= server.sessionKey;
+      ipcClient.sessionKey ??= ipcServer.sessionKey;
       await bootServices();
     }
 
     if (state.isFirstRun()) {
       try {
         logln("First run detected, initializing vault");
-        client.sessionKey ??= server.sessionKey;
+        ipcClient.sessionKey ??= ipcServer.sessionKey;
         await _settingsService.save(SettingKey.vaultInitialized, "initialized");
       } catch (e) {
         logln("Failed to initialize vault: $e");
@@ -139,11 +129,14 @@ class CoreBootstrapServer {
   }
 
   Future<void> dispose() async {
-    await client.dispose();
-    await stopServices();
-    await server.dispose();
-
     _serverWatchdog?.cancel();
     _serverWatchdog = null;
+
+    broadcasterDispose();
+
+    await stopServices();
+
+    await ipcClient.dispose();
+    await ipcServer.dispose();
   }
 }

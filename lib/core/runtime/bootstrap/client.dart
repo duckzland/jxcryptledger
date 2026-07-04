@@ -40,7 +40,7 @@ class CoreBootstrapClient with MixinsState, CoreIpcMixinsBroadcaster {
     if (initialized) return;
     if (kIsWeb) return;
 
-    ipcClient.onReconnect = (CoreIpcClient client) async {
+    ipcClient.reconnecting = (CoreIpcClient client) async {
       if (!CoreMode.isServer) {
         await Future.delayed(const Duration(milliseconds: 500));
 
@@ -68,7 +68,7 @@ class CoreBootstrapClient with MixinsState, CoreIpcMixinsBroadcaster {
       return false;
     };
 
-    ipcClient.onExit = () {
+    ipcClient.exited = () {
       AppRouter.router.go('/error');
     };
 
@@ -142,6 +142,8 @@ class CoreBootstrapClient with MixinsState, CoreIpcMixinsBroadcaster {
     if (CoreMode.isMain) {
       await states.save();
     }
+
+    broadcasterDispose();
 
     await ipcClient.dispose();
   }
