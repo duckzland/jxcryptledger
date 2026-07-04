@@ -182,6 +182,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
   @override
   void dispose() {
     _debounce?.cancel();
+    _debounce = null;
     super.dispose();
   }
 
@@ -747,6 +748,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
               cells: [
                 DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
                 DataCell(Text(r['from'])),
+
                 if (!isCapital) DataCell(Text(r['to'])),
                 if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),
                 if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),

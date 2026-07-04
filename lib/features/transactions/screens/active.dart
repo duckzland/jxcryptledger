@@ -37,6 +37,8 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   late List<TransactionsModel> txs;
 
   Map<String, List<TransactionsModel>> groups = {};
+  List<String> groupKeys = [];
+
   int _filterMode = 0;
   int _sortMode = 0;
 
@@ -56,6 +58,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
     groups = _processTx();
+    groupKeys = groups.keys.toList();
 
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
@@ -151,8 +154,6 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    final groupKeys = groups.keys.toList();
 
     return groups.isEmpty
         ? Center(
