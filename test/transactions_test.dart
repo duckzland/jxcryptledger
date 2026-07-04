@@ -3,7 +3,7 @@ import 'package:hive_ce/hive_ce.dart';
 import 'package:jxledger/app/exceptions.dart';
 import 'package:jxledger/features/transactions/adapter.dart';
 import 'package:jxledger/features/transactions/model.dart';
-import 'hive.dart';
+import 'faker/hive.dart';
 import 'package:jxledger/features/transactions/repository.dart';
 
 void main() async {
@@ -131,7 +131,7 @@ void main() async {
       box = await Hive.openBox<TransactionsModel>('transactions_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = CoreHiveBoxStandard<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
       repo.boxNameDefault = 'transactions_test';
     });
 
@@ -744,7 +744,7 @@ void main() async {
       box = await Hive.openBox<TransactionsModel>('transactions_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = CoreHiveBoxStandard<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
       repo.boxNameDefault = 'transactions_test';
     });
 
@@ -871,7 +871,7 @@ void main() async {
       box = await Hive.openBox<TransactionsModel>('transactions_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = CoreHiveBoxStandard<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
       repo.boxNameDefault = 'transactions_test';
     });
 
