@@ -134,6 +134,9 @@ class AppErrorCode {
   static const int archiveInvalidType = 5003;
   static const int archiveInvalidTimestamp = 5004;
   static const int archiveTimestampInFuture = 5005;
+
+  static const int settingsInvalidValue = 6001;
+  static const int settingsInvalidKey = 6002;
 }
 
 class ValidationException extends CoreBaseException {

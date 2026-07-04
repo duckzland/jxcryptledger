@@ -2,14 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../ipc/event.dart';
-import '../mixins/broadcaster.dart';
+import '../ipc/mixins/broadcaster.dart';
 import '../mode.dart';
-import '../mixins/box.dart';
+import '../ipc/mixins/box.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
 abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseRepository<T>> extends ChangeNotifier
-    with CoreMixinsBox<T>, CoreMixinsBroadcaster {
+    with CoreIpcMixinsBox<T>, CoreIpcMixinsBroadcaster {
   Timer? _notifyTimer;
 
   List<T> listItems = [];

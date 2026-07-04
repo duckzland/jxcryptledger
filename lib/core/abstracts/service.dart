@@ -1,10 +1,11 @@
 import '../ipc/event.dart';
-import '../mixins/box.dart';
-import '../mixins/broadcaster.dart';
+import '../ipc/mixins/box.dart';
+import '../ipc/mixins/broadcaster.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
-abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>> with CoreMixinsBox<T>, CoreMixinsBroadcaster {
+abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>>
+    with CoreIpcMixinsBox<T>, CoreIpcMixinsBroadcaster {
   @override
   final R repo;
 

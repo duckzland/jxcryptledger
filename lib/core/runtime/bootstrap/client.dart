@@ -16,13 +16,13 @@ import '../../../features/watchboard/tickers/controller.dart';
 import '../../../features/watchers/controller.dart';
 import '../../ipc/action.dart';
 import '../../ipc/client.dart';
-import '../../mixins/broadcaster.dart';
+import '../../ipc/mixins/broadcaster.dart';
 import '../../log.dart';
 import '../../mode.dart';
 import '../locator.dart';
 import '../runtime.dart';
 
-class CoreBootstrapClient with MixinsState, CoreMixinsBroadcaster {
+class CoreBootstrapClient with MixinsState, CoreIpcMixinsBroadcaster {
   bool initialized = false;
   bool unlocked = false;
   bool isFirstRun = false;

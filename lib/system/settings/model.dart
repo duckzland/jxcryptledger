@@ -1,3 +1,5 @@
+import 'package:jxledger/app/exceptions.dart';
+
 import '../../core/abstracts/models/exportable.dart';
 import '../../core/abstracts/models/with_id.dart';
 import 'keys.dart';
@@ -7,7 +9,25 @@ class SettingsModel implements CoreModelWithId, CoreModelExportable {
   final SettingType type;
   final dynamic value;
 
-  SettingsModel({required this.keyId, required this.type, required this.value});
+  SettingsModel({required this.keyId, required this.type, required this.value}) {
+    SettingKey? key;
+    try {
+      key = SettingKey.values.firstWhere((k) => k.id == keyId);
+    } catch (_) {
+      throw ValidationException(AppErrorCode.settingsInvalidValue, "invalid key $keyId", "Not valid settings key");
+    }
+
+    if (key.validator != null) {
+      final error = key.validator!(value.toString());
+      if (error != null) {
+        throw ValidationException(
+          AppErrorCode.settingsInvalidValue,
+          "Settings value is not valid for $keyId: $value",
+          "Invalid value provided",
+        );
+      }
+    }
+  }
 
   @override
   String get uuid => keyId;

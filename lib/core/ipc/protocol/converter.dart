@@ -45,16 +45,7 @@ class CoreIpcConverter {
   dynamic fromSenderBytes(CoreIpcAction op, String action, dynamic bytes) {
     switch (op) {
       case CoreIpcAction.extract:
-        List<dynamic> results = [];
-        final reader = CoreIpcReader(bytes);
-        final int count = reader.readInt();
-        final adapter = adapters.get(action);
-
-        for (var i = 0; i < count; i++) {
-          final dynamic decodedItem = reader.read(null, adapter);
-          results.add(decodedItem);
-        }
-        return results;
+        return _bytesToBatchModels(action, bytes);
 
       case CoreIpcAction.clear:
         if (bytes.isEmpty || bytes.length < 4) {
@@ -73,25 +64,33 @@ class CoreIpcConverter {
   dynamic fromBroadcasterBytes(CoreIpcAction op, String action, dynamic bytes) {
     switch (op) {
       case CoreIpcAction.put:
-        final adapter = adapters.get(action);
-        final reader = CoreIpcReader(bytes);
-        return reader.read(null, adapter);
+        return _bytesToModel(action, bytes);
 
       case CoreIpcAction.multiPut:
       case CoreIpcAction.replace:
-        List<dynamic> results = [];
-        final reader = CoreIpcReader(bytes);
-        final int count = reader.readInt();
-        final adapter = adapters.get(action);
-
-        for (var i = 0; i < count; i++) {
-          final dynamic decodedItem = reader.read(null, adapter);
-          results.add(decodedItem);
-        }
-        return results;
+        return _bytesToBatchModels(action, bytes);
 
       default:
         return null;
     }
+  }
+
+  dynamic _bytesToModel(String action, dynamic bytes) {
+    final adapter = adapters.get(action);
+    final reader = CoreIpcReader(bytes);
+    return reader.read(null, adapter);
+  }
+
+  dynamic _bytesToBatchModels(String action, dynamic bytes) {
+    List<dynamic> results = [];
+    final reader = CoreIpcReader(bytes);
+    final int count = reader.readInt();
+    final adapter = adapters.get(action);
+
+    for (var i = 0; i < count; i++) {
+      final dynamic decodedItem = reader.read(null, adapter);
+      results.add(decodedItem);
+    }
+    return results;
   }
 }
