@@ -186,8 +186,9 @@ class CoreIpcServer {
                 builder.add(sessionKey);
                 sendOp = CoreIpcAction.unlock;
 
+                // Must broadcast so other instance mutate its screen to login screen!
                 if (status.isFirstRun()) {
-                  broadcast(CoreIpcAction.databaseCreated, "database_created", '', Uint8List.fromList([status.value]), exclude: client);
+                  broadcast(actionCode, "database_created", '', Uint8List.fromList([status.value]), exclude: client);
                 }
               } else {
                 builder.add([status.value]);
