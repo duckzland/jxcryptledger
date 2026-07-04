@@ -217,65 +217,10 @@ void main() {
     late TransactionsModel txD;
 
     setUp(() {
-      txA = TransactionsModel(
-        tid: '123',
-        pid: '0',
-        rid: '0',
-        srId: 111,
-        rrId: 222,
-        srAmount: 1.0,
-        rrAmount: 2.0,
-        balance: 3.0,
-        status: 0,
-        closable: true,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-        meta: {},
-      );
-
-      txB = TransactionsModel(
-        tid: 'a',
-        pid: '0',
-        rid: '0',
-        srId: 1,
-        rrId: 2,
-        srAmount: 1.0,
-        rrAmount: 2.0,
-        balance: 10.0,
-        status: 0,
-        closable: true,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-        meta: {},
-      );
-
-      txC = TransactionsModel(
-        tid: 'b',
-        pid: '0',
-        rid: '0',
-        srId: 3,
-        rrId: 4,
-        srAmount: 5.0,
-        rrAmount: 6.0,
-        balance: 20.0,
-        status: 0,
-        closable: true,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-        meta: {},
-      );
-
-      txD = TransactionsModel(
-        tid: '99',
-        pid: '0',
-        rid: '0',
-        srId: 123,
-        rrId: 231,
-        srAmount: 1.0,
-        rrAmount: 2.0,
-        balance: 5.0,
-        status: 0,
-        closable: true,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-        meta: {},
-      );
+      txA = makeTx("123", balance: 3.0);
+      txB = makeTx("a", balance: 10.0);
+      txC = makeTx("b", balance: 20.0);
+      txD = makeTx("99", balance: 5.0);
     });
 
     test('toBytes with put serializes TransactionsModel using adapter', () {
@@ -970,7 +915,7 @@ void main() {
         expect(event.key, equals('42'));
         final data = event.payload as TransactionsModel;
         expect(data.uuid, equals('42'));
-        expect(data.balance, equals(3.0));
+        expect(data.balance, equals(6.0));
         expect(data, isA<TransactionsModel>());
       });
 
@@ -992,38 +937,12 @@ void main() {
 
       // Testing sending via client 1
       await Future.delayed(const Duration(milliseconds: 150));
-      final tx1 = TransactionsModel(
-        tid: '42',
-        pid: '0',
-        rid: '0',
-        srId: 123,
-        rrId: 231,
-        srAmount: 1.0,
-        rrAmount: 2.0,
-        balance: 3.0,
-        status: 0,
-        closable: true,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-        meta: {},
-      );
+      final tx1 = makeTx("42", balance: 6.0);
       client1.send(op: CoreIpcAction.put, action: 'transactions_box', key: '42', payload: tx1);
 
       // Testing sending via client 2
       await Future.delayed(const Duration(milliseconds: 150));
-      final tx2 = TransactionsModel(
-        tid: '52',
-        pid: '0',
-        rid: '0',
-        srId: 123,
-        rrId: 231,
-        srAmount: 1.0,
-        rrAmount: 2.0,
-        balance: 3.0,
-        status: 0,
-        closable: true,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-        meta: {},
-      );
+      final tx2 = makeTx("52", balance: 3.0);
       client2.send(op: CoreIpcAction.put, action: 'transactions_box', key: '52', payload: tx2);
     });
   });
