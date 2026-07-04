@@ -228,7 +228,7 @@ void main() {
       final bytes = converter.toBytes(CoreIpcAction.put, 'transactions_box', txA);
       expect(bytes, isNotNull);
 
-      final decoded = converter.fromBroadcasterBytes(CoreIpcAction.put, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(CoreIpcAction.put, 'transactions_box', bytes);
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
       expect(decoded.balance, equals(3.0));
@@ -239,7 +239,7 @@ void main() {
       final bytes = converter.toBytes(CoreIpcAction.multiPut, 'transactions_box', payloads);
       expect(bytes, isNotNull);
 
-      final decoded = converter.fromBroadcasterBytes(CoreIpcAction.multiPut, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(CoreIpcAction.multiPut, 'transactions_box', bytes);
       expect(decoded, isA<List>());
       expect(decoded.length, equals(2));
 
@@ -267,7 +267,7 @@ void main() {
     test('fromSenderBytes with extract decodes list of items', () {
       final payloads = [txA];
       final bytes = converter.toBytes(CoreIpcAction.multiPut, 'transactions_box', payloads);
-      final decoded = converter.fromSenderBytes(CoreIpcAction.extract, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(CoreIpcAction.extract, 'transactions_box', bytes);
 
       expect(decoded, isA<List>());
       expect(decoded.length, equals(1));
@@ -278,11 +278,11 @@ void main() {
 
     test('fromSenderBytes with clear returns int32 or 0 for empty', () {
       final empty = Uint8List(0);
-      expect(converter.fromSenderBytes(CoreIpcAction.clear, 'box', empty), equals(0));
+      expect(converter.fromBytes(CoreIpcAction.clear, 'box', empty), equals(0));
 
       final bd = ByteData(4)..setInt32(0, 42, Endian.big);
       final bytes = bd.buffer.asUint8List();
-      expect(converter.fromSenderBytes(CoreIpcAction.clear, 'box', bytes), equals(42));
+      expect(converter.fromBytes(CoreIpcAction.clear, 'box', bytes), equals(42));
     });
 
     test('fromSenderBytes with unlock returns decoded tx or null', () {
@@ -290,31 +290,31 @@ void main() {
       final good = Uint8List.fromList([1, ...txBytes]);
       final bad = Uint8List.fromList([0, ...txBytes]);
 
-      final decodedGood = converter.fromSenderBytes(CoreIpcAction.unlock, 'transactions_box', good);
+      final decodedGood = converter.fromBytes(CoreIpcAction.unlock, 'transactions_box', good);
       expect(decodedGood, isNotNull);
 
-      final txDecoded = converter.fromBroadcasterBytes(CoreIpcAction.put, 'transactions_box', decodedGood);
+      final txDecoded = converter.fromBytes(CoreIpcAction.put, 'transactions_box', decodedGood);
       expect(txDecoded, isA<TransactionsModel>());
       expect((txDecoded as TransactionsModel).tid, equals('99'));
       expect(txDecoded.balance, equals(5.0));
 
-      final decodedBad = converter.fromSenderBytes(CoreIpcAction.unlock, 'transactions_box', bad);
+      final decodedBad = converter.fromBytes(CoreIpcAction.unlock, 'transactions_box', bad);
       expect(decodedBad, isNull);
     });
 
-    test('fromBroadcasterBytes with put decodes single TransactionsModel', () {
+    test('fromBytes with put decodes single TransactionsModel', () {
       final bytes = converter.toBytes(CoreIpcAction.put, 'transactions_box', txA);
-      final decoded = converter.fromBroadcasterBytes(CoreIpcAction.put, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(CoreIpcAction.put, 'transactions_box', bytes);
 
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
       expect(decoded.balance, equals(3.0));
     });
 
-    test('fromBroadcasterBytes with multiPut decodes multiple TransactionsModel items', () {
+    test('fromBytes with multiPut decodes multiple TransactionsModel items', () {
       final payloads = [txB, txC];
       final bytes = converter.toBytes(CoreIpcAction.multiPut, 'transactions_box', payloads);
-      final decoded = converter.fromBroadcasterBytes(CoreIpcAction.multiPut, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(CoreIpcAction.multiPut, 'transactions_box', bytes);
 
       expect(decoded, isA<List>());
       expect(decoded.length, equals(2));

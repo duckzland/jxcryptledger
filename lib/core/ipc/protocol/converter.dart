@@ -43,10 +43,19 @@ class CoreIpcConverter {
     }
   }
 
-  dynamic fromSenderBytes(CoreIpcAction op, String action, dynamic bytes) {
+  dynamic fromBytes(CoreIpcAction op, String action, dynamic bytes) {
     switch (op) {
+      case CoreIpcAction.put:
+        if (bytes.isNotEmpty) {
+          return _bytesToModel(action, bytes);
+        }
+
+      case CoreIpcAction.multiPut:
+      case CoreIpcAction.replace:
       case CoreIpcAction.extract:
-        return _bytesToBatchModels(action, bytes);
+        if (bytes.isNotEmpty) {
+          return _bytesToBatchModels(action, bytes);
+        }
 
       case CoreIpcAction.clear:
         if (bytes.isEmpty || bytes.length < 4) {
@@ -63,20 +72,6 @@ class CoreIpcConverter {
         }
 
         return null;
-
-      default:
-        return null;
-    }
-  }
-
-  dynamic fromBroadcasterBytes(CoreIpcAction op, String action, dynamic bytes) {
-    switch (op) {
-      case CoreIpcAction.put:
-        return _bytesToModel(action, bytes);
-
-      case CoreIpcAction.multiPut:
-      case CoreIpcAction.replace:
-        return _bytesToBatchModels(action, bytes);
 
       default:
         return null;

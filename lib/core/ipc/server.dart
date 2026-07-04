@@ -36,6 +36,7 @@ class CoreIpcServer {
   late final CoreIpcDatabase database;
   Future<SystemUnlockStatus> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
+  void Function()? disconnected;
 
   bool _isDisposing = false;
 
@@ -83,6 +84,7 @@ class CoreIpcServer {
         _slaves.remove(client);
         try {
           client.destroy();
+          disconnected?.call();
         } catch (_) {}
       }
 

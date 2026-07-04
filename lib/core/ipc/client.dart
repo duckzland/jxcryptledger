@@ -134,7 +134,7 @@ class CoreIpcClient {
     Uint8List? bytes = converter.toBytes(op, action, payload);
 
     final resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
-    return converter.fromSenderBytes(op, action, resultBytes);
+    return converter.fromBytes(op, action, resultBytes);
   }
 
   Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, Uint8List? payload}) async {
@@ -216,7 +216,7 @@ class CoreIpcClient {
             op: currentPacket.op,
             action: currentPacket.action,
             key: currentPacket.key,
-            payload: converter.fromBroadcasterBytes(CoreIpcAction.fromCode(currentPacket.op), currentPacket.action, responseBytes),
+            payload: converter.fromBytes(CoreIpcAction.fromCode(currentPacket.op), currentPacket.action, responseBytes),
           ),
         );
       } else {

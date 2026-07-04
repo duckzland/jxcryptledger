@@ -62,21 +62,26 @@ class CoreBootstrapServer {
     server.database = database;
     server.unlocker = unlock;
     server.shutdown = CoreRuntime.instance.shutdown;
+    server.disconnected = shutdownWhenNoClient;
 
     await database.init();
     await server.start();
 
     _serverWatchdog = Timer.periodic(const Duration(seconds: 5), (_) async {
-      final hasClient = CoreRuntime.instance.hasClient();
-      if (hasClient) {
-        logln("Server still has connected client");
-      } else {
-        logln("Server has no more connected client");
-        CoreRuntime.instance.shutdown();
-      }
+      shutdownWhenNoClient();
     });
 
     initialized = true;
+  }
+
+  void shutdownWhenNoClient() {
+    final hasClient = CoreRuntime.instance.hasClient();
+    if (hasClient) {
+      logln("Server still has connected client");
+    } else {
+      logln("Server has no more connected client");
+      CoreRuntime.instance.shutdown();
+    }
   }
 
   Future<void> bootServices() async {
