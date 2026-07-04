@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jxledger/core/ipc/event.dart';
 
 import '../../app/constants.dart';
 import '../../app/theme.dart';
+import '../../core/ipc/mixins/broadcaster.dart';
 import '../../widgets/button.dart';
 import 'controller.dart';
 
@@ -15,7 +17,7 @@ class SystemUnlockPage extends StatefulWidget {
   State<SystemUnlockPage> createState() => _SystemUnlockPageState();
 }
 
-class _SystemUnlockPageState extends State<SystemUnlockPage> {
+class _SystemUnlockPageState extends State<SystemUnlockPage> with CoreIpcMixinsBroadcaster {
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
 
@@ -28,17 +30,32 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> {
     _confirm.addListener(() => setState(() {}));
     widget.controller.init();
     isFirstRun = widget.controller.isFirstRun;
+    broadcasterListen();
   }
 
   @override
   void dispose() {
     _password.dispose();
     _confirm.dispose();
+    broadcasterDispose();
     super.dispose();
   }
 
   bool showPassword = false;
   String? error;
+
+  @override
+  void broadcasterAction(CoreIpcBroadcastEvent event) {
+    if (event.action != 'database_created') {
+      return;
+    }
+
+    if (isFirstRun) {
+      setState(() {
+        isFirstRun = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

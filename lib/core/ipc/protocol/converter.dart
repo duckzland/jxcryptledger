@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../../../system/unlock/status.dart';
 import '../database/adapters.dart';
 import '../protocol/writer.dart';
 import '../action.dart';
@@ -54,7 +55,14 @@ class CoreIpcConverter {
         return ByteData.sublistView(bytes).getInt32(0, Endian.big);
 
       case CoreIpcAction.unlock:
-        return bytes.isNotEmpty && bytes.first == 1 ? bytes.sublist(1) : null;
+        if (bytes.isNotEmpty) {
+          final status = SystemUnlockStatus.fromValue(bytes.first);
+          if (status.isUnlocked()) {
+            return bytes.sublist(1);
+          }
+        }
+
+        return null;
 
       default:
         return null;

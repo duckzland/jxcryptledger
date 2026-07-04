@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 
-import '../../../app/constants.dart';
 import '../../../features/archives/model.dart';
 import '../../../features/cryptos/model.dart';
 import '../../../system/encryption/service.dart';
@@ -11,6 +10,7 @@ import '../../../features/watchboard/panels/model.dart';
 import '../../../features/watchboard/tickers/model.dart';
 import '../../../features/watchers/model.dart';
 import '../../log.dart';
+import '../../../system/unlock/status.dart';
 import 'adapters.dart';
 import 'boxes.dart';
 import 'migration.dart';
@@ -39,7 +39,7 @@ class CoreIpcDatabase {
     initialized = true;
   }
 
-  Future<int> unlock(Uint8List keyBytes) async {
+  Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
     isFirstRun = !await boxes.exists();
 
     if (!unlocked) {
@@ -69,15 +69,15 @@ class CoreIpcDatabase {
         unlocked = true;
       } catch (e) {
         logln("Failed to decrypt boxes (wrong password): ${e.toString()}");
-        return unlockError;
+        return SystemUnlockStatus.error;
       }
     }
 
     if (isFirstRun) {
-      return unlockFirstTime;
+      return SystemUnlockStatus.firstTime;
     }
 
-    return unlockSuccess;
+    return SystemUnlockStatus.success;
   }
 
   Future<void> dispose() async {

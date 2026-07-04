@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../../../app/constants.dart';
 import '../../../features/archives/service.dart';
 import '../../../features/cryptos/service.dart';
 import '../../../features/notification/service.dart';
@@ -13,6 +12,7 @@ import '../../../features/transactions/service.dart';
 import '../../../features/watchboard/panels/service.dart';
 import '../../../features/watchboard/tickers/service.dart';
 import '../../../features/watchers/service.dart';
+import '../../../system/unlock/status.dart';
 import '../../ipc/client.dart';
 import '../../ipc/database/adapters.dart';
 import '../../ipc/database/boxes.dart';
@@ -107,30 +107,30 @@ class CoreBootstrapServer {
     appWorker.stop();
   }
 
-  Future<bool> unlock(Uint8List keyBytes) async {
-    final state = await database.unlock(keyBytes);
+  Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
+    final SystemUnlockStatus state = await database.unlock(keyBytes);
 
-    if (state == unlockError) {
-      return false;
+    if (!state.isUnlocked()) {
+      return state;
     }
 
-    if (state > unlockError) {
+    if (!state.isFirstRun()) {
       client.sessionKey ??= server.sessionKey;
       await bootServices();
     }
 
-    if (state == unlockFirstTime) {
+    if (state.isFirstRun()) {
       try {
         logln("First run detected, initializing vault");
         client.sessionKey ??= server.sessionKey;
         await _settingsService.save(SettingKey.vaultInitialized, "initialized");
       } catch (e) {
         logln("Failed to initialize vault: $e");
-        return false;
+        return SystemUnlockStatus.error;
       }
     }
 
-    return true;
+    return state;
   }
 
   Future<void> dispose() async {

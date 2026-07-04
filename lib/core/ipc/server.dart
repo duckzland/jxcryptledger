@@ -22,6 +22,7 @@ import 'protocol/writer.dart';
 import 'database/database.dart';
 
 import 'action.dart';
+import '../../system/unlock/status.dart';
 
 class CoreIpcServer {
   final List<Socket> _slaves = [];
@@ -33,7 +34,7 @@ class CoreIpcServer {
   CoreIpcServer();
 
   late final CoreIpcDatabase database;
-  Future<bool> Function(Uint8List keyBytes)? unlocker;
+  Future<SystemUnlockStatus> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
 
   bool _isDisposing = false;
@@ -178,20 +179,25 @@ class CoreIpcServer {
 
           case CoreIpcAction.unlock:
             try {
-              final success = await unlocker?.call(payload) ?? false;
+              final SystemUnlockStatus status = await unlocker?.call(payload) ?? SystemUnlockStatus.error;
               final builder = BytesBuilder();
-              if (success) {
-                builder.add([1]);
+              if (status.isUnlocked()) {
+                builder.add([status.value]);
                 builder.add(sessionKey);
                 sendOp = CoreIpcAction.unlock;
+
+                if (status.isFirstRun()) {
+                  broadcast(CoreIpcAction.databaseCreated, "database_created", '', Uint8List.fromList([status.value]), exclude: client);
+                }
               } else {
-                builder.add([0]);
+                builder.add([status.value]);
                 sendOp = CoreIpcAction.response;
               }
               serializedResult = builder.toBytes();
             } catch (e) {
               serializedResult = Uint8List.fromList([0]);
             }
+
             break;
 
           case CoreIpcAction.multiPut:
