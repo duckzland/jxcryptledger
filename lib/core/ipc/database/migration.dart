@@ -14,7 +14,9 @@ import '../../runtime/locator.dart';
 class CoreIpcMigration {
   Future<void> migrateBeforeUnlock() async {
     // @deprecated Remove this in the next minor version release.
-    await _migrateOldFiles();
+    if (isVersionLessThan(appVersion, "1.0.29.99")) {
+      await _migrateOldFiles();
+    }
   }
 
   Future<void> migrateAfterUnlock() async {

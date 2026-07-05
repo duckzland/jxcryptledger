@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../log.dart';
 import '../../runtime/locker.dart';
@@ -12,14 +11,8 @@ class CoreIpcBoxes {
   String? hivePath;
 
   Future<void> init() async {
-    Directory dir = await getApplicationDocumentsDirectory();
-    hivePath = '${dir.path}/jxledger/live';
-    if (kDebugMode || kProfileMode) {
-      hivePath = '${dir.path}/jxledger/dev';
-    }
-
-    if (!await Directory(hivePath!).exists()) {
-      await Directory(hivePath!).create(recursive: true);
+    if (hivePath == null || hivePath!.isEmpty) {
+      throw ("[IPC] Cannot initialize boxes without proper hive path");
     }
 
     logln("Initializing Hive at $hivePath");

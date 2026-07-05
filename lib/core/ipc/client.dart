@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
-import 'package:dart_ipc/dart_ipc.dart';
 
 import '../log.dart';
 
@@ -56,10 +55,10 @@ class CoreIpcClient {
     _isReconnecting = false;
 
     try {
-      _socket = await connect(pipeName);
+      _socket = await Socket.connect(InternetAddress(pipeName, type: InternetAddressType.unix), 0);
 
       _socketSubscription = _socket!.listen(
-        (Uint8List chunk) => _receive(chunk),
+        (List<int> chunk) => _receive(Uint8List.fromList(chunk)),
         onError: (err) async {
           logln("[IPC] socket error: $err");
           if (!_isDisposing) {

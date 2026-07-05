@@ -25,6 +25,7 @@ class CoreIpcDatabase {
   bool initialized = false;
   bool unlocked = false;
   bool isFirstRun = false;
+  String path = "";
 
   Future<void> init() async {
     if (initialized) return;
@@ -34,6 +35,7 @@ class CoreIpcDatabase {
 
     migration.migrateBeforeUnlock();
 
+    boxes.hivePath = path;
     boxes.init();
 
     initialized = true;

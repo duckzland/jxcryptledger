@@ -2,8 +2,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
 
-import 'package:dart_ipc/dart_ipc.dart';
-
 import '../../features/watchboard/tickers/service.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
@@ -66,7 +64,7 @@ class CoreIpcServer {
   Future<void> start() async {
     _crypto.setSessionKey(sessionKey);
 
-    final socket = await bind(pipeName);
+    final socket = await ServerSocket.bind(InternetAddress(pipeName, type: InternetAddressType.unix), 0);
     logln("[IPC] Server running: $pipeName");
 
     socket.listen((client) {

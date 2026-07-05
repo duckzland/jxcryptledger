@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:jxledger/core/ipc/action.dart';
 import 'package:jxledger/core/ipc/box.dart';
 import 'package:jxledger/core/ipc/client.dart';
@@ -26,12 +27,18 @@ import 'faker/adapters.dart';
 import 'faker/client.dart';
 import 'faker/database.dart';
 
-String _testPipeName() {
+Future<String> _testPipeName() async {
+  WidgetsFlutterBinding.ensureInitialized();
   final suffix = DateTime.now().microsecondsSinceEpoch;
-  if (Platform.isWindows) {
-    return r'\\.\pipe\jxledger_test_pipe_' + suffix.toString();
+  final dir = Directory.current;
+  final path = '${dir.path}/test/tmp';
+
+  final newDir = Directory(path);
+  if (!await newDir.exists()) {
+    await newDir.create(recursive: true);
   }
-  return '/tmp/jxledger_test_pipe_$suffix.sock';
+
+  return '$path/jxledger-$suffix.sock';
 }
 
 TransactionsModel makeTx(String tid, {double balance = 0.0}) {
@@ -832,7 +839,7 @@ void main() {
 
   group('CoreIpcClient and CoreIpcServer', () {
     test('round-trips a request and receives a response', () async {
-      final pipeName = _testPipeName();
+      final pipeName = await _testPipeName();
       CoreMode.isServer = false;
       CoreMode.ipcPipeName = pipeName;
 
@@ -849,7 +856,6 @@ void main() {
         return SystemUnlockStatus.success;
       };
 
-      // await server.database.init();
       await server.start();
       await Future.delayed(const Duration(milliseconds: 150));
       await client.start();
@@ -868,7 +874,7 @@ void main() {
 
     test('broadcasts events to connected clients', () async {
       // Define the variables and keys
-      final pipeName = _testPipeName();
+      final pipeName = await _testPipeName();
       final keyBytes = Uint8List.fromList([1, 2, 3]);
 
       // Booting the server

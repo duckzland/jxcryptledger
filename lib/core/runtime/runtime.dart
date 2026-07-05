@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:dart_ipc/dart_ipc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 import '../../app/router.dart';
 import '../../system/settings/states.dart';
@@ -27,33 +28,11 @@ class CoreRuntime {
   late final StateService states;
 
   static String get ipcPipeName {
-    if (Platform.isWindows) {
-      final String username = Platform.environment['USERNAME'] ?? 'shared';
-      final String safeUser = username.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
-
-      return (kDebugMode || kProfileMode)
-          // ignore: prefer_interpolation_to_compose_strings
-          ? r'\\.\pipe\com.jxledger_ipc_sync_pipe_' + safeUser + '_devel'
-          : r'\\.\pipe\com.jxledger_ipc_sync_pipe_' + safeUser;
-    } else if (Platform.isLinux) {
-      final String? xdgRuntime = Platform.environment['XDG_RUNTIME_DIR'];
-
-      if (xdgRuntime != null && Directory(xdgRuntime).existsSync()) {
-        return (kDebugMode || kProfileMode) ? '$xdgRuntime/jxledger_devel.sock' : '$xdgRuntime/jxledger.sock';
-      } else {
-        final String username = Platform.environment['USER'] ?? Platform.environment['LOGNAME'] ?? 'shared';
-        final String fallbackFolder = '/tmp/jxledger-$username';
-
-        final Directory dir = Directory(fallbackFolder);
-        if (!dir.existsSync()) {
-          dir.createSync(recursive: true);
-        }
-
-        return (kDebugMode || kProfileMode) ? '$fallbackFolder/jxledger_devel.sock' : '$fallbackFolder/jxledger.sock';
-      }
-    } else {
-      return (kDebugMode || kProfileMode) ? '/tmp/jxledger_devel.sock' : '/tmp/jxledger.sock';
+    if (CoreMode.path.isEmpty) {
+      throw ("Path must be initialized before retrieving ipcPipeName");
     }
+
+    return p.normalize('${CoreMode.path}/jxledger.sock');
   }
 
   List<String> args = [];
@@ -69,9 +48,6 @@ class CoreRuntime {
   Future<void> init() async {
     if (initialized) return;
 
-    // Not supporting web!
-    if (kIsWeb) return;
-
     states = locator<StateService>();
     lifecycleListener = AppLifecycleListener(
       onExitRequested: () async {
@@ -86,22 +62,30 @@ class CoreRuntime {
       },
     );
 
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      ProcessSignal.sigint.watch().listen((signal) async {
-        try {
-          await shutdown();
-        } catch (e) {
-          logln("Failed to save state on exit: $e");
-        } finally {
-          exit(0);
-        }
-      });
+    ProcessSignal.sigint.watch().listen((signal) async {
+      try {
+        await shutdown();
+      } catch (e) {
+        logln("Failed to save state on exit: $e");
+      } finally {
+        exit(0);
+      }
+    });
+
+    final dir = await getApplicationDocumentsDirectory();
+
+    // Initialization
+    CoreMode.isServer = args.contains("--server");
+    CoreMode.isMain = serverPid != 0;
+    CoreMode.path = (kDebugMode || kProfileMode) ? p.normalize('${dir.path}/jxledger/dev') : p.normalize('${dir.path}/jxledger/live');
+    CoreMode.ipcPipeName = ipcPipeName;
+
+    final newDir = Directory(CoreMode.path);
+    if (!await newDir.exists()) {
+      await newDir.create(recursive: true);
     }
 
-    CoreMode.isServer = args.contains("--server");
-    CoreMode.ipcPipeName = ipcPipeName;
-    CoreMode.isMain = serverPid != 0;
-
+    // Server Strapping up
     if (!CoreMode.isServer) {
       if (!isServerAvailable() && shouldSpawn()) {
         await spawnServer();
@@ -119,6 +103,7 @@ class CoreRuntime {
       logln("IPC server running via Named Pipe: $ipcPipeName");
     }
 
+    // Client strapping up
     final clientStrap = locator<CoreBootstrapClient>();
     await clientStrap.start();
 
@@ -153,16 +138,14 @@ class CoreRuntime {
   }
 
   void cleanSocketFile() {
-    if (Platform.isLinux) {
-      try {
-        final socketFile = File(ipcPipeName);
-        if (socketFile.existsSync()) {
-          socketFile.deleteSync();
-          logln("Cleaned up stale Linux socket file prior to server spawn.");
-        }
-      } catch (e) {
-        logln("Warning: Failed to clear stale socket file: $e");
+    try {
+      final socketFile = FileSystemEntity.typeSync(CoreMode.ipcPipeName);
+      if (socketFile != FileSystemEntityType.notFound) {
+        File(CoreMode.ipcPipeName).deleteSync();
+        logln("Cleaned up stale socket file prior to server spawn.");
       }
+    } catch (e) {
+      logln("Warning: Failed to clear stale socket file: $e");
     }
   }
 
@@ -192,7 +175,7 @@ class CoreRuntime {
     for (var retries = 0; retries < 30; retries++) {
       try {
         if (isServerAvailable()) {
-          final socket = await connect(CoreMode.ipcPipeName);
+          final socket = await Socket.connect(InternetAddress(CoreMode.ipcPipeName, type: InternetAddressType.unix), 0);
           socket.destroy();
           return true;
         }

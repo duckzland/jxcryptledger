@@ -53,6 +53,7 @@ class CoreBootstrapServer with CoreIpcMixinsBroadcaster {
     ipcServer.unlocker = unlock;
     ipcServer.shutdown = CoreRuntime.instance.shutdown;
     ipcServer.disconnected = shutdownWhenNoClient;
+    ipcServer.database.path = CoreMode.path;
 
     await ipcServer.database.init();
     await ipcServer.start();

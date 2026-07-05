@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -9,6 +10,14 @@ import 'core/runtime/runtime.dart';
 import 'core/runtime/locator.dart';
 
 Future<void> main(List<String> args) async {
+  if (Platform.isWindows == false && Platform.isLinux == false) {
+    throw ("App only support windows or linux");
+  }
+
+  if (kIsWeb) {
+    throw ("App only doesn't support web mode");
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
 
   if (File('.env').existsSync()) {
