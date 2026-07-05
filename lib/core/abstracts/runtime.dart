@@ -10,10 +10,10 @@ import '../../app/router.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
-import '../log.dart';
-import '../mode.dart';
 import '../runtime/locator.dart';
 import '../runtime/process.dart';
+import '../log.dart';
+import '../mode.dart';
 
 abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
   CoreBaseRuntime();
