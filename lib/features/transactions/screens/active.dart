@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
@@ -96,6 +97,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         _filterMode = widget.filterMode;
         _sortMode = widget.sortMode;
         groups = _processTx();
+        groupKeys = groups.keys.toList();
       });
       return;
     }
@@ -109,7 +111,9 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         Map<String, List<TransactionsModel>> oldGroups = groups;
 
         groups = _processTx();
+        groupKeys = groups.keys.toList();
         key = (tx != null) ? "${tx.srId}-${tx.rrId}" : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
+
         if (key != "") {
           states.set("tx-group-active-open-$key", true);
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -155,38 +159,53 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return groups.isEmpty
-        ? Center(
-            child: Text(
-              _filterMode == 0 ? "No active transactions available" : "No transactions available",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          )
-        : ListView.separated(
-            controller: scrollToUtil.controller,
+    if (groups.isEmpty) {
+      return Center(
+        child: Text(
+          _filterMode == 0 ? "No active transactions available" : "No transactions available",
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+      );
+    }
+
+    return ListView.custom(
+      controller: scrollToUtil.controller,
+      scrollCacheExtent: const ScrollCacheExtent.viewport(3.0),
+      childrenDelegate: SliverChildBuilderDelegate(
+        (BuildContext itemContext, int idx) {
+          final key = groupKeys[idx];
+          final parts = key.split('-');
+
+          final srId = int.parse(parts[0]);
+          final rrId = int.parse(parts[1]);
+          final stxs = groups[key]!;
+
+          return Padding(
             padding: const EdgeInsets.only(bottom: 24),
-            itemCount: groupKeys.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 24),
-            itemBuilder: (itemContext, idx) {
-              final key = groupKeys[idx];
-              final parts = key.split('-');
-
-              final srId = int.parse(parts[0]);
-              final rrId = int.parse(parts[1]);
-
-              final stxs = groups[key]!;
-
-              return TransactionsActiveCard(
-                key: ValueKey("card-$rrId"),
-                srid: srId,
-                rrid: rrId,
-                transactions: stxs,
-                onStatusChanged: widget.onStatusChanged,
-                parentContext: context,
-                isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
-              );
-            },
+            child: TransactionsActiveCard(
+              key: ValueKey("$srId-$rrId"),
+              srid: srId,
+              rrid: rrId,
+              transactions: stxs,
+              onStatusChanged: widget.onStatusChanged,
+              parentContext: context,
+              isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
+            ),
           );
+        },
+        childCount: groupKeys.length,
+        addAutomaticKeepAlives: true,
+        findChildIndexCallback: (Key key) {
+          if (key is ValueKey<String>) {
+            final targetIdx = groupKeys.indexWhere((k) => k == key.value);
+            if (targetIdx != -1) {
+              return targetIdx;
+            }
+          }
+          return null;
+        },
+      ),
+    );
   }
 
   Map<String, List<TransactionsModel>> _processTx() {

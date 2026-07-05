@@ -64,7 +64,6 @@ class TransactionsActiveCard extends StatefulWidget {
 
 class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     with
-        AutomaticKeepAliveClientMixin,
         MixinsActionable,
         MixinsState,
         MixinsTable,
@@ -123,9 +122,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   @override
   String get sortableKey => "tx-group-active-${widget.srid}-${widget.rrid}";
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -262,7 +258,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return WidgetsPanel(child: Column(spacing: 20, children: [_buildHeader(), if (_isOpen) _buildTable()]));
   }
 

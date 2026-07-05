@@ -54,9 +54,7 @@ class StateService {
   void populate(String jsonData) {
     final decoded = jsonDecode(jsonData);
     if (decoded is Map<String, dynamic>) {
-      _state
-        ..clear()
-        ..addAll(decoded);
+      _state.addAll(decoded);
     }
   }
 }

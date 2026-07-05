@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
@@ -38,6 +39,8 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
   late List<TransactionsModel> txs;
 
   Map<String, List<TransactionsModel>> groups = {};
+  List<String> groupKeys = [];
+
   int _filterMode = 0;
   int _sortMode = 0;
 
@@ -55,6 +58,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
     groups = _processTx();
+    groupKeys = groups.keys.toList();
 
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
@@ -92,6 +96,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         _filterMode = widget.filterMode;
         _sortMode = widget.sortMode;
         groups = _processTx();
+        groupKeys = groups.keys.toList();
       });
       return;
     }
@@ -105,6 +110,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         Map<String, List<TransactionsModel>> oldGroups = groups;
 
         groups = _processTx();
+        groupKeys = groups.keys.toList();
         key = (tx != null) ? tx.rrId.toString() : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
 
         if (key != "") {
@@ -143,34 +149,48 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
   Widget build(BuildContext context) {
     super.build(context);
 
-    final groupKeys = groups.keys.toList();
+    if (groups.isEmpty) {
+      return Center(
+        child: Text(
+          _filterMode == 0 ? "No active transactions available" : "No transactions available",
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+      );
+    }
 
-    return groups.isEmpty
-        ? Center(
-            child: Text(
-              _filterMode == 0 ? "No active transactions available" : "No transactions available",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          )
-        : ListView.separated(
-            controller: scrollToUtil.controller,
+    return ListView.custom(
+      controller: scrollToUtil.controller,
+      scrollCacheExtent: const ScrollCacheExtent.viewport(3.0),
+      childrenDelegate: SliverChildBuilderDelegate(
+        (BuildContext itemContext, int idx) {
+          final rrId = groupKeys[idx];
+          final stxs = groups[rrId]!;
+
+          return Padding(
             padding: const EdgeInsets.only(bottom: 24),
-            itemCount: groupKeys.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 24),
-            itemBuilder: (itemContext, idx) {
-              final rrId = groupKeys[idx];
-              final stxs = groups[rrId]!;
-
-              return TransactionsOverviewCard(
-                key: ValueKey("card-$rrId"),
-                id: int.parse(rrId),
-                transactions: stxs,
-                onStatusChanged: widget.onStatusChanged,
-                parentContext: context,
-                isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
-              );
-            },
+            child: TransactionsOverviewCard(
+              key: ValueKey(rrId),
+              id: int.parse(rrId),
+              transactions: stxs,
+              onStatusChanged: widget.onStatusChanged,
+              parentContext: context,
+              isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
+            ),
           );
+        },
+        childCount: groupKeys.length,
+        addAutomaticKeepAlives: true,
+        findChildIndexCallback: (Key key) {
+          if (key is ValueKey<String>) {
+            final targetIdx = groupKeys.indexWhere((k) => k == key.value);
+            if (targetIdx != -1) {
+              return targetIdx;
+            }
+          }
+          return null;
+        },
+      ),
+    );
   }
 
   Map<String, List<TransactionsModel>> _processTx() {
