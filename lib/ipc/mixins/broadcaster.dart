@@ -3,21 +3,20 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../action.dart';
-import '../../mode.dart';
+import '../../core/mode.dart';
 import '../client.dart';
 import '../event.dart';
 import '../server.dart';
-import '../../runtime/locator.dart';
 
-mixin CoreIpcMixinsBroadcaster {
+mixin IpcMixinsBroadcaster {
   StreamSubscription? _broadcaster;
 
-  CoreIpcClient get ipcClient => locator<CoreIpcClient>();
-  CoreIpcServer get ipcServer => locator<CoreIpcServer>();
+  IpcClient get ipcClient;
+  IpcServer get ipcServer;
 
   bool isBroadcastable = CoreMode.isServer;
 
-  void broadcasterAction(CoreIpcBroadcastEvent event) {}
+  void broadcasterAction(IpcBroadcastEvent event) {}
 
   void broadcasterListen() {
     _broadcaster = ipcClient.onBroadcast.listen((event) {
@@ -25,11 +24,11 @@ mixin CoreIpcMixinsBroadcaster {
     });
   }
 
-  Future<void> broadcasterSend({required CoreIpcAction op, required String action, dynamic key, dynamic payload}) async {
+  Future<void> broadcasterSend({required IpcAction op, required String action, dynamic key, dynamic payload}) async {
     await ipcClient.send(op: op, action: action, key: key, payload: payload);
   }
 
-  bool broadcasterEmit(CoreIpcAction op, String? action, String? key, Uint8List? payload, {Socket? exclude}) {
+  bool broadcasterEmit(IpcAction op, String? action, String? key, Uint8List? payload, {Socket? exclude}) {
     if (!isBroadcastable) return false;
     ipcServer.broadcast(op, action ?? "", key ?? "", payload ?? Uint8List(0), exclude: exclude);
     return true;

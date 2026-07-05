@@ -10,8 +10,6 @@ typedef _NativeIsServerRunning = Int32 Function();
 typedef _DartIsServerRunning = int Function();
 
 class CoreProcessDetector {
-  CoreProcessDetector._();
-
   static final DynamicLibrary _processLib = DynamicLibrary.executable();
 
   static final _DartGetPids _nativeGetPids = _processLib.lookup<NativeFunction<_NativeGetPids>>('get_active_process_pids').asFunction();

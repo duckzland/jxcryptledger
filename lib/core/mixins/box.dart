@@ -1,7 +1,7 @@
-import '../../abstracts/models/with_id.dart';
-import '../../abstracts/repository.dart';
+import '../abstracts/models/with_id.dart';
+import '../abstracts/repository.dart';
 
-mixin CoreIpcMixinsBox<T extends CoreModelWithId> {
+mixin CoreMixinsBox<T extends CoreModelWithId> {
   CoreBaseRepository<T> get repo;
 
   void load() {}

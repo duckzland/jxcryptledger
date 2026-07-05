@@ -3,14 +3,14 @@ import 'dart:typed_data';
 
 import '../action.dart';
 
-class CoreIpcPacket {
+class IpcPacket {
   final int reqId;
   final int op;
   final String action;
   final String key;
   final Uint8List payload;
 
-  CoreIpcPacket({required this.reqId, required this.op, required this.action, required this.key, required this.payload});
+  IpcPacket({required this.reqId, required this.op, required this.action, required this.key, required this.payload});
 
   Uint8List toBytes() {
     final builder = BytesBuilder();
@@ -31,7 +31,7 @@ class CoreIpcPacket {
     return builder.toBytes();
   }
 
-  static CoreIpcPacket fromBytes(Uint8List bytes) {
+  static IpcPacket fromBytes(Uint8List bytes) {
     final byteData = ByteData.sublistView(bytes);
     int offset = 0;
 
@@ -55,10 +55,10 @@ class CoreIpcPacket {
     offset += 4;
     final payload = bytes.sublist(offset, offset + valLen);
 
-    return CoreIpcPacket(reqId: reqId, op: op, action: action, key: key, payload: payload);
+    return IpcPacket(reqId: reqId, op: op, action: action, key: key, payload: payload);
   }
 
-  CoreIpcAction get actionCode => CoreIpcAction.fromCode(op);
+  IpcAction get actionCode => IpcAction.fromCode(op);
 
   static Uint8List _int32(int v) => (ByteData(4)..setInt32(0, v, Endian.big)).buffer.asUint8List();
   static Uint8List _int16(int v) => (ByteData(2)..setInt16(0, v, Endian.big)).buffer.asUint8List();

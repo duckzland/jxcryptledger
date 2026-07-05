@@ -3,19 +3,19 @@ import 'dart:collection';
 import 'package:hive_ce/hive_ce.dart';
 
 import 'package:jxledger/core/abstracts/models/with_id.dart';
-import 'package:jxledger/core/ipc/action.dart';
-import 'package:jxledger/core/ipc/box.dart';
-import 'package:jxledger/core/ipc/client.dart';
-import 'package:jxledger/core/ipc/database/adapters.dart';
-import 'package:jxledger/core/ipc/event.dart';
+import 'package:jxledger/ipc/action.dart';
+import 'package:jxledger/ipc/box.dart';
+import 'package:jxledger/ipc/client.dart';
+import 'package:jxledger/ipc/database/adapters.dart';
+import 'package:jxledger/ipc/event.dart';
 import 'package:jxledger/core/log.dart';
 
-class HiveBoxFaker<T extends CoreModelWithId> implements CoreIpcBox<T> {
+class HiveBoxFaker<T extends CoreModelWithId> implements IpcBox<T> {
   @override
   final String boxName;
 
   @override
-  final CoreIpcAdapters adapters = CoreIpcAdapters();
+  final IpcAdapters adapters = IpcAdapters();
 
   @override
   final LinkedHashMap<dynamic, T> items = LinkedHashMap();
@@ -158,27 +158,27 @@ class HiveBoxFaker<T extends CoreModelWithId> implements CoreIpcBox<T> {
   }
 
   @override
-  void receive(CoreIpcBroadcastEvent event) {
+  void receive(IpcBroadcastEvent event) {
     if (event.action != boxName) {
       return;
     }
 
     switch (event.actionCode) {
-      case CoreIpcAction.put:
+      case IpcAction.put:
         final data = event.payload as T;
         items[data.uuid] = data;
         break;
 
-      case CoreIpcAction.delete:
+      case IpcAction.delete:
         items.remove(event.key);
         break;
 
-      case CoreIpcAction.clear:
+      case IpcAction.clear:
         items.clear();
         break;
 
-      case CoreIpcAction.multiPut:
-      case CoreIpcAction.replace:
+      case IpcAction.multiPut:
+      case IpcAction.replace:
         items.clear();
         for (final value in event.payload) {
           final data = value as T;
@@ -192,7 +192,7 @@ class HiveBoxFaker<T extends CoreModelWithId> implements CoreIpcBox<T> {
   }
 
   @override
-  CoreIpcClient get client => throw UnimplementedError();
+  IpcClient get client => throw UnimplementedError();
 
   @override
   Future<void> add(T tx) async {

@@ -1,12 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 
-import '../../log.dart';
-import '../../runtime/locker.dart';
+import '../../system/unlock/status.dart';
+import '../../core/log.dart';
+import '../../core/runtime/locker.dart';
 
-class CoreIpcBoxes {
+class IpcBoxes {
   final Map<String, Box> boxes = {};
   String? hivePath;
 
@@ -76,19 +75,14 @@ class CoreIpcBoxes {
   }
 
   Future<bool> exists() async {
-    if (kIsWeb) return false;
-
-    if (hivePath == null) {
-      return false;
-    }
-
-    final settingsFile = File('$hivePath/settings_box.hive');
-    final transactionsFile = File('$hivePath/transactions_box.hive');
-
-    return await settingsFile.exists() || await transactionsFile.exists();
+    return Future.value(true);
   }
 
   Future<void> dispose() async {
     await Hive.close();
+  }
+
+  Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
+    return SystemUnlockStatus.success;
   }
 }

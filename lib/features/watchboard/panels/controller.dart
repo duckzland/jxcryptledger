@@ -1,6 +1,6 @@
 import '../../../core/abstracts/controller.dart';
-import '../../../core/ipc/action.dart';
-import '../../../core/ipc/event.dart';
+import '../../../ipc/action.dart';
+import '../../../ipc/event.dart';
 import '../../../core/math.dart';
 import '../../../core/mixins/controllers/exportable.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
@@ -19,9 +19,9 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   PanelsController(super.repo, this._txRepo);
 
   @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
+  void broadcasterAction(IpcBroadcastEvent event) {
     super.broadcasterAction(event);
-    if (event.actionCode == CoreIpcAction.refreshRates) {
+    if (event.actionCode == IpcAction.refreshRates) {
       if (event.action == "complete") {
         onRatesUpdated();
         load();

@@ -4,20 +4,20 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:jxledger/core/ipc/action.dart';
-import 'package:jxledger/core/ipc/box.dart';
-import 'package:jxledger/core/ipc/client.dart';
-import 'package:jxledger/core/ipc/database/adapters.dart';
-import 'package:jxledger/core/ipc/database/boxes.dart';
-import 'package:jxledger/core/ipc/database/migration.dart';
-import 'package:jxledger/core/ipc/event.dart';
-import 'package:jxledger/core/ipc/protocol/buffer.dart';
-import 'package:jxledger/core/ipc/protocol/converter.dart';
-import 'package:jxledger/core/ipc/protocol/crypto.dart';
-import 'package:jxledger/core/ipc/protocol/packet.dart';
-import 'package:jxledger/core/ipc/protocol/reader.dart';
-import 'package:jxledger/core/ipc/protocol/writer.dart';
-import 'package:jxledger/core/ipc/server.dart';
+import 'package:jxledger/ipc/action.dart';
+import 'package:jxledger/ipc/box.dart';
+import 'package:jxledger/ipc/client.dart';
+import 'package:jxledger/ipc/database/adapters.dart';
+import 'package:jxledger/ipc/database/boxes.dart';
+import 'package:jxledger/ipc/database/migration.dart';
+import 'package:jxledger/ipc/event.dart';
+import 'package:jxledger/ipc/protocol/buffer.dart';
+import 'package:jxledger/ipc/protocol/converter.dart';
+import 'package:jxledger/ipc/protocol/crypto.dart';
+import 'package:jxledger/ipc/protocol/packet.dart';
+import 'package:jxledger/ipc/protocol/reader.dart';
+import 'package:jxledger/ipc/protocol/writer.dart';
+import 'package:jxledger/ipc/server.dart';
 import 'package:jxledger/core/mode.dart';
 import 'package:jxledger/features/transactions/model.dart';
 import 'package:jxledger/system/unlock/status.dart';
@@ -61,61 +61,61 @@ TransactionsModel makeTx(String tid, {double balance = 0.0}) {
 void main() {
   group('CoreIpcAction', () {
     test('returns known action for valid code', () {
-      expect(CoreIpcAction.fromCode(0x02), CoreIpcAction.put);
-      expect(CoreIpcAction.fromCode(0x03), CoreIpcAction.delete);
-      expect(CoreIpcAction.fromCode(0xFF), CoreIpcAction.error);
+      expect(IpcAction.fromCode(0x02), IpcAction.put);
+      expect(IpcAction.fromCode(0x03), IpcAction.delete);
+      expect(IpcAction.fromCode(0xFF), IpcAction.error);
     });
 
     test('returns unknown for invalid code', () {
-      expect(CoreIpcAction.fromCode(0xAB), CoreIpcAction.unknown);
+      expect(IpcAction.fromCode(0xAB), IpcAction.unknown);
     });
   });
 
   group('CoreIpcPacket', () {
     test('serializes and deserializes correctly', () {
       final payload = utf8.encode('hello world');
-      final packet = CoreIpcPacket(
+      final packet = IpcPacket(
         reqId: 123,
-        op: CoreIpcAction.put.code,
+        op: IpcAction.put.code,
         action: 'transactions_box',
         key: '42',
         payload: Uint8List.fromList(payload),
       );
 
       final bytes = packet.toBytes();
-      final parsed = CoreIpcPacket.fromBytes(bytes);
+      final parsed = IpcPacket.fromBytes(bytes);
 
       expect(parsed.reqId, equals(123));
-      expect(parsed.op, equals(CoreIpcAction.put.code));
+      expect(parsed.op, equals(IpcAction.put.code));
       expect(parsed.action, equals('transactions_box'));
       expect(parsed.key, equals('42'));
       expect(utf8.decode(parsed.payload), equals('hello world'));
     });
 
     test('handles empty payload', () {
-      final packet = CoreIpcPacket(reqId: 1, op: CoreIpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
+      final packet = IpcPacket(reqId: 1, op: IpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
 
       final bytes = packet.toBytes();
-      final parsed = CoreIpcPacket.fromBytes(bytes);
+      final parsed = IpcPacket.fromBytes(bytes);
 
       expect(parsed.reqId, equals(1));
-      expect(parsed.op, equals(CoreIpcAction.clear.code));
+      expect(parsed.op, equals(IpcAction.clear.code));
       expect(parsed.action, equals('settings_box'));
       expect(parsed.key, equals(''));
       expect(parsed.payload.length, equals(0));
     });
 
     test('handles non-ASCII characters in action and key', () {
-      final packet = CoreIpcPacket(
+      final packet = IpcPacket(
         reqId: 2,
-        op: CoreIpcAction.put.code,
+        op: IpcAction.put.code,
         action: '测试箱', // Chinese characters
         key: 'ключ', // Cyrillic characters
         payload: Uint8List.fromList(utf8.encode('payload')),
       );
 
       final bytes = packet.toBytes();
-      final parsed = CoreIpcPacket.fromBytes(bytes);
+      final parsed = IpcPacket.fromBytes(bytes);
 
       expect(parsed.reqId, equals(2));
       expect(parsed.action, equals('测试箱'));
@@ -124,30 +124,24 @@ void main() {
     });
 
     test('actionCode returns correct CoreIpcAction', () {
-      final packet = CoreIpcPacket(reqId: 3, op: CoreIpcAction.delete.code, action: 'box', key: 'k', payload: Uint8List(0));
+      final packet = IpcPacket(reqId: 3, op: IpcAction.delete.code, action: 'box', key: 'k', payload: Uint8List(0));
 
-      expect(packet.actionCode, equals(CoreIpcAction.delete));
+      expect(packet.actionCode, equals(IpcAction.delete));
     });
   });
 
   group('CoreIpcBuffer', () {
     test('parses a complete packet correctly', () {
       final payload = utf8.encode('hello');
-      final packet = CoreIpcPacket(
-        reqId: 1,
-        op: CoreIpcAction.put.code,
-        action: 'test_box',
-        key: 'abc',
-        payload: Uint8List.fromList(payload),
-      );
+      final packet = IpcPacket(reqId: 1, op: IpcAction.put.code, action: 'test_box', key: 'abc', payload: Uint8List.fromList(payload));
 
-      final buffer = CoreIpcBuffer();
+      final buffer = IpcBuffer();
       buffer.add(packet.toBytes());
 
       final parsed = buffer.parseNextAction();
       expect(parsed, isNotNull);
       expect(parsed?.reqId, equals(1));
-      expect(parsed?.op, equals(CoreIpcAction.put.code));
+      expect(parsed?.op, equals(IpcAction.put.code));
       expect(parsed?.action, equals('test_box'));
       expect(parsed?.key, equals('abc'));
       expect(utf8.decode(parsed!.payload), equals('hello'));
@@ -155,16 +149,10 @@ void main() {
 
     test('returns null until full packet arrives', () {
       final payload = utf8.encode('data');
-      final packet = CoreIpcPacket(
-        reqId: 2,
-        op: CoreIpcAction.delete.code,
-        action: 'box',
-        key: 'key',
-        payload: Uint8List.fromList(payload),
-      );
+      final packet = IpcPacket(reqId: 2, op: IpcAction.delete.code, action: 'box', key: 'key', payload: Uint8List.fromList(payload));
 
       final bytes = packet.toBytes();
-      final buffer = CoreIpcBuffer();
+      final buffer = IpcBuffer();
 
       buffer.add(bytes.sublist(0, bytes.length - 2));
       expect(buffer.parseNextAction(), isNull);
@@ -179,10 +167,10 @@ void main() {
     });
 
     test('parses multiple packets sequentially', () {
-      final packetA = CoreIpcPacket(reqId: 10, op: CoreIpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
-      final packetB = CoreIpcPacket(reqId: 11, op: CoreIpcAction.extract.code, action: 'transactions_box', key: '', payload: Uint8List(0));
+      final packetA = IpcPacket(reqId: 10, op: IpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
+      final packetB = IpcPacket(reqId: 11, op: IpcAction.extract.code, action: 'transactions_box', key: '', payload: Uint8List(0));
 
-      final buffer = CoreIpcBuffer();
+      final buffer = IpcBuffer();
       buffer.add(packetA.toBytes());
       buffer.add(packetB.toBytes());
 
@@ -198,15 +186,15 @@ void main() {
     });
 
     test('clears buffer correctly', () {
-      final packet = CoreIpcPacket(
+      final packet = IpcPacket(
         reqId: 99,
-        op: CoreIpcAction.put.code,
+        op: IpcAction.put.code,
         action: 'clear_test',
         key: 'k',
         payload: Uint8List.fromList(utf8.encode('x')),
       );
 
-      final buffer = CoreIpcBuffer();
+      final buffer = IpcBuffer();
       buffer.add(packet.toBytes());
       expect(buffer.length, greaterThan(0));
 
@@ -217,7 +205,7 @@ void main() {
   });
 
   group('CoreIpcConverter', () {
-    final converter = CoreIpcConverter(AdaptersFaker());
+    final converter = IpcConverter(AdaptersFaker());
 
     late TransactionsModel txA;
     late TransactionsModel txB;
@@ -232,10 +220,10 @@ void main() {
     });
 
     test('toBytes with put serializes TransactionsModel using adapter', () {
-      final bytes = converter.toBytes(CoreIpcAction.put, 'transactions_box', txA);
+      final bytes = converter.toBytes(IpcAction.put, 'transactions_box', txA);
       expect(bytes, isNotNull);
 
-      final decoded = converter.fromBytes(CoreIpcAction.put, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(IpcAction.put, 'transactions_box', bytes);
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
       expect(decoded.balance, equals(3.0));
@@ -243,10 +231,10 @@ void main() {
 
     test('toBytes with multiPut serializes multiple TransactionsModel payloads', () {
       final payloads = [txB, txC];
-      final bytes = converter.toBytes(CoreIpcAction.multiPut, 'transactions_box', payloads);
+      final bytes = converter.toBytes(IpcAction.multiPut, 'transactions_box', payloads);
       expect(bytes, isNotNull);
 
-      final decoded = converter.fromBytes(CoreIpcAction.multiPut, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(IpcAction.multiPut, 'transactions_box', bytes);
       expect(decoded, isA<List>());
       expect(decoded.length, equals(2));
 
@@ -261,20 +249,20 @@ void main() {
 
     test('toBytes with unlock returns raw payload', () {
       final raw = Uint8List.fromList([1, 2, 3]);
-      final bytes = converter.toBytes(CoreIpcAction.unlock, 'auth', raw);
+      final bytes = converter.toBytes(IpcAction.unlock, 'auth', raw);
       expect(bytes, equals(raw));
     });
 
     test('toBytes with notification encodes string to UTF8', () {
       final msg = 'notify';
-      final bytes = converter.toBytes(CoreIpcAction.notification, 'note', msg);
+      final bytes = converter.toBytes(IpcAction.notification, 'note', msg);
       expect(utf8.decode(bytes!), equals(msg));
     });
 
     test('fromSenderBytes with extract decodes list of items', () {
       final payloads = [txA];
-      final bytes = converter.toBytes(CoreIpcAction.multiPut, 'transactions_box', payloads);
-      final decoded = converter.fromBytes(CoreIpcAction.extract, 'transactions_box', bytes);
+      final bytes = converter.toBytes(IpcAction.multiPut, 'transactions_box', payloads);
+      final decoded = converter.fromBytes(IpcAction.extract, 'transactions_box', bytes);
 
       expect(decoded, isA<List>());
       expect(decoded.length, equals(1));
@@ -285,33 +273,33 @@ void main() {
 
     test('fromSenderBytes with clear returns int32 or 0 for empty', () {
       final empty = Uint8List(0);
-      expect(converter.fromBytes(CoreIpcAction.clear, 'box', empty), equals(0));
+      expect(converter.fromBytes(IpcAction.clear, 'box', empty), equals(0));
 
       final bd = ByteData(4)..setInt32(0, 42, Endian.big);
       final bytes = bd.buffer.asUint8List();
-      expect(converter.fromBytes(CoreIpcAction.clear, 'box', bytes), equals(42));
+      expect(converter.fromBytes(IpcAction.clear, 'box', bytes), equals(42));
     });
 
     test('fromSenderBytes with unlock returns decoded tx or null', () {
-      final txBytes = converter.toBytes(CoreIpcAction.put, 'transactions_box', txD)!;
+      final txBytes = converter.toBytes(IpcAction.put, 'transactions_box', txD)!;
       final good = Uint8List.fromList([1, ...txBytes]);
       final bad = Uint8List.fromList([0, ...txBytes]);
 
-      final decodedGood = converter.fromBytes(CoreIpcAction.unlock, 'transactions_box', good);
+      final decodedGood = converter.fromBytes(IpcAction.unlock, 'transactions_box', good);
       expect(decodedGood, isNotNull);
 
-      final txDecoded = converter.fromBytes(CoreIpcAction.put, 'transactions_box', decodedGood);
+      final txDecoded = converter.fromBytes(IpcAction.put, 'transactions_box', decodedGood);
       expect(txDecoded, isA<TransactionsModel>());
       expect((txDecoded as TransactionsModel).tid, equals('99'));
       expect(txDecoded.balance, equals(5.0));
 
-      final decodedBad = converter.fromBytes(CoreIpcAction.unlock, 'transactions_box', bad);
+      final decodedBad = converter.fromBytes(IpcAction.unlock, 'transactions_box', bad);
       expect(decodedBad, isNull);
     });
 
     test('fromBytes with put decodes single TransactionsModel', () {
-      final bytes = converter.toBytes(CoreIpcAction.put, 'transactions_box', txA);
-      final decoded = converter.fromBytes(CoreIpcAction.put, 'transactions_box', bytes);
+      final bytes = converter.toBytes(IpcAction.put, 'transactions_box', txA);
+      final decoded = converter.fromBytes(IpcAction.put, 'transactions_box', bytes);
 
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
@@ -320,8 +308,8 @@ void main() {
 
     test('fromBytes with multiPut decodes multiple TransactionsModel items', () {
       final payloads = [txB, txC];
-      final bytes = converter.toBytes(CoreIpcAction.multiPut, 'transactions_box', payloads);
-      final decoded = converter.fromBytes(CoreIpcAction.multiPut, 'transactions_box', bytes);
+      final bytes = converter.toBytes(IpcAction.multiPut, 'transactions_box', payloads);
+      final decoded = converter.fromBytes(IpcAction.multiPut, 'transactions_box', bytes);
 
       expect(decoded, isA<List>());
       expect(decoded.length, equals(2));
@@ -338,14 +326,14 @@ void main() {
 
   group('CoreIpcCrypto', () {
     test('createSessionKey generates UTF8 bytes of correct length', () {
-      final keyBytes = CoreIpcCrypto.createSessionKey(16);
+      final keyBytes = IpcCrypto.createSessionKey(16);
       final keyString = utf8.decode(keyBytes);
       expect(keyString.length, equals(16));
       expect(keyString, matches(RegExp(r'^[a-zA-Z0-9]+$')));
     });
 
     test('setSessionKey accepts String and Uint8List', () {
-      final crypto = CoreIpcCrypto();
+      final crypto = IpcCrypto();
       crypto.setSessionKey('abcd1234');
       expect(crypto.hasActiveKey, isTrue);
 
@@ -355,7 +343,7 @@ void main() {
     });
 
     test('clearSessionKey resets active key state', () {
-      final crypto = CoreIpcCrypto(key: 'abcd1234');
+      final crypto = IpcCrypto(key: 'abcd1234');
       expect(crypto.hasActiveKey, isTrue);
       crypto.clearSessionKey();
       expect(crypto.hasActiveKey, isFalse);
@@ -364,7 +352,7 @@ void main() {
     test('encrypt and decrypt roundtrip works', () async {
       // 32‑byte key string
       final keyString = '0123456789abcdef0123456789abcdef';
-      final crypto = CoreIpcCrypto(key: keyString);
+      final crypto = IpcCrypto(key: keyString);
 
       final plain = Uint8List.fromList(utf8.encode('hello world'));
 
@@ -377,13 +365,13 @@ void main() {
     });
 
     test('encrypt throws if no active key', () async {
-      final crypto = CoreIpcCrypto();
+      final crypto = IpcCrypto();
       final plain = Uint8List.fromList([1, 2, 3]);
       expect(() => crypto.encrypt(plain), throwsStateError);
     });
 
     test('decrypt throws if no active key', () async {
-      final crypto = CoreIpcCrypto();
+      final crypto = IpcCrypto();
       final encrypted = Uint8List.fromList([1, 2, 3]);
       expect(() => crypto.decrypt(encrypted), throwsStateError);
     });
@@ -391,7 +379,7 @@ void main() {
     test('decrypt throws ArgumentError on tampered data', () async {
       // 32‑byte key string
       final keyString = '0123456789abcdef0123456789abcdef';
-      final crypto = CoreIpcCrypto(key: keyString);
+      final crypto = IpcCrypto(key: keyString);
 
       final plain = Uint8List.fromList(utf8.encode('secure data'));
       final encrypted = await crypto.encrypt(plain);
@@ -406,7 +394,7 @@ void main() {
   group('CoreIpcReader', () {
     test('readByte and skip advance offset correctly', () {
       final bytes = Uint8List.fromList([1, 2, 3]);
-      final reader = CoreIpcReader(bytes);
+      final reader = IpcReader(bytes);
 
       expect(reader.readByte(), equals(1));
       expect(reader.usedBytes, equals(1));
@@ -424,7 +412,7 @@ void main() {
       bd.setInt64(10, 123456789, Endian.big);
       bd.setFloat64(18, 3.14159, Endian.big);
 
-      final reader = CoreIpcReader(bd.buffer.asUint8List());
+      final reader = IpcReader(bd.buffer.asUint8List());
       expect(reader.readWord(), equals(0x1234));
       expect(reader.readInt32(), equals(-42));
       expect(reader.readUint32(), equals(0xDEADBEEF));
@@ -440,7 +428,7 @@ void main() {
       bd.setInt64(1, strBytes.length, Endian.big);
       bd.buffer.asUint8List().setRange(9, 9 + strBytes.length, strBytes);
 
-      final reader = CoreIpcReader(bd.buffer.asUint8List());
+      final reader = IpcReader(bd.buffer.asUint8List());
       expect(reader.readBool(), isTrue);
       expect(reader.readString(), equals('hi'));
     });
@@ -466,7 +454,7 @@ void main() {
       offset += 1;
       bd.setUint8(offset, 0);
 
-      final reader = CoreIpcReader(bd.buffer.asUint8List());
+      final reader = IpcReader(bd.buffer.asUint8List());
       expect(reader.readIntList(), equals([42, 43]));
       expect(reader.readDoubleList(), equals([1.5, 2.5]));
       expect(reader.readBoolList(), equals([true, false]));
@@ -491,7 +479,7 @@ void main() {
       bb.add(s2Len.buffer.asUint8List());
       bb.add(str2);
 
-      final reader = CoreIpcReader(bb.toBytes());
+      final reader = IpcReader(bb.toBytes());
       expect(reader.readStringList(), equals(['foo', 'bar']));
     });
 
@@ -519,7 +507,7 @@ void main() {
       bb.add(strLen.buffer.asUint8List());
       bb.add(str);
 
-      final reader = CoreIpcReader(bb.toBytes());
+      final reader = IpcReader(bb.toBytes());
       expect(reader.read(), isTrue);
       expect(reader.read(), equals(99));
       expect(reader.read(), closeTo(2.5, 1e-6));
@@ -529,7 +517,7 @@ void main() {
 
   group('CoreIpcWriter', () {
     test('writeByte, writeWord, writeInt32, writeUint32, writeInt, writeDouble', () {
-      final writer = CoreIpcWriter();
+      final writer = IpcWriter();
       writer.writeByte(0x12);
       writer.writeWord(0x3456);
       writer.writeInt32(-42);
@@ -538,7 +526,7 @@ void main() {
       writer.writeDouble(3.14159);
 
       final bytes = writer.toBytes();
-      final reader = CoreIpcReader(bytes);
+      final reader = IpcReader(bytes);
 
       expect(reader.readByte(), equals(0x12));
       expect(reader.readWord(), equals(0x3456));
@@ -549,26 +537,26 @@ void main() {
     });
 
     test('writeBool and writeString', () {
-      final writer = CoreIpcWriter();
+      final writer = IpcWriter();
       writer.writeBool(true);
       writer.writeString('hello');
 
       final bytes = writer.toBytes();
-      final reader = CoreIpcReader(bytes);
+      final reader = IpcReader(bytes);
 
       expect(reader.readBool(), isTrue);
       expect(reader.readString(), equals('hello'));
     });
 
     test('writeByteList, writeIntList, writeDoubleList, writeBoolList', () {
-      final writer = CoreIpcWriter();
+      final writer = IpcWriter();
       writer.writeByteList([1, 2, 3]);
       writer.writeIntList([42, 43]);
       writer.writeDoubleList([1.5, 2.5]);
       writer.writeBoolList([true, false]);
 
       final bytes = writer.toBytes();
-      final reader = CoreIpcReader(bytes);
+      final reader = IpcReader(bytes);
 
       expect(reader.readByteList(), equals([1, 2, 3]));
       expect(reader.readIntList(), equals([42, 43]));
@@ -577,19 +565,19 @@ void main() {
     });
 
     test('writeStringList and writeMap', () {
-      final writer = CoreIpcWriter();
+      final writer = IpcWriter();
       writer.writeStringList(['foo', 'bar']);
       writer.writeMap({'x': 1, 'y': 2});
 
       final bytes = writer.toBytes();
-      final reader = CoreIpcReader(bytes);
+      final reader = IpcReader(bytes);
 
       expect(reader.readStringList(), equals(['foo', 'bar']));
       expect(reader.readMap(), equals({'x': 1, 'y': 2}));
     });
 
     test('write dynamic types with typeId', () {
-      final writer = CoreIpcWriter();
+      final writer = IpcWriter();
       writer.write(true);
       writer.write(99);
       writer.write(2.5);
@@ -600,7 +588,7 @@ void main() {
       writer.write(MapEntry('k', 'v'));
 
       final bytes = writer.toBytes();
-      final reader = CoreIpcReader(bytes);
+      final reader = IpcReader(bytes);
 
       expect(reader.read(), isTrue);
       expect(reader.read(), equals(99));
@@ -616,18 +604,18 @@ void main() {
   });
 
   group('CoreIpcBox', () {
-    late CoreIpcBox<TransactionsModel> box;
+    late IpcBox<TransactionsModel> box;
     late ClientFaker client;
-    late CoreIpcAdapters adapters;
+    late IpcAdapters adapters;
 
     setUp(() {
       client = ClientFaker();
-      adapters = CoreIpcAdapters(); // stub or real adapters
-      box = CoreIpcBox<TransactionsModel>('transactions_box', adapters, client);
+      adapters = IpcAdapters(); // stub or real adapters
+      box = IpcBox<TransactionsModel>('transactions_box', adapters, client);
     });
 
     test('init populates items from client', () async {
-      client.stubResponse(CoreIpcAction.extract, [makeTx('id1', balance: 10.0), makeTx('id2', balance: 20.0)]);
+      client.stubResponse(IpcAction.extract, [makeTx('id1', balance: 10.0), makeTx('id2', balance: 20.0)]);
 
       await box.init();
       expect(box.length, equals(2));
@@ -639,12 +627,12 @@ void main() {
       final tx = makeTx('idX', balance: 99.0);
       await box.put(tx.tid, tx);
 
-      expect(client.lastOp, equals(CoreIpcAction.put));
+      expect(client.lastOp, equals(IpcAction.put));
       expect(box.get('idX')?.balance, equals(99.0));
     });
 
     test('clear empties items and returns count', () async {
-      client.stubResponse(CoreIpcAction.clear, 5);
+      client.stubResponse(IpcAction.clear, 5);
       box.items['id'] = makeTx('id', balance: 5.0);
 
       final count = await box.clear();
@@ -657,7 +645,7 @@ void main() {
       box.items[tx.tid] = tx;
 
       await box.delete(tx.tid);
-      expect(client.lastOp, equals(CoreIpcAction.delete));
+      expect(client.lastOp, equals(IpcAction.delete));
       expect(box.get('idY'), isNull);
     });
 
@@ -665,7 +653,7 @@ void main() {
       final txs = [makeTx('a', balance: 1.0), makeTx('b', balance: 2.0)];
       await box.addAll(txs);
 
-      expect(client.lastOp, equals(CoreIpcAction.multiPut));
+      expect(client.lastOp, equals(IpcAction.multiPut));
       expect(box.length, equals(2));
     });
 
@@ -674,31 +662,31 @@ void main() {
       final txs = [makeTx('new1', balance: 4.0), makeTx('new2', balance: 5.0)];
       await box.replace(txs);
 
-      expect(client.lastOp, equals(CoreIpcAction.replace));
+      expect(client.lastOp, equals(IpcAction.replace));
       expect(box.length, equals(2));
       expect(box.get('new1')?.tid, equals('new1'));
     });
 
     test('receive handles put/delete/clear/multiPut/replace', () {
       // put
-      final putEvent = CoreIpcBroadcastEvent(op: CoreIpcAction.put.code, action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
+      final putEvent = IpcBroadcastEvent(op: IpcAction.put.code, action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
       box.receive(putEvent);
       expect(box.get('id1')?.tid, equals('id1'));
 
       // delete
-      final delEvent = CoreIpcBroadcastEvent(op: CoreIpcAction.delete.code, action: 'transactions_box', key: 'id1', payload: null);
+      final delEvent = IpcBroadcastEvent(op: IpcAction.delete.code, action: 'transactions_box', key: 'id1', payload: null);
       box.receive(delEvent);
       expect(box.get('id1'), isNull);
 
       // clear
       box.items['x'] = makeTx('x');
-      final clearEvent = CoreIpcBroadcastEvent(op: CoreIpcAction.clear.code, action: 'transactions_box', key: '', payload: null);
+      final clearEvent = IpcBroadcastEvent(op: IpcAction.clear.code, action: 'transactions_box', key: '', payload: null);
       box.receive(clearEvent);
       expect(box.isEmpty, isTrue);
 
       // multiPut
-      final multiEvent = CoreIpcBroadcastEvent(
-        op: CoreIpcAction.multiPut.code,
+      final multiEvent = IpcBroadcastEvent(
+        op: IpcAction.multiPut.code,
         action: 'transactions_box',
         key: '',
         payload: [makeTx('a'), makeTx('b')],
@@ -707,12 +695,7 @@ void main() {
       expect(box.length, equals(2));
 
       // replace
-      final replaceEvent = CoreIpcBroadcastEvent(
-        op: CoreIpcAction.replace.code,
-        action: 'transactions_box',
-        key: '',
-        payload: [makeTx('c')],
-      );
+      final replaceEvent = IpcBroadcastEvent(op: IpcAction.replace.code, action: 'transactions_box', key: '', payload: [makeTx('c')]);
       box.receive(replaceEvent);
       expect(box.length, equals(1));
       expect(box.get('c')?.tid, equals('c'));
@@ -734,37 +717,32 @@ void main() {
 
   group('CoreIpcBroadcastEvent', () {
     test('actionCode resolves correctly from op code', () {
-      final eventPut = CoreIpcBroadcastEvent(op: CoreIpcAction.put.code, action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
-      expect(eventPut.actionCode, equals(CoreIpcAction.put));
+      final eventPut = IpcBroadcastEvent(op: IpcAction.put.code, action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
+      expect(eventPut.actionCode, equals(IpcAction.put));
 
-      final eventDelete = CoreIpcBroadcastEvent(op: CoreIpcAction.delete.code, action: 'transactions_box', key: 'id2', payload: null);
-      expect(eventDelete.actionCode, equals(CoreIpcAction.delete));
+      final eventDelete = IpcBroadcastEvent(op: IpcAction.delete.code, action: 'transactions_box', key: 'id2', payload: null);
+      expect(eventDelete.actionCode, equals(IpcAction.delete));
 
-      final eventClear = CoreIpcBroadcastEvent(op: CoreIpcAction.clear.code, action: 'transactions_box', key: '', payload: null);
-      expect(eventClear.actionCode, equals(CoreIpcAction.clear));
+      final eventClear = IpcBroadcastEvent(op: IpcAction.clear.code, action: 'transactions_box', key: '', payload: null);
+      expect(eventClear.actionCode, equals(IpcAction.clear));
 
-      final eventMultiPut = CoreIpcBroadcastEvent(
-        op: CoreIpcAction.multiPut.code,
+      final eventMultiPut = IpcBroadcastEvent(
+        op: IpcAction.multiPut.code,
         action: 'transactions_box',
         key: '',
         payload: [makeTx('a'), makeTx('b')],
       );
-      expect(eventMultiPut.actionCode, equals(CoreIpcAction.multiPut));
+      expect(eventMultiPut.actionCode, equals(IpcAction.multiPut));
 
-      final eventReplace = CoreIpcBroadcastEvent(
-        op: CoreIpcAction.replace.code,
-        action: 'transactions_box',
-        key: '',
-        payload: [makeTx('c')],
-      );
-      expect(eventReplace.actionCode, equals(CoreIpcAction.replace));
+      final eventReplace = IpcBroadcastEvent(op: IpcAction.replace.code, action: 'transactions_box', key: '', payload: [makeTx('c')]);
+      expect(eventReplace.actionCode, equals(IpcAction.replace));
     });
 
     test('fields are stored and accessible', () {
       final tx = makeTx('idX');
-      final event = CoreIpcBroadcastEvent(op: CoreIpcAction.put.code, action: 'transactions_box', key: tx.tid, payload: tx);
+      final event = IpcBroadcastEvent(op: IpcAction.put.code, action: 'transactions_box', key: tx.tid, payload: tx);
 
-      expect(event.op, equals(CoreIpcAction.put.code));
+      expect(event.op, equals(IpcAction.put.code));
       expect(event.action, equals('transactions_box'));
       expect(event.key, equals('idX'));
       expect(event.payload, equals(tx));
@@ -774,21 +752,21 @@ void main() {
   group('CoreIpcPacket and CoreIpcBuffer', () {
     test('serializes and parses a single packet correctly', () {
       final payload = utf8.encode('hello world');
-      final packet = CoreIpcPacket(
+      final packet = IpcPacket(
         reqId: 100,
-        op: CoreIpcAction.put.code,
+        op: IpcAction.put.code,
         action: 'transactions_box',
         key: '42',
         payload: Uint8List.fromList(payload),
       );
 
-      final buffer = CoreIpcBuffer();
+      final buffer = IpcBuffer();
       buffer.add(packet.toBytes());
 
       final parsed = buffer.parseNextAction();
       expect(parsed, isNotNull);
       expect(parsed?.reqId, equals(100));
-      expect(parsed?.op, equals(CoreIpcAction.put.code));
+      expect(parsed?.op, equals(IpcAction.put.code));
       expect(parsed?.action, equals('transactions_box'));
       expect(parsed?.key, equals('42'));
       expect(parsed?.payload, equals(Uint8List.fromList(payload)));
@@ -796,10 +774,10 @@ void main() {
     });
 
     test('parses multiple packets from a single buffer', () {
-      final packetA = CoreIpcPacket(reqId: 1, op: CoreIpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
-      final packetB = CoreIpcPacket(reqId: 2, op: CoreIpcAction.extract.code, action: 'transactions_box', key: '', payload: Uint8List(0));
+      final packetA = IpcPacket(reqId: 1, op: IpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
+      final packetB = IpcPacket(reqId: 2, op: IpcAction.extract.code, action: 'transactions_box', key: '', payload: Uint8List(0));
 
-      final buffer = CoreIpcBuffer();
+      final buffer = IpcBuffer();
       buffer.add(packetA.toBytes());
       buffer.add(packetB.toBytes());
 
@@ -815,15 +793,15 @@ void main() {
     });
 
     test('does not parse incomplete packet until full data arrives', () {
-      final packet = CoreIpcPacket(
+      final packet = IpcPacket(
         reqId: 7,
-        op: CoreIpcAction.delete.code,
+        op: IpcAction.delete.code,
         action: 'watchers_box',
         key: 'abc',
         payload: Uint8List.fromList(utf8.encode('payload')),
       );
       final bytes = packet.toBytes();
-      final buffer = CoreIpcBuffer();
+      final buffer = IpcBuffer();
 
       buffer.add(bytes.sublist(0, bytes.length - 3));
       expect(buffer.parseNextAction(), isNull);
@@ -843,13 +821,13 @@ void main() {
       CoreMode.isServer = false;
       CoreMode.ipcPipeName = pipeName;
 
-      final server = CoreIpcServer();
-      final client = CoreIpcClient(CoreIpcAdapters());
+      final server = IpcServer();
+      final client = IpcClient(IpcAdapters());
       final keyBytes = Uint8List.fromList([1, 2, 3]);
 
       client.pipeName = pipeName;
       server.pipeName = pipeName;
-      server.database = DatabaseFaker(CoreIpcBoxes(), CoreIpcAdapters(), CoreIpcMigration());
+      server.database = DatabaseFaker(IpcBoxes(), IpcAdapters(), IpcMigration());
 
       server.unlocker = (Uint8List bytes) async {
         expect(bytes, equals(keyBytes));
@@ -866,7 +844,7 @@ void main() {
         await server.dispose();
       });
 
-      final response = await client.send(op: CoreIpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
+      final response = await client.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
 
       expect(response, isA<Uint8List>());
       expect(response.length, equals(32));
@@ -879,16 +857,16 @@ void main() {
 
       // Booting the server
       CoreMode.isServer = true;
-      final server = CoreIpcServer();
+      final server = IpcServer();
       server.pipeName = pipeName;
       server.unlocker = (bytes) async => SystemUnlockStatus.success;
-      server.database = DatabaseFaker(CoreIpcBoxes(), CoreIpcAdapters(), CoreIpcMigration());
+      server.database = DatabaseFaker(IpcBoxes(), IpcAdapters(), IpcMigration());
       await server.start();
       final sessionKey = server.sessionKey;
 
       // Booting the client 1
       await Future.delayed(const Duration(milliseconds: 150));
-      final client1 = CoreIpcClient(CoreIpcAdapters());
+      final client1 = IpcClient(IpcAdapters());
       client1.pipeName = pipeName;
       await client1.start();
 
@@ -904,7 +882,7 @@ void main() {
 
       // Handshaking for client 1
       await Future.delayed(const Duration(milliseconds: 150));
-      final handshakeBytes = await client1.send(op: CoreIpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
+      final handshakeBytes = await client1.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
       expect(handshakeBytes, equals(sessionKey));
       client1.localKey = keyBytes;
       client1.sessionKey = handshakeBytes;
@@ -912,7 +890,7 @@ void main() {
       // Booting the client 2
       await Future.delayed(const Duration(milliseconds: 150));
       CoreMode.isServer = false;
-      final client2 = CoreIpcClient(CoreIpcAdapters());
+      final client2 = IpcClient(IpcAdapters());
       client2.pipeName = pipeName;
       await client2.start();
 
@@ -928,7 +906,7 @@ void main() {
 
       // Client 2 handshaking
       await Future.delayed(const Duration(milliseconds: 150));
-      final handshakeBytes2 = await client2.send(op: CoreIpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
+      final handshakeBytes2 = await client2.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
       expect(handshakeBytes2, equals(sessionKey));
       client2.localKey = keyBytes;
       client2.sessionKey = handshakeBytes2;
@@ -945,12 +923,12 @@ void main() {
       // Testing sending via client 1
       await Future.delayed(const Duration(milliseconds: 150));
       final tx1 = makeTx("42", balance: 6.0);
-      client1.send(op: CoreIpcAction.put, action: 'transactions_box', key: '42', payload: tx1);
+      client1.send(op: IpcAction.put, action: 'transactions_box', key: '42', payload: tx1);
 
       // Testing sending via client 2
       await Future.delayed(const Duration(milliseconds: 150));
       final tx2 = makeTx("52", balance: 3.0);
-      client2.send(op: CoreIpcAction.put, action: 'transactions_box', key: '52', payload: tx2);
+      client2.send(op: IpcAction.put, action: 'transactions_box', key: '52', payload: tx2);
     });
   });
 }

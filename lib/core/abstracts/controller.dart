@@ -1,19 +1,28 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../ipc/event.dart';
-import '../ipc/mixins/broadcaster.dart';
+import '../../ipc/client.dart';
+import '../../ipc/event.dart';
+import '../../ipc/mixins/broadcaster.dart';
+import '../../ipc/server.dart';
 import '../mode.dart';
-import '../ipc/mixins/box.dart';
+import '../mixins/box.dart';
+import '../runtime/locator.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
 abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseRepository<T>> extends ChangeNotifier
-    with CoreIpcMixinsBox<T>, CoreIpcMixinsBroadcaster {
+    with CoreMixinsBox<T>, IpcMixinsBroadcaster {
   Timer? _notifyTimer;
 
   List<T> listItems = [];
   List<T> get items => listItems;
+
+  @override
+  IpcClient get ipcClient => locator<IpcClient>();
+
+  @override
+  IpcServer get ipcServer => locator<IpcServer>();
 
   @override
   final R repo;
@@ -27,7 +36,7 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   }
 
   @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
+  void broadcasterAction(IpcBroadcastEvent event) {
     if (event.action != repo.boxName) {
       return;
     }

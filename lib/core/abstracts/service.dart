@@ -1,15 +1,23 @@
-import '../ipc/event.dart';
-import '../ipc/mixins/box.dart';
-import '../ipc/mixins/broadcaster.dart';
+import '../../ipc/client.dart';
+import '../../ipc/event.dart';
+import '../../ipc/server.dart';
+import '../mixins/box.dart';
+import '../../ipc/mixins/broadcaster.dart';
+import '../runtime/locator.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
-abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>>
-    with CoreIpcMixinsBox<T>, CoreIpcMixinsBroadcaster {
+abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepository<T>> with CoreMixinsBox<T>, IpcMixinsBroadcaster {
   @override
   final R repo;
 
   CoreBaseService(this.repo);
+
+  @override
+  IpcClient get ipcClient => locator<IpcClient>();
+
+  @override
+  IpcServer get ipcServer => locator<IpcServer>();
 
   Future<void> init() async {
     repo.init();
@@ -17,7 +25,7 @@ abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepo
   }
 
   @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
+  void broadcasterAction(IpcBroadcastEvent event) {
     if (event.action != repo.boxName) {
       return;
     }

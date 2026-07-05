@@ -1,29 +1,29 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import '../../../system/unlock/status.dart';
+import '../../system/unlock/status.dart';
 import '../database/adapters.dart';
-import '../protocol/writer.dart';
+import 'writer.dart';
 import '../action.dart';
 
 import 'reader.dart';
 
-class CoreIpcConverter {
-  final CoreIpcAdapters adapters;
+class IpcConverter {
+  final IpcAdapters adapters;
 
-  CoreIpcConverter(this.adapters);
+  IpcConverter(this.adapters);
 
-  Uint8List? toBytes(CoreIpcAction op, String action, dynamic payload) {
+  Uint8List? toBytes(IpcAction op, String action, dynamic payload) {
     switch (op) {
-      case CoreIpcAction.put:
-        final writer = CoreIpcWriter();
+      case IpcAction.put:
+        final writer = IpcWriter();
         final adapter = adapters.get(action);
         adapter.write(writer, payload);
         return writer.toBytes();
 
-      case CoreIpcAction.replace:
-      case CoreIpcAction.multiPut:
-        final writer = CoreIpcWriter();
+      case IpcAction.replace:
+      case IpcAction.multiPut:
+        final writer = IpcWriter();
         final adapter = adapters.get(action);
         writer.writeInt(payload.length);
         for (final value in payload) {
@@ -32,10 +32,10 @@ class CoreIpcConverter {
 
         return writer.toBytes();
 
-      case CoreIpcAction.unlock:
+      case IpcAction.unlock:
         return payload;
 
-      case CoreIpcAction.notification:
+      case IpcAction.notification:
         return utf8.encode(payload);
 
       default:
@@ -43,27 +43,27 @@ class CoreIpcConverter {
     }
   }
 
-  dynamic fromBytes(CoreIpcAction op, String action, dynamic bytes) {
+  dynamic fromBytes(IpcAction op, String action, dynamic bytes) {
     switch (op) {
-      case CoreIpcAction.put:
+      case IpcAction.put:
         if (bytes.isNotEmpty) {
           return _bytesToModel(action, bytes);
         }
 
-      case CoreIpcAction.multiPut:
-      case CoreIpcAction.replace:
-      case CoreIpcAction.extract:
+      case IpcAction.multiPut:
+      case IpcAction.replace:
+      case IpcAction.extract:
         if (bytes.isNotEmpty) {
           return _bytesToBatchModels(action, bytes);
         }
 
-      case CoreIpcAction.clear:
+      case IpcAction.clear:
         if (bytes.isEmpty || bytes.length < 4) {
           return 0;
         }
         return ByteData.sublistView(bytes).getInt32(0, Endian.big);
 
-      case CoreIpcAction.unlock:
+      case IpcAction.unlock:
         if (bytes.isNotEmpty) {
           final status = SystemUnlockStatus.fromValue(bytes.first);
           if (status.isUnlocked()) {
@@ -80,13 +80,13 @@ class CoreIpcConverter {
 
   dynamic _bytesToModel(String action, dynamic bytes) {
     final adapter = adapters.get(action);
-    final reader = CoreIpcReader(bytes);
+    final reader = IpcReader(bytes);
     return reader.read(null, adapter);
   }
 
   dynamic _bytesToBatchModels(String action, dynamic bytes) {
     List<dynamic> results = [];
-    final reader = CoreIpcReader(bytes);
+    final reader = IpcReader(bytes);
     final int count = reader.readInt();
     final adapter = adapters.get(action);
 

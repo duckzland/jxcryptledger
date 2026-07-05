@@ -3,11 +3,11 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 
-class CoreIpcCrypto {
+class IpcCrypto {
   final _algorithm = AesGcm.with256bits();
   SecretKey? _secretKey;
 
-  CoreIpcCrypto({dynamic key}) {
+  IpcCrypto({dynamic key}) {
     if (key != null) {
       setSessionKey(key);
     }

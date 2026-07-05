@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
-import '../../core/ipc/action.dart';
+import '../../ipc/action.dart';
 import '../../core/log.dart';
 import '../../system/settings/keys.dart';
 import '../../system/settings/repository.dart';
@@ -103,7 +103,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     _isFetching = force ? false : true;
     _startWatchdog();
 
-    broadcasterEmit(CoreIpcAction.refreshRates, 'start', '', Uint8List(0));
+    broadcasterEmit(IpcAction.refreshRates, 'start', '', Uint8List(0));
 
     try {
       final jobs = List<(int, int)>.from(_queue);
@@ -117,7 +117,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       _watchdog?.cancel();
       _isFetching = false;
 
-      broadcasterEmit(CoreIpcAction.refreshRates, 'complete', '', Uint8List(0));
+      broadcasterEmit(IpcAction.refreshRates, 'complete', '', Uint8List(0));
     }
   }
 

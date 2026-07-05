@@ -8,10 +8,12 @@ import 'package:path/path.dart' as p;
 import '../../../app/constants.dart';
 import '../../../system/settings/model.dart';
 import '../../../features/watchboard/tickers/service.dart';
-import '../../log.dart';
-import '../../runtime/locator.dart';
+import '../../ipc/database/migration.dart';
+import '../log.dart';
+import 'locator.dart';
 
-class CoreIpcMigration {
+class CoreRuntimeMigration extends IpcMigration {
+  @override
   Future<void> migrateBeforeUnlock() async {
     // @deprecated Remove this in the next minor version release.
     if (isVersionLessThan(appVersion, "1.0.29.99")) {
@@ -19,6 +21,7 @@ class CoreIpcMigration {
     }
   }
 
+  @override
   Future<void> migrateAfterUnlock() async {
     if (isVersionLessThan(appVersion, "1.0.30.99")) {
       await _migrateSettingsBox();
@@ -78,17 +81,6 @@ class CoreIpcMigration {
     }
 
     await box.flush();
-  }
-
-  bool isVersionLessThan(String current, String target) {
-    final currentParts = current.split('.').map(int.parse).toList();
-    final targetParts = target.split('.').map(int.parse).toList();
-
-    for (int i = 0; i < currentParts.length; i++) {
-      if (currentParts[i] < targetParts[i]) return true;
-      if (currentParts[i] > targetParts[i]) return false;
-    }
-    return false;
   }
 
   Future<void> migrateHiveFiles(String oldDirPath, String newDirPath, List<String> boxNames) async {

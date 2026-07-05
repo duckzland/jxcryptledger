@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
-import '../../core/ipc/action.dart';
+import '../../ipc/action.dart';
 import '../../system/settings/repository.dart';
 import '../../system/settings/keys.dart';
 import '../../core/log.dart';
@@ -38,7 +38,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
 
     _isFetching = true;
 
-    broadcasterEmit(CoreIpcAction.refreshCryptos, 'start', '', Uint8List(0));
+    broadcasterEmit(IpcAction.refreshCryptos, 'start', '', Uint8List(0));
 
     try {
       final endpoint = settingsRepo.getByKey<String>(SettingKey.dataEndpoint) ?? SettingKey.dataEndpoint.defaultValue;
@@ -90,7 +90,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
       );
     } finally {
       _isFetching = false;
-      broadcasterEmit(CoreIpcAction.refreshCryptos, 'complete', '', Uint8List(0));
+      broadcasterEmit(IpcAction.refreshCryptos, 'complete', '', Uint8List(0));
     }
   }
 }

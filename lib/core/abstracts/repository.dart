@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import '../ipc/box.dart';
-import '../ipc/client.dart';
-import '../ipc/database/adapters.dart';
-import '../ipc/event.dart';
+import '../../ipc/box.dart';
+import '../../ipc/client.dart';
+import '../../ipc/database/adapters.dart';
+import '../../ipc/event.dart';
 import '../runtime/locator.dart';
 import 'models/with_id.dart';
 
@@ -11,13 +11,13 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
   String get boxName;
   bool initialized = false;
 
-  CoreIpcBox<T>? repoBox;
+  IpcBox<T>? repoBox;
 
-  CoreIpcBox<T> get box {
-    return repoBox ??= CoreIpcBox<T>(boxName, locator<CoreIpcAdapters>(), locator<CoreIpcClient>());
+  IpcBox<T> get box {
+    return repoBox ??= IpcBox<T>(boxName, locator<IpcAdapters>(), locator<IpcClient>());
   }
 
-  set box(CoreIpcBox<T> box) {
+  set box(IpcBox<T> box) {
     repoBox = box;
   }
 
@@ -85,7 +85,7 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
     return box.isEmpty;
   }
 
-  void receive(CoreIpcBroadcastEvent event) {
+  void receive(IpcBroadcastEvent event) {
     box.receive(event);
   }
 

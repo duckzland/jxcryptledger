@@ -4,11 +4,11 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:hive_ce/hive_ce.dart';
 
-class CoreIpcReader implements BinaryReader {
+class IpcReader implements BinaryReader {
   final ByteData _data;
   int _offset = 0;
 
-  CoreIpcReader(Uint8List bytes) : _data = ByteData.sublistView(bytes);
+  IpcReader(Uint8List bytes) : _data = ByteData.sublistView(bytes);
 
   @override
   int get availableBytes => _data.lengthInBytes - _offset;

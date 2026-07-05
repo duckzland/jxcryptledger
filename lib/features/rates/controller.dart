@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import '../../core/abstracts/controller.dart';
-import '../../core/ipc/action.dart';
-import '../../core/ipc/event.dart';
+import '../../ipc/action.dart';
+import '../../ipc/event.dart';
 
 import 'mixins/helper.dart';
 import 'model.dart';
@@ -22,7 +22,7 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
   }
 
   @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
+  void broadcasterAction(IpcBroadcastEvent event) {
     super.broadcasterAction(event);
 
     if (event.action == repo.boxName) {
@@ -32,7 +32,7 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
       }
     }
 
-    if (event.actionCode == CoreIpcAction.refreshRates) {
+    if (event.actionCode == IpcAction.refreshRates) {
       if (event.action == "start") {
         if (!isFetching) {
           isFetching = true;
@@ -68,11 +68,11 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
 
   void addQueue(int sourceId, int targetId, {bool force = true}) {
     if (!isValidPair(sourceId, targetId)) return;
-    ipcClient.send(op: CoreIpcAction.addRateQueue, action: "$sourceId-$targetId", key: force);
+    ipcClient.send(op: IpcAction.addRateQueue, action: "$sourceId-$targetId", key: force);
   }
 
   Future<void> refreshRates() async {
-    await ipcClient.send(op: CoreIpcAction.refreshRates, action: "action", key: "refresh_rates");
+    await ipcClient.send(op: IpcAction.refreshRates, action: "action", key: "refresh_rates");
   }
 
   Future<void> deleteById(int sourceId, int targetId) async {

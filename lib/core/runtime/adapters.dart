@@ -16,8 +16,10 @@ import '../../../features/watchers/adapter.dart';
 import '../../../features/watchers/model.dart';
 import '../../../system/settings/adapter.dart';
 import '../../../system/settings/model.dart';
+import '../../ipc/database/adapters.dart';
 
-class CoreIpcAdapters {
+class CoreRuntimeAdapters extends IpcAdapters {
+  @override
   final Map<String, TypeAdapter> adapters = {
     'rates_box': RatesAdapter(),
     'cryptos_box': CryptosAdapter(),
@@ -29,20 +31,9 @@ class CoreIpcAdapters {
     'archives_box': ArchivesAdapter(),
   };
 
-  CoreIpcAdapters();
+  CoreRuntimeAdapters();
 
-  List<String> getKeys() {
-    return adapters.keys.toList();
-  }
-
-  TypeAdapter get(String boxName) {
-    final adapter = adapters[boxName];
-    if (adapter == null) {
-      throw StateError("No adapter registered for box '$boxName'");
-    }
-    return adapter;
-  }
-
+  @override
   void register() {
     Hive.registerAdapter<TransactionsModel>(TransactionsAdapter());
     Hive.registerAdapter<CryptosModel>(CryptosAdapter());

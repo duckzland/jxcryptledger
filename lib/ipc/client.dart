@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import '../log.dart';
+import '../core/log.dart';
 
 import 'database/adapters.dart';
 import 'protocol/buffer.dart';
@@ -13,26 +13,26 @@ import 'protocol/packet.dart';
 import 'event.dart';
 import 'action.dart';
 
-class CoreIpcClient {
-  final CoreIpcAdapters adapters;
-  late CoreIpcConverter converter;
+class IpcClient {
+  final IpcAdapters adapters;
+  late IpcConverter converter;
 
-  CoreIpcClient(this.adapters) {
-    converter = CoreIpcConverter(adapters);
+  IpcClient(this.adapters) {
+    converter = IpcConverter(adapters);
   }
 
   final Map<int, Completer<dynamic>> _pending = {};
   final String uuid = "client_${DateTime.now().millisecondsSinceEpoch}_${StackTrace.current.hashCode}";
-  final CoreIpcBuffer _incomingBuffer = CoreIpcBuffer();
-  final StreamController<CoreIpcBroadcastEvent> _broadcastController = StreamController<CoreIpcBroadcastEvent>.broadcast();
-  final CoreIpcCrypto _crypto = CoreIpcCrypto();
+  final IpcBuffer _incomingBuffer = IpcBuffer();
+  final StreamController<IpcBroadcastEvent> _broadcastController = StreamController<IpcBroadcastEvent>.broadcast();
+  final IpcCrypto _crypto = IpcCrypto();
 
   bool _isDisposing = false;
   bool _isReconnecting = false;
 
   StreamSubscription<Uint8List>? _socketSubscription;
   VoidCallback? exited;
-  Future<bool> Function(CoreIpcClient client)? reconnecting;
+  Future<bool> Function(IpcClient client)? reconnecting;
 
   Socket? _socket;
   int _nextReqId = 0;
@@ -42,7 +42,7 @@ class CoreIpcClient {
 
   String pipeName = "";
 
-  Stream<CoreIpcBroadcastEvent> get onBroadcast => _broadcastController.stream;
+  Stream<IpcBroadcastEvent> get onBroadcast => _broadcastController.stream;
 
   Future<void> start() async {
     if (pipeName.isEmpty) {
@@ -129,14 +129,14 @@ class CoreIpcClient {
     _pending.clear();
   }
 
-  Future<dynamic> send({required CoreIpcAction op, required String action, dynamic key, dynamic payload}) async {
+  Future<dynamic> send({required IpcAction op, required String action, dynamic key, dynamic payload}) async {
     Uint8List? bytes = converter.toBytes(op, action, payload);
 
     final resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
     return converter.fromBytes(op, action, resultBytes);
   }
 
-  Future<dynamic> _send({required CoreIpcAction op, required String action, dynamic key, Uint8List? payload}) async {
+  Future<dynamic> _send({required IpcAction op, required String action, dynamic key, Uint8List? payload}) async {
     final completer = Completer<dynamic>();
     final reqId = _nextReqId++;
     _pending[reqId] = completer;
@@ -148,7 +148,7 @@ class CoreIpcClient {
 
       Uint8List rawPayload = payload ?? Uint8List(0);
 
-      if (op != CoreIpcAction.unlock) {
+      if (op != IpcAction.unlock) {
         if (sessionKey == null) {
           throw StateError('[IPC] Cannot transmit database requests before completing secure handshake.');
         }
@@ -160,7 +160,7 @@ class CoreIpcClient {
         rawPayload = await _crypto.encrypt(rawPayload);
       }
 
-      final packet = CoreIpcPacket(reqId: reqId, op: op.code, action: action, key: key?.toString() ?? "", payload: rawPayload);
+      final packet = IpcPacket(reqId: reqId, op: op.code, action: action, key: key?.toString() ?? "", payload: rawPayload);
 
       _socket!.add(packet.toBytes());
     } catch (e) {
@@ -174,7 +174,7 @@ class CoreIpcClient {
 
   Future<void> _receive(Uint8List chunk) async {
     if (_isDisposing) return;
-    CoreIpcPacket? packet;
+    IpcPacket? packet;
     _incomingBuffer.add(chunk);
 
     if (sessionKey != null) {
@@ -185,7 +185,7 @@ class CoreIpcClient {
       final currentPacket = packet!;
       Uint8List responseBytes = currentPacket.payload;
 
-      if (currentPacket.op != CoreIpcAction.unlock.code && sessionKey != null) {
+      if (currentPacket.op != IpcAction.unlock.code && sessionKey != null) {
         try {
           if (!_crypto.hasActiveKey) {
             _crypto.setSessionKey(sessionKey);
@@ -196,7 +196,7 @@ class CoreIpcClient {
         }
       }
 
-      if (currentPacket.op != CoreIpcAction.unlock.code && sessionKey == null) {
+      if (currentPacket.op != IpcAction.unlock.code && sessionKey == null) {
         final completer = _pending[currentPacket.reqId];
         if (completer != null) {
           completer.complete(Uint8List(0));
@@ -205,17 +205,17 @@ class CoreIpcClient {
         continue;
       }
 
-      if (currentPacket.op == CoreIpcAction.unlock.code) {
+      if (currentPacket.op == IpcAction.unlock.code) {
         sessionKey = responseBytes.sublist(1);
       }
 
       if (currentPacket.reqId == -1) {
         _broadcastController.add(
-          CoreIpcBroadcastEvent(
+          IpcBroadcastEvent(
             op: currentPacket.op,
             action: currentPacket.action,
             key: currentPacket.key,
-            payload: converter.fromBytes(CoreIpcAction.fromCode(currentPacket.op), currentPacket.action, responseBytes),
+            payload: converter.fromBytes(IpcAction.fromCode(currentPacket.op), currentPacket.action, responseBytes),
           ),
         );
       } else {

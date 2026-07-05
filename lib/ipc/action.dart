@@ -1,4 +1,4 @@
-enum CoreIpcAction {
+enum IpcAction {
   response(0x00),
   put(0x02),
   delete(0x03),
@@ -17,12 +17,12 @@ enum CoreIpcAction {
   unknown(-1);
 
   final int code;
-  const CoreIpcAction(this.code);
+  const IpcAction(this.code);
 
-  static CoreIpcAction fromCode(int code) {
-    for (final action in CoreIpcAction.values) {
+  static IpcAction fromCode(int code) {
+    for (final action in IpcAction.values) {
       if (action.code == code) return action;
     }
-    return CoreIpcAction.unknown;
+    return IpcAction.unknown;
   }
 }

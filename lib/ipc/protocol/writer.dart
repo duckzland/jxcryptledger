@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:hive_ce/hive_ce.dart';
 
-class CoreIpcWriter implements BinaryWriter {
+class IpcWriter implements BinaryWriter {
   final BytesBuilder _builder = BytesBuilder();
 
   @override

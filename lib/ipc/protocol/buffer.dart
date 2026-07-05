@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'packet.dart';
 
-class CoreIpcBuffer {
+class IpcBuffer {
   final BytesBuilder _builder = BytesBuilder();
 
   void add(Uint8List frame) => _builder.add(frame);
   int get length => _builder.length;
   void clear() => _builder.clear();
 
-  CoreIpcPacket? parseNextAction() {
+  IpcPacket? parseNextAction() {
     if (_builder.length < 8) return null;
 
     final currentBytes = _builder.toBytes();
@@ -53,6 +53,6 @@ class CoreIpcBuffer {
     _builder.clear();
     _builder.add(remaining);
 
-    return CoreIpcPacket(reqId: reqId, op: op, action: action, key: key, payload: frameBytes.sublist(offset, expectedTotalFrameSize));
+    return IpcPacket(reqId: reqId, op: op, action: action, key: key, payload: frameBytes.sublist(offset, expectedTotalFrameSize));
   }
 }

@@ -1,6 +1,6 @@
-import 'package:jxledger/core/ipc/database/adapters.dart';
+import 'package:jxledger/ipc/database/adapters.dart';
 
-class AdaptersFaker extends CoreIpcAdapters {
+class AdaptersFaker extends IpcAdapters {
   AdaptersFaker();
 
   @override

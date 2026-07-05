@@ -1,7 +1,7 @@
 import 'package:jxledger/features/watchboard/tickers/mixins/helper.dart';
 
 import '../../../core/abstracts/controller.dart';
-import '../../../core/ipc/action.dart';
+import '../../../ipc/action.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -30,7 +30,7 @@ class TickersController extends CoreBaseController<TickersModel, TickersReposito
   }
 
   Future<void> refreshRates() async {
-    await ipcClient.send(op: CoreIpcAction.refreshTickers, action: "action");
+    await ipcClient.send(op: IpcAction.refreshTickers, action: "action");
     load();
   }
 

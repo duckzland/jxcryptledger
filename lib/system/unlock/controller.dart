@@ -1,15 +1,16 @@
 import 'package:flutter/foundation.dart';
+import 'package:jxledger/core/runtime/client.dart';
 
-import '../../core/runtime/bootstrap/client.dart';
+import '../../core/mode.dart';
 import '../../core/runtime/locator.dart';
 import '../../core/log.dart';
 
 class SystemUnlockController extends ChangeNotifier {
   bool _unlocked = false;
   bool get unlocked => _unlocked;
-  bool get isFirstRun => client.isFirstRun;
+  bool get isFirstRun => CoreMode.isFirstRun;
 
-  late CoreBootstrapClient client;
+  late CoreRuntimeClient client;
 
   Future<void> init() async {
     if (kIsWeb) {
@@ -17,7 +18,7 @@ class SystemUnlockController extends ChangeNotifier {
       return;
     }
 
-    client = locator<CoreBootstrapClient>();
+    client = locator<CoreRuntimeClient>();
     notifyListeners();
   }
 

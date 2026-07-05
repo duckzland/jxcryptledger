@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jxledger/core/ipc/event.dart';
+import 'package:jxledger/ipc/event.dart';
 
 import '../../app/constants.dart';
 import '../../app/theme.dart';
-import '../../core/ipc/mixins/broadcaster.dart';
+import '../../core/runtime/locator.dart';
+import '../../ipc/client.dart';
+import '../../ipc/mixins/broadcaster.dart';
+import '../../ipc/server.dart';
 import '../../widgets/button.dart';
 import 'controller.dart';
 
@@ -17,9 +20,15 @@ class SystemUnlockPage extends StatefulWidget {
   State<SystemUnlockPage> createState() => _SystemUnlockPageState();
 }
 
-class _SystemUnlockPageState extends State<SystemUnlockPage> with CoreIpcMixinsBroadcaster {
+class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroadcaster {
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
+
+  @override
+  IpcClient get ipcClient => locator<IpcClient>();
+
+  @override
+  IpcServer get ipcServer => locator<IpcServer>();
 
   late bool isFirstRun;
 
@@ -45,7 +54,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with CoreIpcMixinsB
   String? error;
 
   @override
-  void broadcasterAction(CoreIpcBroadcastEvent event) {
+  void broadcasterAction(IpcBroadcastEvent event) {
     if (event.action != 'database_created') {
       return;
     }

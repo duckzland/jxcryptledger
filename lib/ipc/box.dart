@@ -1,23 +1,23 @@
 import 'dart:collection';
 
-import '../abstracts/models/with_id.dart';
-import '../log.dart';
+import '../core/abstracts/models/with_id.dart';
+import '../core/log.dart';
 
 import 'database/adapters.dart';
 import 'action.dart';
 import 'client.dart';
 import 'event.dart';
 
-class CoreIpcBox<T extends CoreModelWithId> {
+class IpcBox<T extends CoreModelWithId> {
   final String boxName;
   final LinkedHashMap<dynamic, T> items = LinkedHashMap();
-  final CoreIpcAdapters adapters;
-  final CoreIpcClient client;
+  final IpcAdapters adapters;
+  final IpcClient client;
 
-  CoreIpcBox(this.boxName, this.adapters, this.client);
+  IpcBox(this.boxName, this.adapters, this.client);
 
   Future<void> init() async {
-    final results = await client.send(op: CoreIpcAction.extract, action: boxName);
+    final results = await client.send(op: IpcAction.extract, action: boxName);
     for (final value in results) {
       final data = value as T;
       items[data.uuid] = data;
@@ -75,23 +75,23 @@ class CoreIpcBox<T extends CoreModelWithId> {
   }
 
   Future<void> put(dynamic id, T value) async {
-    await client.send(op: CoreIpcAction.put, action: boxName, key: id, payload: value);
+    await client.send(op: IpcAction.put, action: boxName, key: id, payload: value);
     items[id] = value;
   }
 
   Future<int> clear() async {
-    final count = await client.send(op: CoreIpcAction.clear, action: boxName);
+    final count = await client.send(op: IpcAction.clear, action: boxName);
     items.clear();
     return count;
   }
 
   Future<void> delete(dynamic id) async {
-    await client.send(op: CoreIpcAction.delete, action: boxName, key: id);
+    await client.send(op: IpcAction.delete, action: boxName, key: id);
     items.remove(id);
   }
 
   Future<void> flush() async {
-    await client.send(op: CoreIpcAction.flush, action: boxName);
+    await client.send(op: IpcAction.flush, action: boxName);
   }
 
   Future<void> refresh() async {
@@ -101,7 +101,7 @@ class CoreIpcBox<T extends CoreModelWithId> {
   Future<void> addAll(List<T> values) async {
     if (values.isEmpty) return;
 
-    await client.send(op: CoreIpcAction.multiPut, action: boxName, payload: values);
+    await client.send(op: IpcAction.multiPut, action: boxName, payload: values);
 
     for (final value in values) {
       items[value.uuid] = value;
@@ -109,7 +109,7 @@ class CoreIpcBox<T extends CoreModelWithId> {
   }
 
   Future<void> replace(List<T> values) async {
-    await client.send(op: CoreIpcAction.replace, action: boxName, payload: values);
+    await client.send(op: IpcAction.replace, action: boxName, payload: values);
 
     items.clear();
     for (final value in values) {
@@ -117,27 +117,27 @@ class CoreIpcBox<T extends CoreModelWithId> {
     }
   }
 
-  void receive(CoreIpcBroadcastEvent event) {
+  void receive(IpcBroadcastEvent event) {
     if (event.action != boxName) {
       return;
     }
 
     switch (event.actionCode) {
-      case CoreIpcAction.put:
+      case IpcAction.put:
         final data = event.payload as T;
         items[data.uuid] = data;
         break;
 
-      case CoreIpcAction.delete:
+      case IpcAction.delete:
         items.remove(event.key);
         break;
 
-      case CoreIpcAction.clear:
+      case IpcAction.clear:
         items.clear();
         break;
 
-      case CoreIpcAction.multiPut:
-      case CoreIpcAction.replace:
+      case IpcAction.multiPut:
+      case IpcAction.replace:
         items.clear();
         for (final value in event.payload) {
           final data = value as T;

@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
-import 'package:jxledger/core/ipc/database/adapters.dart';
-import 'package:jxledger/core/ipc/server.dart';
+import 'package:jxledger/ipc/database/adapters.dart';
+import 'package:jxledger/ipc/server.dart';
 
 import '../../features/archives/controller.dart';
 import '../../features/archives/repository.dart';
@@ -28,20 +28,21 @@ import '../../features/transactions/repository.dart';
 import '../../features/watchers/controller.dart';
 import '../../features/watchers/repository.dart';
 import '../../features/watchers/service.dart';
-import '../ipc/client.dart';
+import '../../ipc/client.dart';
 import '../worker.dart';
-import 'bootstrap/client.dart';
-import 'bootstrap/server.dart';
+import 'adapters.dart';
+import 'client.dart';
+import 'server.dart';
 
 final GetIt locator = GetIt.instance;
 
 void setupLocator() {
   // IpcClient
-  locator.registerLazySingleton<CoreIpcAdapters>(() => CoreIpcAdapters());
-  locator.registerLazySingleton<CoreIpcClient>(() => CoreIpcClient(locator<CoreIpcAdapters>()));
+  locator.registerLazySingleton<IpcAdapters>(() => CoreRuntimeAdapters());
+  locator.registerLazySingleton<IpcClient>(() => IpcClient(locator<IpcAdapters>()));
 
   // IpcServer
-  locator.registerLazySingleton<CoreIpcServer>(() => CoreIpcServer());
+  locator.registerLazySingleton<IpcServer>(() => IpcServer());
 
   // Settings
   locator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
@@ -95,6 +96,6 @@ void setupLocator() {
   locator.registerLazySingleton<ArchivesService>(() => ArchivesService(locator<ArchivesRepository>()));
 
   // Higher level boots, this will most likely depends on the lower level to boot first.
-  locator.registerLazySingleton<CoreBootstrapServer>(() => CoreBootstrapServer());
-  locator.registerLazySingleton<CoreBootstrapClient>(() => CoreBootstrapClient());
+  locator.registerLazySingleton<CoreRuntimeServer>(() => CoreRuntimeServer());
+  locator.registerLazySingleton<CoreRuntimeClient>(() => CoreRuntimeClient());
 }
