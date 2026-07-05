@@ -245,13 +245,27 @@ class CoreIpcServer {
   void response(Socket client, int reqId, dynamic result, CoreIpcAction op) {
     if (_isDisposing) return;
     final responsePacket = CoreIpcPacket(reqId: reqId, op: op.code, action: '', key: '', payload: result);
-    client.add(responsePacket.toBytes());
+    try {
+      client.add(responsePacket.toBytes());
+    } catch (e) {
+      logln("[IPC] Failed to send response to $client");
+      _slaves.remove(client);
+      client.destroy();
+      disconnected?.call();
+    }
   }
 
   void error(Socket client, int activeReqId) {
     if (_isDisposing) return;
     final errorPacket = CoreIpcPacket(reqId: activeReqId, op: CoreIpcAction.error.code, action: '', key: '', payload: Uint8List(0));
-    client.add(errorPacket.toBytes());
+    try {
+      client.add(errorPacket.toBytes());
+    } catch (e) {
+      logln("[IPC] Failed to send error to $client");
+      _slaves.remove(client);
+      client.destroy();
+      disconnected?.call();
+    }
   }
 
   void broadcast(CoreIpcAction op, String action, String key, Uint8List payload, {Socket? exclude}) {
@@ -261,7 +275,14 @@ class CoreIpcServer {
 
     for (var slave in _slaves) {
       if (slave != exclude) {
-        slave.add(frame);
+        try {
+          slave.add(frame);
+        } catch (e) {
+          logln("[IPC] Failed to broadcast to $slave");
+          _slaves.remove(slave);
+          slave.destroy();
+          disconnected?.call();
+        }
       }
     }
   }
