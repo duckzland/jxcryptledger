@@ -20,7 +20,7 @@ import '../../ipc/database/adapters.dart';
 
 class CoreRuntimeAdapters extends IpcAdapters {
   @override
-  final Map<String, TypeAdapter> adapters = {
+  Map<String, TypeAdapter> get adapters => {
     'rates_box': RatesAdapter(),
     'cryptos_box': CryptosAdapter(),
     'settings_box': SettingsAdapter(),

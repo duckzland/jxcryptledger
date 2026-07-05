@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+
 import '../../features/archives/service.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
@@ -13,11 +14,11 @@ import '../../features/watchboard/panels/service.dart';
 import '../../features/watchboard/tickers/service.dart';
 import '../../features/watchers/service.dart';
 import '../../system/unlock/status.dart';
-import '../abstracts/runtime.dart';
 import '../../ipc/action.dart';
 import '../../ipc/client.dart';
 import '../../ipc/database/adapters.dart';
 import '../../ipc/database/database.dart';
+import '../abstracts/runtime.dart';
 import '../log.dart';
 import '../mode.dart';
 import '../worker.dart';
