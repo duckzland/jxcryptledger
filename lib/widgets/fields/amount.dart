@@ -24,6 +24,7 @@ class WidgetsFieldsAmount extends StatefulWidget {
 
   final void Function(String value)? onChanged;
   final void Function(void Function(String value, String helperText))? onRetrievingRate;
+  final void Function()? onReversing;
 
   const WidgetsFieldsAmount({
     super.key,
@@ -41,6 +42,7 @@ class WidgetsFieldsAmount extends StatefulWidget {
     this.useMax,
     this.onChanged,
     this.onRetrievingRate,
+    this.onReversing,
   });
 
   @override
@@ -111,6 +113,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
       final reversed = Math.divide(1, parsed);
       _controller.text = Utils.formatSmartDouble(reversed).replaceAll(",", "");
       widget.onChanged?.call(reversed.toString());
+      widget.onReversing?.call();
       setState(() {});
     } catch (e) {
       widgetsNotifyError('Failed to reverse "${_controller.text}"');

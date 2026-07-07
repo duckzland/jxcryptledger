@@ -48,6 +48,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   late double _sourceAmount;
   late List<TransactionsModel> txs;
 
+  bool _isReversed = false;
+
   Timer? _debounce;
 
   @override
@@ -150,7 +152,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Widget _buildTable() {
     rows = <Map<String, dynamic>>[];
 
-    final double rate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
+    final double rate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
     final bool showRate = rate > 0 && targetSymbol.isNotEmpty;
@@ -224,10 +226,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   Widget _buildTotal() {
-    final double rate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
+    final double rate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
     final double source = _sourceAmount;
-    final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
-    final double resultValue = Math.multiply(source, entryRate);
+    final double resultValue = Math.multiply(source, rate);
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
     final bool showRate = rate > 0 && targetSymbol.isNotEmpty;
@@ -338,7 +339,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         // Store the callback to act as promise contract!
         rateableStateUpdater = updateState;
         rateableStateUpdater?.call("", "Retrieving rate...");
-        rateableGetRate();
+        rateableGetRate(reversed: _isReversed);
       },
       onChanged: (value) {
         // Nullify the promise contract!
@@ -346,10 +347,19 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-        _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {
-            rateableAmount = value;
+        if (value != rateableAmount) {
+          _debounce = Timer(const Duration(milliseconds: 100), () {
+            setState(() {
+              rateableAmount = value;
+            });
           });
+        }
+      },
+      onReversing: () {
+        setState(() {
+          _isReversed = !_isReversed;
+
+          rateableAmount = rateableParseToString(rateableAmount!, reverse: true);
         });
       },
     );
@@ -374,8 +384,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
     _sourceAmount = _calc.totalActiveBalance(atxs);
 
-    final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
-    double resultValue = Math.multiply(_sourceAmount, entryRate);
+    final double entryRate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
+    final double resultValue = Math.multiply(_sourceAmount, entryRate);
 
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
@@ -394,8 +404,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final double rate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
-
+    final double rate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
     final stxs = [...txs];
 
     final selectedTxIds = selectableGetSelectedRows();
@@ -404,7 +413,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     if (stxs.isEmpty || rate <= 0) return;
 
     for (final tx in stxs) {
-      final double amount = Math.multiply(tx.rrAmount, rate);
+      final double amount = Math.multiply(tx.balance, rate);
       try {
         final child = TransactionsModel(
           tid: _txController.generateId(),

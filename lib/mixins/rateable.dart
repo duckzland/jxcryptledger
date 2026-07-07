@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../app/exceptions.dart';
+import '../core/math.dart';
 import '../core/runtime/locator.dart';
 import '../core/utils.dart';
 import '../features/rates/controller.dart';
@@ -106,5 +107,23 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
       await rateableController.deleteById(source, target);
       await rateableController.deleteById(target, source);
     }
+  }
+
+  String rateableParseToString(String text, {bool reverse = false}) {
+    final sanitized = Utils.sanitizeNumber(text);
+    double parsed = double.tryParse(sanitized) ?? 0.0;
+    if (reverse && parsed != 0.0 && parsed != 1.0) {
+      parsed = Math.divide(1, parsed);
+    }
+    return Utils.formatSmartDouble(parsed).replaceAll(",", "");
+  }
+
+  double rateableParseToDouble(String text, {bool reverse = false}) {
+    final sanitized = Utils.sanitizeNumber(text);
+    double parsed = double.tryParse(sanitized) ?? 0.0;
+    if (reverse && parsed != 0.0 && parsed != 1.0) {
+      parsed = Math.divide(1, parsed);
+    }
+    return parsed;
   }
 }

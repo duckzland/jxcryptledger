@@ -167,7 +167,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         rate = _cachedRates[tx.rrId]!;
       }
 
-      final amount = rate == -9999 ? 0.0 : tx.rrAmount * rate;
+      final amount = rate == -9999 ? 0.0 : tx.balance * rate;
 
       if (rate != -9999) {
         total = (total ?? 0.0) + amount;

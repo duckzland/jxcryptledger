@@ -25,7 +25,12 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   String? _sourceAmount;
   String? _ratesRevertAmount;
 
+  late final TextEditingController _rateController;
+  late final TextEditingController _rateRevertController;
+
   Timer? _debounce;
+
+  bool _isReversed = false;
 
   @override
   void initState() {
@@ -33,6 +38,9 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     _cryptosController = locator<CryptosController>();
     _sourceAmount = null;
     _ratesRevertAmount = null;
+
+    _rateController = TextEditingController();
+    _rateRevertController = TextEditingController();
   }
 
   @override
@@ -140,14 +148,29 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     return WidgetsFieldsAmount(
       title: 'Rate',
       helperText: 'e.g., 10.5',
+      controller: _rateRevertController,
       allowReverse: true,
       onChanged: (value) {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-        _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {
-            _ratesRevertAmount = value;
+        if (_ratesRevertAmount != value) {
+          _debounce = Timer(const Duration(milliseconds: 100), () {
+            setState(() {
+              _ratesRevertAmount = value;
+            });
           });
+        }
+      },
+      onReversing: () {
+        setState(() {
+          _isReversed = !_isReversed;
+
+          _ratesRevertAmount = rateableParseToString(_ratesRevertAmount!, reverse: true);
+
+          if (rateableAmount != null) {
+            rateableAmount = rateableParseToString(rateableAmount!, reverse: true);
+            _rateController.text = rateableAmount!;
+          }
         });
       },
     );
@@ -157,13 +180,14 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     return WidgetsFieldsAmount(
       title: 'Rate',
       helperText: 'e.g., 10.5',
+      controller: _rateController,
       allowReverse: true,
       allowRate: rateableAllow,
       onRetrievingRate: (void Function(String value, String helperText) updateState) {
         // Store the callback to act as promise contract!
         rateableStateUpdater = updateState;
         rateableStateUpdater?.call("", "Retrieving rate...");
-        rateableGetRate();
+        rateableGetRate(reversed: _isReversed);
       },
       onChanged: (value) {
         // Nullify the promise contract!
@@ -171,10 +195,24 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
 
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-        _debounce = Timer(const Duration(milliseconds: 100), () {
-          setState(() {
-            rateableAmount = value;
+        if (rateableAmount != value) {
+          _debounce = Timer(const Duration(milliseconds: 100), () {
+            setState(() {
+              rateableAmount = value;
+            });
           });
+        }
+      },
+      onReversing: () {
+        setState(() {
+          _isReversed = !_isReversed;
+
+          rateableAmount = rateableParseToString(rateableAmount!, reverse: true);
+
+          if (_ratesRevertAmount != null) {
+            _ratesRevertAmount = rateableParseToString(_ratesRevertAmount!, reverse: true);
+            _rateRevertController.text = _ratesRevertAmount!;
+          }
         });
       },
     );
@@ -206,10 +244,11 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
 
   Widget _buildCalculatedResult() {
     final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
-    final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
-    final double returnRate = _ratesRevertAmount == null ? 0.0 : double.tryParse(_ratesRevertAmount!) ?? 0;
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
+
+    final double entryRate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
+    final double returnRate = _ratesRevertAmount == null ? 0.0 : rateableParseToDouble(_ratesRevertAmount!, reverse: _isReversed);
 
     if (source <= 0 || entryRate <= 0 || targetSymbol == "UNK" || sourceSymbol == "UNK" || targetSymbol == "" || sourceSymbol == "") {
       return const Text("");
