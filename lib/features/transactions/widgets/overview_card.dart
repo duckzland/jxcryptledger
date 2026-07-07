@@ -253,7 +253,6 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
 
                   return TransactionsDialogsBatchTrade(
                     srId: widget.id,
-                    totalAmount: _currentHolding,
                     transactions: atxs,
                     onSave: (e) => actionableFormSave<TransactionsModel>(
                       widget.parentContext,

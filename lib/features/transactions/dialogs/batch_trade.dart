@@ -20,16 +20,16 @@ import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
 
 class TransactionsDialogsBatchTrade extends StatefulWidget {
   final int srId;
-  final double totalAmount;
   final List<TransactionsModel>? transactions;
   final void Function(Object? error)? onSave;
 
-  const TransactionsDialogsBatchTrade({super.key, required this.srId, required this.totalAmount, required this.onSave, this.transactions});
+  const TransactionsDialogsBatchTrade({super.key, required this.srId, required this.onSave, this.transactions});
 
   @override
   State<TransactionsDialogsBatchTrade> createState() => _TransactionsDialogsBatchTradeState();
@@ -39,6 +39,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     with MixinsState, MixinsTable, MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchTrade> {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
+
+  final _calc = TransactionCalculation();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -59,10 +61,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     super.initState();
     rateableSource = widget.srId;
 
-    _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
-    _sourceAmount = widget.totalAmount;
     txs = List.from(widget.transactions ?? []);
     txs.retainWhere((tx) => tx.isActive || tx.isPartial);
+
+    _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
+    _sourceAmount = _calc.totalActiveBalance(txs);
 
     for (final tx in txs) {
       selectableSetSelected(tx.uuid, true);
@@ -369,7 +372,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
 
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
-    _sourceAmount = atxs.fold(0, (sum, tx) => Math.add(sum, tx.rrAmount));
+    _sourceAmount = _calc.totalActiveBalance(atxs);
 
     final double entryRate = rateableAmount == null ? 0.0 : double.tryParse(rateableAmount!) ?? 0;
     double resultValue = Math.multiply(_sourceAmount, entryRate);
@@ -408,7 +411,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           rid: tx.isRoot ? tx.tid : tx.rid,
           pid: tx.tid,
           srId: tx.rrId,
-          srAmount: tx.rrAmount,
+          srAmount: tx.balance,
           rrId: rateableTarget ?? 0,
           rrAmount: amount,
           balance: amount,

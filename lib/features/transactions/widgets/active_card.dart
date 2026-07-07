@@ -487,7 +487,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
                   return TransactionsDialogsBatchTrade(
                     srId: widget.rrid,
-                    totalAmount: _totalBalance,
                     transactions: stxs,
                     onSave: (e) => actionableFormSave<TransactionsModel>(
                       widget.parentContext,
