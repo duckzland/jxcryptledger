@@ -82,8 +82,7 @@ jobs:
 
   create-release:
     # Windows build is disabled for now
-    # needs: [build-windows, build-linux]
-    needs: [build-linux]
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
