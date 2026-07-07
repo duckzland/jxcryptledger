@@ -16,12 +16,12 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install png2ico
-        run: choco install png2ico --yes
+      - name: Install ImageMagick
+        run: choco install imagemagick --yes
 
-      - name: Regenerate app_icon.ico
-        run: png2ico windows/runner/resources/app_icon.ico icon_16.png icon_32.png icon_48.png icon_256.png
-
+      - name: Fix app_icon.ico
+        run: magick convert windows/runner/resources/app_icon.ico windows/runner/resources/app_icon.ico
+        
       - name: Create .env file
         shell: bash
         run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
