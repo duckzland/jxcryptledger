@@ -92,3 +92,18 @@ msix_config:
   msix_version: 1.0.0.0
   logo_path: assets/icon.png
   install_certificate: true
+  restart_behavior: terminate
+
+  app_installer_xml:
+    UpdateBlocksActivation: true
+    ShowPrompt: true
+
+  manifest_extensions: |
+    <Extension Category="windows.updateTask" EntryPoint="Windows.FullTrustApplication">
+      <UpdateTask />
+    </Extension>
+    <Extension Category="windows.backgroundTasks">
+      <BackgroundTasks>
+        <Task Type="general" ResourceGroup="Main" ForceAppShutdown="true" />
+      </BackgroundTasks>
+    </Extension>

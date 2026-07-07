@@ -61,15 +61,27 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
   }
 
   Future<void> bindSignal() async {
-    ProcessSignal.sigint.watch().listen((signal) async {
-      try {
-        await shutdown();
-      } catch (e) {
-        logln("Failed to save state on exit: $e");
-      } finally {
-        exit(0);
-      }
+    ProcessSignal.sigint.watch().listen((_) async {
+      await shutdown();
+      exit(0);
     });
+
+    ProcessSignal.sigterm.watch().listen((_) async {
+      await shutdown();
+      exit(0);
+    });
+
+    if (Platform.isLinux) {
+      ProcessSignal.sigquit.watch().listen((_) async {
+        await shutdown();
+        exit(0);
+      });
+
+      ProcessSignal.sighup.watch().listen((_) async {
+        await shutdown();
+        exit(0);
+      });
+    }
   }
 
   Future<bool> checkDatabaseExists() async {

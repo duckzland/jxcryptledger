@@ -347,12 +347,15 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
                     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-                    _debounce = Timer(const Duration(milliseconds: 100), () {
-                      setState(() {
-                        _customRate = double.tryParse(value);
-                        rateableGetRate(silent: true);
+                    final newValue = double.tryParse(value);
+                    if (_customRate != newValue) {
+                      _debounce = Timer(const Duration(milliseconds: 100), () {
+                        setState(() {
+                          _customRate = newValue;
+                          rateableGetRate(silent: true);
+                        });
                       });
-                    });
+                    }
                   },
                 ),
               ),

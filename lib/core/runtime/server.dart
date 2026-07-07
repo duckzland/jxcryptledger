@@ -82,7 +82,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     logln("Connected to IPC server at Named Pipe: ${CoreMode.ipcPipeName}");
 
-    _serverWatchdog = Timer.periodic(const Duration(seconds: 15), (_) async {
+    _serverWatchdog = Timer.periodic(const Duration(seconds: 2), (_) async {
       shutdownWhenNoClient();
     });
 
