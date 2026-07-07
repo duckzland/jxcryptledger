@@ -27,7 +27,9 @@ class NotificationService {
   }
 
   Future<void> dispose() async {
-    await _plugin.cancelAll();
+    try {
+      await _plugin.cancelAll();
+    } catch (_) {}
   }
 
   Future<void> show(String message) async {

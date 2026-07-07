@@ -50,7 +50,7 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
       onExitRequested: () async {
         try {
           await shutdown();
-          await Future.delayed(const Duration(milliseconds: 50));
+          await Future.delayed(const Duration(milliseconds: 350));
           return AppExitResponse.exit;
         } catch (e) {
           logln("Failed to clean exit: $e");
@@ -66,12 +66,12 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
       exit(0);
     });
 
-    ProcessSignal.sigterm.watch().listen((_) async {
-      await shutdown();
-      exit(0);
-    });
-
     if (Platform.isLinux) {
+      ProcessSignal.sigterm.watch().listen((_) async {
+        await shutdown();
+        exit(0);
+      });
+
       ProcessSignal.sigquit.watch().listen((_) async {
         await shutdown();
         exit(0);
@@ -125,13 +125,14 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
     return false;
   }
 
-  bool hasClient() {
+  bool hasClient({int? exclude}) {
     final List<int> activeClients = CoreProcessDetector.getActiveUiClientPids();
-    if (activeClients.isEmpty) {
-      return false;
+
+    if (exclude != null) {
+      activeClients.remove(exclude);
     }
 
-    return true;
+    return activeClients.isNotEmpty;
   }
 
   bool shouldSpawn() {

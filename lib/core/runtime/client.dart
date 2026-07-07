@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import '../../mixins/state.dart';
@@ -63,14 +64,28 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
   @override
   Future<void> shutdown() async {
+    // Note: Had to wrap in try catch for each block to ensure we exit no matter what.
+    try {
+      if (!hasClient(exclude: pid) && isServerAvailable()) {
+        logln("Shutting down server");
+        await ipcClient.send(op: IpcAction.shutdown, action: "shutdown", key: pid);
+      }
+    } catch (_) {}
+
     // @todo: figure out on how to save multiple app state!
-    if (CoreMode.isMain) {
-      await states.save();
-    }
+    try {
+      if (CoreMode.isMain && CoreMode.isUnlocked) {
+        await states.save();
+      }
+    } catch (_) {}
 
-    broadcasterDispose();
+    try {
+      broadcasterDispose();
+    } catch (_) {}
 
-    await ipcClient.dispose();
+    try {
+      await ipcClient.dispose();
+    } catch (_) {}
   }
 
   @override
@@ -145,6 +160,8 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
     await checkDatabaseExists();
     await bootServices();
+
+    CoreMode.isUnlocked = true;
 
     return true;
   }

@@ -51,6 +51,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     CoreMode.isServer = true;
 
     await setup();
+    await bindLifecycle();
     await bindSignal();
 
     cleanSocketFile();
@@ -60,6 +61,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     ipcServer.unlocker = unlock;
     ipcServer.shutdown = shutdown;
     ipcServer.disconnected = shutdownWhenNoClient;
+    ipcServer.hasClient = hasClient;
     ipcServer.database.path = CoreMode.path;
 
     await ipcServer.database.init();
@@ -82,7 +84,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     logln("Connected to IPC server at Named Pipe: ${CoreMode.ipcPipeName}");
 
-    _serverWatchdog = Timer.periodic(const Duration(seconds: 2), (_) async {
+    _serverWatchdog = Timer.periodic(const Duration(seconds: 5), (_) async {
       shutdownWhenNoClient();
     });
 
@@ -91,18 +93,38 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
   @override
   Future<void> shutdown() async {
-    _serverWatchdog?.cancel();
-    _serverWatchdog = null;
+    // Note: Had to wrap in try catch for each block to ensure we exit no matter what.
+    try {
+      _serverWatchdog?.cancel();
+      _serverWatchdog = null;
+    } catch (_) {}
 
-    broadcasterDispose();
+    try {
+      lifecycleListener.dispose();
+    } catch (_) {}
 
-    await stopServices();
+    try {
+      broadcasterDispose();
+    } catch (_) {}
 
-    await ipcClient.dispose();
-    await ipcServer.dispose();
+    try {
+      await stopServices();
+    } catch (_) {}
 
-    await stdout.close();
-    await stderr.close();
+    try {
+      await ipcClient.dispose();
+    } catch (_) {}
+    try {
+      await ipcServer.dispose();
+    } catch (_) {}
+
+    try {
+      await stdout.close();
+    } catch (_) {}
+
+    try {
+      await stderr.close();
+    } catch (_) {}
 
     exit(0);
   }
@@ -187,6 +209,8 @@ class CoreRuntimeServer extends CoreBaseRuntime {
         return SystemUnlockStatus.error;
       }
     }
+
+    CoreMode.isUnlocked = true;
 
     return state;
   }

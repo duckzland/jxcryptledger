@@ -35,6 +35,7 @@ class IpcServer {
   Future<SystemUnlockStatus> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
   void Function()? disconnected;
+  bool Function({int exclude})? hasClient;
 
   bool _isDisposing = false;
 
@@ -75,6 +76,9 @@ class IpcServer {
 
     socket.listen((client) {
       if (_isDisposing) return;
+
+      final String uuid = "client_${client.remoteAddress.address}_${client.remotePort}";
+      logln("connected to client with auto-uuid: $uuid");
 
       _slaves.add(client);
 
@@ -123,7 +127,7 @@ class IpcServer {
         final dynamic nativeHiveKey = int.tryParse(rawKeyStr) ?? rawKeyStr;
         IpcAction sendOp = actionCode;
 
-        if (actionCode != IpcAction.unlock) {
+        if (actionCode != IpcAction.unlock && actionCode != IpcAction.shutdown) {
           if (payload.length < 28) {
             logln("[IPC] SECURITY VIOLATION: Received unauthenticated packet for op: $actionCode from reqId: $activeReqId. Rejecting.");
             error(client, activeReqId);
@@ -232,6 +236,13 @@ class IpcServer {
             await _batchWriteToBox(action, payload);
             final encrypted = await _crypto.encrypt(payload);
             broadcast(actionCode, action, "replace", encrypted, exclude: client);
+            break;
+
+          case IpcAction.shutdown:
+            if (hasClient != null && hasClient!.call(exclude: nativeHiveKey) == false) {
+              await shutdown?.call();
+              logln("Shutdown request from $nativeHiveKey... shutting down.");
+            }
             break;
 
           default:

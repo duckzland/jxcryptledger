@@ -52,16 +52,19 @@ class IpcDatabase {
   Future<void> delete(String boxName, dynamic key) async {
     final box = boxes.get(boxName);
     await box.delete(key);
+    await box.flush();
   }
 
   Future<void> put(String boxName, dynamic key, dynamic value) async {
     final box = boxes.get(boxName);
     await box.put(key, value);
+    await box.flush();
   }
 
   Future<void> clear(String boxName) async {
     final box = boxes.get(boxName);
     await box.clear();
+    await box.flush();
   }
 
   Future<void> flush(String boxName) async {

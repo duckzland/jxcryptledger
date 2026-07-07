@@ -13,6 +13,7 @@ enum IpcAction {
   refreshTickers(0x12),
   refreshRates(0x13),
   refreshCryptos(0x14),
+  shutdown(0x99),
   error(0xFF),
   unknown(-1);
 

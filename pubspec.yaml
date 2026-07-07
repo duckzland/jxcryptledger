@@ -86,24 +86,10 @@ flutter_launcher_icons:
     icon_name: "jxledger"
 
 msix_config:
-  display_name: JXLedger
-  publisher_display_name: Jason Xie
-  identity_name: com.duckzland.jxledger
+  display_name: "JXLedger"
+  publisher_display_name: "Jason Xie"
+  identity_name: "com.duckzland.jxledger"
   msix_version: 1.0.0.0
-  logo_path: assets/icon.png
+  logo_path: "assets/icon.png"
   install_certificate: true
-  restart_behavior: terminate
-
-  app_installer_xml:
-    UpdateBlocksActivation: true
-    ShowPrompt: true
-
-  manifest_extensions: |
-    <Extension Category="windows.updateTask" EntryPoint="Windows.FullTrustApplication">
-      <UpdateTask />
-    </Extension>
-    <Extension Category="windows.backgroundTasks">
-      <BackgroundTasks>
-        <Task Type="general" ResourceGroup="Main" ForceAppShutdown="true" />
-      </BackgroundTasks>
-    </Extension>
+  restart_behavior: none

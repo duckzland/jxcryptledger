@@ -22,7 +22,6 @@ class IpcClient {
   }
 
   final Map<int, Completer<dynamic>> _pending = {};
-  final String uuid = "client_${DateTime.now().millisecondsSinceEpoch}_${StackTrace.current.hashCode}";
   final IpcBuffer _incomingBuffer = IpcBuffer();
   final StreamController<IpcBroadcastEvent> _broadcastController = StreamController<IpcBroadcastEvent>.broadcast();
   final IpcCrypto _crypto = IpcCrypto();
@@ -148,9 +147,9 @@ class IpcClient {
 
       Uint8List rawPayload = payload ?? Uint8List(0);
 
-      if (op != IpcAction.unlock) {
+      if (op != IpcAction.unlock && op != IpcAction.shutdown) {
         if (sessionKey == null) {
-          throw StateError('[IPC] Cannot transmit database requests before completing secure handshake.');
+          throw StateError('[IPC] Cannot transmit database requests before completing secure handshake. $op');
         }
 
         if (!_crypto.hasActiveKey) {
