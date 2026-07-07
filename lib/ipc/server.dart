@@ -1,26 +1,22 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:convert';
 
-import '../features/watchboard/tickers/service.dart';
+import '../core/abstracts/models/with_id.dart';
+import '../core/log.dart';
+import '../core/runtime/locator.dart';
 import '../features/cryptos/service.dart';
 import '../features/notification/service.dart';
 import '../features/rates/service.dart';
-import '../core/abstracts/models/with_id.dart';
-
-import '../core/runtime/locator.dart';
-import '../core/log.dart';
-
+import '../features/watchboard/tickers/service.dart';
+import '../system/unlock/status.dart';
+import 'action.dart';
+import 'database/database.dart';
 import 'protocol/buffer.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 import 'protocol/reader.dart';
 import 'protocol/writer.dart';
-
-import 'database/database.dart';
-
-import 'action.dart';
-import '../system/unlock/status.dart';
 
 class IpcServer {
   final List<Socket> _slaves = [];
@@ -76,9 +72,6 @@ class IpcServer {
 
     socket.listen((client) {
       if (_isDisposing) return;
-
-      final String uuid = "client_${client.remoteAddress.address}_${client.remotePort}";
-      logln("connected to client with auto-uuid: $uuid");
 
       _slaves.add(client);
 

@@ -10,10 +10,10 @@ import '../../app/router.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
-import '../runtime/locator.dart';
-import '../runtime/process.dart';
 import '../log.dart';
 import '../mode.dart';
+import '../runtime/locator.dart';
+import '../runtime/process.dart';
 
 abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
   CoreBaseRuntime();
@@ -68,11 +68,6 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
 
     if (Platform.isLinux) {
       ProcessSignal.sigterm.watch().listen((_) async {
-        await shutdown();
-        exit(0);
-      });
-
-      ProcessSignal.sigquit.watch().listen((_) async {
         await shutdown();
         exit(0);
       });
