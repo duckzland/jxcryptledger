@@ -42,6 +42,7 @@ jobs:
 
       - name: Cleanup
         if: always()
+        shell: bash
         run: rm -f .env
           rm -rf build/
           rm -rf libs/
