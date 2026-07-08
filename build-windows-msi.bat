@@ -36,7 +36,7 @@ for /f "tokens=1,2,3,4 delims=." %%a in ("%FULL_VERSION%") do (
 
 if %SKIP_FLUTTER%==1 goto SKIP_VERSION_BUMP
 
-echo [1/5] Checking pubspec.yaml version...
+echo [1/6] Checking pubspec.yaml version...
 for /f "tokens=2 delims=: " %%v in ('findstr /b "version:" pubspec.yaml') do (
     set CURRENT_VERSION=%%v
 )
@@ -53,7 +53,7 @@ if "%CURRENT_VERSION%"=="%BUILD_NAME%" (
     git commit pubspec.yaml -m "Bump version to %BUILD_NAME%"
 )
 
-echo [2/5] Checking app version...
+echo [2/6] Checking app version...
 for /f "tokens=*" %%A in ('powershell -NoProfile -Command "(Select-String -Path 'lib/app/constants.dart' -Pattern 'appVersion').Line.Split([char]34)"') do set "CURRENT_VERSION=%%A"
 
 if "%CURRENT_VERSION%"=="%FULL_VERSION%" (
@@ -67,7 +67,7 @@ if "%CURRENT_VERSION%"=="%FULL_VERSION%" (
     git commit lib/app/constants.dart -m "Bump version to %FULL_VERSION%"
 )
 
-echo [3/5] Updating app salt at lib/app/constants.dart...
+echo [3/6] Updating app salt at lib/app/constants.dart...
 for /f "tokens=*" %%A in ('powershell -NoProfile -Command "(Select-String -Path '.env' -Pattern 'APP_SALT').Line.Split([char]34)"') do set "ENV_SALT=%%A"
 
 if "%ENV_SALT%"=="" (
@@ -84,7 +84,11 @@ if "%CURRENT_SALT%"=="%ENV_SALT%" (
     powershell -Command "(Get-Content 'lib/app/constants.dart') -replace 'const String appSalt = \".*\";', 'const String appSalt = \"%ENV_SALT%\";' | Set-Content 'lib/app/constants.dart'"
 )
 
-echo [4/5] Cleaning and Compiling Flutter Windows Binaries...
+echo [4/6] Generating Icons
+call dart run flutter_launcher_icons:main
+call dart run .\tools\fix_icon_file.dart
+
+echo [5/6] Cleaning and Compiling Flutter Windows Binaries...
 call flutter clean
 call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER%
 
@@ -93,7 +97,7 @@ if %SKIP_FLUTTER%==1 (
     echo [4/5] Skipping Flutter compilation steps as requested.
 )
 
-echo [5/5] Resolving WiX Toolset via local .NET SDK pathways...
+echo [6/6] Resolving WiX Toolset via local .NET SDK pathways...
 set "PATH=%PATH%;C:\Program Files\dotnet;%USERPROFILE%\.dotnet\tools"
 
 where wix >nul 2>&1
