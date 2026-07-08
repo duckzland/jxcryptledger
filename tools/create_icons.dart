@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 
 void main() async {
+  await Process.run('dart', ['run', 'flutter_launcher_icons:main', '-f', 'pubspec.yaml']);
+
   final inputFile = File('windows/runner/resources/app_icon.ico');
   final outputFile = File('windows/runner/resources/app_icon.ico');
 
@@ -34,11 +36,7 @@ void main() async {
     final rawPng = Uint8List.fromList(img.encodePng(resized));
     frameBlobs.add(rawPng);
 
-    dirMeta.add({
-      'width': size == 256 ? 0 : size,
-      'height': size == 256 ? 0 : size,
-      'size': rawPng.length,
-    });
+    dirMeta.add({'width': size == 256 ? 0 : size, 'height': size == 256 ? 0 : size, 'size': rawPng.length});
   }
 
   final int count = targetSizes.length;

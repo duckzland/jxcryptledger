@@ -98,7 +98,6 @@ if "%CURRENT_SALT%"=="%ENV_SALT%" (
 )
 if %SKIP_ICON%==1 goto SKIP_ICON
 echo [4/6] Generating Icons
-call dart run flutter_launcher_icons:main
 call dart run .\tools\create_icons.dart
 
 :SKIP_ICON
