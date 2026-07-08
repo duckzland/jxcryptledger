@@ -133,8 +133,10 @@ if not exist "%SOURCE_DIR%\jxledger.exe" (
     echo [ERROR] Target binary missing at: %SOURCE_DIR%\jxledger.exe
     exit /b 1
 )
-(
+
 :: --- WRITE WXS MANIFEST ON THE FLY ---
+:: --- WRITE WXS MANIFEST ON THE FLY ---
+(
 echo ^<?xml version="1.0" encoding="UTF-8"?^>
 echo ^<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"^>
 echo   ^<Package Name="JXLedger" Manufacturer="duckzland" Version="%BUILD_NAME%" UpgradeCode="6f3b7c84-1142-4b2a-bf39-8134762da299" Scope="perMachine"^>
@@ -146,8 +148,6 @@ echo     ^</Upgrade^>
 echo     ^<InstallExecuteSequence^>
 echo       ^<RemoveExistingProducts Before="CostFinalize" /^>
 echo     ^</InstallExecuteSequence^>
-echo     ^<Launch Message="A newer version of JXLedger is already installed." Condition="NOT NEWER_VERSION_FOUND" /^>
-echo     ^<Launch Message="Administrative privileges are explicitly required to install JXLedger to Program Files." Condition="Privileged" /^>
 echo     ^<MediaTemplate EmbedCab="yes" /^>
 echo     ^<StandardDirectory Id="ProgramFiles64Folder"^>
 echo       ^<Directory Id="INSTALLFOLDER" Name="JXLedger" /^>
@@ -156,22 +156,28 @@ echo     ^<StandardDirectory Id="ProgramMenuFolder"^>
 echo       ^<Directory Id="ApplicationProgramsFolder" Name="JXLedger" /^>
 echo     ^</StandardDirectory^>
 echo     ^<ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER"^>
-echo       ^<Files Include="%SOURCE_DIR%\**" /^>
+echo       ^<Files Include="%SOURCE_DIR%\*" /^>
+echo     ^</ComponentGroup^>
+echo     ^<ComponentGroup Id="DataFiles" Directory="INSTALLFOLDER"^>
+echo       ^<Files Subdirectory="data" Include="%SOURCE_DIR%\data\**" /^>
 echo     ^</ComponentGroup^>
 echo     ^<ComponentGroup Id="ShortcutCleanup" Directory="ApplicationProgramsFolder"^>
 echo       ^<Component Id="ApplicationShortcutFolderCleanup" Guid="d61a293f-561b-4199-a86d-f0b4fe648011"^>
 echo         ^<RemoveFolder Id="CleanShortcutFolder" On="uninstall" /^>
 echo         ^<RegistryValue Root="HKCU" Key="Software\JXLedger" Name="installed" Type="integer" Value="1" KeyPath="yes" /^>
-echo         ^<Shortcut Id="ApplicationStartMenuShortcut" Directory="ApplicationProgramsFolder" Name="JXLedger" Description="A lightweight crypto transaction ledger for tracking balances, trades, and transaction trees." Target="[INSTALLFOLDER]jxledger.exe" WorkingDirectory="INSTALLFOLDER" /^>
+echo         ^<Shortcut Id="ApplicationStartMenuShortcut" Directory="ApplicationProgramsFolder" Name="JXLedger" Description="A lightweight crypto transaction ledger." Target="[INSTALLFOLDER]jxledger.exe" WorkingDirectory="INSTALLFOLDER" /^>
 echo       ^</Component^>
 echo     ^</ComponentGroup^>
 echo     ^<Feature Id="MainApplication" Title="JXLedger Application" Level="1"^>
 echo       ^<ComponentGroupRef Id="AppFiles" /^>
+echo       ^<ComponentGroupRef Id="DataFiles" /^>
 echo       ^<ComponentGroupRef Id="ShortcutCleanup" /^>
 echo     ^</Feature^>
 echo   ^</Package^>
 echo ^</Wix^>
 ) > "%TEMP_WXS%"
+
+
 
 echo Building %FLUTTER_MODE% MSI installer via Built-in WiX v7 Files Engine...
 call wix build -acceptEula wix7 "%TEMP_WXS%" -o "%TARGET_MSI%"
