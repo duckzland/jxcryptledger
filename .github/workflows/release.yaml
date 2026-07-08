@@ -42,10 +42,9 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: |
-          if (Test-Path .env) { Remove-Item .env -Force }
-          if (Test-Path build) { Remove-Item build -Recurse -Force }
-          if (Test-Path libs) { Remove-Item libs -Recurse -Force }
+        run: rm -f .env
+          rm -rf build/
+          rm -rf libs/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -87,7 +86,6 @@ jobs:
   create-release:
     # Windows build is disabled for now
     needs: [build-windows, build-linux]
-    # needs: [build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -99,7 +97,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            # windows-msi/*.msi
+            windows-msi/*.msi
             linux-deb/*.deb
           body: "Automated Build for ${{ github.ref_name }}"
         env:
