@@ -135,7 +135,6 @@ if not exist "%SOURCE_DIR%\jxledger.exe" (
 )
 
 :: --- WRITE WXS MANIFEST ON THE FLY ---
-:: --- WRITE WXS MANIFEST ON THE FLY ---
 (
 echo ^<?xml version="1.0" encoding="UTF-8"?^>
 echo ^<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"^>
@@ -183,6 +182,8 @@ echo Building %FLUTTER_MODE% MSI installer via Built-in WiX v7 Files Engine...
 call wix build -acceptEula wix7 "%TEMP_WXS%" -o "%TARGET_MSI%"
 
 if exist "%TEMP_WXS%" del /Q "%TEMP_WXS%"
+
+git checkout -- lib/app/constants.dart
 
 echo ---------------------------------------
 echo Done! %FLUTTER_MODE% Full-Tree Installer available at: %TARGET_MSI%
