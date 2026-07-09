@@ -31,26 +31,26 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
     Map<String, dynamic>? meta,
   }) : meta = meta ?? {} {
     if (tid.isEmpty) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be empty.", "Please enter a transaction ID.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidTid, "tid cannot be empty.", "Please enter a watchboard panel ID.");
     }
     if (tid == '0') {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid cannot be '0'.", "This transaction ID is not allowed.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidTid, "tid cannot be '0'.", "This watchboard panel ID is not allowed.");
     }
     if (srAmount <= 0) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrAmount, "srAmount must be > 0.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidSrAmount, "srAmount must be > 0.", "Invalid watchboard data.");
     }
     if (srId <= 0) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrId, "srId must be > 0.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidSrId, "srId must be > 0.", "Invalid watchboard data.");
     }
     if (rrId <= 0) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidRrId, "srId must be > 0.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidRrId, "srId must be > 0.", "Invalid watchboard data.");
     }
     if (digit < 2) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidDigit, "digit must be > 2.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidDigit, "digit must be > 2.", "Invalid watchboard data.");
     }
 
     if (order != null && order! < 0) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidOrder, "order must be > 0.", "Invalid ordering.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidOrder, "order must be > 0.", "Invalid ordering.");
     }
 
     this.meta.putIfAbsent("oldRate", () => null);
@@ -79,22 +79,22 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
 
   factory PanelsModel.fromJson(Map<String, dynamic> json) {
     if (!json.containsKey('tid')) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "Missing required field: tid", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidTid, "Missing required field: tid", "Invalid watchboard data.");
     }
     if (json['tid'] is! String) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidTid, "tid must be a string.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidTid, "tid must be a string.", "Invalid watchboard data.");
     }
     if (json['srAmount'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrAmount, "srAmount must be numeric.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidSrAmount, "srAmount must be numeric.", "Invalid watchboard data.");
     }
     if (json['srId'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidSrId, "srId must be numeric.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidSrId, "srId must be numeric.", "Invalid watchboard data.");
     }
     if (json['rrId'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidRrId, "rrId must be numeric.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidRrId, "rrId must be numeric.", "Invalid watchboard data.");
     }
     if (json['digit'] is! num) {
-      throw ValidationException(AppErrorCode.tickerBasicInvalidDigit, "digit must be numeric.", "Invalid watchboard data.");
+      throw ValidationException(AppErrorCode.panelBasicInvalidDigit, "digit must be numeric.", "Invalid watchboard data.");
     }
 
     return PanelsModel(
