@@ -1,8 +1,7 @@
-import 'package:jxledger/features/watchboard/tickers/mixins/helper.dart';
-
 import '../../../core/abstracts/controller.dart';
 import '../../../ipc/action.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
+import 'mixins/helper.dart';
 import 'model.dart';
 import 'repository.dart';
 
