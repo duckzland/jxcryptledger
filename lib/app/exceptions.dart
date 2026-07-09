@@ -116,18 +116,11 @@ class AppErrorCode {
   static const int watcherTimestampInFuture = 3011;
 
   static const int tickerBasicInvalidType = 4001;
-  static const int tickerBasicInvalidSrAmount = 4002;
-  static const int tickerBasicInvalidSrId = 4003;
-  static const int tickerBasicInvalidRrId = 4004;
-  static const int tickerBasicInvalidDigit = 4005;
-  static const int tickerBasicInvalidRate = 4006;
-  static const int tickerBasicInvalidValue = 4007;
-  static const int tickerBasicInvalidOrder = 4008;
-  static const int tickerBasicInvalidMeta = 4009;
-  static const int tickerBasicInvalidTid = 4010;
-  static const int tickerCannotRemoveStaticType = 4011;
-  static const int tickerBasicInvalidTitle = 4012;
-  static const int tickerBasicInvalidFormat = 4013;
+  static const int tickerBasicInvalidOrder = 4002;
+  static const int tickerBasicInvalidMeta = 4003;
+  static const int tickerBasicInvalidTid = 4004;
+  static const int tickerBasicInvalidTitle = 4005;
+  static const int tickerBasicInvalidFormat = 4006;
 
   static const int archiveAidEmpty = 5001;
   static const int archiveDataEmpty = 5002;
@@ -137,6 +130,18 @@ class AppErrorCode {
 
   static const int settingsInvalidValue = 6001;
   static const int settingsInvalidKey = 6002;
+
+  static const int panelBasicInvalidSrAmount = 7001;
+  static const int panelBasicInvalidSrId = 7002;
+  static const int panelBasicInvalidRrId = 7003;
+  static const int panelBasicInvalidDigit = 7004;
+  static const int panelBasicInvalidOrder = 7005;
+  static const int panelBasicInvalidTid = 7006;
+
+  static const int snapshotsBasicInvalidTid = 8001;
+  static const int snapshotsBasicInvalidPrice = 8002;
+  static const int snapshotsBasicInvalidMarketCap = 8003;
+  static const int snapshotsBasicInvalidWeight = 8004;
 }
 
 class ValidationException extends CoreBaseException {
