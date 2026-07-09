@@ -81,15 +81,16 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     try {
       final srId = _saveSourceCryptoField();
       final srAmount = _saveSourceAmountField();
-      final balance = _saveBalanceField();
       final timestamp = _selectedDate != null ? Utils.dateToTimestamp(_selectedDate) : data.timestamp;
       final meta = _saveNotesField();
+      double balance = _saveBalanceField();
 
       int rrId = _saveResultCryptoField();
       double rrAmount = _saveResultAmountField();
 
       if (_isCapital) {
         rrAmount = srAmount;
+        balance = srAmount;
         rrId = srId;
       } else {
         if (rrAmount == srAmount && rrId == srId) {
