@@ -137,11 +137,6 @@ class AppErrorCode {
   static const int panelBasicInvalidDigit = 7004;
   static const int panelBasicInvalidOrder = 7005;
   static const int panelBasicInvalidTid = 7006;
-
-  static const int snapshotsBasicInvalidTid = 8001;
-  static const int snapshotsBasicInvalidPrice = 8002;
-  static const int snapshotsBasicInvalidMarketCap = 8003;
-  static const int snapshotsBasicInvalidWeight = 8004;
 }
 
 class ValidationException extends CoreBaseException {
