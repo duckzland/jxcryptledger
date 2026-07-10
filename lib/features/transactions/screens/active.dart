@@ -62,6 +62,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
+    
     groups = _processTx();
     groupKeys = groups.keys.toList();
 

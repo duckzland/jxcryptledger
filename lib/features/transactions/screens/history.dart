@@ -46,6 +46,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
     txController = locator<TransactionsController>();
 
     _sortMode = widget.sortMode;
+
     txs = widget.transactions;
     fxs = widget.txsFlags;
     txs = _processTx();
@@ -84,6 +85,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
     }
 
     _sortMode = widget.sortMode;
+
     txs = widget.transactions;
     fxs = widget.txsFlags;
     txs = _processTx();
