@@ -30,6 +30,7 @@ import '../../model.dart';
 import '../buttons/batch.dart';
 import '../buttons/linkable.dart';
 import '../panel_item.dart';
+import '../status_text.dart';
 
 class TransactionsWidgetsCardsActive extends StatefulWidget {
   final int srid;
@@ -517,7 +518,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                   DataCell(WidgetsBalanceText(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'], comparator: 0)),
                 ],
 
-                DataCell(Text(r['status'])),
+                DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
                 DataCell(
                   TransactionsWidgetsButtonsAction(
                     key: Key("action-${tx.uuid}"),
@@ -532,9 +533,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                     isFinalizable: fxsIsFinalizable(tx),
                     hasLeaf: fxsHasLeaf(tx),
                     hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                    onAction: () {
-                      widget.onStatusChanged();
-                    },
+                    onAction: widget.onStatusChanged,
                   ),
                 ),
               ],

@@ -17,6 +17,7 @@ import '../dialogs/details.dart';
 import '../mixins/flags.dart';
 import '../widgets/buttons/action.dart';
 import '../model.dart';
+import '../widgets/status_text.dart';
 
 class TransactionsJournalView extends StatefulWidget {
   final List<TransactionsModel> transactions;
@@ -200,7 +201,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                       DataCell(Text(r['source'] ?? '')),
                       DataCell(Text(r['result'] ?? '')),
                       DataCell(Text(r['rate'] ?? '')),
-                      DataCell(Text(r['status'] ?? '')),
+                      DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
                       DataCell(
                         TransactionsWidgetsButtonsAction(
                           tx: tx,
@@ -214,9 +215,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                           isFinalizable: fxsIsFinalizable(tx),
                           hasLeaf: fxsHasLeaf(tx),
                           hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                          onAction: () {
-                            widget.onStatusChanged();
-                          },
+                          onAction: widget.onStatusChanged,
                         ),
                       ),
                     ],

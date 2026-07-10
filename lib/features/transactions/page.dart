@@ -57,6 +57,7 @@ class TransactionsPageState extends State<TransactionsPage>
     _viewMode = TransactionsViewMode.values.byName(states.get('tx-view-mode', defaultValue: "active"));
 
     txs = txController.items;
+    fxs = {};
     fxsRebuild();
 
     _detectFilterAndSortOptions();

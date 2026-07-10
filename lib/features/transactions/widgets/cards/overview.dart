@@ -25,6 +25,7 @@ import '../../model.dart';
 import '../buttons/batch.dart';
 import '../buttons/action.dart';
 import '../panel_item.dart';
+import '../status_text.dart';
 
 class TransactionsWidgetsCardsOverview extends StatefulWidget {
   final int id;
@@ -80,10 +81,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   void initState() {
     super.initState();
 
+    txController = locator<TransactionsController>();
+
     _isOpen = widget.isOpen;
 
     txs = widget.transactions;
-    txController = locator<TransactionsController>();
     fxs = widget.txsFlags;
 
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
@@ -353,7 +355,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                 DataCell(Text(r['source'])),
                 DataCell(Text(r['balance'])),
                 DataCell(Text(r['exchangedRate'])),
-                DataCell(Text(r['status'])),
+                DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
                 DataCell(
                   TransactionsWidgetsButtonsAction(
                     key: Key("action-${tx.uuid}"),
@@ -368,9 +370,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                     isFinalizable: fxsIsFinalizable(tx),
                     hasLeaf: fxsHasLeaf(tx),
                     hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                    onAction: () {
-                      widget.onStatusChanged();
-                    },
+                    onAction: widget.onStatusChanged,
                   ),
                 ),
               ],
