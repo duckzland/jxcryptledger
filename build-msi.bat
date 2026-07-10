@@ -126,6 +126,7 @@ set TARGET_MSI=%OUTPUT_DIR%\JXLedger_%BUILD_NAME%.msi
 set SOURCE_DIR=%CD%\build\windows\x64\runner\Release
 set UPGRADE_GUID=6f3b7c84-1142-4b2a-bf39-8134762da299
 set SHORTCUT_GUID=3e0298de-9989-49c6-9285-8134762da299
+set MANUFACTURER=com.duckzland.jxledger
 
 :: Verify target directory exists before running WiX compiler
 if not exist "%SOURCE_DIR%\jxledger.exe" (
@@ -137,7 +138,7 @@ if not exist "%SOURCE_DIR%\jxledger.exe" (
 (
 echo ^<?xml version="1.0" encoding="UTF-8"?^>
 echo ^<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"^>
-echo   ^<Package Name="JXLedger" Manufacturer="duckzland" Version="%BUILD_NAME%" UpgradeCode="%UPGRADE_GUID%" Scope="perMachine"^>
+echo   ^<Package Name="JXLedger" Manufacturer="%MANUFACTURER%" Version="%BUILD_NAME%" UpgradeCode="%UPGRADE_GUID%" Scope="perMachine"^>
 echo     ^<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" /^>
 echo     ^<MajorUpgrade DowngradeErrorMessage="A newer version of JXLedger is already installed." Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes" /^>
 echo     ^<MediaTemplate EmbedCab="yes" /^>

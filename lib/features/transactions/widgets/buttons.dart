@@ -5,11 +5,11 @@ import '../../../widgets/button.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
 import '../../cryptos/controller.dart';
-import '../controller.dart';
 import '../dialogs/balance_snapshot.dart';
 import '../forms/edit.dart';
 import '../forms/trade.dart';
 import '../model.dart';
+import '../controller.dart';
 
 class TransactionsWidgetsButtons extends StatelessWidget with MixinsActionable {
   final TransactionsModel tx;

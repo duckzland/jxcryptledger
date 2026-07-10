@@ -14,17 +14,15 @@ import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
-import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/panel.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
-import '../dialogs/batch_action.dart';
-import '../dialogs/batch_trade.dart';
 import '../dialogs/details.dart';
 import '../mixins/actions.dart';
 import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
+import 'batch_buttons.dart';
 import 'buttons.dart';
 
 class TransactionsOverviewCard extends StatefulWidget {
@@ -222,181 +220,23 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
   }
 
   Widget _buildActions() {
-    return Wrap(
-      direction: Axis.horizontal,
-      runSpacing: 14,
-      spacing: 8,
-      runAlignment: WrapAlignment.center,
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            if (isActive)
-              WidgetsDialogsShowForm(
-                key: const Key("trade-multiple-button"),
-                icon: Icons.swap_vert,
-                tooltip: "Show batch trade action for the selected transactions",
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  final stxs = [...txs];
-
-                  if (selectableHasSelectedRows()) {
-                    final selectedTxIds = selectableGetSelectedRows();
-                    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-                  }
-
-                  final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
-
-                  return TransactionsDialogsBatchTrade(
-                    srId: widget.id,
-                    transactions: atxs,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Trade completed successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isDeletable)
-              WidgetsDialogsShowForm(
-                key: const Key("delete-multiple-button"),
-                icon: Icons.delete,
-                tooltip: "Delete all transactions",
-                initialState: WidgetsButtonActionState.error,
-                evaluator: (s) {
-                  if (!isDeletable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.delete,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions deleted.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isRefundable)
-              WidgetsDialogsShowForm(
-                key: const Key("refund-multiple-button"),
-                icon: Icons.u_turn_left,
-                tooltip: "Refund all refundable transactions found in this group",
-                initialState: WidgetsButtonActionState.error,
-                evaluator: (s) {
-                  if (!isRefundable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.refund,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Transactions refunded successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isClosable)
-              WidgetsDialogsShowForm(
-                key: const Key("close-multiple-button"),
-                icon: Icons.close,
-                tooltip: "Close all closable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isClosable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.close,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Transactions closed successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isFinalizable)
-              WidgetsDialogsShowForm(
-                key: const Key("finalize-multiple-button"),
-                icon: Icons.close_fullscreen,
-                tooltip: "Finalize all finalizable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isFinalizable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: const EdgeInsets.all(0),
-                iconSize: 18,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.finalize,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions finalized.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            WidgetsButton(
-              key: const Key("toggle-show-button"),
-              icon: _isOpen ? Icons.expand_less : Icons.expand_more,
-              padding: const EdgeInsets.all(0),
-              iconSize: 18,
-              minimumSize: const Size(40, 40),
-              tooltip: _isOpen ? "Hide table" : "Show table",
-              onPressed: (_) {
-                setState(() {
-                  _isOpen = !_isOpen;
-                  states.set("tx-group-overview-open-${widget.id}", _isOpen);
-                });
-              },
-            ),
-          ],
-        ),
-      ],
+    return TransactionsWidgetsBatchButtons(
+      parentContext: widget.parentContext,
+      srid: widget.id,
+      rrid: 0,
+      txs: txs,
+      selectedRows: selectableSelectedRows,
+      isOpen: _isOpen,
+      isDeletable: isDeletable,
+      isClosable: isClosable,
+      isFinalizable: isFinalizable,
+      isRefundable: isRefundable,
+      onToggleShow: (WidgetsButtonState b) {
+        setState(() {
+          _isOpen = !_isOpen;
+          states.set("tx-group-active-open-${widget.id}", _isOpen);
+        });
+      },
     );
   }
 

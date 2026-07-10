@@ -16,26 +16,19 @@ import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
-import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
-import '../../watchboard/panels/controller.dart';
-import '../../watchboard/panels/form.dart';
-import '../../watchboard/panels/model.dart';
-import '../../watchers/controller.dart';
-import '../../watchers/form.dart';
-import '../../watchers/model.dart';
-import '../dialogs/batch_action.dart';
-import '../dialogs/batch_trade.dart';
 import '../dialogs/details.dart';
 import '../mixins/actions.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
+import 'batch_buttons.dart';
+import 'linkable_buttons.dart';
 
 class TransactionsActiveCard extends StatefulWidget {
   final int srid;
@@ -74,8 +67,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
   final _calc = TransactionCalculation();
 
   late final CryptosController _cryptosController;
-  late final WatchersController _wxController;
-  late final PanelsController _pxController;
 
   late String _sourceSymbol;
   late String _resultSymbol;
@@ -139,12 +130,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     _cryptosController = locator<CryptosController>();
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
     _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
-
-    _wxController = locator<WatchersController>();
-    _wxController.start();
-
-    _pxController = locator<PanelsController>();
-    _pxController.start();
 
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
@@ -311,13 +296,9 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     final btnSize = const Size(40, 40);
     final btnPadding = const EdgeInsets.all(0);
 
-    return Wrap(
-      direction: Axis.horizontal,
-      runSpacing: 14,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       spacing: 8,
-      runAlignment: WrapAlignment.center,
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (!isCapital)
           Row(
@@ -390,252 +371,32 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
               ),
             ],
           ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            if (!isCapital)
-              AnimatedBuilder(
-                animation: _pxController,
-                builder: (context, _) {
-                  final linkedPanel = _pxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                  return WidgetsDialogsShowForm(
-                    key: const Key("add-watchboard-button"),
-                    icon: Icons.candlestick_chart_outlined,
-                    padding: btnPadding,
-                    iconSize: btnIconSize,
-                    minimumSize: btnSize,
-                    tooltip: linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
-                    persistBg: true,
-                    evaluator: (s) {
-                      if (linkedPanel == null) {
-                        s.normal();
-                      } else {
-                        s.action();
-                      }
-                    },
-                    buildForm: (dialogContext) {
-                      return PanelsForm(
-                        initialData: linkedPanel,
-                        initialSrId: linkedPanel == null ? widget.srid : null,
-                        initialRrId: linkedPanel == null ? widget.rrid : null,
-                        initialSrAmount: linkedPanel == null ? _calc.totalActiveSourceBalance(txs) : null,
-                        linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                        onSave: (e) => actionableFormSave<PanelsModel>(
-                          context,
-                          dialogContext: dialogContext,
-                          successMessage: linkedPanel == null ? "Created watchboard entry." : "Watchboard entry updated",
-                          error: e,
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
 
-            if (!isCapital)
-              AnimatedBuilder(
-                animation: _wxController,
-                builder: (context, _) {
-                  final linkedWatcher = _wxController.getLinked("active-screen-${widget.srid}-${widget.rrid}");
-                  return WidgetsDialogsShowForm(
-                    key: const Key("add-watcher-button"),
-                    icon: Icons.add_alarm,
-                    padding: btnPadding,
-                    iconSize: btnIconSize,
-                    minimumSize: btnSize,
-                    tooltip: linkedWatcher == null ? "Add new watcher" : "Edit watcher",
-                    persistBg: true,
-                    evaluator: (s) {
-                      if (linkedWatcher == null) {
-                        s.normal();
-                      } else {
-                        linkedWatcher.isSpent ? s.error() : s.action();
-                      }
-                    },
-                    buildForm: (dialogContext) {
-                      return WatchersForm(
-                        initialData: linkedWatcher,
-                        initialSrId: linkedWatcher == null ? widget.srid : null,
-                        initialRrId: linkedWatcher == null ? widget.rrid : null,
-                        initialRate: linkedWatcher == null ? nonReversedEffectiveRate : null,
-                        linkedToTx: "active-screen-${widget.srid}-${widget.rrid}",
-                        onSave: (e) => actionableFormSave<WatchersModel>(
-                          context,
-                          dialogContext: dialogContext,
-                          successMessage: linkedWatcher == null ? "Created rate watcher." : "Rate watcher updated",
-                          error: e,
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+        TransactionsWidgetsLinkableButtons(
+          srid: widget.srid,
+          rrid: widget.rrid,
+          txs: txs,
+          rate: nonReversedEffectiveRate ?? 0,
+          balance: _calc.totalActiveSourceBalance(txs),
+        ),
 
-            if (isActive)
-              WidgetsDialogsShowForm(
-                key: const Key("trade-multiple-button"),
-                icon: Icons.swap_vert,
-                tooltip: "Show batch trade action for the selected transactions",
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                buildForm: (dialogContext) {
-                  final stxs = [...txs];
-
-                  if (selectableHasSelectedRows()) {
-                    final selectedTxIds = selectableGetSelectedRows();
-                    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-                  }
-
-                  return TransactionsDialogsBatchTrade(
-                    srId: widget.rrid,
-                    transactions: stxs,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Trade completed successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isDeletable)
-              WidgetsDialogsShowForm(
-                key: const Key("delete-multiple-button"),
-                icon: Icons.delete,
-                tooltip: "Delete all transactions",
-                initialState: WidgetsButtonActionState.error,
-                evaluator: (s) {
-                  if (!isDeletable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.delete,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions deleted.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isRefundable)
-              WidgetsDialogsShowForm(
-                key: const Key("refund-multiple-button"),
-                icon: Icons.u_turn_left,
-                tooltip: "Refund all refundable transactions found in this group",
-                initialState: WidgetsButtonActionState.error,
-                evaluator: (s) {
-                  if (!isRefundable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.refund,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Transactions refunded successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isClosable)
-              WidgetsDialogsShowForm(
-                key: const Key("close-multiple-button"),
-                icon: Icons.close,
-                tooltip: "Close all closable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isClosable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.close,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "Transactions closed successfully.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            if (isFinalizable)
-              WidgetsDialogsShowForm(
-                key: const Key("finalize-multiple-button"),
-                icon: Icons.close_fullscreen,
-                tooltip: "Finalize all finalizable transactions found in this group",
-                initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  if (!isFinalizable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                buildForm: (dialogContext) {
-                  return TransactionsDialogsBatchAction(
-                    transactions: txs,
-                    mode: TransactionsBatchActionMode.finalize,
-                    onSave: (e) => actionableFormSave<TransactionsModel>(
-                      widget.parentContext,
-                      dialogContext: dialogContext,
-                      successMessage: "All transactions finalized.",
-                      error: e,
-                    ),
-                  );
-                },
-              ),
-
-            WidgetsButton(
-              key: const Key("toggle-show-button"),
-              icon: _isOpen ? Icons.expand_less : Icons.expand_more,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              tooltip: _isOpen ? "Hide table" : "Show table",
-              onPressed: (_) {
-                setState(() {
-                  _isOpen = !_isOpen;
-                  states.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
-                });
-              },
-            ),
-          ],
+        TransactionsWidgetsBatchButtons(
+          parentContext: widget.parentContext,
+          srid: widget.srid,
+          rrid: widget.rrid,
+          txs: txs,
+          selectedRows: selectableSelectedRows,
+          isOpen: _isOpen,
+          isDeletable: isDeletable,
+          isClosable: isClosable,
+          isFinalizable: isFinalizable,
+          isRefundable: isRefundable,
+          onToggleShow: (WidgetsButtonState b) {
+            setState(() {
+              _isOpen = !_isOpen;
+              states.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
+            });
+          },
         ),
       ],
     );
