@@ -4,8 +4,6 @@ setlocal enabledelayedexpansion
 :: Parse input arguments
 set SKIP_FLUTTER=0
 set SKIP_ICON=1
-set FLUTTER_MODE=Release
-set SOURCE_SUBDIR=Release
 
 :parseArgs
 if "%~1"=="" goto done
@@ -106,7 +104,6 @@ if %SKIP_ICON%==1 (
 )
 
 echo [5/6] Cleaning and Compiling Flutter Windows Binaries...
-call flutter clean
 call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER%
 
 :SKIP_VERSION_BUMP
@@ -125,8 +122,10 @@ if %errorlevel% neq 0 (
 
 set OUTPUT_DIR=build
 set TEMP_WXS=%OUTPUT_DIR%\Generated_Product.wxs
-set TARGET_MSI=%OUTPUT_DIR%\JXLedger_%FULL_VERSION%.msi
-set SOURCE_DIR=%CD%\build\windows\x64\runner\%SOURCE_SUBDIR%
+set TARGET_MSI=%OUTPUT_DIR%\JXLedger_%BUILD_NAME%.msi
+set SOURCE_DIR=%CD%\build\windows\x64\runner\Release
+set UPGRADE_GUID=6f3b7c84-1142-4b2a-bf39-8134762da299
+set SHORTCUT_GUID=3e0298de-9989-49c6-9285-8134762da299
 
 :: Verify target directory exists before running WiX compiler
 if not exist "%SOURCE_DIR%\jxledger.exe" (
@@ -138,15 +137,9 @@ if not exist "%SOURCE_DIR%\jxledger.exe" (
 (
 echo ^<?xml version="1.0" encoding="UTF-8"?^>
 echo ^<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"^>
-echo   ^<Package Name="JXLedger" Manufacturer="duckzland" Version="%BUILD_NAME%" UpgradeCode="6f3b7c84-1142-4b2a-bf39-8134762da299" Scope="perMachine"^>
+echo   ^<Package Name="JXLedger" Manufacturer="duckzland" Version="%BUILD_NAME%" UpgradeCode="%UPGRADE_GUID%" Scope="perMachine"^>
 echo     ^<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" /^>
-echo     ^<Upgrade Id="6f3b7c84-1142-4b2a-bf39-8134762da299"^>
-echo       ^<UpgradeVersion Minimum="0.0.0" Maximum="99.0.0" IncludeMaximum="no" OnlyDetect="no" Property="OLD_VERSION_FOUND" /^>
-echo       ^<UpgradeVersion Minimum="%BUILD_NAME%" IncludeMinimum="yes" OnlyDetect="yes" Property="NEWER_VERSION_FOUND" /^>
-echo     ^</Upgrade^>
-echo     ^<InstallExecuteSequence^>
-echo       ^<RemoveExistingProducts Before="CostFinalize" /^>
-echo     ^</InstallExecuteSequence^>
+echo     ^<MajorUpgrade DowngradeErrorMessage="A newer version of JXLedger is already installed." Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes" /^>
 echo     ^<MediaTemplate EmbedCab="yes" /^>
 echo     ^<StandardDirectory Id="ProgramFiles64Folder"^>
 echo       ^<Directory Id="INSTALLFOLDER" Name="JXLedger" /^>
@@ -161,13 +154,13 @@ echo     ^<ComponentGroup Id="DataFiles" Directory="INSTALLFOLDER"^>
 echo       ^<Files Subdirectory="data" Include="%SOURCE_DIR%\data\**" /^>
 echo     ^</ComponentGroup^>
 echo     ^<ComponentGroup Id="ShortcutCleanup" Directory="ApplicationProgramsFolder"^>
-echo       ^<Component Id="ApplicationShortcutFolderCleanup" Guid="d61a293f-561b-4199-a86d-f0b4fe648011"^>
+echo       ^<Component Id="ApplicationShortcutFolderCleanup" Guid="%SHORTCUT_GUID%"^>
 echo         ^<RemoveFolder Id="CleanShortcutFolder" On="uninstall" /^>
 echo         ^<RegistryValue Root="HKCU" Key="Software\JXLedger" Name="installed" Type="integer" Value="1" KeyPath="yes" /^>
 echo         ^<Shortcut Id="ApplicationStartMenuShortcut" Directory="ApplicationProgramsFolder" Name="JXLedger" Description="A lightweight crypto transaction ledger." Target="[INSTALLFOLDER]jxledger.exe" WorkingDirectory="INSTALLFOLDER" /^>
 echo       ^</Component^>
 echo     ^</ComponentGroup^>
-echo     ^<Feature Id="MainApplication" Title="JXLedger Application" Level="1"^>
+echo     ^<Feature Id="MainApplication" Title="JXLedger Application" Level="1" ^>
 echo       ^<ComponentGroupRef Id="AppFiles" /^>
 echo       ^<ComponentGroupRef Id="DataFiles" /^>
 echo       ^<ComponentGroupRef Id="ShortcutCleanup" /^>
@@ -177,8 +170,7 @@ echo ^</Wix^>
 ) > "%TEMP_WXS%"
 
 
-
-echo Building %FLUTTER_MODE% MSI installer via Built-in WiX v7 Files Engine...
+echo Building MSI installer via Built-in WiX v7 Files Engine...
 call wix build -acceptEula wix7 "%TEMP_WXS%" -o "%TARGET_MSI%"
 
 if exist "%TEMP_WXS%" del /Q "%TEMP_WXS%"
@@ -186,6 +178,6 @@ if exist "%TEMP_WXS%" del /Q "%TEMP_WXS%"
 git checkout -- lib/app/constants.dart
 
 echo ---------------------------------------
-echo Done! %FLUTTER_MODE% Full-Tree Installer available at: %TARGET_MSI%
+echo Done! MSI file available at: %TARGET_MSI%
 echo ---------------------------------------
-pause
+exit
