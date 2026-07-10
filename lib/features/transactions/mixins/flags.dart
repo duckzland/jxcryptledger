@@ -8,14 +8,37 @@ mixin TransactionsMixinsFlags {
   late List<TransactionsModel> txs;
   late Map<String, Map<TransactionsFlagsType, bool>> fxs;
 
-  bool fxsIsTradable(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.tradable);
-  bool fxsIsClosable(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.closable);
-  bool fxsIsDeletable(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.deletable);
-  bool fxsIsUpdatable(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.updatable);
-  bool fxsIsRefundable(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.refundable);
-  bool fxsIsFinalizable(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.finalizable);
-  bool fxsHasLeaf(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.hasLeaf);
-  bool fxsHasTradeableLeaf(TransactionsModel tx) => _pick(tx, TransactionsFlagsType.hasTradeableLeaf);
+  bool fxsIsTradable(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.tradable);
+  }
+
+  bool fxsIsClosable(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.closable);
+  }
+
+  bool fxsIsDeletable(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.deletable);
+  }
+
+  bool fxsIsUpdatable(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.updatable);
+  }
+
+  bool fxsIsRefundable(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.refundable);
+  }
+
+  bool fxsIsFinalizable(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.finalizable);
+  }
+
+  bool fxsHasLeaf(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.hasLeaf);
+  }
+
+  bool fxsHasTradeableLeaf(TransactionsModel tx) {
+    return _pick(tx, TransactionsFlagsType.hasTradeableLeaf);
+  }
 
   void fxsRebuild() {
     fxs.clear();
