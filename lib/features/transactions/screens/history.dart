@@ -7,7 +7,7 @@ import '../../../mixins/state.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../mixins/flags.dart';
-import '../widgets/tree_card.dart';
+import '../widgets/cards/tree.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -162,7 +162,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
             builder: (context, node) {
               final tx = node.data;
               if (tx == null) return const SizedBox.shrink();
-              return TransactionsTreeCard(
+              return TransactionsWidgetsCardsTree(
                 key: ValueKey(tx.tid),
                 tx: tx,
                 node: node,

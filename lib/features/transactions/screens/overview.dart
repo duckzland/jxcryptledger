@@ -9,7 +9,7 @@ import '../../../mixins/state.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
-import '../widgets/overview_card.dart';
+import '../widgets/cards/overview.dart';
 
 class TransactionsOverviewView extends StatefulWidget {
   final List<TransactionsModel> transactions;
@@ -170,7 +170,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 24),
-            child: TransactionsOverviewCard(
+            child: TransactionsWidgetsCardsOverview(
               key: ValueKey(rrId),
               id: int.parse(rrId),
               transactions: stxs,

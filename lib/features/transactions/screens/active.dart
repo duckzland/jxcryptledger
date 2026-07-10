@@ -8,7 +8,7 @@ import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
-import '../widgets/active_card.dart';
+import '../widgets/cards/active.dart';
 import '../model.dart';
 
 class TransactionsActiveView extends StatefulWidget {
@@ -185,7 +185,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 24),
-            child: TransactionsActiveCard(
+            child: TransactionsWidgetsCardsActive(
               key: ValueKey("$srId-$rrId"),
               srid: srId,
               rrid: rrId,

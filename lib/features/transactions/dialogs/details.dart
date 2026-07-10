@@ -9,7 +9,7 @@ import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
-import '../widgets/simple_tree_card.dart';
+import '../widgets/cards/simple_tree.dart';
 
 class TransactionsDialogsDetails extends StatelessWidget {
   final TransactionsModel tx;
@@ -151,7 +151,7 @@ class TransactionsDialogsDetails extends StatelessWidget {
       builder: (context, node) {
         final stx = node.data;
         if (stx == null) return const SizedBox.shrink();
-        return TransactionsSimpleTreeCard(key: ValueKey(stx.tid), tx: stx, node: node, isActive: stx.uuid == tx.uuid);
+        return TransactionsWidgetsCardsSimpleTree(key: ValueKey(stx.tid), tx: stx, node: node, isActive: stx.uuid == tx.uuid);
       },
     );
   }

@@ -15,7 +15,7 @@ import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../dialogs/details.dart';
 import '../mixins/flags.dart';
-import '../widgets/buttons.dart';
+import '../widgets/buttons/action.dart';
 import '../model.dart';
 
 class TransactionsJournalView extends StatefulWidget {
@@ -202,7 +202,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                       DataCell(Text(r['rate'] ?? '')),
                       DataCell(Text(r['status'] ?? '')),
                       DataCell(
-                        TransactionsWidgetsButtons(
+                        TransactionsWidgetsButtonsAction(
                           tx: tx,
                           cryptosController: _cryptosController,
                           txController: txController,
