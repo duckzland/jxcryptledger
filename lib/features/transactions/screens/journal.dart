@@ -20,7 +20,7 @@ import '../model.dart';
 
 class TransactionsJournalView extends StatefulWidget {
   final List<TransactionsModel> transactions;
-  final Map<String, Map<String, bool>> txsFlags;
+  final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
   final int filterMode;
   final VoidCallback onStatusChanged;
 
@@ -66,7 +66,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     txController = locator<TransactionsController>();
 
     txs = widget.transactions;
-    txsFlags = widget.txsFlags;
+    fxs = widget.txsFlags;
     txs = _processTx();
 
     sortableSorters = {
@@ -99,7 +99,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
       setState(() {
         _filterMode = widget.filterMode;
         txs = widget.transactions;
-        txsFlags = widget.txsFlags;
+        fxs = widget.txsFlags;
         txs = _processTx();
         rows = _buildRows();
       });
@@ -113,7 +113,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     setState(() {
       final ntx = txController.findNew(txs);
       txs = widget.transactions;
-      txsFlags = widget.txsFlags;
+      fxs = widget.txsFlags;
       rows = _buildRows();
       sortableApplySorting();
       if (ntx != null) {
@@ -206,14 +206,14 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                           tx: tx,
                           cryptosController: _cryptosController,
                           txController: txController,
-                          isTradable: txFlagPick(tx, "tradable"),
-                          isClosable: txFlagPick(tx, "closable"),
-                          isDeletable: txFlagPick(tx, "deletable"),
-                          isUpdatable: txFlagPick(tx, "updatable"),
-                          isRefundable: txFlagPick(tx, "refundable"),
-                          isFinalizable: txFlagPick(tx, "finalizable"),
-                          hasLeaf: txFlagPick(tx, "hasLeaf"),
-                          hasTradeableLeaf: txFlagPick(tx, "hasTradeableLeaf"),
+                          isTradable: fxsIsTradable(tx),
+                          isClosable: fxsIsClosable(tx),
+                          isDeletable: fxsIsDeletable(tx),
+                          isUpdatable: fxsIsUpdatable(tx),
+                          isRefundable: fxsIsRefundable(tx),
+                          isFinalizable: fxsIsFinalizable(tx),
+                          hasLeaf: fxsHasLeaf(tx),
+                          hasTradeableLeaf: fxsHasTradeableLeaf(tx),
                           onAction: () {
                             widget.onStatusChanged();
                           },

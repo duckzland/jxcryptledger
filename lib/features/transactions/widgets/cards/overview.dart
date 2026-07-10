@@ -29,7 +29,7 @@ import '../panel_item.dart';
 class TransactionsWidgetsCardsOverview extends StatefulWidget {
   final int id;
   final List<TransactionsModel> transactions;
-  final Map<String, Map<String, bool>> txsFlags;
+  final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
   final VoidCallback onStatusChanged;
 
   final BuildContext parentContext;
@@ -84,7 +84,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
     txs = widget.transactions;
     txController = locator<TransactionsController>();
-    txsFlags = widget.txsFlags;
+    fxs = widget.txsFlags;
 
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
@@ -131,7 +131,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
     setState(() {
       txs = widget.transactions;
-      txsFlags = widget.txsFlags;
+      fxs = widget.txsFlags;
       rows = _buildRows();
       sortableApplySorting();
 
@@ -360,14 +360,14 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                     tx: r['tx'],
                     cryptosController: _cryptosController,
                     txController: txController,
-                    isTradable: txFlagPick(tx, "tradable"),
-                    isClosable: txFlagPick(tx, "closable"),
-                    isDeletable: txFlagPick(tx, "deletable"),
-                    isUpdatable: txFlagPick(tx, "updatable"),
-                    isRefundable: txFlagPick(tx, "refundable"),
-                    isFinalizable: txFlagPick(tx, "finalizable"),
-                    hasLeaf: txFlagPick(tx, "hasLeaf"),
-                    hasTradeableLeaf: txFlagPick(tx, "hasTradeableLeaf"),
+                    isTradable: fxsIsTradable(tx),
+                    isClosable: fxsIsClosable(tx),
+                    isDeletable: fxsIsDeletable(tx),
+                    isUpdatable: fxsIsUpdatable(tx),
+                    isRefundable: fxsIsRefundable(tx),
+                    isFinalizable: fxsIsFinalizable(tx),
+                    hasLeaf: fxsHasLeaf(tx),
+                    hasTradeableLeaf: fxsHasTradeableLeaf(tx),
                     onAction: () {
                       widget.onStatusChanged();
                     },

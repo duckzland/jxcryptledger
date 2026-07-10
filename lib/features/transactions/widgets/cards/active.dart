@@ -36,7 +36,7 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
   final int rrid;
 
   final List<TransactionsModel> transactions;
-  final Map<String, Map<String, bool>> txsFlags;
+  final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
 
   final VoidCallback onStatusChanged;
 
@@ -130,7 +130,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _isOpen = widget.isOpen;
 
     txs = widget.transactions;
-    txsFlags = widget.txsFlags;
+    fxs = widget.txsFlags;
 
     txController = locator<TransactionsController>();
 
@@ -160,7 +160,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     }
 
     sortableApplySorting();
-
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
@@ -194,7 +193,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
     setState(() {
       txs = widget.transactions;
-      txsFlags = widget.txsFlags;
+      fxs = widget.txsFlags;
 
       _calculateProfitLoss();
       rows = _buildRows();
@@ -525,14 +524,14 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                     tx: r['tx'],
                     cryptosController: _cryptosController,
                     txController: txController,
-                    isTradable: txFlagPick(tx, "tradable"),
-                    isClosable: txFlagPick(tx, "closable"),
-                    isDeletable: txFlagPick(tx, "deletable"),
-                    isUpdatable: txFlagPick(tx, "updatable"),
-                    isRefundable: txFlagPick(tx, "refundable"),
-                    isFinalizable: txFlagPick(tx, "finalizable"),
-                    hasLeaf: txFlagPick(tx, "hasLeaf"),
-                    hasTradeableLeaf: txFlagPick(tx, "hasTradeableLeaf"),
+                    isTradable: fxsIsTradable(tx),
+                    isClosable: fxsIsClosable(tx),
+                    isDeletable: fxsIsDeletable(tx),
+                    isUpdatable: fxsIsUpdatable(tx),
+                    isRefundable: fxsIsRefundable(tx),
+                    isFinalizable: fxsIsFinalizable(tx),
+                    hasLeaf: fxsHasLeaf(tx),
+                    hasTradeableLeaf: fxsHasTradeableLeaf(tx),
                     onAction: () {
                       widget.onStatusChanged();
                     },

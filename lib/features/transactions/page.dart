@@ -57,7 +57,7 @@ class TransactionsPageState extends State<TransactionsPage>
     _viewMode = TransactionsViewMode.values.byName(states.get('tx-view-mode', defaultValue: "active"));
 
     txs = txController.items;
-    txFlagRebuild();
+    fxsRebuild();
 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
@@ -81,7 +81,7 @@ class TransactionsPageState extends State<TransactionsPage>
     if (!txController.isEqualToItems(txs)) {
       setState(() {
         txs = txController.items;
-        txFlagRebuild();
+        fxsRebuild();
       });
     }
 
@@ -567,7 +567,7 @@ class TransactionsPageState extends State<TransactionsPage>
           panelsAction: toggleAction,
           filterMode: _filterMode,
           sortMode: _sortMode,
-          txsFlags: txsFlags,
+          txsFlags: fxs,
           onStatusChanged: () {},
         );
 
@@ -581,14 +581,14 @@ class TransactionsPageState extends State<TransactionsPage>
           panelsAction: toggleAction,
           filterMode: _filterMode,
           sortMode: _sortMode,
-          txsFlags: txsFlags,
+          txsFlags: fxs,
           onStatusChanged: () {},
         );
 
       case TransactionsViewMode.journal:
         actionbarRegister("Transaction Overview");
 
-        return TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: txsFlags, onStatusChanged: () {});
+        return TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: fxs, onStatusChanged: () {});
 
       case TransactionsViewMode.history:
         actionbarRegister("Transaction History");
@@ -599,7 +599,7 @@ class TransactionsPageState extends State<TransactionsPage>
         return TransactionHistory(
           sortMode: _sortMode,
           transactions: txs,
-          txsFlags: txsFlags,
+          txsFlags: fxs,
           panelsAction: toggleAction,
           onStatusChanged: () {},
         );

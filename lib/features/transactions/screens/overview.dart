@@ -8,12 +8,13 @@ import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
+import '../mixins/flags.dart';
 import '../model.dart';
 import '../widgets/cards/overview.dart';
 
 class TransactionsOverviewView extends StatefulWidget {
   final List<TransactionsModel> transactions;
-  final Map<String, Map<String, bool>> txsFlags;
+  final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
   final int filterMode;
   final int sortMode;
   final VoidCallback onStatusChanged;
