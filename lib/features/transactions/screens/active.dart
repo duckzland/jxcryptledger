@@ -46,11 +46,13 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   int _filterMode = 0;
   int _sortMode = 0;
 
+  bool _shouldKeepAlive = true;
+
   @override
   final scrollToUtil = ScrollTo('tx-group-offset-active');
 
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => _shouldKeepAlive;
 
   @override
   void initState() {
@@ -62,7 +64,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
-    
+
     groups = _processTx();
     groupKeys = groups.keys.toList();
 
@@ -72,6 +74,13 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         states.set("tx-group-active-open-$key", open);
       }
     }
+  }
+
+  @override
+  void deactivate() {
+    _shouldKeepAlive = false;
+    updateKeepAlive();
+    super.deactivate();
   }
 
   @override

@@ -47,11 +47,13 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
   int _filterMode = 0;
   int _sortMode = 0;
 
+  bool _shouldKeepAlive = true;
+
   @override
   final scrollToUtil = ScrollTo('tx-group-offset-overview');
 
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => _shouldKeepAlive;
 
   @override
   void initState() {
@@ -69,6 +71,13 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         states.set("tx-group-overview-open-$key", open);
       }
     }
+  }
+
+  @override
+  void deactivate() {
+    _shouldKeepAlive = false;
+    updateKeepAlive();
+    super.deactivate();
   }
 
   @override

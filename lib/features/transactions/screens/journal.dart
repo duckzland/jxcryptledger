@@ -49,6 +49,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
 
   int _filterMode = 0;
 
+  bool _shouldKeepAlive = true;
+
   @override
   String get sortableKey => "tx-group-journal";
 
@@ -56,7 +58,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   final scrollToUtil = ScrollTo('tx-group-offset-journal');
 
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => _shouldKeepAlive;
 
   @override
   void initState() {
@@ -80,6 +82,13 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
 
     rows = _buildRows();
     sortableApplySorting();
+  }
+
+  @override
+  void deactivate() {
+    _shouldKeepAlive = false;
+    updateKeepAlive();
+    super.deactivate();
   }
 
   @override
