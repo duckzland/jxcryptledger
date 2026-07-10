@@ -60,7 +60,6 @@ class _WatchersPageState extends State<WatchersPage>
   void initState() {
     super.initState();
     _wxController = locator<WatchersController>();
-    _wxController.start();
     _wxController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
 

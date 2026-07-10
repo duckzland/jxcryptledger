@@ -6,6 +6,7 @@ import '../../../core/runtime/locator.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
+import '../mixins/flags.dart';
 import '../widgets/tree_card.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -15,6 +16,7 @@ class TransactionHistory extends StatefulWidget {
   final int sortMode;
   final VoidCallback onStatusChanged;
   final String panelsAction;
+  final Map<String, Map<String, bool>> txsFlags;
 
   const TransactionHistory({
     super.key,
@@ -22,15 +24,15 @@ class TransactionHistory extends StatefulWidget {
     required this.sortMode,
     required this.onStatusChanged,
     required this.panelsAction,
+    required this.txsFlags,
   });
 
   @override
   State<TransactionHistory> createState() => _TransactionHistoryState();
 }
 
-class _TransactionHistoryState extends State<TransactionHistory> with MixinsState {
+class _TransactionHistoryState extends State<TransactionHistory> with MixinsState, TransactionsMixinsFlags {
   CryptosController get _cryptosController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
 
   late IndexedTreeNode<TransactionsModel> _root;
   late Map<String, IndexedTreeNode<TransactionsModel>> _nodes;
@@ -38,14 +40,16 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
   TreeViewController<TransactionsModel, IndexedTreeNode<TransactionsModel>>? scrollController;
   late AutoScrollController _autoScrollController;
 
-  late List<TransactionsModel> txs;
-
   @override
   void initState() {
     super.initState();
+    txController = locator<TransactionsController>();
+
     _sortMode = widget.sortMode;
     txs = widget.transactions;
+    txsFlags = widget.txsFlags;
     txs = _processTx();
+
     _root = _treeBuildNodes(txs);
     _autoScrollController = AutoScrollController(axis: Axis.vertical);
   }
@@ -81,6 +85,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
 
     _sortMode = widget.sortMode;
     txs = widget.transactions;
+    txsFlags = widget.txsFlags;
     txs = _processTx();
 
     if (oldWidget.sortMode != widget.sortMode) {
@@ -89,7 +94,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
       return;
     }
 
-    if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
+    if (txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
@@ -157,7 +162,20 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
             builder: (context, node) {
               final tx = node.data;
               if (tx == null) return const SizedBox.shrink();
-              return TransactionsTreeCard(key: ValueKey(tx.tid), tx: tx, node: node, onAction: widget.onStatusChanged);
+              return TransactionsTreeCard(
+                key: ValueKey(tx.tid),
+                tx: tx,
+                node: node,
+                isTradable: txFlagPick(tx, "tradable"),
+                isClosable: txFlagPick(tx, "closable"),
+                isDeletable: txFlagPick(tx, "deletable"),
+                isUpdatable: txFlagPick(tx, "updatable"),
+                isRefundable: txFlagPick(tx, "refundable"),
+                isFinalizable: txFlagPick(tx, "finalizable"),
+                hasLeaf: txFlagPick(tx, "hasLeaf"),
+                hasTradeableLeaf: txFlagPick(tx, "hasTradeableLeaf"),
+                onAction: widget.onStatusChanged,
+              );
             },
           ),
         ),
@@ -266,7 +284,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
       final node = _nodes[tid];
       final parent = tx.isRoot ? _root : _nodes[tx.pid];
 
-      if (node == null || parent == null || _txController.isBothEqual(tx, node.data!)) {
+      if (node == null || parent == null || txController.isBothEqual(tx, node.data!)) {
         continue;
       }
 

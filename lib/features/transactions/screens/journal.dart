@@ -14,15 +14,23 @@ import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../dialogs/details.dart';
+import '../mixins/flags.dart';
 import '../widgets/buttons.dart';
 import '../model.dart';
 
 class TransactionsJournalView extends StatefulWidget {
   final List<TransactionsModel> transactions;
+  final Map<String, Map<String, bool>> txsFlags;
   final int filterMode;
   final VoidCallback onStatusChanged;
 
-  const TransactionsJournalView({super.key, required this.transactions, required this.filterMode, required this.onStatusChanged});
+  const TransactionsJournalView({
+    super.key,
+    required this.transactions,
+    required this.txsFlags,
+    required this.filterMode,
+    required this.onStatusChanged,
+  });
 
   @override
   State<TransactionsJournalView> createState() => _TransactionsJournalViewState();
@@ -34,11 +42,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         MixinsTable,
         AutomaticKeepAliveClientMixin,
         MixinsSortableTable<TransactionsJournalView>,
-        MixinsScrollToTable<TransactionsJournalView, TransactionsModel> {
-  TransactionsController get _txController => locator<TransactionsController>();
+        MixinsScrollToTable<TransactionsJournalView, TransactionsModel>,
+        TransactionsMixinsFlags {
   CryptosController get _cryptosController => locator<CryptosController>();
-
-  late List<TransactionsModel> txs;
 
   int _filterMode = 0;
 
@@ -57,7 +63,10 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
 
     _filterMode = widget.filterMode;
 
+    txController = locator<TransactionsController>();
+
     txs = widget.transactions;
+    txsFlags = widget.txsFlags;
     txs = _processTx();
 
     sortableSorters = {
@@ -90,20 +99,21 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
       setState(() {
         _filterMode = widget.filterMode;
         txs = widget.transactions;
+        txsFlags = widget.txsFlags;
         txs = _processTx();
         rows = _buildRows();
-        sortableApplySorting();
       });
       return;
     }
 
-    if (_txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
+    if (txController.isBothEqualGroup(oldWidget.transactions, widget.transactions)) {
       return;
     }
 
     setState(() {
-      final ntx = _txController.findNew(txs);
+      final ntx = txController.findNew(txs);
       txs = widget.transactions;
+      txsFlags = widget.txsFlags;
       rows = _buildRows();
       sortableApplySorting();
       if (ntx != null) {
@@ -178,10 +188,11 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                   const DataColumn2(label: Text('Actions'), fixedWidth: 160),
                 ],
                 rows: rows.map((r) {
+                  final tx = r['tx'] as TransactionsModel;
                   return DataRow2(
                     key: ValueKey(r['uuid']),
                     onTap: () {
-                      TransactionsDialogsDetails.show(context, r['tx']);
+                      TransactionsDialogsDetails.show(context, tx);
                     },
                     cells: [
                       DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
@@ -192,9 +203,17 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                       DataCell(Text(r['status'] ?? '')),
                       DataCell(
                         TransactionsWidgetsButtons(
-                          tx: r['tx'],
+                          tx: tx,
                           cryptosController: _cryptosController,
-                          txController: _txController,
+                          txController: txController,
+                          isTradable: txFlagPick(tx, "tradable"),
+                          isClosable: txFlagPick(tx, "closable"),
+                          isDeletable: txFlagPick(tx, "deletable"),
+                          isUpdatable: txFlagPick(tx, "updatable"),
+                          isRefundable: txFlagPick(tx, "refundable"),
+                          isFinalizable: txFlagPick(tx, "finalizable"),
+                          hasLeaf: txFlagPick(tx, "hasLeaf"),
+                          hasTradeableLeaf: txFlagPick(tx, "hasTradeableLeaf"),
                           onAction: () {
                             widget.onStatusChanged();
                           },

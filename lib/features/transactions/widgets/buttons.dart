@@ -18,6 +18,16 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActionable {
   final void Function() onAction;
   final void Function()? onExit;
 
+  final bool isTradable;
+  final bool isClosable;
+  final bool isDeletable;
+  final bool isUpdatable;
+  final bool isRefundable;
+  final bool isFinalizable;
+
+  final bool hasLeaf;
+  final bool hasTradeableLeaf;
+
   final bool? allowBalanceSnapshot;
 
   const TransactionsWidgetsButtons({
@@ -26,6 +36,14 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActionable {
     required this.txController,
     required this.cryptosController,
     required this.onAction,
+    required this.isTradable,
+    required this.isClosable,
+    required this.isDeletable,
+    required this.isUpdatable,
+    required this.isRefundable,
+    required this.isFinalizable,
+    required this.hasLeaf,
+    required this.hasTradeableLeaf,
     this.onExit,
     this.allowBalanceSnapshot = false,
   });
@@ -48,15 +66,6 @@ class TransactionsWidgetsButtons extends StatelessWidget with MixinsActionable {
 
   @override
   Widget build(BuildContext context) {
-    final isTradable = txController.isTradable(tx);
-    final isClosable = txController.isClosable(tx);
-    final isDeletable = txController.isDeletable(tx);
-    final isUpdatable = txController.isUpdatable(tx);
-    final isRefundable = txController.isRefundable(tx);
-    final isFinalizable = txController.isFinalizable(tx);
-
-    final hasLeaf = txController.hasLeaf(tx);
-    final hasTradeableLeaf = txController.hasTradeableLeaf(tx);
     final ptx = txController.getParent(tx);
 
     final sourceSymbol = cryptosController.getSymbol(tx.srId) ?? "";

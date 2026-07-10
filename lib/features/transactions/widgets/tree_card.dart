@@ -19,7 +19,30 @@ class TransactionsTreeCard extends StatefulWidget {
   final IndexedTreeNode<TransactionsModel> node;
   final VoidCallback onAction;
 
-  const TransactionsTreeCard({super.key, required this.tx, required this.node, required this.onAction});
+  final bool isTradable;
+  final bool isClosable;
+  final bool isDeletable;
+  final bool isUpdatable;
+  final bool isRefundable;
+  final bool isFinalizable;
+
+  final bool hasLeaf;
+  final bool hasTradeableLeaf;
+
+  const TransactionsTreeCard({
+    super.key,
+    required this.tx,
+    required this.node,
+    required this.isTradable,
+    required this.isClosable,
+    required this.isDeletable,
+    required this.isUpdatable,
+    required this.isRefundable,
+    required this.isFinalizable,
+    required this.hasLeaf,
+    required this.hasTradeableLeaf,
+    required this.onAction,
+  });
 
   @override
   State<TransactionsTreeCard> createState() => _TransactionsTreeCardState();
@@ -230,6 +253,14 @@ class _TransactionsTreeCardState extends State<TransactionsTreeCard> with Automa
                     tx: _tx,
                     cryptosController: _cryptosController,
                     txController: _txController,
+                    isTradable: widget.isTradable,
+                    isClosable: widget.isClosable,
+                    isDeletable: widget.isDeletable,
+                    isUpdatable: widget.isUpdatable,
+                    isRefundable: widget.isRefundable,
+                    isFinalizable: widget.isFinalizable,
+                    hasLeaf: widget.hasLeaf,
+                    hasTradeableLeaf: widget.hasTradeableLeaf,
                     onAction: _onAction,
                     onExit: _onExit,
                     allowBalanceSnapshot: true,

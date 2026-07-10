@@ -11,6 +11,8 @@ class WidgetsHeader extends StatelessWidget {
 
   final bool reversed;
 
+  final bool centered;
+
   const WidgetsHeader({
     super.key,
     required this.title,
@@ -18,6 +20,7 @@ class WidgetsHeader extends StatelessWidget {
     this.titleColor = AppTheme.text,
     this.subtitleColor = AppTheme.textMuted,
     this.reversed = false,
+    this.centered = false,
   });
 
   @override
@@ -40,7 +43,7 @@ class WidgetsHeader extends StatelessWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: reversed ? items.reversed.toList() : items,
     );
   }

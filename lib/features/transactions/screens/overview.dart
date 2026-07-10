@@ -13,6 +13,7 @@ import '../widgets/overview_card.dart';
 
 class TransactionsOverviewView extends StatefulWidget {
   final List<TransactionsModel> transactions;
+  final Map<String, Map<String, bool>> txsFlags;
   final int filterMode;
   final int sortMode;
   final VoidCallback onStatusChanged;
@@ -21,6 +22,7 @@ class TransactionsOverviewView extends StatefulWidget {
   const TransactionsOverviewView({
     super.key,
     required this.transactions,
+    required this.txsFlags,
     required this.filterMode,
     required this.sortMode,
     required this.onStatusChanged,
@@ -33,7 +35,7 @@ class TransactionsOverviewView extends StatefulWidget {
 
 class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     with AutomaticKeepAliveClientMixin, MixinsState, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
-  TransactionsController get _txController => locator<TransactionsController>();
+  TransactionsController get txController => locator<TransactionsController>();
   CryptosController get _cryptosController => locator<CryptosController>();
 
   late List<TransactionsModel> txs;
@@ -101,9 +103,9 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
       return;
     }
 
-    if (!_txController.isEqualToItems(txs)) {
+    if (!txController.isEqualToItems(txs)) {
       setState(() {
-        final tx = _txController.findNew(txs);
+        final tx = txController.findNew(txs);
         txs = widget.transactions;
 
         String key = "";
@@ -172,6 +174,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
               key: ValueKey(rrId),
               id: int.parse(rrId),
               transactions: stxs,
+              txsFlags: widget.txsFlags,
               onStatusChanged: widget.onStatusChanged,
               parentContext: context,
               isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),

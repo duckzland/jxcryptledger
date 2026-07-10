@@ -17,6 +17,7 @@ import '../../widgets/separator.dart';
 import '../cryptos/controller.dart';
 import 'controller.dart';
 import 'dialogs/batch_action.dart';
+import 'mixins/flags.dart';
 import 'model.dart';
 import 'forms/create.dart';
 import 'screens/active.dart';
@@ -33,11 +34,9 @@ class TransactionsPage extends StatefulWidget {
   State<TransactionsPage> createState() => TransactionsPageState();
 }
 
-class TransactionsPageState extends State<TransactionsPage> with MixinsActionable, MixinsState, MixinsActionBar<TransactionsPage> {
+class TransactionsPageState extends State<TransactionsPage>
+    with MixinsActionable, MixinsState, MixinsActionBar<TransactionsPage>, TransactionsMixinsFlags {
   final CryptosController _cryptosController = locator<CryptosController>();
-
-  late List<TransactionsModel> txs;
-  late TransactionsController _txController;
 
   late Map<int, String> _sortableOptions;
   late Map<int, String> _filterableOptions;
@@ -51,14 +50,14 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
   void initState() {
     super.initState();
 
-    _txController = locator<TransactionsController>();
-    _txController.start();
-    _txController.addListener(_onControllerChanged);
+    txController = locator<TransactionsController>();
+    txController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onCryptoControllerChanged);
 
     _viewMode = TransactionsViewMode.values.byName(states.get('tx-view-mode', defaultValue: "active"));
 
-    txs = _txController.items;
+    txs = txController.items;
+    txFlagRebuild();
 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
@@ -68,9 +67,8 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
 
   @override
   void dispose() {
-    _txController.removeListener(_onControllerChanged);
+    txController.removeListener(_onControllerChanged);
     _cryptosController.removeListener(_onCryptoControllerChanged);
-
     super.dispose();
   }
 
@@ -80,9 +78,10 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
   }
 
   void _onControllerChanged() {
-    if (!_txController.isEqualToItems(txs)) {
+    if (!txController.isEqualToItems(txs)) {
       setState(() {
-        txs = _txController.items;
+        txs = txController.items;
+        txFlagRebuild();
       });
     }
 
@@ -306,7 +305,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               tooltip: "Delete all transactions",
               initialState: WidgetsButtonActionState.error,
               evaluator: (s) {
-                final bool isDeletable = _txController.hasDeletableRoot();
+                final bool isDeletable = txController.hasDeletableRoot();
                 if (!isDeletable) {
                   s.disable();
                 } else {
@@ -332,7 +331,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               tooltip: "Close all closable transactions",
               initialState: WidgetsButtonActionState.warning,
               evaluator: (s) {
-                final bool isClosable = _txController.hasClosableLeaf();
+                final bool isClosable = txController.hasClosableLeaf();
                 if (!isClosable) {
                   s.disable();
                 } else {
@@ -358,7 +357,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               tooltip: "Finalize all finalizable transactions",
               initialState: WidgetsButtonActionState.warning,
               evaluator: (s) {
-                final bool isFinalizable = _txController.hasFinalizable();
+                final bool isFinalizable = txController.hasFinalizable();
                 if (!isFinalizable) {
                   s.disable();
                 } else {
@@ -405,7 +404,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               padding: const EdgeInsets.all(8),
               showDialogBeforeImport: true,
               onImport: (String json) async {
-                await _txController.importDatabase(json);
+                await txController.importDatabase(json);
                 setState(() {});
                 states.removeByPrefix('tx-group');
               },
@@ -414,8 +413,8 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
               key: const Key("export-button-batch"),
               tooltip: "Export transactions from database",
               suggestedPrefix: "transactions_",
-              onExport: _txController.exportDatabase,
-              isEmpty: _txController.isEmpty,
+              onExport: txController.exportDatabase,
+              isEmpty: txController.isEmpty,
             ),
             WidgetsDialogsReset(
               key: const Key("reset-button-batch"),
@@ -426,9 +425,9 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
                   "This action cannot be undone.",
               onWipe: () {
                 states.removeByPrefix('tx-group');
-                return _txController.wipe();
+                return txController.wipe();
               },
-              isEmpty: _txController.isEmpty,
+              isEmpty: txController.isEmpty,
             ),
           ],
         ),
@@ -453,7 +452,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         importTitle: "Import",
         importTooltip: "Import transactions to database",
         importEvaluator: () => true,
-        importCallback: (json) async => await _txController.importDatabase(json),
+        importCallback: (json) async => await txController.importDatabase(json),
         addForm: _buildForm,
       );
     }
@@ -568,6 +567,7 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
           panelsAction: toggleAction,
           filterMode: _filterMode,
           sortMode: _sortMode,
+          txsFlags: txsFlags,
           onStatusChanged: () {},
         );
 
@@ -581,13 +581,14 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
           panelsAction: toggleAction,
           filterMode: _filterMode,
           sortMode: _sortMode,
+          txsFlags: txsFlags,
           onStatusChanged: () {},
         );
 
       case TransactionsViewMode.journal:
         actionbarRegister("Transaction Overview");
 
-        return TransactionsJournalView(filterMode: _filterMode, transactions: txs, onStatusChanged: () {});
+        return TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: txsFlags, onStatusChanged: () {});
 
       case TransactionsViewMode.history:
         actionbarRegister("Transaction History");
@@ -595,7 +596,13 @@ class TransactionsPageState extends State<TransactionsPage> with MixinsActionabl
         final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
         states.remove("tx-toggle-panels");
 
-        return TransactionHistory(sortMode: _sortMode, transactions: txs, panelsAction: toggleAction, onStatusChanged: () {});
+        return TransactionHistory(
+          sortMode: _sortMode,
+          transactions: txs,
+          txsFlags: txsFlags,
+          panelsAction: toggleAction,
+          onStatusChanged: () {},
+        );
     }
   }
 }

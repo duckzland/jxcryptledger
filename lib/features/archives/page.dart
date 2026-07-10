@@ -65,7 +65,6 @@ class _ArchivesPageState extends State<ArchivesPage>
   void initState() {
     super.initState();
     _controller = locator<ArchivesController>();
-    _controller.start();
     _controller.addListener(_onControllerChanged);
 
     _cryptosController.addListener(_onControllerChanged);

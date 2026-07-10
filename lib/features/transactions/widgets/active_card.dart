@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
-import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../mixins/actionable.dart';
 import '../../../mixins/rateable.dart';
@@ -23,18 +22,22 @@ import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../dialogs/details.dart';
 import '../mixins/actions.dart';
+import '../mixins/flags.dart';
 import '../widgets/buttons.dart';
 import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
 import 'batch_buttons.dart';
 import 'linkable_buttons.dart';
+import 'panel_item.dart';
 
 class TransactionsActiveCard extends StatefulWidget {
   final int srid;
   final int rrid;
 
   final List<TransactionsModel> transactions;
+  final Map<String, Map<String, bool>> txsFlags;
+
   final VoidCallback onStatusChanged;
 
   final BuildContext parentContext;
@@ -49,6 +52,7 @@ class TransactionsActiveCard extends StatefulWidget {
     required this.transactions,
     required this.onStatusChanged,
     required this.isOpen,
+    required this.txsFlags,
   });
 
   @override
@@ -63,7 +67,8 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsActiveCard>,
         MixinsRateable<TransactionsActiveCard>,
-        TransactionsMixinsActions {
+        TransactionsMixinsActions,
+        TransactionsMixinsFlags {
   final _calc = TransactionCalculation();
 
   late final CryptosController _cryptosController;
@@ -125,6 +130,8 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
     _isOpen = widget.isOpen;
 
     txs = widget.transactions;
+    txsFlags = widget.txsFlags;
+
     txController = locator<TransactionsController>();
 
     _cryptosController = locator<CryptosController>();
@@ -187,6 +194,8 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
 
     setState(() {
       txs = widget.transactions;
+      txsFlags = widget.txsFlags;
+
       _calculateProfitLoss();
       rows = _buildRows();
       sortableApplySorting();
@@ -254,40 +263,31 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
           return Row(
             spacing: 20,
             children: [
-              _buildTitle(CrossAxisAlignment.start),
+              WidgetsHeader(
+                key: Key("title-${widget.srid}-${widget.rrid}"),
+                title: isCapital ? '$_sourceSymbol Capital' : '$_sourceSymbol to $_resultSymbol Trades',
+                subtitle: isCapital ? 'Coin ID: ${widget.srid}' : 'Coin ID: ${widget.srid} - ${widget.rrid}',
+              ),
               Expanded(child: _buildPanels()),
               _buildActions(),
             ],
           );
         } else {
-          return Wrap(
-            direction: Axis.horizontal,
-            runSpacing: 14,
+          return Column(
             spacing: 10,
-            runAlignment: WrapAlignment.center,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [_buildTitle(CrossAxisAlignment.center), _buildActions(), _buildPanels()],
+            children: [
+              WidgetsHeader(
+                key: Key("title-${widget.srid}-${widget.rrid}"),
+                title: isCapital ? '$_sourceSymbol Capital' : '$_sourceSymbol to $_resultSymbol Trades',
+                subtitle: isCapital ? 'Coin ID: ${widget.srid}' : 'Coin ID: ${widget.srid} - ${widget.rrid}',
+                centered: true,
+              ),
+              _buildActions(),
+              _buildPanels(),
+            ],
           );
         }
       },
-    );
-  }
-
-  Widget _buildTitle(CrossAxisAlignment align) {
-    return Column(
-      key: Key("title-${widget.srid}-${widget.rrid}"),
-      crossAxisAlignment: align,
-      children: [
-        const SizedBox(height: 5),
-        isCapital
-            ? Text('$_sourceSymbol Capital', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))
-            : Text('$_sourceSymbol to $_resultSymbol Trades', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-
-        isCapital
-            ? Text('Coin ID: ${widget.srid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted))
-            : Text('Coin ID: ${widget.srid} - ${widget.rrid}', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-      ],
     );
   }
 
@@ -525,6 +525,14 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                     tx: r['tx'],
                     cryptosController: _cryptosController,
                     txController: txController,
+                    isTradable: txFlagPick(tx, "tradable"),
+                    isClosable: txFlagPick(tx, "closable"),
+                    isDeletable: txFlagPick(tx, "deletable"),
+                    isUpdatable: txFlagPick(tx, "updatable"),
+                    isRefundable: txFlagPick(tx, "refundable"),
+                    isFinalizable: txFlagPick(tx, "finalizable"),
+                    hasLeaf: txFlagPick(tx, "hasLeaf"),
+                    hasTradeableLeaf: txFlagPick(tx, "hasTradeableLeaf"),
                     onAction: () {
                       widget.onStatusChanged();
                     },
@@ -617,7 +625,7 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 spacing: 16,
                 children: [
-                  _buildPanelItem(
+                  TransactionsWidgetsPanelItem(
                     title: 'Total Balance',
                     subtitle: isCapital
                         ? '${Utils.formatSmartDouble(_totalBalance)} $_sourceSymbol'
@@ -627,23 +635,38 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
                   ),
 
                   if (!isCapital)
-                    _buildPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(_averageRate), value: 0, comparator: 0),
+                    TransactionsWidgetsPanelItem(
+                      title: 'Avg Rate',
+                      subtitle: Utils.formatSmartDouble(_averageRate),
+                      value: 0,
+                      comparator: 0,
+                    ),
 
                   if (_plPercentage != 0 && _plPercentage.isFinite && !isCapital) ...[
                     if (_totalProfit != 0.0 && _totalLoss != 0.0)
-                      _buildPanelItem(title: 'Profit', subtitle: Utils.formatSmartDouble(_totalProfit), value: _totalProfit, comparator: 0),
+                      TransactionsWidgetsPanelItem(
+                        title: 'Profit',
+                        subtitle: Utils.formatSmartDouble(_totalProfit),
+                        value: _totalProfit,
+                        comparator: 0,
+                      ),
 
                     if (_totalProfit != 0.0 && _totalLoss != 0.0)
-                      _buildPanelItem(title: 'Loss', subtitle: Utils.formatSmartDouble(_totalLoss), value: _totalLoss, comparator: 0),
+                      TransactionsWidgetsPanelItem(
+                        title: 'Loss',
+                        subtitle: Utils.formatSmartDouble(_totalLoss),
+                        value: _totalLoss,
+                        comparator: 0,
+                      ),
 
-                    _buildPanelItem(
+                    TransactionsWidgetsPanelItem(
                       title: 'Total P/L',
                       subtitle: "${Utils.formatSmartDouble(_totalPL)} $_sourceSymbol",
                       value: _plPercentage,
                       comparator: 0,
                     ),
 
-                    _buildPanelItem(
+                    TransactionsWidgetsPanelItem(
                       title: 'P/L %',
                       subtitle: '${Utils.formatSmartDouble(_plPercentage, maxDecimals: 2)}%',
                       value: _plPercentage,
@@ -656,17 +679,6 @@ class _TransactionsActiveCardState extends State<TransactionsActiveCard>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPanelItem({required String title, required String subtitle, required double value, required double comparator}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-        const SizedBox(height: 1),
-        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
-      ],
     );
   }
 }

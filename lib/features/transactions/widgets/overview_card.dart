@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
@@ -12,8 +11,8 @@ import '../../../mixins/selectable_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
-import '../../../widgets/balance_text.dart';
 import '../../../widgets/button.dart';
+import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
@@ -21,13 +20,16 @@ import '../dialogs/details.dart';
 import '../mixins/actions.dart';
 import '../calculations.dart';
 import '../controller.dart';
+import '../mixins/flags.dart';
 import '../model.dart';
 import 'batch_buttons.dart';
 import 'buttons.dart';
+import 'panel_item.dart';
 
 class TransactionsOverviewCard extends StatefulWidget {
   final int id;
   final List<TransactionsModel> transactions;
+  final Map<String, Map<String, bool>> txsFlags;
   final VoidCallback onStatusChanged;
 
   final BuildContext parentContext;
@@ -39,6 +41,7 @@ class TransactionsOverviewCard extends StatefulWidget {
     required this.parentContext,
     required this.id,
     required this.transactions,
+    required this.txsFlags,
     required this.onStatusChanged,
     required this.isOpen,
   });
@@ -54,7 +57,8 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
         MixinsTable,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsOverviewCard>,
-        TransactionsMixinsActions {
+        TransactionsMixinsActions,
+        TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
 
   CryptosController get _cryptosController => locator<CryptosController>();
@@ -80,6 +84,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
 
     txs = widget.transactions;
     txController = locator<TransactionsController>();
+    txsFlags = widget.txsFlags;
 
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
@@ -126,6 +131,7 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
 
     setState(() {
       txs = widget.transactions;
+      txsFlags = widget.txsFlags;
       rows = _buildRows();
       sortableApplySorting();
 
@@ -178,49 +184,16 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
   }
 
   Widget _buildHeader() {
-    return LayoutBuilder(
-      key: Key("header-${widget.id}"),
-      builder: (context, constraints) {
-        if (constraints.maxWidth > 560) {
-          return Row(
-            spacing: 20,
-            children: [
-              _buildTitle(CrossAxisAlignment.start),
-              Expanded(child: _buildPanels()),
-              _buildActions(),
-            ],
-          );
-        } else {
-          return Wrap(
-            direction: Axis.horizontal,
-            runSpacing: 14,
-            spacing: 10,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_buildTitle(CrossAxisAlignment.start), _buildActions()]),
-              _buildPanels(),
-            ],
-          );
-        }
-      },
+    final title = Padding(
+      padding: const EdgeInsets.only(top: 5),
+      child: WidgetsHeader(
+        key: Key("title-${widget.id}"),
+        title: _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin',
+        subtitle: 'Coin ID: ${widget.id}',
+      ),
     );
-  }
 
-  Widget _buildTitle(CrossAxisAlignment align) {
-    return Column(
-      key: Key("title-${widget.id}"),
-      crossAxisAlignment: align,
-      children: [
-        const SizedBox(height: 5),
-        Text(_cryptosController.getSymbol(widget.id) ?? 'Unknown Coin', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        Text('Coin ID: ${widget.id}', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-      ],
-    );
-  }
-
-  Widget _buildActions() {
-    return TransactionsWidgetsBatchButtons(
+    final actions = TransactionsWidgetsBatchButtons(
       parentContext: widget.parentContext,
       srid: widget.id,
       rrid: 0,
@@ -236,6 +209,34 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
           _isOpen = !_isOpen;
           states.set("tx-group-active-open-${widget.id}", _isOpen);
         });
+      },
+    );
+
+    return LayoutBuilder(
+      key: Key("header-${widget.id}"),
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 560) {
+          return Row(
+            spacing: 20,
+            children: [
+              title,
+              Expanded(child: _buildPanels()),
+              actions,
+            ],
+          );
+        } else {
+          return Wrap(
+            direction: Axis.horizontal,
+            runSpacing: 14,
+            spacing: 10,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Row(spacing: 10, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [title, actions]),
+              _buildPanels(),
+            ],
+          );
+        }
       },
     );
   }
@@ -256,35 +257,35 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                 spacing: 16,
                 children: [
                   if (_totalCapital > 0)
-                    _buildPanelItem(
+                    TransactionsWidgetsPanelItem(
                       title: "Total Capital",
                       subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
                       value: 0,
                       comparator: 0,
                     ),
                   if (_currentHolding > 0)
-                    _buildPanelItem(
+                    TransactionsWidgetsPanelItem(
                       title: "Current Balance",
                       subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
                       value: 0,
                       comparator: 0,
                     ),
                   if (_finalizedBalance > 0)
-                    _buildPanelItem(
+                    TransactionsWidgetsPanelItem(
                       title: "Finalized Balance",
                       subtitle: "${Utils.formatSmartDouble(_finalizedBalance)} $_resultSymbol",
                       value: 0,
                       comparator: 0,
                     ),
                   if (_totalCapital > 0 && _profitLossPercentage != 0)
-                    _buildPanelItem(
+                    TransactionsWidgetsPanelItem(
                       title: "Profit/Loss",
                       subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
                       value: _profitLossPercentage,
                       comparator: 0,
                     ),
                   if (_totalCapital > 0 && _profitLossPercentage != 0)
-                    _buildPanelItem(
+                    TransactionsWidgetsPanelItem(
                       title: "Profit/Loss %",
                       subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
                       value: _profitLossPercentage,
@@ -296,17 +297,6 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPanelItem({required String title, required String subtitle, required double value, required double comparator}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-        const SizedBox(height: 1),
-        WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
-      ],
     );
   }
 
@@ -370,6 +360,14 @@ class _TransactionsOverviewCardState extends State<TransactionsOverviewCard>
                     tx: r['tx'],
                     cryptosController: _cryptosController,
                     txController: txController,
+                    isTradable: txFlagPick(tx, "tradable"),
+                    isClosable: txFlagPick(tx, "closable"),
+                    isDeletable: txFlagPick(tx, "deletable"),
+                    isUpdatable: txFlagPick(tx, "updatable"),
+                    isRefundable: txFlagPick(tx, "refundable"),
+                    isFinalizable: txFlagPick(tx, "finalizable"),
+                    hasLeaf: txFlagPick(tx, "hasLeaf"),
+                    hasTradeableLeaf: txFlagPick(tx, "hasTradeableLeaf"),
                     onAction: () {
                       widget.onStatusChanged();
                     },

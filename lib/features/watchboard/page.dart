@@ -57,11 +57,9 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   void initState() {
     super.initState();
     _pxController = locator<PanelsController>();
-    _pxController.start();
     _pxController.addListener(_onPanelsControllerChanged);
 
     _tixController = locator<TickersController>();
-    _tixController.start();
     _tixController.addListener(_onTickersControllerChanged);
 
     _cryptosController = locator<CryptosController>();

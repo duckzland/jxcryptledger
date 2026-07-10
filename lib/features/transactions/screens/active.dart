@@ -13,6 +13,7 @@ import '../model.dart';
 
 class TransactionsActiveView extends StatefulWidget {
   final List<TransactionsModel> transactions;
+  final Map<String, Map<String, bool>> txsFlags;
   final int filterMode;
   final int sortMode;
   final VoidCallback onStatusChanged;
@@ -25,6 +26,7 @@ class TransactionsActiveView extends StatefulWidget {
     required this.sortMode,
     required this.onStatusChanged,
     required this.panelsAction,
+    required this.txsFlags,
   });
 
   @override
@@ -33,7 +35,7 @@ class TransactionsActiveView extends StatefulWidget {
 
 class _TransactionsActiveViewState extends State<TransactionsActiveView>
     with AutomaticKeepAliveClientMixin, MixinsState, MixinsScrollToGroup<TransactionsActiveView, TransactionsModel> {
-  late final TransactionsController _txController;
+  late final TransactionsController txController;
   late final CryptosController _cryptosController;
   late List<TransactionsModel> txs;
 
@@ -52,10 +54,11 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   @override
   void initState() {
     super.initState();
-    _txController = locator<TransactionsController>();
+    txController = locator<TransactionsController>();
     _cryptosController = locator<CryptosController>();
 
     txs = widget.transactions;
+
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
     groups = _processTx();
@@ -102,9 +105,9 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
       return;
     }
 
-    if (!_txController.isEqualToItems(txs)) {
+    if (!txController.isEqualToItems(txs)) {
       setState(() {
-        final tx = _txController.findNew(txs);
+        final tx = txController.findNew(txs);
         txs = widget.transactions;
 
         String key = "";
@@ -187,6 +190,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
               srid: srId,
               rrid: rrId,
               transactions: stxs,
+              txsFlags: widget.txsFlags,
               onStatusChanged: widget.onStatusChanged,
               parentContext: context,
               isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
