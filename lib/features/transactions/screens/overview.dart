@@ -35,7 +35,7 @@ class TransactionsOverviewView extends StatefulWidget {
 }
 
 class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
-    with AutomaticKeepAliveClientMixin, MixinsState, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
+    with MixinsState, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
   TransactionsController get txController => locator<TransactionsController>();
   CryptosController get _cryptosController => locator<CryptosController>();
 
@@ -47,13 +47,8 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
   int _filterMode = 0;
   int _sortMode = 0;
 
-  bool _shouldKeepAlive = true;
-
   @override
   final scrollToUtil = ScrollTo('tx-group-offset-overview');
-
-  @override
-  bool get wantKeepAlive => _shouldKeepAlive;
 
   @override
   void initState() {
@@ -71,13 +66,6 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         states.set("tx-group-overview-open-$key", open);
       }
     }
-  }
-
-  @override
-  void deactivate() {
-    _shouldKeepAlive = false;
-    updateKeepAlive();
-    super.deactivate();
   }
 
   @override
@@ -159,8 +147,6 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     if (groups.isEmpty) {
       return Center(
         child: Text(

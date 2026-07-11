@@ -99,14 +99,14 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       4: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
-    rows = _buildRows();
-
-    sortableApplySorting();
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
     checkForRefundable();
+
     _calculateProfitLoss();
+    rows = _buildRows();
+    sortableApplySorting();
   }
 
   @override
@@ -132,53 +132,17 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       return;
     }
 
-    setState(() {
-      txs = widget.transactions;
-      fxs = widget.txsFlags;
-      rows = _buildRows();
-      sortableApplySorting();
+    txs = widget.transactions;
+    fxs = widget.txsFlags;
 
-      _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
+    checkForClosable();
+    checkForDeletable();
+    checkForFinalizable();
+    checkForRefundable();
 
-      checkForClosable();
-      checkForDeletable();
-      checkForFinalizable();
-      checkForRefundable();
-      _calculateProfitLoss();
-    });
-  }
-
-  void _calculateProfitLoss() {
-    if (txs.isEmpty) {
-      return;
-    }
-
-    final stxs = [...txs];
-
-    if (selectableHasSelectedRows()) {
-      final selectedTxIds = selectableGetSelectedRows();
-      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-    }
-
-    // Extract all roots for the same srId as this group!
-    double capital = 0;
-    final roots = txController.collectAllRoots();
-    for (final rtx in roots) {
-      if (rtx.srId == widget.id) {
-        capital = Math.add(capital, rtx.srAmount);
-      }
-    }
-
-    final finalizedBalance = _calc.totalFinalizedBalance(stxs);
-    final balance = _calc.totalActiveBalance(stxs);
-    final totalBalance = Math.add(balance, finalizedBalance);
-    final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(totalBalance, capital), capital) * 100);
-
-    _totalCapital = capital;
-    _currentHolding = balance;
-    _finalizedBalance = finalizedBalance;
-    _profitLoss = Math.subtract(totalBalance, capital);
-    _profitLossPercentage = profitPercentage;
+    _calculateProfitLoss();
+    rows = _buildRows();
+    sortableApplySorting();
   }
 
   @override
@@ -207,12 +171,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       isClosable: isClosable,
       isFinalizable: isFinalizable,
       isRefundable: isRefundable,
-      onToggleShow: (WidgetsButtonState b) {
-        setState(() {
-          _isOpen = !_isOpen;
-          states.set("tx-group-active-open-${widget.id}", _isOpen);
-        });
-      },
+      onToggleShow: _toggleShowAction,
     );
 
     return LayoutBuilder(
@@ -228,12 +187,9 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
             ],
           );
         } else {
-          return Wrap(
-            direction: Axis.horizontal,
-            runSpacing: 14,
+          return Column(
             spacing: 10,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Row(spacing: 10, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [title, actions]),
               _buildPanels(),
@@ -307,6 +263,60 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     final canSelect = isActive && rows.length > 1;
     final theme = Theme.of(context);
     final checkboxTheme = theme.checkboxTheme;
+    final tableColumns = [
+      DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+      DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
+      DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
+      DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sortableSorters[4]),
+      const DataColumn2(label: Text('Actions'), fixedWidth: 160),
+    ];
+    final tableRows = rows.map((r) {
+      final tx = r['tx'] as TransactionsModel;
+      final canSelect = tx.isActive || tx.isPartial;
+
+      return DataRow2(
+        key: ValueKey(r['uuid']),
+        selected: canSelect ? selectableIsSelected(r['uuid']) : false,
+        onSelectChanged: canSelect
+            ? (v) {
+                setState(() {
+                  selectableSetSelected(r['uuid'], v!);
+                  _calculateProfitLoss();
+                  sortableApplySorting();
+                });
+              }
+            : null,
+        onTap: () {
+          TransactionsDialogsDetails.show(context, r['tx']);
+        },
+        cells: [
+          DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
+          DataCell(Text(r['source'])),
+          DataCell(Text(r['balance'])),
+          DataCell(Text(r['exchangedRate'])),
+          DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
+          DataCell(
+            TransactionsWidgetsButtonsAction(
+              parentContext: context,
+              key: Key("action-${tx.uuid}"),
+              tx: r['tx'],
+              cryptosController: _cryptosController,
+              txController: txController,
+              isTradable: fxsIsTradable(tx),
+              isClosable: fxsIsClosable(tx),
+              isDeletable: fxsIsDeletable(tx),
+              isUpdatable: fxsIsUpdatable(tx),
+              isRefundable: fxsIsRefundable(tx),
+              isFinalizable: fxsIsFinalizable(tx),
+              hasLeaf: fxsHasLeaf(tx),
+              hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+              onAction: widget.onStatusChanged,
+            ),
+          ),
+        ],
+      );
+    }).toList();
 
     return SizedBox(
       width: double.infinity,
@@ -327,60 +337,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
           sortColumnIndex: sortableColumnIndex,
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
-          columns: [
-            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-            DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
-            DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
-            DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
-            DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sortableSorters[4]),
-            const DataColumn2(label: Text('Actions'), fixedWidth: 160),
-          ],
-          rows: rows.map((r) {
-            final tx = r['tx'] as TransactionsModel;
-            final canSelect = tx.isActive || tx.isPartial;
-
-            return DataRow2(
-              key: ValueKey(r['uuid']),
-              selected: canSelect ? selectableIsSelected(r['uuid']) : false,
-              onSelectChanged: canSelect
-                  ? (v) {
-                      setState(() {
-                        selectableSetSelected(r['uuid'], v!);
-                        _calculateProfitLoss();
-                        sortableApplySorting();
-                      });
-                    }
-                  : null,
-              onTap: () {
-                TransactionsDialogsDetails.show(context, r['tx']);
-              },
-              cells: [
-                DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
-                DataCell(Text(r['source'])),
-                DataCell(Text(r['balance'])),
-                DataCell(Text(r['exchangedRate'])),
-                DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
-                DataCell(
-                  TransactionsWidgetsButtonsAction(
-                    parentContext: context,
-                    key: Key("action-${tx.uuid}"),
-                    tx: r['tx'],
-                    cryptosController: _cryptosController,
-                    txController: txController,
-                    isTradable: fxsIsTradable(tx),
-                    isClosable: fxsIsClosable(tx),
-                    isDeletable: fxsIsDeletable(tx),
-                    isUpdatable: fxsIsUpdatable(tx),
-                    isRefundable: fxsIsRefundable(tx),
-                    isFinalizable: fxsIsFinalizable(tx),
-                    hasLeaf: fxsHasLeaf(tx),
-                    hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                    onAction: widget.onStatusChanged,
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
+          columns: tableColumns,
+          rows: tableRows,
         ),
       ),
     );
@@ -411,5 +369,45 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     }
 
     return rx;
+  }
+
+  void _calculateProfitLoss() {
+    if (txs.isEmpty) {
+      return;
+    }
+
+    final stxs = [...txs];
+
+    if (selectableHasSelectedRows()) {
+      final selectedTxIds = selectableGetSelectedRows();
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
+    // Extract all roots for the same srId as this group!
+    double capital = 0;
+    final roots = txController.collectAllRoots();
+    for (final rtx in roots) {
+      if (rtx.srId == widget.id) {
+        capital = Math.add(capital, rtx.srAmount);
+      }
+    }
+
+    final finalizedBalance = _calc.totalFinalizedBalance(stxs);
+    final balance = _calc.totalActiveBalance(stxs);
+    final totalBalance = Math.add(balance, finalizedBalance);
+    final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(totalBalance, capital), capital) * 100);
+
+    _totalCapital = capital;
+    _currentHolding = balance;
+    _finalizedBalance = finalizedBalance;
+    _profitLoss = Math.subtract(totalBalance, capital);
+    _profitLossPercentage = profitPercentage;
+  }
+
+  void _toggleShowAction(WidgetsButtonState b) {
+    setState(() {
+      _isOpen = !_isOpen;
+      states.set("tx-group-active-open-${widget.id}", _isOpen);
+    });
   }
 }
