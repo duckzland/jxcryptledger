@@ -27,7 +27,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
   bool get rateableAllow => (rateableSource ?? 0) > 0 && (rateableTarget ?? 0) > 0;
   RatesController get rateableController => locator<RatesController>();
 
-  void rateableGetCallback() {}
+  void rateableGetCallback(bool hasNewRate) {}
 
   @override
   void initState() {
@@ -77,10 +77,11 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
         return;
       }
 
+      final hasNewRate = rate != rateableValue;
       rateableAmount = Utils.formatSmartDouble(rate).replaceAll(",", "");
       rateableValue = rate;
 
-      rateableGetCallback.call();
+      rateableGetCallback.call(hasNewRate);
 
       if (rateableStateUpdater != null) {
         rateableStateUpdater?.call(rateableAmount ?? "", rateableDefaultHelper);

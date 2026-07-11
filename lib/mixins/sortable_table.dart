@@ -5,6 +5,7 @@ import 'table.dart';
 mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
   int sortableColumnIndex = 0;
   bool sortableAscending = false;
+  bool get sortableShouldRefresh => true;
   String get sortableKey => "";
 
   late Map<int, Function(int col, bool asc)> sortableSorters = {};
@@ -17,6 +18,8 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
       sortableAscending = states.get("$sortableKey-sortable-ascending", defaultValue: false);
     }
   }
+
+  void sortableAfterSorting() {}
 
   void sortableOnSort<U>(U Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
     rows.sort((a, b) {
@@ -44,7 +47,9 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
       states.set("$sortableKey-sortable-ascending", sortableAscending);
     }
 
-    if (mounted) {
+    sortableAfterSorting();
+
+    if (mounted && sortableShouldRefresh) {
       setState(() {});
     }
   }

@@ -272,7 +272,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   }
 
   @override
-  void rateableGetCallback() {
+  void rateableGetCallback(bool hasNewRate) {
     if (rateableValue != null && rateableValue! > 0) {
       _reversedRate = Math.divide(1, rateableValue!);
     }

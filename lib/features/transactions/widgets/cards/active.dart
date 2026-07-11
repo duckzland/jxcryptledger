@@ -153,19 +153,25 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       9: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
-    _calculateProfitLoss();
-
-    // Rateable callback will try to build rows
-    rateableGetRate(refresh: false, silent: true);
-    if (rows.isEmpty && txs.isNotEmpty) {
-      rows = _buildRows();
-    }
-
-    sortableApplySorting();
     checkForClosable();
     checkForDeletable();
     checkForFinalizable();
     checkForRefundable();
+
+    // _calculateProfitLoss();
+
+    // Rateable callback will try to build rows
+    rows = [];
+    rateableGetRate(refresh: false, silent: true);
+    // if (rows.isEmpty && txs.isNotEmpty) {
+    //   rows = _buildRows();
+    // }
+
+    // sortableApplySorting();
+    // checkForClosable();
+    // checkForDeletable();
+    // checkForFinalizable();
+    // checkForRefundable();
   }
 
   @override
@@ -193,55 +199,29 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       return;
     }
 
-    setState(() {
-      txs = widget.transactions;
-      fxs = widget.txsFlags;
+    txs = widget.transactions;
+    fxs = widget.txsFlags;
 
-      _calculateProfitLoss();
-      rows = _buildRows();
-      sortableApplySorting();
+    _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
+    _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
-      _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
-      _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
+    checkForClosable();
+    checkForDeletable();
+    checkForFinalizable();
+    checkForRefundable();
 
-      checkForClosable();
-      checkForDeletable();
-      checkForFinalizable();
-      checkForRefundable();
-    });
+    _calculateProfitLoss();
+    rows = _buildRows();
+    sortableApplySorting(); // Sortable will call setState!
   }
 
   @override
   void rateableUpdateRate() {
-    final oldRate = rateableValue;
     rateableGetRate(refresh: false, silent: true);
-    if (oldRate != rateableValue) {
-      setState(() {});
-    }
-  }
-
-  void _calculateProfitLoss() {
-    final stxs = [...txs];
-
-    if (selectableHasSelectedRows()) {
-      final selectedTxIds = selectableGetSelectedRows();
-      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-    }
-
-    final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
-
-    _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
-    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
-    _totalSourceBalance = _calc.totalSourceBalance(stxs, shrinkPartial: true);
-    _totalBalance = _calc.totalBalance(stxs);
-    _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
-    _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
-    _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
-    _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
   }
 
   @override
-  void rateableGetCallback() {
+  void rateableGetCallback(bool hasNewRate) {
     if (rateableStateUpdater != null) {
       _customRate = rateableValue;
     } else {
@@ -249,10 +229,14 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         rateableValue = _customRate;
       }
     }
+
     rateableDefaultHelper = _averageRate.toStringAsFixed(8);
-    _calculateProfitLoss();
-    rows = _buildRows();
-    sortableApplySorting();
+
+    if (hasNewRate) {
+      _calculateProfitLoss();
+      rows = _buildRows();
+      sortableApplySorting();
+    }
   }
 
   @override
@@ -325,7 +309,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                     // Store the callback to act as promise contract!
                     rateableStateUpdater = updateState;
                     rateableStateUpdater?.call("", "Retrieving rate...");
-                    rateableGetRate(reversed: _isReversed);
+                    rateableGetRate(refresh: false, reversed: _isReversed);
                   },
                   onChanged: (value) {
                     // Nullify the promise contract!
@@ -336,10 +320,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                     final newValue = double.tryParse(value);
                     if (_customRate != newValue) {
                       _debounce = Timer(const Duration(milliseconds: 100), () {
-                        setState(() {
-                          _customRate = newValue;
-                          rateableGetRate(refresh: false, silent: true);
-                        });
+                        _customRate = newValue;
+                        rateableGetRate(refresh: false, silent: true);
                       });
                     }
                   },
@@ -360,18 +342,16 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                   }
                 },
                 onPressed: (_) {
-                  setState(() {
-                    _isReversed = !_isReversed;
-                    if (_customRate != null) {
-                      _customRate = Math.divide(1, _customRate!);
-                    }
+                  _isReversed = !_isReversed;
+                  if (_customRate != null) {
+                    _customRate = Math.divide(1, _customRate!);
+                  }
 
-                    // BugFix: Dont link to rateable to prevent double inversing!
-                    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
-                    _calculateProfitLoss();
-                    rows = _buildRows();
-                    sortableApplySorting();
-                  });
+                  // BugFix: Dont link to rateable to prevent double inversing!
+                  _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+                  _calculateProfitLoss();
+                  rows = _buildRows();
+                  sortableApplySorting();
                 },
               ),
             ],
@@ -501,11 +481,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
               selected: canSelect ? selectableIsSelected(r['uuid']) : false,
               onSelectChanged: canSelect
                   ? (v) {
-                      setState(() {
-                        selectableSetSelected(r['uuid'], v!);
-                        _calculateProfitLoss();
-                        sortableApplySorting();
-                      });
+                      selectableSetSelected(r['uuid'], v!);
+                      _calculateProfitLoss();
+                      sortableApplySorting();
                     }
                   : null,
               onTap: () {
@@ -687,5 +665,25 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         ),
       ),
     );
+  }
+
+  void _calculateProfitLoss() {
+    final stxs = [...txs];
+
+    if (selectableHasSelectedRows()) {
+      final selectedTxIds = selectableGetSelectedRows();
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
+    final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
+
+    _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
+    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    _totalSourceBalance = _calc.totalSourceBalance(stxs, shrinkPartial: true);
+    _totalBalance = _calc.totalBalance(stxs);
+    _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
+    _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
+    _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
+    _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
   }
 }
