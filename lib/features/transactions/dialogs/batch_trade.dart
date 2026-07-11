@@ -173,6 +173,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       });
     }
 
+    final rateText = Text(rateableAmount ?? "");
+
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
@@ -214,7 +216,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                   DataCell(Text(r['date'] ?? '')),
                   DataCell(Text(r['transaction'] ?? '')),
                   DataCell(Text(r['balance'] ?? '')),
-                  if (showRate) DataCell(Text('${r['rate'] ?? ''}')),
+                  if (showRate) DataCell(rateText),
                   if (showRate) DataCell(Text('${Utils.formatSmartDouble(r['amount'] ?? 0)} $targetSymbol')),
                 ],
               );
