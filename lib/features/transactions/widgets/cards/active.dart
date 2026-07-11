@@ -158,20 +158,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     checkForFinalizable();
     checkForRefundable();
 
-    // _calculateProfitLoss();
-
-    // Rateable callback will try to build rows
     rows = [];
     rateableGetRate(refresh: false, silent: true);
-    // if (rows.isEmpty && txs.isNotEmpty) {
-    //   rows = _buildRows();
-    // }
-
-    // sortableApplySorting();
-    // checkForClosable();
-    // checkForDeletable();
-    // checkForFinalizable();
-    // checkForRefundable();
   }
 
   @override
