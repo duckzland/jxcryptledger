@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../app/scroll_behavior.dart';
 import '../../../../core/runtime/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
@@ -304,15 +305,18 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   Widget _buildTable() {
     final canSelect = isActive && rows.length > 1;
+    final theme = Theme.of(context);
+    final checkboxTheme = theme.checkboxTheme;
+
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
       child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
+        behavior: const AppScrollBehavior(),
         child: DataTable2(
           key: Key("table-${widget.id}"),
-          headingCheckboxTheme: Theme.of(context).checkboxTheme,
-          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+          headingCheckboxTheme: checkboxTheme,
+          datarowCheckboxTheme: checkboxTheme,
           showHeadingCheckBox: canSelect,
           showCheckboxColumn: canSelect,
           minWidth: 1200,

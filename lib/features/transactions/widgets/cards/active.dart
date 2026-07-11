@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../app/scroll_behavior.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../core/runtime/locator.dart';
@@ -212,7 +213,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
   @override
   void rateableUpdateRate() {
-    rateableGetRate(silent: true);
+    final oldRate = rateableValue;
+    rateableGetRate(refresh: false, silent: true);
+    if (oldRate != rateableValue) {
+      setState(() {});
+    }
   }
 
   void _calculateProfitLoss() {
@@ -333,7 +338,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                       _debounce = Timer(const Duration(milliseconds: 100), () {
                         setState(() {
                           _customRate = newValue;
-                          rateableGetRate(silent: true);
+                          rateableGetRate(refresh: false, silent: true);
                         });
                       });
                     }
@@ -405,16 +410,18 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
   Widget _buildTable() {
     final canSelect = !isCapital && rows.length > 1;
+    final theme = Theme.of(context);
+    final checkboxTheme = theme.checkboxTheme;
 
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
       child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
+        behavior: const AppScrollBehavior(),
         child: DataTable2(
           key: Key("table-${widget.srid}-${widget.rrid}"),
-          headingCheckboxTheme: Theme.of(context).checkboxTheme,
-          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+          headingCheckboxTheme: checkboxTheme,
+          datarowCheckboxTheme: checkboxTheme,
           showHeadingCheckBox: canSelect,
           showCheckboxColumn: canSelect,
           minWidth: 1200,
