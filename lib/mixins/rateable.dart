@@ -13,7 +13,6 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
   late void Function(String value, String helperText)? rateableStateUpdater;
   final List<(int source, int target)> rateableTemporary = [];
 
-  StreamSubscription? _emitter;
   bool rateableIsTemporary = true;
   bool rateableWithField = true;
   bool rateableForceFetch = true;
@@ -47,7 +46,6 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     if (rateableIsTemporary) {
       rateableCleanTemporary();
     }
-    _emitter?.cancel();
     super.dispose();
   }
 

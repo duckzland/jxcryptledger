@@ -35,7 +35,7 @@ class TransactionsActiveView extends StatefulWidget {
 }
 
 class _TransactionsActiveViewState extends State<TransactionsActiveView>
-    with AutomaticKeepAliveClientMixin, MixinsState, MixinsScrollToGroup<TransactionsActiveView, TransactionsModel> {
+    with MixinsState, MixinsScrollToGroup<TransactionsActiveView, TransactionsModel> {
   late final TransactionsController txController;
   late final CryptosController _cryptosController;
   late List<TransactionsModel> txs;
@@ -46,13 +46,8 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   int _filterMode = 0;
   int _sortMode = 0;
 
-  bool _shouldKeepAlive = true;
-
   @override
   final scrollToUtil = ScrollTo('tx-group-offset-active');
-
-  @override
-  bool get wantKeepAlive => _shouldKeepAlive;
 
   @override
   void initState() {
@@ -74,13 +69,6 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         states.set("tx-group-active-open-$key", open);
       }
     }
-  }
-
-  @override
-  void deactivate() {
-    _shouldKeepAlive = false;
-    updateKeepAlive();
-    super.deactivate();
   }
 
   @override
@@ -171,8 +159,6 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     if (groups.isEmpty) {
       return Center(
         child: Text(

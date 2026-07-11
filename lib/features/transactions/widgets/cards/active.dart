@@ -86,12 +86,10 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   double _totalProfit = 0;
   double _totalLoss = 0;
   double _plPercentage = 0;
+  double? _customRate;
 
   bool _isReversed = false;
-
   bool _isOpen = true;
-
-  double? _customRate;
 
   Timer? _debounce;
 
@@ -189,9 +187,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
     txs = widget.transactions;
     fxs = widget.txsFlags;
-
-    _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
-    _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 
     checkForClosable();
     checkForDeletable();
@@ -293,26 +288,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                   initialValue: _customRate != null ? Utils.formatSmartDouble(_customRate!) : "",
                   allowCopy: false,
                   allowRate: true,
-                  onRetrievingRate: (void Function(String value, String helperText) updateState) {
-                    // Store the callback to act as promise contract!
-                    rateableStateUpdater = updateState;
-                    rateableStateUpdater?.call("", "Retrieving rate...");
-                    rateableGetRate(refresh: false, reversed: _isReversed);
-                  },
-                  onChanged: (value) {
-                    // Nullify the promise contract!
-                    rateableStateUpdater = null;
-
-                    if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-                    final newValue = double.tryParse(value);
-                    if (_customRate != newValue) {
-                      _debounce = Timer(const Duration(milliseconds: 100), () {
-                        _customRate = newValue;
-                        rateableGetRate(refresh: false, silent: true);
-                      });
-                    }
-                  },
+                  onRetrievingRate: _rateAmountRetrieveAction,
+                  onChanged: _rateAmountChangeAction,
                 ),
               ),
 
@@ -322,25 +299,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                 iconSize: btnIconSize,
                 minimumSize: btnSize,
                 tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
-                evaluator: (s) {
-                  if (_isReversed) {
-                    s.action();
-                  } else {
-                    s.normal();
-                  }
-                },
-                onPressed: (_) {
-                  _isReversed = !_isReversed;
-                  if (_customRate != null) {
-                    _customRate = Math.divide(1, _customRate!);
-                  }
-
-                  // BugFix: Dont link to rateable to prevent double inversing!
-                  _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
-                  _calculateProfitLoss();
-                  rows = _buildRows();
-                  sortableApplySorting();
-                },
+                evaluator: _reverseActionEvaluator,
+                onPressed: _reverseRateAction,
               ),
             ],
           ),
@@ -365,12 +325,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           isClosable: isClosable,
           isFinalizable: isFinalizable,
           isRefundable: isRefundable,
-          onToggleShow: (WidgetsButtonState b) {
-            setState(() {
-              _isOpen = !_isOpen;
-              states.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
-            });
-          },
+          onToggleShow: _toggleShowAction,
         ),
       ],
     );
@@ -380,6 +335,117 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     final canSelect = !isCapital && rows.length > 1;
     final theme = Theme.of(context);
     final checkboxTheme = theme.checkboxTheme;
+    final tableColumns = [
+      DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+      DataColumn2(
+        size: ColumnSize.S,
+        label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount', subtitle: _sourceSymbol),
+        onSort: sortableSorters[1],
+      ),
+      if (!isCapital)
+        DataColumn2(
+          size: ColumnSize.S,
+          label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
+          onSort: sortableSorters[2],
+        ),
+      if (!isCapital)
+        DataColumn2(
+          size: ColumnSize.S,
+          label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
+          onSort: sortableSorters[3],
+        ),
+      if (!isCapital)
+        DataColumn2(
+          size: ColumnSize.S,
+          label: WidgetsHeader(
+            title: 'Exchanged Rate ',
+            subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+          ),
+          onSort: sortableSorters[4],
+        ),
+
+      if (_currentRate != 0.0 && !isCapital) ...[
+        DataColumn2(
+          size: ColumnSize.S,
+          label: WidgetsHeader(
+            title: 'Current Rate ',
+            subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+          ),
+        ),
+        DataColumn2(
+          size: ColumnSize.S,
+          label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
+          onSort: sortableSorters[6],
+        ),
+        DataColumn2(
+          size: ColumnSize.S,
+          label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
+          onSort: sortableSorters[7],
+        ),
+        DataColumn2(
+          fixedWidth: 100,
+          label: const WidgetsHeader(title: 'P/L', subtitle: "%"),
+          onSort: sortableSorters[8],
+        ),
+      ],
+
+      DataColumn2(label: const Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9]),
+      const DataColumn2(label: Text('Actions'), fixedWidth: 160),
+    ];
+
+    final tableRows = rows.map((r) {
+      final tx = r['tx'] as TransactionsModel;
+      final canSelect = tx.isActive || tx.isPartial;
+      return DataRow2(
+        key: ValueKey(r['uuid']),
+        selected: canSelect ? selectableIsSelected(r['uuid']) : false,
+        onSelectChanged: canSelect
+            ? (v) {
+                selectableSetSelected(r['uuid'], v!);
+                _calculateProfitLoss();
+                sortableApplySorting();
+              }
+            : null,
+        onTap: () {
+          TransactionsDialogsDetails.show(context, r['tx']);
+        },
+        cells: [
+          DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
+          DataCell(Text(r['from'])),
+
+          if (!isCapital) DataCell(Text(r['to'])),
+          if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),
+          if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),
+
+          if (_currentRate != 0 && !isCapital) ...[
+            DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
+            DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
+            DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
+            DataCell(WidgetsBalanceText(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'], comparator: 0)),
+          ],
+
+          DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
+          DataCell(
+            TransactionsWidgetsButtonsAction(
+              parentContext: context,
+              key: Key("action-${tx.uuid}"),
+              tx: r['tx'],
+              cryptosController: _cryptosController,
+              txController: txController,
+              isTradable: fxsIsTradable(tx),
+              isClosable: fxsIsClosable(tx),
+              isDeletable: fxsIsDeletable(tx),
+              isUpdatable: fxsIsUpdatable(tx),
+              isRefundable: fxsIsRefundable(tx),
+              isFinalizable: fxsIsFinalizable(tx),
+              hasLeaf: fxsHasLeaf(tx),
+              hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+              onAction: widget.onStatusChanged,
+            ),
+          ),
+        ],
+      );
+    }).toList();
 
     return SizedBox(
       width: double.infinity,
@@ -400,120 +466,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
-          columns: [
-            DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-            DataColumn2(
-              size: ColumnSize.S,
-              label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount', subtitle: _sourceSymbol),
-              onSort: sortableSorters[1],
-            ),
-            if (!isCapital)
-              DataColumn2(
-                size: ColumnSize.S,
-                label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-                onSort: sortableSorters[2],
-              ),
-            if (!isCapital)
-              DataColumn2(
-                size: ColumnSize.S,
-                label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
-                onSort: sortableSorters[3],
-              ),
-            if (!isCapital)
-              DataColumn2(
-                size: ColumnSize.S,
-                label: WidgetsHeader(
-                  title: 'Exchanged Rate ',
-                  subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
-                ),
-                onSort: sortableSorters[4],
-              ),
-
-            if (_currentRate != 0.0 && !isCapital) ...[
-              DataColumn2(
-                size: ColumnSize.S,
-                label: WidgetsHeader(
-                  title: 'Current Rate ',
-                  subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
-                ),
-              ),
-              DataColumn2(
-                size: ColumnSize.S,
-                label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
-                onSort: sortableSorters[6],
-              ),
-              DataColumn2(
-                size: ColumnSize.S,
-                label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
-                onSort: sortableSorters[7],
-              ),
-              DataColumn2(
-                fixedWidth: 100,
-                label: const WidgetsHeader(title: 'P/L', subtitle: "%"),
-                onSort: sortableSorters[8],
-              ),
-            ],
-
-            DataColumn2(
-              label: const Text('Status '),
-              fixedWidth: 100,
-              onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9],
-            ),
-            const DataColumn2(label: Text('Actions'), fixedWidth: 160),
-          ],
-          rows: rows.map((r) {
-            final tx = r['tx'] as TransactionsModel;
-            final canSelect = tx.isActive || tx.isPartial;
-            return DataRow2(
-              key: ValueKey(r['uuid']),
-              selected: canSelect ? selectableIsSelected(r['uuid']) : false,
-              onSelectChanged: canSelect
-                  ? (v) {
-                      selectableSetSelected(r['uuid'], v!);
-                      _calculateProfitLoss();
-                      sortableApplySorting();
-                    }
-                  : null,
-              onTap: () {
-                TransactionsDialogsDetails.show(context, r['tx']);
-              },
-              cells: [
-                DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
-                DataCell(Text(r['from'])),
-
-                if (!isCapital) DataCell(Text(r['to'])),
-                if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),
-                if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),
-
-                if (_currentRate != 0 && !isCapital) ...[
-                  DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-                  DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-                  DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'], comparator: 0)),
-                ],
-
-                DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
-                DataCell(
-                  TransactionsWidgetsButtonsAction(
-                    parentContext: context,
-                    key: Key("action-${tx.uuid}"),
-                    tx: r['tx'],
-                    cryptosController: _cryptosController,
-                    txController: txController,
-                    isTradable: fxsIsTradable(tx),
-                    isClosable: fxsIsClosable(tx),
-                    isDeletable: fxsIsDeletable(tx),
-                    isUpdatable: fxsIsUpdatable(tx),
-                    isRefundable: fxsIsRefundable(tx),
-                    isFinalizable: fxsIsFinalizable(tx),
-                    hasLeaf: fxsHasLeaf(tx),
-                    hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                    onAction: widget.onStatusChanged,
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
+          columns: tableColumns,
+          rows: tableRows,
         ),
       ),
     );
@@ -673,5 +627,55 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _totalProfit = _calc.totalProfit(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
     _totalLoss = _calc.totalLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
     _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
+  }
+
+  void _reverseRateAction(WidgetsButtonState s) {
+    _isReversed = !_isReversed;
+    if (_customRate != null) {
+      _customRate = Math.divide(1, _customRate!);
+    }
+
+    // BugFix: Dont link to rateable to prevent double inversing!
+    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    _calculateProfitLoss();
+    rows = _buildRows();
+    sortableApplySorting();
+  }
+
+  void _reverseActionEvaluator(WidgetsButtonState s) {
+    if (_isReversed) {
+      s.action();
+    } else {
+      s.normal();
+    }
+  }
+
+  void _rateAmountChangeAction(String value) {
+    // Nullify the promise contract!
+    rateableStateUpdater = null;
+
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    final newValue = double.tryParse(value);
+    if (_customRate != newValue) {
+      _debounce = Timer(const Duration(milliseconds: 100), () {
+        _customRate = newValue;
+        rateableGetRate(refresh: false, silent: true);
+      });
+    }
+  }
+
+  void _rateAmountRetrieveAction(void Function(String value, String helperText) updateState) {
+    // Store the callback to act as promise contract!
+    rateableStateUpdater = updateState;
+    rateableStateUpdater?.call("", "Retrieving rate...");
+    rateableGetRate(refresh: false, reversed: _isReversed);
+  }
+
+  void _toggleShowAction(WidgetsButtonState b) {
+    setState(() {
+      _isOpen = !_isOpen;
+      states.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
+    });
   }
 }
