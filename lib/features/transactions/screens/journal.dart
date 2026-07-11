@@ -120,16 +120,16 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
       return;
     }
 
-    setState(() {
-      final ntx = txController.findNew(txs);
-      txs = widget.transactions;
-      fxs = widget.txsFlags;
-      rows = _buildRows();
-      sortableApplySorting();
-      if (ntx != null) {
-        scrollToTableNewRow(ntx);
-      }
-    });
+    final ntx = txController.findNew(txs);
+    txs = widget.transactions;
+    fxs = widget.txsFlags;
+
+    rows = _buildRows();
+    sortableApplySorting();
+
+    if (ntx != null) {
+      scrollToTableNewRow(ntx);
+    }
   }
 
   List<Map<String, dynamic>> _buildRows() {
