@@ -30,8 +30,11 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
 
   final bool? allowBalanceSnapshot;
 
+  final BuildContext parentContext;
+
   const TransactionsWidgetsButtonsAction({
     super.key,
+    required this.parentContext,
     required this.tx,
     required this.txController,
     required this.cryptosController,
@@ -48,28 +51,14 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
     this.allowBalanceSnapshot = false,
   });
 
-  Future<void> _actionRefund(TransactionsModel tx) async {
-    if (onExit != null) {
-      onExit?.call();
-      await Future.delayed(const Duration(milliseconds: 150));
-    }
-    await txController.removeLeaf(tx);
-  }
-
-  Future<void> _actionDelete(TransactionsModel tx) async {
-    if (onExit != null) {
-      onExit?.call();
-      await Future.delayed(const Duration(milliseconds: 150));
-    }
-    await txController.removeRoot(tx);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final ptx = txController.getParent(tx);
-
     final sourceSymbol = cryptosController.getSymbol(tx.srId) ?? "";
     final targetSymbol = cryptosController.getSymbol(tx.rrId) ?? "";
+
+    final btnSize = const Size(34, 34);
+    final btnPadding = const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2);
+    final iconSize = 16.0;
 
     return Wrap(
       spacing: 4,
@@ -80,15 +69,11 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             key: Key("balance-snapshot-button-${tx.tid}"),
             icon: Icons.insights,
             tooltip: "Show balance snapshots of this transaction",
-            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
-            iconSize: 16,
-            minimumSize: const Size(34, 34),
-            evaluator: (s) {
-              !cryptosController.isEmpty() ? s.normal() : s.disable();
-            },
-            buildForm: (dialogContext) {
-              return TransactionsDialogsBalanceSnapshots(initialData: tx, parent: ptx);
-            },
+            padding: btnPadding,
+            iconSize: iconSize,
+            minimumSize: btnSize,
+            evaluator: _evaluatorShowBalance,
+            buildForm: _formShowBalance,
           ),
 
         if (isUpdatable && tx.isActive && !hasLeaf)
@@ -96,25 +81,11 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             key: Key("edit-button-${tx.tid}"),
             icon: Icons.edit,
             tooltip: "Edit this transaction",
-            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
-            iconSize: 16,
-            minimumSize: const Size(34, 34),
-            evaluator: (s) {
-              !cryptosController.isEmpty() ? s.normal() : s.disable();
-            },
-            buildForm: (dialogContext) {
-              return TransactionFormEdit(
-                initialData: tx,
-                parent: ptx,
-                onSave: (e, stx) => actionableFormSave<TransactionsModel>(
-                  context,
-                  dialogContext: dialogContext,
-                  onComplete: onAction,
-                  successMessage: "${tx.srAmountText} - ${tx.balanceText} transaction updated.",
-                  error: e,
-                ),
-              );
-            },
+            padding: btnPadding,
+            iconSize: iconSize,
+            minimumSize: btnSize,
+            evaluator: _evaluatorEditTx,
+            buildForm: _formEditTx,
           ),
 
         if (isTradable)
@@ -123,25 +94,11 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             icon: Icons.swap_vert,
             initialState: WidgetsButtonActionState.action,
             tooltip: "Trade this transaction",
-            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
-            iconSize: 18,
-            minimumSize: const Size(34, 34),
-            evaluator: (s) {
-              !cryptosController.isEmpty() ? s.action() : s.disable();
-            },
-            buildForm: (dialogContext) {
-              return TransactionFormTrade(
-                initialData: tx,
-                parent: ptx,
-                onSave: (e, stx) => actionableFormSave<TransactionsModel>(
-                  context,
-                  dialogContext: dialogContext,
-                  onComplete: onAction,
-                  successMessage: "New trading transaction created.",
-                  error: e,
-                ),
-              );
-            },
+            padding: btnPadding,
+            iconSize: iconSize,
+            minimumSize: btnSize,
+            evaluator: _evaluatorTradeTx,
+            buildForm: _formTradeTx,
           ),
 
         if (isDeletable)
@@ -150,9 +107,9 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             icon: Icons.delete,
             initialState: WidgetsButtonActionState.error,
             tooltip: "Delete this transaction",
-            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
-            iconSize: 18,
-            minimumSize: const Size(34, 34),
+            padding: btnPadding,
+            iconSize: iconSize,
+            minimumSize: btnSize,
             dialogTitle: "Delete Transaction",
             dialogMessage:
                 "This will delete this transaction and all of its history.\n"
@@ -170,9 +127,9 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             icon: Icons.u_turn_left,
             initialState: WidgetsButtonActionState.error,
             tooltip: "Refund this transaction",
-            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
-            iconSize: 18,
-            minimumSize: const Size(34, 34),
+            padding: btnPadding,
+            iconSize: iconSize,
+            minimumSize: btnSize,
             dialogTitle: "Refund Transaction",
             dialogMessage:
                 "This will cancel this transaction and refund the balance back to its parent transaction.\n"
@@ -190,9 +147,9 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             icon: Icons.close,
             initialState: WidgetsButtonActionState.warning,
             tooltip: "Close this transaction",
-            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
-            iconSize: 18,
-            minimumSize: const Size(34, 34),
+            padding: btnPadding,
+            iconSize: iconSize,
+            minimumSize: btnSize,
             dialogTitle: "Close Transaction",
             dialogMessage: "Are you sure you want to close this transaction?",
             dialogConfirmLabel: "Close",
@@ -208,9 +165,9 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             icon: Icons.close_fullscreen,
             initialState: WidgetsButtonActionState.warning,
             tooltip: "Finalize this transaction",
-            padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
-            iconSize: 18,
-            minimumSize: const Size(34, 34),
+            padding: btnPadding,
+            iconSize: iconSize,
+            minimumSize: btnSize,
             dialogTitle: "Finalize Transaction",
             dialogMessage: "Are you sure you want to finalize this transaction?",
             dialogConfirmLabel: "finalize",
@@ -220,6 +177,67 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
             actionSuccessMessage: "${tx.srAmountText} - ${tx.balanceText} transaction finalized.",
           ),
       ],
+    );
+  }
+
+  Future<void> _actionRefund(TransactionsModel tx) async {
+    if (onExit != null) {
+      onExit?.call();
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
+    await txController.removeLeaf(tx);
+  }
+
+  Future<void> _actionDelete(TransactionsModel tx) async {
+    if (onExit != null) {
+      onExit?.call();
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
+    await txController.removeRoot(tx);
+  }
+
+  void _evaluatorShowBalance(WidgetsButtonState s) {
+    !cryptosController.isEmpty() ? s.normal() : s.disable();
+  }
+
+  void _evaluatorEditTx(WidgetsButtonState s) {
+    !cryptosController.isEmpty() ? s.normal() : s.disable();
+  }
+
+  void _evaluatorTradeTx(WidgetsButtonState s) {
+    !cryptosController.isEmpty() ? s.action() : s.disable();
+  }
+
+  Widget _formShowBalance(BuildContext dialogContext) {
+    final ptx = txController.getParent(tx);
+    return TransactionsDialogsBalanceSnapshots(initialData: tx, parent: ptx);
+  }
+
+  Widget _formEditTx(BuildContext dialogContext) {
+    return TransactionFormEdit(
+      initialData: tx,
+      parent: txController.getParent(tx),
+      onSave: (e, stx) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        onComplete: onAction,
+        successMessage: "${tx.srAmountText} - ${tx.balanceText} transaction updated.",
+        error: e,
+      ),
+    );
+  }
+
+  Widget _formTradeTx(BuildContext dialogContext) {
+    return TransactionFormTrade(
+      initialData: tx,
+      parent: txController.getParent(tx),
+      onSave: (e, stx) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        onComplete: onAction,
+        successMessage: "New trading transaction created.",
+        error: e,
+      ),
     );
   }
 }

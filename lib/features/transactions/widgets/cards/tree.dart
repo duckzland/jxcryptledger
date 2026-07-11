@@ -250,6 +250,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
                 child: Padding(
                   padding: const EdgeInsets.only(right: 25, top: 6, left: 8),
                   child: TransactionsWidgetsButtonsAction(
+                    parentContext: context,
                     key: Key("action-${_tx.uuid}"),
                     tx: _tx,
                     cryptosController: _cryptosController,

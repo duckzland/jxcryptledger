@@ -358,6 +358,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                 DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
                 DataCell(
                   TransactionsWidgetsButtonsAction(
+                    parentContext: context,
                     key: Key("action-${tx.uuid}"),
                     tx: r['tx'],
                     cryptosController: _cryptosController,

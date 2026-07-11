@@ -59,25 +59,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
             padding: btnPadding,
             iconSize: btnIconSize,
             minimumSize: btnSize,
-            buildForm: (dialogContext) {
-              final stxs = [...txs];
-
-              if (hasSelectedRows) {
-                final selectedTxIds = selectedRows;
-                stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-              }
-
-              return TransactionsDialogsBatchTrade(
-                srId: rrid,
-                transactions: stxs,
-                onSave: (e) => actionableFormSave<TransactionsModel>(
-                  parentContext,
-                  dialogContext: dialogContext,
-                  successMessage: "Trade completed successfully.",
-                  error: e,
-                ),
-              );
-            },
+            buildForm: _formTradeTx,
           ),
 
         if (isDeletable)
@@ -86,28 +68,11 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
             icon: Icons.delete,
             tooltip: "Delete all transactions",
             initialState: WidgetsButtonActionState.error,
-            evaluator: (s) {
-              if (!isDeletable) {
-                s.disable();
-              } else {
-                s.error();
-              }
-            },
+            evaluator: _evaluatorDeleteTx,
             padding: btnPadding,
             iconSize: btnIconSize,
             minimumSize: btnSize,
-            buildForm: (dialogContext) {
-              return TransactionsDialogsBatchAction(
-                transactions: txs,
-                mode: TransactionsBatchActionMode.delete,
-                onSave: (e) => actionableFormSave<TransactionsModel>(
-                  parentContext,
-                  dialogContext: dialogContext,
-                  successMessage: "All transactions deleted.",
-                  error: e,
-                ),
-              );
-            },
+            buildForm: _formDeleteTx,
           ),
 
         if (isRefundable)
@@ -116,28 +81,11 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
             icon: Icons.u_turn_left,
             tooltip: "Refund all refundable transactions found in this group",
             initialState: WidgetsButtonActionState.error,
-            evaluator: (s) {
-              if (!isRefundable) {
-                s.disable();
-              } else {
-                s.error();
-              }
-            },
+            evaluator: _evaluatorRefundTx,
             padding: btnPadding,
             iconSize: btnIconSize,
             minimumSize: btnSize,
-            buildForm: (dialogContext) {
-              return TransactionsDialogsBatchAction(
-                transactions: txs,
-                mode: TransactionsBatchActionMode.refund,
-                onSave: (e) => actionableFormSave<TransactionsModel>(
-                  parentContext,
-                  dialogContext: dialogContext,
-                  successMessage: "Transactions refunded successfully.",
-                  error: e,
-                ),
-              );
-            },
+            buildForm: _formRefundTx,
           ),
 
         if (isClosable)
@@ -146,28 +94,11 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
             icon: Icons.close,
             tooltip: "Close all closable transactions found in this group",
             initialState: WidgetsButtonActionState.warning,
-            evaluator: (s) {
-              if (!isClosable) {
-                s.disable();
-              } else {
-                s.warning();
-              }
-            },
+            evaluator: _evaluatorCloseTx,
             padding: btnPadding,
             iconSize: btnIconSize,
             minimumSize: btnSize,
-            buildForm: (dialogContext) {
-              return TransactionsDialogsBatchAction(
-                transactions: txs,
-                mode: TransactionsBatchActionMode.close,
-                onSave: (e) => actionableFormSave<TransactionsModel>(
-                  parentContext,
-                  dialogContext: dialogContext,
-                  successMessage: "Transactions closed successfully.",
-                  error: e,
-                ),
-              );
-            },
+            buildForm: _formCloseTx,
           ),
 
         if (isFinalizable)
@@ -176,28 +107,11 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
             icon: Icons.close_fullscreen,
             tooltip: "Finalize all finalizable transactions found in this group",
             initialState: WidgetsButtonActionState.warning,
-            evaluator: (s) {
-              if (!isFinalizable) {
-                s.disable();
-              } else {
-                s.warning();
-              }
-            },
+            evaluator: _evaluatorFinalizeTx,
             padding: btnPadding,
             iconSize: btnIconSize,
             minimumSize: btnSize,
-            buildForm: (dialogContext) {
-              return TransactionsDialogsBatchAction(
-                transactions: txs,
-                mode: TransactionsBatchActionMode.finalize,
-                onSave: (e) => actionableFormSave<TransactionsModel>(
-                  parentContext,
-                  dialogContext: dialogContext,
-                  successMessage: "All transactions finalized.",
-                  error: e,
-                ),
-              );
-            },
+            buildForm: _formFinalizeTx,
           ),
 
         WidgetsButton(
@@ -210,6 +124,110 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           onPressed: onToggleShow,
         ),
       ],
+    );
+  }
+
+  void _evaluatorDeleteTx(WidgetsButtonState s) {
+    if (!isDeletable) {
+      s.disable();
+    } else {
+      s.error();
+    }
+  }
+
+  void _evaluatorRefundTx(WidgetsButtonState s) {
+    if (!isRefundable) {
+      s.disable();
+    } else {
+      s.error();
+    }
+  }
+
+  void _evaluatorCloseTx(WidgetsButtonState s) {
+    if (!isClosable) {
+      s.disable();
+    } else {
+      s.warning();
+    }
+  }
+
+  void _evaluatorFinalizeTx(WidgetsButtonState s) {
+    if (!isFinalizable) {
+      s.disable();
+    } else {
+      s.warning();
+    }
+  }
+
+  Widget _formTradeTx(BuildContext dialogContext) {
+    final stxs = [...txs];
+
+    if (hasSelectedRows) {
+      final selectedTxIds = selectedRows;
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
+    return TransactionsDialogsBatchTrade(
+      srId: rrid,
+      transactions: stxs,
+      onSave: (e) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        successMessage: "Trade completed successfully.",
+        error: e,
+      ),
+    );
+  }
+
+  Widget _formDeleteTx(BuildContext dialogContext) {
+    return TransactionsDialogsBatchAction(
+      transactions: txs,
+      mode: TransactionsBatchActionMode.delete,
+      onSave: (e) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        successMessage: "All transactions deleted.",
+        error: e,
+      ),
+    );
+  }
+
+  Widget _formRefundTx(BuildContext dialogContext) {
+    return TransactionsDialogsBatchAction(
+      transactions: txs,
+      mode: TransactionsBatchActionMode.refund,
+      onSave: (e) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        successMessage: "Transactions refunded successfully.",
+        error: e,
+      ),
+    );
+  }
+
+  Widget _formCloseTx(BuildContext dialogContext) {
+    return TransactionsDialogsBatchAction(
+      transactions: txs,
+      mode: TransactionsBatchActionMode.close,
+      onSave: (e) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        successMessage: "Transactions closed successfully.",
+        error: e,
+      ),
+    );
+  }
+
+  Widget _formFinalizeTx(BuildContext dialogContext) {
+    return TransactionsDialogsBatchAction(
+      transactions: txs,
+      mode: TransactionsBatchActionMode.finalize,
+      onSave: (e) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        successMessage: "All transactions finalized.",
+        error: e,
+      ),
     );
   }
 }

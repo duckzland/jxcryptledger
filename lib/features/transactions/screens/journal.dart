@@ -213,6 +213,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                       DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
                       DataCell(
                         TransactionsWidgetsButtonsAction(
+                          parentContext: context,
                           tx: tx,
                           cryptosController: _cryptosController,
                           txController: txController,

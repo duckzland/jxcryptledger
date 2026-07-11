@@ -373,6 +373,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           ),
 
         TransactionsWidgetsButtonsLinkable(
+          parentContext: context,
           srid: widget.srid,
           rrid: widget.rrid,
           txs: txs,
@@ -521,6 +522,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                 DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
                 DataCell(
                   TransactionsWidgetsButtonsAction(
+                    parentContext: context,
                     key: Key("action-${tx.uuid}"),
                     tx: r['tx'],
                     cryptosController: _cryptosController,
