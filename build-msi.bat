@@ -140,6 +140,8 @@ echo ^<?xml version="1.0" encoding="UTF-8"?^>
 echo ^<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"^>
 echo   ^<Package Name="JXLedger" Manufacturer="%MANUFACTURER%" Version="%BUILD_NAME%" UpgradeCode="%UPGRADE_GUID%" Scope="perMachine"^>
 echo     ^<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" /^>
+echo     ^<Icon Id="AppIcon" SourceFile="%SOURCE_DIR%\data\flutter_assets\assets\app_icon.ico" /^>
+echo     ^<Property Id="ARPPRODUCTICON" Value="AppIcon" /^>
 echo     ^<MajorUpgrade DowngradeErrorMessage="A newer version of JXLedger is already installed." Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes" /^>
 echo     ^<MediaTemplate EmbedCab="yes" /^>
 echo     ^<StandardDirectory Id="ProgramFiles64Folder"^>
