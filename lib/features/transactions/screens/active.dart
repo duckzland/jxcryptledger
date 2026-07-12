@@ -162,6 +162,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     }
 
     final separator = EdgeInsets.only(bottom: scrollToGroupGetSeparatorHeight());
+    final theme = Theme.of(context);
 
     return ListView.custom(
       controller: scrollToUtil.controller,
@@ -190,6 +191,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
               onStatusChanged: widget.onStatusChanged,
               onToggleChanged: _toggleAction,
               parentContext: context,
+              theme: theme,
               isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
             ),
           );

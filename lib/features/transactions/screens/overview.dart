@@ -157,6 +157,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     }
 
     final separator = EdgeInsets.only(bottom: scrollToGroupGetSeparatorHeight());
+    final theme = Theme.of(context);
 
     return ListView.custom(
       controller: scrollToUtil.controller,
@@ -180,6 +181,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
               onStatusChanged: widget.onStatusChanged,
               onToggleChanged: _toggleAction,
               parentContext: context,
+              theme: theme,
               isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
             ),
           );

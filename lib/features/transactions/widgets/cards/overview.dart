@@ -38,11 +38,14 @@ class TransactionsWidgetsCardsOverview extends StatefulWidget {
 
   final BuildContext parentContext;
 
+  final ThemeData theme;
+
   final bool isOpen;
 
   const TransactionsWidgetsCardsOverview({
     super.key,
     required this.parentContext,
+    required this.theme,
     required this.id,
     required this.transactions,
     required this.txsFlags,
@@ -264,8 +267,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   Widget _buildTable() {
     final canSelect = isActive && rows.length > 1;
-    final theme = Theme.of(context);
-    final checkboxTheme = theme.checkboxTheme;
     final tableColumns = [
       DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
       DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
@@ -326,8 +327,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         behavior: const AppScrollBehavior(),
         child: DataTable2(
           key: Key("table-${widget.id}"),
-          headingCheckboxTheme: checkboxTheme,
-          datarowCheckboxTheme: checkboxTheme,
+          headingCheckboxTheme: widget.theme.checkboxTheme,
+          datarowCheckboxTheme: widget.theme.checkboxTheme,
           showHeadingCheckBox: canSelect,
           showCheckboxColumn: canSelect,
           minWidth: 1200,

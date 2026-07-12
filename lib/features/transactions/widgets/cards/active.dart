@@ -45,11 +45,14 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
 
   final BuildContext parentContext;
 
+  final ThemeData theme;
+
   final bool isOpen;
 
   const TransactionsWidgetsCardsActive({
     super.key,
     required this.parentContext,
+    required this.theme,
     required this.srid,
     required this.rrid,
     required this.transactions,
@@ -335,8 +338,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
   Widget _buildTable() {
     final canSelect = !isCapital && rows.length > 1;
-    final theme = Theme.of(context);
-    final checkboxTheme = theme.checkboxTheme;
     final tableColumns = [
       DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
       DataColumn2(
@@ -456,8 +457,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         behavior: const AppScrollBehavior(),
         child: DataTable2(
           key: Key("table-${widget.srid}-${widget.rrid}"),
-          headingCheckboxTheme: checkboxTheme,
-          datarowCheckboxTheme: checkboxTheme,
+          headingCheckboxTheme: widget.theme.checkboxTheme,
+          datarowCheckboxTheme: widget.theme.checkboxTheme,
           showHeadingCheckBox: canSelect,
           showCheckboxColumn: canSelect,
           minWidth: 1200,
