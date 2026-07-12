@@ -452,24 +452,51 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: DataTable2(
-        key: Key("table-${widget.srid}-${widget.rrid}"),
-        headingCheckboxTheme: widget.theme.checkboxTheme,
-        datarowCheckboxTheme: widget.theme.checkboxTheme,
-        showHeadingCheckBox: canSelect,
-        showCheckboxColumn: canSelect,
-        minWidth: 1200,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: tableColumns,
-        rows: tableRows,
+      child: Stack(
+        children: [
+          Positioned.fill(child: Center(child: CircularProgressIndicator())),
+          DataTable2(
+            key: Key("table-${widget.srid}-${widget.rrid}"),
+            headingCheckboxTheme: widget.theme.checkboxTheme,
+            datarowCheckboxTheme: widget.theme.checkboxTheme,
+            showHeadingCheckBox: canSelect,
+            showCheckboxColumn: canSelect,
+            minWidth: 1200,
+            columnSpacing: 12,
+            horizontalMargin: 12,
+            headingRowHeight: tableHeadingHeight,
+            dataRowHeight: tableRowHeight,
+            sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
+            sortAscending: sortableAscending,
+            isHorizontalScrollBarVisible: false,
+            columns: tableColumns,
+            rows: tableRows,
+          ),
+        ],
       ),
     );
+
+    // return SizedBox(
+    //   width: double.infinity,
+    //   height: tableCalculateHeight(),
+    //   child: DataTable2(
+    //     key: Key("table-${widget.srid}-${widget.rrid}"),
+    //     headingCheckboxTheme: widget.theme.checkboxTheme,
+    //     datarowCheckboxTheme: widget.theme.checkboxTheme,
+    //     showHeadingCheckBox: canSelect,
+    //     showCheckboxColumn: canSelect,
+    //     minWidth: 1200,
+    //     columnSpacing: 12,
+    //     horizontalMargin: 12,
+    //     headingRowHeight: tableHeadingHeight,
+    //     dataRowHeight: tableRowHeight,
+    //     sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
+    //     sortAscending: sortableAscending,
+    //     isHorizontalScrollBarVisible: false,
+    //     columns: tableColumns,
+    //     rows: tableRows,
+    //   ),
+    // );
   }
 
   List<Map<String, dynamic>> _buildRows() {

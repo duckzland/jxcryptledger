@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../app/scroll_behavior.dart';
 import '../../../../core/runtime/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
@@ -323,25 +322,27 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: ScrollConfiguration(
-        behavior: const AppScrollBehavior(),
-        child: DataTable2(
-          key: Key("table-${widget.id}"),
-          headingCheckboxTheme: widget.theme.checkboxTheme,
-          datarowCheckboxTheme: widget.theme.checkboxTheme,
-          showHeadingCheckBox: canSelect,
-          showCheckboxColumn: canSelect,
-          minWidth: 1200,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: tableHeadingHeight,
-          dataRowHeight: tableRowHeight,
-          sortColumnIndex: sortableColumnIndex,
-          sortAscending: sortableAscending,
-          isHorizontalScrollBarVisible: false,
-          columns: tableColumns,
-          rows: tableRows,
-        ),
+      child: Stack(
+        children: [
+          Positioned.fill(child: Center(child: CircularProgressIndicator())),
+          DataTable2(
+            key: Key("table-${widget.id}"),
+            headingCheckboxTheme: widget.theme.checkboxTheme,
+            datarowCheckboxTheme: widget.theme.checkboxTheme,
+            showHeadingCheckBox: canSelect,
+            showCheckboxColumn: canSelect,
+            minWidth: 1200,
+            columnSpacing: 12,
+            horizontalMargin: 12,
+            headingRowHeight: tableHeadingHeight,
+            dataRowHeight: tableRowHeight,
+            sortColumnIndex: sortableColumnIndex,
+            sortAscending: sortableAscending,
+            isHorizontalScrollBarVisible: false,
+            columns: tableColumns,
+            rows: tableRows,
+          ),
+        ],
       ),
     );
   }
