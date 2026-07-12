@@ -130,14 +130,11 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   double scrollToGroupGetGroupHeight(String id, List<TransactionsModel> txs, double currentWidth) {
     final isOpen = states.get("tx-group-active-open-$id", defaultValue: true);
 
-    double height = 0.0;
-
-    height += 16 + 16;
-    height += 16 + 16;
+    double height = 32.0;
     if (currentWidth > 1035) {
-      height += 50;
+      height += 42;
     } else {
-      height += 130;
+      height += 137;
     }
 
     if (isOpen) {
@@ -164,12 +161,14 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
       );
     }
 
+    final separator = EdgeInsets.only(bottom: scrollToGroupGetSeparatorHeight());
+
     return ListView.custom(
       controller: scrollToUtil.controller,
       scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
       itemExtentBuilder: (index, dimensions) {
         final key = groupKeys[index];
-        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent);
+        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent) + scrollToGroupGetSeparatorHeight();
       },
       childrenDelegate: SliverChildBuilderDelegate(
         (BuildContext itemContext, int idx) {
@@ -181,7 +180,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
           final stxs = groups[key]!;
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: separator,
             child: TransactionsWidgetsCardsActive(
               key: ValueKey("$srId-$rrId"),
               srid: srId,
@@ -189,13 +188,14 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
               transactions: stxs,
               txsFlags: widget.txsFlags,
               onStatusChanged: widget.onStatusChanged,
+              onToggleChanged: _toggleAction,
               parentContext: context,
               isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
             ),
           );
         },
         childCount: groupKeys.length,
-        addAutomaticKeepAlives: false,
+        addAutomaticKeepAlives: true,
         findChildIndexCallback: (Key key) {
           if (key is ValueKey<String>) {
             final targetIdx = groupKeys.indexWhere((k) => k == key.value);
@@ -259,5 +259,9 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     }
 
     return Map<String, List<TransactionsModel>>.fromEntries(entries);
+  }
+
+  void _toggleAction() {
+    setState(() {});
   }
 }

@@ -255,7 +255,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     canFinalize(tx);
 
     if (tx.statusEnum != TransactionStatus.finalized) {
-      tx = tx.copyWith(status: TransactionStatus.finalized.index);
+      tx = tx.copyWith(status: TransactionStatus.finalized.index, balance: 0);
     }
 
     if (debugLogs) {

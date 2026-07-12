@@ -41,6 +41,7 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
   final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
 
   final VoidCallback onStatusChanged;
+  final VoidCallback onToggleChanged;
 
   final BuildContext parentContext;
 
@@ -53,6 +54,7 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
     required this.rrid,
     required this.transactions,
     required this.onStatusChanged,
+    required this.onToggleChanged,
     required this.isOpen,
     required this.txsFlags,
   });
@@ -677,5 +679,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       _isOpen = !_isOpen;
       states.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);
     });
+
+    widget.onToggleChanged.call();
   }
 }

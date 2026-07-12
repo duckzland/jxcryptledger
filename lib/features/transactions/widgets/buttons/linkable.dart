@@ -47,23 +47,24 @@ class TransactionsWidgetsButtonsLinkable extends StatelessWidget with MixinsActi
       mainAxisSize: MainAxisSize.min,
       spacing: 8,
       children: [
-        AnimatedBuilder(
-          animation: pxController,
-          builder: (context, _) {
-            final linkedPanel = pxController.getLinked("active-screen-$srid-$rrid");
-            return WidgetsDialogsShowForm(
-              key: const Key("add-watchboard-button"),
-              icon: Icons.candlestick_chart_outlined,
-              padding: btnPadding,
-              iconSize: btnIconSize,
-              minimumSize: btnSize,
-              tooltip: linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
-              persistBg: true,
-              evaluator: _evaluatorWatchboard,
-              buildForm: _formWatchboard,
-            );
-          },
-        ),
+        if (balance > 0)
+          AnimatedBuilder(
+            animation: pxController,
+            builder: (context, _) {
+              final linkedPanel = pxController.getLinked("active-screen-$srid-$rrid");
+              return WidgetsDialogsShowForm(
+                key: const Key("add-watchboard-button"),
+                icon: Icons.candlestick_chart_outlined,
+                padding: btnPadding,
+                iconSize: btnIconSize,
+                minimumSize: btnSize,
+                tooltip: linkedPanel == null ? "Add new watchboard" : "Edit watchboard",
+                persistBg: true,
+                evaluator: _evaluatorWatchboard,
+                buildForm: _formWatchboard,
+              );
+            },
+          ),
 
         AnimatedBuilder(
           animation: wxController,

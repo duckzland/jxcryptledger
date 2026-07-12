@@ -32,7 +32,9 @@ class TransactionsWidgetsCardsOverview extends StatefulWidget {
   final int id;
   final List<TransactionsModel> transactions;
   final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
+
   final VoidCallback onStatusChanged;
+  final VoidCallback onToggleChanged;
 
   final BuildContext parentContext;
 
@@ -45,6 +47,7 @@ class TransactionsWidgetsCardsOverview extends StatefulWidget {
     required this.transactions,
     required this.txsFlags,
     required this.onStatusChanged,
+    required this.onToggleChanged,
     required this.isOpen,
   });
 
@@ -280,11 +283,9 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         selected: canSelect ? selectableIsSelected(r['uuid']) : false,
         onSelectChanged: canSelect
             ? (v) {
-                setState(() {
-                  selectableSetSelected(r['uuid'], v!);
-                  _calculateProfitLoss();
-                  sortableApplySorting();
-                });
+                selectableSetSelected(r['uuid'], v!);
+                _calculateProfitLoss();
+                sortableApplySorting();
               }
             : null,
         onTap: () {
@@ -407,7 +408,9 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   void _toggleShowAction(WidgetsButtonState b) {
     setState(() {
       _isOpen = !_isOpen;
-      states.set("tx-group-active-open-${widget.id}", _isOpen);
+      states.set("tx-group-overview-open-${widget.id}", _isOpen);
     });
+
+    widget.onToggleChanged.call();
   }
 }

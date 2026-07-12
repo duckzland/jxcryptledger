@@ -130,7 +130,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     double height = 0.0;
 
     height += 16 + 16;
-    height += (currentWidth > 595) ? 68 : 116;
+    height += (currentWidth > 595) ? 44 : 92;
 
     if (isOpen) {
       height += 20;
@@ -156,12 +156,14 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
       );
     }
 
+    final separator = EdgeInsets.only(bottom: scrollToGroupGetSeparatorHeight());
+
     return ListView.custom(
       controller: scrollToUtil.controller,
       scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
       itemExtentBuilder: (index, dimensions) {
         final key = groupKeys[index];
-        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent);
+        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent) + scrollToGroupGetSeparatorHeight();
       },
       childrenDelegate: SliverChildBuilderDelegate(
         (BuildContext itemContext, int idx) {
@@ -169,20 +171,21 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
           final stxs = groups[rrId]!;
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: separator,
             child: TransactionsWidgetsCardsOverview(
               key: ValueKey(rrId),
               id: int.parse(rrId),
               transactions: stxs,
               txsFlags: widget.txsFlags,
               onStatusChanged: widget.onStatusChanged,
+              onToggleChanged: _toggleAction,
               parentContext: context,
               isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
             ),
           );
         },
         childCount: groupKeys.length,
-        addAutomaticKeepAlives: false,
+        addAutomaticKeepAlives: true,
         findChildIndexCallback: (Key key) {
           if (key is ValueKey<String>) {
             final targetIdx = groupKeys.indexWhere((k) => k == key.value);
@@ -243,5 +246,9 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     }
 
     return Map<String, List<TransactionsModel>>.fromEntries(entries);
+  }
+
+  void _toggleAction() {
+    setState(() {});
   }
 }
