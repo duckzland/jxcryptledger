@@ -88,8 +88,6 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
       int rrId = _saveResultCryptoField();
       double rrAmount = _saveResultAmountField();
 
-      print("RRAMOUNT $rrAmount");
-
       if (_isCapital) {
         rrAmount = srAmount;
         balance = srAmount;
