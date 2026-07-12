@@ -160,8 +160,13 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     checkForFinalizable();
     checkForRefundable();
 
-    rows = [];
-    rateableGetRate(refresh: false, silent: true);
+    _calculateProfitLoss();
+    rows = _buildRows();
+    sortableApplySorting(pauseRefresh: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      rateableGetRate(refresh: false, silent: true);
+    });
   }
 
   @override

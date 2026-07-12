@@ -81,7 +81,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     };
 
     rows = _buildRows();
-    sortableApplySorting();
+    sortableApplySorting(pauseRefresh: true);
   }
 
   @override

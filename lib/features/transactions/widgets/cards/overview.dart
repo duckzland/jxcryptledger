@@ -111,7 +111,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
     _calculateProfitLoss();
     rows = _buildRows();
-    sortableApplySorting();
+    sortableApplySorting(pauseRefresh: true);
   }
 
   @override
