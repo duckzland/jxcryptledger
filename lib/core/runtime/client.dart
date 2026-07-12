@@ -65,21 +65,17 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
   @override
   Future<void> shutdown() async {
     // Note: Had to wrap in try catch for each block to ensure we exit no matter what.
+
+    try {
+      if (CoreMode.isMain && CoreMode.isUnlocked) {
+        await states.save();
+      }
+    } catch (_) {}
+
     try {
       if (!hasClient(exclude: pid) && isServerAvailable()) {
         logln("Shutting down server");
         await ipcClient.send(op: IpcAction.shutdown, action: "shutdown", key: pid);
-      }
-    } catch (_) {}
-
-    // @todo: figure out on how to save multiple app state!
-    try {
-      if (CoreMode.isMain && CoreMode.isUnlocked) {
-        // This is workaround to fix initial boot and scroll causes blank table
-        states.remove('tx-group-offset-active');
-        states.remove('tx-group-offset-overview');
-
-        await states.save();
       }
     } catch (_) {}
 

@@ -22,7 +22,11 @@ class StateService {
   Future<void> save() async {
     final jsonData = store();
 
-    await controller.updateByKey(SettingKey.states, jsonData);
+    try {
+      await controller.updateByKey(SettingKey.states, jsonData);
+    } catch (e) {
+      logln("Failed to save app state to database: $e");
+    }
 
     logln('Saved app state to database.');
   }
