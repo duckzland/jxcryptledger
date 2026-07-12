@@ -31,7 +31,7 @@ class Utils {
     }
 
     if (smartDecimal && value.abs() > 100) {
-      effectivePrecision = 2;
+      effectivePrecision = 4;
     }
 
     dec = dec.round(scale: effectivePrecision);

@@ -74,7 +74,7 @@ class RatesModel implements CoreModelWithId {
     );
   }
 
-  String get rateText => Utils.formatSmartDouble(rateDouble);
+  String get rateText => Utils.formatSmartDouble(rateDouble, smartDecimal: false);
 
   Decimal get rate {
     if (sourceAmount <= Decimal.zero || targetAmount <= Decimal.zero) {

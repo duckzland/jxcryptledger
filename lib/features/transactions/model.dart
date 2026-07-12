@@ -348,6 +348,12 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
   String get rateText => Utils.formatSmartDouble(rateDouble);
   String get rateReversedText => Utils.formatSmartDouble(1 / rateDouble);
 
+  String get srAmountTextRaw => Utils.formatSmartDouble(srAmount, smartDecimal: false);
+  String get rrAmountTextRaw => Utils.formatSmartDouble(rrAmount, smartDecimal: false);
+  String get balanceTextRaw => Utils.formatSmartDouble(balance, smartDecimal: false);
+  String get rateTextRaw => Utils.formatSmartDouble(rateDouble, smartDecimal: false);
+  String get rateReversedTextRaw => Utils.formatSmartDouble(1 / rateDouble, smartDecimal: false);
+
   Decimal get rate {
     if (srAmount <= 0 || rrAmount <= 0) return Decimal.zero;
     final r = rrAmount / srAmount;

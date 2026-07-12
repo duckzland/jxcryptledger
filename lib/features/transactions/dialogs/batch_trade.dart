@@ -164,8 +164,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
-        'balance': '${tx.balanceText} $resultSymbol',
+        'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
+        'balance': '${tx.balanceTextRaw} $resultSymbol',
         'rate': rateableAmount,
         'amount': amount,
         'tx': tx,
@@ -217,7 +217,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                   DataCell(Text(r['transaction'] ?? '')),
                   DataCell(Text(r['balance'] ?? '')),
                   if (showRate) DataCell(rateText),
-                  if (showRate) DataCell(Text('${Utils.formatSmartDouble(r['amount'] ?? 0)} $targetSymbol')),
+                  if (showRate) DataCell(Text('${Utils.formatSmartDouble(r['amount'] ?? 0, smartDecimal: false)} $targetSymbol')),
                 ],
               );
             }),
@@ -248,9 +248,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         columns: [
           const DataColumn2(label: Text('        Total'), fixedWidth: 130),
           const DataColumn2(label: Text(' '), size: ColumnSize.M),
-          DataColumn2(label: Text('${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol'), size: ColumnSize.M),
+          DataColumn2(label: Text('${Utils.formatSmartDouble(_sourceAmount, smartDecimal: false)} $_selectedSymbol'), size: ColumnSize.M),
           if (showRate) const DataColumn2(label: Text(''), size: ColumnSize.M),
-          if (showRate) DataColumn2(label: Text('${Utils.formatSmartDouble(resultValue)} $targetSymbol'), size: ColumnSize.M),
+          if (showRate)
+            DataColumn2(label: Text('${Utils.formatSmartDouble(resultValue, smartDecimal: false)} $targetSymbol'), size: ColumnSize.M),
         ],
         rows: [],
       ),
@@ -324,7 +325,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Widget _buildFromAmountField() {
     return TextField(
       controller: TextEditingController(
-        text: selectableHasSelectedRows() ? "${Utils.formatSmartDouble(_sourceAmount)} $_selectedSymbol" : "No transaction selected",
+        text: selectableHasSelectedRows()
+            ? "${Utils.formatSmartDouble(_sourceAmount, smartDecimal: false)} $_selectedSymbol"
+            : "No transaction selected",
       ),
       readOnly: true,
       style: const TextStyle(fontSize: 16),
@@ -395,7 +398,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       "Result:",
       TextField(
         controller: TextEditingController(
-          text: (_sourceAmount <= 0 || entryRate <= 0) ? "" : "${Utils.formatSmartDouble(resultValue)} $targetSymbol",
+          text: (_sourceAmount <= 0 || entryRate <= 0) ? "" : "${Utils.formatSmartDouble(resultValue, smartDecimal: false)} $targetSymbol",
         ),
         readOnly: true,
         style: const TextStyle(fontSize: 16),

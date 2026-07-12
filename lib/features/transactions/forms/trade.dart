@@ -191,7 +191,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
 
     return WidgetsFieldsAmount(
       title: 'Amount',
-      helperText: 'Max: ${Utils.formatSmartDouble(balance)}',
+      helperText: 'Max: ${Utils.formatSmartDouble(balance, smartDecimal: false)}',
       useMax: balance,
       suffixText: symbol,
       onChanged: (value) {

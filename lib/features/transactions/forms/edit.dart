@@ -88,6 +88,8 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
       int rrId = _saveResultCryptoField();
       double rrAmount = _saveResultAmountField();
 
+      print("RRAMOUNT $rrAmount");
+
       if (_isCapital) {
         rrAmount = srAmount;
         balance = srAmount;
@@ -345,7 +347,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
     return WidgetsFieldsAmount(
       title: 'Amount',
-      initialValue: data?.srAmountText.replaceAll(',', ''),
+      initialValue: data?.srAmountTextRaw.replaceAll(',', ''),
       suffixText: symbol,
       enabled: _isActive,
       helperText: 'e.g., 1.5',
@@ -378,7 +380,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
     return WidgetsFieldsAmount(
       title: 'Amount',
-      initialValue: data?.rrAmountText.replaceAll(',', ''),
+      initialValue: data?.rrAmountTextRaw.replaceAll(',', ''),
       suffixText: symbol,
       enabled: isRoot || _isActive,
       helperText: 'e.g., 10.5',

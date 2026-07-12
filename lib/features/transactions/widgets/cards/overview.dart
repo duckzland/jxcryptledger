@@ -165,8 +165,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
     final actions = TransactionsWidgetsButtonsBatch(
       parentContext: widget.parentContext,
-      rrid: widget.id,
       srid: 0,
+      rrid: widget.id,
       txs: txs,
       selectedRows: selectableSelectedRows,
       isOpen: _isOpen,
