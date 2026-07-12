@@ -75,6 +75,10 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
     // @todo: figure out on how to save multiple app state!
     try {
       if (CoreMode.isMain && CoreMode.isUnlocked) {
+        // This is workaround to fix initial boot and scroll causes blank table
+        states.remove('tx-group-offset-active');
+        states.remove('tx-group-offset-overview');
+
         await states.save();
       }
     } catch (_) {}
