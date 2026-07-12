@@ -188,7 +188,6 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         },
         childCount: groupKeys.length,
         addAutomaticKeepAlives: true,
-        addRepaintBoundaries: false,
         findChildIndexCallback: (Key key) {
           if (key is ValueKey<String>) {
             final targetIdx = groupKeys.indexWhere((k) => k == key.value);

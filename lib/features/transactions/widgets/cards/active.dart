@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../app/scroll_behavior.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../core/runtime/locator.dart';
@@ -453,25 +452,22 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: ScrollConfiguration(
-        behavior: const AppScrollBehavior(),
-        child: DataTable2(
-          key: Key("table-${widget.srid}-${widget.rrid}"),
-          headingCheckboxTheme: widget.theme.checkboxTheme,
-          datarowCheckboxTheme: widget.theme.checkboxTheme,
-          showHeadingCheckBox: canSelect,
-          showCheckboxColumn: canSelect,
-          minWidth: 1200,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: tableHeadingHeight,
-          dataRowHeight: tableRowHeight,
-          sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
-          sortAscending: sortableAscending,
-          isHorizontalScrollBarVisible: false,
-          columns: tableColumns,
-          rows: tableRows,
-        ),
+      child: DataTable2(
+        key: Key("table-${widget.srid}-${widget.rrid}"),
+        headingCheckboxTheme: widget.theme.checkboxTheme,
+        datarowCheckboxTheme: widget.theme.checkboxTheme,
+        showHeadingCheckBox: canSelect,
+        showCheckboxColumn: canSelect,
+        minWidth: 1200,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        columns: tableColumns,
+        rows: tableRows,
       ),
     );
   }

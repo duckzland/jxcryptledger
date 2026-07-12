@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../mixins/state.dart';
 import 'router.dart';
+import 'scroll_behavior.dart';
 import 'theme.dart';
 
 class AppRoot extends StatefulWidget {
@@ -27,7 +28,7 @@ class _AppRootState extends State<AppRoot> with MixinsState {
 
         return MediaQuery(
           data: mq.copyWith(textScaler: TextScaler.noScaling),
-          child: child!,
+          child: ScrollConfiguration(behavior: const AppScrollBehavior(), child: child!),
         );
       },
     );

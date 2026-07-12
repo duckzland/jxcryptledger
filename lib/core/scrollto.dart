@@ -9,8 +9,8 @@ class ScrollTo with MixinsState {
   late ScrollController controller;
   Timer? _debounce;
 
-  ScrollTo([this.storeKey]) {
-    controller = ScrollController(initialScrollOffset: states.get(storeKey ?? "", defaultValue: 0.0));
+  ScrollTo([this.storeKey, bootAndScroll = true]) {
+    controller = ScrollController(initialScrollOffset: bootAndScroll ? states.get(storeKey ?? "", defaultValue: 0.0) : 0.0);
 
     if (storeKey != null) {
       controller.addListener(storeOffset);
