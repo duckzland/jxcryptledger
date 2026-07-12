@@ -130,7 +130,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     double height = 0.0;
 
     height += 16 + 16;
-    height += (currentWidth > 560) ? 40 : 90;
+    height += (currentWidth > 595) ? 68 : 116;
 
     if (isOpen) {
       height += 20;
@@ -159,6 +159,10 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     return ListView.custom(
       controller: scrollToUtil.controller,
       scrollCacheExtent: const ScrollCacheExtent.viewport(3.0),
+      itemExtentBuilder: (index, dimensions) {
+        final key = groupKeys[index];
+        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent);
+      },
       childrenDelegate: SliverChildBuilderDelegate(
         (BuildContext itemContext, int idx) {
           final rrId = groupKeys[idx];

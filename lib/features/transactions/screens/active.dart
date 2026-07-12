@@ -136,12 +136,8 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     height += 16 + 16;
     if (currentWidth > 1035) {
       height += 50;
-    } else if (currentWidth > 800) {
-      height += 120;
-    } else if (currentWidth > 470) {
-      height += 160;
     } else {
-      height += 200;
+      height += 130;
     }
 
     if (isOpen) {
@@ -171,6 +167,10 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     return ListView.custom(
       controller: scrollToUtil.controller,
       scrollCacheExtent: const ScrollCacheExtent.viewport(3.0),
+      itemExtentBuilder: (index, dimensions) {
+        final key = groupKeys[index];
+        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent);
+      },
       childrenDelegate: SliverChildBuilderDelegate(
         (BuildContext itemContext, int idx) {
           final key = groupKeys[idx];
