@@ -152,7 +152,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   @override
   Widget build(BuildContext context) {
-    return WidgetsPanel(child: Column(spacing: 20, children: [_buildHeader(), if (_isOpen) _buildTable()]));
+    return WidgetsPanel(
+      child: rows.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : Column(spacing: 20, children: [_buildHeader(), if (_isOpen) _buildTable()]),
+    );
   }
 
   Widget _buildHeader() {
@@ -322,27 +326,22 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: Stack(
-        children: [
-          Positioned.fill(child: Center(child: CircularProgressIndicator())),
-          DataTable2(
-            key: Key("table-${widget.id}"),
-            headingCheckboxTheme: widget.theme.checkboxTheme,
-            datarowCheckboxTheme: widget.theme.checkboxTheme,
-            showHeadingCheckBox: canSelect,
-            showCheckboxColumn: canSelect,
-            minWidth: 1200,
-            columnSpacing: 12,
-            horizontalMargin: 12,
-            headingRowHeight: tableHeadingHeight,
-            dataRowHeight: tableRowHeight,
-            sortColumnIndex: sortableColumnIndex,
-            sortAscending: sortableAscending,
-            isHorizontalScrollBarVisible: false,
-            columns: tableColumns,
-            rows: tableRows,
-          ),
-        ],
+      child: DataTable2(
+        key: Key("table-overview-${widget.id}"),
+        headingCheckboxTheme: widget.theme.checkboxTheme,
+        datarowCheckboxTheme: widget.theme.checkboxTheme,
+        showHeadingCheckBox: canSelect,
+        showCheckboxColumn: canSelect,
+        minWidth: 1200,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        sortColumnIndex: sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        columns: tableColumns,
+        rows: tableRows,
       ),
     );
   }

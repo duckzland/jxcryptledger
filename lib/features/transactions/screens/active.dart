@@ -183,7 +183,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
           return Padding(
             padding: separator,
             child: TransactionsWidgetsCardsActive(
-              key: ValueKey("$srId-$rrId"),
+              key: ValueKey(key),
               srid: srId,
               rrid: rrId,
               transactions: stxs,
