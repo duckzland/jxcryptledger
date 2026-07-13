@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../mixins/actionable.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
@@ -61,7 +61,7 @@ class WatchersButtons extends StatelessWidget with MixinsActionable {
           actionCompleteCallback: onAction,
           actionSuccessMessage: "Rate watcher deleted.",
         ),
-        WidgetsButton(
+        WidgetsButtonsAction(
           key: Key("test-button-${tx.wid}"),
           icon: Icons.arrow_forward,
           initialState: WidgetsButtonActionState.action,

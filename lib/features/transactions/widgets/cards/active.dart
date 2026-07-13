@@ -14,7 +14,7 @@ import '../../../../mixins/sortable_table.dart';
 import '../../../../mixins/state.dart';
 import '../../../../mixins/table.dart';
 import '../../../../widgets/balance_text.dart';
-import '../../../../widgets/button.dart';
+import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
@@ -306,7 +306,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                 ),
               ),
 
-              WidgetsButton(
+              WidgetsButtonsAction(
                 icon: Icons.swap_horiz,
                 padding: btnPadding,
                 iconSize: btnIconSize,
@@ -400,8 +400,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         ),
       ],
 
-      DataColumn2(label: const Text('Status '), fixedWidth: 100, onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9]),
-      const DataColumn2(label: Text('Actions'), fixedWidth: 160),
+      DataColumn2(label: const Text('Status '), fixedWidth: 80, onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9]),
+      const DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
 
     final tableRows = rows.map((r) {
@@ -637,7 +637,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _plPercentage = _calc.profitLossPercentage(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
   }
 
-  void _reverseRateAction(WidgetsButtonState s) {
+  void _reverseRateAction(WidgetsButtonsActionState s) {
     _isReversed = !_isReversed;
     if (_customRate != null) {
       _customRate = Math.divide(1, _customRate!);
@@ -650,7 +650,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     sortableApplySorting();
   }
 
-  void _reverseActionEvaluator(WidgetsButtonState s) {
+  void _reverseActionEvaluator(WidgetsButtonsActionState s) {
     if (_isReversed) {
       s.action();
     } else {
@@ -680,7 +680,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     rateableGetRate(refresh: false, reversed: _isReversed);
   }
 
-  void _toggleShowAction(WidgetsButtonState b) {
+  void _toggleShowAction(WidgetsButtonsActionState b) {
     setState(() {
       _isOpen = !_isOpen;
       states.set("tx-group-active-open-$rateableSource-$rateableTarget", _isOpen);

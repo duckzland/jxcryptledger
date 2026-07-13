@@ -10,7 +10,7 @@ import '../../../core/utils.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
-import '../../../widgets/button.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
@@ -292,7 +292,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
       padding: const EdgeInsets.all(12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [WidgetsButton(label: 'Close', onPressed: (_) => Navigator.pop(context))],
+        children: [WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context))],
       ),
     );
   }

@@ -194,8 +194,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                   DataColumn2(label: const Text('To'), size: ColumnSize.M, onSort: sortableSorters[3]),
                   DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
                   const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
-                  DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sortableSorters[5]),
-                  const DataColumn2(label: Text('Actions'), fixedWidth: 160),
+                  DataColumn2(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
+                  const DataColumn2(label: Text('Actions'), fixedWidth: 100),
                 ],
                 rows: rows.map((r) {
                   final tx = r['tx'] as TransactionsModel;

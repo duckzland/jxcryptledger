@@ -19,6 +19,7 @@ class AppTheme {
 
   static const background = Color(0xFF0D1421);
   static const scrimBackground = Color(0xFF06070A);
+  static const menuBackground = Color(0xFF0161A1);
   static const menuHeaderBg = Color(0xFF1F3C6E);
   static const headerBg = Color(0xFF161C27);
   static const columnHeaderBg = Color(0xFF000000);
@@ -194,6 +195,15 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
+      ),
+
+      menuTheme: MenuThemeData(
+        style: MenuStyle(
+          backgroundColor: WidgetStateProperty.all(menuBackground),
+          surfaceTintColor: WidgetStateProperty.all(menuBackground),
+          shadowColor: WidgetStateProperty.all(menuBackground),
+          padding: WidgetStateProperty.all(const EdgeInsets.only(top: 6, left: 6, right: 6, bottom: 6)),
+        ),
       ),
     );
   }

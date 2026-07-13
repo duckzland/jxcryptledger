@@ -6,11 +6,12 @@ import '../../core/runtime/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actionable.dart';
 import '../../mixins/state.dart';
+import '../../widgets/buttons/dropdown.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
-import '../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
@@ -151,7 +152,7 @@ class TransactionsPageState extends State<TransactionsPage>
         Wrap(
           spacing: 4,
           children: [
-            WidgetsButton(
+            WidgetsButtonsAction(
               key: const Key("view-active"),
               icon: Icons.show_chart,
               padding: const EdgeInsets.all(8),
@@ -175,7 +176,7 @@ class TransactionsPageState extends State<TransactionsPage>
                 });
               },
             ),
-            WidgetsButton(
+            WidgetsButtonsAction(
               key: const Key("view-balance"),
               icon: Icons.account_balance_wallet_outlined,
               padding: const EdgeInsets.all(8),
@@ -199,7 +200,7 @@ class TransactionsPageState extends State<TransactionsPage>
                 });
               },
             ),
-            WidgetsButton(
+            WidgetsButtonsAction(
               key: const Key("view-journal"),
               icon: Icons.article_outlined,
               padding: const EdgeInsets.all(8),
@@ -223,7 +224,7 @@ class TransactionsPageState extends State<TransactionsPage>
                 });
               },
             ),
-            WidgetsButton(
+            WidgetsButtonsAction(
               key: const Key("view-history"),
               icon: Icons.history,
               padding: const EdgeInsets.all(8),
@@ -266,7 +267,7 @@ class TransactionsPageState extends State<TransactionsPage>
           Wrap(
             spacing: 4,
             children: [
-              WidgetsButton(
+              WidgetsButtonsAction(
                 key: const Key("toggle-hide-button"),
                 icon: Icons.expand_less,
                 padding: const EdgeInsets.all(0),
@@ -278,7 +279,7 @@ class TransactionsPageState extends State<TransactionsPage>
                   setState(() {});
                 },
               ),
-              WidgetsButton(
+              WidgetsButtonsAction(
                 key: const Key("toggle-show-button"),
                 icon: Icons.expand_more,
                 padding: const EdgeInsets.all(0),
@@ -297,13 +298,40 @@ class TransactionsPageState extends State<TransactionsPage>
             _viewMode == TransactionsViewMode.history)
           const WidgetsSeparator(),
 
-        Wrap(
-          spacing: 4,
+        WidgetsButtonsDropdown(
+          dotStates: [
+            WidgetsButtonActionState.action,
+            WidgetsButtonActionState.error,
+            WidgetsButtonActionState.warning,
+            WidgetsButtonActionState.warning,
+            WidgetsButtonActionState.primary,
+            WidgetsButtonActionState.action,
+            WidgetsButtonActionState.error,
+          ],
+          maxVisible: 1,
+          iconWidth: 34,
+          iconHeight: 34,
+          menuWidth: 120,
+          menuAlignRight: true,
           children: [
+            WidgetsDialogsShowForm(
+              key: const Key("add-button"),
+              tooltip: "Add new transaction",
+              label: "Create New",
+              buildForm: _buildForm,
+              evaluator: (s) {
+                if (_cryptosController.isEmpty()) {
+                  s.disable();
+                } else {
+                  s.action();
+                }
+              },
+            ),
             WidgetsDialogsShowForm(
               key: const Key("delete-multiple-button"),
               icon: Icons.delete,
               tooltip: "Delete all transactions",
+              label: "Delete",
               initialState: WidgetsButtonActionState.error,
               evaluator: (s) {
                 final bool isDeletable = txController.hasDeletableRoot();
@@ -330,6 +358,7 @@ class TransactionsPageState extends State<TransactionsPage>
               key: const Key("close-multiple-button"),
               icon: Icons.close,
               tooltip: "Close all closable transactions",
+              label: "Close",
               initialState: WidgetsButtonActionState.warning,
               evaluator: (s) {
                 final bool isClosable = txController.hasClosableLeaf();
@@ -356,6 +385,7 @@ class TransactionsPageState extends State<TransactionsPage>
               key: const Key("finalize-multiple-button"),
               icon: Icons.close_fullscreen,
               tooltip: "Finalize all finalizable transactions",
+              label: "Finalize",
               initialState: WidgetsButtonActionState.warning,
               evaluator: (s) {
                 final bool isFinalizable = txController.hasFinalizable();
@@ -378,28 +408,10 @@ class TransactionsPageState extends State<TransactionsPage>
                 );
               },
             ),
-
-            WidgetsDialogsShowForm(
-              key: const Key("add-button"),
-              tooltip: "Add new transaction",
-              buildForm: _buildForm,
-              evaluator: (s) {
-                if (_cryptosController.isEmpty()) {
-                  s.disable();
-                } else {
-                  s.action();
-                }
-              },
-            ),
-          ],
-        ),
-        const WidgetsSeparator(),
-        Wrap(
-          spacing: 4,
-          children: [
             WidgetsDialogsImport(
               key: const Key("import-button-batch"),
               tooltip: "Import transactions to database",
+              label: "Import DB",
               iconSize: 20,
               minimumSize: const Size(40, 40),
               padding: const EdgeInsets.all(8),
@@ -413,6 +425,7 @@ class TransactionsPageState extends State<TransactionsPage>
             WidgetsDialogsExport(
               key: const Key("export-button-batch"),
               tooltip: "Export transactions from database",
+              label: "Export DB",
               suggestedPrefix: "transactions_",
               onExport: txController.exportDatabase,
               isEmpty: txController.isEmpty,
@@ -420,6 +433,7 @@ class TransactionsPageState extends State<TransactionsPage>
             WidgetsDialogsReset(
               key: const Key("reset-button-batch"),
               tooltip: "Reset transactions database",
+              label: "Reset DB",
               dialogTitle: "Delete All Transactions",
               dialogMessage:
                   "This will delete all transactions and all of its history.\n"

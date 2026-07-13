@@ -13,7 +13,7 @@ import '../../mixins/scrollto_table.dart';
 import '../../mixins/sortable_table.dart';
 import '../../mixins/state.dart';
 import '../../mixins/table.dart';
-import '../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';

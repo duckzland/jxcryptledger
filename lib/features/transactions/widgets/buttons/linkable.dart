@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/runtime/locator.dart';
 import '../../../../mixins/actionable.dart';
-import '../../../../widgets/button.dart';
+import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/dialogs/show_form.dart';
 import '../../../watchboard/panels/controller.dart';
 import '../../../watchboard/panels/form.dart';
@@ -87,7 +87,7 @@ class TransactionsWidgetsButtonsLinkable extends StatelessWidget with MixinsActi
     );
   }
 
-  void _evaluatorWatchboard(WidgetsButtonState s) {
+  void _evaluatorWatchboard(WidgetsButtonsActionState s) {
     final linkedPanel = pxController.getLinked("active-screen-$srid-$rrid");
     if (linkedPanel == null) {
       s.normal();
@@ -96,7 +96,7 @@ class TransactionsWidgetsButtonsLinkable extends StatelessWidget with MixinsActi
     }
   }
 
-  void _evaluatorWatcher(WidgetsButtonState s) {
+  void _evaluatorWatcher(WidgetsButtonsActionState s) {
     final linkedWatcher = wxController.getLinked("active-screen-$srid-$rrid");
     if (linkedWatcher == null) {
       s.normal();

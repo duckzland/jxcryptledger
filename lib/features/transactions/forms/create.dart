@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/exceptions.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
-import '../../../widgets/button.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/datepicker.dart';
 import '../../../widgets/fields/textarea.dart';
@@ -288,8 +288,8 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        WidgetsButton(label: "Create New", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
+        WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+        WidgetsButtonsAction(label: "Create New", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
       ],
     );
   }

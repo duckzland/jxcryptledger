@@ -9,7 +9,7 @@ import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/state.dart';
-import '../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/show_form.dart';
 import '../../widgets/dialogs/export.dart';
@@ -123,7 +123,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         Wrap(
           spacing: 4,
           children: [
-            WidgetsButton(
+            WidgetsButtonsAction(
               key: _enableTickers ? const Key("ticker-shown") : const Key("ticker-hidden"),
               icon: Icons.remove_red_eye,
               padding: const EdgeInsets.all(8),
@@ -145,7 +145,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
                 });
               },
             ),
-            WidgetsButton(
+            WidgetsButtonsAction(
               key: _enableDrag ? const Key("panel-drag-allowed") : const Key("panel-drag-disabled"),
               icon: Icons.drag_indicator,
               padding: const EdgeInsets.all(8),

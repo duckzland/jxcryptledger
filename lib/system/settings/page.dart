@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
-import '../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
@@ -256,7 +256,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
   }
 
   Widget _buildSaveButton() {
-    return WidgetsButton(
+    return WidgetsButtonsAction(
       key: const ValueKey('settings-save-button'),
       label: "Save Changes",
       initialState: WidgetsButtonActionState.action,
@@ -294,7 +294,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
   }
 
   Widget _buildResetButton(List<SettingKey> editableKeys) {
-    return WidgetsButton(
+    return WidgetsButtonsAction(
       key: const ValueKey('settings-reset-button'),
       initialState: WidgetsButtonActionState.error,
       label: "Reset to Default",
@@ -306,13 +306,17 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
               title: const Text("Reset Settings"),
               content: const Text("Are you sure you want to reset all settings to default values?"),
               actions: [
-                WidgetsButton(
+                WidgetsButtonsAction(
                   label: "Cancel",
                   onPressed: (s) {
                     Navigator.pop(context, false);
                   },
                 ),
-                WidgetsButton(initialState: WidgetsButtonActionState.error, label: "Reset", onPressed: (s) => Navigator.pop(context, true)),
+                WidgetsButtonsAction(
+                  initialState: WidgetsButtonActionState.error,
+                  label: "Reset",
+                  onPressed: (s) => Navigator.pop(context, true),
+                ),
               ],
             );
           },

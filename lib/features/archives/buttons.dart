@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../mixins/actionable.dart';
 import '../../widgets/dialogs/alert.dart';
 import 'controller.dart';

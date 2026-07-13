@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/runtime/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/state.dart';
-import '../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
 import 'screens/qrcode.dart';
@@ -61,7 +61,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
     return Wrap(
       spacing: 4,
       children: [
-        WidgetsButton(
+        WidgetsButtonsAction(
           icon: Icons.calculate,
           padding: const EdgeInsets.all(8),
           iconSize: 20,
@@ -82,7 +82,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
           },
         ),
 
-        WidgetsButton(
+        WidgetsButtonsAction(
           icon: Icons.swap_horiz,
           padding: const EdgeInsets.all(8),
           iconSize: 20,
@@ -103,7 +103,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
           },
         ),
 
-        WidgetsButton(
+        WidgetsButtonsAction(
           icon: Icons.qr_code_2,
           padding: const EdgeInsets.all(8),
           iconSize: 20,

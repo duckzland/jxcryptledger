@@ -8,7 +8,7 @@ import '../../core/runtime/locator.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
-import '../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import 'controller.dart';
 
 class SystemUnlockPage extends StatefulWidget {
@@ -127,7 +127,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
           ],
         ),
 
-        WidgetsButton(
+        WidgetsButtonsAction(
           label: "Create Vault",
           initialState: WidgetsButtonActionState.action,
           evaluator: (s) {
@@ -189,7 +189,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
           decoration: InputDecoration(labelText: "Password", errorText: error),
         ),
 
-        WidgetsButton(
+        WidgetsButtonsAction(
           label: "Unlock",
           initialState: WidgetsButtonActionState.action,
           evaluator: (s) {

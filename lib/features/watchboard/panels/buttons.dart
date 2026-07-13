@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../mixins/actionable.dart';
-import '../../../widgets/button.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
 import '../../watchers/form.dart';

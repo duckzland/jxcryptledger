@@ -9,7 +9,7 @@ import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
-import '../../../widgets/button.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
@@ -145,7 +145,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+                      WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
                       if (txs.isNotEmpty)
                         WidgetsDialogsAlert(
                           label: buttonLabel,

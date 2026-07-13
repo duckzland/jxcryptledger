@@ -11,7 +11,7 @@ import '../../../../mixins/selectable_table.dart';
 import '../../../../mixins/sortable_table.dart';
 import '../../../../mixins/state.dart';
 import '../../../../mixins/table.dart';
-import '../../../../widgets/button.dart';
+import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/with_tooltip.dart';
@@ -275,8 +275,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
       DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
       DataColumn2(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
-      DataColumn2(label: const Text('Status'), fixedWidth: 100, onSort: sortableSorters[4]),
-      const DataColumn2(label: Text('Actions'), fixedWidth: 160),
+      DataColumn2(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[4]),
+      const DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {
       final tx = r['tx'] as TransactionsModel;
@@ -406,7 +406,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _profitLossPercentage = profitPercentage;
   }
 
-  void _toggleShowAction(WidgetsButtonState b) {
+  void _toggleShowAction(WidgetsButtonsActionState b) {
     setState(() {
       _isOpen = !_isOpen;
       states.set("tx-group-overview-open-${widget.id}", _isOpen);

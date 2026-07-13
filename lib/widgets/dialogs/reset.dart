@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../button.dart';
+import '../buttons/action.dart';
 import 'alert.dart';
 
 class WidgetsDialogsReset extends StatefulWidget {
@@ -12,9 +12,11 @@ class WidgetsDialogsReset extends StatefulWidget {
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
-  final void Function(WidgetsButtonState s)? evaluator;
+  final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool Function()? isEmpty;
   final bool persistBg;
+  final bool initialTransparent;
+  final bool centered;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -35,6 +37,8 @@ class WidgetsDialogsReset extends StatefulWidget {
     this.evaluator,
     this.isEmpty,
     this.persistBg = false,
+    this.initialTransparent = false,
+    this.centered = true,
 
     this.dialogTitle = "Reset Database",
     this.dialogMessage =
@@ -47,10 +51,48 @@ class WidgetsDialogsReset extends StatefulWidget {
 
   @override
   State<WidgetsDialogsReset> createState() => _WidgetsDialogsResetState();
+
+  WidgetsDialogsReset copyWith({
+    String? label,
+    String? tooltip,
+    IconData? icon,
+    double? iconSize,
+    EdgeInsets? padding,
+    Size? minimumSize,
+    WidgetsButtonActionState? initialState,
+    void Function(WidgetsButtonsActionState s)? evaluator,
+    bool? persistBg,
+    bool? initialTransparent,
+    bool? centered,
+    String? dialogTitle,
+    String? dialogMessage,
+    String? dialogCancelLabel,
+    String? dialogWipeLabel,
+    Future<void> Function()? onWipe,
+  }) {
+    return WidgetsDialogsReset(
+      label: label ?? this.label,
+      tooltip: tooltip ?? this.tooltip,
+      icon: icon ?? this.icon,
+      iconSize: iconSize ?? this.iconSize,
+      padding: padding ?? this.padding,
+      minimumSize: minimumSize ?? this.minimumSize,
+      initialState: initialState ?? this.initialState,
+      evaluator: evaluator ?? this.evaluator,
+      persistBg: persistBg ?? this.persistBg,
+      initialTransparent: initialTransparent ?? this.initialTransparent,
+      centered: centered ?? this.centered,
+      dialogTitle: dialogTitle ?? this.dialogTitle,
+      dialogMessage: dialogMessage ?? this.dialogMessage,
+      dialogCancelLabel: dialogCancelLabel ?? this.dialogCancelLabel,
+      dialogWipeLabel: dialogWipeLabel ?? this.dialogWipeLabel,
+      onWipe: onWipe ?? this.onWipe,
+    );
+  }
 }
 
 class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
-  void _evaluate(WidgetsButtonState s) {
+  void _evaluate(WidgetsButtonsActionState s) {
     if (widget.isEmpty == null) {
       return;
     }
@@ -64,7 +106,7 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
 
   @override
   Widget build(BuildContext context) {
-    void Function(WidgetsButtonState s)? evaluator = widget.evaluator;
+    void Function(WidgetsButtonsActionState s)? evaluator = widget.evaluator;
     if (evaluator == null && widget.isEmpty != null) {
       evaluator = _evaluate;
     }
@@ -84,6 +126,8 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
       initialState: widget.initialState,
       evaluator: evaluator,
       persistBg: widget.persistBg,
+      initialTransparent: widget.initialTransparent,
+      centered: widget.centered,
     );
   }
 }

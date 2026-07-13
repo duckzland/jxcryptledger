@@ -2,35 +2,66 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../app/theme.dart';
+import '../../app/theme.dart';
 
 enum WidgetsButtonActionState {
-  transparent,
-  allowActions,
-  disallowActions,
-  disabled,
-  inProgress,
-  active,
-  error,
-  normal,
-  primary,
-  action,
-  warning,
+  transparent(background: Colors.transparent, foreground: AppTheme.buttonFg),
+
+  allowActions(background: AppTheme.buttonBg, foreground: AppTheme.buttonFg),
+
+  disallowActions(background: AppTheme.buttonBgDisabled, foreground: AppTheme.buttonFgDisabled),
+
+  disabled(background: AppTheme.buttonBgDisabled, foreground: AppTheme.buttonFgDisabled),
+
+  inProgress(background: AppTheme.buttonBgProgress, foreground: AppTheme.buttonFgProgress),
+
+  active(background: AppTheme.buttonBgActive, foreground: AppTheme.buttonFgActive),
+
+  error(background: AppTheme.buttonBgError, foreground: AppTheme.buttonFgError),
+
+  normal(background: AppTheme.buttonBg, foreground: AppTheme.buttonFg),
+
+  primary(background: AppTheme.buttonBgPrimary, foreground: AppTheme.buttonFgPrimary),
+
+  action(background: AppTheme.buttonBgAction, foreground: AppTheme.buttonFgAction),
+
+  warning(background: AppTheme.buttonBgWarning, foreground: AppTheme.buttonFgWarning);
+
+  final Color background;
+  final Color foreground;
+
+  const WidgetsButtonActionState({required this.background, required this.foreground});
+
+  Color resolveBackground(WidgetsButtonActionState initialState) {
+    if (this == WidgetsButtonActionState.inProgress) {
+      switch (initialState) {
+        case WidgetsButtonActionState.action:
+          return AppTheme.buttonBgAction;
+        case WidgetsButtonActionState.warning:
+          return AppTheme.buttonBgWarning;
+        default:
+          return AppTheme.buttonBgProgress;
+      }
+    }
+    return background;
+  }
 }
 
-class WidgetsButton extends StatefulWidget {
+class WidgetsButtonsAction extends StatefulWidget {
   final String? label;
   final IconData? icon;
-  final FutureOr<void> Function(WidgetsButtonState state)? onPressed;
+  final FutureOr<void> Function(WidgetsButtonsActionState state)? onPressed;
   final String? tooltip;
   final EdgeInsetsGeometry? padding;
-  final FutureOr<void> Function(WidgetsButtonState state)? evaluator;
+  final FutureOr<void> Function(WidgetsButtonsActionState state)? evaluator;
   final WidgetsButtonActionState initialState;
   final double? iconSize;
   final Size? minimumSize;
   final bool persistBg;
+  final bool initialTransparent;
+  final bool centered;
 
-  const WidgetsButton({
+  const WidgetsButtonsAction({
     super.key,
     this.label,
     this.icon,
@@ -42,13 +73,15 @@ class WidgetsButton extends StatefulWidget {
     this.iconSize,
     this.minimumSize,
     this.persistBg = true,
+    this.initialTransparent = false,
+    this.centered = true,
   });
 
   @override
-  State<WidgetsButton> createState() => WidgetsButtonState();
+  State<WidgetsButtonsAction> createState() => WidgetsButtonsActionState();
 }
 
-class WidgetsButtonState extends State<WidgetsButton> {
+class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
   WidgetsButtonActionState _state = WidgetsButtonActionState.normal;
 
   @override
@@ -75,7 +108,7 @@ class WidgetsButtonState extends State<WidgetsButton> {
   }
 
   @override
-  void didUpdateWidget(covariant WidgetsButton oldWidget) {
+  void didUpdateWidget(covariant WidgetsButtonsAction oldWidget) {
     super.didUpdateWidget(oldWidget);
     _runEvaluator();
   }
@@ -99,7 +132,7 @@ class WidgetsButtonState extends State<WidgetsButton> {
             return _backgroundColor();
           }
 
-          return AppTheme.buttonBg;
+          return widget.initialTransparent ? Colors.transparent : AppTheme.buttonBg;
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.hovered) || widget.persistBg || _state == WidgetsButtonActionState.inProgress) {
@@ -147,10 +180,10 @@ class WidgetsButtonState extends State<WidgetsButton> {
       );
     }
 
-    if (widget.label != null && widget.icon != null) {
+    if ((widget.label != null && widget.label!.isNotEmpty) && widget.icon != null) {
       return Row(
         spacing: 8,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: widget.centered ? MainAxisSize.min : MainAxisSize.max,
         children: [
           SizedBox(
             width: widget.iconSize ?? 18,
@@ -180,76 +213,11 @@ class WidgetsButtonState extends State<WidgetsButton> {
   }
 
   Color _backgroundColor() {
-    switch (_state) {
-      case WidgetsButtonActionState.disabled:
-      case WidgetsButtonActionState.disallowActions:
-        return AppTheme.buttonBgDisabled;
-
-      case WidgetsButtonActionState.inProgress:
-        switch (widget.initialState) {
-          case WidgetsButtonActionState.action:
-            return AppTheme.buttonBgAction;
-
-          case WidgetsButtonActionState.warning:
-            return AppTheme.buttonBgWarning;
-
-          default:
-            return AppTheme.buttonBgProgress;
-        }
-
-      case WidgetsButtonActionState.transparent:
-        return Colors.transparent;
-
-      case WidgetsButtonActionState.active:
-        return AppTheme.buttonBgActive;
-
-      case WidgetsButtonActionState.error:
-        return AppTheme.buttonBgError;
-
-      case WidgetsButtonActionState.primary:
-        return AppTheme.buttonBgPrimary;
-
-      case WidgetsButtonActionState.action:
-        return AppTheme.buttonBgAction;
-
-      case WidgetsButtonActionState.warning:
-        return AppTheme.buttonBgWarning;
-
-      case WidgetsButtonActionState.allowActions:
-      case WidgetsButtonActionState.normal:
-        return AppTheme.buttonBg;
-    }
+    return _state.resolveBackground(widget.initialState);
   }
 
   Color _foregroundColor() {
-    switch (_state) {
-      case WidgetsButtonActionState.disabled:
-      case WidgetsButtonActionState.disallowActions:
-        return AppTheme.buttonFgDisabled;
-
-      case WidgetsButtonActionState.inProgress:
-        return AppTheme.buttonFgProgress;
-
-      case WidgetsButtonActionState.active:
-        return AppTheme.buttonFgActive;
-
-      case WidgetsButtonActionState.primary:
-        return AppTheme.buttonFgPrimary;
-
-      case WidgetsButtonActionState.action:
-        return AppTheme.buttonFgAction;
-
-      case WidgetsButtonActionState.warning:
-        return AppTheme.buttonFgWarning;
-
-      case WidgetsButtonActionState.error:
-        return AppTheme.buttonFgError;
-
-      case WidgetsButtonActionState.transparent:
-      case WidgetsButtonActionState.allowActions:
-      case WidgetsButtonActionState.normal:
-        return AppTheme.buttonFg;
-    }
+    return _state.foreground;
   }
 
   // Helper methods previously provided by AppActionController

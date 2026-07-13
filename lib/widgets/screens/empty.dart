@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
-import '../button.dart';
+import '../buttons/action.dart';
 import '../dialogs/show_form.dart';
 import '../dialogs/import.dart';
 
@@ -36,7 +36,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
     this.importShow = true,
   });
 
-  void _evaluateAddNew(WidgetsButtonState s) {
+  void _evaluateAddNew(WidgetsButtonsActionState s) {
     if (addEvaluator() == false) {
       s.disable();
     } else {
@@ -44,7 +44,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
     }
   }
 
-  void _evaluateImport(WidgetsButtonState s) {
+  void _evaluateImport(WidgetsButtonsActionState s) {
     if (importEvaluator() == false) {
       s.disable();
     } else {

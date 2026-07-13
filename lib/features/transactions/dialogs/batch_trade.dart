@@ -13,7 +13,7 @@ import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
-import '../../../widgets/button.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
@@ -116,7 +116,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      WidgetsButton(label: (txs.isNotEmpty) ? 'Cancel' : 'Close', onPressed: (_) => Navigator.pop(context)),
+                      WidgetsButtonsAction(label: (txs.isNotEmpty) ? 'Cancel' : 'Close', onPressed: (_) => Navigator.pop(context)),
                       if (txs.isNotEmpty)
                         WidgetsDialogsAlert(
                           label: "Trade",

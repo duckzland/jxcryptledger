@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../mixins/actionable.dart';
-import '../../../../widgets/button.dart';
+import '../../../../widgets/buttons/action.dart';
+import '../../../../widgets/buttons/dropdown.dart';
 import '../../../../widgets/dialogs/show_form.dart';
 import '../../dialogs/batch_action.dart';
 import '../../dialogs/batch_trade.dart';
@@ -21,7 +22,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   final bool isFinalizable;
   final bool isRefundable;
 
-  final void Function(WidgetsButtonState) onToggleShow;
+  final void Function(WidgetsButtonsActionState) onToggleShow;
 
   const TransactionsWidgetsButtonsBatch({
     super.key,
@@ -45,76 +46,112 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   Widget build(BuildContext context) {
     final btnIconSize = 18.0;
     final btnSize = const Size(40, 40);
-    final btnPadding = const EdgeInsets.all(0);
+    final btnPadding = const EdgeInsets.only(left: 6, right: 6, top: 6, bottom: 6);
+
+    final List<Widget> buttons = [];
+    final List<WidgetsButtonActionState> states = [];
+
+    if (isActive) {
+      buttons.add(
+        WidgetsDialogsShowForm(
+          key: const Key("trade-multiple-button"),
+          icon: Icons.swap_vert,
+          label: "Trade",
+          tooltip: "Show batch trade action for the selected transactions",
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
+          buildForm: _formTradeTx,
+        ),
+      );
+      states.add(WidgetsButtonActionState.action);
+    }
+
+    if (isDeletable) {
+      buttons.add(
+        WidgetsDialogsShowForm(
+          key: const Key("delete-multiple-button"),
+          icon: Icons.delete,
+          label: "Delete",
+          tooltip: "Delete all transactions",
+          initialState: WidgetsButtonActionState.error,
+          evaluator: _evaluatorDeleteTx,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
+          buildForm: _formDeleteTx,
+        ),
+      );
+      states.add(WidgetsButtonActionState.error);
+    }
+
+    if (isRefundable) {
+      buttons.add(
+        WidgetsDialogsShowForm(
+          key: const Key("refund-multiple-button"),
+          icon: Icons.u_turn_left,
+          label: "Refund",
+          tooltip: "Refund all refundable transactions found in this group",
+          initialState: WidgetsButtonActionState.error,
+          evaluator: _evaluatorRefundTx,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
+          buildForm: _formRefundTx,
+        ),
+      );
+      states.add(WidgetsButtonActionState.error);
+    }
+
+    if (isClosable) {
+      buttons.add(
+        WidgetsDialogsShowForm(
+          key: const Key("close-multiple-button"),
+          icon: Icons.close,
+          label: "Close",
+          tooltip: "Close all closable transactions found in this group",
+          initialState: WidgetsButtonActionState.warning,
+          evaluator: _evaluatorCloseTx,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
+          buildForm: _formCloseTx,
+        ),
+      );
+      states.add(WidgetsButtonActionState.warning);
+    }
+
+    if (isFinalizable) {
+      buttons.add(
+        WidgetsDialogsShowForm(
+          key: const Key("finalize-multiple-button"),
+          icon: Icons.close_fullscreen,
+          label: "Finalize",
+          tooltip: "Finalize all finalizable transactions found in this group",
+          initialState: WidgetsButtonActionState.warning,
+          evaluator: _evaluatorFinalizeTx,
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
+          buildForm: _formFinalizeTx,
+        ),
+      );
+      states.add(WidgetsButtonActionState.warning);
+    }
 
     return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 8,
+      spacing: 6,
       children: [
-        if (isActive)
-          WidgetsDialogsShowForm(
-            key: const Key("trade-multiple-button"),
-            icon: Icons.swap_vert,
-            tooltip: "Show batch trade action for the selected transactions",
-            padding: btnPadding,
-            iconSize: btnIconSize,
-            minimumSize: btnSize,
-            buildForm: _formTradeTx,
-          ),
-
-        if (isDeletable)
-          WidgetsDialogsShowForm(
-            key: const Key("delete-multiple-button"),
-            icon: Icons.delete,
-            tooltip: "Delete all transactions",
-            initialState: WidgetsButtonActionState.error,
-            evaluator: _evaluatorDeleteTx,
-            padding: btnPadding,
-            iconSize: btnIconSize,
-            minimumSize: btnSize,
-            buildForm: _formDeleteTx,
-          ),
-
-        if (isRefundable)
-          WidgetsDialogsShowForm(
-            key: const Key("refund-multiple-button"),
-            icon: Icons.u_turn_left,
-            tooltip: "Refund all refundable transactions found in this group",
-            initialState: WidgetsButtonActionState.error,
-            evaluator: _evaluatorRefundTx,
-            padding: btnPadding,
-            iconSize: btnIconSize,
-            minimumSize: btnSize,
-            buildForm: _formRefundTx,
-          ),
-
-        if (isClosable)
-          WidgetsDialogsShowForm(
-            key: const Key("close-multiple-button"),
-            icon: Icons.close,
-            tooltip: "Close all closable transactions found in this group",
-            initialState: WidgetsButtonActionState.warning,
-            evaluator: _evaluatorCloseTx,
-            padding: btnPadding,
-            iconSize: btnIconSize,
-            minimumSize: btnSize,
-            buildForm: _formCloseTx,
-          ),
-
-        if (isFinalizable)
-          WidgetsDialogsShowForm(
-            key: const Key("finalize-multiple-button"),
-            icon: Icons.close_fullscreen,
-            tooltip: "Finalize all finalizable transactions found in this group",
-            initialState: WidgetsButtonActionState.warning,
-            evaluator: _evaluatorFinalizeTx,
-            padding: btnPadding,
-            iconSize: btnIconSize,
-            minimumSize: btnSize,
-            buildForm: _formFinalizeTx,
-          ),
-
-        WidgetsButton(
+        WidgetsButtonsDropdown(
+          dotStates: states,
+          maxVisible: 1,
+          iconWidth: 34,
+          iconHeight: 34,
+          menuWidth: 100,
+          menuAlignRight: true,
+          children: buttons,
+        ),
+        WidgetsButtonsAction(
           key: const Key("toggle-show-button"),
           icon: isOpen ? Icons.expand_less : Icons.expand_more,
           padding: btnPadding,
@@ -127,7 +164,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
     );
   }
 
-  void _evaluatorDeleteTx(WidgetsButtonState s) {
+  void _evaluatorDeleteTx(WidgetsButtonsActionState s) {
     if (!isDeletable) {
       s.disable();
     } else {
@@ -135,7 +172,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
     }
   }
 
-  void _evaluatorRefundTx(WidgetsButtonState s) {
+  void _evaluatorRefundTx(WidgetsButtonsActionState s) {
     if (!isRefundable) {
       s.disable();
     } else {
@@ -143,7 +180,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
     }
   }
 
-  void _evaluatorCloseTx(WidgetsButtonState s) {
+  void _evaluatorCloseTx(WidgetsButtonsActionState s) {
     if (!isClosable) {
       s.disable();
     } else {
@@ -151,7 +188,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
     }
   }
 
-  void _evaluatorFinalizeTx(WidgetsButtonState s) {
+  void _evaluatorFinalizeTx(WidgetsButtonsActionState s) {
     if (!isFinalizable) {
       s.disable();
     } else {

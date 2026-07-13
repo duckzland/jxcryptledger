@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/math.dart';
 import '../../../mixins/rateable.dart';
-import '../../../widgets/button.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
@@ -75,7 +75,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
 
                           _buildCryptoInputColumn(
                             "",
-                            WidgetsButton(
+                            WidgetsButtonsAction(
                               icon: Icons.swap_horiz,
                               tooltip: "Convert",
                               padding: const EdgeInsets.all(0),
@@ -128,7 +128,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                           const SizedBox(width: 10),
                           _buildCryptoInputColumn(
                             "",
-                            WidgetsButton(
+                            WidgetsButtonsAction(
                               icon: Icons.swap_horiz,
                               tooltip: "Convert",
                               padding: const EdgeInsets.all(0),

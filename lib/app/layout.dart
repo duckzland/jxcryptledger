@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/rates/controller.dart';
 import '../core/runtime/locator.dart';
 import '../features/cryptos/controller.dart';
-import '../widgets/button.dart';
+import '../widgets/buttons/action.dart';
 import '../widgets/notify.dart';
 import '../widgets/separator.dart';
 import 'exceptions.dart';
@@ -285,7 +285,7 @@ class _AppLayoutState extends State<AppLayout> {
               AnimatedBuilder(
                 animation: _cryptosController,
                 builder: (context, _) {
-                  return WidgetsButton(
+                  return WidgetsButtonsAction(
                     key: const Key("refresh-crypto"),
                     icon: Icons.refresh,
                     padding: const EdgeInsets.all(8),
@@ -316,7 +316,7 @@ class _AppLayoutState extends State<AppLayout> {
                 animation: _ratesController,
                 builder: (context, _) {
                   return _ratesController.hasRates
-                      ? WidgetsButton(
+                      ? WidgetsButtonsAction(
                           key: const Key("refresh-rates"),
                           icon: Icons.autorenew,
                           padding: const EdgeInsets.all(8),
@@ -352,7 +352,7 @@ class _AppLayoutState extends State<AppLayout> {
 
   Widget _buildMenuToggler(BuildContext context) {
     return Builder(
-      builder: (context) => WidgetsButton(
+      builder: (context) => WidgetsButtonsAction(
         key: const Key("menu-toggler"),
         icon: Icons.menu,
         padding: const EdgeInsets.all(8),
@@ -373,7 +373,7 @@ class _AppLayoutState extends State<AppLayout> {
 
     for (var menu in menus) {
       navigation.add(
-        WidgetsButton(
+        WidgetsButtonsAction(
           key: ValueKey(menu['target']),
           icon: menu['icon'] as IconData,
           padding: const EdgeInsets.all(8),

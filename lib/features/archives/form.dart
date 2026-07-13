@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/runtime/locator.dart';
-import '../../../widgets/button.dart';
+import '../../widgets/buttons/action.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/panel.dart';
 import '../../app/exceptions.dart';
@@ -122,8 +122,8 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        WidgetsButton(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        WidgetsButton(
+        WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+        WidgetsButtonsAction(
           label: "Create",
           initialState: WidgetsButtonActionState.action,
           evaluator: (s) {

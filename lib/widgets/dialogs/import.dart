@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/log.dart';
-import '../button.dart';
+import '../buttons/action.dart';
 import '../notify.dart';
 import 'alert.dart';
 
@@ -19,8 +19,10 @@ class WidgetsDialogsImport extends StatefulWidget {
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
-  final void Function(WidgetsButtonState s)? evaluator;
+  final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool persistBg;
+  final bool initialTransparent;
+  final bool centered;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -41,6 +43,8 @@ class WidgetsDialogsImport extends StatefulWidget {
     this.initialState = WidgetsButtonActionState.primary,
     this.evaluator,
     this.persistBg = false,
+    this.initialTransparent = false,
+    this.centered = true,
 
     this.dialogTitle = "Import Data",
     this.dialogMessage = "This will erase existing data before importing.\nThis action cannot be undone.",
@@ -50,6 +54,46 @@ class WidgetsDialogsImport extends StatefulWidget {
 
   @override
   State<WidgetsDialogsImport> createState() => _WidgetsDialogsImportState();
+
+  WidgetsDialogsImport copyWith({
+    String? label,
+    String? tooltip,
+    IconData? icon,
+    double? iconSize,
+    EdgeInsets? padding,
+    Size? minimumSize,
+    WidgetsButtonActionState? initialState,
+    void Function(WidgetsButtonsActionState s)? evaluator,
+    bool? persistBg,
+    bool? initialTransparent,
+    bool? centered,
+    bool? showDialogBeforeImport,
+    String? dialogTitle,
+    String? dialogMessage,
+    String? dialogCancelLabel,
+    String? dialogImportLabel,
+    Future<void> Function(String json)? onImport,
+  }) {
+    return WidgetsDialogsImport(
+      label: label ?? this.label,
+      tooltip: tooltip ?? this.tooltip,
+      icon: icon ?? this.icon,
+      iconSize: iconSize ?? this.iconSize,
+      padding: padding ?? this.padding,
+      minimumSize: minimumSize ?? this.minimumSize,
+      initialState: initialState ?? this.initialState,
+      evaluator: evaluator ?? this.evaluator,
+      persistBg: persistBg ?? this.persistBg,
+      initialTransparent: initialTransparent ?? this.initialTransparent,
+      centered: centered ?? this.centered,
+      showDialogBeforeImport: showDialogBeforeImport ?? this.showDialogBeforeImport,
+      dialogTitle: dialogTitle ?? this.dialogTitle,
+      dialogMessage: dialogMessage ?? this.dialogMessage,
+      dialogCancelLabel: dialogCancelLabel ?? this.dialogCancelLabel,
+      dialogImportLabel: dialogImportLabel ?? this.dialogImportLabel,
+      onImport: onImport ?? this.onImport,
+    );
+  }
 }
 
 class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
@@ -96,6 +140,8 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
       initialState: widget.initialState,
       evaluator: widget.evaluator,
       persistBg: widget.persistBg,
+      initialTransparent: widget.initialTransparent,
+      centered: widget.centered,
       onPressed: widget.showDialogBeforeImport ? null : _handlePressed,
     );
   }

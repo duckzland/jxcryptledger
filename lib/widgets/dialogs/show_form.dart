@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../button.dart';
+import '../buttons/action.dart';
 
 class WidgetsDialogsShowForm extends StatefulWidget {
   final Widget Function(BuildContext dialogContext) buildForm;
@@ -11,8 +11,10 @@ class WidgetsDialogsShowForm extends StatefulWidget {
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
-  final void Function(WidgetsButtonState s)? evaluator;
+  final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool persistBg;
+  final bool initialTransparent;
+  final bool centered;
 
   const WidgetsDialogsShowForm({
     super.key,
@@ -27,10 +29,42 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     this.initialState = WidgetsButtonActionState.action,
     this.evaluator,
     this.persistBg = false,
+    this.initialTransparent = false,
+    this.centered = true,
   });
 
   @override
   State<WidgetsDialogsShowForm> createState() => _WidgetsDialogsShowFormState();
+
+  WidgetsDialogsShowForm copyWith({
+    Widget Function(BuildContext dialogContext)? buildForm,
+    String? label,
+    String? tooltip,
+    IconData? icon,
+    double? iconSize,
+    EdgeInsets? padding,
+    Size? minimumSize,
+    WidgetsButtonActionState? initialState,
+    void Function(WidgetsButtonsActionState s)? evaluator,
+    bool? persistBg,
+    bool? initialTransparent,
+    bool? centered,
+  }) {
+    return WidgetsDialogsShowForm(
+      buildForm: buildForm ?? this.buildForm,
+      label: label ?? this.label,
+      tooltip: tooltip ?? this.tooltip,
+      icon: icon ?? this.icon,
+      iconSize: iconSize ?? this.iconSize,
+      padding: padding ?? this.padding,
+      minimumSize: minimumSize ?? this.minimumSize,
+      initialState: initialState ?? this.initialState,
+      evaluator: evaluator ?? this.evaluator,
+      persistBg: persistBg ?? this.persistBg,
+      initialTransparent: initialTransparent ?? this.initialTransparent,
+      centered: centered ?? this.centered,
+    );
+  }
 }
 
 class _WidgetsDialogsShowFormState extends State<WidgetsDialogsShowForm> {
@@ -46,7 +80,7 @@ class _WidgetsDialogsShowFormState extends State<WidgetsDialogsShowForm> {
 
   @override
   Widget build(BuildContext context) {
-    return WidgetsButton(
+    return WidgetsButtonsAction(
       label: widget.label,
       tooltip: widget.tooltip,
       icon: widget.icon,
@@ -57,6 +91,8 @@ class _WidgetsDialogsShowFormState extends State<WidgetsDialogsShowForm> {
       onPressed: (_) => _showDialog(context),
       evaluator: widget.evaluator,
       persistBg: widget.persistBg,
+      initialTransparent: widget.initialTransparent,
+      centered: widget.centered,
     );
   }
 }

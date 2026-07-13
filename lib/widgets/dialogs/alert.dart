@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../mixins/actionable.dart';
-import '../button.dart';
+import '../buttons/action.dart';
 
 class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final String? label;
@@ -10,9 +10,11 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
-  final void Function(WidgetsButtonState s)? evaluator;
+  final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool persistBg;
   final bool showMessage;
+  final bool initialTransparent;
+  final bool centered;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -40,6 +42,8 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     this.evaluator,
     this.persistBg = false,
     this.showMessage = true,
+    this.initialTransparent = false,
+    this.centered = true,
 
     this.dialogTitle = "Are you sure?",
     this.dialogMessage = "This action cannot be undone.",
@@ -57,6 +61,58 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
 
   @override
   State<WidgetsDialogsAlert<T>> createState() => _WidgetsDialogsAlertState<T>();
+
+  WidgetsDialogsAlert<T> copyWith({
+    String? label,
+    String? tooltip,
+    IconData? icon,
+    double? iconSize,
+    EdgeInsets? padding,
+    Size? minimumSize,
+    WidgetsButtonActionState? initialState,
+    void Function(WidgetsButtonsActionState s)? evaluator,
+    bool? persistBg,
+    bool? initialTransparent,
+    bool? centered,
+    bool? showMessage,
+    String? dialogTitle,
+    String? dialogMessage,
+    String? dialogCancelLabel,
+    String? dialogConfirmLabel,
+    T? actionData,
+    String? actionSuccessMessage,
+    String? actionErrorMessage,
+    Future<void> Function(T)? actionCallback,
+    VoidCallback? actionCompleteCallback,
+    VoidCallback? actionStartCallback,
+    Future<void> Function(BuildContext)? onPressed,
+  }) {
+    return WidgetsDialogsAlert<T>(
+      label: label ?? this.label,
+      tooltip: tooltip ?? this.tooltip,
+      icon: icon ?? this.icon,
+      iconSize: iconSize ?? this.iconSize,
+      padding: padding ?? this.padding,
+      minimumSize: minimumSize ?? this.minimumSize,
+      initialState: initialState ?? this.initialState,
+      evaluator: evaluator ?? this.evaluator,
+      persistBg: persistBg ?? this.persistBg,
+      initialTransparent: initialTransparent ?? this.initialTransparent,
+      centered: centered ?? this.centered,
+      showMessage: showMessage ?? this.showMessage,
+      dialogTitle: dialogTitle ?? this.dialogTitle,
+      dialogMessage: dialogMessage ?? this.dialogMessage,
+      dialogCancelLabel: dialogCancelLabel ?? this.dialogCancelLabel,
+      dialogConfirmLabel: dialogConfirmLabel ?? this.dialogConfirmLabel,
+      actionData: actionData ?? this.actionData,
+      actionSuccessMessage: actionSuccessMessage ?? this.actionSuccessMessage,
+      actionErrorMessage: actionErrorMessage ?? this.actionErrorMessage,
+      actionCallback: actionCallback ?? this.actionCallback,
+      actionCompleteCallback: actionCompleteCallback ?? this.actionCompleteCallback,
+      actionStartCallback: actionStartCallback ?? this.actionStartCallback,
+      onPressed: onPressed ?? this.onPressed,
+    );
+  }
 }
 
 class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with MixinsActionable {
@@ -90,8 +146,8 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
                 alignment: WrapAlignment.center,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  WidgetsButton(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
-                  WidgetsButton(
+                  WidgetsButtonsAction(label: widget.dialogCancelLabel, onPressed: (_) => Navigator.pop(dialogContext)),
+                  WidgetsButtonsAction(
                     label: widget.dialogConfirmLabel,
                     initialState: widget.initialState,
                     onPressed: (_) => actionableAction<T>(
@@ -117,7 +173,7 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
 
   @override
   Widget build(BuildContext context) {
-    return WidgetsButton(
+    return WidgetsButtonsAction(
       label: widget.label,
       tooltip: widget.tooltip,
       icon: widget.icon,
@@ -128,6 +184,8 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
       onPressed: (_) => widget.onPressed?.call(context) ?? _showDialog(context),
       evaluator: widget.evaluator,
       persistBg: widget.persistBg,
+      initialTransparent: widget.initialTransparent,
+      centered: widget.centered,
     );
   }
 }

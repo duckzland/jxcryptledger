@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
-import '../../../widgets/button.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
@@ -65,7 +65,7 @@ class TransactionsDialogsDetails extends StatelessWidget {
                     runAlignment: WrapAlignment.center,
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [WidgetsButton(label: 'Close', onPressed: (_) => Navigator.pop(context))],
+                    children: [WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context))],
                   ),
                 ),
               ],

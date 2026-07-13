@@ -4,7 +4,7 @@ import '../../app/theme.dart';
 import '../../app/exceptions.dart';
 import '../../core/runtime/locator.dart';
 import '../../features/cryptos/controller.dart';
-import '../button.dart';
+import '../buttons/action.dart';
 import '../notify.dart';
 
 class WidgetsScreensFetchCryptos extends StatefulWidget {
@@ -19,7 +19,7 @@ class WidgetsScreensFetchCryptos extends StatefulWidget {
 class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos> {
   final CryptosController _cryptosController = locator<CryptosController>();
 
-  void _fetchCryptos(WidgetsButtonState s) async {
+  void _fetchCryptos(WidgetsButtonsActionState s) async {
     s.progress();
 
     try {
@@ -37,7 +37,7 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
     }
   }
 
-  void _evaluator(WidgetsButtonState s) async {
+  void _evaluator(WidgetsButtonsActionState s) async {
     _cryptosController.isFetching ? s.progress() : s.reset();
   }
 
@@ -61,7 +61,7 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
           AnimatedBuilder(
             animation: _cryptosController,
             builder: (context, _) {
-              return WidgetsButton(
+              return WidgetsButtonsAction(
                 icon: Icons.refresh,
                 iconSize: 16,
                 label: "Download",

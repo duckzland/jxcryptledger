@@ -3,7 +3,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/log.dart';
-import '../button.dart';
+import '../buttons/action.dart';
 import '../notify.dart';
 import 'alert.dart';
 
@@ -17,8 +17,10 @@ class WidgetsDialogsExport extends StatefulWidget {
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
+  final bool initialTransparent;
+  final bool centered;
 
-  final void Function(WidgetsButtonState s)? evaluator;
+  final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool Function()? isEmpty;
   final bool persistBg;
 
@@ -43,6 +45,8 @@ class WidgetsDialogsExport extends StatefulWidget {
     this.evaluator,
     this.isEmpty,
     this.persistBg = false,
+    this.initialTransparent = false,
+    this.centered = true,
 
     this.dialogTitle = "Export Data",
     this.dialogMessage = "This will export your data to a JSON file.",
@@ -54,6 +58,44 @@ class WidgetsDialogsExport extends StatefulWidget {
 
   @override
   State<WidgetsDialogsExport> createState() => _WidgetsDialogsExportState();
+
+  WidgetsDialogsExport copyWith({
+    String? label,
+    String? tooltip,
+    IconData? icon,
+    double? iconSize,
+    EdgeInsets? padding,
+    Size? minimumSize,
+    WidgetsButtonActionState? initialState,
+    void Function(WidgetsButtonsActionState s)? evaluator,
+    bool? persistBg,
+    bool? initialTransparent,
+    bool? centered,
+    String? dialogTitle,
+    String? dialogMessage,
+    String? dialogCancelLabel,
+    String? dialogExportLabel,
+    Future<String> Function()? onExport,
+  }) {
+    return WidgetsDialogsExport(
+      label: label ?? this.label,
+      tooltip: tooltip ?? this.tooltip,
+      icon: icon ?? this.icon,
+      iconSize: iconSize ?? this.iconSize,
+      padding: padding ?? this.padding,
+      minimumSize: minimumSize ?? this.minimumSize,
+      initialState: initialState ?? this.initialState,
+      evaluator: evaluator ?? this.evaluator,
+      persistBg: persistBg ?? this.persistBg,
+      initialTransparent: initialTransparent ?? this.initialTransparent,
+      centered: centered ?? this.centered,
+      dialogTitle: dialogTitle ?? this.dialogTitle,
+      dialogMessage: dialogMessage ?? this.dialogMessage,
+      dialogCancelLabel: dialogCancelLabel ?? this.dialogCancelLabel,
+      dialogExportLabel: dialogExportLabel ?? this.dialogExportLabel,
+      onExport: onExport ?? this.onExport,
+    );
+  }
 }
 
 class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
@@ -84,7 +126,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
     }
   }
 
-  void _evaluate(WidgetsButtonState s) {
+  void _evaluate(WidgetsButtonsActionState s) {
     if (widget.isEmpty == null) {
       return;
     }
@@ -98,7 +140,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
 
   @override
   Widget build(BuildContext context) {
-    void Function(WidgetsButtonState s)? evaluator = widget.evaluator;
+    void Function(WidgetsButtonsActionState s)? evaluator = widget.evaluator;
     if (evaluator == null && widget.isEmpty != null) {
       evaluator = _evaluate;
     }
@@ -118,6 +160,8 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       initialState: widget.initialState,
       evaluator: evaluator,
       persistBg: widget.persistBg,
+      initialTransparent: widget.initialTransparent,
+      centered: widget.centered,
     );
   }
 }
