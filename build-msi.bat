@@ -140,8 +140,6 @@ if errorlevel 1 (
     echo [ERROR] Failed to copy app_icon.ico. Check if the source path or %%SOURCE_DIR%% exists.
     pause
     exit /b 1
-) else (
-    echo [SUCCESS] Icon copied successfully.
 )
 
 :: --- WRITE WXS MANIFEST ON THE FLY ---
