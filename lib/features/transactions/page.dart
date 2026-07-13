@@ -327,6 +327,7 @@ class TransactionsPageState extends State<TransactionsPage>
                 }
               },
             ),
+            
             if (txController.hasDeletableRoot())
               WidgetsDialogsShowForm(
                 key: const Key("delete-multiple-button"),
@@ -355,6 +356,7 @@ class TransactionsPageState extends State<TransactionsPage>
                   );
                 },
               ),
+            
             if (txController.hasClosableLeaf())
               WidgetsDialogsShowForm(
                 key: const Key("close-multiple-button"),
@@ -383,6 +385,7 @@ class TransactionsPageState extends State<TransactionsPage>
                   );
                 },
               ),
+            
             if (txController.hasFinalizable())
               WidgetsDialogsShowForm(
                 key: const Key("finalize-multiple-button"),
@@ -411,6 +414,7 @@ class TransactionsPageState extends State<TransactionsPage>
                   );
                 },
               ),
+            
             WidgetsDialogsImport(
               key: const Key("import-button-batch"),
               tooltip: "Import transactions to database",
@@ -425,6 +429,7 @@ class TransactionsPageState extends State<TransactionsPage>
                 states.removeByPrefix('tx-group');
               },
             ),
+            
             WidgetsDialogsExport(
               key: const Key("export-button-batch"),
               tooltip: "Export transactions from database",
@@ -433,6 +438,7 @@ class TransactionsPageState extends State<TransactionsPage>
               onExport: txController.exportDatabase,
               isEmpty: txController.isEmpty,
             ),
+            
             WidgetsDialogsReset(
               key: const Key("reset-button-batch"),
               tooltip: "Reset transactions database",
