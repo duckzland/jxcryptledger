@@ -301,9 +301,9 @@ class TransactionsPageState extends State<TransactionsPage>
         WidgetsButtonsDropdown(
           dotStates: [
             WidgetsButtonActionState.action,
-            WidgetsButtonActionState.error,
-            WidgetsButtonActionState.warning,
-            WidgetsButtonActionState.warning,
+            if (txController.hasDeletableRoot()) WidgetsButtonActionState.error,
+            if (txController.hasClosableLeaf()) WidgetsButtonActionState.warning,
+            if (txController.hasFinalizable()) WidgetsButtonActionState.warning,
             WidgetsButtonActionState.primary,
             WidgetsButtonActionState.action,
             WidgetsButtonActionState.error,
@@ -327,87 +327,90 @@ class TransactionsPageState extends State<TransactionsPage>
                 }
               },
             ),
-            WidgetsDialogsShowForm(
-              key: const Key("delete-multiple-button"),
-              icon: Icons.delete,
-              tooltip: "Delete all transactions",
-              label: "Delete",
-              initialState: WidgetsButtonActionState.error,
-              evaluator: (s) {
-                final bool isDeletable = txController.hasDeletableRoot();
-                if (!isDeletable) {
-                  s.disable();
-                } else {
-                  s.error();
-                }
-              },
-              buildForm: (dialogContext) {
-                return TransactionsDialogsBatchAction(
-                  transactions: txs,
-                  mode: TransactionsBatchActionMode.delete,
-                  onSave: (e) => actionableFormSave<TransactionsModel>(
-                    context,
-                    dialogContext: dialogContext,
-                    successMessage: "All transactions deleted.",
-                    error: e,
-                  ),
-                );
-              },
-            ),
-            WidgetsDialogsShowForm(
-              key: const Key("close-multiple-button"),
-              icon: Icons.close,
-              tooltip: "Close all closable transactions",
-              label: "Close",
-              initialState: WidgetsButtonActionState.warning,
-              evaluator: (s) {
-                final bool isClosable = txController.hasClosableLeaf();
-                if (!isClosable) {
-                  s.disable();
-                } else {
-                  s.warning();
-                }
-              },
-              buildForm: (dialogContext) {
-                return TransactionsDialogsBatchAction(
-                  transactions: txs,
-                  mode: TransactionsBatchActionMode.close,
-                  onSave: (e) => actionableFormSave<TransactionsModel>(
-                    context,
-                    dialogContext: dialogContext,
-                    successMessage: "Transactions closed successfully.",
-                    error: e,
-                  ),
-                );
-              },
-            ),
-            WidgetsDialogsShowForm(
-              key: const Key("finalize-multiple-button"),
-              icon: Icons.close_fullscreen,
-              tooltip: "Finalize all finalizable transactions",
-              label: "Finalize",
-              initialState: WidgetsButtonActionState.warning,
-              evaluator: (s) {
-                final bool isFinalizable = txController.hasFinalizable();
-                if (!isFinalizable) {
-                  s.disable();
-                } else {
-                  s.warning();
-                }
-              },
-              buildForm: (dialogContext) {
-                return TransactionsDialogsBatchAction(
-                  transactions: txs,
-                  mode: TransactionsBatchActionMode.finalize,
-                  onSave: (e) => actionableFormSave<TransactionsModel>(
-                    context,
-                    dialogContext: dialogContext,
-                    successMessage: "All transactions finalized.",
-                    error: e,
-                  ),
-                );
-              },
-            ),
+            if (txController.hasDeletableRoot())
+              WidgetsDialogsShowForm(
+                key: const Key("delete-multiple-button"),
+                icon: Icons.delete,
+                tooltip: "Delete all transactions",
+                label: "Delete",
+                initialState: WidgetsButtonActionState.error,
+                evaluator: (s) {
+                  final bool isDeletable = txController.hasDeletableRoot();
+                  if (!isDeletable) {
+                    s.disable();
+                  } else {
+                    s.error();
+                  }
+                },
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.delete,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      successMessage: "All transactions deleted.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+            if (txController.hasClosableLeaf())
+              WidgetsDialogsShowForm(
+                key: const Key("close-multiple-button"),
+                icon: Icons.close,
+                tooltip: "Close all closable transactions",
+                label: "Close",
+                initialState: WidgetsButtonActionState.warning,
+                evaluator: (s) {
+                  final bool isClosable = txController.hasClosableLeaf();
+                  if (!isClosable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.close,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      successMessage: "Transactions closed successfully.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
+            if (txController.hasFinalizable())
+              WidgetsDialogsShowForm(
+                key: const Key("finalize-multiple-button"),
+                icon: Icons.close_fullscreen,
+                tooltip: "Finalize all finalizable transactions",
+                label: "Finalize",
+                initialState: WidgetsButtonActionState.warning,
+                evaluator: (s) {
+                  final bool isFinalizable = txController.hasFinalizable();
+                  if (!isFinalizable) {
+                    s.disable();
+                  } else {
+                    s.warning();
+                  }
+                },
+                buildForm: (dialogContext) {
+                  return TransactionsDialogsBatchAction(
+                    transactions: txs,
+                    mode: TransactionsBatchActionMode.finalize,
+                    onSave: (e) => actionableFormSave<TransactionsModel>(
+                      context,
+                      dialogContext: dialogContext,
+                      successMessage: "All transactions finalized.",
+                      error: e,
+                    ),
+                  );
+                },
+              ),
             WidgetsDialogsImport(
               key: const Key("import-button-batch"),
               tooltip: "Import transactions to database",
