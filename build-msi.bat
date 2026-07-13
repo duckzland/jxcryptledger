@@ -134,14 +134,25 @@ if not exist "%SOURCE_DIR%\jxledger.exe" (
     exit /b 1
 )
 
+:: --- COPY ICON AND VERIFY SUCCESS ---
+copy /b /y "windows\runner\resources\app_icon.ico" "%SOURCE_DIR%\data\flutter_assets\assets\app_icon.ico" >nul
+if errorlevel 1 (
+    echo [ERROR] Failed to copy app_icon.ico. Check if the source path or %%SOURCE_DIR%% exists.
+    pause
+    exit /b 1
+) else (
+    echo [SUCCESS] Icon copied successfully.
+)
+
 :: --- WRITE WXS MANIFEST ON THE FLY ---
 (
 echo ^<?xml version="1.0" encoding="UTF-8"?^>
 echo ^<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"^>
 echo   ^<Package Name="JXLedger" Manufacturer="%MANUFACTURER%" Version="%BUILD_NAME%" UpgradeCode="%UPGRADE_GUID%" Scope="perMachine"^>
 echo     ^<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" /^>
-echo     ^<Icon Id="AppIcon" SourceFile="%SOURCE_DIR%\data\flutter_assets\assets\app_icon.ico" /^>
-echo     ^<Property Id="ARPPRODUCTICON" Value="AppIcon" /^>
+echo     ^<Property Id="DISABLEADVTSHORTCUTS" Value="1" /^>
+echo     ^<Icon Id="AppIcon.ico" SourceFile="%SOURCE_DIR%\data\flutter_assets\assets\app_icon.ico" /^>
+echo     ^<Property Id="ARPPRODUCTICON" Value="AppIcon.ico" /^>
 echo     ^<MajorUpgrade DowngradeErrorMessage="A newer version of JXLedger is already installed." Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes" /^>
 echo     ^<MediaTemplate EmbedCab="yes" /^>
 echo     ^<StandardDirectory Id="ProgramFiles64Folder"^>
