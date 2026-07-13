@@ -79,7 +79,11 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
   @override
   void dispose() {
     _debounce?.cancel();
-    _controller.dispose();
+
+    // Only dispose own controller!
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 

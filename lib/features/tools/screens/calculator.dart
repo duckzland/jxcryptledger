@@ -46,6 +46,8 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   @override
   void dispose() {
     _debounce?.cancel();
+    _rateController.dispose();
+    _rateRevertController.dispose();
     super.dispose();
   }
 

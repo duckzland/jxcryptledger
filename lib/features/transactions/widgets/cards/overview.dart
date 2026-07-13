@@ -200,7 +200,26 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
             spacing: 10,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(spacing: 10, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [title, actions]),
+              SizedBox(
+                height: 42,
+                child: CustomScrollView(
+                  scrollDirection: Axis.horizontal,
+                  slivers: [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          title,
+                          Expanded(flex: 2, child: SizedBox(width: 30)),
+                          actions,
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               _buildPanels(),
             ],
           );

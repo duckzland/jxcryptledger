@@ -261,11 +261,14 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           return Column(
             spacing: 10,
             children: [
-              WidgetsHeader(
-                key: Key("title-${widget.srid}-${widget.rrid}"),
-                title: isCapital ? '$_sourceSymbol Capital' : '$_sourceSymbol to $_resultSymbol Trades',
-                subtitle: isCapital ? 'Coin ID: ${widget.srid}' : 'Coin ID: ${widget.srid} - ${widget.rrid}',
-                centered: true,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: WidgetsHeader(
+                  key: Key("title-${widget.srid}-${widget.rrid}"),
+                  title: isCapital ? '$_sourceSymbol Capital' : '$_sourceSymbol to $_resultSymbol Trades',
+                  subtitle: isCapital ? 'Coin ID: ${widget.srid}' : 'Coin ID: ${widget.srid} - ${widget.rrid}',
+                  centered: true,
+                ),
               ),
               _buildActions(),
               _buildPanels(),
@@ -281,66 +284,69 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     final btnSize = const Size(40, 40);
     final btnPadding = const EdgeInsets.all(0);
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 8,
-      children: [
-        if (!isCapital)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 8,
-            children: [
-              SizedBox(
-                width: 180,
-                height: 40,
-                child: WidgetsFieldsAmount(
-                  key: Key(_isReversed ? "Reversed" : "Normal"),
-                  title: "Custom Rates",
-                  suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
-                  helperText: _averageRate.toStringAsFixed(8),
-                  initialValue: _customRate != null ? Utils.formatSmartDouble(_customRate!) : "",
-                  allowCopy: false,
-                  allowRate: true,
-                  onRetrievingRate: _rateAmountRetrieveAction,
-                  onChanged: _rateAmountChangeAction,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 8,
+        children: [
+          if (!isCapital)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 8,
+              children: [
+                SizedBox(
+                  width: 180,
+                  height: 40,
+                  child: WidgetsFieldsAmount(
+                    key: Key(_isReversed ? "Reversed" : "Normal"),
+                    title: "Custom Rates",
+                    suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
+                    helperText: _averageRate.toStringAsFixed(8),
+                    initialValue: _customRate != null ? Utils.formatSmartDouble(_customRate!) : "",
+                    allowCopy: false,
+                    allowRate: true,
+                    onRetrievingRate: _rateAmountRetrieveAction,
+                    onChanged: _rateAmountChangeAction,
+                  ),
                 ),
-              ),
 
-              WidgetsButtonsAction(
-                icon: Icons.swap_horiz,
-                padding: btnPadding,
-                iconSize: btnIconSize,
-                minimumSize: btnSize,
-                tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
-                evaluator: _reverseActionEvaluator,
-                onPressed: _reverseRateAction,
-              ),
-            ],
+                WidgetsButtonsAction(
+                  icon: Icons.swap_horiz,
+                  padding: btnPadding,
+                  iconSize: btnIconSize,
+                  minimumSize: btnSize,
+                  tooltip: _isReversed ? "Click to Inverse rate" : "Click to reverse rate",
+                  evaluator: _reverseActionEvaluator,
+                  onPressed: _reverseRateAction,
+                ),
+              ],
+            ),
+
+          TransactionsWidgetsButtonsLinkable(
+            parentContext: context,
+            srid: widget.srid,
+            rrid: widget.rrid,
+            txs: txs,
+            rate: nonReversedEffectiveRate ?? 0,
+            balance: _calc.totalActiveSourceBalance(txs),
           ),
 
-        TransactionsWidgetsButtonsLinkable(
-          parentContext: context,
-          srid: widget.srid,
-          rrid: widget.rrid,
-          txs: txs,
-          rate: nonReversedEffectiveRate ?? 0,
-          balance: _calc.totalActiveSourceBalance(txs),
-        ),
-
-        TransactionsWidgetsButtonsBatch(
-          parentContext: widget.parentContext,
-          srid: widget.srid,
-          rrid: widget.rrid,
-          txs: txs,
-          selectedRows: selectableSelectedRows,
-          isOpen: _isOpen,
-          isDeletable: isDeletable,
-          isClosable: isClosable,
-          isFinalizable: isFinalizable,
-          isRefundable: isRefundable,
-          onToggleShow: _toggleShowAction,
-        ),
-      ],
+          TransactionsWidgetsButtonsBatch(
+            parentContext: widget.parentContext,
+            srid: widget.srid,
+            rrid: widget.rrid,
+            txs: txs,
+            selectedRows: selectableSelectedRows,
+            isOpen: _isOpen,
+            isDeletable: isDeletable,
+            isClosable: isClosable,
+            isFinalizable: isFinalizable,
+            isRefundable: isRefundable,
+            onToggleShow: _toggleShowAction,
+          ),
+        ],
+      ),
     );
   }
 
@@ -548,71 +554,63 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   Widget _buildPanels() {
     return SizedBox(
       height: 38,
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-        child: CustomScrollView(
-          scrollDirection: Axis.horizontal,
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Row(
-                key: Key("panels-${widget.srid}-${widget.rrid}"),
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                spacing: 16,
-                children: [
+      child: CustomScrollView(
+        scrollDirection: Axis.horizontal,
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Row(
+              key: Key("panels-${widget.srid}-${widget.rrid}"),
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              spacing: 16,
+              children: [
+                TransactionsWidgetsPanelItem(
+                  title: 'Total Balance',
+                  subtitle: isCapital
+                      ? '${Utils.formatSmartDouble(_totalBalance)} $_sourceSymbol'
+                      : '${Utils.formatSmartDouble(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(_totalBalance)} $_resultSymbol',
+                  value: 0,
+                  comparator: 0,
+                ),
+
+                if (!isCapital)
+                  TransactionsWidgetsPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(_averageRate), value: 0, comparator: 0),
+
+                if (_plPercentage != 0 && _plPercentage.isFinite && !isCapital) ...[
+                  if (_totalProfit != 0.0 && _totalLoss != 0.0)
+                    TransactionsWidgetsPanelItem(
+                      title: 'Profit',
+                      subtitle: Utils.formatSmartDouble(_totalProfit),
+                      value: _totalProfit,
+                      comparator: 0,
+                    ),
+
+                  if (_totalProfit != 0.0 && _totalLoss != 0.0)
+                    TransactionsWidgetsPanelItem(
+                      title: 'Loss',
+                      subtitle: Utils.formatSmartDouble(_totalLoss),
+                      value: _totalLoss,
+                      comparator: 0,
+                    ),
+
                   TransactionsWidgetsPanelItem(
-                    title: 'Total Balance',
-                    subtitle: isCapital
-                        ? '${Utils.formatSmartDouble(_totalBalance)} $_sourceSymbol'
-                        : '${Utils.formatSmartDouble(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(_totalBalance)} $_resultSymbol',
-                    value: 0,
+                    title: 'Total P/L',
+                    subtitle: "${Utils.formatSmartDouble(_totalPL)} $_sourceSymbol",
+                    value: _plPercentage,
                     comparator: 0,
                   ),
 
-                  if (!isCapital)
-                    TransactionsWidgetsPanelItem(
-                      title: 'Avg Rate',
-                      subtitle: Utils.formatSmartDouble(_averageRate),
-                      value: 0,
-                      comparator: 0,
-                    ),
-
-                  if (_plPercentage != 0 && _plPercentage.isFinite && !isCapital) ...[
-                    if (_totalProfit != 0.0 && _totalLoss != 0.0)
-                      TransactionsWidgetsPanelItem(
-                        title: 'Profit',
-                        subtitle: Utils.formatSmartDouble(_totalProfit),
-                        value: _totalProfit,
-                        comparator: 0,
-                      ),
-
-                    if (_totalProfit != 0.0 && _totalLoss != 0.0)
-                      TransactionsWidgetsPanelItem(
-                        title: 'Loss',
-                        subtitle: Utils.formatSmartDouble(_totalLoss),
-                        value: _totalLoss,
-                        comparator: 0,
-                      ),
-
-                    TransactionsWidgetsPanelItem(
-                      title: 'Total P/L',
-                      subtitle: "${Utils.formatSmartDouble(_totalPL)} $_sourceSymbol",
-                      value: _plPercentage,
-                      comparator: 0,
-                    ),
-
-                    TransactionsWidgetsPanelItem(
-                      title: 'P/L %',
-                      subtitle: '${Utils.formatSmartDouble(_plPercentage, maxDecimals: 2)}%',
-                      value: _plPercentage,
-                      comparator: 0,
-                    ),
-                  ],
+                  TransactionsWidgetsPanelItem(
+                    title: 'P/L %',
+                    subtitle: '${Utils.formatSmartDouble(_plPercentage, maxDecimals: 2)}%',
+                    value: _plPercentage,
+                    comparator: 0,
+                  ),
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
