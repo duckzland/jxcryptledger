@@ -152,6 +152,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       helperText: 'e.g., 10.5',
       controller: _rateRevertController,
       allowReverse: true,
+      disposeController: false,
       onChanged: (value) {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
@@ -185,6 +186,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       controller: _rateController,
       allowReverse: true,
       allowRate: rateableAllow,
+      disposeController: false,
       onRetrievingRate: (void Function(String value, String helperText) updateState) {
         // Store the callback to act as promise contract!
         rateableStateUpdater = updateState;

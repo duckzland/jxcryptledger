@@ -19,6 +19,7 @@ class WidgetsFieldsAmount extends StatefulWidget {
   final bool allowReverse;
   final bool allowRate;
   final double? useMax;
+  final bool disposeController;
 
   final TextEditingController? controller;
 
@@ -39,6 +40,7 @@ class WidgetsFieldsAmount extends StatefulWidget {
     this.allowCopy = true,
     this.allowReverse = false,
     this.allowRate = false,
+    this.disposeController = true,
     this.useMax,
     this.onChanged,
     this.onRetrievingRate,
@@ -81,7 +83,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
     _debounce?.cancel();
 
     // Only dispose own controller!
-    if (widget.controller == null) {
+    if (widget.disposeController) {
       _controller.dispose();
     }
     super.dispose();
