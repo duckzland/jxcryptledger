@@ -95,7 +95,7 @@ class WidgetsButtonsDropdown extends StatelessWidget {
 
       buttons.add(
         MenuAnchor(
-          animated: true,
+          animated: false,
           alignmentOffset: Offset(offsetX, 4),
           builder: (context, controller, child) {
             return Container(
@@ -116,7 +116,6 @@ class WidgetsButtonsDropdown extends StatelessWidget {
                 splashRadius: 6,
                 mouseCursor: SystemMouseCursors.click,
                 onPressed: () => controller.isOpen ? controller.close() : controller.open(),
-
                 icon: buildAdaptiveDots(controller),
               ),
             );

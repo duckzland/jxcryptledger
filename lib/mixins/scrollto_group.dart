@@ -42,6 +42,10 @@ mixin MixinsScrollToGroup<T extends StatefulWidget, K extends CoreModelWithId> {
   }
 
   String? scrollToGroupGetDifferenceKey(Map<String, List<K>> a, Map<String, List<K>> b) {
+    if (a.isEmpty || b.isEmpty) {
+      return null;
+    }
+
     final keysA = a.keys.toList();
     final keysB = b.keys.toList();
 
