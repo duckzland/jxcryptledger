@@ -136,8 +136,8 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
                   ),
                 ),
 
-                AnimatedBuilder(
-                  animation: _wxController,
+                ListenableBuilder(
+                  listenable: _wxController,
                   builder: (context, _) {
                     final linked = _wxController.getLinked("panels-${widget.tix.tid}");
 

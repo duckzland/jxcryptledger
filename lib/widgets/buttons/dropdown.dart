@@ -12,11 +12,14 @@ class WidgetsButtonsDropdown extends StatelessWidget {
   final List<Widget> children;
   final int maxVisible;
   final List<WidgetsButtonActionState> dotStates;
+  final List<WidgetsButtonActionState> Function(MenuController menuController)? dotEvaluator;
 
   final double iconWidth;
   final double iconHeight;
   final double menuWidth;
   final bool menuAlignRight;
+
+  final Listenable? listener;
 
   const WidgetsButtonsDropdown({
     super.key,
@@ -27,6 +30,8 @@ class WidgetsButtonsDropdown extends StatelessWidget {
     required this.menuWidth,
     this.menuAlignRight = false,
     this.dotStates = const [],
+    this.dotEvaluator,
+    this.listener,
   });
 
   @override
@@ -34,6 +39,21 @@ class WidgetsButtonsDropdown extends StatelessWidget {
     if (children.isEmpty) {
       return const SizedBox();
     }
+
+    if (listener != null) {
+      return ListenableBuilder(
+        listenable: listener!,
+        builder: (context, _) {
+          return buildButtons();
+        },
+      );
+    }
+
+    return buildButtons();
+  }
+
+  Widget buildButtons() {
+    List<Widget> buttons;
 
     final visible = children.sublist(0, children.length <= maxVisible ? children.length : maxVisible).map((item) {
       if (item is WidgetsDialogsShowForm) {
@@ -50,84 +70,80 @@ class WidgetsButtonsDropdown extends StatelessWidget {
       return item;
     }).toList();
 
-    if (children.length <= maxVisible) {
-      return Wrap(
-        direction: Axis.horizontal,
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 6,
-        children: visible,
+    buttons = [...visible];
+
+    if (children.length > maxVisible) {
+      final inMenus = children.sublist(maxVisible).map((item) {
+        if (item is WidgetsDialogsShowForm) {
+          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+        } else if (item is WidgetsDialogsAlert) {
+          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+        } else if (item is WidgetsDialogsExport) {
+          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+        } else if (item is WidgetsDialogsImport) {
+          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+        } else if (item is WidgetsDialogsReset) {
+          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+        }
+        return item;
+      }).toList();
+
+      double offsetX = 0;
+      if (menuAlignRight) {
+        offsetX = (menuWidth - (iconWidth / 2)) * -1;
+      }
+
+      buttons.add(
+        MenuAnchor(
+          animated: true,
+          alignmentOffset: Offset(offsetX, 4),
+          builder: (context, controller, child) {
+            return Container(
+              width: iconWidth,
+              height: iconHeight,
+              decoration: BoxDecoration(
+                color: controller.isOpen ? AppTheme.menuBackground : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(maxWidth: iconWidth, maxHeight: iconHeight),
+                focusColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                splashColor: Colors.transparent,
+                disabledColor: Colors.transparent,
+                splashRadius: 6,
+                mouseCursor: SystemMouseCursors.click,
+                onPressed: () => controller.isOpen ? controller.close() : controller.open(),
+
+                icon: buildAdaptiveDots(controller),
+              ),
+            );
+          },
+          menuChildren: [
+            SizedBox(
+              width: menuWidth,
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, spacing: 6, children: inMenus),
+            ),
+          ],
+        ),
       );
     }
-
-    final inMenus = children.sublist(maxVisible).map((item) {
-      if (item is WidgetsDialogsShowForm) {
-        return item.copyWith(initialTransparent: true, centered: false, tooltip: "");
-      } else if (item is WidgetsDialogsAlert) {
-        return item.copyWith(initialTransparent: true, centered: false, tooltip: "");
-      } else if (item is WidgetsDialogsExport) {
-        return item.copyWith(initialTransparent: true, centered: false, tooltip: "");
-      } else if (item is WidgetsDialogsImport) {
-        return item.copyWith(initialTransparent: true, centered: false, tooltip: "");
-      } else if (item is WidgetsDialogsReset) {
-        return item.copyWith(initialTransparent: true, centered: false, tooltip: "");
-      }
-      return item;
-    }).toList();
-
-    double offsetX = 0;
-    if (menuAlignRight) {
-      offsetX = (menuWidth - (iconWidth / 2)) * -1;
-    }
-
-    final dropdown = MenuAnchor(
-      animated: true,
-      alignmentOffset: Offset(offsetX, 4),
-      builder: (context, controller, child) {
-        return Container(
-          width: iconWidth,
-          height: iconHeight,
-          decoration: BoxDecoration(
-            color: controller.isOpen ? AppTheme.menuBackground : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            constraints: BoxConstraints(maxWidth: iconWidth, maxHeight: iconHeight),
-
-            focusColor: Colors.transparent,
-            hoverColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            disabledColor: Colors.transparent,
-            splashRadius: 6,
-            mouseCursor: SystemMouseCursors.click,
-            onPressed: () => controller.isOpen ? controller.close() : controller.open(),
-
-            icon: buildAdaptiveDots(),
-          ),
-        );
-      },
-      menuChildren: [
-        SizedBox(
-          width: menuWidth,
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, spacing: 6, children: inMenus),
-        ),
-      ],
-    );
 
     return Wrap(
       direction: Axis.horizontal,
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 6,
-      children: [...visible, dropdown],
+      children: buttons,
     );
   }
 
-  Widget buildAdaptiveDots() {
+  Widget buildAdaptiveDots(MenuController controller) {
+    final states = dotEvaluator != null ? dotEvaluator?.call(controller) ?? [] : dotStates;
     final dotSize = (iconWidth / 7).clamp(3.0, 6.0);
-    final dots = dotStates.skip(maxVisible).take(6).toList();
+    final dots = states.skip(maxVisible).take(6).toList();
 
     Widget dot(WidgetsButtonActionState s) => Container(
       width: dotSize,

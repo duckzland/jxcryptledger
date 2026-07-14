@@ -17,6 +17,7 @@ class WidgetsDialogsReset extends StatefulWidget {
   final bool persistBg;
   final bool initialTransparent;
   final bool centered;
+  final Listenable? listener;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -39,6 +40,7 @@ class WidgetsDialogsReset extends StatefulWidget {
     this.persistBg = false,
     this.initialTransparent = false,
     this.centered = true,
+    this.listener,
 
     this.dialogTitle = "Reset Database",
     this.dialogMessage =
@@ -64,6 +66,7 @@ class WidgetsDialogsReset extends StatefulWidget {
     bool? persistBg,
     bool? initialTransparent,
     bool? centered,
+    Listenable? listener,
     String? dialogTitle,
     String? dialogMessage,
     String? dialogCancelLabel,
@@ -82,6 +85,7 @@ class WidgetsDialogsReset extends StatefulWidget {
       persistBg: persistBg ?? this.persistBg,
       initialTransparent: initialTransparent ?? this.initialTransparent,
       centered: centered ?? this.centered,
+      listener: listener ?? this.listener,
       dialogTitle: dialogTitle ?? this.dialogTitle,
       dialogMessage: dialogMessage ?? this.dialogMessage,
       dialogCancelLabel: dialogCancelLabel ?? this.dialogCancelLabel,
@@ -128,6 +132,7 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
       persistBg: widget.persistBg,
       initialTransparent: widget.initialTransparent,
       centered: widget.centered,
+      listener: widget.listener,
     );
   }
 }

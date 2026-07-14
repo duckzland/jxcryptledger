@@ -25,7 +25,11 @@ enum WidgetsButtonActionState {
 
   action(background: AppTheme.buttonBgAction, foreground: AppTheme.buttonFgAction),
 
-  warning(background: AppTheme.buttonBgWarning, foreground: AppTheme.buttonFgWarning);
+  warning(background: AppTheme.buttonBgWarning, foreground: AppTheme.buttonFgWarning),
+
+  muted(background: AppTheme.buttonBgMuted, foreground: AppTheme.buttonFgMuted),
+
+  reversed(background: AppTheme.buttonFg, foreground: AppTheme.buttonBg);
 
   final Color background;
   final Color foreground;
@@ -61,6 +65,8 @@ class WidgetsButtonsAction extends StatefulWidget {
   final bool initialTransparent;
   final bool centered;
 
+  final Listenable? listener;
+
   const WidgetsButtonsAction({
     super.key,
     this.label,
@@ -75,6 +81,7 @@ class WidgetsButtonsAction extends StatefulWidget {
     this.persistBg = true,
     this.initialTransparent = false,
     this.centered = true,
+    this.listener,
   });
 
   @override
@@ -125,7 +132,7 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
     final fg = _foregroundColor();
     final br = Color.lerp(bg, fg, 0.70)!;
 
-    final button = ElevatedButton(
+    Widget button = ElevatedButton(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.hovered) || widget.persistBg || _state == WidgetsButtonActionState.inProgress) {
@@ -162,7 +169,16 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
     );
 
     if (widget.tooltip != null) {
-      return Tooltip(message: widget.tooltip!, child: button);
+      button = Tooltip(message: widget.tooltip!, child: button);
+    }
+
+    if (widget.listener != null) {
+      return ListenableBuilder(
+        listenable: widget.listener!,
+        builder: (context, _) {
+          return button;
+        },
+      );
     }
 
     return button;

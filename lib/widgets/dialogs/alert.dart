@@ -15,6 +15,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final bool showMessage;
   final bool initialTransparent;
   final bool centered;
+  final Listenable? listener;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -44,6 +45,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     this.showMessage = true,
     this.initialTransparent = false,
     this.centered = true,
+    this.listener,
 
     this.dialogTitle = "Are you sure?",
     this.dialogMessage = "This action cannot be undone.",
@@ -74,6 +76,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     bool? persistBg,
     bool? initialTransparent,
     bool? centered,
+    Listenable? listener,
     bool? showMessage,
     String? dialogTitle,
     String? dialogMessage,
@@ -99,6 +102,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
       persistBg: persistBg ?? this.persistBg,
       initialTransparent: initialTransparent ?? this.initialTransparent,
       centered: centered ?? this.centered,
+      listener: listener ?? this.listener,
       showMessage: showMessage ?? this.showMessage,
       dialogTitle: dialogTitle ?? this.dialogTitle,
       dialogMessage: dialogMessage ?? this.dialogMessage,
@@ -186,6 +190,7 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
       persistBg: widget.persistBg,
       initialTransparent: widget.initialTransparent,
       centered: widget.centered,
+      listener: widget.listener,
     );
   }
 }

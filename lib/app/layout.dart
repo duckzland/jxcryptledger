@@ -282,8 +282,8 @@ class _AppLayoutState extends State<AppLayout> {
             spacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              AnimatedBuilder(
-                animation: _cryptosController,
+              ListenableBuilder(
+                listenable: _cryptosController,
                 builder: (context, _) {
                   return WidgetsButtonsAction(
                     key: const Key("refresh-crypto"),
@@ -312,8 +312,8 @@ class _AppLayoutState extends State<AppLayout> {
                 },
               ),
 
-              AnimatedBuilder(
-                animation: _ratesController,
+              ListenableBuilder(
+                listenable: _ratesController,
                 builder: (context, _) {
                   return _ratesController.hasRates
                       ? WidgetsButtonsAction(

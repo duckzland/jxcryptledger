@@ -55,8 +55,8 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
       mainAxisSize: MainAxisSize.min,
       spacing: 10,
       children: [
-        AnimatedBuilder(
-          animation: _controller,
+        ListenableBuilder(
+          listenable: _controller,
           builder: (context, _) {
             return Wrap(
               spacing: 4,

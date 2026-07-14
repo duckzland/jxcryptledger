@@ -19,6 +19,7 @@ class WidgetsDialogsExport extends StatefulWidget {
   final WidgetsButtonActionState initialState;
   final bool initialTransparent;
   final bool centered;
+  final Listenable? listener;
 
   final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool Function()? isEmpty;
@@ -47,6 +48,7 @@ class WidgetsDialogsExport extends StatefulWidget {
     this.persistBg = false,
     this.initialTransparent = false,
     this.centered = true,
+    this.listener,
 
     this.dialogTitle = "Export Data",
     this.dialogMessage = "This will export your data to a JSON file.",
@@ -71,6 +73,7 @@ class WidgetsDialogsExport extends StatefulWidget {
     bool? persistBg,
     bool? initialTransparent,
     bool? centered,
+    Listenable? listener,
     String? dialogTitle,
     String? dialogMessage,
     String? dialogCancelLabel,
@@ -89,6 +92,7 @@ class WidgetsDialogsExport extends StatefulWidget {
       persistBg: persistBg ?? this.persistBg,
       initialTransparent: initialTransparent ?? this.initialTransparent,
       centered: centered ?? this.centered,
+      listener: listener ?? this.listener,
       dialogTitle: dialogTitle ?? this.dialogTitle,
       dialogMessage: dialogMessage ?? this.dialogMessage,
       dialogCancelLabel: dialogCancelLabel ?? this.dialogCancelLabel,
@@ -162,6 +166,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       persistBg: widget.persistBg,
       initialTransparent: widget.initialTransparent,
       centered: widget.centered,
+      listener: widget.listener,
     );
   }
 }

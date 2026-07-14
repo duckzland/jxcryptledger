@@ -15,6 +15,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
   final bool persistBg;
   final bool initialTransparent;
   final bool centered;
+  final Listenable? listener;
 
   const WidgetsDialogsShowForm({
     super.key,
@@ -31,6 +32,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     this.persistBg = false,
     this.initialTransparent = false,
     this.centered = true,
+    this.listener,
   });
 
   @override
@@ -49,6 +51,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     bool? persistBg,
     bool? initialTransparent,
     bool? centered,
+    Listenable? listener,
   }) {
     return WidgetsDialogsShowForm(
       buildForm: buildForm ?? this.buildForm,
@@ -63,6 +66,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
       persistBg: persistBg ?? this.persistBg,
       initialTransparent: initialTransparent ?? this.initialTransparent,
       centered: centered ?? this.centered,
+      listener: listener ?? this.listener,
     );
   }
 }
@@ -93,6 +97,7 @@ class _WidgetsDialogsShowFormState extends State<WidgetsDialogsShowForm> {
       persistBg: widget.persistBg,
       initialTransparent: widget.initialTransparent,
       centered: widget.centered,
+      listener: widget.listener,
     );
   }
 }

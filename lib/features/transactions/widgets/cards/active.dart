@@ -28,7 +28,6 @@ import '../../calculations.dart';
 import '../../controller.dart';
 import '../../model.dart';
 import '../buttons/batch.dart';
-import '../buttons/linkable.dart';
 import '../panel_item.dart';
 import '../status_text.dart';
 
@@ -323,20 +322,15 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
               ],
             ),
 
-          TransactionsWidgetsButtonsLinkable(
-            parentContext: context,
-            srid: widget.srid,
-            rrid: widget.rrid,
-            txs: txs,
-            rate: nonReversedEffectiveRate ?? 0,
-            balance: _calc.totalActiveSourceBalance(txs),
-          ),
-
           TransactionsWidgetsButtonsBatch(
             parentContext: widget.parentContext,
             srid: widget.srid,
             rrid: widget.rrid,
             txs: txs,
+            rate: nonReversedEffectiveRate ?? 0,
+            balance: _calc.totalActiveSourceBalance(txs),
+            linkableKey: "active-screen",
+            menuWidth: 130,
             selectedRows: selectableSelectedRows,
             isOpen: _isOpen,
             isDeletable: isDeletable,

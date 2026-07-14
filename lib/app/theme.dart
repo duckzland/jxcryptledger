@@ -68,6 +68,9 @@ class AppTheme {
   static const buttonBgWarning = Color(0xFFD5A114);
   static const buttonFgWarning = Colors.white;
 
+  static const buttonBgMuted = Color.fromARGB(255, 68, 81, 104);
+  static const buttonFgMuted = Colors.white;
+
   static const double tableHeadingRowHeight = 50;
   static const double tableDataRowMinHeight = 42;
 

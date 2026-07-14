@@ -23,6 +23,7 @@ class WidgetsDialogsImport extends StatefulWidget {
   final bool persistBg;
   final bool initialTransparent;
   final bool centered;
+  final Listenable? listener;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -45,6 +46,7 @@ class WidgetsDialogsImport extends StatefulWidget {
     this.persistBg = false,
     this.initialTransparent = false,
     this.centered = true,
+    this.listener,
 
     this.dialogTitle = "Import Data",
     this.dialogMessage = "This will erase existing data before importing.\nThis action cannot be undone.",
@@ -67,6 +69,7 @@ class WidgetsDialogsImport extends StatefulWidget {
     bool? persistBg,
     bool? initialTransparent,
     bool? centered,
+    Listenable? listener,
     bool? showDialogBeforeImport,
     String? dialogTitle,
     String? dialogMessage,
@@ -86,6 +89,7 @@ class WidgetsDialogsImport extends StatefulWidget {
       persistBg: persistBg ?? this.persistBg,
       initialTransparent: initialTransparent ?? this.initialTransparent,
       centered: centered ?? this.centered,
+      listener: listener ?? this.listener,
       showDialogBeforeImport: showDialogBeforeImport ?? this.showDialogBeforeImport,
       dialogTitle: dialogTitle ?? this.dialogTitle,
       dialogMessage: dialogMessage ?? this.dialogMessage,
@@ -142,6 +146,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
       persistBg: widget.persistBg,
       initialTransparent: widget.initialTransparent,
       centered: widget.centered,
+      listener: widget.listener,
       onPressed: widget.showDialogBeforeImport ? null : _handlePressed,
     );
   }

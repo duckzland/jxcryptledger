@@ -317,14 +317,14 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               Row(
                 children: [
                   Expanded(
-                    child: AnimatedBuilder(animation: _tixController, builder: (_, _) => _buildTickers()),
+                    child: ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
                   ),
                 ],
               ),
             Flexible(
               flex: 10,
               fit: FlexFit.loose,
-              child: AnimatedBuilder(animation: _pxController, builder: (_, _) => _buildPanels()),
+              child: ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels()),
             ),
           ],
         ),

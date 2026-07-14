@@ -58,8 +58,8 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          AnimatedBuilder(
-            animation: _cryptosController,
+          ListenableBuilder(
+            listenable: _cryptosController,
             builder: (context, _) {
               return WidgetsButtonsAction(
                 icon: Icons.refresh,
