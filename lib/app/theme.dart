@@ -30,6 +30,7 @@ class AppTheme {
   static const mutedBg = Color(0xFF292F3B);
   static const closedBg = Color(0xFF253442);
   static const finalizedBg = Color(0xFF253446);
+  static const barrierBg = Color(0xD9000000);
 
   static const red = Color(0xFF852424);
   static const darkRed = Color(0xFF641919);
@@ -207,6 +208,22 @@ class AppTheme {
           shadowColor: WidgetStateProperty.all(menuBackground),
           padding: WidgetStateProperty.all(const EdgeInsets.only(top: 6, left: 6, right: 6, bottom: 6)),
         ),
+      ),
+
+      bottomSheetTheme: const BottomSheetThemeData(modalBarrierColor: barrierBg),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: background,
+        surfaceTintColor: Colors.transparent,
+        barrierColor: barrierBg,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+          side: BorderSide(color: panelBg, width: 1),
+        ),
+        titleTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.bold, color: text),
+        contentTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 16, color: text),
+        iconColor: action,
       ),
     );
   }
