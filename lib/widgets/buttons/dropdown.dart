@@ -75,22 +75,57 @@ class WidgetsButtonsDropdown extends StatelessWidget {
     if (children.length > maxVisible) {
       final inMenus = children.sublist(maxVisible).map((item) {
         if (item is WidgetsDialogsShowForm) {
-          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+          return item.copyWith(
+            initialTransparent: true,
+            centered: false,
+            tooltip: "",
+            persistBg: false,
+            radius: 0,
+            initialState: WidgetsButtonActionState.normal,
+          );
         } else if (item is WidgetsDialogsAlert) {
-          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+          return item.copyWith(
+            initialTransparent: true,
+            centered: false,
+            tooltip: "",
+            persistBg: false,
+            radius: 0,
+            initialState: WidgetsButtonActionState.normal,
+          );
         } else if (item is WidgetsDialogsExport) {
-          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+          return item.copyWith(
+            initialTransparent: true,
+            centered: false,
+            tooltip: "",
+            persistBg: false,
+            radius: 0,
+            initialState: WidgetsButtonActionState.normal,
+          );
         } else if (item is WidgetsDialogsImport) {
-          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+          return item.copyWith(
+            initialTransparent: true,
+            centered: false,
+            tooltip: "",
+            persistBg: false,
+            radius: 0,
+            initialState: WidgetsButtonActionState.normal,
+          );
         } else if (item is WidgetsDialogsReset) {
-          return item.copyWith(initialTransparent: true, centered: false, tooltip: "", persistBg: false);
+          return item.copyWith(
+            initialTransparent: true,
+            centered: false,
+            tooltip: "",
+            persistBg: false,
+            radius: 0,
+            initialState: WidgetsButtonActionState.normal,
+          );
         }
         return item;
       }).toList();
 
       double offsetX = 0;
       if (menuAlignRight) {
-        offsetX = (menuWidth - (iconWidth / 2)) * -1;
+        offsetX = (menuWidth - iconWidth) * -1;
       }
 
       buttons.add(

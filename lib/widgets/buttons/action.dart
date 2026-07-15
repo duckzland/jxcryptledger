@@ -61,6 +61,7 @@ class WidgetsButtonsAction extends StatefulWidget {
   final WidgetsButtonActionState initialState;
   final double? iconSize;
   final Size? minimumSize;
+  final double radius;
   final bool persistBg;
   final bool initialTransparent;
   final bool centered;
@@ -81,6 +82,7 @@ class WidgetsButtonsAction extends StatefulWidget {
     this.persistBg = true,
     this.initialTransparent = false,
     this.centered = true,
+    this.radius = 6.0,
     this.listener,
   });
 
@@ -134,6 +136,9 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
 
     Widget button = ElevatedButton(
       style: ButtonStyle(
+        shape: WidgetStateProperty.resolveWith((states) {
+          return RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.radius));
+        }),
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.hovered) || widget.persistBg || _state == WidgetsButtonActionState.inProgress) {
             return _backgroundColor();

@@ -99,7 +99,6 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           label: "Delete",
           tooltip: "Delete all transactions",
           initialState: WidgetsButtonActionState.error,
-          evaluator: _evaluatorDeleteTx,
           padding: btnPadding,
           iconSize: btnIconSize,
           minimumSize: btnSize,
@@ -116,7 +115,6 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           label: "Refund",
           tooltip: "Refund all refundable transactions found in this group",
           initialState: WidgetsButtonActionState.error,
-          evaluator: _evaluatorRefundTx,
           padding: btnPadding,
           iconSize: btnIconSize,
           minimumSize: btnSize,
@@ -133,7 +131,6 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           label: "Close",
           tooltip: "Close all closable transactions found in this group",
           initialState: WidgetsButtonActionState.warning,
-          evaluator: _evaluatorCloseTx,
           padding: btnPadding,
           iconSize: btnIconSize,
           minimumSize: btnSize,
@@ -150,7 +147,6 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           label: "Finalize",
           tooltip: "Finalize all finalizable transactions found in this group",
           initialState: WidgetsButtonActionState.warning,
-          evaluator: _evaluatorFinalizeTx,
           padding: btnPadding,
           iconSize: btnIconSize,
           minimumSize: btnSize,
@@ -239,38 +235,6 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
             ? (controller.isOpen ? WidgetsButtonActionState.reversed : WidgetsButtonActionState.muted)
             : (linkedWatcher!.isSpent ? WidgetsButtonActionState.error : WidgetsButtonActionState.action),
     ];
-  }
-
-  void _evaluatorDeleteTx(WidgetsButtonsActionState s) {
-    if (!isDeletable) {
-      s.disable();
-    } else {
-      s.error();
-    }
-  }
-
-  void _evaluatorRefundTx(WidgetsButtonsActionState s) {
-    if (!isRefundable) {
-      s.disable();
-    } else {
-      s.error();
-    }
-  }
-
-  void _evaluatorCloseTx(WidgetsButtonsActionState s) {
-    if (!isClosable) {
-      s.disable();
-    } else {
-      s.warning();
-    }
-  }
-
-  void _evaluatorFinalizeTx(WidgetsButtonsActionState s) {
-    if (!isFinalizable) {
-      s.disable();
-    } else {
-      s.warning();
-    }
   }
 
   void _evaluatorWatchboard(WidgetsButtonsActionState s) {

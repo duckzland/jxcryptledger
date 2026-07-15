@@ -8,6 +8,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
   final String tooltip;
   final IconData icon;
   final double iconSize;
+  final double radius;
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
@@ -25,6 +26,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     this.tooltip = "Add new item",
     this.icon = Icons.add,
     this.iconSize = 20,
+    this.radius = 6.0,
     this.padding = const EdgeInsets.all(8),
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.action,
@@ -44,6 +46,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     String? tooltip,
     IconData? icon,
     double? iconSize,
+    double? radius,
     EdgeInsets? padding,
     Size? minimumSize,
     WidgetsButtonActionState? initialState,
@@ -59,6 +62,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
       tooltip: tooltip ?? this.tooltip,
       icon: icon ?? this.icon,
       iconSize: iconSize ?? this.iconSize,
+      radius: radius ?? this.radius,
       padding: padding ?? this.padding,
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
@@ -89,6 +93,7 @@ class _WidgetsDialogsShowFormState extends State<WidgetsDialogsShowForm> {
       tooltip: widget.tooltip,
       icon: widget.icon,
       iconSize: widget.iconSize,
+      radius: widget.radius,
       padding: widget.padding,
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,

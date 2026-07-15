@@ -337,14 +337,6 @@ class TransactionsPageState extends State<TransactionsPage>
                 tooltip: "Delete all transactions",
                 label: "Delete",
                 initialState: WidgetsButtonActionState.error,
-                evaluator: (s) {
-                  final bool isDeletable = txController.hasDeletableRoot();
-                  if (!isDeletable) {
-                    s.disable();
-                  } else {
-                    s.error();
-                  }
-                },
                 buildForm: (dialogContext) {
                   return TransactionsDialogsBatchAction(
                     transactions: txs,
@@ -366,14 +358,6 @@ class TransactionsPageState extends State<TransactionsPage>
                 tooltip: "Close all closable transactions",
                 label: "Close",
                 initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  final bool isClosable = txController.hasClosableLeaf();
-                  if (!isClosable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
                 buildForm: (dialogContext) {
                   return TransactionsDialogsBatchAction(
                     transactions: txs,
@@ -395,14 +379,6 @@ class TransactionsPageState extends State<TransactionsPage>
                 tooltip: "Finalize all finalizable transactions",
                 label: "Finalize",
                 initialState: WidgetsButtonActionState.warning,
-                evaluator: (s) {
-                  final bool isFinalizable = txController.hasFinalizable();
-                  if (!isFinalizable) {
-                    s.disable();
-                  } else {
-                    s.warning();
-                  }
-                },
                 buildForm: (dialogContext) {
                   return TransactionsDialogsBatchAction(
                     transactions: txs,

@@ -7,6 +7,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final String tooltip;
   final IconData? icon;
   final double iconSize;
+  final double radius;
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
@@ -37,6 +38,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     this.tooltip = "Confirm action",
     this.icon,
     this.iconSize = 20,
+    this.radius = 6.0,
     this.padding = const EdgeInsets.all(8),
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.error,
@@ -69,6 +71,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     String? tooltip,
     IconData? icon,
     double? iconSize,
+    double? radius,
     EdgeInsets? padding,
     Size? minimumSize,
     WidgetsButtonActionState? initialState,
@@ -95,6 +98,7 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
       tooltip: tooltip ?? this.tooltip,
       icon: icon ?? this.icon,
       iconSize: iconSize ?? this.iconSize,
+      radius: radius ?? this.radius,
       padding: padding ?? this.padding,
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
@@ -182,6 +186,7 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
       tooltip: widget.tooltip,
       icon: widget.icon,
       iconSize: widget.iconSize,
+      radius: widget.radius,
       padding: widget.padding,
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
