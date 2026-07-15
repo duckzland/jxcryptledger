@@ -84,6 +84,9 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   String get sortableKey => "tx-group-overview-${widget.id}";
 
   @override
+  String get selectableKey => "tx-group-overview-${widget.id}";
+
+  @override
   void initState() {
     super.initState();
 

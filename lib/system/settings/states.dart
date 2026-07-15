@@ -52,7 +52,13 @@ class StateService {
   }
 
   String store() {
-    return jsonEncode(_state);
+    final states = _state;
+    final keysToRemove = states.keys.where((k) => k.startsWith("[np]")).toList();
+    for (final key in keysToRemove) {
+      states.remove(key);
+    }
+
+    return jsonEncode(states);
   }
 
   void populate(String jsonData) {

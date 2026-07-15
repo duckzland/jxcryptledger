@@ -118,9 +118,13 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   }
 
   bool get isCapital => (widget.srid == widget.rrid);
+  String get cardKey => "tx-group-active-${widget.srid}-${widget.rrid}";
 
   @override
-  String get sortableKey => "tx-group-active-${widget.srid}-${widget.rrid}";
+  String get sortableKey => cardKey;
+
+  @override
+  String get selectableKey => cardKey;
 
   @override
   void initState() {
@@ -131,6 +135,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     rateableTarget = widget.rrid;
 
     _isOpen = widget.isOpen;
+    _customRate = states.get("[np]-$cardKey-custom-rate", defaultValue: null);
+    _isReversed = states.get("[np]-$cardKey-is-reversed", defaultValue: false);
 
     txs = widget.transactions;
     fxs = widget.txsFlags;
@@ -222,6 +228,12 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     }
 
     rateableDefaultHelper = _averageRate.toStringAsFixed(8);
+
+    if (_customRate == null) {
+      states.remove("[np]-$cardKey-custom-rate");
+    } else {
+      states.set("[np]-$cardKey-custom-rate", _customRate);
+    }
 
     if (hasNewRate) {
       _calculateProfitLoss();
@@ -640,6 +652,14 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _calculateProfitLoss();
     rows = _buildRows();
     sortableApplySorting();
+
+    if (_customRate == null) {
+      states.remove("[np]-$cardKey-custom-rate");
+    } else {
+      states.set("[np]-$cardKey-custom-rate", _customRate);
+    }
+
+    states.set("[np]-$cardKey-is-reversed", _isReversed);
   }
 
   void _reverseActionEvaluator(WidgetsButtonsActionState s) {
@@ -661,6 +681,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       _debounce = Timer(const Duration(milliseconds: 100), () {
         _customRate = newValue;
         rateableGetRate(refresh: false, silent: true);
+        if (_customRate == null) {
+          states.remove("[np]-$cardKey-custom-rate");
+        } else {
+          states.set("[np]-$cardKey-custom-rate", _customRate);
+        }
       });
     }
   }

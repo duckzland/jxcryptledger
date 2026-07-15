@@ -14,8 +14,8 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
   void initState() {
     super.initState();
     if (sortableKey.isNotEmpty) {
-      sortableColumnIndex = states.get("$sortableKey-sortable-column-index", defaultValue: 0);
-      sortableAscending = states.get("$sortableKey-sortable-ascending", defaultValue: false);
+      sortableColumnIndex = states.get("[np]-$sortableKey-sortable-column-index", defaultValue: 0);
+      sortableAscending = states.get("[np]-$sortableKey-sortable-ascending", defaultValue: false);
     }
   }
 
@@ -43,8 +43,8 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
     sortableAscending = ascending;
 
     if (sortableKey.isNotEmpty) {
-      states.set("$sortableKey-sortable-column-index", sortableColumnIndex);
-      states.set("$sortableKey-sortable-ascending", sortableAscending);
+      states.set("[np]-$sortableKey-sortable-column-index", sortableColumnIndex);
+      states.set("[np]-$sortableKey-sortable-ascending", sortableAscending);
     }
 
     sortableAfterSorting();
