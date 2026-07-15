@@ -220,7 +220,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   @override
   void rateableGetCallback(bool hasNewRate) {
     if (rateableStateUpdater != null) {
-      _customRate = rateableValue;
+      _setCustomRate(rateableValue);
     } else {
       if (_customRate != null) {
         rateableValue = _customRate;
@@ -228,12 +228,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     }
 
     rateableDefaultHelper = _averageRate.toStringAsFixed(8);
-
-    if (_customRate == null) {
-      states.remove("[np]-$cardKey-custom-rate");
-    } else {
-      states.set("[np]-$cardKey-custom-rate", _customRate);
-    }
 
     if (hasNewRate) {
       _calculateProfitLoss();
@@ -644,7 +638,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   void _reverseRateAction(WidgetsButtonsActionState s) {
     _isReversed = !_isReversed;
     if (_customRate != null) {
-      _customRate = Math.divide(1, _customRate!);
+      _setCustomRate(Math.divide(1, _customRate!));
     }
 
     // BugFix: Dont link to rateable to prevent double inversing!
@@ -652,12 +646,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _calculateProfitLoss();
     rows = _buildRows();
     sortableApplySorting();
-
-    if (_customRate == null) {
-      states.remove("[np]-$cardKey-custom-rate");
-    } else {
-      states.set("[np]-$cardKey-custom-rate", _customRate);
-    }
 
     states.set("[np]-$cardKey-is-reversed", _isReversed);
   }
@@ -679,13 +667,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     final newValue = double.tryParse(value);
     if (_customRate != newValue) {
       _debounce = Timer(const Duration(milliseconds: 100), () {
-        _customRate = newValue;
+        _setCustomRate(newValue);
         rateableGetRate(refresh: false, silent: true);
-        if (_customRate == null) {
-          states.remove("[np]-$cardKey-custom-rate");
-        } else {
-          states.set("[np]-$cardKey-custom-rate", _customRate);
-        }
       });
     }
   }
@@ -704,5 +687,14 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     });
 
     widget.onToggleChanged.call();
+  }
+
+  void _setCustomRate(double? rate) {
+    _customRate = rate;
+    if (_customRate == null) {
+      states.remove("[np]-$cardKey-custom-rate");
+    } else {
+      states.set("[np]-$cardKey-custom-rate", _customRate);
+    }
   }
 }
