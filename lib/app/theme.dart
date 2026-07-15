@@ -30,6 +30,7 @@ class AppTheme {
   static const mutedBg = Color(0xFF292F3B);
   static const closedBg = Color(0xFF253442);
   static const finalizedBg = Color(0xFF253446);
+  static const dialogBg = Color(0xFF151A25);
   static const barrierBg = Color(0xD9000000);
 
   static const red = Color(0xFF852424);
@@ -213,16 +214,16 @@ class AppTheme {
       bottomSheetTheme: const BottomSheetThemeData(modalBarrierColor: barrierBg),
 
       dialogTheme: DialogThemeData(
-        backgroundColor: background,
+        backgroundColor: dialogBg,
         surfaceTintColor: Colors.transparent,
         barrierColor: barrierBg,
         elevation: 6,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-          side: BorderSide(color: panelBg, width: 1),
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: separator, width: 1),
         ),
-        titleTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.bold, color: text),
-        contentTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 16, color: text),
+        titleTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w600, color: text),
+        contentTextStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w400, color: text),
         iconColor: action,
       ),
     );

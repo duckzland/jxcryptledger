@@ -12,7 +12,6 @@ import '../../../mixins/table.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/notify.dart';
-import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -118,73 +117,68 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                if (txs.isNotEmpty) Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                if (txs.isNotEmpty)
-                  WidgetsPanel(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildTable()]),
-                  ),
-                if (txs.isEmpty) Text(emptyMessage, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+      constraints: const BoxConstraints(maxWidth: 1200),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 20,
+            children: [
+              if (txs.isNotEmpty) Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isNotEmpty) _buildTable(),
 
-                WidgetsPanel(
-                  padding: const EdgeInsets.all(12),
-                  child: Wrap(
-                    direction: Axis.horizontal,
-                    runSpacing: 20,
-                    spacing: 10,
-                    runAlignment: WrapAlignment.center,
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-                      if (txs.isNotEmpty)
-                        WidgetsDialogsAlert(
-                          label: buttonLabel,
-                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                          persistBg: true,
-                          dialogTitle: confirmTitle,
-                          dialogMessage: confirmMessage,
-                          dialogCancelLabel: "Cancel",
-                          dialogConfirmLabel: buttonLabel,
-                          showMessage: false,
-                          initialState: buttonActionState,
-                          tooltip: tooltip,
-                          evaluator: (s) {
-                            if (selectableHasSelectedRows()) {
-                              switch (widget.mode) {
-                                case TransactionsBatchActionMode.close:
-                                  s.warning();
-                                  break;
-                                case TransactionsBatchActionMode.finalize:
-                                  s.warning();
-                                  break;
-                                case TransactionsBatchActionMode.delete:
-                                  s.error();
-                                  break;
-                                case TransactionsBatchActionMode.refund:
-                                  s.error();
-                                  break;
-                              }
-                            } else {
-                              s.disable();
+              if (txs.isEmpty) Text(emptyMessage, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+
+              Padding(
+                padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                child: Wrap(
+                  direction: Axis.horizontal,
+                  runSpacing: 20,
+                  spacing: 10,
+                  runAlignment: WrapAlignment.center,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+                    if (txs.isNotEmpty)
+                      WidgetsDialogsAlert(
+                        label: buttonLabel,
+                        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                        persistBg: true,
+                        dialogTitle: confirmTitle,
+                        dialogMessage: confirmMessage,
+                        dialogCancelLabel: "Cancel",
+                        dialogConfirmLabel: buttonLabel,
+                        showMessage: false,
+                        initialState: buttonActionState,
+                        tooltip: tooltip,
+                        evaluator: (s) {
+                          if (selectableHasSelectedRows()) {
+                            switch (widget.mode) {
+                              case TransactionsBatchActionMode.close:
+                                s.warning();
+                                break;
+                              case TransactionsBatchActionMode.finalize:
+                                s.warning();
+                                break;
+                              case TransactionsBatchActionMode.delete:
+                                s.error();
+                                break;
+                              case TransactionsBatchActionMode.refund:
+                                s.error();
+                                break;
                             }
-                          },
-                          actionCompleteCallback: _handleSave,
-                        ),
-                    ],
-                  ),
+                          } else {
+                            s.disable();
+                          }
+                        },
+                        actionCompleteCallback: _handleSave,
+                      ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

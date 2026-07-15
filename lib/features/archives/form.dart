@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../widgets/fields/textarea.dart';
+import '../../app/theme.dart';
+import '../../app/exceptions.dart';
 import '../../core/runtime/locator.dart';
 import '../../widgets/buttons/action.dart';
-import '../../../widgets/fields/textarea.dart';
-import '../../../widgets/panel.dart';
-import '../../app/exceptions.dart';
 import '../../mixins/rateable.dart';
 import '../../system/settings/controller.dart';
 import '../transactions/controller.dart';
@@ -39,74 +39,66 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: _canArchive()
-                ? Form(
-                    key: _formKey,
-                    child: Column(
-                      spacing: 24,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [_buildTitle(), _buildTypePanel(), _buildNotesPanel(), _buildButtonPanel()],
-                    ),
-                  )
-                : Center(child: Text("No valid data that can be archived.")),
-          ),
+      constraints: const BoxConstraints(maxWidth: 1600),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: _canArchive()
+              ? Form(
+                  key: _formKey,
+                  child: Column(
+                    spacing: 30,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [_buildTitle(), _buildTypePanel(), _buildNotesPanel(), _buildButtonPanel()],
+                  ),
+                )
+              : Center(child: Text("No valid data that can be archived.")),
         ),
       ),
     );
   }
 
   Widget _buildTypePanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Data Type", style: TextStyle(fontWeight: FontWeight.w600)),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              labelText: "Data Type",
-            ),
-            items: [
-              if (_txController.items.isNotEmpty) const DropdownMenuItem(value: "transactions", child: Text("Transactions Data")),
-              if (_pxController.items.isNotEmpty) const DropdownMenuItem(value: "watchboards", child: Text("Watchboards Data")),
-              if (_wxController.items.isNotEmpty) const DropdownMenuItem(value: "watchers", child: Text("Rate Watchers Data")),
-              if (_sxController.items.isNotEmpty) const DropdownMenuItem(value: "settings", child: Text("Settings Data")),
-            ],
-            onChanged: (String? newValue) {
-              setState(() {
-                _type = newValue!;
-              });
-            },
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Data Type", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            labelText: "Data Type",
           ),
-        ],
-      ),
+          items: [
+            if (_txController.items.isNotEmpty) const DropdownMenuItem(value: "transactions", child: Text("Transactions Data")),
+            if (_pxController.items.isNotEmpty) const DropdownMenuItem(value: "watchboards", child: Text("Watchboards Data")),
+            if (_wxController.items.isNotEmpty) const DropdownMenuItem(value: "watchers", child: Text("Rate Watchers Data")),
+            if (_sxController.items.isNotEmpty) const DropdownMenuItem(value: "settings", child: Text("Settings Data")),
+          ],
+          onChanged: (String? newValue) {
+            setState(() {
+              _type = newValue!;
+            });
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildNotesPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Notes", style: TextStyle(fontWeight: FontWeight.w600)),
-          WidgetsFieldsTextarea(title: 'Notes', helperText: 'Enter notes..', maxLines: 1, onChanged: (value) => _notes = value),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Notes", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        WidgetsFieldsTextarea(title: 'Notes', helperText: 'Enter notes..', maxLines: 1, onChanged: (value) => _notes = value),
+      ],
     );
   }
 
   Widget _buildButtonPanel() {
-    return WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons());
+    return _buildButtons();
   }
 
   Widget _buildTitle() {
@@ -114,28 +106,31 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
   }
 
   Widget _buildButtons() {
-    return Wrap(
-      direction: Axis.horizontal,
-      runSpacing: 14,
-      spacing: 10,
-      runAlignment: WrapAlignment.center,
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        WidgetsButtonsAction(
-          label: "Create",
-          initialState: WidgetsButtonActionState.action,
-          evaluator: (s) {
-            if (_canArchive()) {
-              s.action();
-            } else {
-              s.disable();
-            }
-          },
-          onPressed: (_) => _handleSave(),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      child: Wrap(
+        direction: Axis.horizontal,
+        runSpacing: 14,
+        spacing: 10,
+        runAlignment: WrapAlignment.center,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+          WidgetsButtonsAction(
+            label: "Create",
+            initialState: WidgetsButtonActionState.action,
+            evaluator: (s) {
+              if (_canArchive()) {
+                s.action();
+              } else {
+                s.disable();
+              }
+            },
+            onPressed: (_) => _handleSave(),
+          ),
+        ],
+      ),
     );
   }
 

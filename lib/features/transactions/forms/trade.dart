@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
+import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/datepicker.dart';
 import '../../../widgets/fields/textarea.dart';
-import '../../../widgets/panel.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
@@ -69,43 +69,41 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 20,
-                children: [
-                  _buildTitle(),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth > 900) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 16,
-                          children: [
-                            SizedBox(width: 260, child: _buildDatePanel()),
+      constraints: const BoxConstraints(maxWidth: 1600),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 30,
+              children: [
+                _buildTitle(),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth > 900) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 16,
+                        children: [
+                          SizedBox(width: 260, child: _buildDatePanel()),
 
-                            Expanded(child: _buildFromPanel()),
+                          Expanded(child: _buildFromPanel()),
 
-                            Column(children: const [SizedBox(height: 48), Icon(Icons.arrow_forward, size: 24)]),
+                          Column(children: const [SizedBox(height: 42), Icon(Icons.arrow_forward, size: 24)]),
 
-                            Expanded(child: _buildToPanel()),
-                          ],
-                        );
-                      } else {
-                        return Column(spacing: 20, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
-                      }
-                    },
-                  ),
-                  _buildNotesPanel(),
-                  _buildButtonPanel(),
-                ],
-              ),
+                          Expanded(child: _buildToPanel()),
+                        ],
+                      );
+                    } else {
+                      return Column(spacing: 30, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
+                    }
+                  },
+                ),
+                _buildNotesPanel(),
+                _buildButtonPanel(),
+              ],
             ),
           ),
         ),
@@ -114,69 +112,57 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   Widget _buildDatePanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("On date:", style: TextStyle(fontWeight: FontWeight.w600)),
-          _buildTimestampField(),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("On date:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        _buildTimestampField(),
+      ],
     );
   }
 
   Widget _buildFromPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("From:", style: TextStyle(fontWeight: FontWeight.w600)),
-          Row(spacing: 12, children: [Flexible(flex: 3, child: _buildSourceAmountField())]),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        Row(spacing: 12, children: [Flexible(flex: 3, child: _buildSourceAmountField())]),
+      ],
     );
   }
 
   Widget _buildToPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("To:", style: TextStyle(fontWeight: FontWeight.w600)),
-          Row(
-            spacing: 12,
-            children: [
-              Flexible(flex: 3, child: _buildResultAmountField()),
-              Flexible(flex: 2, child: _buildResultCryptoField()),
-            ],
-          ),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("To:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        Row(
+          spacing: 12,
+          children: [
+            Flexible(flex: 3, child: _buildResultAmountField()),
+            Flexible(flex: 2, child: _buildResultCryptoField()),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildNotesPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 20),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Notes:", style: TextStyle(fontWeight: FontWeight.w600)),
-          _buildNotesField(),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Notes:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        _buildNotesField(),
+      ],
     );
   }
 
   Widget _buildButtonPanel() {
-    return WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons());
+    return _buildButtons();
   }
 
   Widget _buildTitle() {
@@ -252,17 +238,20 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   Widget _buildButtons() {
-    return Wrap(
-      direction: Axis.horizontal,
-      runSpacing: 20,
-      spacing: 10,
-      runAlignment: WrapAlignment.center,
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        WidgetsButtonsAction(label: "Trade", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      child: Wrap(
+        direction: Axis.horizontal,
+        runSpacing: 20,
+        spacing: 10,
+        runAlignment: WrapAlignment.center,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+          WidgetsButtonsAction(label: "Trade", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
+        ],
+      ),
     );
   }
 

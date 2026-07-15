@@ -5,7 +5,6 @@ import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/header.dart';
-import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -23,53 +22,42 @@ class TransactionsDialogsDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                const Text("Transaction Information", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+      constraints: const BoxConstraints(maxWidth: 1200),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 30,
+            children: [
+              const Text("Transaction Information", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
-                WidgetsPanel(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildInformation()]),
-                ),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildInformation()]),
 
-                WidgetsPanel(
-                  padding: const EdgeInsets.all(12),
-                  child: WidgetsHeader(title: tx.noteText ?? "No notes available", subtitle: "Notes", reversed: true),
-                ),
+              WidgetsHeader(title: tx.noteText ?? "No notes available", subtitle: "Notes", reversed: true),
 
-                WidgetsPanel(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 0,
-                    children: [
-                      WidgetsHeader(title: "", subtitle: "History", reversed: true),
-                      SizedBox(width: double.infinity, height: 300, child: _buildHistory()),
-                    ],
-                  ),
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 5,
+                children: [
+                  WidgetsHeader(title: "", subtitle: "History", reversed: true),
+                  SizedBox(width: double.infinity, height: 300, child: _buildHistory()),
+                ],
+              ),
 
-                WidgetsPanel(
-                  padding: const EdgeInsets.all(12),
-                  child: Wrap(
-                    direction: Axis.horizontal,
-                    runSpacing: 20,
-                    spacing: 10,
-                    runAlignment: WrapAlignment.center,
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context))],
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                child: Wrap(
+                  direction: Axis.horizontal,
+                  runSpacing: 20,
+                  spacing: 10,
+                  runAlignment: WrapAlignment.center,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context))],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

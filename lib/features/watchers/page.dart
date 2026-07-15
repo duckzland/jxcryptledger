@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
@@ -240,53 +238,50 @@ class _WatchersPageState extends State<WatchersPage>
   Widget _buildTable() {
     final table = rows;
 
-    return ScrollConfiguration(
-      behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-      child: WidgetsPanel(
-        child: DataTable2(
-          scrollController: scrollToUtil.controller,
-          minWidth: 1200,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: AppTheme.tableHeadingRowHeight,
-          dataRowHeight: AppTheme.tableDataRowMinHeight,
-          showCheckboxColumn: false,
-          sortColumnIndex: sortableColumnIndex,
-          sortAscending: sortableAscending,
-          isHorizontalScrollBarVisible: false,
-          columns: [
-            DataColumn2(label: const Text("From"), onSort: sortableSorters[0]),
-            DataColumn2(label: const Text("To"), onSort: sortableSorters[1]),
-            DataColumn2(label: const Text("Ops"), onSort: sortableSorters[2]),
-            DataColumn2(label: const Text("Rate"), onSort: sortableSorters[3]),
-            DataColumn2(label: const Text("Sent"), onSort: sortableSorters[5]),
-            DataColumn2(label: const Text("Limit"), onSort: sortableSorters[6]),
-            DataColumn2(label: const Text("Duration"), onSort: sortableSorters[7]),
-            const DataColumn2(label: Text("Action")),
-          ],
-          rows: table.map((r) {
-            return DataRow(
-              cells: [
-                DataCell(Text(r['from'])),
-                DataCell(Text(r['to'])),
-                DataCell(Text(r['ops'])),
-                DataCell(Text(r['rate'])),
-                DataCell(Text(r['sent'])),
-                DataCell(Text(r['limit'])),
-                DataCell(Text(r['duration'])),
-                DataCell(
-                  WatchersButtons(
-                    tx: r['tx'],
-                    wxController: _wxController,
-                    onAction: () {
-                      setState(() {});
-                    },
-                  ),
+    return WidgetsPanel(
+      child: DataTable2(
+        scrollController: scrollToUtil.controller,
+        minWidth: 1200,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: AppTheme.tableHeadingRowHeight,
+        dataRowHeight: AppTheme.tableDataRowMinHeight,
+        showCheckboxColumn: false,
+        sortColumnIndex: sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        columns: [
+          DataColumn2(label: const Text("From"), onSort: sortableSorters[0]),
+          DataColumn2(label: const Text("To"), onSort: sortableSorters[1]),
+          DataColumn2(label: const Text("Ops"), onSort: sortableSorters[2]),
+          DataColumn2(label: const Text("Rate"), onSort: sortableSorters[3]),
+          DataColumn2(label: const Text("Sent"), onSort: sortableSorters[5]),
+          DataColumn2(label: const Text("Limit"), onSort: sortableSorters[6]),
+          DataColumn2(label: const Text("Duration"), onSort: sortableSorters[7]),
+          const DataColumn2(label: Text("Action")),
+        ],
+        rows: table.map((r) {
+          return DataRow(
+            cells: [
+              DataCell(Text(r['from'])),
+              DataCell(Text(r['to'])),
+              DataCell(Text(r['ops'])),
+              DataCell(Text(r['rate'])),
+              DataCell(Text(r['sent'])),
+              DataCell(Text(r['limit'])),
+              DataCell(Text(r['duration'])),
+              DataCell(
+                WatchersButtons(
+                  tx: r['tx'],
+                  wxController: _wxController,
+                  onAction: () {
+                    setState(() {});
+                  },
                 ),
-              ],
-            );
-          }).toList(),
-        ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme.dart';
 import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
@@ -107,19 +108,24 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
   Widget build(BuildContext context) {
     final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1024),
-        child: Form(
-          key: _formKey,
-          child: ListView.separated(
-            controller: scrollToUtil.controller,
-            padding: const EdgeInsets.only(bottom: 20),
-            itemCount: editableKeys.length + 1,
-            separatorBuilder: (context, index) => const SizedBox(height: 20),
-            itemBuilder: (context, index) {
-              return WidgetsPanel(child: _buildItem(index, editableKeys));
-            },
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 12),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1024),
+          child: WidgetsPanel(
+            child: Form(
+              key: _formKey,
+              child: ListView.separated(
+                controller: scrollToUtil.controller,
+                padding: const EdgeInsets.only(bottom: 20),
+                itemCount: editableKeys.length + 1,
+                separatorBuilder: (context, index) => const SizedBox(height: 30),
+                itemBuilder: (context, index) {
+                  return _buildItem(index, editableKeys);
+                },
+              ),
+            ),
           ),
         ),
       ),
@@ -134,14 +140,17 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
 
   Widget _buildItem(int index, List<SettingKey> editableKeys) {
     if (index == editableKeys.length) {
-      return Wrap(
-        direction: Axis.horizontal,
-        runSpacing: 20,
-        spacing: 10,
-        runAlignment: WrapAlignment.center,
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [_buildResetButton(editableKeys), _buildSaveButton()],
+      return Padding(
+        padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+        child: Wrap(
+          direction: Axis.horizontal,
+          runSpacing: 20,
+          spacing: 10,
+          runAlignment: WrapAlignment.center,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [_buildResetButton(editableKeys), _buildSaveButton()],
+        ),
       );
     }
 
@@ -249,7 +258,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
       spacing: 10,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(key.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+        Text(key.label, style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
         field,
       ],
     );

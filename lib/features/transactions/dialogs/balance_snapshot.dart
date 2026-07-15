@@ -11,7 +11,6 @@ import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/buttons/action.dart';
-import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
 import '../controller.dart';
@@ -107,16 +106,14 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [_buildTitle(), _buildTransactionsPanel(), _buildButtonPanel()],
-            ),
+      constraints: const BoxConstraints(maxWidth: 1200),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 20,
+            children: [_buildTitle(), _buildTransactionsPanel(), _buildButtonPanel()],
           ),
         ),
       ),
@@ -180,10 +177,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   Widget _buildTransactionsPanel() {
     rows = _buildRows(tradableLeaves);
 
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 4, children: [_buildTable(), _buildTotal()]),
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 4, children: [_buildTable(), _buildTotal()]);
   }
 
   Widget _buildTable() {
@@ -246,6 +240,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         headingRowHeight: 0,
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
+        dataRowColor: WidgetStateProperty.all(AppTheme.headerBg),
         columns: [
           const DataColumn2(label: SizedBox.shrink(), fixedWidth: 100),
           const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.M),
@@ -288,8 +283,8 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   }
 
   Widget _buildButtonPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
+    return Padding(
+      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context))],

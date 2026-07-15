@@ -18,7 +18,6 @@ import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/notify.dart';
-import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -84,65 +83,54 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 20,
-              children: [
-                if (txs.isNotEmpty) const Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                if (txs.isNotEmpty)
-                  WidgetsPanel(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildCalculator()]),
-                  ),
-                if (txs.isNotEmpty)
-                  WidgetsPanel(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 4, children: [_buildTable(), _buildTotal()]),
-                  ),
-                if (txs.isEmpty) const Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-
-                WidgetsPanel(
-                  padding: const EdgeInsets.all(12),
-                  child: Wrap(
-                    direction: Axis.horizontal,
-                    runSpacing: 20,
-                    spacing: 10,
-                    runAlignment: WrapAlignment.center,
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      WidgetsButtonsAction(label: (txs.isNotEmpty) ? 'Cancel' : 'Close', onPressed: (_) => Navigator.pop(context)),
-                      if (txs.isNotEmpty)
-                        WidgetsDialogsAlert(
-                          label: "Trade",
-                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                          persistBg: true,
-                          dialogTitle: "Trade Confirmation",
-                          dialogMessage: "This action cannot be undone.",
-                          dialogCancelLabel: "Cancel",
-                          dialogConfirmLabel: "Trade",
-                          showMessage: false,
-                          initialState: WidgetsButtonActionState.action,
-                          tooltip: "Trade all selected transactions",
-                          evaluator: (s) {
-                            if (selectableHasSelectedRows()) {
-                              s.action();
-                            } else {
-                              s.disable();
-                            }
-                          },
-                          actionCompleteCallback: _handleSave,
-                        ),
-                    ],
-                  ),
+      constraints: const BoxConstraints(maxWidth: 1200),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 20,
+            children: [
+              if (txs.isNotEmpty) const Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isNotEmpty) _buildCalculator(),
+              if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
+              if (txs.isEmpty) const Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              Padding(
+                padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                child: Wrap(
+                  direction: Axis.horizontal,
+                  runSpacing: 20,
+                  spacing: 10,
+                  runAlignment: WrapAlignment.center,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    WidgetsButtonsAction(label: (txs.isNotEmpty) ? 'Cancel' : 'Close', onPressed: (_) => Navigator.pop(context)),
+                    if (txs.isNotEmpty)
+                      WidgetsDialogsAlert(
+                        label: "Trade",
+                        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                        persistBg: true,
+                        dialogTitle: "Trade Confirmation",
+                        dialogMessage: "This action cannot be undone.",
+                        dialogCancelLabel: "Cancel",
+                        dialogConfirmLabel: "Trade",
+                        showMessage: false,
+                        initialState: WidgetsButtonActionState.action,
+                        tooltip: "Trade all selected transactions",
+                        evaluator: (s) {
+                          if (selectableHasSelectedRows()) {
+                            s.action();
+                          } else {
+                            s.disable();
+                          }
+                        },
+                        actionCompleteCallback: _handleSave,
+                      ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -174,6 +162,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     }
 
     final rateText = Text(rateableAmount ?? "");
+    final checkboxTheme = Theme.of(context).checkboxTheme;
 
     return SizedBox(
       width: double.infinity,
@@ -181,8 +170,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
         child: DataTable2(
-          headingCheckboxTheme: Theme.of(context).checkboxTheme,
-          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+          headingCheckboxTheme: checkboxTheme,
+          datarowCheckboxTheme: checkboxTheme,
           showHeadingCheckBox: true,
           showCheckboxColumn: true,
           minWidth: 800,
@@ -314,9 +303,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Widget _buildCryptoInputColumn(String label, Widget amountField) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 16,
+      spacing: 10,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
         amountField,
       ],
     );

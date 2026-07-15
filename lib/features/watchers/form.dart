@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
-import '../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
-import '../../../widgets/panel.dart';
+import '../../app/theme.dart';
 import '../../app/exceptions.dart';
+import '../../core/runtime/locator.dart';
 import '../../mixins/rateable.dart';
+import '../../widgets/buttons/action.dart';
 import 'controller.dart';
 import 'model.dart';
 
@@ -82,53 +82,51 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                spacing: 24,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTitle(),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth > 900) {
-                        return Column(
-                          spacing: 24,
-                          children: [
-                            Row(
-                              spacing: 16,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(child: _buildFromPanel()),
-                                Expanded(child: _buildToPanel()),
-                                Expanded(child: _buildOpsPanel()),
-                                Expanded(child: _buildTargetPanel()),
-                              ],
-                            ),
-                            Row(
-                              spacing: 16,
-                              children: [
-                                Expanded(child: _buildLimitPanel()),
-                                Expanded(child: _buildDurationPanel()),
-                              ],
-                            ),
-                          ],
-                        );
-                      } else {
-                        return Column(spacing: 24, children: [_buildFromPanel(), _buildToPanel(), _buildOpsPanel(), _buildTargetPanel()]);
-                      }
-                    },
-                  ),
+      constraints: const BoxConstraints(maxWidth: 1600),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              spacing: 30,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildTitle(),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth > 900) {
+                      return Column(
+                        spacing: 24,
+                        children: [
+                          Row(
+                            spacing: 24,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildFromPanel()),
+                              Expanded(child: _buildToPanel()),
+                              Expanded(child: _buildOpsPanel()),
+                              Expanded(child: _buildTargetPanel()),
+                            ],
+                          ),
+                          Row(
+                            spacing: 24,
+                            children: [
+                              Expanded(child: _buildLimitPanel()),
+                              Expanded(child: _buildDurationPanel()),
+                            ],
+                          ),
+                        ],
+                      );
+                    } else {
+                      return Column(spacing: 30, children: [_buildFromPanel(), _buildToPanel(), _buildOpsPanel(), _buildTargetPanel()]);
+                    }
+                  },
+                ),
 
-                  _buildMessagePanel(),
-                  _buildButtonPanel(),
-                ],
-              ),
+                _buildMessagePanel(),
+                _buildButtonPanel(),
+              ],
             ),
           ),
         ),
@@ -137,164 +135,143 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
   }
 
   Widget _buildFromPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("From", style: TextStyle(fontWeight: FontWeight.w600)),
-          WidgetsFieldsCryptoSearch(
-            labelText: 'Coin',
-            initialValue: rateableSource,
-            enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-            onSelected: (id) => setState(() => rateableSource = id),
-          ),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("From", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        WidgetsFieldsCryptoSearch(
+          labelText: 'Coin',
+          initialValue: rateableSource,
+          enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+          onSelected: (id) => setState(() => rateableSource = id),
+        ),
+      ],
     );
   }
 
   Widget _buildToPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("To", style: TextStyle(fontWeight: FontWeight.w600)),
-          WidgetsFieldsCryptoSearch(
-            labelText: 'Coin',
-            initialValue: rateableTarget,
-            enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-            onSelected: (id) => setState(() => rateableTarget = id),
-          ),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("To", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        WidgetsFieldsCryptoSearch(
+          labelText: 'Coin',
+          initialValue: rateableTarget,
+          enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+          onSelected: (id) => setState(() => rateableTarget = id),
+        ),
+      ],
     );
   }
 
   Widget _buildOpsPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Operator", style: TextStyle(fontWeight: FontWeight.w600)),
-          DropdownButtonFormField<String>(
-            initialValue: _operator,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              labelText: "Operator",
-            ),
-            items: const [
-              DropdownMenuItem(value: "0", child: Text("Rate = target rate")),
-              DropdownMenuItem(value: "1", child: Text("Rate < target rate")),
-              DropdownMenuItem(value: "2", child: Text("Rate > target rate")),
-            ],
-            onChanged: (String? newValue) {
-              setState(() {
-                _operator = newValue!;
-              });
-            },
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Operator", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        DropdownButtonFormField<String>(
+          initialValue: _operator,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            labelText: "Operator",
           ),
-        ],
-      ),
+          items: const [
+            DropdownMenuItem(value: "0", child: Text("Rate = target rate")),
+            DropdownMenuItem(value: "1", child: Text("Rate < target rate")),
+            DropdownMenuItem(value: "2", child: Text("Rate > target rate")),
+          ],
+          onChanged: (String? newValue) {
+            setState(() {
+              _operator = newValue!;
+            });
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildTargetPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Target Rate", style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
-          WidgetsFieldsAmount(
-            title: 'Rate',
-            helperText: 'e.g., 65000',
-            initialValue: rateableAmount,
-            allowReverse: true,
-            allowRate: rateableAllow,
-            onRetrievingRate: (void Function(String value, String helperText) updateState) {
-              // Store the callback to act as promise contract!
-              rateableStateUpdater = updateState;
-              rateableStateUpdater?.call("", "Retrieving rate...");
-              rateableGetRate();
-            },
-            onChanged: (value) {
-              // Nullify the promise contract!
-              rateableStateUpdater = null;
-              rateableAmount = value;
-            },
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Target Rate", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        const SizedBox(height: 16),
+        WidgetsFieldsAmount(
+          title: 'Rate',
+          helperText: 'e.g., 65000',
+          initialValue: rateableAmount,
+          allowReverse: true,
+          allowRate: rateableAllow,
+          onRetrievingRate: (void Function(String value, String helperText) updateState) {
+            // Store the callback to act as promise contract!
+            rateableStateUpdater = updateState;
+            rateableStateUpdater?.call("", "Retrieving rate...");
+            rateableGetRate();
+          },
+          onChanged: (value) {
+            // Nullify the promise contract!
+            rateableStateUpdater = null;
+            rateableAmount = value;
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildLimitPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Limit", style: TextStyle(fontWeight: FontWeight.w600)),
-          TextFormField(
-            initialValue: _limitCount,
-            decoration: const InputDecoration(labelText: "Times to send"),
-            keyboardType: TextInputType.number,
-            onChanged: (v) => _limitCount = v,
-          ),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Limit", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        TextFormField(
+          initialValue: _limitCount,
+          decoration: const InputDecoration(labelText: "Times to send"),
+          keyboardType: TextInputType.number,
+          onChanged: (v) => _limitCount = v,
+        ),
+      ],
     );
   }
 
   Widget _buildDurationPanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Retry Duration", style: TextStyle(fontWeight: FontWeight.w600)),
-          TextFormField(
-            initialValue: _durationMinutes,
-            decoration: const InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
-            keyboardType: TextInputType.number,
-            onChanged: (v) => _durationMinutes = v,
-          ),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Retry Duration", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        TextFormField(
+          initialValue: _durationMinutes,
+          decoration: const InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
+          keyboardType: TextInputType.number,
+          onChanged: (v) => _durationMinutes = v,
+        ),
+      ],
     );
   }
 
   Widget _buildMessagePanel() {
-    return WidgetsPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Message", style: TextStyle(fontWeight: FontWeight.w600)),
-          WidgetsFieldsTextarea(
-            title: 'Notification Message',
-            helperText: 'Enter message..',
-            initialValue: _message,
-            onChanged: (value) => _message = value,
-          ),
-        ],
-      ),
+    return Column(
+      spacing: 16,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Message", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        WidgetsFieldsTextarea(
+          title: 'Notification Message',
+          helperText: 'Enter message..',
+          initialValue: _message,
+          onChanged: (value) => _message = value,
+        ),
+      ],
     );
   }
 
   Widget _buildButtonPanel() {
-    return WidgetsPanel(padding: const EdgeInsets.all(12), child: _buildButtons());
+    return _buildButtons();
   }
 
   Widget _buildTitle() {
@@ -304,21 +281,24 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
 
   Widget _buildButtons() {
     final isEdit = widget.initialData != null;
-    return Wrap(
-      direction: Axis.horizontal,
-      runSpacing: 14,
-      spacing: 10,
-      runAlignment: WrapAlignment.center,
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-        WidgetsButtonsAction(
-          label: isEdit ? "Save" : "Create",
-          initialState: WidgetsButtonActionState.action,
-          onPressed: (_) => _handleSave(),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      child: Wrap(
+        direction: Axis.horizontal,
+        runSpacing: 14,
+        spacing: 10,
+        runAlignment: WrapAlignment.center,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+          WidgetsButtonsAction(
+            label: isEdit ? "Save" : "Create",
+            initialState: WidgetsButtonActionState.action,
+            onPressed: (_) => _handleSave(),
+          ),
+        ],
+      ),
     );
   }
 
