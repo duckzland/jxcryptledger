@@ -265,15 +265,15 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 children: [
                   Expanded(child: _buildCryptoInputColumn("From:", _buildFromAmountField())),
 
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 50), child: Icon(Icons.clear, size: 24)),
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.clear, size: 24)),
 
                   Expanded(child: _buildCryptoInputColumn("To:", _buildRatesAmountField())),
 
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 50)),
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
 
                   Expanded(child: _buildCryptoInputColumn(" ", _buildResultCryptoField())),
 
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 50), child: Icon(Icons.arrow_forward, size: 24)),
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
 
                   Expanded(child: _buildCalculatedResult()),
                 ],

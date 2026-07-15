@@ -64,21 +64,21 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Data Type", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        DropdownButtonFormField<String>(
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            labelText: "Data Type",
-          ),
-          items: [
-            if (_txController.items.isNotEmpty) const DropdownMenuItem(value: "transactions", child: Text("Transactions Data")),
-            if (_pxController.items.isNotEmpty) const DropdownMenuItem(value: "watchboards", child: Text("Watchboards Data")),
-            if (_wxController.items.isNotEmpty) const DropdownMenuItem(value: "watchers", child: Text("Rate Watchers Data")),
-            if (_sxController.items.isNotEmpty) const DropdownMenuItem(value: "settings", child: Text("Settings Data")),
+        DropdownMenu<String>(
+          initialSelection: _type,
+          requestFocusOnTap: false,
+          expandedInsets: EdgeInsets.zero,
+          label: const Text("Data Type"),
+          dropdownMenuEntries: [
+            if (_txController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "transactions", label: "Transactions Data"),
+            if (_pxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchboards", label: "Watchboards Data"),
+            if (_wxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchers", label: "Rate Watchers Data"),
+            if (_sxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "settings", label: "Settings Data"),
           ],
-          onChanged: (String? newValue) {
+          onSelected: (String? newValue) {
+            if (newValue == null) return;
             setState(() {
-              _type = newValue!;
+              _type = newValue;
             });
           },
         ),

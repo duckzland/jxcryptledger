@@ -258,7 +258,7 @@ class _WatchersPageState extends State<WatchersPage>
           DataColumn2(label: const Text("Sent"), onSort: sortableSorters[5]),
           DataColumn2(label: const Text("Limit"), onSort: sortableSorters[6]),
           DataColumn2(label: const Text("Duration"), onSort: sortableSorters[7]),
-          const DataColumn2(label: Text("Action")),
+          const DataColumn2(label: Text("Action"), fixedWidth: 110),
         ],
         rows: table.map((r) {
           return DataRow(

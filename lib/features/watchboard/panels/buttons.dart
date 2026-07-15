@@ -32,7 +32,7 @@ class PanelsButtons extends StatelessWidget with MixinsActionable {
           padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 16,
           minimumSize: const Size(34, 34),
-          tooltip: wix == null ? "Add new watchboard" : "Edit watchboard",
+          tooltip: wix == null ? "Add new rate notification" : "Edit linked rate notification",
           persistBg: true,
           evaluator: (s) {
             if (wix == null) {

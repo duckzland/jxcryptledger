@@ -68,7 +68,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   double _rProfit = 0;
   double _rProfitPercentage = 0;
 
-  Color _bgColor = AppTheme.rowHeaderBg;
+  Color _bgColor = AppTheme.tableRowBg;
   Color _fgColor = AppTheme.text;
 
   Map<int, double> _activeBranchAmounts = {};
@@ -138,23 +138,23 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   void _calculateColor() {
     switch (_tx.statusEnum) {
       case TransactionStatus.inactive:
-        _bgColor = AppTheme.mutedBg;
-        _fgColor = AppTheme.textMuted;
+        _bgColor = AppTheme.treeBgInactive;
+        _fgColor = AppTheme.treeFgInactive;
         break;
 
       case TransactionStatus.closed:
-        _bgColor = AppTheme.closedBg;
-        _fgColor = AppTheme.textMuted;
+        _bgColor = AppTheme.treeBgClosed;
+        _fgColor = AppTheme.treeFgClosed;
         break;
 
       case TransactionStatus.finalized:
-        _bgColor = AppTheme.finalizedBg;
-        _fgColor = AppTheme.textMuted;
+        _bgColor = AppTheme.treeBgFinalized;
+        _fgColor = AppTheme.treeFgFinalized;
         break;
 
       default:
-        _bgColor = AppTheme.rowHeaderBg;
-        _fgColor = AppTheme.text;
+        _bgColor = AppTheme.treeBgNormal;
+        _fgColor = AppTheme.treeFgNormal;
     }
   }
 

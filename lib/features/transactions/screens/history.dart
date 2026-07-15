@@ -138,7 +138,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
             scrollController: _autoScrollController,
             expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
               tree: node,
-              color: AppTheme.text,
+              color: AppTheme.treeConnector,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
               alignment: Alignment.topRight,
             ),

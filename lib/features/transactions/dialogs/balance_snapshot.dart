@@ -240,7 +240,6 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         headingRowHeight: 0,
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
-        dataRowColor: WidgetStateProperty.all(AppTheme.headerBg),
         columns: [
           const DataColumn2(label: SizedBox.shrink(), fixedWidth: 100),
           const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.M),
@@ -251,7 +250,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         rows: [
           DataRow(
             key: ValueKey('total-row'),
-            color: WidgetStateProperty.all(AppTheme.headerBg),
+            color: WidgetStateProperty.all(AppTheme.tableHeaderBg),
             cells: [
               const DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -264,7 +263,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
           ),
           DataRow(
             key: ValueKey('profit-row'),
-            color: WidgetStateProperty.all(AppTheme.headerBg),
+            color: WidgetStateProperty.all(AppTheme.tableHeaderBg),
             cells: [
               const DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),

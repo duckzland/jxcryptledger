@@ -288,7 +288,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.rowHeaderBg,
+              color: AppTheme.tableRowBg,
               borderRadius: BorderRadius.circular(100),
               border: Border.all(color: AppTheme.separator),
             ),

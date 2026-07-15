@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../app/layout.dart';
-import '../../app/theme.dart';
 import '../../core/runtime/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actionable.dart';
@@ -499,86 +498,70 @@ class TransactionsPageState extends State<TransactionsPage>
   }
 
   Widget _buildSorter() {
-    return Container(
-      height: 38,
-      padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.separator, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: _sortMode,
-          isExpanded: false,
-          icon: const Icon(Icons.arrow_drop_down),
-          style: const TextStyle(fontSize: 14),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemHeight: kMinInteractiveDimension,
-          items: _sortableOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() => _sortMode = value);
+    return DropdownMenu<int>(
+      initialSelection: _sortMode,
+      alignmentOffset: const Offset(0, 3),
+      requestFocusOnTap: false,
+      inputDecorationTheme: Theme.of(
+        context,
+      ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
+      showTrailingIcon: false,
+      dropdownMenuEntries: _sortableOptions.entries.map((e) {
+        return DropdownMenuEntry<int>(value: e.key, label: e.value);
+      }).toList(),
+      onSelected: (value) {
+        if (value == null) return;
+        setState(() => _sortMode = value);
 
-            switch (_viewMode) {
-              case TransactionsViewMode.active:
-                states.set('tx-sort-active', value);
-                break;
-
-              case TransactionsViewMode.overview:
-                states.set('tx-sort-overview', value);
-                break;
-              case TransactionsViewMode.journal:
-                states.set('tx-sort-journal', value);
-                break;
-              case TransactionsViewMode.history:
-                states.set('tx-sort-history', value);
-                break;
-            }
-          },
-        ),
-      ),
+        switch (_viewMode) {
+          case TransactionsViewMode.active:
+            states.set('tx-sort-active', value);
+            break;
+          case TransactionsViewMode.overview:
+            states.set('tx-sort-overview', value);
+            break;
+          case TransactionsViewMode.journal:
+            states.set('tx-sort-journal', value);
+            break;
+          case TransactionsViewMode.history:
+            states.set('tx-sort-history', value);
+            break;
+        }
+      },
     );
   }
 
   Widget _buildFilter() {
-    return Container(
-      height: 38,
-      padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.separator, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: _filterableOptions.containsKey(_filterMode) ? _filterMode : _filterableOptions.keys.first,
-          isExpanded: false,
-          icon: const Icon(Icons.arrow_drop_down),
-          style: const TextStyle(fontSize: 14),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemHeight: kMinInteractiveDimension,
-          items: _filterableOptions.entries.map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value))).toList(),
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() => _filterMode = value);
+    return DropdownMenu<int>(
+      initialSelection: _filterableOptions.containsKey(_filterMode) ? _filterMode : _filterableOptions.keys.first,
+      requestFocusOnTap: false,
+      alignmentOffset: const Offset(0, 3),
+      showTrailingIcon: false,
+      inputDecorationTheme: Theme.of(
+        context,
+      ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
+      dropdownMenuEntries: _filterableOptions.entries.map((e) {
+        return DropdownMenuEntry<int>(value: e.key, label: e.value);
+      }).toList(),
+      onSelected: (value) {
+        if (value == null) return;
+        setState(() => _filterMode = value);
 
-            switch (_viewMode) {
-              case TransactionsViewMode.active:
-                states.set('tx-filter-active', value);
-                break;
-
-              case TransactionsViewMode.overview:
-                states.set('tx-filter-overview', value);
-                break;
-              case TransactionsViewMode.journal:
-                states.set('tx-filter-journal', value);
-                break;
-              case TransactionsViewMode.history:
-                states.set('tx-filter-history', value);
-                break;
-            }
-          },
-        ),
-      ),
+        switch (_viewMode) {
+          case TransactionsViewMode.active:
+            states.set('tx-filter-active', value);
+            break;
+          case TransactionsViewMode.overview:
+            states.set('tx-filter-overview', value);
+            break;
+          case TransactionsViewMode.journal:
+            states.set('tx-filter-journal', value);
+            break;
+          case TransactionsViewMode.history:
+            states.set('tx-filter-history', value);
+            break;
+        }
+      },
     );
   }
 

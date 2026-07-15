@@ -125,7 +125,7 @@ class TransactionsDialogsDetails extends StatelessWidget {
       animation: kAlwaysCompleteAnimation,
       expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
         tree: node,
-        color: AppTheme.text,
+        color: AppTheme.treeConnector,
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
         alignment: Alignment.topRight,
       ),

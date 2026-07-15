@@ -172,21 +172,20 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Operator", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        DropdownButtonFormField<String>(
-          initialValue: _operator,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            labelText: "Operator",
-          ),
-          items: const [
-            DropdownMenuItem(value: "0", child: Text("Rate = target rate")),
-            DropdownMenuItem(value: "1", child: Text("Rate < target rate")),
-            DropdownMenuItem(value: "2", child: Text("Rate > target rate")),
+        DropdownMenu<String>(
+          initialSelection: _operator,
+          requestFocusOnTap: false,
+          label: const Text("Operator"),
+          expandedInsets: EdgeInsets.zero,
+          dropdownMenuEntries: const [
+            DropdownMenuEntry<String>(value: "0", label: "Rate = target rate"),
+            DropdownMenuEntry<String>(value: "1", label: "Rate < target rate"),
+            DropdownMenuEntry<String>(value: "2", label: "Rate > target rate"),
           ],
-          onChanged: (String? newValue) {
+          onSelected: (String? newValue) {
+            if (newValue == null) return;
             setState(() {
-              _operator = newValue!;
+              _operator = newValue;
             });
           },
         ),
@@ -323,7 +322,6 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       await _controller.update(model);
       widget.onSave?.call(null);
     } on ValidationException catch (e) {
-      // TODO: Improve this by analyzing the error code and set the form field error state!
       widget.onSave?.call(e);
     } catch (e) {
       widget.onSave?.call(e);

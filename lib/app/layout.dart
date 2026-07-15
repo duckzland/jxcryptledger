@@ -111,7 +111,6 @@ class _AppLayoutState extends State<AppLayout> {
         return Scaffold(
           drawer: (showMenu) ? _buildDrawer(location, context) : null,
           appBar: AppBar(
-            backgroundColor: AppTheme.columnHeaderBg,
             leadingWidth: leadingWidth,
             leading: (showMenu) ? const SizedBox.shrink() : _buildLeading(leadingWidth),
             title: LayoutBuilder(
