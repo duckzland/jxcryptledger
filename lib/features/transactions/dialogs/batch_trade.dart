@@ -52,7 +52,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Timer? _debounce;
 
   @override
-  double get tableHeightOffset => 260;
+  double get tableHeightOffset => 290;
 
   @override
   double get tableHeadingHeightOffset => 0;
@@ -167,51 +167,48 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-        child: DataTable2(
-          headingCheckboxTheme: checkboxTheme,
-          datarowCheckboxTheme: checkboxTheme,
-          showHeadingCheckBox: true,
-          showCheckboxColumn: true,
-          minWidth: 800,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: tableHeadingHeight,
-          dataRowHeight: tableRowHeight,
-          isHorizontalScrollBarVisible: false,
-          columns: [
-            const DataColumn2(label: Text('Date '), fixedWidth: 100),
-            const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-            const DataColumn2(label: Text('Balance '), size: ColumnSize.M),
-            if (showRate) const DataColumn2(label: Text('Rate '), size: ColumnSize.M),
-            if (showRate) const DataColumn2(label: Text('Amount '), size: ColumnSize.M),
-          ],
-          rows: [
-            ...rows.map((r) {
-              final tx = r['tx'] as TransactionsModel;
-              final canSelect = tx.isActive || tx.isPartial;
-              return DataRow(
-                selected: canSelect ? selectableIsSelected(r['uuid']) : false,
-                onSelectChanged: canSelect
-                    ? (v) {
-                        setState(() {
-                          selectableSetSelected(r['uuid'], v!);
-                          _buildCalculatedResult();
-                        });
-                      }
-                    : null,
-                cells: [
-                  DataCell(Text(r['date'] ?? '')),
-                  DataCell(Text(r['transaction'] ?? '')),
-                  DataCell(Text(r['balance'] ?? '')),
-                  if (showRate) DataCell(rateText),
-                  if (showRate) DataCell(Text('${Utils.formatSmartDouble(r['amount'] ?? 0, smartDecimal: false)} $targetSymbol')),
-                ],
-              );
-            }),
-          ],
-        ),
+      child: DataTable2(
+        headingCheckboxTheme: checkboxTheme,
+        datarowCheckboxTheme: checkboxTheme,
+        showHeadingCheckBox: true,
+        showCheckboxColumn: true,
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        isHorizontalScrollBarVisible: false,
+        columns: [
+          const DataColumn2(label: Text('Date '), fixedWidth: 100),
+          const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+          const DataColumn2(label: Text('Balance '), size: ColumnSize.M),
+          if (showRate) const DataColumn2(label: Text('Rate '), size: ColumnSize.M),
+          if (showRate) const DataColumn2(label: Text('Amount '), size: ColumnSize.M),
+        ],
+        rows: [
+          ...rows.map((r) {
+            final tx = r['tx'] as TransactionsModel;
+            final canSelect = tx.isActive || tx.isPartial;
+            return DataRow(
+              selected: canSelect ? selectableIsSelected(r['uuid']) : false,
+              onSelectChanged: canSelect
+                  ? (v) {
+                      setState(() {
+                        selectableSetSelected(r['uuid'], v!);
+                        _buildCalculatedResult();
+                      });
+                    }
+                  : null,
+              cells: [
+                DataCell(Text(r['date'] ?? '')),
+                DataCell(Text(r['transaction'] ?? '')),
+                DataCell(Text(r['balance'] ?? '')),
+                if (showRate) DataCell(rateText),
+                if (showRate) DataCell(Text('${Utils.formatSmartDouble(r['amount'] ?? 0, smartDecimal: false)} $targetSymbol')),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }

@@ -171,67 +171,64 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-              child: DataTable2(
-                key: const Key("table-journal"),
-                scrollController: scrollToUtil.controller,
-                minWidth: 1200,
-                columnSpacing: 12,
-                horizontalMargin: 12,
-                headingRowHeight: tableHeadingHeight,
-                dataRowHeight: tableRowHeight,
-                showCheckboxColumn: false,
-                sortColumnIndex: sortableColumnIndex,
-                sortAscending: sortableAscending,
-                isHorizontalScrollBarVisible: false,
-                empty: const Center(
-                  child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                ),
-                columns: [
-                  DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-                  DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
-                  DataColumn2(label: const Text('To'), size: ColumnSize.M, onSort: sortableSorters[3]),
-                  DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
-                  const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
-                  DataColumn2(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
-                  const DataColumn2(label: Text('Actions'), fixedWidth: 100),
-                ],
-                rows: rows.map((r) {
-                  final tx = r['tx'] as TransactionsModel;
-                  return DataRow2(
-                    key: ValueKey(r['uuid']),
-                    onTap: () {
-                      TransactionsDialogsDetails.show(context, tx);
-                    },
-                    cells: [
-                      DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
-                      DataCell(Text(r['source'] ?? '')),
-                      DataCell(Text(r['result'] ?? '')),
-                      DataCell(Text(r['balance'] ?? '')),
-                      DataCell(Text(r['rate'] ?? '')),
-                      DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
-                      DataCell(
-                        TransactionsWidgetsButtonsAction(
-                          parentContext: context,
-                          tx: tx,
-                          cryptosController: _cryptosController,
-                          txController: txController,
-                          isTradable: fxsIsTradable(tx),
-                          isClosable: fxsIsClosable(tx),
-                          isDeletable: fxsIsDeletable(tx),
-                          isUpdatable: fxsIsUpdatable(tx),
-                          isRefundable: fxsIsRefundable(tx),
-                          isFinalizable: fxsIsFinalizable(tx),
-                          hasLeaf: fxsHasLeaf(tx),
-                          hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                          onAction: widget.onStatusChanged,
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+            child: DataTable2(
+              key: const Key("table-journal"),
+              scrollController: scrollToUtil.controller,
+              minWidth: 1200,
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              headingRowHeight: tableHeadingHeight,
+              dataRowHeight: tableRowHeight,
+              showCheckboxColumn: false,
+              sortColumnIndex: sortableColumnIndex,
+              sortAscending: sortableAscending,
+              isHorizontalScrollBarVisible: false,
+              empty: const Center(
+                child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
               ),
+              columns: [
+                DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+                DataColumn2(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
+                DataColumn2(label: const Text('To'), size: ColumnSize.M, onSort: sortableSorters[3]),
+                DataColumn2(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
+                const DataColumn2(label: Text('Rate'), size: ColumnSize.S),
+                DataColumn2(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
+                const DataColumn2(label: Text('Actions'), fixedWidth: 100),
+              ],
+              rows: rows.map((r) {
+                final tx = r['tx'] as TransactionsModel;
+                return DataRow2(
+                  key: ValueKey(r['uuid']),
+                  onTap: () {
+                    TransactionsDialogsDetails.show(context, tx);
+                  },
+                  cells: [
+                    DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
+                    DataCell(Text(r['source'] ?? '')),
+                    DataCell(Text(r['result'] ?? '')),
+                    DataCell(Text(r['balance'] ?? '')),
+                    DataCell(Text(r['rate'] ?? '')),
+                    DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
+                    DataCell(
+                      TransactionsWidgetsButtonsAction(
+                        parentContext: context,
+                        tx: tx,
+                        cryptosController: _cryptosController,
+                        txController: txController,
+                        isTradable: fxsIsTradable(tx),
+                        isClosable: fxsIsClosable(tx),
+                        isDeletable: fxsIsDeletable(tx),
+                        isUpdatable: fxsIsUpdatable(tx),
+                        isRefundable: fxsIsRefundable(tx),
+                        isFinalizable: fxsIsFinalizable(tx),
+                        hasLeaf: fxsHasLeaf(tx),
+                        hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+                        onAction: widget.onStatusChanged,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
             ),
           ),
         ],

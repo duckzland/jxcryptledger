@@ -65,7 +65,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   @override
   double get tableHeightOffset {
     final ttl = _getTotalAmount(tradableLeaves);
-    return ttl == null ? 100 : 100 + (2 * tableRowHeight);
+    return ttl == null ? 130 : 130 + (2 * tableRowHeight);
   }
 
   @override
@@ -184,38 +184,35 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-        child: DataTable2(
-          minWidth: 800,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: tableHeadingHeight,
-          dataRowHeight: tableRowHeight,
-          showCheckboxColumn: false,
-          isHorizontalScrollBarVisible: false,
-          columns: [
-            const DataColumn2(label: Text('Date '), fixedWidth: 100),
-            const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-            const DataColumn2(label: Text('Balance '), size: ColumnSize.S),
-            const DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
-            const DataColumn2(label: Text('Return '), size: ColumnSize.S),
-          ],
-          rows: [
-            ...rows.map((r) {
-              return DataRow(
-                key: ValueKey(r['uuid']),
-                cells: [
-                  DataCell(Text(r['date'] ?? '')),
-                  DataCell(Text(r['transaction'] ?? '')),
-                  DataCell(Text(r['balance'] ?? '')),
-                  DataCell(Text(r['rate'] ?? '')),
-                  DataCell(Text(r['amount'] ?? '')),
-                ],
-              );
-            }),
-          ],
-        ),
+      child: DataTable2(
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        showCheckboxColumn: false,
+        isHorizontalScrollBarVisible: false,
+        columns: [
+          const DataColumn2(label: Text('Date '), fixedWidth: 100),
+          const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+          const DataColumn2(label: Text('Balance '), size: ColumnSize.S),
+          const DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
+          const DataColumn2(label: Text('Return '), size: ColumnSize.S),
+        ],
+        rows: [
+          ...rows.map((r) {
+            return DataRow(
+              key: ValueKey(r['uuid']),
+              cells: [
+                DataCell(Text(r['date'] ?? '')),
+                DataCell(Text(r['transaction'] ?? '')),
+                DataCell(Text(r['balance'] ?? '')),
+                DataCell(Text(r['rate'] ?? '')),
+                DataCell(Text(r['amount'] ?? '')),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }

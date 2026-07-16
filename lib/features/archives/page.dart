@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
@@ -215,45 +213,42 @@ class _ArchivesPageState extends State<ArchivesPage>
   }
 
   Widget _buildTable() {
-    return ScrollConfiguration(
-      behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-      child: WidgetsPanel(
-        child: DataTable2(
-          scrollController: scrollToUtil.controller,
-          minWidth: 460,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: tableHeadingHeight,
-          dataRowHeight: tableRowHeight,
-          showCheckboxColumn: false,
-          sortColumnIndex: sortableColumnIndex,
-          sortAscending: sortableAscending,
-          isHorizontalScrollBarVisible: false,
-          columns: [
-            DataColumn2(label: const Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
-            DataColumn2(label: const Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
-            DataColumn2(label: const Text("Notes")),
-            const DataColumn2(label: Text("Action"), fixedWidth: 80),
-          ],
-          rows: rows.map((r) {
-            return DataRow(
-              cells: [
-                DataCell(Text(r['date'])),
-                DataCell(Text(r['type'])),
-                DataCell(Text(r['notes'])),
-                DataCell(
-                  ArchivesButtons(
-                    tx: r['tx'],
-                    wxController: _controller,
-                    onAction: () {
-                      setState(() {});
-                    },
-                  ),
+    return WidgetsPanel(
+      child: DataTable2(
+        scrollController: scrollToUtil.controller,
+        minWidth: 460,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        showCheckboxColumn: false,
+        sortColumnIndex: sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        columns: [
+          DataColumn2(label: const Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
+          DataColumn2(label: const Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
+          DataColumn2(label: const Text("Notes")),
+          const DataColumn2(label: Text("Action"), fixedWidth: 80),
+        ],
+        rows: rows.map((r) {
+          return DataRow(
+            cells: [
+              DataCell(Text(r['date'])),
+              DataCell(Text(r['type'])),
+              DataCell(Text(r['notes'])),
+              DataCell(
+                ArchivesButtons(
+                  tx: r['tx'],
+                  wxController: _controller,
+                  onAction: () {
+                    setState(() {});
+                  },
                 ),
-              ],
-            );
-          }).toList(),
-        ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }

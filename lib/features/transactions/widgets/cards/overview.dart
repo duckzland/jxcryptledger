@@ -234,58 +234,55 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   Widget _buildPanels() {
     return SizedBox(
       height: 38,
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-        child: CustomScrollView(
-          scrollDirection: Axis.horizontal,
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Row(
-                key: Key("panels-${widget.id}"),
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                spacing: 16,
-                children: [
-                  if (_totalCapital > 0)
-                    TransactionsWidgetsPanelItem(
-                      title: "Total Capital",
-                      subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
-                      value: 0,
-                      comparator: 0,
-                    ),
-                  if (_currentHolding > 0)
-                    TransactionsWidgetsPanelItem(
-                      title: "Current Balance",
-                      subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
-                      value: 0,
-                      comparator: 0,
-                    ),
-                  if (_finalizedBalance > 0)
-                    TransactionsWidgetsPanelItem(
-                      title: "Finalized Balance",
-                      subtitle: "${Utils.formatSmartDouble(_finalizedBalance)} $_resultSymbol",
-                      value: 0,
-                      comparator: 0,
-                    ),
-                  if (_totalCapital > 0 && _profitLossPercentage != 0)
-                    TransactionsWidgetsPanelItem(
-                      title: "Profit/Loss",
-                      subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
-                      value: _profitLossPercentage,
-                      comparator: 0,
-                    ),
-                  if (_totalCapital > 0 && _profitLossPercentage != 0)
-                    TransactionsWidgetsPanelItem(
-                      title: "Profit/Loss %",
-                      subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
-                      value: _profitLossPercentage,
-                      comparator: 0,
-                    ),
-                ],
-              ),
+      child: CustomScrollView(
+        scrollDirection: Axis.horizontal,
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Row(
+              key: Key("panels-${widget.id}"),
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              spacing: 16,
+              children: [
+                if (_totalCapital > 0)
+                  TransactionsWidgetsPanelItem(
+                    title: "Total Capital",
+                    subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
+                    value: 0,
+                    comparator: 0,
+                  ),
+                if (_currentHolding > 0)
+                  TransactionsWidgetsPanelItem(
+                    title: "Current Balance",
+                    subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
+                    value: 0,
+                    comparator: 0,
+                  ),
+                if (_finalizedBalance > 0)
+                  TransactionsWidgetsPanelItem(
+                    title: "Finalized Balance",
+                    subtitle: "${Utils.formatSmartDouble(_finalizedBalance)} $_resultSymbol",
+                    value: 0,
+                    comparator: 0,
+                  ),
+                if (_totalCapital > 0 && _profitLossPercentage != 0)
+                  TransactionsWidgetsPanelItem(
+                    title: "Profit/Loss",
+                    subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
+                    value: _profitLossPercentage,
+                    comparator: 0,
+                  ),
+                if (_totalCapital > 0 && _profitLossPercentage != 0)
+                  TransactionsWidgetsPanelItem(
+                    title: "Profit/Loss %",
+                    subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
+                    value: _profitLossPercentage,
+                    comparator: 0,
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

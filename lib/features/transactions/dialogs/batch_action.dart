@@ -47,7 +47,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   late WidgetsButtonActionState buttonActionState;
 
   @override
-  double get tableHeightOffset => 100;
+  double get tableHeightOffset => 130;
 
   @override
   double get tableHeadingHeightOffset => 4;
@@ -204,38 +204,35 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-        child: DataTable2(
-          headingCheckboxTheme: Theme.of(context).checkboxTheme,
-          datarowCheckboxTheme: Theme.of(context).checkboxTheme,
-          showHeadingCheckBox: true,
-          showCheckboxColumn: true,
-          minWidth: 800,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: tableHeadingHeight,
-          dataRowHeight: tableRowHeight,
-          isHorizontalScrollBarVisible: false,
-          columns: [
-            DataColumn2(label: const Text('Date '), fixedWidth: 100),
-            DataColumn2(label: const Text('Transactions '), size: ColumnSize.M),
-            DataColumn2(label: const Text('Balance '), size: ColumnSize.M),
-          ],
-          rows: [
-            ...rows.map((r) {
-              return DataRow(
-                selected: selectableIsSelected(r['uuid']),
-                onSelectChanged: (v) {
-                  setState(() {
-                    selectableSetSelected(r['uuid'], v!);
-                  });
-                },
-                cells: [DataCell(Text(r['date'] ?? '')), DataCell(Text(r['transaction'] ?? '')), DataCell(Text(r['balance'] ?? ''))],
-              );
-            }),
-          ],
-        ),
+      child: DataTable2(
+        headingCheckboxTheme: Theme.of(context).checkboxTheme,
+        datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+        showHeadingCheckBox: true,
+        showCheckboxColumn: true,
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        isHorizontalScrollBarVisible: false,
+        columns: [
+          DataColumn2(label: const Text('Date '), fixedWidth: 100),
+          DataColumn2(label: const Text('Transactions '), size: ColumnSize.M),
+          DataColumn2(label: const Text('Balance '), size: ColumnSize.M),
+        ],
+        rows: [
+          ...rows.map((r) {
+            return DataRow(
+              selected: selectableIsSelected(r['uuid']),
+              onSelectChanged: (v) {
+                setState(() {
+                  selectableSetSelected(r['uuid'], v!);
+                });
+              },
+              cells: [DataCell(Text(r['date'] ?? '')), DataCell(Text(r['transaction'] ?? '')), DataCell(Text(r['balance'] ?? ''))],
+            );
+          }),
+        ],
       ),
     );
   }

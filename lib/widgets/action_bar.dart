@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class WidgetsActionBar extends StatelessWidget {
@@ -60,34 +58,31 @@ class WidgetsActionBar extends StatelessWidget {
           return Center(
             child: SizedBox(
               height: 50,
-              child: ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-                child: CustomScrollView(
-                  shrinkWrap: doCentering ? false : doShrinkWrap,
-                  scrollDirection: Axis.horizontal,
-                  center: doCentering ? centerKey : null,
-                  slivers: [
-                    ?leftActions != null
-                        ? SliverToBoxAdapter(
-                            child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?leftActions]),
-                          )
-                        : null,
-                    ?mainActions != null
-                        ? SliverToBoxAdapter(
-                            key: centerKey,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?mainActions]),
-                            ),
-                          )
-                        : null,
-                    ?rightActions != null
-                        ? SliverToBoxAdapter(
-                            child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?rightActions]),
-                          )
-                        : null,
-                  ],
-                ),
+              child: CustomScrollView(
+                shrinkWrap: doCentering ? false : doShrinkWrap,
+                scrollDirection: Axis.horizontal,
+                center: doCentering ? centerKey : null,
+                slivers: [
+                  ?leftActions != null
+                      ? SliverToBoxAdapter(
+                          child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?leftActions]),
+                        )
+                      : null,
+                  ?mainActions != null
+                      ? SliverToBoxAdapter(
+                          key: centerKey,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?mainActions]),
+                          ),
+                        )
+                      : null,
+                  ?rightActions != null
+                      ? SliverToBoxAdapter(
+                          child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?rightActions]),
+                        )
+                      : null,
+                ],
               ),
             ),
           );
