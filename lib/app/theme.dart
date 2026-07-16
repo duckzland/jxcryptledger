@@ -12,8 +12,11 @@ class AppTheme {
   static const inputErrorBorder = Color(0xFF992B2B);
   static const inputErrorText = Color(0xFFFF7A7A);
 
-  static const tableHeaderBg = Color(0xFF151B29);
-  static const tableRowBg = Color(0xFF192030);
+  //static const tableHeaderBg = Color(0xFF151B29);
+  //static const tableRowBg = Color(0xFF192030);
+
+  static const tableHeaderBg = Colors.transparent;
+  static const tableRowBg = Colors.transparent;
 
   static const treeConnector = Color(0xFE2C3544);
 
