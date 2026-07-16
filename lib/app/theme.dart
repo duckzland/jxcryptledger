@@ -17,17 +17,18 @@ class AppTheme {
 
   static const treeConnector = Color(0xFE2C3544);
 
-  static const treeBgNormal = Color(0xFF1B2433);
+  static const treeBgNormal = Color(0xFF0d1421);
   static const treeFgNormal = text;
 
   static const treeBgInactive = Color(0xFF2E3A4E);
-  static const treeFgInactive = Color(0xFF8EA2C0);
+  static const treeFgInactive = textInactive;
 
   static const treeBgClosed = Color(0xFF2A2338);
-  static const treeFgClosed = Color(0xFFB5A7CB);
+  static const treeFgClosed = textHalfInactive;
 
-  static const treeBgFinalized = Color(0xFF212C3D);
-  static const treeFgFinalized = Color(0xFF90A3BF);
+  static const treeBgFinalized = Color(0xFF4D2A13);
+
+  static const treeFgFinalized = textHalfInactive;
 
   static const treeBgCurrent = Color(0xFF1C3E2F);
   static const treeFgCurrent = text;
@@ -37,10 +38,10 @@ class AppTheme {
   static const warning = Color(0xFFD5A114);
 
   static const action = Color(0xFF43A047);
-  static const loss = Color(0xFFE65F5F);
-  static const profit = Color(0xFF00CC8A);
+  static const loss = Color(0xFFE96A6A);
+  static const profit = Color(0xFF00D695);
 
-  static const text = Color(0xFFDDDDDD);
+  static const text = Color(0xFFEEEEEE);
   static const textMuted = Color(0xB3BEBEBE);
   static const textInactive = Color(0x72DDDDDD);
   static const textHalfInactive = Color(0x99DDDDDD);
@@ -51,14 +52,13 @@ class AppTheme {
   static const scrimBackground = Color(0xFF06070A);
   static const headerBg = Color(0xFF161C27);
   static const separator = Color(0xFF2C3544);
-  static const panelBg = Color(0xFF131A27);
+  static const panelBg = Color(0xFF0d1421);
 
   static const scrollbarBg = Color(0xFF2A354A);
   static const mutedBg = Color(0xFF292F3B);
   static const closedBg = Color(0xFF253442);
   static const finalizedBg = Color(0xFF253446);
-  static const dialogBg = Color(0xFF131A27);
-
+  static const dialogBg = Color(0xFF0d1421);
   static const barrierBg = Color(0xD9000000);
 
   static const red = Color(0xFF641D1D);
@@ -79,7 +79,7 @@ class AppTheme {
   static const menuBorder = Color(0xFF1A2F4A);
 
   static const cardBg = Color(0xFF1B2230);
-  static const cardBorder = Color(0xFE2C3544);
+  static const cardBorder = Color(0xFF2C3544);
 
   static const buttonBg = Color(0xFF253042);
   static const buttonFg = Color(0xFFE2E8F0);
