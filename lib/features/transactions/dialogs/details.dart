@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
@@ -10,7 +11,7 @@ import '../controller.dart';
 import '../model.dart';
 import '../widgets/cards/simple_tree.dart';
 
-class TransactionsDialogsDetails extends StatelessWidget {
+class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
   final TransactionsModel tx;
 
   const TransactionsDialogsDetails({super.key, required this.tx});
@@ -41,7 +42,7 @@ class TransactionsDialogsDetails extends StatelessWidget {
                 spacing: 5,
                 children: [
                   WidgetsHeader(title: "", subtitle: "History", reversed: true),
-                  SizedBox(width: double.infinity, height: 300, child: _buildHistory()),
+                  SizedBox(width: double.infinity, height: calculateAdjustedMaxHeight(), child: _buildHistory()),
                 ],
               ),
 
@@ -120,7 +121,7 @@ class TransactionsDialogsDetails extends StatelessWidget {
       tree: root,
       padding: const EdgeInsets.only(left: 16),
       showRootNode: false,
-      indentation: const Indentation(style: IndentStyle.roundJoint),
+      indentation: const Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
       expansionBehavior: ExpansionBehavior.scrollToLastChild,
       animation: kAlwaysCompleteAnimation,
       expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
@@ -172,5 +173,45 @@ class TransactionsDialogsDetails extends StatelessWidget {
       context: context,
       builder: (_) => TransactionsDialogsDetails(tx: transaction),
     );
+  }
+
+  double calculateAdjustedMaxHeight() {
+    List<TransactionsModel> txs = _txController.collectBranchWithTarget(tx);
+    double maxHeight = states.get('viewport-height', defaultValue: -1.00);
+
+    final double itemHeight = 80;
+    final double topOffset = 300;
+    final double screenPercentage = 0.8;
+    final int maxItems = 3;
+
+    double suggestedHeight = txs.length * itemHeight;
+    double minimumHeight = 3 * itemHeight;
+
+    if (maxHeight < minimumHeight) {
+      return suggestedHeight;
+    }
+
+    maxHeight -= topOffset;
+    maxHeight = maxHeight * screenPercentage;
+    if (maxHeight > 0 && suggestedHeight > maxHeight) {
+      final rowsFit = (maxHeight / itemHeight).floor();
+
+      int clampedRows;
+      if (txs.length >= maxItems) {
+        clampedRows = rowsFit < maxItems ? maxItems : rowsFit;
+      } else {
+        clampedRows = rowsFit;
+      }
+
+      if (clampedRows > txs.length) {
+        clampedRows = txs.length;
+      }
+
+      final maxRows = clampedRows.toDouble();
+
+      suggestedHeight = (maxRows * itemHeight);
+    }
+
+    return suggestedHeight;
   }
 }

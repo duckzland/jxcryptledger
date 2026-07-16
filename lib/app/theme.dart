@@ -15,22 +15,21 @@ class AppTheme {
   static const tableHeaderBg = Colors.transparent;
   static const tableRowBg = Colors.transparent;
 
-  static const treeConnector = Color(0xFE2C3544);
+  static const treeConnector = Color(0xFF2C3748);
 
-  static const treeBgNormal = Color(0xFF0d1421);
+  static const treeBgNormal = Color(0xFF161D30);
   static const treeFgNormal = text;
 
-  static const treeBgInactive = Color(0xFF2E3A4E);
+  static const treeBgInactive = Color(0xFF2C3A50);
   static const treeFgInactive = textInactive;
 
-  static const treeBgClosed = Color(0xFF2A2338);
+  static const treeBgClosed = Color(0xFF202A3D);
   static const treeFgClosed = textHalfInactive;
 
-  static const treeBgFinalized = Color(0xFF4D2A13);
-
+  static const treeBgFinalized = Color(0xFF2A2F46);
   static const treeFgFinalized = textHalfInactive;
 
-  static const treeBgCurrent = Color(0xFF1C3E2F);
+  static const treeBgCurrent = Color(0xFF1C2F4A);
   static const treeFgCurrent = text;
 
   static const error = Color(0xFFC62828);
@@ -47,12 +46,12 @@ class AppTheme {
   static const textHalfInactive = Color(0x99DDDDDD);
 
   static const appBarBg = Color(0xFF060A10);
-  static const background = Color(0xFF0B111C);
+  static const background = Color(0xFF06070A);
 
   static const scrimBackground = Color(0xFF06070A);
   static const headerBg = Color(0xFF161C27);
   static const separator = Color(0xFF2C3544);
-  static const panelBg = Color(0xFF0d1421);
+  static const panelBg = Color(0xFF0D1421);
 
   static const scrollbarBg = Color(0xFF2A354A);
   static const mutedBg = Color(0xFF292F3B);
@@ -227,7 +226,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(6),
-          side: const BorderSide(color: cardBorder, width: 1),
+          // side: const BorderSide(color: cardBorder, width: 1),
         ),
       ),
 

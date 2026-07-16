@@ -4,6 +4,7 @@ import '../../core/runtime/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/state.dart';
 import '../../widgets/buttons/action.dart';
+import '../../widgets/panel.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../cryptos/controller.dart';
 import 'screens/qrcode.dart';
@@ -48,10 +49,18 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
       actionbarRemove();
       return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.');
     }
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Column(spacing: 12, children: [Expanded(child: _buildScreen())]),
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 16, bottom: 16),
+          child: WidgetsPanel(
+            padding: const EdgeInsets.all(24.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1600),
+              child: Column(spacing: 12, children: [Expanded(child: _buildScreen())]),
+            ),
+          ),
+        ),
       ),
     );
   }

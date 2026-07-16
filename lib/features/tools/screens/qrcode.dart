@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../../widgets/panel.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../app/theme.dart';
 
@@ -25,34 +24,26 @@ class _ToolsQRGeneratorViewState extends State<ToolsQRGeneratorView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: WidgetsPanel(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                WidgetsFieldsTextarea(
-                  title: "Source Text",
-                  helperText: "Enter any text to generate the QRCode...",
-                  onChanged: (value) {
-                    _debounce?.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 120), () {
-                      setState(() {
-                        _inputText = value.trim().isEmpty ? null : value.trim();
-                      });
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 30),
-                Center(child: _buildBarcodeResult()),
-              ],
-            ),
+    return Form(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          WidgetsFieldsTextarea(
+            title: "Source Text",
+            helperText: "Enter any text to generate the QRCode...",
+            onChanged: (value) {
+              _debounce?.cancel();
+              _debounce = Timer(const Duration(milliseconds: 120), () {
+                setState(() {
+                  _inputText = value.trim().isEmpty ? null : value.trim();
+                });
+              });
+            },
           ),
-        ),
+
+          const SizedBox(height: 30),
+          Center(child: _buildBarcodeResult()),
+        ],
       ),
     );
   }
