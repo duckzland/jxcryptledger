@@ -33,7 +33,7 @@ class PanelsButtons extends StatelessWidget with MixinsActionable {
           iconSize: 16,
           minimumSize: const Size(34, 34),
           tooltip: wix == null ? "Add new rate notification" : "Edit linked rate notification",
-          persistBg: true,
+          filledMode: true,
           evaluator: (s) {
             if (wix == null) {
               s.normal();

@@ -15,9 +15,11 @@ class WidgetsDialogsReset extends StatefulWidget {
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool Function()? isEmpty;
-  final bool persistBg;
-  final bool initialTransparent;
-  final bool centered;
+  final bool filledMode;
+  final bool ghostMode;
+  final bool plainMode;
+  final bool centerMode;
+  
   final Listenable? listener;
 
   final String dialogTitle;
@@ -37,11 +39,12 @@ class WidgetsDialogsReset extends StatefulWidget {
     this.padding = const EdgeInsets.all(8),
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.error,
+    this.plainMode = false,
     this.evaluator,
     this.isEmpty,
-    this.persistBg = false,
-    this.initialTransparent = false,
-    this.centered = true,
+    this.filledMode = false,
+    this.ghostMode = false,
+    this.centerMode = true,
     this.listener,
 
     this.dialogTitle = "Reset Database",
@@ -68,6 +71,7 @@ class WidgetsDialogsReset extends StatefulWidget {
     void Function(WidgetsButtonsActionState s)? evaluator,
     bool? persistBg,
     bool? initialTransparent,
+    bool? insideDropdown,
     bool? centered,
     Listenable? listener,
     String? dialogTitle,
@@ -86,9 +90,10 @@ class WidgetsDialogsReset extends StatefulWidget {
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
       evaluator: evaluator ?? this.evaluator,
-      persistBg: persistBg ?? this.persistBg,
-      initialTransparent: initialTransparent ?? this.initialTransparent,
-      centered: centered ?? this.centered,
+      filledMode: persistBg ?? this.filledMode,
+      ghostMode: initialTransparent ?? this.ghostMode,
+      plainMode: insideDropdown ?? this.plainMode,
+      centerMode: centered ?? this.centerMode,
       listener: listener ?? this.listener,
       dialogTitle: dialogTitle ?? this.dialogTitle,
       dialogMessage: dialogMessage ?? this.dialogMessage,
@@ -134,9 +139,10 @@ class _WidgetsDialogsResetState extends State<WidgetsDialogsReset> {
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
       evaluator: evaluator,
-      persistBg: widget.persistBg,
-      initialTransparent: widget.initialTransparent,
-      centered: widget.centered,
+      filledMode: widget.filledMode,
+      ghostMode: widget.ghostMode,
+      plainMode: widget.plainMode,
+      centerMode: widget.centerMode,
       listener: widget.listener,
     );
   }

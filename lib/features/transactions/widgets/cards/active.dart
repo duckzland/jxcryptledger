@@ -375,7 +375,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         DataColumn2(
           size: ColumnSize.S,
           label: WidgetsHeader(
-            title: 'Exchanged Rate ',
+            title: 'Ex. Rate ',
             subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
           ),
           onSort: sortableSorters[4],
@@ -385,13 +385,13 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         DataColumn2(
           size: ColumnSize.S,
           label: WidgetsHeader(
-            title: 'Current Rate ',
+            title: 'Cu. Rate ',
             subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
           ),
         ),
         DataColumn2(
           size: ColumnSize.S,
-          label: WidgetsHeader(title: 'Current Value ', subtitle: _sourceSymbol),
+          label: WidgetsHeader(title: 'Cu. Value ', subtitle: _sourceSymbol),
           onSort: sortableSorters[6],
         ),
         DataColumn2(

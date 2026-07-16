@@ -166,7 +166,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           minimumSize: btnSize,
           tooltip: "Manage linked watchboard",
           initialState: WidgetsButtonActionState.action,
-          persistBg: true,
+          filledMode: true,
           evaluator: _evaluatorWatchboard,
           buildForm: _formWatchboard,
         ),
@@ -184,7 +184,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           minimumSize: btnSize,
           tooltip: "Manage linked rate watcher",
           initialState: WidgetsButtonActionState.action,
-          persistBg: true,
+          filledMode: true,
           evaluator: _evaluatorWatcher,
           buildForm: _formWatcher,
         ),
@@ -239,7 +239,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
 
   void _evaluatorWatchboard(WidgetsButtonsActionState s) {
     final linkedPanel = pxController.getLinked("$linkableKey-$srid-$rrid");
-    if (s.widget.persistBg) {
+    if (s.widget.filledMode) {
       if (linkedPanel == null) {
         s.normal();
       } else {
@@ -250,7 +250,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
 
   void _evaluatorWatcher(WidgetsButtonsActionState s) {
     final linkedWatcher = wxController.getLinked("$linkableKey-$srid-$rrid");
-    if (s.widget.persistBg) {
+    if (s.widget.filledMode) {
       if (linkedWatcher == null) {
         s.normal();
       } else {

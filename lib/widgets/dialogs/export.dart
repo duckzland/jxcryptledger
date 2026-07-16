@@ -18,13 +18,15 @@ class WidgetsDialogsExport extends StatefulWidget {
   final EdgeInsets padding;
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
-  final bool initialTransparent;
-  final bool centered;
+  final bool filledMode;
+  final bool ghostMode;
+  final bool plainMode;
+  final bool centerMode;
+
   final Listenable? listener;
 
   final void Function(WidgetsButtonsActionState s)? evaluator;
   final bool Function()? isEmpty;
-  final bool persistBg;
 
   final String dialogTitle;
   final String dialogMessage;
@@ -47,9 +49,10 @@ class WidgetsDialogsExport extends StatefulWidget {
     this.initialState = WidgetsButtonActionState.action,
     this.evaluator,
     this.isEmpty,
-    this.persistBg = false,
-    this.initialTransparent = false,
-    this.centered = true,
+    this.filledMode = false,
+    this.ghostMode = false,
+    this.plainMode = false,
+    this.centerMode = true,
     this.listener,
 
     this.dialogTitle = "Export Data",
@@ -75,6 +78,7 @@ class WidgetsDialogsExport extends StatefulWidget {
     void Function(WidgetsButtonsActionState s)? evaluator,
     bool? persistBg,
     bool? initialTransparent,
+    bool? insideDropdown,
     bool? centered,
     Listenable? listener,
     String? dialogTitle,
@@ -93,9 +97,10 @@ class WidgetsDialogsExport extends StatefulWidget {
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
       evaluator: evaluator ?? this.evaluator,
-      persistBg: persistBg ?? this.persistBg,
-      initialTransparent: initialTransparent ?? this.initialTransparent,
-      centered: centered ?? this.centered,
+      filledMode: persistBg ?? this.filledMode,
+      ghostMode: initialTransparent ?? this.ghostMode,
+      plainMode: insideDropdown ?? this.plainMode,
+      centerMode: centered ?? this.centerMode,
       listener: listener ?? this.listener,
       dialogTitle: dialogTitle ?? this.dialogTitle,
       dialogMessage: dialogMessage ?? this.dialogMessage,
@@ -163,14 +168,15 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       tooltip: widget.tooltip,
       icon: widget.icon,
       iconSize: widget.iconSize,
-      radius: widget.radius,
+      radius: widget.plainMode ? 0.0 : widget.radius,
       padding: widget.padding,
       minimumSize: widget.minimumSize,
-      initialState: widget.initialState,
+      initialState: widget.plainMode ? WidgetsButtonActionState.normal : widget.initialState,
       evaluator: evaluator,
-      persistBg: widget.persistBg,
-      initialTransparent: widget.initialTransparent,
-      centered: widget.centered,
+      filledMode: widget.filledMode,
+      ghostMode: widget.ghostMode,
+      plainMode: widget.plainMode,
+      centerMode: widget.centerMode,
       listener: widget.listener,
     );
   }

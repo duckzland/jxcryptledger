@@ -145,7 +145,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                       WidgetsDialogsAlert(
                         label: buttonLabel,
                         padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                        persistBg: true,
+                        filledMode: true,
                         dialogTitle: confirmTitle,
                         dialogMessage: confirmMessage,
                         dialogCancelLabel: "Cancel",

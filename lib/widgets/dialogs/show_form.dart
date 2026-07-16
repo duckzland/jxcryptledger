@@ -13,9 +13,11 @@ class WidgetsDialogsShowForm extends StatefulWidget {
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonsActionState s)? evaluator;
-  final bool persistBg;
-  final bool initialTransparent;
-  final bool centered;
+  final bool filledMode;
+  final bool ghostMode;
+  final bool plainMode;
+  final bool centerMode;
+
   final Listenable? listener;
 
   const WidgetsDialogsShowForm({
@@ -31,9 +33,10 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.action,
     this.evaluator,
-    this.persistBg = false,
-    this.initialTransparent = false,
-    this.centered = true,
+    this.filledMode = false,
+    this.ghostMode = false,
+    this.plainMode = false,
+    this.centerMode = true,
     this.listener,
   });
 
@@ -50,6 +53,7 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     EdgeInsets? padding,
     Size? minimumSize,
     WidgetsButtonActionState? initialState,
+    bool? insideDropdown,
     void Function(WidgetsButtonsActionState s)? evaluator,
     bool? persistBg,
     bool? initialTransparent,
@@ -66,10 +70,11 @@ class WidgetsDialogsShowForm extends StatefulWidget {
       padding: padding ?? this.padding,
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
+      plainMode: insideDropdown ?? this.plainMode,
       evaluator: evaluator ?? this.evaluator,
-      persistBg: persistBg ?? this.persistBg,
-      initialTransparent: initialTransparent ?? this.initialTransparent,
-      centered: centered ?? this.centered,
+      filledMode: persistBg ?? this.filledMode,
+      ghostMode: initialTransparent ?? this.ghostMode,
+      centerMode: centered ?? this.centerMode,
       listener: listener ?? this.listener,
     );
   }
@@ -90,18 +95,18 @@ class _WidgetsDialogsShowFormState extends State<WidgetsDialogsShowForm> {
   Widget build(BuildContext context) {
     return WidgetsButtonsAction(
       label: widget.label,
-      tooltip: widget.tooltip,
-      icon: widget.icon,
+      tooltip: widget.plainMode ? null : widget.tooltip,
+      icon: widget.plainMode ? null : widget.icon,
       iconSize: widget.iconSize,
-      radius: widget.radius,
+      radius: widget.plainMode ? 0.0 : widget.radius,
       padding: widget.padding,
       minimumSize: widget.minimumSize,
-      initialState: widget.initialState,
+      initialState: widget.plainMode ? WidgetsButtonActionState.normal : widget.initialState,
       onPressed: (_) => _showDialog(context),
       evaluator: widget.evaluator,
-      persistBg: widget.persistBg,
-      initialTransparent: widget.initialTransparent,
-      centered: widget.centered,
+      filledMode: widget.plainMode ? false : widget.filledMode,
+      ghostMode: widget.plainMode ? true : widget.ghostMode,
+      centerMode: widget.plainMode ? false : widget.centerMode,
       listener: widget.listener,
     );
   }

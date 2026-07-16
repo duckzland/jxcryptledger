@@ -110,7 +110,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                       WidgetsDialogsAlert(
                         label: "Trade",
                         padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                        persistBg: true,
+                        filledMode: true,
                         dialogTitle: "Trade Confirmation",
                         dialogMessage: "This action cannot be undone.",
                         dialogCancelLabel: "Cancel",

@@ -118,13 +118,16 @@ class AppTheme {
   static const double tableHeadingRowHeight = 50;
   static const double tableDataRowMinHeight = 42;
 
+  static const EdgeInsets menuPadding = EdgeInsets.symmetric(vertical: 4);
+  static const EdgeInsets inputPadding = EdgeInsets.symmetric(vertical: 12, horizontal: 12);
+
   static ThemeData get dark {
     final menuDecoration = MenuThemeData(
       style: MenuStyle(
         backgroundColor: WidgetStateProperty.all(menuBackground),
         surfaceTintColor: WidgetStateProperty.all(menuBackground),
         shadowColor: WidgetStateProperty.all(Colors.transparent),
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 4)),
+        padding: WidgetStateProperty.all(menuPadding),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(6),
@@ -144,7 +147,7 @@ class AppTheme {
       errorStyle: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w400, color: inputErrorText),
 
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      contentPadding: inputPadding,
 
       hoverColor: Colors.transparent,
 

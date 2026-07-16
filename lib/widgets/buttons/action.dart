@@ -62,9 +62,9 @@ class WidgetsButtonsAction extends StatefulWidget {
   final double? iconSize;
   final Size? minimumSize;
   final double radius;
-  final bool persistBg;
-  final bool initialTransparent;
-  final bool centered;
+  final bool filledMode;
+  final bool ghostMode;
+  final bool centerMode;
 
   final Listenable? listener;
 
@@ -79,9 +79,9 @@ class WidgetsButtonsAction extends StatefulWidget {
     this.initialState = WidgetsButtonActionState.normal,
     this.iconSize,
     this.minimumSize,
-    this.persistBg = true,
-    this.initialTransparent = false,
-    this.centered = true,
+    this.filledMode = true,
+    this.ghostMode = false,
+    this.centerMode = true,
     this.radius = 6.0,
     this.listener,
   });
@@ -140,14 +140,14 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
           return RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.radius));
         }),
         backgroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.hovered) || widget.persistBg || _state == WidgetsButtonActionState.inProgress) {
+          if (states.contains(WidgetState.hovered) || widget.filledMode || _state == WidgetsButtonActionState.inProgress) {
             return _backgroundColor();
           }
 
-          return widget.initialTransparent ? Colors.transparent : AppTheme.buttonBg;
+          return widget.ghostMode ? Colors.transparent : AppTheme.buttonBg;
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.hovered) || widget.persistBg || _state == WidgetsButtonActionState.inProgress) {
+          if (states.contains(WidgetState.hovered) || widget.filledMode || _state == WidgetsButtonActionState.inProgress) {
             return _foregroundColor();
           }
           return AppTheme.buttonFg;
@@ -201,11 +201,11 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
       );
     }
 
-    if ((widget.label != null && widget.label!.isNotEmpty) && widget.icon != null) {
-      return Row(
-        spacing: 8,
-        mainAxisSize: widget.centered ? MainAxisSize.min : MainAxisSize.max,
-        children: [
+    return Row(
+      spacing: 8,
+      mainAxisSize: widget.centerMode ? MainAxisSize.min : MainAxisSize.max,
+      children: [
+        if (widget.icon != null)
           SizedBox(
             width: widget.iconSize ?? 18,
             height: widget.iconSize ?? 18,
@@ -214,23 +214,9 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
               child: Icon(widget.icon, size: widget.iconSize ?? 18, color: fg),
             ),
           ),
-          Text(widget.label!, softWrap: false, overflow: TextOverflow.visible),
-        ],
-      );
-    }
-
-    if (widget.icon != null) {
-      return SizedBox(
-        width: widget.iconSize ?? 18,
-        height: widget.iconSize ?? 18,
-        child: FittedBox(
-          fit: BoxFit.contain,
-          child: Icon(widget.icon, size: widget.iconSize ?? 18, color: fg),
-        ),
-      );
-    }
-
-    return Text(widget.label ?? "", softWrap: false, overflow: TextOverflow.visible);
+        if (widget.label != null && widget.label!.isNotEmpty) Text(widget.label!, softWrap: false, overflow: TextOverflow.visible),
+      ],
+    );
   }
 
   Color _backgroundColor() {

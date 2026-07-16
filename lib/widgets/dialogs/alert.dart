@@ -12,10 +12,12 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonsActionState s)? evaluator;
-  final bool persistBg;
+  final bool filledMode;
+  final bool ghostMode;
+  final bool centerMode;
+  final bool plainMode;
   final bool showMessage;
-  final bool initialTransparent;
-  final bool centered;
+
   final Listenable? listener;
 
   final String dialogTitle;
@@ -43,10 +45,11 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.error,
     this.evaluator,
-    this.persistBg = false,
+    this.filledMode = false,
     this.showMessage = true,
-    this.initialTransparent = false,
-    this.centered = true,
+    this.ghostMode = false,
+    this.plainMode = false,
+    this.centerMode = true,
     this.listener,
 
     this.dialogTitle = "Are you sure?",
@@ -76,11 +79,12 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
     Size? minimumSize,
     WidgetsButtonActionState? initialState,
     void Function(WidgetsButtonsActionState s)? evaluator,
-    bool? persistBg,
-    bool? initialTransparent,
-    bool? centered,
-    Listenable? listener,
+    bool? filledMode,
+    bool? ghostMode,
+    bool? plainMode,
+    bool? centerMode,
     bool? showMessage,
+    Listenable? listener,
     String? dialogTitle,
     String? dialogMessage,
     String? dialogCancelLabel,
@@ -103,9 +107,10 @@ class WidgetsDialogsAlert<T> extends StatefulWidget with MixinsActionable {
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
       evaluator: evaluator ?? this.evaluator,
-      persistBg: persistBg ?? this.persistBg,
-      initialTransparent: initialTransparent ?? this.initialTransparent,
-      centered: centered ?? this.centered,
+      filledMode: filledMode ?? this.filledMode,
+      ghostMode: ghostMode ?? this.ghostMode,
+      plainMode: plainMode ?? this.plainMode,
+      centerMode: centerMode ?? this.centerMode,
       listener: listener ?? this.listener,
       showMessage: showMessage ?? this.showMessage,
       dialogTitle: dialogTitle ?? this.dialogTitle,
@@ -183,18 +188,18 @@ class _WidgetsDialogsAlertState<T> extends State<WidgetsDialogsAlert<T>> with Mi
   Widget build(BuildContext context) {
     return WidgetsButtonsAction(
       label: widget.label,
-      tooltip: widget.tooltip,
-      icon: widget.icon,
+      tooltip: widget.plainMode ? null : widget.tooltip,
+      icon: widget.plainMode ? null : widget.icon,
       iconSize: widget.iconSize,
-      radius: widget.radius,
+      radius: widget.plainMode ? 0.0 : widget.radius,
       padding: widget.padding,
       minimumSize: widget.minimumSize,
-      initialState: widget.initialState,
+      initialState: widget.plainMode ? WidgetsButtonActionState.normal : widget.initialState,
       onPressed: (_) => widget.onPressed?.call(context) ?? _showDialog(context),
       evaluator: widget.evaluator,
-      persistBg: widget.persistBg,
-      initialTransparent: widget.initialTransparent,
-      centered: widget.centered,
+      filledMode: widget.plainMode ? false : widget.filledMode,
+      ghostMode: widget.plainMode ? true : widget.ghostMode,
+      centerMode: widget.plainMode ? false : widget.centerMode,
       listener: widget.listener,
     );
   }

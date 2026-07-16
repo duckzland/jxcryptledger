@@ -76,7 +76,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                   buildForm: addForm,
                   evaluator: _evaluateAddNew,
-                  persistBg: true,
+                  filledMode: true,
                 ),
               if (importShow)
                 WidgetsDialogsImport(
@@ -90,7 +90,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
                   initialState: WidgetsButtonActionState.action,
                   onImport: importCallback,
                   evaluator: _evaluateImport,
-                  persistBg: true,
+                  filledMode: true,
                 ),
             ],
           ),

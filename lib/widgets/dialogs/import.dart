@@ -21,9 +21,11 @@ class WidgetsDialogsImport extends StatefulWidget {
   final Size? minimumSize;
   final WidgetsButtonActionState initialState;
   final void Function(WidgetsButtonsActionState s)? evaluator;
-  final bool persistBg;
-  final bool initialTransparent;
-  final bool centered;
+  final bool filledMode;
+  final bool ghostMode;
+  final bool plainMode;
+  final bool centerMode;
+  
   final Listenable? listener;
 
   final String dialogTitle;
@@ -45,9 +47,10 @@ class WidgetsDialogsImport extends StatefulWidget {
     this.minimumSize = const Size(40, 40),
     this.initialState = WidgetsButtonActionState.primary,
     this.evaluator,
-    this.persistBg = false,
-    this.initialTransparent = false,
-    this.centered = true,
+    this.filledMode = false,
+    this.ghostMode = false,
+    this.plainMode = false,
+    this.centerMode = true,
     this.listener,
 
     this.dialogTitle = "Import Data",
@@ -71,6 +74,7 @@ class WidgetsDialogsImport extends StatefulWidget {
     void Function(WidgetsButtonsActionState s)? evaluator,
     bool? persistBg,
     bool? initialTransparent,
+    bool? insideDropdown,
     bool? centered,
     Listenable? listener,
     bool? showDialogBeforeImport,
@@ -90,9 +94,10 @@ class WidgetsDialogsImport extends StatefulWidget {
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
       evaluator: evaluator ?? this.evaluator,
-      persistBg: persistBg ?? this.persistBg,
-      initialTransparent: initialTransparent ?? this.initialTransparent,
-      centered: centered ?? this.centered,
+      filledMode: persistBg ?? this.filledMode,
+      ghostMode: initialTransparent ?? this.ghostMode,
+      plainMode: insideDropdown ?? this.plainMode,
+      centerMode: centered ?? this.centerMode,
       listener: listener ?? this.listener,
       showDialogBeforeImport: showDialogBeforeImport ?? this.showDialogBeforeImport,
       dialogTitle: dialogTitle ?? this.dialogTitle,
@@ -148,9 +153,10 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
       minimumSize: widget.minimumSize,
       initialState: widget.initialState,
       evaluator: widget.evaluator,
-      persistBg: widget.persistBg,
-      initialTransparent: widget.initialTransparent,
-      centered: widget.centered,
+      filledMode: widget.filledMode,
+      ghostMode: widget.ghostMode,
+      plainMode: widget.plainMode,
+      centerMode: widget.centerMode,
       listener: widget.listener,
       onPressed: widget.showDialogBeforeImport ? null : _handlePressed,
     );
