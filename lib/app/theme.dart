@@ -5,15 +5,12 @@ class AppTheme {
 
   static const primary = Color(0xFF0088DB);
 
-  static const inputBg = Color(0xFF151B29);
+  static const inputBg = Color(0xFF111723);
   static const inputBorder = Color(0xFF242E3D);
   static const inputBorderDisabled = Color(0xFF1A202B);
   static const inputBorderFocused = Color(0xFF2C3748);
   static const inputErrorBorder = Color(0xFF992B2B);
   static const inputErrorText = Color(0xFFFF7A7A);
-
-  //static const tableHeaderBg = Color(0xFF151B29);
-  //static const tableRowBg = Color(0xFF192030);
 
   static const tableHeaderBg = Colors.transparent;
   static const tableRowBg = Colors.transparent;
@@ -21,7 +18,7 @@ class AppTheme {
   static const treeConnector = Color(0xFE2C3544);
 
   static const treeBgNormal = Color(0xFF1B2433);
-  static const treeFgNormal = Colors.white;
+  static const treeFgNormal = text;
 
   static const treeBgInactive = Color(0xFF2E3A4E);
   static const treeFgInactive = Color(0xFF8EA2C0);
@@ -33,47 +30,49 @@ class AppTheme {
   static const treeFgFinalized = Color(0xFF90A3BF);
 
   static const treeBgCurrent = Color(0xFF1C3E2F);
-  static const treeFgCurrent = Colors.white;
+  static const treeFgCurrent = text;
 
   static const error = Color(0xFFC62828);
   static const success = Color(0xFF43F436);
   static const warning = Color(0xFFD5A114);
 
   static const action = Color(0xFF43A047);
-  static const loss = Color(0xFFFF6D6D);
-  static const profit = Color(0xFF00E699);
+  static const loss = Color(0xFFE65F5F);
+  static const profit = Color(0xFF00CC8A);
 
-  static const text = Color(0xFFEFEFEF);
-  static const textMuted = Color(0xB3D9D9D9);
-  static const textInactive = Color(0x72FFFFFF);
-  static const textHalfInactive = Color(0x99FFFFFF);
+  static const text = Color(0xFFDDDDDD);
+  static const textMuted = Color(0xB3BEBEBE);
+  static const textInactive = Color(0x72DDDDDD);
+  static const textHalfInactive = Color(0x99DDDDDD);
 
-  static const appBarBg = Color(0xFF090E17);
+  static const appBarBg = Color(0xFF060A10);
+  static const background = Color(0xFF0B111C);
 
-  static const background = Color(0xFF0D1421);
   static const scrimBackground = Color(0xFF06070A);
   static const headerBg = Color(0xFF161C27);
   static const separator = Color(0xFF2C3544);
-  static const panelBg = Color(0xFF1B2235);
+  static const panelBg = Color(0xFF131A27);
+
   static const scrollbarBg = Color(0xFF2A354A);
   static const mutedBg = Color(0xFF292F3B);
   static const closedBg = Color(0xFF253442);
   static const finalizedBg = Color(0xFF253446);
-  static const dialogBg = Color(0xFF1B2235);
+  static const dialogBg = Color(0xFF131A27);
+
   static const barrierBg = Color(0xD9000000);
 
-  static const red = Color(0xFF852424);
-  static const darkRed = Color(0xFF641919);
-  static const green = Color(0xFF166A45);
-  static const darkGreen = Color(0xFF0F462D);
-  static const blue = Color(0xFF3C78DC);
-  static const lightBlue = Color(0xFF64A0E6);
-  static const lightPurple = Color(0xFFA08CC8);
-  static const lightOrange = Color(0xFFF0A064);
-  static const orange = Color(0xFFC36633);
-  static const yellow = Color(0xFFC0A840);
-  static const teal = Color(0xFF28AA8C);
-  static const darkGrey = Color(0xFF282828);
+  static const red = Color(0xFF641D1D);
+  static const darkRed = Color(0xFF4A1212);
+  static const green = Color(0xFF0F4F34);
+  static const darkGreen = Color(0xFF0B3322);
+  static const blue = Color(0xFF2C5EA9);
+  static const lightBlue = Color(0xFF4C79AF);
+  static const lightPurple = Color(0xFF796A97);
+  static const lightOrange = Color(0xFFB4794C);
+  static const orange = Color(0xFF915027);
+  static const yellow = Color(0xFF927F32);
+  static const teal = Color(0xFF1D7667);
+  static const darkGrey = Color(0xFF1D1D1D);
 
   static const menuBackground = Color(0xFF1A2F4A);
   static const menuHeaderBg = Color(0xFF243659);
@@ -89,34 +88,34 @@ class AppTheme {
   static const buttonFgDisabled = Color(0xFF4A5568);
 
   static const buttonBgActive = Color(0xFF0088DB);
-  static const buttonFgActive = Colors.white;
+  static const buttonFgActive = text;
 
   static const buttonBgPrimary = Color(0xFF0088DB);
-  static const buttonFgPrimary = Colors.white;
+  static const buttonFgPrimary = text;
 
   static const buttonBgProgress = Color(0xFF0088DB);
-  static const buttonFgProgress = Colors.white;
+  static const buttonFgProgress = text;
 
   static const buttonBgError = Color(0xFF992B2B);
-  static const buttonFgError = Colors.white;
+  static const buttonFgError = text;
 
   static const buttonBgAction = Color(0xFF00A86B);
-  static const buttonFgAction = Colors.white;
+  static const buttonFgAction = text;
 
   static const buttonBgWarning = Color(0xFFB88A00);
-  static const buttonFgWarning = Colors.white;
+  static const buttonFgWarning = text;
 
   static const buttonBgMuted = Color(0xFF222D3D);
   static const buttonFgMuted = Color(0xFFBDD1DE);
 
   static const notifyBgSuccess = Color(0xFF1565C0);
-  static const notifyFgSuccess = Colors.white;
+  static const notifyFgSuccess = text;
 
   static const notifyBgError = Color(0xFFC62828);
-  static const notifyFgError = Colors.white;
+  static const notifyFgError = text;
 
   static const notifyBgWarning = Color(0xFFEF6C00);
-  static const notifyFgWarning = Colors.white;
+  static const notifyFgWarning = text;
 
   static const double tableHeadingRowHeight = 50;
   static const double tableDataRowMinHeight = 42;
@@ -185,18 +184,18 @@ class AppTheme {
       menuTheme: menuDecoration,
 
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontFamily: 'Inter'),
-        displayMedium: TextStyle(fontFamily: 'Inter'),
-        displaySmall: TextStyle(fontFamily: 'Inter'),
-        titleLarge: TextStyle(fontFamily: 'Inter'),
-        titleMedium: TextStyle(fontFamily: 'Inter'),
-        titleSmall: TextStyle(fontFamily: 'Inter'),
-        bodyLarge: TextStyle(fontFamily: 'Inter'),
-        bodyMedium: TextStyle(fontFamily: 'Inter'),
-        bodySmall: TextStyle(fontFamily: 'Inter'),
-        labelLarge: TextStyle(fontFamily: 'Inter'),
-        labelMedium: TextStyle(fontFamily: 'Inter'),
-        labelSmall: TextStyle(fontFamily: 'Inter'),
+        displayLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
+        displayMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
+        displaySmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
+        titleLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
+        titleMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
+        titleSmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
+        bodyLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
+        bodyMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
+        bodySmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
+        labelLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
+        labelMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
+        labelSmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
 
         headlineSmall: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w500, color: text),
         headlineMedium: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w500, color: text),
