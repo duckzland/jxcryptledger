@@ -188,10 +188,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
         field = TextFormField(
           key: ValueKey("${key.name}-$_buildCount"),
           initialValue: (current is List) ? current.join(',') : (current?.toString() ?? ''),
-          decoration: InputDecoration(
-            hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label} (comma separated)...",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-          ),
+          decoration: InputDecoration(hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label} (comma separated)..."),
           maxLines: null,
           onChanged: (val) {
             setState(() {
@@ -206,10 +203,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
         field = TextFormField(
           key: ValueKey("${key.name}-$_buildCount"),
           initialValue: current?.toString() ?? '',
-          decoration: InputDecoration(
-            hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-          ),
+          decoration: InputDecoration(hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}..."),
           keyboardType: TextInputType.number,
           validator: (value) {
             if (key.required && (value == null || value.isEmpty)) return "This field is required";
@@ -229,10 +223,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
         field = TextFormField(
           key: ValueKey("${key.name}-$_buildCount"),
           initialValue: current?.toString() ?? _controller.getByKey(key),
-          decoration: InputDecoration(
-            hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}...",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-          ),
+          decoration: InputDecoration(hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}..."),
           keyboardType: TextInputType.text,
           validator: (value) {
             if (key.required && (value == null || value.isEmpty)) {

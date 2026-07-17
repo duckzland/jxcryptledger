@@ -10,7 +10,7 @@ class AppTheme {
   static const inputBorderDisabled = Color(0xFF1A202B);
   static const inputBorderFocused = Color(0xFF2C3748);
   static const inputErrorBorder = Color(0xFF992B2B);
-  static const inputErrorText = Color(0xFFFF7A7A);
+  static const inputErrorText = Color.fromARGB(255, 227, 227, 227);
 
   static const tableHeaderBg = Colors.transparent;
   static const tableRowBg = Colors.transparent;
@@ -59,6 +59,7 @@ class AppTheme {
   static const finalizedBg = Color(0xFF253446);
   static const dialogBg = Color(0xFF0d1421);
   static const barrierBg = Color(0xD9000000);
+  static const divider = Color(0xFF242E3D);
 
   static const red = Color(0xFF641D1D);
   static const darkRed = Color(0xFF4A1212);
@@ -122,6 +123,12 @@ class AppTheme {
   static const EdgeInsets menuPadding = EdgeInsets.symmetric(vertical: 4);
   static const EdgeInsets inputPadding = EdgeInsets.symmetric(vertical: 12, horizontal: 12);
 
+  static const text600 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w600);
+  static const text500 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500);
+  static const text400 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400);
+
+  static final borderRadius = BorderRadius.circular(6);
+
   static ThemeData get dark {
     final menuDecoration = MenuThemeData(
       style: MenuStyle(
@@ -131,7 +138,7 @@ class AppTheme {
         padding: WidgetStateProperty.all(menuPadding),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: borderRadius,
             side: const BorderSide(color: menuBorder, width: 1),
           ),
         ),
@@ -147,7 +154,7 @@ class AppTheme {
       hintStyle: const TextStyle(color: textHalfInactive, fontFamily: 'Inter'),
       errorStyle: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w400, color: inputErrorText),
 
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+      border: OutlineInputBorder(borderRadius: borderRadius),
       contentPadding: inputPadding,
 
       hoverColor: Colors.transparent,
@@ -155,22 +162,22 @@ class AppTheme {
       suffixIconConstraints: const BoxConstraints(maxHeight: 48),
 
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: borderRadius,
         borderSide: const BorderSide(color: inputErrorBorder, width: 1),
       ),
 
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: borderRadius,
         borderSide: const BorderSide(color: inputBorder, width: 1),
       ),
 
       disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: borderRadius,
         borderSide: const BorderSide(color: inputBorderDisabled, width: 1),
       ),
 
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: borderRadius,
         borderSide: const BorderSide(color: inputBorderFocused, width: 1),
       ),
     );
@@ -183,18 +190,18 @@ class AppTheme {
       menuTheme: menuDecoration,
 
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
-        displayMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
-        displaySmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
-        titleLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
-        titleMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
-        titleSmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500),
-        bodyLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
-        bodyMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
-        bodySmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
-        labelLarge: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
-        labelMedium: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
-        labelSmall: TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400),
+        displayLarge: text500,
+        displayMedium: text500,
+        displaySmall: text500,
+        titleLarge: text500,
+        titleMedium: text500,
+        titleSmall: text500,
+        bodyLarge: text400,
+        bodyMedium: text400,
+        bodySmall: text400,
+        labelLarge: text400,
+        labelMedium: text400,
+        labelSmall: text400,
 
         headlineSmall: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w500, color: text),
         headlineMedium: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w500, color: text),
@@ -218,15 +225,13 @@ class AppTheme {
         titleTextStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: text, fontFamily: 'Inter'),
       ),
 
-      dividerTheme: const DividerThemeData(color: separator, thickness: 1),
+      dividerTheme: const DividerThemeData(color: divider, thickness: 1),
 
       cardTheme: CardThemeData(
         color: cardBg,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: borderRadius),
       ),
 
       datePickerTheme: DatePickerThemeData(
@@ -253,18 +258,12 @@ class AppTheme {
         todayForegroundColor: WidgetStateProperty.all(primary),
         todayBorder: const BorderSide(color: primary, width: 1),
 
-        cancelButtonStyle: TextButton.styleFrom(
-          foregroundColor: textMuted,
-          textStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
-        ),
+        cancelButtonStyle: TextButton.styleFrom(foregroundColor: textMuted, textStyle: text500),
 
-        confirmButtonStyle: TextButton.styleFrom(
-          foregroundColor: primary,
-          textStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold),
-        ),
+        confirmButtonStyle: TextButton.styleFrom(foregroundColor: primary, textStyle: text600),
 
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: borderRadius,
           side: const BorderSide(color: separator, width: 1),
         ),
       ),
@@ -274,7 +273,7 @@ class AppTheme {
           backgroundColor: buttonBg,
           foregroundColor: buttonFg,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: borderRadius),
           textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: text, fontFamily: 'Inter'),
         ),
       ),
@@ -296,7 +295,7 @@ class AppTheme {
 
       snackBarTheme: SnackBarThemeData(
         backgroundColor: buttonBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: borderRadius),
         behavior: SnackBarBehavior.floating,
         elevation: 6,
         contentTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w500),
@@ -313,6 +312,7 @@ class AppTheme {
         dataRowColor: WidgetStateProperty.all(tableRowBg),
         dataTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w400, fontSize: 13, fontFamily: 'Inter'),
         dividerThickness: 1,
+
         headingRowHeight: tableHeadingRowHeight,
         dataRowMinHeight: tableDataRowMinHeight,
       ),

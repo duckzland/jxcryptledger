@@ -68,7 +68,7 @@ class _WidgetsFieldsDatepickerState extends State<WidgetsFieldsDatepicker> {
                 textButtonTheme: TextButtonThemeData(
                   style: TextButton.styleFrom(
                     foregroundColor: AppTheme.text,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    shape: RoundedRectangleBorder(borderRadius: AppTheme.borderRadius),
                   ),
                 ),
               ),

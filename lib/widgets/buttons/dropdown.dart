@@ -103,7 +103,7 @@ class WidgetsButtonsDropdown extends StatelessWidget {
               height: iconHeight,
               decoration: BoxDecoration(
                 color: controller.isOpen ? AppTheme.menuBackground : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: AppTheme.borderRadius,
               ),
               child: IconButton(
                 padding: EdgeInsets.zero,
