@@ -139,20 +139,17 @@ class IpcServer {
         switch (actionCode) {
           case IpcAction.put:
             await _writeToBox(action, nativeHiveKey, payload);
-            final encrypted = await _crypto.encrypt(payload);
-            broadcast(actionCode, action, rawKeyStr, encrypted, exclude: client);
+            broadcast(actionCode, action, rawKeyStr, payload, exclude: client);
             break;
 
           case IpcAction.delete:
             await database.delete(action, nativeHiveKey);
-            final encrypted = await _crypto.encrypt(Uint8List(0));
-            broadcast(actionCode, action, rawKeyStr, encrypted, exclude: client);
+            broadcast(actionCode, action, rawKeyStr, Uint8List(0), exclude: client);
             break;
 
           case IpcAction.clear:
             await database.clear(action);
-            final encrypted = await _crypto.encrypt(Uint8List(0));
-            broadcast(actionCode, action, '', encrypted, exclude: client);
+            broadcast(actionCode, action, '', Uint8List(0), exclude: client);
             break;
 
           case IpcAction.flush:
@@ -206,8 +203,7 @@ class IpcServer {
 
           case IpcAction.multiPut:
             await _batchWriteToBox(action, payload);
-            final encrypted = await _crypto.encrypt(payload);
-            broadcast(actionCode, action, "batch", encrypted, exclude: client);
+            broadcast(actionCode, action, "batch", payload, exclude: client);
             break;
 
           case IpcAction.addRateQueue:
@@ -227,8 +223,7 @@ class IpcServer {
           case IpcAction.replace:
             await database.clear(action);
             await _batchWriteToBox(action, payload);
-            final encrypted = await _crypto.encrypt(payload);
-            broadcast(actionCode, action, "replace", encrypted, exclude: client);
+            broadcast(actionCode, action, "replace", payload, exclude: client);
             break;
 
           case IpcAction.shutdown:
@@ -276,9 +271,15 @@ class IpcServer {
     }
   }
 
-  void broadcast(IpcAction op, String action, String key, Uint8List payload, {Socket? exclude}) {
+  void broadcast(IpcAction op, String action, String key, Uint8List payload, {Socket? exclude}) async {
     if (_isDisposing) return;
-    final packet = IpcPacket(reqId: -1, op: op.code, action: action, key: key, payload: payload);
+
+    Uint8List finalPayload = payload;
+    if (op != IpcAction.unlock && op != IpcAction.shutdown) {
+      finalPayload = await _crypto.encrypt(finalPayload);
+    }
+
+    final packet = IpcPacket(reqId: -1, op: op.code, action: action, key: key, payload: finalPayload);
     final Uint8List frame = packet.toBytes();
 
     for (var slave in _slaves) {

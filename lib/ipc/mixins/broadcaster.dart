@@ -14,7 +14,7 @@ mixin IpcMixinsBroadcaster {
   IpcClient get ipcClient;
   IpcServer get ipcServer;
 
-  bool isBroadcastable = CoreMode.isServer;
+  bool get isBroadcastable => CoreMode.isServer;
 
   void broadcasterAction(IpcBroadcastEvent event) {}
 

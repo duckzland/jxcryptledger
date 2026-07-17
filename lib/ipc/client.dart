@@ -191,6 +191,7 @@ class IpcClient {
           }
           responseBytes = await _crypto.decrypt(responseBytes);
         } catch (e) {
+          logln("[IPC] Failed to decrypt packet: $e");
           continue;
         }
       }
@@ -201,6 +202,7 @@ class IpcClient {
           completer.complete(Uint8List(0));
           _pending.remove(currentPacket.reqId);
         }
+        logln("[IPC] Failed to process packet for ${currentPacket.op}");
         continue;
       }
 

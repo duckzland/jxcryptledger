@@ -17,7 +17,9 @@ void logln(String message) {
     try {
       final file = File('server_log.txt');
       file.writeAsStringSync('[JX]$prefix $ts - $message\n', mode: FileMode.append, flush: true);
-    } catch (e) {}
+    } catch (e) {
+      stdout.writeln('[JX]$prefix $ts - Failed to write log: $e');
+    }
   } else {
     stdout.writeln('[JX]$prefix $ts - $message');
   }

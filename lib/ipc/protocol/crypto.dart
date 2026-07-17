@@ -65,7 +65,7 @@ class IpcCrypto {
 
       return Uint8List.fromList(decryptedList);
     } catch (e) {
-      throw ArgumentError("[Crypto] Decryption validation failed. Data payload has been tampered with or corrupted.");
+      throw ArgumentError("[Crypto] Decryption validation failed. Data payload has been tampered with or corrupted: $e");
     }
   }
 }
