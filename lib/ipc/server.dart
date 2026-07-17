@@ -275,8 +275,13 @@ class IpcServer {
     if (_isDisposing) return;
 
     Uint8List finalPayload = payload;
-    if (op != IpcAction.unlock && op != IpcAction.shutdown) {
-      finalPayload = await _crypto.encrypt(finalPayload);
+    try {
+      if (op != IpcAction.unlock && op != IpcAction.shutdown) {
+        finalPayload = await _crypto.encrypt(finalPayload);
+      }
+    } catch (e) {
+      logln("[IPC] Failed to process payload: $e");
+      return;
     }
 
     final packet = IpcPacket(reqId: -1, op: op.code, action: action, key: key, payload: finalPayload);
