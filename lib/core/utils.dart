@@ -34,6 +34,10 @@ class Utils {
       effectivePrecision = 4;
     }
 
+    if (smartDecimal && value.abs() > 1000) {
+      effectivePrecision = 2;
+    }
+
     dec = dec.round(scale: effectivePrecision);
 
     String s = dec.toString();
