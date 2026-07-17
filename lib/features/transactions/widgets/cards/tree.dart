@@ -18,6 +18,7 @@ class TransactionsWidgetsCardsTree extends StatefulWidget {
   final TransactionsModel tx;
   final IndexedTreeNode<TransactionsModel> node;
   final VoidCallback onAction;
+  final VoidCallback? onExit;
 
   final bool isTradable;
   final bool isClosable;
@@ -42,14 +43,14 @@ class TransactionsWidgetsCardsTree extends StatefulWidget {
     required this.hasLeaf,
     required this.hasTradeableLeaf,
     required this.onAction,
+    this.onExit,
   });
 
   @override
   State<TransactionsWidgetsCardsTree> createState() => _TransactionsWidgetsCardsTreeState();
 }
 
-class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsTree>
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsTree> {
   CryptosController get _cryptosController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
@@ -75,13 +76,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
 
   double _panelHeight = 40;
 
-  late AnimationController _controller;
-  late Animation<double> _fade;
-
   bool get isCapital => (widget.tx.isCapital);
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -89,17 +84,8 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
 
     _tx = widget.tx;
 
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: 1.0);
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-
     _calculateData();
     _calculateColor();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
@@ -213,64 +199,59 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   }
 
   void _onExit() async {
-    await _controller.reverse();
+    widget.onExit?.call();
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    return Card(
+      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
+      color: _bgColor,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: CustomMultiChildLayout(
+          key: ValueKey(_tx.statusEnum),
+          delegate: WidgetsLayoutsWrappedTwoColumns(
+            onWrapChanged: (int totalRows, double currentHeight) {
+              if (_panelHeight == currentHeight) return;
 
-    return FadeTransition(
-      opacity: _fade,
-      child: Card(
-        margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
-        color: _bgColor,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: CustomMultiChildLayout(
-            key: ValueKey(_tx.statusEnum),
-            delegate: WidgetsLayoutsWrappedTwoColumns(
-              onWrapChanged: (int totalRows, double currentHeight) {
-                if (_panelHeight == currentHeight) return;
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                setState(() => _panelHeight = currentHeight);
+              });
+            },
 
-                SchedulerBinding.instance.addPostFrameCallback((_) {
-                  if (!mounted) return;
-                  setState(() => _panelHeight = currentHeight);
-                });
-              },
-
-              currentHeight: _panelHeight,
-            ),
-            children: [
-              LayoutId(id: 'left', child: _buildLeftGroup()),
-              if (_activeBranchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
-              if (!(!_hasLeaf || _balance <= 0)) LayoutId(id: 'right', child: _buildRightGroup()),
-              LayoutId(
-                id: 'trailing',
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 25, top: 6, left: 8),
-                  child: TransactionsWidgetsButtonsAction(
-                    parentContext: context,
-                    key: Key("action-${_tx.uuid}"),
-                    tx: _tx,
-                    cryptosController: _cryptosController,
-                    txController: _txController,
-                    isTradable: widget.isTradable,
-                    isClosable: widget.isClosable,
-                    isDeletable: widget.isDeletable,
-                    isUpdatable: widget.isUpdatable,
-                    isRefundable: widget.isRefundable,
-                    isFinalizable: widget.isFinalizable,
-                    hasLeaf: widget.hasLeaf,
-                    hasTradeableLeaf: widget.hasTradeableLeaf,
-                    onAction: _onAction,
-                    onExit: _onExit,
-                    allowBalanceSnapshot: true,
-                  ),
+            currentHeight: _panelHeight,
+          ),
+          children: [
+            LayoutId(id: 'left', child: _buildLeftGroup()),
+            if (_activeBranchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
+            if (!(!_hasLeaf || _balance <= 0)) LayoutId(id: 'right', child: _buildRightGroup()),
+            LayoutId(
+              id: 'trailing',
+              child: Padding(
+                padding: const EdgeInsets.only(right: 25, top: 6, left: 8),
+                child: TransactionsWidgetsButtonsAction(
+                  parentContext: context,
+                  key: Key("action-${_tx.uuid}"),
+                  tx: _tx,
+                  cryptosController: _cryptosController,
+                  txController: _txController,
+                  isTradable: widget.isTradable,
+                  isClosable: widget.isClosable,
+                  isDeletable: widget.isDeletable,
+                  isUpdatable: widget.isUpdatable,
+                  isRefundable: widget.isRefundable,
+                  isFinalizable: widget.isFinalizable,
+                  hasLeaf: widget.hasLeaf,
+                  hasTradeableLeaf: widget.hasTradeableLeaf,
+                  onAction: _onAction,
+                  onExit: _onExit,
+                  allowBalanceSnapshot: true,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

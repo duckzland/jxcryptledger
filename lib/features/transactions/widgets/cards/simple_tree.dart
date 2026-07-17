@@ -21,8 +21,7 @@ class TransactionsWidgetsCardsSimpleTree extends StatefulWidget {
   State<TransactionsWidgetsCardsSimpleTree> createState() => _TransactionsWidgetsCardsSimpleTreeState();
 }
 
-class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgetsCardsSimpleTree>
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgetsCardsSimpleTree> {
   CryptosController get _cryptosController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
@@ -31,13 +30,7 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
   Color _bgColor = AppTheme.tableRowBg;
   Color _fgColor = AppTheme.text;
 
-  late AnimationController _controller;
-  late Animation<double> _fade;
-
   bool get isCapital => (widget.tx.isCapital);
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -45,16 +38,7 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
 
     _tx = widget.tx;
 
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: 1.0);
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-
     _calculateColor();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
@@ -105,19 +89,15 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    return FadeTransition(
-      opacity: _fade,
-      child: Card(
-        margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
-        color: _bgColor,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: CustomMultiChildLayout(
-            key: ValueKey(_tx.statusEnum),
-            delegate: WidgetsLayoutsWrappedTwoColumns(onWrapChanged: (int totalRows, double currentHeight) {}, currentHeight: 40),
-            children: [LayoutId(id: 'left', child: _buildCard())],
-          ),
+    return Card(
+      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
+      color: _bgColor,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: CustomMultiChildLayout(
+          key: ValueKey(_tx.statusEnum),
+          delegate: WidgetsLayoutsWrappedTwoColumns(onWrapChanged: (int totalRows, double currentHeight) {}, currentHeight: 40),
+          children: [LayoutId(id: 'left', child: _buildCard())],
         ),
       ),
     );
