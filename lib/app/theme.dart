@@ -226,7 +226,6 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(6),
-          // side: const BorderSide(color: cardBorder, width: 1),
         ),
       ),
 
