@@ -311,7 +311,7 @@ class AppTheme {
         headingRowColor: WidgetStateProperty.all(tableHeaderBg),
         headingTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w500, fontSize: 14, fontFamily: 'Inter'),
         dataRowColor: WidgetStateProperty.all(tableRowBg),
-        dataTextStyle: const TextStyle(color: text, fontSize: 14, fontFamily: 'Inter'),
+        dataTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w400, fontSize: 13, fontFamily: 'Inter'),
         dividerThickness: 1,
         headingRowHeight: tableHeadingRowHeight,
         dataRowMinHeight: tableDataRowMinHeight,
