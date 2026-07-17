@@ -25,7 +25,7 @@ class WidgetsDialogsImport extends StatefulWidget {
   final bool ghostMode;
   final bool plainMode;
   final bool centerMode;
-  
+
   final Listenable? listener;
 
   final String dialogTitle;
@@ -72,10 +72,10 @@ class WidgetsDialogsImport extends StatefulWidget {
     Size? minimumSize,
     WidgetsButtonActionState? initialState,
     void Function(WidgetsButtonsActionState s)? evaluator,
-    bool? persistBg,
-    bool? initialTransparent,
-    bool? insideDropdown,
-    bool? centered,
+    bool? filledMode,
+    bool? ghostMode,
+    bool? plainMode,
+    bool? centerMode,
     Listenable? listener,
     bool? showDialogBeforeImport,
     String? dialogTitle,
@@ -94,10 +94,10 @@ class WidgetsDialogsImport extends StatefulWidget {
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
       evaluator: evaluator ?? this.evaluator,
-      filledMode: persistBg ?? filledMode,
-      ghostMode: initialTransparent ?? ghostMode,
-      plainMode: insideDropdown ?? plainMode,
-      centerMode: centered ?? centerMode,
+      filledMode: filledMode ?? this.filledMode,
+      ghostMode: ghostMode ?? this.ghostMode,
+      plainMode: plainMode ?? this.plainMode,
+      centerMode: centerMode ?? this.centerMode,
       listener: listener ?? this.listener,
       showDialogBeforeImport: showDialogBeforeImport ?? this.showDialogBeforeImport,
       dialogTitle: dialogTitle ?? this.dialogTitle,

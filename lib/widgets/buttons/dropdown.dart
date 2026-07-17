@@ -75,15 +75,15 @@ class WidgetsButtonsDropdown extends StatelessWidget {
     if (children.length > maxVisible) {
       final inMenus = children.sublist(maxVisible).map((item) {
         if (item is WidgetsDialogsShowForm) {
-          return item.copyWith(insideDropdown: true, padding: AppTheme.inputPadding);
+          return item.copyWith(plainMode: true, padding: AppTheme.inputPadding);
         } else if (item is WidgetsDialogsAlert) {
           return item.copyWith(plainMode: true, padding: AppTheme.inputPadding);
         } else if (item is WidgetsDialogsExport) {
-          return item.copyWith(insideDropdown: true, padding: AppTheme.inputPadding);
+          return item.copyWith(plainMode: true, padding: AppTheme.inputPadding);
         } else if (item is WidgetsDialogsImport) {
-          return item.copyWith(insideDropdown: true, padding: AppTheme.inputPadding);
+          return item.copyWith(plainMode: true, padding: AppTheme.inputPadding);
         } else if (item is WidgetsDialogsReset) {
-          return item.copyWith(insideDropdown: true, padding: AppTheme.inputPadding);
+          return item.copyWith(plainMode: true, padding: AppTheme.inputPadding);
         }
         return item;
       }).toList();

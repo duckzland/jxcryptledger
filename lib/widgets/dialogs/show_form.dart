@@ -53,11 +53,11 @@ class WidgetsDialogsShowForm extends StatefulWidget {
     EdgeInsets? padding,
     Size? minimumSize,
     WidgetsButtonActionState? initialState,
-    bool? insideDropdown,
     void Function(WidgetsButtonsActionState s)? evaluator,
-    bool? persistBg,
-    bool? initialTransparent,
-    bool? centered,
+    bool? filledMode,
+    bool? ghostMode,
+    bool? plainMode,
+    bool? centerMode,
     Listenable? listener,
   }) {
     return WidgetsDialogsShowForm(
@@ -70,11 +70,11 @@ class WidgetsDialogsShowForm extends StatefulWidget {
       padding: padding ?? this.padding,
       minimumSize: minimumSize ?? this.minimumSize,
       initialState: initialState ?? this.initialState,
-      plainMode: insideDropdown ?? this.plainMode,
       evaluator: evaluator ?? this.evaluator,
-      filledMode: persistBg ?? this.filledMode,
-      ghostMode: initialTransparent ?? this.ghostMode,
-      centerMode: centered ?? this.centerMode,
+      filledMode: filledMode ?? this.filledMode,
+      ghostMode: ghostMode ?? this.ghostMode,
+      plainMode: plainMode ?? this.plainMode,
+      centerMode: centerMode ?? this.centerMode,
       listener: listener ?? this.listener,
     );
   }
