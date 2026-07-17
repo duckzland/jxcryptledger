@@ -126,7 +126,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
       animation: kAlwaysCompleteAnimation,
       expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
         tree: node,
-        color: AppTheme.treeConnector,
+        color: AppTheme.text,
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
         alignment: Alignment.topRight,
       ),
@@ -179,7 +179,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
     List<TransactionsModel> txs = _txController.collectBranchWithTarget(tx);
     double maxHeight = states.get('viewport-height', defaultValue: -1.00);
 
-    final double itemHeight = 80;
+    final double itemHeight = 77;
     final double topOffset = 300;
     final double screenPercentage = 0.8;
     final int maxItems = 3;

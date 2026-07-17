@@ -74,7 +74,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
 
   Map<int, double> _activeBranchAmounts = {};
 
-  double _panelHeight = 40;
+  double _panelHeight = 37;
 
   bool get isCapital => (widget.tx.isCapital);
 
@@ -205,10 +205,10 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
+      margin: EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
       color: _bgColor,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),
         child: CustomMultiChildLayout(
           key: ValueKey(_tx.statusEnum),
           delegate: WidgetsLayoutsWrappedTwoColumns(
@@ -230,7 +230,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
             LayoutId(
               id: 'trailing',
               child: Padding(
-                padding: const EdgeInsets.only(right: 25, top: 6, left: 8),
+                padding: EdgeInsets.only(right: _hasLeaf ? 30 : 0, top: 6, left: 8),
                 child: TransactionsWidgetsButtonsAction(
                   parentContext: context,
                   key: Key("action-${_tx.uuid}"),

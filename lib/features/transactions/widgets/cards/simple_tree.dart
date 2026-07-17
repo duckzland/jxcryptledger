@@ -93,10 +93,10 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
       margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
       color: _bgColor,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),
         child: CustomMultiChildLayout(
           key: ValueKey(_tx.statusEnum),
-          delegate: WidgetsLayoutsWrappedTwoColumns(onWrapChanged: (int totalRows, double currentHeight) {}, currentHeight: 40),
+          delegate: WidgetsLayoutsWrappedTwoColumns(onWrapChanged: (int totalRows, double currentHeight) {}, currentHeight: 37),
           children: [LayoutId(id: 'left', child: _buildCard())],
         ),
       ),
