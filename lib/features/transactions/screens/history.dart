@@ -135,7 +135,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
             expansionBehavior: ExpansionBehavior.scrollToLastChild,
             animation: kAlwaysCompleteAnimation,
             scrollController: _autoScrollController,
-            expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
+            expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
               tree: node,
               color: AppTheme.text,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
@@ -163,19 +163,22 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
             builder: (context, node) {
               final tx = node.data;
               if (tx == null) return const SizedBox.shrink();
-              return TransactionsWidgetsCardsTree(
-                key: ValueKey(tx.tid),
-                tx: tx,
-                node: node,
-                isTradable: fxsIsTradable(tx),
-                isClosable: fxsIsClosable(tx),
-                isDeletable: fxsIsDeletable(tx),
-                isUpdatable: fxsIsUpdatable(tx),
-                isRefundable: fxsIsRefundable(tx),
-                isFinalizable: fxsIsFinalizable(tx),
-                hasLeaf: fxsHasLeaf(tx),
-                hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                onAction: widget.onStatusChanged,
+              return MouseRegion(
+                cursor: node.childrenAsList.isNotEmpty ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                child: TransactionsWidgetsCardsTree(
+                  key: ValueKey(tx.tid),
+                  tx: tx,
+                  node: node,
+                  isTradable: fxsIsTradable(tx),
+                  isClosable: fxsIsClosable(tx),
+                  isDeletable: fxsIsDeletable(tx),
+                  isUpdatable: fxsIsUpdatable(tx),
+                  isRefundable: fxsIsRefundable(tx),
+                  isFinalizable: fxsIsFinalizable(tx),
+                  hasLeaf: fxsHasLeaf(tx),
+                  hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+                  onAction: widget.onStatusChanged,
+                ),
               );
             },
           ),

@@ -124,7 +124,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
       indentation: const Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
       expansionBehavior: ExpansionBehavior.scrollToLastChild,
       animation: kAlwaysCompleteAnimation,
-      expansionIndicatorBuilder: (context, node) => ChevronIndicator.rightDown(
+      expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
         tree: node,
         color: AppTheme.text,
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
@@ -140,7 +140,10 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
       builder: (context, node) {
         final stx = node.data;
         if (stx == null) return const SizedBox.shrink();
-        return TransactionsWidgetsCardsSimpleTree(key: ValueKey(stx.tid), tx: stx, node: node, isActive: stx.uuid == tx.uuid);
+        return MouseRegion(
+          cursor: node.childrenAsList.isNotEmpty ? SystemMouseCursors.click : SystemMouseCursors.basic,
+          child: TransactionsWidgetsCardsSimpleTree(key: ValueKey(stx.tid), tx: stx, node: node, isActive: stx.uuid == tx.uuid),
+        );
       },
     );
   }
