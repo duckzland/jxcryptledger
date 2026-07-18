@@ -409,7 +409,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
             itemCount: items.length,
             itemBuilder: (context, index) {
               final tx = items[index];
-              return TickersDisplay(key: ValueKey(tx.tid), tix: tx);
+              return TickersDisplay(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
             },
             dragWidgetBuilder: (index, child) {
               return Material(color: Colors.transparent, elevation: 0, child: child);

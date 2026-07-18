@@ -116,62 +116,65 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
       tween: ColorTween(begin: startColor, end: targetColor),
       curve: Curves.easeInOut,
       builder: (context, Color? animatedBgColor, child) {
-        return GestureDetector(
-          onTap: _handleToggle,
-          child: SizedBox(
-            width: double.infinity,
-            child: Stack(
-              children: [
-                WidgetsPanel(
-                  padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
-                  background: animatedBgColor,
-                  borderColor: mutedColor,
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: text,
+        return MouseRegion(
+          cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: _handleToggle,
+            child: SizedBox(
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  WidgetsPanel(
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
+                    background: animatedBgColor,
+                    borderColor: mutedColor,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: text,
+                      ),
                     ),
                   ),
-                ),
 
-                ListenableBuilder(
-                  listenable: _wxController,
-                  builder: (context, _) {
-                    final linked = _wxController.getLinked("panels-${widget.tix.tid}");
+                  ListenableBuilder(
+                    listenable: _wxController,
+                    builder: (context, _) {
+                      final linked = _wxController.getLinked("panels-${widget.tix.tid}");
 
-                    return Stack(
-                      children: [
-                        if (linked != null)
-                          Positioned(
-                            top: 8,
-                            left: 6,
-                            child: Icon(
-                              Icons.add_alarm,
-                              size: 16,
-                              color: linked.isSpent ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
+                      return Stack(
+                        children: [
+                          if (linked != null)
+                            Positioned(
+                              top: 8,
+                              left: 6,
+                              child: Icon(
+                                Icons.add_alarm,
+                                size: 16,
+                                color: linked.isSpent ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
+                              ),
                             ),
-                          ),
 
-                        if (widget.tix.isLinked)
-                          Positioned(
-                            top: 8,
-                            left: linked != null ? 24 : 6,
-                            child: Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.text.withAlpha(205)),
-                          ),
+                          if (widget.tix.isLinked)
+                            Positioned(
+                              top: 8,
+                              left: linked != null ? 24 : 6,
+                              child: Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.text.withAlpha(205)),
+                            ),
 
-                        if (isThisOneActive && !widget.isDragging)
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: PanelsButtons(tix: widget.tix, tixController: _controller, linkedWatcher: linked, onAction: () {}),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ],
+                          if (isThisOneActive && !widget.isDragging)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: PanelsButtons(tix: widget.tix, tixController: _controller, linkedWatcher: linked, onAction: () {}),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );

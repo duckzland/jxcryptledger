@@ -8,8 +8,9 @@ import 'model.dart';
 
 class TickersDisplay extends StatefulWidget {
   final TickersModel tix;
+  final bool isDragging;
 
-  const TickersDisplay({super.key, required this.tix});
+  const TickersDisplay({super.key, required this.tix, required this.isDragging});
 
   @override
   State<TickersDisplay> createState() => _TickersDisplayState();
@@ -109,36 +110,39 @@ class _TickersDisplayState extends State<TickersDisplay> {
       tween: ColorTween(begin: startColor, end: targetColor),
       curve: Curves.easeInOut,
       builder: (context, Color? animatedBgColor, child) {
-        return WidgetsPanel(
-          padding: const EdgeInsets.all(0),
-          background: animatedBgColor,
-          borderColor: mutedColor,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: tix.getContent() != ""
-                ? [
-                    Text(
-                      tix.getTitle(),
-                      softWrap: false,
-                      overflow: TextOverflow.visible,
-                      style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
-                    ),
-                    Text(
-                      tix.getContent(),
-                      softWrap: false,
-                      overflow: TextOverflow.visible,
-                      style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
-                    ),
-                  ]
-                : [
-                    Text(
-                      "Loading...",
-                      softWrap: false,
-                      overflow: TextOverflow.visible,
-                      style: const TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
-                    ),
-                  ],
+        return MouseRegion(
+          cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic,
+          child: WidgetsPanel(
+            padding: const EdgeInsets.all(0),
+            background: animatedBgColor,
+            borderColor: mutedColor,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: tix.getContent() != ""
+                  ? [
+                      Text(
+                        tix.getTitle(),
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
+                      ),
+                      Text(
+                        tix.getContent(),
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                      ),
+                    ]
+                  : [
+                      Text(
+                        "Loading...",
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        style: const TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+            ),
           ),
         );
       },
