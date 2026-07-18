@@ -81,6 +81,20 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
       children: [
         TypeAheadField<CryptosModel>(
           controller: _controller,
+          transitionBuilder: (context, animationController, child) {
+            return child;
+          },
+          decorationBuilder: (context, child) {
+            final menuTheme = MenuTheme.of(context);
+            final style = menuTheme.style;
+
+            return Material(
+              color: style?.backgroundColor?.resolve({}),
+              shape: style?.shape?.resolve({}),
+              shadowColor: style?.shadowColor?.resolve({}),
+              child: Padding(padding: style?.padding?.resolve({}) ?? EdgeInsets.zero, child: child),
+            );
+          },
           builder: (context, controller, focusNode) {
             return TextFormField(
               enabled: widget.enabled,
