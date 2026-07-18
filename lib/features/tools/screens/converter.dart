@@ -56,6 +56,8 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                   children: [
                     Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
 
+                    const SizedBox(width: 5),
+
                     Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
 
                     const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.arrow_forward, size: 24)),

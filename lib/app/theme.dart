@@ -127,7 +127,7 @@ class AppTheme {
   static const text500 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500);
   static const text400 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400);
 
-  static final borderRadius = BorderRadius.circular(6);
+  static const borderRadius = BorderRadius.all(Radius.circular(6));
 
   static ThemeData get dark {
     final menuDecoration = MenuThemeData(
@@ -137,9 +137,9 @@ class AppTheme {
         shadowColor: WidgetStateProperty.all(Colors.transparent),
         padding: WidgetStateProperty.all(menuPadding),
         shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(
+          const RoundedRectangleBorder(
             borderRadius: borderRadius,
-            side: const BorderSide(color: menuBorder, width: 1),
+            side: BorderSide(color: menuBorder, width: 1),
           ),
         ),
       ),
@@ -149,36 +149,36 @@ class AppTheme {
       filled: true,
       fillColor: inputBg,
 
-      labelStyle: const TextStyle(fontSize: 14, color: textMuted, fontFamily: 'Inter'),
-      floatingLabelStyle: const TextStyle(fontSize: 13, color: text, fontFamily: 'Inter'),
-      hintStyle: const TextStyle(color: textHalfInactive, fontFamily: 'Inter'),
-      errorStyle: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w400, color: inputErrorText),
+      labelStyle: text400.copyWith(fontSize: 14, color: textMuted),
+      floatingLabelStyle: text400.copyWith(fontSize: 13, color: text),
+      hintStyle: text400.copyWith(color: textHalfInactive),
+      errorStyle: text400.copyWith(fontSize: 12, color: inputErrorText),
 
-      border: OutlineInputBorder(borderRadius: borderRadius),
+      border: const OutlineInputBorder(borderRadius: borderRadius),
       contentPadding: inputPadding,
 
       hoverColor: Colors.transparent,
 
       suffixIconConstraints: const BoxConstraints(maxHeight: 48),
 
-      errorBorder: OutlineInputBorder(
+      errorBorder: const OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: inputErrorBorder, width: 1),
+        borderSide: BorderSide(color: inputErrorBorder, width: 1),
       ),
 
-      enabledBorder: OutlineInputBorder(
+      enabledBorder: const OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: inputBorder, width: 1),
+        borderSide: BorderSide(color: inputBorder, width: 1),
       ),
 
-      disabledBorder: OutlineInputBorder(
+      disabledBorder: const OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: inputBorderDisabled, width: 1),
+        borderSide: BorderSide(color: inputBorderDisabled, width: 1),
       ),
 
-      focusedBorder: OutlineInputBorder(
+      focusedBorder: const OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: const BorderSide(color: inputBorderFocused, width: 1),
+        borderSide: BorderSide(color: inputBorderFocused, width: 1),
       ),
     );
 
@@ -189,7 +189,7 @@ class AppTheme {
       inputDecorationTheme: inputDecoration,
       menuTheme: menuDecoration,
 
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         displayLarge: text500,
         displayMedium: text500,
         displaySmall: text500,
@@ -203,9 +203,9 @@ class AppTheme {
         labelMedium: text400,
         labelSmall: text400,
 
-        headlineSmall: TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w500, color: text),
-        headlineMedium: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w500, color: text),
-        headlineLarge: TextStyle(fontFamily: 'Inter', fontSize: 20, fontWeight: FontWeight.w500, color: text),
+        headlineSmall: text500.copyWith(fontSize: 16),
+        headlineMedium: text500.copyWith(fontSize: 18),
+        headlineLarge: text500.copyWith(fontSize: 20),
       ),
 
       colorScheme: const ColorScheme.dark(
@@ -217,17 +217,17 @@ class AppTheme {
         onPrimary: text,
       ),
 
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: appBarBg,
         foregroundColor: text,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleTextStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: text, fontFamily: 'Inter'),
+        titleTextStyle: text600.copyWith(fontSize: 16),
       ),
 
       dividerTheme: const DividerThemeData(color: divider, thickness: 1),
 
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         color: cardBg,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -240,8 +240,8 @@ class AppTheme {
 
         headerBackgroundColor: headerBg,
         headerForegroundColor: text,
-        headerHeadlineStyle: const TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.bold),
-        headerHelpStyle: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: textInactive),
+        headerHeadlineStyle: text600.copyWith(fontSize: 18),
+        headerHelpStyle: text400.copyWith(fontSize: 12, color: textInactive),
 
         dayForegroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.disabled)) return textInactive;
@@ -262,9 +262,9 @@ class AppTheme {
 
         confirmButtonStyle: TextButton.styleFrom(foregroundColor: primary, textStyle: text600),
 
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: borderRadius,
-          side: const BorderSide(color: separator, width: 1),
+          side: BorderSide(color: separator, width: 1),
         ),
       ),
 
@@ -273,18 +273,14 @@ class AppTheme {
           backgroundColor: buttonBg,
           foregroundColor: buttonFg,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: borderRadius),
-          textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: text, fontFamily: 'Inter'),
+          shape: const RoundedRectangleBorder(borderRadius: borderRadius),
+          textStyle: text500.copyWith(fontSize: 14),
         ),
       ),
 
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(textStyle: const TextStyle(fontFamily: 'Inter')),
-      ),
+      textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(textStyle: text400)),
 
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(textStyle: const TextStyle(fontFamily: 'Inter')),
-      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(textStyle: text400)),
 
       scrollbarTheme: ScrollbarThemeData(
         thumbVisibility: WidgetStateProperty.all(false),
@@ -293,24 +289,24 @@ class AppTheme {
         thumbColor: WidgetStateProperty.all(scrollbarBg),
       ),
 
-      snackBarTheme: SnackBarThemeData(
+      snackBarTheme: const SnackBarThemeData(
         backgroundColor: buttonBg,
         shape: RoundedRectangleBorder(borderRadius: borderRadius),
         behavior: SnackBarBehavior.floating,
         elevation: 6,
-        contentTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w500),
+        contentTextStyle: text500,
       ),
 
-      tooltipTheme: const TooltipThemeData(
-        decoration: BoxDecoration(color: buttonBg, borderRadius: BorderRadius.all(Radius.circular(4))),
-        textStyle: TextStyle(color: textMuted, fontSize: 12, fontWeight: FontWeight.w400),
+      tooltipTheme: TooltipThemeData(
+        decoration: const BoxDecoration(color: buttonBg, borderRadius: borderRadius),
+        textStyle: text400.copyWith(color: textMuted, fontSize: 12),
       ),
 
       dataTableTheme: DataTableThemeData(
         headingRowColor: WidgetStateProperty.all(tableHeaderBg),
-        headingTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w500, fontSize: 14, fontFamily: 'Inter'),
+        headingTextStyle: text500.copyWith(fontSize: 14),
         dataRowColor: WidgetStateProperty.all(tableRowBg),
-        dataTextStyle: const TextStyle(color: text, fontWeight: FontWeight.w400, fontSize: 13, fontFamily: 'Inter'),
+        dataTextStyle: text400.copyWith(fontSize: 13),
         dividerThickness: 1,
 
         headingRowHeight: tableHeadingRowHeight,
@@ -328,8 +324,8 @@ class AppTheme {
           return inputBg;
         }),
         checkColor: WidgetStateProperty.all(text),
-        side: const BorderSide(color: inputBorderFocused, width: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        side: const BorderSide(color: inputBorderFocused, width: 1),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
       ),
@@ -341,18 +337,18 @@ class AppTheme {
         surfaceTintColor: dialogBg,
         barrierColor: barrierBg,
         elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: separator, width: 1),
+        shape: const RoundedRectangleBorder(
+          borderRadius: borderRadius,
+          side: BorderSide(color: separator, width: 1),
         ),
-        titleTextStyle: const TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w600, color: text),
-        contentTextStyle: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w400, color: text),
+        titleTextStyle: text600.copyWith(fontSize: 18),
+        contentTextStyle: text400.copyWith(fontSize: 14),
         iconColor: action,
       ),
 
       dropdownMenuTheme: DropdownMenuThemeData(
         menuStyle: menuDecoration.style,
-        textStyle: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: text),
+        textStyle: text400.copyWith(fontSize: 14),
         inputDecorationTheme: inputDecoration,
       ),
     );
