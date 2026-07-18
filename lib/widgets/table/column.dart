@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
-class WidgetsSortableColumn extends DataColumn2 {
-  WidgetsSortableColumn({
+class WidgetsTableColumn extends DataColumn2 {
+  WidgetsTableColumn({
     required Widget label,
     super.tooltip,
     super.numeric = false,

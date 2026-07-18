@@ -12,7 +12,7 @@ import '../../../../mixins/table.dart';
 import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
-import '../../../../widgets/sortable_column.dart';
+import '../../../../widgets/table/column.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
@@ -289,11 +289,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   Widget _buildTable() {
     final canSelect = isActive && rows.length > 1;
     final tableColumns = [
-      WidgetsSortableColumn(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsSortableColumn(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
-      WidgetsSortableColumn(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
-      WidgetsSortableColumn(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
-      WidgetsSortableColumn(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[4]),
+      WidgetsTableColumn(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+      WidgetsTableColumn(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
+      WidgetsTableColumn(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
+      WidgetsTableColumn(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[4]),
       const DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {

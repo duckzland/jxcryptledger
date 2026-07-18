@@ -19,7 +19,7 @@ import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
-import '../../widgets/sortable_column.dart';
+import '../../widgets/table/column.dart';
 import '../cryptos/controller.dart';
 import '../../system/settings/controller.dart';
 import '../transactions/controller.dart';
@@ -227,8 +227,8 @@ class _ArchivesPageState extends State<ArchivesPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsSortableColumn(label: const Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
-          WidgetsSortableColumn(label: const Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
+          WidgetsTableColumn(label: const Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
+          WidgetsTableColumn(label: const Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
           const DataColumn2(label: Text("Notes")),
           const DataColumn2(label: Text("Action"), fixedWidth: 80),
         ],

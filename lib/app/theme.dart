@@ -81,6 +81,9 @@ class AppTheme {
   static const cardBg = Color(0xFF1B2230);
   static const cardBorder = Color(0xFF2C3544);
 
+  static const tooltipBg = Color(0xFF1A2F4A);
+  static const tooltipFg = Color(0xFFEEEEEE);
+
   static const buttonBg = Color(0xFF253042);
   static const buttonFg = Color(0xFFE2E8F0);
 
@@ -313,19 +316,18 @@ class AppTheme {
       ),
 
       tooltipTheme: TooltipThemeData(
-        decoration: const BoxDecoration(color: buttonBg, borderRadius: borderRadius),
-        textStyle: text400.copyWith(color: textMuted, fontSize: 12),
+        decoration: const BoxDecoration(color: tooltipBg, borderRadius: BorderRadius.all(Radius.circular(2))),
+        textStyle: text400.copyWith(color: tooltipFg, fontSize: 12),
       ),
 
       dataTableTheme: DataTableThemeData(
         headingRowColor: WidgetStateProperty.all(tableHeaderBg),
         headingTextStyle: text500.copyWith(fontSize: 14),
-        headingCellCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+        headingRowHeight: tableHeadingRowHeight,
         dataRowColor: WidgetStateProperty.all(tableRowBg),
         dataTextStyle: text400.copyWith(fontSize: 13),
-        dividerThickness: 1,
-        headingRowHeight: tableHeadingRowHeight,
         dataRowMinHeight: tableDataRowMinHeight,
+        dividerThickness: 1,
       ),
 
       iconButtonTheme: IconButtonThemeData(
