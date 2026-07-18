@@ -22,6 +22,7 @@ import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
+import '../../widgets/sortable_column.dart';
 import '../cryptos/controller.dart';
 import 'buttons.dart';
 import 'controller.dart';
@@ -251,13 +252,13 @@ class _WatchersPageState extends State<WatchersPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: const Text("From"), onSort: sortableSorters[0]),
-          DataColumn2(label: const Text("To"), onSort: sortableSorters[1]),
-          DataColumn2(label: const Text("Ops"), onSort: sortableSorters[2]),
-          DataColumn2(label: const Text("Rate"), onSort: sortableSorters[3]),
-          DataColumn2(label: const Text("Sent"), onSort: sortableSorters[5]),
-          DataColumn2(label: const Text("Limit"), onSort: sortableSorters[6]),
-          DataColumn2(label: const Text("Duration"), onSort: sortableSorters[7]),
+          WidgetsSortableColumn(label: const Text("From"), onSort: sortableSorters[0]),
+          WidgetsSortableColumn(label: const Text("To"), onSort: sortableSorters[1]),
+          WidgetsSortableColumn(label: const Text("Ops"), onSort: sortableSorters[2]),
+          WidgetsSortableColumn(label: const Text("Rate"), onSort: sortableSorters[3]),
+          WidgetsSortableColumn(label: const Text("Sent"), onSort: sortableSorters[5]),
+          WidgetsSortableColumn(label: const Text("Limit"), onSort: sortableSorters[6]),
+          WidgetsSortableColumn(label: const Text("Duration"), onSort: sortableSorters[7]),
           const DataColumn2(label: Text("Action"), fixedWidth: 110),
         ],
         rows: table.map((r) {

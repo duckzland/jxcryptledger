@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
-
 class WidgetsFieldsDatepicker extends StatefulWidget {
   final String labelText;
   final DateTime initialDate;
@@ -62,19 +60,6 @@ class _WidgetsFieldsDatepickerState extends State<WidgetsFieldsDatepicker> {
           initialDate: _selectedDate ?? widget.initialDate,
           firstDate: widget.firstDate,
           lastDate: widget.lastDate,
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.text,
-                    shape: RoundedRectangleBorder(borderRadius: AppTheme.borderRadius),
-                  ),
-                ),
-              ),
-              child: child!,
-            );
-          },
         );
         if (picked != null) {
           setState(() => _selectedDate = picked);

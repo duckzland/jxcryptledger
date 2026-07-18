@@ -17,6 +17,7 @@ import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
+import '../../../../widgets/sortable_column.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
@@ -352,26 +353,26 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   Widget _buildTable() {
     final canSelect = !isCapital && rows.length > 1;
     final tableColumns = [
-      DataColumn2(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      DataColumn2(
+      WidgetsSortableColumn(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+      WidgetsSortableColumn(
         size: ColumnSize.S,
         label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount', subtitle: _sourceSymbol),
         onSort: sortableSorters[1],
       ),
       if (!isCapital)
-        DataColumn2(
+        WidgetsSortableColumn(
           size: ColumnSize.S,
           label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
           onSort: sortableSorters[2],
         ),
       if (!isCapital)
-        DataColumn2(
+        WidgetsSortableColumn(
           size: ColumnSize.S,
           label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
           onSort: sortableSorters[3],
         ),
       if (!isCapital)
-        DataColumn2(
+        WidgetsSortableColumn(
           size: ColumnSize.S,
           label: WidgetsHeader(
             title: 'Ex. Rate ',
@@ -388,24 +389,28 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
             subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
           ),
         ),
-        DataColumn2(
+        WidgetsSortableColumn(
           size: ColumnSize.S,
           label: WidgetsHeader(title: 'Cu. Value ', subtitle: _sourceSymbol),
           onSort: sortableSorters[6],
         ),
-        DataColumn2(
+        WidgetsSortableColumn(
           size: ColumnSize.S,
           label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
           onSort: sortableSorters[7],
         ),
-        DataColumn2(
+        WidgetsSortableColumn(
           fixedWidth: 100,
           label: const WidgetsHeader(title: 'P/L', subtitle: "%"),
           onSort: sortableSorters[8],
         ),
       ],
 
-      DataColumn2(label: const Text('Status '), fixedWidth: 80, onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9]),
+      WidgetsSortableColumn(
+        label: const Text('Status '),
+        fixedWidth: 80,
+        onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9],
+      ),
       const DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
 

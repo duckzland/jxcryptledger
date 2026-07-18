@@ -8,7 +8,7 @@ class AppTheme {
   static const inputBg = Color(0xFF111723);
   static const inputBorder = Color(0xFF242E3D);
   static const inputBorderDisabled = Color(0xFF1A202B);
-  static const inputBorderFocused = Color(0xFF2C3748);
+  static const inputBorderFocused = Color(0xFF353F52);
   static const inputErrorBorder = Color(0xFF992B2B);
   static const inputErrorText = Color.fromARGB(255, 227, 227, 227);
 
@@ -132,6 +132,7 @@ class AppTheme {
   static ThemeData get dark {
     final menuDecoration = MenuThemeData(
       style: MenuStyle(
+        mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
         backgroundColor: WidgetStateProperty.all(menuBackground),
         surfaceTintColor: WidgetStateProperty.all(menuBackground),
         shadowColor: WidgetStateProperty.all(Colors.transparent),
@@ -181,6 +182,22 @@ class AppTheme {
         borderSide: BorderSide(color: inputBorderFocused, width: 1),
       ),
     );
+
+    final textButton = TextButton.styleFrom(
+      textStyle: text400,
+    ).copyWith(overlayColor: WidgetStateProperty.all(Colors.transparent), mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
+
+    final outlinedButton = OutlinedButton.styleFrom(
+      textStyle: text400,
+    ).copyWith(mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
+
+    final elevatedButton = ElevatedButton.styleFrom(
+      backgroundColor: buttonBg,
+      foregroundColor: buttonFg,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(borderRadius: borderRadius),
+      textStyle: text500.copyWith(fontSize: 14),
+    ).copyWith(mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
 
     return ThemeData(
       useMaterial3: true,
@@ -258,9 +275,15 @@ class AppTheme {
         todayForegroundColor: WidgetStateProperty.all(primary),
         todayBorder: const BorderSide(color: primary, width: 1),
 
-        cancelButtonStyle: TextButton.styleFrom(foregroundColor: textMuted, textStyle: text500),
+        cancelButtonStyle: textButton.copyWith(
+          foregroundColor: WidgetStatePropertyAll(textMuted),
+          textStyle: WidgetStatePropertyAll(text500),
+        ),
 
-        confirmButtonStyle: TextButton.styleFrom(foregroundColor: primary, textStyle: text600),
+        confirmButtonStyle: textButton.copyWith(
+          foregroundColor: WidgetStatePropertyAll(primary),
+          textStyle: WidgetStatePropertyAll(text600),
+        ),
 
         shape: const RoundedRectangleBorder(
           borderRadius: borderRadius,
@@ -268,19 +291,11 @@ class AppTheme {
         ),
       ),
 
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: buttonBg,
-          foregroundColor: buttonFg,
-          elevation: 0,
-          shape: const RoundedRectangleBorder(borderRadius: borderRadius),
-          textStyle: text500.copyWith(fontSize: 14),
-        ),
-      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(style: elevatedButton),
 
-      textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(textStyle: text400)),
+      textButtonTheme: TextButtonThemeData(style: textButton),
 
-      outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(textStyle: text400)),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: outlinedButton),
 
       scrollbarTheme: ScrollbarThemeData(
         thumbVisibility: WidgetStateProperty.all(false),
@@ -305,15 +320,24 @@ class AppTheme {
       dataTableTheme: DataTableThemeData(
         headingRowColor: WidgetStateProperty.all(tableHeaderBg),
         headingTextStyle: text500.copyWith(fontSize: 14),
+        headingCellCursor: WidgetStateProperty.all(SystemMouseCursors.click),
         dataRowColor: WidgetStateProperty.all(tableRowBg),
         dataTextStyle: text400.copyWith(fontSize: 13),
         dividerThickness: 1,
-
         headingRowHeight: tableHeadingRowHeight,
         dataRowMinHeight: tableDataRowMinHeight,
       ),
 
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+        ),
+      ),
+
       checkboxTheme: CheckboxThemeData(
+        mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.disabled)) {
             return mutedBg;
