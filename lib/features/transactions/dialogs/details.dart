@@ -135,6 +135,11 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
           for (final child in root.childrenAsList) {
             controller.expandAllChildren(child as IndexedTreeNode<TransactionsModel>, recursive: true);
           }
+
+          final current = _treeFindNodeByUuid(root, tx.uuid);
+          if (current != null) {
+            controller.scrollToItem(current);
+          }
         });
       },
       builder: (context, node) {
@@ -146,6 +151,17 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
         );
       },
     );
+  }
+
+  IndexedTreeNode<TransactionsModel>? _treeFindNodeByUuid(IndexedTreeNode<TransactionsModel> root, String uuid) {
+    if (root.data?.uuid == uuid) {
+      return root;
+    }
+    for (final child in root.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>()) {
+      final found = _treeFindNodeByUuid(child, uuid);
+      if (found != null) return found;
+    }
+    return null;
   }
 
   IndexedTreeNode<TransactionsModel> _treeBuildNodes() {
