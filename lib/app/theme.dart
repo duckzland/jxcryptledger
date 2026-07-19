@@ -305,6 +305,7 @@ class AppTheme {
         thickness: WidgetStateProperty.all(4),
         radius: const Radius.circular(3),
         thumbColor: WidgetStateProperty.all(scrollbarBg),
+        crossAxisMargin: -11,
       ),
 
       snackBarTheme: const SnackBarThemeData(

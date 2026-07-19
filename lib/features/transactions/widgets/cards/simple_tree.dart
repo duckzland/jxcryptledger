@@ -90,7 +90,7 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 16),
+      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 0),
       color: _bgColor,
       child: Padding(
         padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),

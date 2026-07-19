@@ -141,7 +141,7 @@ class _AppLayoutState extends State<AppLayout> {
             ),
             actions: (!showMenu) ? [_buildActions()] : [],
           ),
-          body: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8), child: widget.child),
+          body: Padding(padding: const EdgeInsets.only(left: 0, right: 0, top: 8, bottom: 8), child: widget.child),
         );
       },
     );

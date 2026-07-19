@@ -119,7 +119,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
     return TreeView.indexed(
       key: PageStorageKey('detail-tree-history-${tx.uuid}'),
       tree: root,
-      padding: const EdgeInsets.only(left: 16),
+      padding: const EdgeInsets.only(left: 0),
       showRootNode: false,
       indentation: const Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
       expansionBehavior: ExpansionBehavior.scrollToLastChild,

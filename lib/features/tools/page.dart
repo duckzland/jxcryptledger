@@ -49,16 +49,25 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
       actionbarRemove();
       return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.');
     }
-    return Scaffold(
-      body: Center(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1600),
         child: Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 16),
-          child: WidgetsPanel(
-            padding: const EdgeInsets.all(24.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1600),
-              child: Column(spacing: 12, children: [Expanded(child: _buildScreen())]),
-            ),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start, // top alignment
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 12,
+            children: [
+              Expanded(
+                child: WidgetsPanel(
+                  child: Align(
+                    alignment: Alignment.topCenter, // aligns to top
+                    child: _buildScreen(),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

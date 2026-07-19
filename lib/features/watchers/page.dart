@@ -193,12 +193,15 @@ class _WatchersPageState extends State<WatchersPage>
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
-        child: Column(
-          spacing: 12,
-          children: [
-            Expanded(child: _buildTable()),
-            const SizedBox(height: 1),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: Column(
+            spacing: 12,
+            children: [
+              Expanded(child: _buildTable()),
+              const SizedBox(height: 1),
+            ],
+          ),
         ),
       ),
     );

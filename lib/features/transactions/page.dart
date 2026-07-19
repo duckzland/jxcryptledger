@@ -548,13 +548,16 @@ class TransactionsPageState extends State<TransactionsPage>
         final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
         states.remove("tx-toggle-panels");
 
-        return TransactionsOverviewView(
-          transactions: txs,
-          panelsAction: toggleAction,
-          filterMode: _filterMode,
-          sortMode: _sortMode,
-          txsFlags: fxs,
-          onStatusChanged: () {},
+        return Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: TransactionsOverviewView(
+            transactions: txs,
+            panelsAction: toggleAction,
+            filterMode: _filterMode,
+            sortMode: _sortMode,
+            txsFlags: fxs,
+            onStatusChanged: () {},
+          ),
         );
 
       case TransactionsViewMode.active:
@@ -562,19 +565,25 @@ class TransactionsPageState extends State<TransactionsPage>
         final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
         states.remove("tx-toggle-panels");
 
-        return TransactionsActiveView(
-          transactions: txs,
-          panelsAction: toggleAction,
-          filterMode: _filterMode,
-          sortMode: _sortMode,
-          txsFlags: fxs,
-          onStatusChanged: () {},
+        return Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: TransactionsActiveView(
+            transactions: txs,
+            panelsAction: toggleAction,
+            filterMode: _filterMode,
+            sortMode: _sortMode,
+            txsFlags: fxs,
+            onStatusChanged: () {},
+          ),
         );
 
       case TransactionsViewMode.journal:
         actionbarRegister("Transaction Overview");
 
-        return TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: fxs, onStatusChanged: () {});
+        return Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+          child: TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: fxs, onStatusChanged: () {}),
+        );
 
       case TransactionsViewMode.history:
         actionbarRegister("Transaction History");
@@ -582,12 +591,15 @@ class TransactionsPageState extends State<TransactionsPage>
         final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
         states.remove("tx-toggle-panels");
 
-        return TransactionHistory(
-          sortMode: _sortMode,
-          transactions: txs,
-          txsFlags: fxs,
-          panelsAction: toggleAction,
-          onStatusChanged: () {},
+        return Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+          child: TransactionHistory(
+            sortMode: _sortMode,
+            transactions: txs,
+            txsFlags: fxs,
+            panelsAction: toggleAction,
+            onStatusChanged: () {},
+          ),
         );
     }
   }

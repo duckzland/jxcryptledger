@@ -310,23 +310,26 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1600),
-        child: Column(
-          spacing: 12,
-          children: [
-            if (_enableTickers)
-              Row(
-                children: [
-                  Expanded(
-                    child: ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
-                  ),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: Column(
+            spacing: 12,
+            children: [
+              if (_enableTickers)
+                Row(
+                  children: [
+                    Expanded(
+                      child: ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
+                    ),
+                  ],
+                ),
+              Flexible(
+                flex: 10,
+                fit: FlexFit.loose,
+                child: ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels()),
               ),
-            Flexible(
-              flex: 10,
-              fit: FlexFit.loose,
-              child: ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels()),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

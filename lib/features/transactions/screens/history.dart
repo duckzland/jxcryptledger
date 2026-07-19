@@ -123,65 +123,61 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(top: 16, bottom: 16),
-        child: WidgetsPanel(
-          padding: const EdgeInsets.only(top: 16, left: 22, right: 6, bottom: 16),
-          child: TreeView.indexed(
-            key: PageStorageKey('tree-history-$_sortMode'),
-            tree: _root,
-            showRootNode: false,
-            indentation: const Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
-            expansionBehavior: ExpansionBehavior.scrollToLastChild,
-            animation: kAlwaysCompleteAnimation,
-            scrollController: _autoScrollController,
-            expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
-              tree: node,
-              color: AppTheme.text,
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-              alignment: Alignment.topRight,
-            ),
-            onTreeReady: (controller) {
-              scrollController = controller;
-              Future.delayed(const Duration(milliseconds: 100), () {
-                if (!mounted) return;
-
-                for (final child in _root.childrenAsList) {
-                  controller.expandAllChildren(child as IndexedTreeNode<TransactionsModel>, recursive: true);
-                }
-
-                // Must be done this way, impossible to use initialOffset.
-                final initalOffset = states.get('tx-group-offset-history', defaultValue: 0.0);
-                if (initalOffset != 0.0) {
-                  _autoScrollController.jumpTo(initalOffset);
-                }
-
-                // AddListener late to prevent corrupting stored data.
-                _autoScrollController.addListener(_saveOffset);
-              });
-            },
-            builder: (context, node) {
-              final tx = node.data;
-              if (tx == null) return const SizedBox.shrink();
-              return MouseRegion(
-                cursor: node.childrenAsList.isNotEmpty ? SystemMouseCursors.click : SystemMouseCursors.basic,
-                child: TransactionsWidgetsCardsTree(
-                  key: ValueKey(tx.tid),
-                  tx: tx,
-                  node: node,
-                  isTradable: fxsIsTradable(tx),
-                  isClosable: fxsIsClosable(tx),
-                  isDeletable: fxsIsDeletable(tx),
-                  isUpdatable: fxsIsUpdatable(tx),
-                  isRefundable: fxsIsRefundable(tx),
-                  isFinalizable: fxsIsFinalizable(tx),
-                  hasLeaf: fxsHasLeaf(tx),
-                  hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                  onAction: widget.onStatusChanged,
-                ),
-              );
-            },
+      body: WidgetsPanel(
+        child: TreeView.indexed(
+          key: PageStorageKey('tree-history-$_sortMode'),
+          tree: _root,
+          showRootNode: false,
+          indentation: const Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
+          expansionBehavior: ExpansionBehavior.scrollToLastChild,
+          animation: kAlwaysCompleteAnimation,
+          scrollController: _autoScrollController,
+          expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
+            tree: node,
+            color: AppTheme.text,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 24),
+            alignment: Alignment.topRight,
           ),
+          onTreeReady: (controller) {
+            scrollController = controller;
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (!mounted) return;
+
+              for (final child in _root.childrenAsList) {
+                controller.expandAllChildren(child as IndexedTreeNode<TransactionsModel>, recursive: true);
+              }
+
+              // Must be done this way, impossible to use initialOffset.
+              final initalOffset = states.get('tx-group-offset-history', defaultValue: 0.0);
+              if (initalOffset != 0.0) {
+                _autoScrollController.jumpTo(initalOffset);
+              }
+
+              // AddListener late to prevent corrupting stored data.
+              _autoScrollController.addListener(_saveOffset);
+            });
+          },
+          builder: (context, node) {
+            final tx = node.data;
+            if (tx == null) return const SizedBox.shrink();
+            return MouseRegion(
+              cursor: node.childrenAsList.isNotEmpty ? SystemMouseCursors.click : SystemMouseCursors.basic,
+              child: TransactionsWidgetsCardsTree(
+                key: ValueKey(tx.tid),
+                tx: tx,
+                node: node,
+                isTradable: fxsIsTradable(tx),
+                isClosable: fxsIsClosable(tx),
+                isDeletable: fxsIsDeletable(tx),
+                isUpdatable: fxsIsUpdatable(tx),
+                isRefundable: fxsIsRefundable(tx),
+                isFinalizable: fxsIsFinalizable(tx),
+                hasLeaf: fxsHasLeaf(tx),
+                hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+                onAction: widget.onStatusChanged,
+              ),
+            );
+          },
         ),
       ),
     );
