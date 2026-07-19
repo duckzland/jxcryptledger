@@ -130,12 +130,8 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = _backgroundColor();
-    final fg = _foregroundColor();
-    final br = Color.lerp(bg, fg, 0.70)!;
-
     Widget button = ElevatedButton(
-      style: ButtonStyle(
+      style: AppTheme.elevatedButton.copyWith(
         shape: WidgetStateProperty.resolveWith((states) {
           return RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.radius));
         }),
@@ -152,12 +148,8 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
           }
           return AppTheme.buttonFg;
         }),
-        shadowColor: WidgetStateProperty.all(br),
         padding: WidgetStateProperty.all(widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
         minimumSize: WidgetStateProperty.all(widget.minimumSize ?? Size.zero),
-        mouseCursor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.disabled) ? SystemMouseCursors.basic : SystemMouseCursors.click,
-        ),
       ),
       onPressed: _disabled || _inProgress || _isActive
           ? null
@@ -170,7 +162,7 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
               // Re-evaluate state after an interaction
               await _runEvaluator();
             },
-      child: _buildChild(fg),
+      child: _buildChild(_foregroundColor()),
     );
 
     if (widget.tooltip != null) {

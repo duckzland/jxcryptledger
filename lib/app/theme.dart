@@ -132,6 +132,26 @@ class AppTheme {
 
   static const borderRadius = BorderRadius.all(Radius.circular(6));
 
+  static final textButton = TextButton.styleFrom(
+    textStyle: text400,
+    shadowColor: Colors.transparent,
+    overlayColor: Colors.transparent,
+  ).copyWith(overlayColor: WidgetStateProperty.all(Colors.transparent), mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
+
+  static final outlinedButton = OutlinedButton.styleFrom(
+    textStyle: text400,
+    shadowColor: Colors.transparent,
+  ).copyWith(mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
+
+  static final elevatedButton = ElevatedButton.styleFrom(
+    backgroundColor: buttonBg,
+    foregroundColor: buttonFg,
+    elevation: 0,
+    shape: const RoundedRectangleBorder(borderRadius: borderRadius),
+    shadowColor: Colors.transparent,
+    textStyle: text500.copyWith(fontSize: 14),
+  ).copyWith(mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
+
   static ThemeData get dark {
     final menuDecoration = MenuThemeData(
       style: MenuStyle(
@@ -185,22 +205,6 @@ class AppTheme {
         borderSide: BorderSide(color: inputBorderFocused, width: 1),
       ),
     );
-
-    final textButton = TextButton.styleFrom(
-      textStyle: text400,
-    ).copyWith(overlayColor: WidgetStateProperty.all(Colors.transparent), mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
-
-    final outlinedButton = OutlinedButton.styleFrom(
-      textStyle: text400,
-    ).copyWith(mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
-
-    final elevatedButton = ElevatedButton.styleFrom(
-      backgroundColor: buttonBg,
-      foregroundColor: buttonFg,
-      elevation: 0,
-      shape: const RoundedRectangleBorder(borderRadius: borderRadius),
-      textStyle: text500.copyWith(fontSize: 14),
-    ).copyWith(mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
 
     return ThemeData(
       useMaterial3: true,
