@@ -860,13 +860,13 @@ void main() {
       final server = IpcServer();
       server.pipeName = pipeName;
       server.unlocker = (bytes) async => SystemUnlockStatus.success;
-      server.database = DatabaseFaker(IpcBoxes(), IpcAdapters(), IpcMigration());
+      server.database = DatabaseFaker(IpcBoxes(), AdaptersFaker(), IpcMigration());
       await server.start();
       final sessionKey = server.sessionKey;
 
       // Booting the client 1
       await Future.delayed(const Duration(milliseconds: 150));
-      final client1 = IpcClient(IpcAdapters());
+      final client1 = IpcClient(AdaptersFaker());
       client1.pipeName = pipeName;
       await client1.start();
 
@@ -890,7 +890,7 @@ void main() {
       // Booting the client 2
       await Future.delayed(const Duration(milliseconds: 150));
       CoreMode.isServer = false;
-      final client2 = IpcClient(IpcAdapters());
+      final client2 = IpcClient(AdaptersFaker());
       client2.pipeName = pipeName;
       await client2.start();
 

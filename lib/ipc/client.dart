@@ -132,6 +132,7 @@ class IpcClient {
     Uint8List? bytes = converter.toBytes(op, action, payload);
 
     final resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
+
     return converter.fromBytes(op, action, resultBytes);
   }
 
@@ -147,16 +148,25 @@ class IpcClient {
 
       Uint8List rawPayload = payload ?? Uint8List(0);
 
-      if (op != IpcAction.unlock && op != IpcAction.shutdown) {
-        if (sessionKey == null) {
-          throw StateError('[IPC] Cannot transmit database requests before completing secure handshake. $op');
-        }
+      switch (op) {
+        case IpcAction.unknown:
+          throw StateError('[IPC] Cannot transmit database for unknown action.');
 
-        if (!_crypto.hasActiveKey) {
-          _crypto.setSessionKey(sessionKey);
-        }
+        case IpcAction.unlock:
+        case IpcAction.shutdown:
+          break;
 
-        rawPayload = await _crypto.encrypt(rawPayload);
+        default:
+          if (sessionKey == null || sessionKey!.isEmpty) {
+            throw StateError('[IPC] Cannot transmit database requests before completing secure handshake. $op');
+          }
+
+          if (!_crypto.hasActiveKey) {
+            _crypto.setSessionKey(sessionKey);
+          }
+
+          rawPayload = await _crypto.encrypt(rawPayload);
+          break;
       }
 
       final packet = IpcPacket(reqId: reqId, op: op.code, action: action, key: key?.toString() ?? "", payload: rawPayload);
@@ -168,11 +178,13 @@ class IpcClient {
         completer.completeError(e);
       }
     }
+
     return completer.future;
   }
 
   Future<void> _receive(Uint8List chunk) async {
     if (_isDisposing) return;
+
     IpcPacket? packet;
     _incomingBuffer.add(chunk);
 
@@ -184,49 +196,63 @@ class IpcClient {
       final currentPacket = packet!;
       Uint8List responseBytes = currentPacket.payload;
 
-      if (currentPacket.op != IpcAction.unlock.code && sessionKey != null) {
-        try {
-          if (!_crypto.hasActiveKey && sessionKey != null && sessionKey!.isNotEmpty) {
-            _crypto.setSessionKey(sessionKey);
+      final op = IpcAction.fromCode(currentPacket.op);
+      switch (op) {
+        case IpcAction.unknown:
+          logln("[IPC] Refusing to process unknown request op");
+          break;
+
+        case IpcAction.shutdown:
+        case IpcAction.unlock:
+          if (currentPacket.reqId == -1) {
+            _broadcastPacket(currentPacket, responseBytes);
           }
-          responseBytes = await _crypto.decrypt(responseBytes);
-        } catch (e) {
-          logln("[IPC] Failed to decrypt packet: $e");
-          continue;
-        }
+          break;
+
+        default:
+          if (sessionKey == null) {
+            logln("[IPC] Refusing to process op without sessionKey: ${op.code}");
+            break;
+          }
+
+          try {
+            responseBytes = await _crypto.decrypt(responseBytes);
+          } catch (e) {
+            logln("[IPC] Failed to decrypt packet: ${op.code} - $e");
+            break;
+          }
+
+          if (currentPacket.reqId == -1) {
+            _broadcastPacket(currentPacket, responseBytes);
+          }
+
+          break;
       }
 
-      if (currentPacket.op != IpcAction.unlock.code && sessionKey == null) {
-        final completer = _pending[currentPacket.reqId];
-        if (completer != null) {
-          completer.complete(Uint8List(0));
-          _pending.remove(currentPacket.reqId);
-        }
-        logln("[IPC] Failed to process packet for ${currentPacket.op}");
-        continue;
-      }
+      _closeBuffer(currentPacket, responseBytes);
+    }
+  }
 
-      // Protect the sessionKey, only update if there is actual bytes and serverKey isnt set yet!
-      if (currentPacket.op == IpcAction.unlock.code && currentPacket.action != "database_created" && responseBytes.sublist(1).isNotEmpty) {
-        sessionKey ??= responseBytes.sublist(1);
-      }
+  void _closeBuffer(IpcPacket packet, dynamic bytes) {
+    final completer = _pending[packet.reqId];
+    if (completer != null) {
+      completer.complete(bytes);
+      _pending.remove(packet.reqId);
+    }
+  }
 
-      if (currentPacket.reqId == -1) {
-        _broadcastController.add(
-          IpcBroadcastEvent(
-            op: currentPacket.op,
-            action: currentPacket.action,
-            key: currentPacket.key,
-            payload: converter.fromBytes(IpcAction.fromCode(currentPacket.op), currentPacket.action, responseBytes),
-          ),
-        );
-      } else {
-        final completer = _pending[currentPacket.reqId];
-        if (completer != null) {
-          completer.complete(responseBytes);
-          _pending.remove(currentPacket.reqId);
-        }
-      }
+  void _broadcastPacket(IpcPacket packet, dynamic bytes) {
+    try {
+      _broadcastController.add(
+        IpcBroadcastEvent(
+          op: packet.op,
+          action: packet.action,
+          key: packet.key,
+          payload: converter.fromBytes(IpcAction.fromCode(packet.op), packet.action, bytes),
+        ),
+      );
+    } catch (e) {
+      logln("[IPC] Failed to broadcast event: ${packet.op} - $e");
     }
   }
 }

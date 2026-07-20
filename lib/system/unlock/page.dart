@@ -198,8 +198,13 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
       return;
     }
 
+    if (_confirm.text.isEmpty) {
+      setState(() => error = "Please confirm your password");
+      return;
+    }
+
     if (_password.text != _confirm.text) {
-      setState(() => error = "Passwords does not match");
+      setState(() => error = "Password and confirmation does not match");
       return;
     }
   }
