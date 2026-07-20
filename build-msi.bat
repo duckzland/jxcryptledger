@@ -104,6 +104,7 @@ if %SKIP_ICON%==1 (
 )
 
 echo [5/6] Cleaning and Compiling Flutter Windows Binaries...
+@REM call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER% --obfuscate --split-debug-info=./symbols
 call flutter build windows --release --build-name=%BUILD_NAME% --build-number=%BUILD_NUMBER%
 
 :SKIP_VERSION_BUMP
