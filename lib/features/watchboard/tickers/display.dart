@@ -115,7 +115,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
           final index = double.tryParse(rawValue) ?? 0;
           if (index >= 70) return AppTheme.green;
           if (index >= 55) return AppTheme.darkGreen;
-          if (index >= 45) return AppTheme.darkGrey;
+          if (index >= 45) return AppTheme.darkRed;
           if (index >= 30) return AppTheme.red;
           return AppTheme.red;
 
