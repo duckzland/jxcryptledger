@@ -176,7 +176,7 @@ class IpcClient {
     IpcPacket? packet;
     _incomingBuffer.add(chunk);
 
-    if (sessionKey != null) {
+    if (sessionKey != null && sessionKey!.isNotEmpty) {
       _crypto.setSessionKey(sessionKey);
     }
 
@@ -186,7 +186,7 @@ class IpcClient {
 
       if (currentPacket.op != IpcAction.unlock.code && sessionKey != null) {
         try {
-          if (!_crypto.hasActiveKey) {
+          if (!_crypto.hasActiveKey && sessionKey != null && sessionKey!.isNotEmpty) {
             _crypto.setSessionKey(sessionKey);
           }
           responseBytes = await _crypto.decrypt(responseBytes);
@@ -206,8 +206,9 @@ class IpcClient {
         continue;
       }
 
-      if (currentPacket.op == IpcAction.unlock.code) {
-        sessionKey = responseBytes.sublist(1);
+      // Protect the sessionKey, only update if there is actual bytes and serverKey isnt set yet!
+      if (currentPacket.op == IpcAction.unlock.code && currentPacket.action != "database_created" && responseBytes.sublist(1).isNotEmpty) {
+        sessionKey ??= responseBytes.sublist(1);
       }
 
       if (currentPacket.reqId == -1) {
