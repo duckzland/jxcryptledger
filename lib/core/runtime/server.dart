@@ -79,7 +79,6 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     // Client strapping up
     ipcClient.pipeName = CoreMode.ipcPipeName;
     ipcClient.reconnecting = reconnect;
-    ipcClient.sessionKey = ipcServer.sessionKey;
 
     await ipcClient.start();
 
@@ -179,6 +178,8 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     await _transactionsService.dispose();
 
     appWorker.stop();
+
+    logln("Server services stopped.");
   }
 
   void shutdownWhenNoClient() {
@@ -197,6 +198,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     if (!state.isFirstRun()) {
       ipcClient.localKey = keyBytes;
+      ipcClient.sessionKey ??= ipcServer.sessionKey;
       await bootServices();
       CoreMode.isFirstRun = false;
     }
@@ -206,6 +208,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
       try {
         logln("First run detected, initializing vault");
         ipcClient.localKey = keyBytes;
+        ipcClient.sessionKey ??= ipcServer.sessionKey;
         await bootServices();
         await _settingsService.save(SettingKey.vaultInitialized, "initialized");
       } catch (e) {
