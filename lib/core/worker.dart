@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../app/router.dart';
+import 'mode.dart';
 import 'runtime/locator.dart';
 import 'log.dart';
 import '../features/rates/service.dart';
@@ -30,9 +31,12 @@ class CoreWorker {
 
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       bool mustAlwaysFetchRate = false;
-      final current = AppRouter.router.routerDelegate.currentConfiguration.uri.toString();
-      if (current == "/tools") {
-        mustAlwaysFetchRate = true;
+
+      if (!CoreMode.isServer) {
+        final current = AppRouter.router.routerDelegate.currentConfiguration.uri.toString();
+        if (current == "/tools") {
+          mustAlwaysFetchRate = true;
+        }
       }
 
       final pxs = panels.getAllRateID();
