@@ -42,6 +42,15 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
     if (!await newDir.exists()) {
       await newDir.create(recursive: true);
       CoreMode.isFirstRun = true;
+      return;
+    }
+
+    final settingsFile = File('${CoreMode.path}/settings_box.hive');
+    final transactionsFile = File('${CoreMode.path}/transactions_box.hive');
+
+    if (!await settingsFile.exists() || !await transactionsFile.exists()) {
+      CoreMode.isFirstRun = true;
+      return;
     }
   }
 

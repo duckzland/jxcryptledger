@@ -32,6 +32,8 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
 
   late bool isFirstRun;
 
+  bool _isProcessing = false;
+
   @override
   void initState() {
     super.initState();
@@ -103,13 +105,41 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
             TextField(
               controller: _password,
               obscureText: !showPassword,
-              decoration: const InputDecoration(labelText: "Password"),
+              readOnly: _isProcessing,
+              onSubmitted: _registering,
+              onChanged: _validatePassword,
+              decoration: InputDecoration(
+                labelText: "Password",
+                enabledBorder: error == null || _isProcessing
+                    ? Theme.of(context).inputDecorationTheme.enabledBorder
+                    : Theme.of(context).inputDecorationTheme.errorBorder,
+                focusedBorder: error == null || _isProcessing
+                    ? Theme.of(context).inputDecorationTheme.focusedBorder
+                    : Theme.of(context).inputDecorationTheme.errorBorder,
+              ),
             ),
             TextField(
               controller: _confirm,
               obscureText: !showPassword,
-              decoration: const InputDecoration(labelText: "Confirm Password"),
+              readOnly: _isProcessing,
+              onSubmitted: _registering,
+              onChanged: _validatePassword,
+              decoration: InputDecoration(
+                labelText: "Confirm Password",
+                enabledBorder: error == null || _isProcessing
+                    ? Theme.of(context).inputDecorationTheme.enabledBorder
+                    : Theme.of(context).inputDecorationTheme.errorBorder,
+                focusedBorder: error == null || _isProcessing
+                    ? Theme.of(context).inputDecorationTheme.focusedBorder
+                    : Theme.of(context).inputDecorationTheme.errorBorder,
+              ),
             ),
+            if (error != null)
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.inputErrorText),
+              ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -117,51 +147,14 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
                 const Text("Show password"),
               ],
             ),
-
-            if (error != null)
-              Text(
-                error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.buttonBgError),
-              ),
           ],
         ),
 
         WidgetsButtonsAction(
           label: "Create Vault",
           initialState: WidgetsButtonActionState.action,
-          evaluator: (s) {
-            if (_password.text.isEmpty || _confirm.text.isEmpty || _password.text != _confirm.text) {
-              s.disable();
-            } else {
-              s.action();
-            }
-          },
-          onPressed: (s) async {
-            if (_password.text.isEmpty) {
-              setState(() => error = "Password cannot be empty");
-              return;
-            }
-
-            if (_password.text != _confirm.text) {
-              setState(() => error = "Passwords do not match");
-              return;
-            }
-
-            s.progress();
-
-            final ok = await widget.controller.unlock(_password.text);
-
-            if (!mounted) return;
-
-            if (ok) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.go("/transactions");
-              });
-            } else {
-              s.error();
-            }
-          },
+          evaluator: _evaluatorRegister,
+          onPressed: _registering,
         ),
       ],
     );
@@ -177,45 +170,115 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
           controller: _password,
           obscureText: true,
           textInputAction: TextInputAction.done,
-          onSubmitted: (_) async {
-            final ok = await widget.controller.unlock(_password.text);
-            if (ok) {
-              if (!mounted) return;
-              context.go("/transactions");
-            } else {
-              setState(() => error = "Invalid password");
-            }
-          },
-          decoration: InputDecoration(labelText: "Password", errorText: error),
+          readOnly: _isProcessing,
+          onSubmitted: _unlocking,
+          decoration: InputDecoration(labelText: "Password", errorText: _isProcessing ? null : error),
         ),
 
         WidgetsButtonsAction(
           label: "Unlock",
           initialState: WidgetsButtonActionState.action,
-          evaluator: (s) {
-            if (_password.text.isEmpty) {
-              s.disable();
-            } else {
-              s.action();
-            }
-          },
-          onPressed: (s) async {
-            s.progress();
-            final ok = await widget.controller.unlock(_password.text);
-
-            if (!mounted) return;
-
-            if (ok) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.go("/transactions");
-              });
-            } else {
-              s.action();
-              setState(() => error = "Invalid password");
-            }
-          },
+          evaluator: _evaluatorUnlock,
+          onPressed: _unlocking,
         ),
       ],
     );
+  }
+
+  void _validatePassword(dynamic value) {
+    if (_password.text.isNotEmpty && _confirm.text.isNotEmpty && _password.text == _confirm.text) {
+      setState(() {
+        error = null;
+      });
+      return;
+    }
+
+    if (_password.text.isEmpty) {
+      setState(() => error = "Password cannot be empty");
+      return;
+    }
+
+    if (_password.text != _confirm.text) {
+      setState(() => error = "Passwords does not match");
+      return;
+    }
+  }
+
+  void _evaluatorRegister(WidgetsButtonsActionState s) {
+    if (_password.text.isEmpty || _confirm.text.isEmpty || _password.text != _confirm.text) {
+      s.disable();
+      return;
+    }
+
+    if (_isProcessing) {
+      s.progress();
+      return;
+    }
+
+    s.action();
+  }
+
+  void _evaluatorUnlock(WidgetsButtonsActionState s) {
+    if (_password.text.isEmpty) {
+      s.disable();
+      return;
+    }
+
+    if (_isProcessing) {
+      s.progress();
+      return;
+    }
+
+    s.action();
+  }
+
+  void _registering(dynamic s) async {
+    _validatePassword(null);
+
+    if (error != null) {
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+      error = null;
+    });
+
+    final ok = await widget.controller.unlock(_password.text);
+
+    if (!mounted) return;
+
+    if (ok) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go("/transactions");
+      });
+    } else {
+      setState(() {
+        _isProcessing = false;
+        error = "Failed to create vault";
+      });
+    }
+  }
+
+  void _unlocking(dynamic s) async {
+    setState(() {
+      _isProcessing = true;
+      error = null;
+    });
+
+    final ok = await widget.controller.unlock(_password.text);
+
+    if (!mounted) return;
+
+    if (ok) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go("/transactions");
+      });
+    } else {
+      setState(() {
+        _isProcessing = false;
+        error = "Invalid password";
+      });
+    }
   }
 }

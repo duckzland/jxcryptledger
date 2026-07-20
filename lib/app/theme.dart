@@ -10,7 +10,7 @@ class AppTheme {
   static const inputBorderDisabled = Color(0xFF1A202B);
   static const inputBorderFocused = Color(0xFF353F52);
   static const inputErrorBorder = Color(0xFF992B2B);
-  static const inputErrorText = Color.fromARGB(255, 227, 227, 227);
+  static const inputErrorText = Color(0xFFE96A6A);
 
   static const tableHeaderBg = Colors.transparent;
   static const tableRowBg = Colors.transparent;
