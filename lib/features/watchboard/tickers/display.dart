@@ -21,6 +21,77 @@ class _TickersDisplayState extends State<TickersDisplay> {
 
   Color _currentColor = AppTheme.darkGrey;
 
+  @override
+  void initState() {
+    super.initState();
+    _currentColor = _resolveBackground();
+  }
+
+  @override
+  void didUpdateWidget(covariant TickersDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!_controller.isBothEqual(widget.tix, oldWidget.tix)) {
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tix = widget.tix;
+
+    final targetColor = _resolveBackground();
+    bool colorChanged = targetColor != _currentColor;
+
+    final hsl = HSLColor.fromColor(targetColor);
+    final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
+    final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
+    _currentColor = targetColor;
+
+    return TweenAnimationBuilder<Color?>(
+      duration: const Duration(milliseconds: 300),
+      tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
+      curve: Curves.easeInOut,
+      builder: (context, Color? animatedBgColor, child) {
+        return MouseRegion(
+          cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic,
+          child: WidgetsPanel(
+            padding: const EdgeInsets.all(0),
+            background: animatedBgColor,
+            borderColor: mutedColor,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: tix.getContent() != ""
+                  ? [
+                      Text(
+                        tix.getTitle(),
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
+                      ),
+                      Text(
+                        tix.getContent(),
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                      ),
+                    ]
+                  : [
+                      Text(
+                        "Loading...",
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        style: const TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Color _resolveBackground() {
     final rawValue = widget.tix.value;
     final oldRawValue = widget.tix.meta['oldValue'] as String?;
@@ -84,68 +155,5 @@ class _TickersDisplayState extends State<TickersDisplay> {
     } catch (_) {
       return AppTheme.darkGrey;
     }
-  }
-
-  @override
-  void didUpdateWidget(covariant TickersDisplay oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (!_controller.isBothEqual(widget.tix, oldWidget.tix)) {
-      setState(() {});
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tix = widget.tix;
-
-    final targetColor = _resolveBackground();
-    final hsl = HSLColor.fromColor(targetColor);
-    final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
-    final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
-    _currentColor = targetColor;
-
-    return TweenAnimationBuilder<Color?>(
-      duration: const Duration(milliseconds: 300),
-      tween: ColorTween(begin: startColor, end: targetColor),
-      curve: Curves.easeInOut,
-      builder: (context, Color? animatedBgColor, child) {
-        return MouseRegion(
-          cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic,
-          child: WidgetsPanel(
-            padding: const EdgeInsets.all(0),
-            background: animatedBgColor,
-            borderColor: mutedColor,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: tix.getContent() != ""
-                  ? [
-                      Text(
-                        tix.getTitle(),
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
-                      ),
-                      Text(
-                        tix.getContent(),
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
-                      ),
-                    ]
-                  : [
-                      Text(
-                        "Loading...",
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: const TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-            ),
-          ),
-        );
-      },
-    );
   }
 }

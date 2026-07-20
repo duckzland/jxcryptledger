@@ -17,6 +17,13 @@ import 'page.dart';
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> shellNavigatorKey = GlobalKey<NavigatorState>();
 
+Page customPageBuilder(GoRouterState state, Widget child) {
+  return NoTransitionPage(
+    key: state.pageKey,
+    child: AppPage(child: child),
+  );
+}
+
 class AppRouter {
   static final router = GoRouter(
     initialLocation: "/unlock",
@@ -25,31 +32,41 @@ class AppRouter {
     routes: [
       GoRoute(
         path: "/unlock",
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final c = SystemUnlockController();
-          return FutureBuilder(
-            future: c.init(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
-              }
-              return SystemUnlockPage(controller: c);
-            },
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: AppPage(
+              child: FutureBuilder(
+                future: c.init(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                  }
+                  return SystemUnlockPage(controller: c);
+                },
+              ),
+            ),
           );
         },
       ),
       GoRoute(
         path: "/error",
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final c = SystemErrorController();
-          return FutureBuilder(
-            future: c.init(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
-              }
-              return SystemErrorPage(controller: c);
-            },
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: AppPage(
+              child: FutureBuilder(
+                future: c.init(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                  }
+                  return SystemErrorPage(controller: c);
+                },
+              ),
+            ),
           );
         },
       ),
@@ -65,28 +82,45 @@ class AppRouter {
           GoRoute(path: "/", redirect: (context, state) => "/transactions"),
           GoRoute(
             path: "/transactions",
-            builder: (context, state) => const AppPage(child: TransactionsPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppPage(child: TransactionsPage()),
+            ),
           ),
-
           GoRoute(
             path: "/watchboard",
-            builder: (context, state) => const AppPage(child: WatchboardPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppPage(child: WatchboardPage()),
+            ),
           ),
           GoRoute(
             path: "/watchers",
-            builder: (context, state) => const AppPage(child: WatchersPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppPage(child: WatchersPage()),
+            ),
           ),
           GoRoute(
             path: "/archives",
-            builder: (context, state) => const AppPage(child: ArchivesPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppPage(child: ArchivesPage()),
+            ),
           ),
           GoRoute(
             path: "/tools",
-            builder: (context, state) => const AppPage(child: ToolsPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppPage(child: ToolsPage()),
+            ),
           ),
           GoRoute(
             path: "/settings",
-            builder: (context, state) => const AppPage(child: SettingsPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const AppPage(child: SettingsPage()),
+            ),
           ),
         ],
       ),

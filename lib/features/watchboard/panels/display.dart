@@ -30,18 +30,21 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
   static dynamic _activePanelId;
 
+  Color _currentColor = AppTheme.panelBg;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribers.add(setState);
+    _currentColor = _resolveBackground();
+  }
+
   @override
   void didUpdateWidget(covariant PanelsDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_controller.isBothEqual(oldWidget.tix, widget.tix)) {
       setState(() {});
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _subscribers.add(setState);
   }
 
   @override
@@ -56,18 +59,6 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
     for (final setter in _subscribers) {
       setter(() {});
-    }
-  }
-
-  Color _resolveBackground() {
-    final status = widget.tix.status;
-    switch (status) {
-      case 1:
-        return AppTheme.green;
-      case -1:
-        return AppTheme.red;
-      default:
-        return AppTheme.panelBg;
     }
   }
 
@@ -107,13 +98,17 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
           ];
 
     final targetColor = _resolveBackground();
+    bool colorChanged = targetColor != _currentColor;
+
     final hsl = HSLColor.fromColor(targetColor);
     final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
     final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
 
+    _currentColor = targetColor;
+
     return TweenAnimationBuilder<Color?>(
       duration: const Duration(milliseconds: 300),
-      tween: ColorTween(begin: startColor, end: targetColor),
+      tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
       curve: Curves.easeInOut,
       builder: (context, Color? animatedBgColor, child) {
         return MouseRegion(
@@ -180,5 +175,17 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
         );
       },
     );
+  }
+
+  Color _resolveBackground() {
+    final status = widget.tix.status;
+    switch (status) {
+      case 1:
+        return AppTheme.green;
+      case -1:
+        return AppTheme.red;
+      default:
+        return AppTheme.panelBg;
+    }
   }
 }
