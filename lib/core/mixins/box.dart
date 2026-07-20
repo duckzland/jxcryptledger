@@ -51,4 +51,6 @@ mixin CoreMixinsBox<T extends CoreModelWithId> {
   }
 
   bool isEmpty() => repo.isEmpty();
+
+  bool isNotEmpty() => !repo.isEmpty();
 }

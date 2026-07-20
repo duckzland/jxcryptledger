@@ -292,7 +292,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         title: "Add Watchboard",
         addTitle: "Add New",
         addTooltip: "Create new watchboard entry",
-        addEvaluator: () => !_cryptosController.isEmpty(),
+        addEvaluator: _cryptosController.isNotEmpty,
         importTitle: "Import",
         importTooltip: "Import watchboard to database",
         importEvaluator: () => true,

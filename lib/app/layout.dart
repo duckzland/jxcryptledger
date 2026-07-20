@@ -249,7 +249,7 @@ class _AppLayoutState extends State<AppLayout> {
         Container(
           padding: const EdgeInsets.only(left: 16.0),
           decoration: const BoxDecoration(
-            color: AppTheme.panelBg,
+            color: AppTheme.appBarTitleBg,
             borderRadius: BorderRadius.only(topRight: Radius.circular(4), bottomRight: Radius.circular(4)),
           ),
           child: SizedBox(
@@ -260,7 +260,7 @@ class _AppLayoutState extends State<AppLayout> {
               child: ValueListenableBuilder<String?>(
                 valueListenable: _title,
                 builder: (_, title, _) {
-                  return title != null ? Text(title, style: const TextStyle(fontWeight: FontWeight.w700)) : const SizedBox.shrink();
+                  return title != null ? Text(title, style: AppTheme.text700) : const SizedBox.shrink();
                 },
               ),
             ),

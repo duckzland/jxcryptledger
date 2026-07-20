@@ -46,6 +46,7 @@ class AppTheme {
   static const textHalfInactive = Color(0x99DDDDDD);
 
   static const appBarBg = Color(0xFF060A10);
+  static const appBarTitleBg = Color(0xFF0D1421);
   static const background = Color(0xFF06070A);
 
   static const scrimBackground = Color(0xFF06070A);
@@ -126,6 +127,7 @@ class AppTheme {
   static const EdgeInsets menuPadding = EdgeInsets.symmetric(vertical: 4);
   static const EdgeInsets inputPadding = EdgeInsets.symmetric(vertical: 12, horizontal: 12);
 
+  static const text700 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w700);
   static const text600 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w600);
   static const text500 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w500);
   static const text400 = TextStyle(fontFamily: 'Inter', color: text, fontWeight: FontWeight.w400);

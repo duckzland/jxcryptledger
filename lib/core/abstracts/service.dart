@@ -1,9 +1,10 @@
+import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/client.dart';
 import '../../ipc/event.dart';
 import '../../ipc/server.dart';
-import '../mixins/box.dart';
-import '../../ipc/mixins/broadcaster.dart';
 import '../runtime/locator.dart';
+import '../mode.dart';
+import '../mixins/box.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 
@@ -12,6 +13,9 @@ abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepo
   final R repo;
 
   CoreBaseService(this.repo);
+
+  @override
+  bool get isBroadcastable => CoreMode.isServer;
 
   @override
   IpcClient get ipcClient => locator<IpcClient>();

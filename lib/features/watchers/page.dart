@@ -180,7 +180,7 @@ class _WatchersPageState extends State<WatchersPage>
         title: "Add Rate Watcher",
         addTitle: "Add New",
         addTooltip: "Create new rate watcher entry",
-        addEvaluator: () => !_cryptosController.isEmpty(),
+        addEvaluator: _cryptosController.isNotEmpty,
         importTitle: "Import",
         importTooltip: "Import rate watchers to database",
         importEvaluator: () => true,

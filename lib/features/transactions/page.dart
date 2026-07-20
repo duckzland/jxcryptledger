@@ -450,7 +450,7 @@ class TransactionsPageState extends State<TransactionsPage>
         title: "Add Transaction",
         addTitle: "Add New",
         addTooltip: "Create new transaction entry",
-        addEvaluator: () => !_cryptosController.isEmpty(),
+        addEvaluator: _cryptosController.isNotEmpty,
         importTitle: "Import",
         importTooltip: "Import transactions to database",
         importEvaluator: () => true,
