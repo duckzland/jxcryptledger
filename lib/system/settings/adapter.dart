@@ -19,12 +19,15 @@ class SettingsAdapter extends TypeAdapter<SettingsModel> {
       case SettingType.string:
         value = reader.readString();
         break;
+
       case SettingType.boolean:
         value = reader.readBool();
         break;
+
       case SettingType.integer:
         value = reader.readInt();
         break;
+
       case SettingType.list:
         value = reader.readList();
         break;
@@ -43,12 +46,15 @@ class SettingsAdapter extends TypeAdapter<SettingsModel> {
         final strValue = obj.value is String ? obj.value : jsonEncode(obj.value);
         writer.writeString(strValue);
         break;
+
       case SettingType.boolean:
         writer.writeBool(obj.value as bool);
         break;
+
       case SettingType.integer:
         writer.writeInt(obj.value as int);
         break;
+
       case SettingType.list:
         writer.writeList(obj.value as List);
         break;

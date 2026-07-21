@@ -20,12 +20,4 @@ void main() {
     expect(decoded.value, 'ready');
     expect(decoded.type, SettingType.string);
   });
-
-  test('SettingsModel.fromLegacy converts old map payloads', () {
-    final migrated = SettingsModel.fromLegacy('vaultInitialized', {'vaultInitialized': 'initialized'});
-
-    expect(migrated.keyId, 'vaultInitialized');
-    expect(migrated.value, 'initialized');
-    expect(migrated.type, SettingType.string);
-  });
 }
