@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
-import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
@@ -9,6 +8,7 @@ import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/datepicker.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/fields/crypto_search.dart';
+import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -112,53 +112,35 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   Widget _buildDatePanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("On date:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        _buildTimestampField(),
-      ],
-    );
+    return WidgetsHeader(subtitle: "On Date:", subtitleFontSize: 13, spacing: 10, child: _buildTimestampField());
   }
 
   Widget _buildFromPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        Row(spacing: 12, children: [Flexible(flex: 3, child: _buildSourceAmountField())]),
-      ],
+    return WidgetsHeader(
+      subtitle: "From:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: Row(spacing: 12, children: [Flexible(flex: 3, child: _buildSourceAmountField())]),
     );
   }
 
   Widget _buildToPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("To:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        Row(
-          spacing: 12,
-          children: [
-            Flexible(flex: 3, child: _buildResultAmountField()),
-            Flexible(flex: 2, child: _buildResultCryptoField()),
-          ],
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "To:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: Row(
+        spacing: 12,
+        children: [
+          Flexible(flex: 2, child: _buildResultAmountField()),
+          Flexible(flex: 2, child: _buildResultCryptoField()),
+        ],
+      ),
     );
   }
 
   Widget _buildNotesPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Notes:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        _buildNotesField(),
-      ],
-    );
+    return WidgetsHeader(subtitle: "Notes:", subtitleFontSize: 13, spacing: 10, child: _buildNotesField());
   }
 
   Widget _buildButtonPanel() {

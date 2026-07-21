@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
 import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
@@ -8,6 +7,7 @@ import '../../widgets/buttons/action.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
+import '../../widgets/header.dart';
 import '../../widgets/panel.dart';
 import '../../widgets/notify.dart';
 import 'controller.dart';
@@ -245,14 +245,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
         );
     }
 
-    return Column(
-      spacing: 10,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(key.label, style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        field,
-      ],
-    );
+    return WidgetsHeader(subtitle: key.label, subtitleFontSize: 13, spacing: 10, child: field);
   }
 
   Widget _buildSaveButton() {

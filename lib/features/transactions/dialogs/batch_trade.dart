@@ -16,6 +16,7 @@ import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
+import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
 import '../../cryptos/controller.dart';
 import '../calculations.dart';
@@ -259,15 +260,21 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _buildCryptoInputColumn("From:", _buildFromAmountField())),
+                  Expanded(
+                    child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildFromAmountField()),
+                  ),
 
                   const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.clear, size: 24)),
 
-                  Expanded(child: _buildCryptoInputColumn("To:", _buildRatesAmountField())),
+                  Expanded(
+                    child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
+                  ),
 
                   const Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
 
-                  Expanded(child: _buildCryptoInputColumn(" ", _buildResultCryptoField())),
+                  Expanded(
+                    child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
+                  ),
 
                   const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
 
@@ -284,8 +291,20 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Row(children: [Expanded(child: _buildCryptoInputColumn("From:", _buildFromAmountField()))]),
-                Row(children: [Expanded(child: _buildCryptoInputColumn("To:", _buildRatesAmountField()))]),
+                Row(
+                  children: [
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildFromAmountField()),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
+                    ),
+                  ],
+                ),
                 Row(children: [Expanded(child: _buildResultCryptoField())]),
                 Row(children: [Expanded(child: _buildCalculatedResult())]),
               ],
@@ -293,17 +312,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           }
         },
       ),
-    );
-  }
-
-  Widget _buildCryptoInputColumn(String label, Widget amountField) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 10,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        amountField,
-      ],
     );
   }
 
@@ -379,9 +387,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
-    return _buildCryptoInputColumn(
-      "Result:",
-      TextField(
+    return WidgetsHeader(
+      subtitle: "Result:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: TextField(
         controller: TextEditingController(
           text: (_sourceAmount <= 0 || entryRate <= 0) ? "" : "${Utils.formatSmartDouble(resultValue, smartDecimal: false)} $targetSymbol",
         ),

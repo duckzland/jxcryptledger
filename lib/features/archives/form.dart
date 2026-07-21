@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../widgets/fields/textarea.dart';
-import '../../app/theme.dart';
 import '../../app/exceptions.dart';
 import '../../core/runtime/locator.dart';
 import '../../widgets/buttons/action.dart';
 import '../../mixins/rateable.dart';
 import '../../system/settings/controller.dart';
+import '../../widgets/header.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';
@@ -59,41 +59,37 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
   }
 
   Widget _buildTypePanel() {
-    return Column(
+    return WidgetsHeader(
+      subtitle: "Data Type",
       spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Data Type", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        DropdownMenu<String>(
-          initialSelection: _type,
-          requestFocusOnTap: false,
-          expandedInsets: EdgeInsets.zero,
-          label: const Text("Data Type"),
-          dropdownMenuEntries: [
-            if (_txController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "transactions", label: "Transactions Data"),
-            if (_pxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchboards", label: "Watchboards Data"),
-            if (_wxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchers", label: "Rate Watchers Data"),
-            if (_sxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "settings", label: "Settings Data"),
-          ],
-          onSelected: (String? newValue) {
-            if (newValue == null) return;
-            setState(() {
-              _type = newValue;
-            });
-          },
-        ),
-      ],
+      subtitleFontSize: 13,
+      child: DropdownMenu<String>(
+        initialSelection: _type,
+        requestFocusOnTap: false,
+        expandedInsets: EdgeInsets.zero,
+        label: const Text("Data Type"),
+        dropdownMenuEntries: [
+          if (_txController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "transactions", label: "Transactions Data"),
+          if (_pxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchboards", label: "Watchboards Data"),
+          if (_wxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchers", label: "Rate Watchers Data"),
+          if (_sxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "settings", label: "Settings Data"),
+        ],
+        onSelected: (String? newValue) {
+          if (newValue == null) return;
+          setState(() {
+            _type = newValue;
+          });
+        },
+      ),
     );
   }
 
   Widget _buildNotesPanel() {
-    return Column(
+    return WidgetsHeader(
+      subtitle: "Notes",
       spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Notes", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        WidgetsFieldsTextarea(title: 'Notes', helperText: 'Enter notes..', maxLines: 1, onChanged: (value) => _notes = value),
-      ],
+      subtitleFontSize: 13,
+      child: WidgetsFieldsTextarea(title: 'Notes', helperText: 'Enter notes..', maxLines: 1, onChanged: (value) => _notes = value),
     );
   }
 

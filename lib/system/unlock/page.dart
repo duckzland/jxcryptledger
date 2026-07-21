@@ -9,6 +9,7 @@ import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
 import '../../widgets/buttons/action.dart';
+import '../../widgets/header.dart';
 import 'controller.dart';
 
 class SystemUnlockPage extends StatefulWidget {
@@ -73,7 +74,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
     return Scaffold(
       body: Stack(
         children: [
-          Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
+          Center(child: SizedBox(width: 340, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
@@ -87,66 +88,60 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
   }
 
   Widget _buildFirstRunUI() {
-    return Column(
-      spacing: 20,
-      mainAxisSize: MainAxisSize.min,
+    return WidgetsHeader(
+      title: "Welcome!",
+      titleFontSize: 20,
+      subtitle: "Create a password for securing your vault",
+      subtitleFontSize: 16,
+      spacing: 16,
+      centered: true,
       children: [
-        Column(
-          spacing: 8,
-          children: [
-            const Text("Welcome!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const Text("Create a password to secure your vault.", textAlign: TextAlign.center),
-          ],
+        TextField(
+          controller: _password,
+          obscureText: !showPassword,
+          readOnly: _isProcessing,
+          onSubmitted: _registering,
+          onChanged: _validatePassword,
+          decoration: InputDecoration(
+            labelText: "Password",
+            enabledBorder: error == null || _isProcessing
+                ? Theme.of(context).inputDecorationTheme.enabledBorder
+                : Theme.of(context).inputDecorationTheme.errorBorder,
+            focusedBorder: error == null || _isProcessing
+                ? Theme.of(context).inputDecorationTheme.focusedBorder
+                : Theme.of(context).inputDecorationTheme.errorBorder,
+          ),
         ),
 
-        Column(
-          spacing: 12,
+        TextField(
+          controller: _confirm,
+          obscureText: !showPassword,
+          readOnly: _isProcessing,
+          onSubmitted: _registering,
+          onChanged: _validatePassword,
+          decoration: InputDecoration(
+            labelText: "Confirm Password",
+            enabledBorder: error == null || _isProcessing
+                ? Theme.of(context).inputDecorationTheme.enabledBorder
+                : Theme.of(context).inputDecorationTheme.errorBorder,
+            focusedBorder: error == null || _isProcessing
+                ? Theme.of(context).inputDecorationTheme.focusedBorder
+                : Theme.of(context).inputDecorationTheme.errorBorder,
+          ),
+        ),
+
+        if (error != null)
+          Text(
+            error!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppTheme.inputErrorText),
+          ),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: _password,
-              obscureText: !showPassword,
-              readOnly: _isProcessing,
-              onSubmitted: _registering,
-              onChanged: _validatePassword,
-              decoration: InputDecoration(
-                labelText: "Password",
-                enabledBorder: error == null || _isProcessing
-                    ? Theme.of(context).inputDecorationTheme.enabledBorder
-                    : Theme.of(context).inputDecorationTheme.errorBorder,
-                focusedBorder: error == null || _isProcessing
-                    ? Theme.of(context).inputDecorationTheme.focusedBorder
-                    : Theme.of(context).inputDecorationTheme.errorBorder,
-              ),
-            ),
-            TextField(
-              controller: _confirm,
-              obscureText: !showPassword,
-              readOnly: _isProcessing,
-              onSubmitted: _registering,
-              onChanged: _validatePassword,
-              decoration: InputDecoration(
-                labelText: "Confirm Password",
-                enabledBorder: error == null || _isProcessing
-                    ? Theme.of(context).inputDecorationTheme.enabledBorder
-                    : Theme.of(context).inputDecorationTheme.errorBorder,
-                focusedBorder: error == null || _isProcessing
-                    ? Theme.of(context).inputDecorationTheme.focusedBorder
-                    : Theme.of(context).inputDecorationTheme.errorBorder,
-              ),
-            ),
-            if (error != null)
-              Text(
-                error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.inputErrorText),
-              ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Checkbox(value: showPassword, onChanged: (v) => setState(() => showPassword = v!)),
-                const Text("Show password"),
-              ],
-            ),
+            Checkbox(value: showPassword, onChanged: (v) => setState(() => showPassword = v!)),
+            const Text("Show password"),
           ],
         ),
 
@@ -161,11 +156,12 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
   }
 
   Widget _buildUnlockUI() {
-    return Column(
+    return WidgetsHeader(
+      title: "Please enter password to unlock",
+      titleFontSize: 16,
       spacing: 20,
-      mainAxisSize: MainAxisSize.min,
+      centered: true,
       children: [
-        const Text("Please enter password to unlock", textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
         TextField(
           controller: _password,
           obscureText: true,

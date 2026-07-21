@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/utils.dart';
 import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/fields/crypto_search.dart';
-import '../../../app/theme.dart';
 import '../../../app/exceptions.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../widgets/buttons/action.dart';
+import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
 import 'controller.dart';
@@ -155,72 +155,66 @@ class _PanelsFormState extends State<PanelsForm> {
   }
 
   Widget _buildFromPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("From", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        Row(
-          spacing: 16,
-          children: [
+    return WidgetsHeader(
+      subtitle: "From:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: Row(
+        spacing: 16,
+        children: [
+          Flexible(
+            flex: 2,
+            child: WidgetsFieldsAmount(
+              title: 'Amount',
+              suffixText: _sourceSymbol,
+              enabled: widget.initialData == null ? widget.initialSrAmount == null : !widget.initialData!.isLinked,
+              helperText: 'e.g., 65000',
+              initialValue: _srAmountText,
+              allowClean: _sourceSymbol == null,
+              allowCopy: _sourceSymbol == null,
+              onChanged: (v) => _srAmountText = Utils.sanitizeNumber(v),
+            ),
+          ),
+          if (_sourceSymbol == null)
             Flexible(
-              flex: 3,
-              child: WidgetsFieldsAmount(
-                title: 'Amount',
-                suffixText: _sourceSymbol,
-                enabled: widget.initialData == null ? widget.initialSrAmount == null : !widget.initialData!.isLinked,
-                helperText: 'e.g., 65000',
-                initialValue: _srAmountText,
-                allowClean: _sourceSymbol == null,
-                allowCopy: _sourceSymbol == null,
-                onChanged: (v) => _srAmountText = Utils.sanitizeNumber(v),
+              flex: 2,
+              child: WidgetsFieldsCryptoSearch(
+                labelText: 'Coin',
+                enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+                initialValue: _selectedSrId,
+                onSelected: (id) => setState(() => _selectedSrId = id),
               ),
             ),
-            if (_sourceSymbol == null)
-              Flexible(
-                flex: 2,
-                child: WidgetsFieldsCryptoSearch(
-                  labelText: 'Coin',
-                  enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-                  initialValue: _selectedSrId,
-                  onSelected: (id) => setState(() => _selectedSrId = id),
-                ),
-              ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildToPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("To", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        WidgetsFieldsCryptoSearch(
-          labelText: 'Target Coin',
-          enabled: widget.initialData == null ? widget.initialRrId == null : !widget.initialData!.isLinked,
-          initialValue: _selectedRrId,
-          onSelected: (id) => setState(() => _selectedRrId = id),
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "To:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: WidgetsFieldsCryptoSearch(
+        labelText: 'Target Coin',
+        enabled: widget.initialData == null ? widget.initialRrId == null : !widget.initialData!.isLinked,
+        initialValue: _selectedRrId,
+        onSelected: (id) => setState(() => _selectedRrId = id),
+      ),
     );
   }
 
   Widget _buildPrecisionPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Precision Digit", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        TextFormField(
-          initialValue: _digit?.toString(),
-          decoration: const InputDecoration(labelText: "Digit"),
-          keyboardType: TextInputType.number,
-          onChanged: (v) => _digit = int.tryParse(v),
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "Precision Digit:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: TextFormField(
+        initialValue: _digit?.toString(),
+        decoration: const InputDecoration(labelText: "Digit"),
+        keyboardType: TextInputType.number,
+        onChanged: (v) => _digit = int.tryParse(v),
+      ),
     );
   }
 

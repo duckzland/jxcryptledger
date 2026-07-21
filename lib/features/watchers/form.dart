@@ -4,11 +4,11 @@ import '../../../core/utils.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
-import '../../app/theme.dart';
 import '../../app/exceptions.dart';
 import '../../core/runtime/locator.dart';
 import '../../mixins/rateable.dart';
 import '../../widgets/buttons/action.dart';
+import '../../widgets/header.dart';
 import 'controller.dart';
 import 'model.dart';
 
@@ -135,137 +135,123 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
   }
 
   Widget _buildFromPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("From", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        WidgetsFieldsCryptoSearch(
-          labelText: 'Coin',
-          initialValue: rateableSource,
-          enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-          onSelected: (id) => setState(() => rateableSource = id),
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "From:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: WidgetsFieldsCryptoSearch(
+        labelText: 'Coin',
+        initialValue: rateableSource,
+        enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+        onSelected: (id) => setState(() => rateableSource = id),
+      ),
     );
   }
 
   Widget _buildToPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("To", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        WidgetsFieldsCryptoSearch(
-          labelText: 'Coin',
-          initialValue: rateableTarget,
-          enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
-          onSelected: (id) => setState(() => rateableTarget = id),
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "To:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: WidgetsFieldsCryptoSearch(
+        labelText: 'Coin',
+        initialValue: rateableTarget,
+        enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+        onSelected: (id) => setState(() => rateableTarget = id),
+      ),
     );
   }
 
   Widget _buildOpsPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Operator", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        DropdownMenu<String>(
-          initialSelection: _operator,
-          requestFocusOnTap: false,
-          label: const Text("Operator"),
-          expandedInsets: EdgeInsets.zero,
-          dropdownMenuEntries: const [
-            DropdownMenuEntry<String>(value: "0", label: "Rate = target rate"),
-            DropdownMenuEntry<String>(value: "1", label: "Rate < target rate"),
-            DropdownMenuEntry<String>(value: "2", label: "Rate > target rate"),
-          ],
-          onSelected: (String? newValue) {
-            if (newValue == null) return;
-            setState(() {
-              _operator = newValue;
-            });
-          },
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "Operator:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: DropdownMenu<String>(
+        initialSelection: _operator,
+        requestFocusOnTap: false,
+        label: const Text("Operator"),
+        expandedInsets: EdgeInsets.zero,
+        dropdownMenuEntries: const [
+          DropdownMenuEntry<String>(value: "0", label: "Rate = target rate"),
+          DropdownMenuEntry<String>(value: "1", label: "Rate < target rate"),
+          DropdownMenuEntry<String>(value: "2", label: "Rate > target rate"),
+        ],
+        onSelected: (String? newValue) {
+          if (newValue == null) return;
+          setState(() {
+            _operator = newValue;
+          });
+        },
+      ),
     );
   }
 
   Widget _buildTargetPanel() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Target Rate", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        const SizedBox(height: 16),
-        WidgetsFieldsAmount(
-          title: 'Rate',
-          helperText: 'e.g., 65000',
-          initialValue: rateableAmount,
-          allowReverse: true,
-          allowRate: rateableAllow,
-          onRetrievingRate: (void Function(String value, String helperText) updateState) {
-            // Store the callback to act as promise contract!
-            rateableStateUpdater = updateState;
-            rateableStateUpdater?.call("", "Retrieving rate...");
-            rateableGetRate();
-          },
-          onChanged: (value) {
-            // Nullify the promise contract!
-            rateableStateUpdater = null;
-            rateableAmount = value;
-          },
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "Target Rate:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: WidgetsFieldsAmount(
+        title: 'Rate',
+        helperText: 'e.g., 65000',
+        initialValue: rateableAmount,
+        allowReverse: true,
+        allowRate: rateableAllow,
+        onRetrievingRate: (void Function(String value, String helperText) updateState) {
+          // Store the callback to act as promise contract!
+          rateableStateUpdater = updateState;
+          rateableStateUpdater?.call("", "Retrieving rate...");
+          rateableGetRate();
+        },
+        onChanged: (value) {
+          // Nullify the promise contract!
+          rateableStateUpdater = null;
+          rateableAmount = value;
+        },
+      ),
     );
   }
 
   Widget _buildLimitPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Limit", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        TextFormField(
-          initialValue: _limitCount,
-          decoration: const InputDecoration(labelText: "Times to send"),
-          keyboardType: TextInputType.number,
-          onChanged: (v) => _limitCount = v,
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "Limit:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: TextFormField(
+        initialValue: _limitCount,
+        decoration: const InputDecoration(labelText: "Times to send"),
+        keyboardType: TextInputType.number,
+        onChanged: (v) => _limitCount = v,
+      ),
     );
   }
 
   Widget _buildDurationPanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Retry Duration", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        TextFormField(
-          initialValue: _durationMinutes,
-          decoration: const InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
-          keyboardType: TextInputType.number,
-          onChanged: (v) => _durationMinutes = v,
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "Retry Duration:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: TextFormField(
+        initialValue: _durationMinutes,
+        decoration: const InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
+        keyboardType: TextInputType.number,
+        onChanged: (v) => _durationMinutes = v,
+      ),
     );
   }
 
   Widget _buildMessagePanel() {
-    return Column(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Message", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        WidgetsFieldsTextarea(
-          title: 'Notification Message',
-          helperText: 'Enter message..',
-          initialValue: _message,
-          onChanged: (value) => _message = value,
-        ),
-      ],
+    return WidgetsHeader(
+      subtitle: "Message:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: WidgetsFieldsTextarea(
+        title: 'Notification Message',
+        helperText: 'Enter message..',
+        initialValue: _message,
+        onChanged: (value) => _message = value,
+      ),
     );
   }
 

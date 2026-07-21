@@ -19,6 +19,7 @@ class WidgetsHeader extends StatelessWidget {
   final FontWeight titleFontWeight;
   final FontWeight subtitleFontWeight;
 
+  final List<Widget>? children;
   final Widget? child;
 
   const WidgetsHeader({
@@ -36,6 +37,7 @@ class WidgetsHeader extends StatelessWidget {
     this.reversed = false,
     this.centered = false,
     this.spacing = 1,
+    this.children,
     this.child,
   });
 
@@ -62,6 +64,10 @@ class WidgetsHeader extends StatelessWidget {
 
     if (child != null) {
       items.add(child!);
+    }
+
+    if (children != null) {
+      items = [...items, ...children!];
     }
 
     return Column(

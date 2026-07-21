@@ -196,6 +196,7 @@ class _ArchivesPageState extends State<ArchivesPage>
         onSave: (e) async {
           if (e == null) {
             Navigator.pop(dialogContext);
+            widgetsNotifySuccess("Data successfully archived");
             return;
           }
 
