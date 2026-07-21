@@ -85,6 +85,7 @@ class WidgetsDialogsExport extends StatefulWidget {
     String? dialogMessage,
     String? dialogCancelLabel,
     String? dialogExportLabel,
+    String? suggestedPrefix,
     Future<String> Function()? onExport,
   }) {
     return WidgetsDialogsExport(
@@ -106,6 +107,7 @@ class WidgetsDialogsExport extends StatefulWidget {
       dialogMessage: dialogMessage ?? this.dialogMessage,
       dialogCancelLabel: dialogCancelLabel ?? this.dialogCancelLabel,
       dialogExportLabel: dialogExportLabel ?? this.dialogExportLabel,
+      suggestedPrefix: suggestedPrefix ?? this.suggestedPrefix,
       onExport: onExport ?? this.onExport,
     );
   }
