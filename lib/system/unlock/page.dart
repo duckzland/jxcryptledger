@@ -74,7 +74,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
     return Scaffold(
       body: Stack(
         children: [
-          Center(child: SizedBox(width: 340, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
+          Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
@@ -92,7 +92,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
       title: "Welcome!",
       titleFontSize: 20,
       subtitle: "Create a password for securing your vault",
-      subtitleFontSize: 16,
+      subtitleFontSize: 14,
       spacing: 16,
       centered: true,
       children: [

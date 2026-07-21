@@ -79,6 +79,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     // Client strapping up
     ipcClient.pipeName = CoreMode.ipcPipeName;
     ipcClient.reconnecting = reconnect;
+    ipcClient.sessionKey = ipcServer.sessionKey;
 
     await ipcClient.start();
 
