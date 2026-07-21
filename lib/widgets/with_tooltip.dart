@@ -5,18 +5,21 @@ import '../app/theme.dart';
 class WidgetsWithTooltip extends StatelessWidget {
   final Widget content;
   final String? message;
+  final String? accent;
 
   final bool showIcon;
-  const WidgetsWithTooltip(this.content, this.message, {super.key, this.showIcon = true});
+  const WidgetsWithTooltip(this.content, this.message, this.accent, {super.key, this.showIcon = true});
 
   @override
   Widget build(BuildContext context) {
-    if (message == null) {
+    if (message == null && !showIcon) {
       return content;
     }
 
+    final Color? ac = int.tryParse(accent ?? '', radix: 16) != null ? Color(int.parse(accent!, radix: 16)) : null;
+
     return Tooltip(
-      message: message!,
+      message: message ?? "",
       child: Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 4,
@@ -24,9 +27,9 @@ class WidgetsWithTooltip extends StatelessWidget {
           content,
           if (showIcon)
             Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(color: AppTheme.green, shape: BoxShape.circle),
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: ac ?? Colors.transparent, shape: BoxShape.circle),
             ),
         ],
       ),

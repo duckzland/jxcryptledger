@@ -62,17 +62,30 @@ class AppTheme {
   static const barrierBg = Color(0xD9000000);
   static const divider = Color(0xFF242E3D);
 
+  static const lightRed = Color(0xFF8C3A3A);
   static const red = Color(0xFF641D1D);
   static const darkRed = Color(0xFF4A1212);
+
+  static const lightGreen = Color(0xFF1D7667);
   static const green = Color(0xFF0F4F34);
   static const darkGreen = Color(0xFF0B3322);
-  static const blue = Color(0xFF2C5EA9);
+
   static const lightBlue = Color(0xFF4C79AF);
-  static const lightPurple = Color(0xFF796A97);
+  static const blue = Color(0xFF2C5EA9);
+  static const darkBlue = Color(0xFF1E3F73);
+
+  static const lightPurple = Color(0xFF9A84B8);
+  static const purple = Color(0xFF6A3FA0);
+  static const darkPurple = Color(0xFF4E3A73);
+
   static const lightOrange = Color(0xFFB4794C);
   static const orange = Color(0xFF915027);
+  static const darkOrange = Color(0xFF7A2F0F);
+
+  static const lightYellow = Color(0xFFE6D46A);
   static const yellow = Color(0xFF927F32);
-  static const teal = Color(0xFF1D7667);
+  static const darkYellow = Color(0xFF5C4A14);
+
   static const darkGrey = Color(0xFF1D1D1D);
 
   static const menuBackground = Color(0xFF1A2F4A);

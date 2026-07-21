@@ -5,6 +5,7 @@ import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
+import '../../../widgets/fields/accent_colors.dart';
 import '../../../widgets/fields/datepicker.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/fields/crypto_search.dart';
@@ -34,6 +35,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   String? _rrAmount;
   String? _noteEntry;
   String? _parentNote;
+  Color? _accentColor;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -101,6 +103,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
                     }
                   },
                 ),
+                _buildAccentColorsPanel(),
                 _buildNotesPanel(),
                 _buildButtonPanel(),
               ],
@@ -141,6 +144,10 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
 
   Widget _buildNotesPanel() {
     return WidgetsHeader(subtitle: "Notes:", subtitleFontSize: 13, spacing: 10, child: _buildNotesField());
+  }
+
+  Widget _buildAccentColorsPanel() {
+    return WidgetsHeader(subtitle: "Accent Color:", subtitleFontSize: 13, spacing: 10, child: _buildColorsField());
   }
 
   Widget _buildButtonPanel() {
@@ -204,6 +211,14 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
     );
   }
 
+  Widget _buildColorsField() {
+    return WidgetsFieldsAccentColors(
+      onChange: (value) {
+        setState(() => _accentColor = value);
+      },
+    );
+  }
+
   Widget _buildTimestampField() {
     TransactionsModel tx = widget.initialData!;
 
@@ -254,7 +269,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
         status: TransactionStatus.active.index,
         timestamp: Utils.dateToTimestamp(_selectedDate),
         closable: false,
-        meta: _saveNotesField(),
+        meta: _saveMetaField(),
       );
       await _txController.add(child);
       widget.onSave?.call(null, child);
@@ -273,11 +288,14 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
     return data.rid;
   }
 
-  Map<String, dynamic> _saveNotesField() {
+  Map<String, dynamic> _saveMetaField() {
     final data = widget.initialData!;
     final meta = Map<String, dynamic>.from(data.meta);
 
     meta['trading_notes'] = _noteEntry;
+    if (_accentColor != null) {
+      meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
+    }
     return meta;
   }
 }

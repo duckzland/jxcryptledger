@@ -137,7 +137,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
         case TickerType.fearGreed:
           final index = double.tryParse(rawValue) ?? 0;
           if (index >= 75) return AppTheme.green;
-          if (index >= 55) return AppTheme.teal;
+          if (index >= 55) return AppTheme.lightGreen;
           if (index >= 45) return AppTheme.yellow;
           if (index >= 25) return AppTheme.orange;
           return AppTheme.red;

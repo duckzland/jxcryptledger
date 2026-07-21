@@ -6,6 +6,7 @@ import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
+import '../../../widgets/fields/accent_colors.dart';
 import '../../../widgets/fields/datepicker.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/fields/crypto_search.dart';
@@ -34,6 +35,7 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
   String? _srAmount;
   String? _rrAmount;
   String? _noteEntry;
+  Color? _accentColor;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -49,46 +51,6 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
     _srAmount = null;
     _rrAmount = null;
     _noteEntry = null;
-  }
-
-  void _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
-    try {
-      if (_isCapital) {
-        _rrAmount = _srAmount;
-        _selectedRrId = _selectedSrId;
-      } else {
-        if (_rrAmount == _srAmount && _selectedRrId == _selectedSrId) {
-          throw ValidationException(
-            AppErrorCode.txBasicSrIdEqualsRrId,
-            "srId must not equal rrId (srId=$_selectedSrId, rrId=$_selectedRrId).",
-            "Source and target coin must be different.",
-          );
-        }
-      }
-
-      final tx = TransactionsModel(
-        tid: generateTid(),
-        rid: '0',
-        pid: '0',
-        srId: _selectedSrId ?? 0,
-        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
-        rrId: _selectedRrId ?? 0,
-        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-        status: TransactionStatus.active.index,
-        timestamp: Utils.dateToTimestamp(_selectedDate),
-        closable: true,
-        meta: {'purchase_notes': _noteEntry},
-      );
-
-      await _txController.add(tx);
-      widget.onSave?.call(null, tx);
-    } on ValidationException catch (e) {
-      widget.onSave?.call(e, null);
-    } catch (e) {
-      widget.onSave?.call(e, null);
-    }
   }
 
   @override
@@ -126,6 +88,7 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
                     }
                   },
                 ),
+                _buildAccentColorsPanel(),
                 _buildNotesPanel(),
                 _buildButtonPanel(),
               ],
@@ -191,6 +154,10 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
     return WidgetsHeader(subtitle: "Notes:", subtitleFontSize: 13, spacing: 10, child: _buildNotesField());
   }
 
+  Widget _buildAccentColorsPanel() {
+    return WidgetsHeader(subtitle: "Accent Color:", subtitleFontSize: 13, spacing: 10, child: _buildColorsField());
+  }
+
   Widget _buildButtonPanel() {
     return _buildButtons();
   }
@@ -237,6 +204,14 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
     );
   }
 
+  Widget _buildColorsField() {
+    return WidgetsFieldsAccentColors(
+      onChange: (value) {
+        setState(() => _accentColor = value);
+      },
+    );
+  }
+
   Widget _buildTimestampField() {
     final currentDate = DateTime.now();
 
@@ -265,5 +240,50 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
         ],
       ),
     );
+  }
+
+  void _handleSave() async {
+    if (!_formKey.currentState!.validate()) return;
+    try {
+      if (_isCapital) {
+        _rrAmount = _srAmount;
+        _selectedRrId = _selectedSrId;
+      } else {
+        if (_rrAmount == _srAmount && _selectedRrId == _selectedSrId) {
+          throw ValidationException(
+            AppErrorCode.txBasicSrIdEqualsRrId,
+            "srId must not equal rrId (srId=$_selectedSrId, rrId=$_selectedRrId).",
+            "Source and target coin must be different.",
+          );
+        }
+      }
+
+      final meta = {'purchase_notes': _noteEntry};
+      if (_accentColor != null) {
+        meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
+      }
+
+      final tx = TransactionsModel(
+        tid: generateTid(),
+        rid: '0',
+        pid: '0',
+        srId: _selectedSrId ?? 0,
+        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
+        rrId: _selectedRrId ?? 0,
+        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        status: TransactionStatus.active.index,
+        timestamp: Utils.dateToTimestamp(_selectedDate),
+        closable: true,
+        meta: meta,
+      );
+
+      await _txController.add(tx);
+      widget.onSave?.call(null, tx);
+    } on ValidationException catch (e) {
+      widget.onSave?.call(e, null);
+    } catch (e) {
+      widget.onSave?.call(e, null);
+    }
   }
 }

@@ -6,6 +6,7 @@ import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
+import '../../../widgets/fields/accent_colors.dart';
 import '../../../widgets/fields/datepicker.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
@@ -35,6 +36,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   String? _srAmount;
   String? _rrAmount;
   String? _noteEntry;
+  Color? _accentColor;
 
   bool? _hasLeaf;
   bool _isActive = true;
@@ -64,6 +66,260 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     _isActive = widget.initialData?.statusEnum == TransactionStatus.active;
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(24),
+      constraints: const BoxConstraints(maxWidth: 1600),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 30,
+              children: [
+                _buildTitle(),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth > 900) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 16,
+                        children: [
+                          SizedBox(width: 260, child: _buildDatePanel()),
+
+                          Expanded(child: _buildFromPanel()),
+
+                          if (!isRoot || !_isCapital) Column(children: const [SizedBox(height: 42), Icon(Icons.arrow_forward, size: 24)]),
+
+                          if (!isRoot || !_isCapital) Expanded(child: _buildToPanel()),
+                        ],
+                      );
+                    } else {
+                      return Column(spacing: 30, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
+                    }
+                  },
+                ),
+                _buildAccentColorsPanel(),
+                _buildNotesPanel(),
+                _buildButtonPanel(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePanel() {
+    return WidgetsHeader(subtitle: "On Date:", subtitleFontSize: 13, spacing: 10, child: _buildTimestampField());
+  }
+
+  Widget _buildFromPanel() {
+    return WidgetsHeader(
+      spacing: 10,
+      children: [
+        isRoot
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+                  const Spacer(),
+                  SizedBox(
+                    height: 20,
+                    child: Checkbox(
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      value: _isCapital,
+                      onChanged: (v) => setState(() {
+                        _isCapital = v!;
+                        _selectedRrId = null;
+                        _rrAmount = null;
+                      }),
+                    ),
+                  ),
+                  const Text("Set as capital"),
+                ],
+              )
+            : const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        Row(
+          spacing: 12,
+          children: [
+            Flexible(flex: 2, child: _buildSourceAmountField()),
+            if (isRoot) Flexible(flex: 2, child: _buildSourceCryptoField()),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToPanel() {
+    return WidgetsHeader(
+      subtitle: "To:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: Row(
+        spacing: 12,
+        children: [
+          Flexible(flex: 2, child: _buildResultAmountField()),
+          if (!(!isRoot && !_isActive)) Flexible(flex: 2, child: _buildResultCryptoField()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesPanel() {
+    return WidgetsHeader(subtitle: "Notes:", subtitleFontSize: 13, spacing: 10, child: _buildNotesField());
+  }
+
+  Widget _buildAccentColorsPanel() {
+    return WidgetsHeader(subtitle: "Accent Color:", subtitleFontSize: 13, spacing: 10, child: _buildColorsField());
+  }
+
+  Widget _buildButtonPanel() {
+    return _buildButtons();
+  }
+
+  Widget _buildTitle() {
+    return const Text('Edit Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+  }
+
+  Widget _buildSourceAmountField() {
+    String? symbol;
+    final data = widget.initialData;
+
+    if (!isRoot) {
+      final srid = data?.srId ?? 0;
+      symbol = _cryptoController.getSymbol(srid);
+    }
+
+    return WidgetsFieldsAmount(
+      title: 'Amount',
+      initialValue: data?.srAmountTextRaw.replaceAll(',', ''),
+      suffixText: symbol,
+      enabled: _isActive,
+      helperText: 'e.g., 1.5',
+      onChanged: (value) {
+        _srAmount = value;
+      },
+    );
+  }
+
+  Widget _buildSourceCryptoField() {
+    final data = widget.initialData;
+
+    return WidgetsFieldsCryptoSearch(
+      labelText: 'Coin',
+      initialValue: data?.srId,
+      enabled: isRoot,
+      onSelected: (id) => setState(() => _selectedSrId = id),
+    );
+  }
+
+  Widget _buildResultAmountField() {
+    String? symbol;
+
+    final data = widget.initialData;
+
+    if (!isRoot && !_isActive) {
+      final rrid = data?.rrId ?? 0;
+      symbol = _cryptoController.getSymbol(rrid);
+    }
+
+    return WidgetsFieldsAmount(
+      title: 'Amount',
+      initialValue: data?.rrAmountTextRaw.replaceAll(',', ''),
+      suffixText: symbol,
+      enabled: isRoot || _isActive,
+      helperText: 'e.g., 10.5',
+      onChanged: (value) {
+        _rrAmount = value;
+      },
+    );
+  }
+
+  Widget _buildResultCryptoField() {
+    final data = widget.initialData;
+
+    return WidgetsFieldsCryptoSearch(
+      labelText: 'Coin',
+      initialValue: data?.rrId,
+      enabled: !(!isRoot && !_isActive),
+      onSelected: (id) => setState(() => _selectedRrId = id),
+    );
+  }
+
+  Widget _buildNotesField() {
+    final data = widget.initialData;
+
+    return WidgetsFieldsTextarea(
+      title: isRoot ? 'Purchase Notes' : 'Trading Notes',
+      helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
+      initialValue: data?.noteText,
+      onChanged: (value) {
+        setState(() => _noteEntry = value);
+      },
+    );
+  }
+
+  Widget _buildColorsField() {
+    final data = widget.initialData;
+    Color initialColor = Colors.transparent;
+
+    if (data?.meta['accent_color'] != null) {
+      final parsedColor = int.tryParse(data!.meta['accent_color'], radix: 16);
+      if (parsedColor != null) {
+        initialColor = Color(parsedColor);
+      }
+    }
+    return WidgetsFieldsAccentColors(
+      initialValue: initialColor,
+      onChange: (value) {
+        setState(() => _accentColor = value);
+      },
+    );
+  }
+
+  Widget _buildTimestampField() {
+    TransactionsModel tx = widget.initialData!;
+    final initialDate = DateTime.fromMicrosecondsSinceEpoch(tx.sanitizedTimestamp, isUtc: true).toLocal();
+    final hasLeaf = _hasLeaf ?? false;
+    DateTime firstDate = DateTime(2000).toLocal();
+    if (widget.parent != null) {
+      final DateTime localParent = DateTime.fromMicrosecondsSinceEpoch(widget.parent!.sanitizedTimestamp, isUtc: true).toLocal();
+      firstDate = DateTime(localParent.year, localParent.month, localParent.day);
+    }
+
+    return WidgetsFieldsDatepicker(
+      labelText: 'Date',
+      enabled: !hasLeaf,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: DateTime.now().toLocal(),
+      onSelected: (date) => setState(() => _selectedDate = date),
+    );
+  }
+
+  Widget _buildButtons() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      child: Wrap(
+        direction: Axis.horizontal,
+        runSpacing: 20,
+        spacing: 10,
+        runAlignment: WrapAlignment.center,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+          WidgetsButtonsAction(label: "Update", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
+        ],
+      ),
+    );
+  }
+
   void detectLeaf(TransactionsModel tx) {
     final leaf = _txController.hasLeaf(tx);
     setState(() {
@@ -83,7 +339,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
       final srId = _saveSourceCryptoField();
       final srAmount = _saveSourceAmountField();
       final timestamp = _selectedDate != null ? Utils.dateToTimestamp(_selectedDate) : data.timestamp;
-      final meta = _saveNotesField();
+      final meta = _saveMetaField();
       double balance = _saveBalanceField();
 
       int rrId = _saveResultCryptoField();
@@ -173,250 +429,26 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     return data.rrAmount;
   }
 
-  Map<String, dynamic> _saveNotesField() {
+  Map<String, dynamic> _saveMetaField() {
     final data = widget.initialData!;
-    if (_noteEntry != null) {
+    if (_noteEntry != null || _accentColor != null) {
       final meta = Map<String, dynamic>.from(data.meta);
-      if (isRoot) {
-        meta['purchase_notes'] = _noteEntry;
-      } else {
-        meta['trading_notes'] = _noteEntry;
+
+      if (_noteEntry != null) {
+        if (isRoot) {
+          meta['purchase_notes'] = _noteEntry;
+        } else {
+          meta['trading_notes'] = _noteEntry;
+        }
+      }
+
+      if (_accentColor != null) {
+        meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
       }
 
       return meta;
     }
 
     return data.meta;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1600),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 30,
-              children: [
-                _buildTitle(),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth > 900) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 16,
-                        children: [
-                          SizedBox(width: 260, child: _buildDatePanel()),
-
-                          Expanded(child: _buildFromPanel()),
-
-                          if (!isRoot || !_isCapital) Column(children: const [SizedBox(height: 42), Icon(Icons.arrow_forward, size: 24)]),
-
-                          if (!isRoot || !_isCapital) Expanded(child: _buildToPanel()),
-                        ],
-                      );
-                    } else {
-                      return Column(spacing: 30, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
-                    }
-                  },
-                ),
-                _buildNotesPanel(),
-                _buildButtonPanel(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDatePanel() {
-    return WidgetsHeader(subtitle: "On Date:", subtitleFontSize: 13, spacing: 10, child: _buildTimestampField());
-  }
-
-  Widget _buildFromPanel() {
-    return WidgetsHeader(
-      spacing: 10,
-      children: [
-        isRoot
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-                  const Spacer(),
-                  SizedBox(
-                    height: 20,
-                    child: Checkbox(
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      value: _isCapital,
-                      onChanged: (v) => setState(() {
-                        _isCapital = v!;
-                        _selectedRrId = null;
-                        _rrAmount = null;
-                      }),
-                    ),
-                  ),
-                  const Text("Set as capital"),
-                ],
-              )
-            : const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-        Row(
-          spacing: 12,
-          children: [
-            Flexible(flex: 2, child: _buildSourceAmountField()),
-            if (isRoot) Flexible(flex: 2, child: _buildSourceCryptoField()),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildToPanel() {
-    return WidgetsHeader(
-      subtitle: "To:",
-      subtitleFontSize: 13,
-      spacing: 10,
-      child: Row(
-        spacing: 12,
-        children: [
-          Flexible(flex: 2, child: _buildResultAmountField()),
-          if (!(!isRoot && !_isActive)) Flexible(flex: 2, child: _buildResultCryptoField()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotesPanel() {
-    return WidgetsHeader(subtitle: "Notes:", subtitleFontSize: 13, spacing: 10, child: _buildNotesField());
-  }
-
-  Widget _buildButtonPanel() {
-    return _buildButtons();
-  }
-
-  Widget _buildTitle() {
-    return const Text('Edit Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
-  }
-
-  Widget _buildSourceAmountField() {
-    String? symbol;
-    final data = widget.initialData;
-
-    if (!isRoot) {
-      final srid = data?.srId ?? 0;
-      symbol = _cryptoController.getSymbol(srid);
-    }
-
-    return WidgetsFieldsAmount(
-      title: 'Amount',
-      initialValue: data?.srAmountTextRaw.replaceAll(',', ''),
-      suffixText: symbol,
-      enabled: _isActive,
-      helperText: 'e.g., 1.5',
-      onChanged: (value) {
-        _srAmount = value;
-      },
-    );
-  }
-
-  Widget _buildSourceCryptoField() {
-    final data = widget.initialData;
-
-    return WidgetsFieldsCryptoSearch(
-      labelText: 'Coin',
-      initialValue: data?.srId,
-      enabled: isRoot,
-      onSelected: (id) => setState(() => _selectedSrId = id),
-    );
-  }
-
-  Widget _buildResultAmountField() {
-    String? symbol;
-
-    final data = widget.initialData;
-
-    if (!isRoot && !_isActive) {
-      final rrid = data?.rrId ?? 0;
-      symbol = _cryptoController.getSymbol(rrid);
-    }
-
-    return WidgetsFieldsAmount(
-      title: 'Amount',
-      initialValue: data?.rrAmountTextRaw.replaceAll(',', ''),
-      suffixText: symbol,
-      enabled: isRoot || _isActive,
-      helperText: 'e.g., 10.5',
-      onChanged: (value) {
-        _rrAmount = value;
-      },
-    );
-  }
-
-  Widget _buildResultCryptoField() {
-    final data = widget.initialData;
-
-    return WidgetsFieldsCryptoSearch(
-      labelText: 'Coin',
-      initialValue: data?.rrId,
-      enabled: !(!isRoot && !_isActive),
-      onSelected: (id) => setState(() => _selectedRrId = id),
-    );
-  }
-
-  Widget _buildNotesField() {
-    final data = widget.initialData;
-
-    return WidgetsFieldsTextarea(
-      title: isRoot ? 'Purchase Notes' : 'Trading Notes',
-      helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
-      initialValue: data?.noteText,
-      onChanged: (value) {
-        setState(() => _noteEntry = value);
-      },
-    );
-  }
-
-  Widget _buildTimestampField() {
-    TransactionsModel tx = widget.initialData!;
-    final initialDate = DateTime.fromMicrosecondsSinceEpoch(tx.sanitizedTimestamp, isUtc: true).toLocal();
-    final hasLeaf = _hasLeaf ?? false;
-    DateTime firstDate = DateTime(2000).toLocal();
-    if (widget.parent != null) {
-      final DateTime localParent = DateTime.fromMicrosecondsSinceEpoch(widget.parent!.sanitizedTimestamp, isUtc: true).toLocal();
-      firstDate = DateTime(localParent.year, localParent.month, localParent.day);
-    }
-
-    return WidgetsFieldsDatepicker(
-      labelText: 'Date',
-      enabled: !hasLeaf,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: DateTime.now().toLocal(),
-      onSelected: (date) => setState(() => _selectedDate = date),
-    );
-  }
-
-  Widget _buildButtons() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
-      child: Wrap(
-        direction: Axis.horizontal,
-        runSpacing: 20,
-        spacing: 10,
-        runAlignment: WrapAlignment.center,
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
-          WidgetsButtonsAction(label: "Update", initialState: WidgetsButtonActionState.action, onPressed: (_) => _handleSave()),
-        ],
-      ),
-    );
   }
 }

@@ -431,7 +431,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           TransactionsDialogsDetails.show(context, r['tx']);
         },
         cells: [
-          DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
+          DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
           DataCell(Text(r['from'])),
 
           if (!isCapital) DataCell(Text(r['to'])),

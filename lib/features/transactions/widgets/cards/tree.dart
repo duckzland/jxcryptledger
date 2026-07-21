@@ -106,8 +106,9 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
           _tx = widget.tx;
           _calculateColor();
         });
+
+        return;
       }
-      return;
     }
 
     if (_txController.isBothEqual(oldWidget.tx, widget.tx)) {
@@ -301,7 +302,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
           spacing: 20,
           mainAxisSize: MainAxisSize.min,
           children: [
-            WidgetsWithTooltip(header, _tx.noteText),
+            WidgetsWithTooltip(header, _tx.noteText, _tx.meta['accent_color']),
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 

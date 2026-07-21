@@ -138,7 +138,7 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
           spacing: 20,
           mainAxisSize: MainAxisSize.max,
           children: [
-            WidgetsWithTooltip(header, _tx.noteText),
+            WidgetsWithTooltip(header, _tx.noteText, _tx.meta['accent_color']),
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 

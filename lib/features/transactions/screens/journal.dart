@@ -202,7 +202,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
                     TransactionsDialogsDetails.show(context, tx);
                   },
                   cells: [
-                    DataCell(WidgetsWithTooltip(Text(r['date']), r['note'])),
+                    DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
                     DataCell(Text(r['source'] ?? '')),
                     DataCell(Text(r['result'] ?? '')),
                     DataCell(Text(r['balance'] ?? '')),
