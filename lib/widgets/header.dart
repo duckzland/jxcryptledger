@@ -3,48 +3,72 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 
 class WidgetsHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
+  final String? title;
+  final String? subtitle;
 
   final Color titleColor;
   final Color subtitleColor;
 
   final bool reversed;
-
   final bool centered;
+
+  final double titleFontSize;
+  final double subtitleFontSize;
+  final double spacing;
+
+  final FontWeight titleFontWeight;
+  final FontWeight subtitleFontWeight;
+
+  final Widget? child;
 
   const WidgetsHeader({
     super.key,
-    required this.title,
-    required this.subtitle,
+    this.title,
+    this.subtitle,
     this.titleColor = AppTheme.text,
+    this.titleFontSize = 14,
+    this.titleFontWeight = FontWeight.w600,
+
     this.subtitleColor = AppTheme.textMuted,
+    this.subtitleFontSize = 11,
+    this.subtitleFontWeight = FontWeight.w400,
+
     this.reversed = false,
     this.centered = false,
+    this.spacing = 1,
+    this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      if (title != "")
+    List<Widget> items = [
+      if (title != null && title != "")
         Text(
-          title,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: titleColor),
+          title!,
+          style: TextStyle(fontSize: titleFontSize, fontWeight: titleFontWeight, color: titleColor),
         ),
-      if (title != "") const SizedBox(height: 1),
-      if (subtitle != "")
+      if (subtitle != null && subtitle != "")
         Text(
-          subtitle,
-          style: TextStyle(fontSize: 11, color: subtitleColor),
+          subtitle!,
+          style: TextStyle(fontSize: subtitleFontSize, fontWeight: subtitleFontWeight, color: subtitleColor),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
     ];
 
+    if (reversed) {
+      items = items.reversed.toList();
+    }
+
+    if (child != null) {
+      items.add(child!);
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: reversed ? items.reversed.toList() : items,
+      spacing: spacing,
+      children: items,
     );
   }
 }

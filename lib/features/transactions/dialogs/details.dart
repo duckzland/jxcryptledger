@@ -33,29 +33,21 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
             children: [
               const Text("Transaction Information", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
-              Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 0, children: [_buildInformation()]),
+              _buildInformation(),
 
               WidgetsHeader(title: tx.noteText ?? "No notes available", subtitle: "Notes", reversed: true),
 
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              WidgetsHeader(
+                subtitle: "History",
+                reversed: true,
                 spacing: 5,
-                children: [
-                  WidgetsHeader(title: "", subtitle: "History", reversed: true),
-                  SizedBox(width: double.infinity, height: calculateAdjustedMaxHeight(), child: _buildHistory()),
-                ],
+                child: SizedBox(width: double.infinity, height: calculateAdjustedMaxHeight(), child: _buildHistory()),
               ),
 
               Padding(
                 padding: const EdgeInsets.only(top: 15.0, bottom: 5),
-                child: Wrap(
-                  direction: Axis.horizontal,
-                  runSpacing: 20,
-                  spacing: 10,
-                  runAlignment: WrapAlignment.center,
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context))],
+                child: Center(
+                  child: WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context)),
                 ),
               ),
             ],
