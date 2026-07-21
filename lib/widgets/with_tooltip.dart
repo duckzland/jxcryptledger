@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../app/theme.dart';
-
 class WidgetsWithTooltip extends StatelessWidget {
   final Widget content;
   final String? message;
