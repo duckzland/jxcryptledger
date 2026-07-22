@@ -293,6 +293,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
     final meta = Map<String, dynamic>.from(data.meta);
 
     meta['trading_notes'] = _noteEntry;
+
     if (_accentColor != null) {
       meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
     }

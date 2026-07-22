@@ -14,8 +14,10 @@ import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
+import '../../../widgets/fields/accent_colors.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
+import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
 import '../../cryptos/controller.dart';
@@ -47,12 +49,15 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   late double _sourceAmount;
   late List<TransactionsModel> txs;
 
+  Color? _accentColor;
+  String? _noteEntry;
+
   bool _isReversed = false;
 
   Timer? _debounce;
 
   @override
-  double get tableHeightOffset => 290;
+  double get tableHeightOffset => 360;
 
   @override
   double get tableHeadingHeightOffset => 0;
@@ -89,7 +94,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 20,
+            spacing: 16,
             children: [
               if (txs.isNotEmpty) const Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               if (txs.isNotEmpty) _buildCalculator(),
@@ -254,33 +259,49 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 800) {
-            return SizedBox(
-              width: double.infinity,
-              height: hasError ? 108 : 90,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildFromAmountField()),
+            return Column(
+              spacing: 10,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: hasError ? 108 : 90,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildFromAmountField()),
+                      ),
+
+                      const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.clear, size: 24)),
+
+                      Expanded(
+                        child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
+                      ),
+
+                      const Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
+
+                      Expanded(
+                        child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
+                      ),
+
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40),
+                        child: Icon(Icons.arrow_forward, size: 24),
+                      ),
+
+                      Expanded(child: _buildCalculatedResult()),
+                    ],
                   ),
-
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.clear, size: 24)),
-
-                  Expanded(
-                    child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
-                  ),
-
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
-
-                  Expanded(
-                    child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
-                  ),
-
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
-
-                  Expanded(child: _buildCalculatedResult()),
-                ],
-              ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 16,
+                  children: [
+                    Flexible(flex: 2, child: _buildNotesPanel()),
+                    Flexible(flex: 2, child: _buildAccentColorsPanel()),
+                  ],
+                ),
+              ],
             );
           } else {
             return Wrap(
@@ -307,12 +328,22 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 ),
                 Row(children: [Expanded(child: _buildResultCryptoField())]),
                 Row(children: [Expanded(child: _buildCalculatedResult())]),
+                Row(children: [Expanded(child: _buildAccentColorsPanel())]),
+                Row(children: [Expanded(child: _buildNotesPanel())]),
               ],
             );
           }
         },
       ),
     );
+  }
+
+  Widget _buildAccentColorsPanel() {
+    return WidgetsHeader(subtitle: "Accent Color:", subtitleFontSize: 13, spacing: 10, child: _buildColorsField());
+  }
+
+  Widget _buildNotesPanel() {
+    return WidgetsHeader(subtitle: "Notes:", subtitleFontSize: 13, spacing: 10, child: _buildNotesField());
   }
 
   Widget _buildFromAmountField() {
@@ -373,6 +404,25 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     );
   }
 
+  Widget _buildNotesField() {
+    return WidgetsFieldsTextarea(
+      title: 'Trading Notes',
+      helperText: 'Add notes..',
+      maxLines: 3,
+      onChanged: (value) {
+        setState(() => _noteEntry = value);
+      },
+    );
+  }
+
+  Widget _buildColorsField() {
+    return WidgetsFieldsAccentColors(
+      onChange: (value) {
+        setState(() => _accentColor = value);
+      },
+    );
+  }
+
   Widget _buildCalculatedResult() {
     final stxs = [...txs];
 
@@ -414,6 +464,16 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     for (final tx in stxs) {
       final double amount = Math.multiply(tx.balance, rate);
+      final meta = tx.meta;
+
+      if (_noteEntry != null) {
+        meta['trading_notes'] = _noteEntry;
+      }
+
+      if (_accentColor != null) {
+        meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
+      }
+
       try {
         final child = TransactionsModel(
           tid: _txController.generateId(),
@@ -427,7 +487,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           status: TransactionStatus.active.index,
           timestamp: Utils.dateToTimestamp(DateTime.now()),
           closable: false,
-          meta: tx.meta,
+          meta: meta,
         );
         await _txController.add(child);
         txs.remove(tx);
