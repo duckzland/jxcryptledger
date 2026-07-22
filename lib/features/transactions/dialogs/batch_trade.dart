@@ -53,11 +53,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   String? _noteEntry;
 
   bool _isReversed = false;
+  bool _showNotes = false;
 
   Timer? _debounce;
 
   @override
-  double get tableHeightOffset => 360;
+  double get tableHeightOffset => _showNotes ? 360 : 290;
 
   @override
   double get tableHeadingHeightOffset => 0;
@@ -96,7 +97,31 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 16,
             children: [
-              if (txs.isNotEmpty) const Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isNotEmpty)
+                Row(
+                  children: [
+                    Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                    Spacer(),
+                    WidgetsButtonsAction(
+                      icon: Icons.note_add,
+                      iconSize: 14,
+                      padding: EdgeInsets.all(10),
+                      minimumSize: Size(40, 40),
+                      tooltip: _showNotes ? "Hide notes" : "Show Notes",
+                      onPressed: (s) {
+                        setState(() {
+                          _showNotes = !_showNotes;
+                        });
+
+                        if (_showNotes) {
+                          s.action();
+                        } else {
+                          s.normal();
+                        }
+                      },
+                    ),
+                  ],
+                ),
               if (txs.isNotEmpty) _buildCalculator(),
               if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
               if (txs.isEmpty) const Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
@@ -293,14 +318,15 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     ],
                   ),
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 16,
-                  children: [
-                    Flexible(flex: 2, child: _buildNotesPanel()),
-                    Flexible(flex: 2, child: _buildAccentColorsPanel()),
-                  ],
-                ),
+                if (_showNotes)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 16,
+                    children: [
+                      Flexible(flex: 2, child: _buildNotesPanel()),
+                      Flexible(flex: 2, child: _buildAccentColorsPanel()),
+                    ],
+                  ),
               ],
             );
           } else {
@@ -328,8 +354,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 ),
                 Row(children: [Expanded(child: _buildResultCryptoField())]),
                 Row(children: [Expanded(child: _buildCalculatedResult())]),
-                Row(children: [Expanded(child: _buildAccentColorsPanel())]),
-                Row(children: [Expanded(child: _buildNotesPanel())]),
+                if (_showNotes) Row(children: [Expanded(child: _buildAccentColorsPanel())]),
+                if (_showNotes) Row(children: [Expanded(child: _buildNotesPanel())]),
               ],
             );
           }
