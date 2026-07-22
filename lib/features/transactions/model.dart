@@ -333,6 +333,9 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
   }
 
   String? get noteText {
+    if (meta['group_notes'] != null && meta['group_notes'] != "") {
+      return meta['group_notes'];
+    }
     if (meta['trading_notes'] != null && meta['trading_notes'] != "") {
       return meta['trading_notes'];
     }

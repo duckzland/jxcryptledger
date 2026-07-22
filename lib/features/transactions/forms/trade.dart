@@ -35,6 +35,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   String? _rrAmount;
   String? _noteEntry;
   String? _parentNote;
+  String? _groupNote;
   Color? _accentColor;
 
   final _formKey = GlobalKey<FormState>();
@@ -59,6 +60,10 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
 
     if (widget.initialData != null && widget.initialData!.isLeaf) {
       _parentNote = widget.initialData!.meta['trading_notes'];
+    }
+
+    if (widget.initialData != null) {
+      _groupNote = widget.initialData!.meta['group_notes'];
     }
 
     _selectedRrId = null;
@@ -208,11 +213,14 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   Widget _buildNotesField() {
+    const divider = Divider(height: 1, thickness: 1);
     return Column(
+      spacing: 16,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_parentNote != null && _parentNote != "") Text(_parentNote!),
-        if (_parentNote != null && _parentNote != "") const SizedBox(height: 24),
+        if (_parentNote != null && _parentNote!.isNotEmpty) ...[Text(_parentNote!), divider],
+
+        if (_groupNote != null && _groupNote!.isNotEmpty) ...[Text(_groupNote!), divider],
 
         WidgetsFieldsTextarea(
           title: 'New Trading Notes',

@@ -49,6 +49,7 @@ class _WidgetsFieldsTextareaState extends State<WidgetsFieldsTextarea> {
       textAlignVertical: TextAlignVertical.top,
       decoration: InputDecoration(labelText: widget.title, hintText: widget.helperText, alignLabelWithHint: true),
       maxLines: widget.maxLines,
+      enabled: widget.enabled,
       onChanged: (value) {
         _debounce?.cancel();
         _debounce = Timer(const Duration(milliseconds: 100), () {

@@ -36,6 +36,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   String? _srAmount;
   String? _rrAmount;
   String? _noteEntry;
+  String? _groupNoteEntry;
   Color? _accentColor;
 
   bool? _hasLeaf;
@@ -272,15 +273,35 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   }
 
   Widget _buildNotesField() {
-    final data = widget.initialData;
+    final data = widget.initialData!;
+    final notes = isRoot ? data.meta['purchase_notes'] : data.meta['trading_notes'];
+    final groupNotes = data.meta['group_notes'];
+    final hasGroupNotes = groupNotes is String && groupNotes.isNotEmpty;
 
-    return WidgetsFieldsTextarea(
-      title: isRoot ? 'Purchase Notes' : 'Trading Notes',
-      helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
-      initialValue: data?.noteText,
-      onChanged: (value) {
-        setState(() => _noteEntry = value);
-      },
+    return Column(
+      spacing: 16,
+      children: [
+        WidgetsFieldsTextarea(
+          title: isRoot ? 'Purchase Notes' : 'Trading Notes',
+          helperText: isRoot ? 'Edit purchase notes..' : 'Edit trading notes...',
+          initialValue: notes,
+          maxLines: hasGroupNotes ? 3 : 4,
+          onChanged: (value) {
+            setState(() => _noteEntry = value);
+          },
+        ),
+
+        if (hasGroupNotes)
+          WidgetsFieldsTextarea(
+            title: 'Group Notes',
+            helperText: 'Edit group notes..',
+            initialValue: groupNotes,
+            maxLines: 2,
+            onChanged: (value) {
+              setState(() => _groupNoteEntry = value);
+            },
+          ),
+      ],
     );
   }
 
@@ -460,6 +481,10 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
         } else {
           meta['trading_notes'] = _noteEntry;
         }
+      }
+
+      if (_groupNoteEntry != null) {
+        meta['group_notes'] = _groupNoteEntry;
       }
 
       if (_accentColor != null) {

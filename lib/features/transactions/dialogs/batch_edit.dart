@@ -54,7 +54,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     txs = List.from(widget.transactions ?? []);
     txs.retainWhere((tx) => _txController.isUpdatable(tx));
 
-    final notes = {for (final tx in txs) tx.meta['trading_notes']};
+    final notes = {for (final tx in txs) tx.meta['group_notes']};
     final accents = {for (final tx in txs) tx.meta['accent_color']};
 
     if (notes.length == 1) {
@@ -228,7 +228,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
 
   Widget _buildNotesField() {
     return WidgetsFieldsTextarea(
-      title: 'Trading Notes',
+      title: 'Group Notes',
       helperText: 'Add notes..',
       maxLines: 3,
       initialValue: _noteEntry,
@@ -258,10 +258,10 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     if (stxs.isEmpty) return;
 
     for (final tx in stxs) {
-      final meta = tx.meta;
+      final meta = Map<String, dynamic>.from(tx.meta);
 
       if (_noteEntry != null) {
-        meta['trading_notes'] = _noteEntry;
+        meta['group_notes'] = _noteEntry;
       }
 
       if (_accentColor != null) {

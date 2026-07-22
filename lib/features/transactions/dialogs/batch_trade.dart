@@ -490,7 +490,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     for (final tx in stxs) {
       final double amount = Math.multiply(tx.balance, rate);
-      final meta = tx.meta;
+      final meta = Map<String, dynamic>.from(tx.meta);
 
       if (_noteEntry != null) {
         meta['trading_notes'] = _noteEntry;
