@@ -215,7 +215,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   Widget _buildNotesField() {
     const divider = Divider(height: 1, thickness: 1);
     return Column(
-      spacing: 16,
+      spacing: 10,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_parentNote != null && _parentNote!.isNotEmpty) ...[Text(_parentNote!), divider],

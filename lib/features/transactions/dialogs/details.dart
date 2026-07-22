@@ -21,6 +21,10 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
 
   @override
   Widget build(BuildContext context) {
+    final notes = tx.isRoot ? tx.meta['purchase_notes'] : tx.meta['trading_notes'];
+    final groupNotes = tx.meta['group_notes'];
+    const divider = Divider(height: 1, thickness: 1);
+
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
       constraints: const BoxConstraints(maxWidth: 1200),
@@ -35,7 +39,20 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
 
               _buildInformation(),
 
-              WidgetsHeader(title: tx.noteText ?? "No notes available", subtitle: "Notes", reversed: true),
+              WidgetsHeader(
+                title: ((notes == null || notes.isEmpty) && (groupNotes == null || groupNotes.isEmpty)) ? "No notes available" : null,
+                subtitle: "Notes",
+                reversed: true,
+                child: Column(
+                  spacing: 10,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (notes != null && notes.isNotEmpty) Text(notes),
+                    if (notes != null && notes.isNotEmpty && groupNotes != null && groupNotes.isNotEmpty) divider,
+                    if (groupNotes != null && groupNotes.isNotEmpty) Text(groupNotes),
+                  ],
+                ),
+              ),
 
               WidgetsHeader(
                 subtitle: "History",
