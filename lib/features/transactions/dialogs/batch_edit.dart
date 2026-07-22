@@ -18,18 +18,17 @@ import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
 
-class TransactionsDialogsBatchNotes extends StatefulWidget {
+class TransactionsDialogsBatchEdit extends StatefulWidget {
   final List<TransactionsModel>? transactions;
   final void Function(Object? error)? onSave;
 
-  const TransactionsDialogsBatchNotes({super.key, required this.onSave, this.transactions});
+  const TransactionsDialogsBatchEdit({super.key, required this.onSave, this.transactions});
 
   @override
-  State<TransactionsDialogsBatchNotes> createState() => _TransactionsDialogsBatchNotesState();
+  State<TransactionsDialogsBatchEdit> createState() => _TransactionsDialogsBatchEditState();
 }
 
-class _TransactionsDialogsBatchNotesState extends State<TransactionsDialogsBatchNotes>
-    with MixinsState, MixinsTable, MixinsSelectableTable {
+class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchEdit> with MixinsState, MixinsTable, MixinsSelectableTable {
   CryptosController get _cryptoController => locator<CryptosController>();
   TransactionsController get _txController => locator<TransactionsController>();
 
@@ -89,12 +88,11 @@ class _TransactionsDialogsBatchNotesState extends State<TransactionsDialogsBatch
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 16,
             children: [
-              if (txs.isNotEmpty)
-                const Text("Updating Transactions Notes and Accents", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isNotEmpty) const Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
               if (txs.isNotEmpty) _buildForm(),
               if (txs.isNotEmpty) _buildTable(),
-              if (txs.isEmpty) const Text("No transactions to update", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isEmpty) const Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               Padding(
                 padding: const EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Wrap(
@@ -148,6 +146,7 @@ class _TransactionsDialogsBatchNotesState extends State<TransactionsDialogsBatch
         'date': tx.timestampAsFormattedDate,
         'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
         'balance': '${tx.balanceTextRaw} $resultSymbol',
+        'status': tx.statusText,
         'tx': tx,
         'uuid': tx.uuid,
       });
@@ -173,6 +172,7 @@ class _TransactionsDialogsBatchNotesState extends State<TransactionsDialogsBatch
           const DataColumn2(label: Text('Date '), fixedWidth: 100),
           const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
           const DataColumn2(label: Text('Balance '), size: ColumnSize.M),
+          const DataColumn2(label: Text('Status '), fixedWidth: 140),
         ],
         rows: [
           ...rows.map((r) {
@@ -183,7 +183,12 @@ class _TransactionsDialogsBatchNotesState extends State<TransactionsDialogsBatch
                   selectableSetSelected(r['uuid'], v!);
                 });
               },
-              cells: [DataCell(Text(r['date'] ?? '')), DataCell(Text(r['transaction'] ?? '')), DataCell(Text(r['balance'] ?? ''))],
+              cells: [
+                DataCell(Text(r['date'] ?? '')),
+                DataCell(Text(r['transaction'] ?? '')),
+                DataCell(Text(r['balance'] ?? '')),
+                DataCell(Text(r['status'] ?? '')),
+              ],
             );
           }),
         ],
@@ -280,7 +285,7 @@ class _TransactionsDialogsBatchNotesState extends State<TransactionsDialogsBatch
     if (txs.isEmpty) {
       widget.onSave?.call(null);
     } else {
-      widgetsNotifySuccess("Update completed successfully.");
+      widgetsNotifySuccess("Updating transactions completed successfully.");
       setState(() {});
     }
   }

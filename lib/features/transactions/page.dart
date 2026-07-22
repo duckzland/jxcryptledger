@@ -79,12 +79,10 @@ class TransactionsPageState extends State<TransactionsPage>
   }
 
   void _onControllerChanged() {
-    if (!txController.isEqualToItems(txs)) {
-      setState(() {
-        txs = txController.items;
-        fxsRebuild();
-      });
-    }
+    setState(() {
+      txs = txController.items;
+      fxsRebuild();
+    });
 
     AppLayout.refreshBar?.call();
   }

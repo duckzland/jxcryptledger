@@ -12,7 +12,7 @@ import '../../../watchers/controller.dart';
 import '../../../watchers/form.dart';
 import '../../../watchers/model.dart';
 import '../../dialogs/batch_action.dart';
-import '../../dialogs/batch_notes.dart';
+import '../../dialogs/batch_edit.dart';
 import '../../dialogs/batch_trade.dart';
 import '../../model.dart';
 
@@ -97,14 +97,14 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
     if (isUpdatable) {
       buttons.add(
         WidgetsDialogsShowForm(
-          key: const Key("notes-multiple-button"),
-          icon: Icons.note_add,
-          label: "Notes & Accents",
-          tooltip: "Show batch transactions notes and accent updater",
+          key: const Key("edit-multiple-button"),
+          icon: Icons.edit,
+          label: "Edit",
+          tooltip: "Edit all transactions",
           padding: btnPadding,
           iconSize: btnIconSize,
           minimumSize: btnSize,
-          buildForm: _formNotesTx,
+          buildForm: _formEditTx,
         ),
       );
     }
@@ -298,7 +298,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
     );
   }
 
-  Widget _formNotesTx(BuildContext dialogContext) {
+  Widget _formEditTx(BuildContext dialogContext) {
     final stxs = [...txs];
 
     if (hasSelectedRows) {
@@ -306,12 +306,12 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
       stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
     }
 
-    return TransactionsDialogsBatchNotes(
+    return TransactionsDialogsBatchEdit(
       transactions: stxs,
       onSave: (e) => actionableFormSave<TransactionsModel>(
         parentContext,
         dialogContext: dialogContext,
-        successMessage: "Update completed successfully.",
+        successMessage: "Updating transactions completed successfully.",
         error: e,
       ),
     );
