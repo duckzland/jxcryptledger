@@ -8,10 +8,9 @@ class WidgetsFieldsAccentColors extends FormField<Color> {
     super.onSaved,
     super.validator,
     super.autovalidateMode,
-    Color initialValue = Colors.transparent,
+    super.initialValue = Colors.transparent,
     ValueChanged<Color>? onChange,
   }) : super(
-         initialValue: initialValue,
          builder: (FormFieldState<Color> state) {
            final availableColors = [
              Colors.transparent,

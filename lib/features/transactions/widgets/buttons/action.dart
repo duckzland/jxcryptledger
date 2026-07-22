@@ -81,7 +81,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
       states.add(WidgetsButtonActionState.normal);
     }
 
-    if (isUpdatable && tx.isActive && !hasLeaf) {
+    if (isUpdatable) {
       buttons.add(
         WidgetsDialogsShowForm(
           key: Key("edit-button-${tx.tid}"),

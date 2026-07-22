@@ -9,6 +9,7 @@ mixin TransactionsMixinsActions {
   bool isClosable = false;
   bool isFinalizable = false;
   bool isRefundable = false;
+  bool isUpdatable = false;
   bool get isActive => txs.any((tx) => tx.isActive || tx.isPartial);
 
   void checkForClosable() {
@@ -67,6 +68,22 @@ mixin TransactionsMixinsActions {
         final refundable = txController.isRefundable(tx);
         if (refundable) {
           isRefundable = true;
+          break;
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+  }
+
+  void checkForUpdatable() {
+    isUpdatable = false;
+
+    for (final tx in txs) {
+      try {
+        final updatable = txController.isUpdatable(tx);
+        if (updatable) {
+          isUpdatable = true;
           break;
         }
       } catch (_) {

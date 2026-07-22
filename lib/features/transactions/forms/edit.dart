@@ -51,6 +51,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   bool get isLeaf => !isRoot;
 
   bool _isCapital = false;
+  bool _isEditable = true;
 
   String generateTid() => _txController.generateId();
 
@@ -61,6 +62,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     final data = widget.initialData!;
 
     _isCapital = data.isCapital;
+    _isEditable = data.isEditable;
     detectLeaf(data);
 
     _isActive = widget.initialData?.statusEnum == TransactionStatus.active;
@@ -84,26 +86,41 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     if (constraints.maxWidth > 900) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 16,
+                      return Column(
+                        spacing: 30,
                         children: [
-                          SizedBox(width: 260, child: _buildDatePanel()),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 16,
+                            children: [
+                              SizedBox(width: 260, child: _buildDatePanel()),
 
-                          Expanded(child: _buildFromPanel()),
+                              Expanded(child: _buildFromPanel()),
 
-                          if (!isRoot || !_isCapital) Column(children: const [SizedBox(height: 42), Icon(Icons.arrow_forward, size: 24)]),
+                              if (!isRoot || !_isCapital)
+                                Column(children: const [SizedBox(height: 42), Icon(Icons.arrow_forward, size: 24)]),
 
-                          if (!isRoot || !_isCapital) Expanded(child: _buildToPanel()),
+                              if (!isRoot || !_isCapital) Expanded(child: _buildToPanel()),
+                            ],
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 16,
+                            children: [
+                              Flexible(flex: 2, child: _buildNotesPanel()),
+                              Flexible(flex: 2, child: _buildAccentColorsPanel()),
+                            ],
+                          ),
                         ],
                       );
                     } else {
-                      return Column(spacing: 30, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
+                      return Column(
+                        spacing: 30,
+                        children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel(), _buildAccentColorsPanel(), _buildNotesPanel()],
+                      );
                     }
                   },
                 ),
-                _buildAccentColorsPanel(),
-                _buildNotesPanel(),
                 _buildButtonPanel(),
               ],
             ),
@@ -133,11 +150,14 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       value: _isCapital,
-                      onChanged: (v) => setState(() {
-                        _isCapital = v!;
-                        _selectedRrId = null;
-                        _rrAmount = null;
-                      }),
+                      mouseCursor: _isEditable ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                      onChanged: _isEditable
+                          ? (v) => setState(() {
+                              _isCapital = v!;
+                              _selectedRrId = null;
+                              _rrAmount = null;
+                            })
+                          : null,
                     ),
                   ),
                   const Text("Set as capital"),
@@ -199,7 +219,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
       title: 'Amount',
       initialValue: data?.srAmountTextRaw.replaceAll(',', ''),
       suffixText: symbol,
-      enabled: _isActive,
+      enabled: _isActive && _isEditable,
       helperText: 'e.g., 1.5',
       onChanged: (value) {
         _srAmount = value;
@@ -213,7 +233,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: data?.srId,
-      enabled: isRoot,
+      enabled: isRoot && _isEditable,
       onSelected: (id) => setState(() => _selectedSrId = id),
     );
   }
@@ -232,7 +252,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
       title: 'Amount',
       initialValue: data?.rrAmountTextRaw.replaceAll(',', ''),
       suffixText: symbol,
-      enabled: isRoot || _isActive,
+      enabled: _isEditable && (isRoot || _isActive),
       helperText: 'e.g., 10.5',
       onChanged: (value) {
         _rrAmount = value;
@@ -246,7 +266,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: data?.rrId,
-      enabled: !(!isRoot && !_isActive),
+      enabled: _isEditable && (isRoot || _isActive),
       onSelected: (id) => setState(() => _selectedRrId = id),
     );
   }
@@ -294,7 +314,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
 
     return WidgetsFieldsDatepicker(
       labelText: 'Date',
-      enabled: !hasLeaf,
+      enabled: !hasLeaf && _isEditable,
       initialDate: initialDate,
       firstDate: firstDate,
       lastDate: DateTime.now().toLocal(),

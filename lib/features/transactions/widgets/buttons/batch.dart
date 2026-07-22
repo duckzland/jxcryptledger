@@ -12,6 +12,7 @@ import '../../../watchers/controller.dart';
 import '../../../watchers/form.dart';
 import '../../../watchers/model.dart';
 import '../../dialogs/batch_action.dart';
+import '../../dialogs/batch_notes.dart';
 import '../../dialogs/batch_trade.dart';
 import '../../model.dart';
 
@@ -28,6 +29,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   final bool isClosable;
   final bool isFinalizable;
   final bool isRefundable;
+  final bool isUpdatable;
 
   final double menuWidth;
 
@@ -50,8 +52,9 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
     required this.isClosable,
     required this.isFinalizable,
     required this.isRefundable,
+    required this.isUpdatable,
     required this.onToggleShow,
-    this.menuWidth = 100,
+    this.menuWidth = 140,
     this.rate,
     this.balance,
     this.linkableKey,
@@ -87,6 +90,21 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
           iconSize: btnIconSize,
           minimumSize: btnSize,
           buildForm: _formTradeTx,
+        ),
+      );
+    }
+
+    if (isUpdatable) {
+      buttons.add(
+        WidgetsDialogsShowForm(
+          key: const Key("notes-multiple-button"),
+          icon: Icons.note_add,
+          label: "Notes & Accents",
+          tooltip: "Show batch transactions notes and accent updater",
+          padding: btnPadding,
+          iconSize: btnIconSize,
+          minimumSize: btnSize,
+          buildForm: _formNotesTx,
         ),
       );
     }
@@ -222,6 +240,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   List<WidgetsButtonActionState> _evaluatorDropdown(MenuController controller) {
     return [
       if (isActive) WidgetsButtonActionState.action,
+      if (isUpdatable) WidgetsButtonActionState.action,
       if (isDeletable) WidgetsButtonActionState.error,
       if (isRefundable) WidgetsButtonActionState.error,
       if (isClosable) WidgetsButtonActionState.warning,
@@ -274,6 +293,25 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
         parentContext,
         dialogContext: dialogContext,
         successMessage: "Trade completed successfully.",
+        error: e,
+      ),
+    );
+  }
+
+  Widget _formNotesTx(BuildContext dialogContext) {
+    final stxs = [...txs];
+
+    if (hasSelectedRows) {
+      final selectedTxIds = selectedRows;
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
+    return TransactionsDialogsBatchNotes(
+      transactions: stxs,
+      onSave: (e) => actionableFormSave<TransactionsModel>(
+        parentContext,
+        dialogContext: dialogContext,
+        successMessage: "Update completed successfully.",
         error: e,
       ),
     );

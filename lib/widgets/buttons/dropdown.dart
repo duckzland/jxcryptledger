@@ -55,7 +55,9 @@ class WidgetsButtonsDropdown extends StatelessWidget {
   Widget buildButtons() {
     List<Widget> buttons;
 
-    final visible = children.sublist(0, children.length <= maxVisible ? children.length : maxVisible).map((item) {
+    final canVisible = maxVisible + 1;
+
+    final visible = children.sublist(0, children.length <= canVisible ? children.length : maxVisible).map((item) {
       if (item is WidgetsDialogsShowForm) {
         return item.copyWith(label: "");
       } else if (item is WidgetsDialogsAlert) {
@@ -72,7 +74,7 @@ class WidgetsButtonsDropdown extends StatelessWidget {
 
     buttons = [...visible];
 
-    if (children.length > maxVisible) {
+    if (children.length > canVisible) {
       final inMenus = children.sublist(maxVisible).map((item) {
         if (item is WidgetsDialogsShowForm) {
           return item.copyWith(plainMode: true, padding: AppTheme.inputPadding);

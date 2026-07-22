@@ -164,6 +164,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     checkForDeletable();
     checkForFinalizable();
     checkForRefundable();
+    checkForUpdatable();
 
     _calculateProfitLoss();
     rows = _buildRows();
@@ -206,6 +207,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     checkForDeletable();
     checkForFinalizable();
     checkForRefundable();
+    checkForUpdatable();
 
     _calculateProfitLoss();
     rows = _buildRows();
@@ -336,13 +338,13 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
             rate: nonReversedEffectiveRate ?? 0,
             balance: _calc.totalActiveSourceBalance(txs),
             linkableKey: "active-screen",
-            menuWidth: 130,
             selectedRows: selectableSelectedRows,
             isOpen: _isOpen,
             isDeletable: isDeletable,
             isClosable: isClosable,
             isFinalizable: isFinalizable,
             isRefundable: isRefundable,
+            isUpdatable: isUpdatable,
             onToggleShow: _toggleShowAction,
           ),
         ],

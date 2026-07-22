@@ -85,26 +85,40 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     if (constraints.maxWidth > 900) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 16,
+                      return Column(
+                        spacing: 30,
                         children: [
-                          SizedBox(width: 260, child: _buildDatePanel()),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 16,
+                            children: [
+                              SizedBox(width: 260, child: _buildDatePanel()),
 
-                          Expanded(child: _buildFromPanel()),
+                              Expanded(child: _buildFromPanel()),
 
-                          Column(children: const [SizedBox(height: 42), Icon(Icons.arrow_forward, size: 24)]),
+                              Column(children: const [SizedBox(height: 42), Icon(Icons.arrow_forward, size: 24)]),
 
-                          Expanded(child: _buildToPanel()),
+                              Expanded(child: _buildToPanel()),
+                            ],
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 16,
+                            children: [
+                              Flexible(flex: 2, child: _buildNotesPanel()),
+                              Flexible(flex: 2, child: _buildAccentColorsPanel()),
+                            ],
+                          ),
                         ],
                       );
                     } else {
-                      return Column(spacing: 30, children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel()]);
+                      return Column(
+                        spacing: 30,
+                        children: [_buildDatePanel(), _buildFromPanel(), _buildToPanel(), _buildAccentColorsPanel(), _buildNotesPanel()],
+                      );
                     }
                   },
                 ),
-                _buildAccentColorsPanel(),
-                _buildNotesPanel(),
                 _buildButtonPanel(),
               ],
             ),

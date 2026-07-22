@@ -110,6 +110,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     checkForDeletable();
     checkForFinalizable();
     checkForRefundable();
+    checkForUpdatable();
 
     _calculateProfitLoss();
     rows = _buildRows();
@@ -146,6 +147,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     checkForDeletable();
     checkForFinalizable();
     checkForRefundable();
+    checkForUpdatable();
 
     _calculateProfitLoss();
     rows = _buildRows();
@@ -182,6 +184,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       isClosable: isClosable,
       isFinalizable: isFinalizable,
       isRefundable: isRefundable,
+      isUpdatable: isUpdatable,
       onToggleShow: _toggleShowAction,
     );
 
