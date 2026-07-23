@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../core/runtime/locator.dart';
@@ -18,6 +19,7 @@ import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
+import '../../../../widgets/table/header/layout.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
@@ -47,6 +49,8 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
 
   final bool isOpen;
 
+  final ScrollController scrollController;
+
   const TransactionsWidgetsCardsActive({
     super.key,
     required this.parentContext,
@@ -58,6 +62,7 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
     required this.onToggleChanged,
     required this.isOpen,
     required this.txsFlags,
+    required this.scrollController,
   });
 
   @override
@@ -473,22 +478,29 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: DataTable2(
-        key: Key("table-active-${widget.srid}-${widget.rrid}"),
-        headingCheckboxTheme: widget.theme.checkboxTheme,
-        datarowCheckboxTheme: widget.theme.checkboxTheme,
-        showHeadingCheckBox: canSelect,
-        showCheckboxColumn: canSelect,
-        minWidth: 1200,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: tableColumns,
-        rows: tableRows,
+      child: WidgetsTableHeaderLayoutProxy(
+        controller: widget.scrollController,
+        topOffset: 80,
+        headerHeight: AppTheme.tableHeadingRowHeight,
+        rowHeight: AppTheme.tableDataRowMinHeight,
+        background: AppTheme.panelBg,
+        child: DataTable2(
+          key: Key("table-active-${widget.srid}-${widget.rrid}"),
+          headingCheckboxTheme: widget.theme.checkboxTheme,
+          datarowCheckboxTheme: widget.theme.checkboxTheme,
+          showHeadingCheckBox: canSelect,
+          showCheckboxColumn: canSelect,
+          minWidth: 1200,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
+          sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
+          sortAscending: sortableAscending,
+          isHorizontalScrollBarVisible: false,
+          columns: tableColumns,
+          rows: tableRows,
+        ),
       ),
     );
   }

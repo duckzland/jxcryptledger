@@ -183,6 +183,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
               parentContext: context,
               theme: theme,
               isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
+              scrollController: scrollToUtil.controller,
             ),
           );
         },

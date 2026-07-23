@@ -1,6 +1,7 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme.dart';
 import '../../../../core/runtime/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
@@ -13,6 +14,7 @@ import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
+import '../../../../widgets/table/header/layout.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
@@ -40,6 +42,8 @@ class TransactionsWidgetsCardsOverview extends StatefulWidget {
 
   final bool isOpen;
 
+  final ScrollController scrollController;
+
   const TransactionsWidgetsCardsOverview({
     super.key,
     required this.parentContext,
@@ -50,6 +54,7 @@ class TransactionsWidgetsCardsOverview extends StatefulWidget {
     required this.onStatusChanged,
     required this.onToggleChanged,
     required this.isOpen,
+    required this.scrollController,
   });
 
   @override
@@ -347,22 +352,29 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: DataTable2(
-        key: Key("table-overview-${widget.id}"),
-        headingCheckboxTheme: widget.theme.checkboxTheme,
-        datarowCheckboxTheme: widget.theme.checkboxTheme,
-        showHeadingCheckBox: canSelect,
-        showCheckboxColumn: canSelect,
-        minWidth: 1200,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        sortColumnIndex: sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: tableColumns,
-        rows: tableRows,
+      child: WidgetsTableHeaderLayoutProxy(
+        controller: widget.scrollController,
+        topOffset: 80,
+        headerHeight: AppTheme.tableHeadingRowHeight,
+        rowHeight: AppTheme.tableDataRowMinHeight,
+        background: AppTheme.panelBg,
+        child: DataTable2(
+          key: Key("table-overview-${widget.id}"),
+          headingCheckboxTheme: widget.theme.checkboxTheme,
+          datarowCheckboxTheme: widget.theme.checkboxTheme,
+          showHeadingCheckBox: canSelect,
+          showCheckboxColumn: canSelect,
+          minWidth: 1200,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
+          sortColumnIndex: sortableColumnIndex,
+          sortAscending: sortableAscending,
+          isHorizontalScrollBarVisible: false,
+          columns: tableColumns,
+          rows: tableRows,
+        ),
       ),
     );
   }

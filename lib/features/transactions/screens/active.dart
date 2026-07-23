@@ -193,6 +193,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
               parentContext: context,
               theme: theme,
               isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
+              scrollController: scrollToUtil.controller,
             ),
           );
         },
