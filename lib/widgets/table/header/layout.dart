@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+
 import '../column.dart';
 import 'painter.dart';
 
@@ -56,37 +57,27 @@ class WidgetsTableHeaderLayoutProxy extends SingleChildRenderObjectWidget {
 }
 
 class WidgetsTableHeaderLayoutBox extends RenderProxyBox {
-  ScrollController _controller;
+  ScrollController controller;
   double headerHeight;
   double rowHeight;
   double topOffset;
   double minHeight;
 
   WidgetsTableHeaderLayoutBox({
-    required ScrollController controller,
+    required this.controller,
     required this.headerHeight,
     required this.rowHeight,
     required this.topOffset,
     required this.minHeight,
-  }) : _controller = controller {
-    _controller.addListener(_onScrollUpdate);
-  }
-
-  set controller(ScrollController value) {
-    if (_controller == value) return;
-    _controller.removeListener(_onScrollUpdate);
-    _controller = value;
-    _controller.addListener(_onScrollUpdate);
-    markNeedsLayout();
+  }) {
+    controller.addListener(_onScrollUpdate);
   }
 
   void _onScrollUpdate() => markNeedsLayout();
 
-  double? _absoluteTableStartY;
-
   @override
   void detach() {
-    _controller.removeListener(_onScrollUpdate);
+    controller.removeListener(_onScrollUpdate);
     super.detach();
   }
 
@@ -122,50 +113,35 @@ class WidgetsTableHeaderLayoutBox extends RenderProxyBox {
 
     child!.visitChildren(walkTree);
 
-    double calculatedOffsetY = 0.0;
+    if (header == null || !header!.attached) return;
+    if (table == null || !table!.attached) return;
+    if (size.height < minHeight) return;
 
-    if (table != null && table!.attached && header != null && header!.attached) {
+    double offsetY = 0.0;
+
+    try {
       final double tableHeight = size.height;
-      if (tableHeight > minHeight) {
-        final double currentScroll = _controller.offset;
+      final double currentScroll = controller.offset;
+      final double startY = (header?.localToGlobal(Offset.zero).dy ?? 0.0) + currentScroll;
+      final double distancePastTop = currentScroll - startY + topOffset;
+      final double maxDistance = math.max(0.0, tableHeight - headerHeight - (rowHeight * 2));
 
-        if (_absoluteTableStartY == null) {
-          try {
-            _absoluteTableStartY = header!.localToGlobal(Offset.zero).dy + currentScroll;
-          } catch (_) {
-            _absoluteTableStartY = null;
-          }
-        }
-
-        if (_absoluteTableStartY != null) {
-          final double distancePastTop = currentScroll - _absoluteTableStartY! + topOffset;
-          final double maxDistance = math.max(0.0, tableHeight - headerHeight - (rowHeight * 2));
-
-          double scrollTo = distancePastTop;
-          if (scrollTo >= maxDistance) {
-            scrollTo = maxDistance;
-          }
-          calculatedOffsetY = (scrollTo <= 0.0) ? 0.0 : scrollTo;
-        }
-      }
-    } else {
-      _absoluteTableStartY = null;
+      offsetY = distancePastTop.clamp(0.0, maxDistance);
+    } catch (e) {
+      return;
     }
 
     RenderObject? target = child;
-    while (target != null) {
+    while (target is RenderProxyBox) {
       if (target is WidgetsTableHeaderPainterBox) {
-        if (target.offsetY != calculatedOffsetY) {
-          target.offsetY = calculatedOffsetY;
+        final newOffset = offsetY;
+        if (target.offsetY != newOffset) {
+          target.offsetY = newOffset;
           target.markNeedsPaint();
         }
         break;
       }
-      if (target is RenderProxyBox) {
-        target = target.child;
-      } else {
-        break;
-      }
+      target = target.child;
     }
   }
 }

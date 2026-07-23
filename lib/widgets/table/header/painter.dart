@@ -82,6 +82,7 @@ class WidgetsTableHeaderPainterBox extends RenderProxyBox {
 
     void walkTree(RenderObject object) {
       if (table != null) return;
+
       if (object is WidgetsTableColumnRenderElement) {
         RenderObject? current = object.parent;
         while (current != null && current != child) {
@@ -98,42 +99,43 @@ class WidgetsTableHeaderPainterBox extends RenderProxyBox {
 
     child!.visitChildren(walkTree);
 
-    if (table != null && table!.attached && offsetY > 0.0) {
-      final Rect bodyClipBox = Rect.fromLTWH(offset.dx, offset.dy + headerHeight, size.width, size.height - headerHeight);
-
-      context.pushClipRect(needsCompositing, offset, bodyClipBox, (PaintingContext bodyCtx, Offset bodyOff) {
-        bodyCtx.paintChild(child!, bodyOff);
-      });
-
-      final Offset headerTranslateOffset = offset.translate(0, offsetY);
-
-      context.pushTransform(
-        needsCompositing,
-        Offset.zero,
-        Matrix4.translationValues(headerTranslateOffset.dx, headerTranslateOffset.dy, 0.0),
-        (PaintingContext headerCtx, Offset headerOff) {
-          headerCtx.canvas.save();
-
-          final Paint bgPaint = Paint()..color = background;
-          headerCtx.canvas.drawRect(Rect.fromLTWH(0.0, 0.0, size.width, headerHeight), bgPaint);
-
-          table!.visitChildren((RenderObject cellBox) {
-            if (cellBox is RenderBox && cellBox.parentData is TableCellParentData) {
-              final TableCellParentData cellData = cellBox.parentData as TableCellParentData;
-
-              if (cellData.y == 0) {
-                final double cellX = cellData.offset.dx;
-                headerCtx.paintChild(cellBox, Offset(cellX, 0.0));
-              }
-            }
-          });
-
-          headerCtx.canvas.restore();
-        },
-      );
-    } else {
+    if (table == null || !table!.attached || offsetY <= 0.0) {
       context.paintChild(child!, offset);
+      return;
     }
+
+    final Rect bodyClipBox = Rect.fromLTWH(offset.dx, offset.dy + headerHeight, size.width, size.height - headerHeight);
+
+    context.pushClipRect(needsCompositing, offset, bodyClipBox, (PaintingContext bodyCtx, Offset bodyOff) {
+      bodyCtx.paintChild(child!, bodyOff);
+    });
+
+    final Offset headerTranslateOffset = offset.translate(0, offsetY);
+
+    context.pushTransform(
+      needsCompositing,
+      Offset.zero,
+      Matrix4.translationValues(headerTranslateOffset.dx, headerTranslateOffset.dy, 0.0),
+      (PaintingContext headerCtx, Offset headerOff) {
+        headerCtx.canvas.save();
+
+        final Paint bgPaint = Paint()..color = background;
+        headerCtx.canvas.drawRect(Rect.fromLTWH(0.0, 0.0, size.width, headerHeight), bgPaint);
+
+        table!.visitChildren((RenderObject cellBox) {
+          if (cellBox is RenderBox && cellBox.parentData is TableCellParentData) {
+            final TableCellParentData cellData = cellBox.parentData as TableCellParentData;
+
+            if (cellData.y == 0) {
+              final double cellX = cellData.offset.dx;
+              headerCtx.paintChild(cellBox, Offset(cellX, 0.0));
+            }
+          }
+        });
+
+        headerCtx.canvas.restore();
+      },
+    );
   }
 
   @override
