@@ -19,7 +19,7 @@ List<Map<String, dynamic>> cryptosParser(Map args) {
 
       String name = item[1] as String;
 
-      if (id == 0 || isActive == 0 || status == 0) {
+      if (id == 0) {
         continue;
       }
 
