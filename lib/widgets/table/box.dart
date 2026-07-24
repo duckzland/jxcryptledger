@@ -26,6 +26,7 @@ class WidgetsTableBox extends RenderProxyBox {
   double _offsetY = 0.0;
   RenderTable? _table;
   RenderBox? _header;
+  Paint? bgPaint;
 
   @override
   void detach() {
@@ -40,7 +41,7 @@ class WidgetsTableBox extends RenderProxyBox {
   void paint(PaintingContext context, Offset offset) {
     if (child == null) return;
 
-    child!.visitChildren(_walkTree);
+    _walkTree(child!);
 
     if (_table == null || !_table!.attached || _offsetY <= 0.0) {
       context.paintChild(child!, offset);
@@ -51,54 +52,32 @@ class WidgetsTableBox extends RenderProxyBox {
       needsCompositing,
       offset,
       Rect.fromLTWH(offset.dx, offset.dy + headerHeight, size.width, size.height - headerHeight),
-      (PaintingContext ctx, Offset bOffset) {
-        ctx.paintChild(child!, bOffset);
-      },
+      _paintBackground,
     );
 
     final Offset tOffset = offset.translate(0, _offsetY);
-
-    context.pushTransform(needsCompositing, Offset.zero, Matrix4.translationValues(tOffset.dx, tOffset.dy, 0.0), (
-      PaintingContext ctx,
-      Offset hOffset,
-    ) {
-      ctx.canvas.save();
-
-      final Paint bg = Paint()..color = background;
-      ctx.canvas.drawRect(Rect.fromLTWH(0.0, 0.0, size.width, headerHeight), bg);
-
-      _table!.visitChildren((RenderObject box) {
-        if (box is RenderBox && box.parentData is TableCellParentData) {
-          final TableCellParentData data = box.parentData as TableCellParentData;
-
-          if (data.y == 0) {
-            ctx.paintChild(box, Offset(data.offset.dx, 0.0));
-          }
-        }
-      });
-
-      ctx.canvas.restore();
-    });
+    context.pushTransform(needsCompositing, Offset.zero, Matrix4.translationValues(tOffset.dx, tOffset.dy, 0.0), _paintTransformedHeader);
   }
 
   @override
   bool hitTest(BoxHitTestResult result, {required Offset position}) {
-    if (child != null) _walkTree(child!);
+    if (child == null) return false;
+
+    _walkTree(child!);
 
     if (_table != null && _table!.attached && _header != null && _header!.attached && _offsetY > 0.0) {
-      final Offset tOffset = _table!.localToGlobal(Offset.zero, ancestor: this);
+      final Offset offset = _table!.localToGlobal(Offset.zero, ancestor: this);
 
-      final double topEdge = tOffset.dy;
-      final double bottomEdge = tOffset.dy + child!.size.height;
+      final double topEdge = offset.dy;
+      final double bottomEdge = offset.dy + child!.size.height;
 
-      final Rect rect = Rect.fromLTWH(tOffset.dx, topEdge + _offsetY, child!.size.width, headerHeight);
+      final Rect rect = Rect.fromLTWH(offset.dx, topEdge + _offsetY, child!.size.width, headerHeight);
 
       if (position.dy >= topEdge && position.dy <= bottomEdge && rect.contains(position)) {
-        final bool hitChild = child!.hitTest(result, position: position.translate(0.0, -_offsetY));
-
-        if (!hitChild) {
+        if (!child!.hitTest(result, position: position.translate(0.0, -_offsetY))) {
           result.add(BoxHitTestEntry(this, position));
         } else {
+          // BugFix: the checkbox at header stutter when clicked and the sort arrow flashes when hovered.
           Future.microtask(() {
             if (attached) {
               markNeedsPaint();
@@ -141,7 +120,7 @@ class WidgetsTableBox extends RenderProxyBox {
       return;
     }
 
-    child!.visitChildren(_walkTree);
+    _walkTree(child!);
 
     if (_header == null || !_header!.attached) return;
     if (_table == null || !_table!.attached) return;
@@ -157,7 +136,7 @@ class WidgetsTableBox extends RenderProxyBox {
 
       if (newOffsetY != _offsetY) {
         _offsetY = newOffsetY;
-        child!.markNeedsPaint();
+        _header!.markNeedsPaint();
       }
     } catch (e) {
       return;
@@ -165,7 +144,9 @@ class WidgetsTableBox extends RenderProxyBox {
   }
 
   void _onScrollUpdate() {
-    markNeedsLayout();
+    if (size.height > minHeight) {
+      markNeedsLayout();
+    }
   }
 
   void _walkTree(RenderObject object) {
@@ -176,6 +157,7 @@ class WidgetsTableBox extends RenderProxyBox {
       RenderObject? current = object.parent;
       while (current != null && current != child) {
         if (current is RenderTable) {
+          // Need a RenderTable not DataTable2 itself.
           _table = current;
           break;
         }
@@ -184,5 +166,28 @@ class WidgetsTableBox extends RenderProxyBox {
       return;
     }
     object.visitChildren(_walkTree);
+  }
+
+  void _paintBackground(PaintingContext ctx, Offset offset) {
+    ctx.paintChild(child!, offset);
+  }
+
+  void _paintTransformedHeader(PaintingContext ctx, Offset offset) {
+    ctx.canvas.save();
+
+    bgPaint ??= Paint()..color = background;
+    ctx.canvas.drawRect(Rect.fromLTWH(0.0, 0.0, size.width, headerHeight), bgPaint!);
+
+    _table!.visitChildren((RenderObject box) {
+      if (box is RenderBox && box.parentData is TableCellParentData) {
+        final TableCellParentData data = box.parentData as TableCellParentData;
+
+        if (data.y == 0) {
+          ctx.paintChild(box, Offset(data.offset.dx, 0.0));
+        }
+      }
+    });
+
+    ctx.canvas.restore();
   }
 }
