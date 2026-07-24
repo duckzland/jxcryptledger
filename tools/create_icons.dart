@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
+import 'package:jxledger/core/log.dart';
 
 void main() async {
   await Process.run('dart', ['run', 'flutter_launcher_icons:main', '-f', 'pubspec.yaml']);
@@ -9,18 +10,18 @@ void main() async {
   final outputFile = File('windows/runner/resources/app_icon.ico');
 
   if (!await inputFile.exists()) {
-    print("Error: Input file missing at ${inputFile.path}");
+    logln("Error: Input file missing at ${inputFile.path}");
     return;
   }
 
   final bytes = await inputFile.readAsBytes();
   final decodedImage = img.decodeImage(bytes);
   if (decodedImage == null) {
-    print("Error: Could not decode the icon image structure.");
+    logln("Error: Could not decode the icon image structure.");
     return;
   }
 
-  print("Generating compliant multi-size PNG-compressed icon...");
+  logln("Generating compliant multi-size PNG-compressed icon...");
 
   final int s16 = 16;
   final int s32 = 32;
@@ -73,5 +74,5 @@ void main() async {
   }
 
   await outputFile.writeAsBytes(newFileBuffer.toBytes());
-  print("Success! All-PNG multi-size 'app_icon.ico' written safely.");
+  logln("Success! All-PNG multi-size 'app_icon.ico' written safely.");
 }

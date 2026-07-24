@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxledger/core/log.dart';
 import 'package:jxledger/system/settings/keys.dart';
 
 final env = DotEnv()..load();
@@ -40,34 +41,34 @@ Future<void> main() async {
   final dir = requireEnv('APP_DATA_DIR');
   final password = requireEnv('APP_DB_PASSWORD');
 
-  print("Initializing Hives...");
+  logln("Initializing Hives...");
   Hive.init(dir);
 
-  print("Wiping old boxes...");
+  logln("Wiping old boxes...");
   final boxes = ['settings_box'];
 
   for (final box in boxes) {
     try {
       await Hive.deleteBoxFromDisk(box);
-      print("Deleted: $box");
+      logln("Deleted: $box");
     } catch (e) {
-      print("Failed to delete $box: $e");
+      logln("Failed to delete $box: $e");
     }
   }
 
   String salt = '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a';
 
-  print("Preparing for encryption using salt: $salt");
+  logln("Preparing for encryption using salt: $salt");
 
   final key = await derivePasswordKey(password, salt);
   final cipher = HiveAesCipher(key);
 
-  print("Seeding settings...");
+  logln("Seeding settings...");
   final settingsBox = await Hive.openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
   final encryptedMarker = await encryptValue("initialized", key);
   await settingsBox.put(SettingKey.vaultInitialized.id, encryptedMarker);
 
-  print("Vault seeded successfully.");
+  logln("Vault seeded successfully.");
   await Hive.close();
   exit(0);
 }

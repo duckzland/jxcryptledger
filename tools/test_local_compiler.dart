@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:jxledger/core/log.dart';
+
 void main() async {
   final rcFile = File('windows/runner/Runner.rc');
 
@@ -8,17 +10,17 @@ void main() async {
   const String sdkIncludeUm = r'C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\um';
 
   if (!await rcFile.exists()) {
-    print("Error: Runner.rc file not found at expected location.");
+    logln("Error: Runner.rc file not found at expected location.");
     exit(1);
   }
 
   if (!File(rcPath).existsSync()) {
-    print("Error: Hardcoded compiler path is invalid or missing: $rcPath");
+    logln("Error: Hardcoded compiler path is invalid or missing: $rcPath");
     exit(1);
   }
 
-  print("Testing icon compliance via local compiler with SDK headers...");
-  print("Compiler: $rcPath\n");
+  logln("Testing icon compliance via local compiler with SDK headers...");
+  logln("Compiler: $rcPath\n");
 
   // We turn off runInShell so the operating system handles the spaces perfectly
   final result = Process.runSync(
@@ -37,13 +39,13 @@ void main() async {
   final outputLog = result.stdout.toString() + result.stderr.toString();
 
   if (result.exitCode == 0 && !outputLog.contains('RC2176')) {
-    print("VERIFICATION PASSED!");
+    logln("VERIFICATION PASSED!");
     exit(0);
   } else {
-    print("COMPILER TEST FAILED!");
-    print("===================== ERROR LOGS =====================");
-    print(outputLog.trim());
-    print("======================================================");
+    logln("COMPILER TEST FAILED!");
+    logln("===================== ERROR LOGS =====================");
+    logln(outputLog.trim());
+    logln("======================================================");
     exit(1);
   }
 }

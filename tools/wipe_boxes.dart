@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
+import 'package:jxledger/core/log.dart' show logln;
 
 final env = DotEnv()..load();
 
@@ -14,7 +15,7 @@ String getAppDocumentsDir() {
 }
 
 Future<void> main() async {
-  print("Wiping Hive boxes...");
+  logln("Wiping Hive boxes...");
 
   final dir = getAppDocumentsDir();
   Hive.init(dir);
@@ -33,12 +34,12 @@ Future<void> main() async {
   for (final boxName in boxes) {
     try {
       await Hive.deleteBoxFromDisk(boxName);
-      print("Deleted box: $boxName");
+      logln("Deleted box: $boxName");
     } catch (e) {
-      print("Failed to delete $boxName: $e");
+      logln("Failed to delete $boxName: $e");
     }
   }
 
-  print("Done.");
+  logln("Done.");
   exit(0);
 }
