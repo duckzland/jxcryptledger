@@ -14,7 +14,7 @@ import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
-import '../../../../widgets/table/header/proxy.dart';
+import '../../../../widgets/table/proxy.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
@@ -352,7 +352,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: WidgetsTableHeaderProxy(
+      child: WidgetsTableProxy(
         controller: widget.scrollController,
         topOffset: 80,
         headerHeight: AppTheme.tableHeadingRowHeight,

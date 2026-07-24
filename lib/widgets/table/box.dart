@@ -2,9 +2,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../column.dart';
+import 'column.dart';
 
-class WidgetsTableHeaderBox extends RenderProxyBox {
+class WidgetsTableBox extends RenderProxyBox {
   ScrollController controller;
   double headerHeight;
   double rowHeight;
@@ -12,7 +12,7 @@ class WidgetsTableHeaderBox extends RenderProxyBox {
   double minHeight;
   Color background;
 
-  WidgetsTableHeaderBox({
+  WidgetsTableBox({
     required this.controller,
     required this.headerHeight,
     required this.rowHeight,

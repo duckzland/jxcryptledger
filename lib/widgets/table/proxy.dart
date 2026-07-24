@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'box.dart';
 
-class WidgetsTableHeaderProxy extends SingleChildRenderObjectWidget {
+class WidgetsTableProxy extends SingleChildRenderObjectWidget {
   final ScrollController controller;
   final double headerHeight;
   final double rowHeight;
@@ -11,7 +11,7 @@ class WidgetsTableHeaderProxy extends SingleChildRenderObjectWidget {
   final double minHeight;
   final Color background;
 
-  const WidgetsTableHeaderProxy({
+  const WidgetsTableProxy({
     super.key,
     required this.controller,
     required DataTable2 child,
@@ -24,8 +24,8 @@ class WidgetsTableHeaderProxy extends SingleChildRenderObjectWidget {
   }) : super(child: child);
 
   @override
-  WidgetsTableHeaderBox createRenderObject(BuildContext context) {
-    return WidgetsTableHeaderBox(
+  WidgetsTableBox createRenderObject(BuildContext context) {
+    return WidgetsTableBox(
       controller: controller,
       headerHeight: headerHeight,
       rowHeight: rowHeight,
@@ -36,7 +36,7 @@ class WidgetsTableHeaderProxy extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, WidgetsTableHeaderBox renderObject) {
+  void updateRenderObject(BuildContext context, WidgetsTableBox renderObject) {
     renderObject
       ..controller = controller
       ..headerHeight = headerHeight
