@@ -231,7 +231,7 @@ void main() async {
       expect(repo.isEmpty(), true);
     });
 
-    test('leaf -> Add, Update, Close, Refund and Remove', () async {
+    test('leaf -> Add, Update, Close, Refund, Remove and Finalize', () async {
       await box.clear();
 
       final root = TransactionsModel(
@@ -480,6 +480,44 @@ void main() async {
         repo.canRefund(ll1, silent: true);
       } on ValidationException catch (e) {
         expect(e.code, 1601);
+      }
+
+      // CHECKPOINT:
+      final rootTx = box.get('root')!;
+      final leaf1Tx = box.get('leaf_1')!;
+
+      // 1. Root should not be finalizable while leaf_1 is still partial
+      try {
+        repo.canFinalize(rootTx, silent: true);
+      } on ValidationException catch (e) {
+        expect(e.code, AppErrorCode.txUpdateFinalizableRequiresInactiveLeaves);
+      }
+
+      // 2. Leaf_1 should not be finalizable while it has children
+      try {
+        repo.canFinalize(leaf1Tx, silent: true);
+      } on ValidationException catch (e) {
+        expect(e.code, AppErrorCode.txUpdateFinalizableRequiresInactiveLeaves);
+      }
+
+      // 3. Finalize leaf_2 manually to make it inactive
+      try {
+        await repo.finalize(leaf1Tx);
+      } on ValidationException catch (e) {
+        fail('Finalizing leaf failed: $e');
+      }
+
+      // 4. Now root has only inactive/closed leaves → should be finalizable
+      try {
+        repo.canFinalize(rootTx, silent: true);
+      } on ValidationException catch (_) {
+        fail('Root should be finalizable now');
+      }
+
+      try {
+        repo.finalize(rootTx);
+      } on ValidationException catch (e) {
+        fail('Finalizing root failed: $e');
       }
     });
 
@@ -732,6 +770,44 @@ void main() async {
         repo.canRefund(ll1, silent: true);
       } on ValidationException catch (e) {
         expect(e.code, 1601);
+      }
+
+      // CHECKPOINT:
+      final rootTx = box.get('root')!;
+      final leaf1Tx = box.get('leaf_1')!;
+
+      // 1. Root should not be finalizable while leaf_1 is still partial
+      try {
+        repo.canFinalize(rootTx, silent: true);
+      } on ValidationException catch (e) {
+        expect(e.code, AppErrorCode.txUpdateFinalizableRequiresInactiveLeaves);
+      }
+
+      // 2. Leaf_1 should not be finalizable while it has children
+      try {
+        repo.canFinalize(leaf1Tx, silent: true);
+      } on ValidationException catch (e) {
+        expect(e.code, AppErrorCode.txUpdateFinalizableRequiresInactiveLeaves);
+      }
+
+      // 3. Finalize leaf_2 manually to make it inactive
+      try {
+        await repo.finalize(leaf1Tx);
+      } on ValidationException catch (e) {
+        fail('Finalizing leaf failed: $e');
+      }
+
+      // 4. Now root has only inactive/closed leaves → should be finalizable
+      try {
+        repo.canFinalize(rootTx, silent: true);
+      } on ValidationException catch (_) {
+        fail('Root should be finalizable now');
+      }
+
+      try {
+        repo.finalize(rootTx);
+      } on ValidationException catch (e) {
+        fail('Finalizing root failed: $e');
       }
     });
   });
