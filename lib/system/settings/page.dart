@@ -4,6 +4,7 @@ import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../widgets/buttons/action.dart';
+import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
 import '../../widgets/dialogs/reset.dart';
@@ -287,38 +288,16 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
   }
 
   Widget _buildResetButton(List<SettingKey> editableKeys) {
-    return WidgetsButtonsAction(
+    return WidgetsDialogsAlert(
       key: const ValueKey('settings-reset-button'),
       initialState: WidgetsButtonActionState.error,
       label: "Reset to Default",
-      onPressed: (s) async {
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Reset Settings"),
-              content: const Text("Are you sure you want to reset all settings to default values?"),
-              actions: [
-                WidgetsButtonsAction(
-                  label: "Cancel",
-                  onPressed: (s) {
-                    Navigator.pop(context, false);
-                  },
-                ),
-                WidgetsButtonsAction(
-                  initialState: WidgetsButtonActionState.error,
-                  label: "Reset",
-                  onPressed: (s) => Navigator.pop(context, true),
-                ),
-              ],
-            );
-          },
-        );
-
-        if (confirmed != true) return;
-
-        s.progress();
-
+      dialogTitle: "Reset Settings",
+      dialogMessage: "Are you sure you want to reset all settings to default values?",
+      dialogConfirmLabel: "Reset",
+      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+      filledMode: true,
+      actionStartCallback: () async {
         Map<SettingKey, dynamic> newBuff = {};
         for (var key in editableKeys) {
           final def = key.defaultValue;
@@ -330,12 +309,9 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
           _buildCount++;
           _buffer = newBuff;
         });
-
-        if (!mounted) return;
-        widgetsNotifySuccess("Settings reset to default");
-
-        s.error();
       },
+      actionSuccessMessage: "Settings resetted to default values",
+      actionErrorMessage: "Failed to reset settings to default values.",
     );
   }
 }
