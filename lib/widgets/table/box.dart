@@ -47,38 +47,38 @@ class WidgetsTableBox extends RenderProxyBox {
       return;
     }
 
-    final Rect bodyClipBox = Rect.fromLTWH(offset.dx, offset.dy + headerHeight, size.width, size.height - headerHeight);
-
-    context.pushClipRect(needsCompositing, offset, bodyClipBox, (PaintingContext bodyCtx, Offset bodyOff) {
-      bodyCtx.paintChild(child!, bodyOff);
-    });
-
-    final Offset headerTranslateOffset = offset.translate(0, _offsetY);
-
-    context.pushTransform(
+    context.pushClipRect(
       needsCompositing,
-      Offset.zero,
-      Matrix4.translationValues(headerTranslateOffset.dx, headerTranslateOffset.dy, 0.0),
-      (PaintingContext headerCtx, Offset headerOff) {
-        headerCtx.canvas.save();
-
-        final Paint bgPaint = Paint()..color = background;
-        headerCtx.canvas.drawRect(Rect.fromLTWH(0.0, 0.0, size.width, headerHeight), bgPaint);
-
-        _table!.visitChildren((RenderObject cellBox) {
-          if (cellBox is RenderBox && cellBox.parentData is TableCellParentData) {
-            final TableCellParentData cellData = cellBox.parentData as TableCellParentData;
-
-            if (cellData.y == 0) {
-              final double cellX = cellData.offset.dx;
-              headerCtx.paintChild(cellBox, Offset(cellX, 0.0));
-            }
-          }
-        });
-
-        headerCtx.canvas.restore();
+      offset,
+      Rect.fromLTWH(offset.dx, offset.dy + headerHeight, size.width, size.height - headerHeight),
+      (PaintingContext ctx, Offset bOffset) {
+        ctx.paintChild(child!, bOffset);
       },
     );
+
+    final Offset tOffset = offset.translate(0, _offsetY);
+
+    context.pushTransform(needsCompositing, Offset.zero, Matrix4.translationValues(tOffset.dx, tOffset.dy, 0.0), (
+      PaintingContext ctx,
+      Offset hOffset,
+    ) {
+      ctx.canvas.save();
+
+      final Paint bg = Paint()..color = background;
+      ctx.canvas.drawRect(Rect.fromLTWH(0.0, 0.0, size.width, headerHeight), bg);
+
+      _table!.visitChildren((RenderObject box) {
+        if (box is RenderBox && box.parentData is TableCellParentData) {
+          final TableCellParentData data = box.parentData as TableCellParentData;
+
+          if (data.y == 0) {
+            ctx.paintChild(box, Offset(data.offset.dx, 0.0));
+          }
+        }
+      });
+
+      ctx.canvas.restore();
+    });
   }
 
   @override
@@ -86,17 +86,15 @@ class WidgetsTableBox extends RenderProxyBox {
     if (child != null) _walkTree(child!);
 
     if (_table != null && _table!.attached && _header != null && _header!.attached && _offsetY > 0.0) {
-      final Offset tableOffset = _table!.localToGlobal(Offset.zero, ancestor: this);
+      final Offset tOffset = _table!.localToGlobal(Offset.zero, ancestor: this);
 
-      final double tableTopEdge = tableOffset.dy;
-      final double tableBottomEdge = tableOffset.dy + child!.size.height;
+      final double topEdge = tOffset.dy;
+      final double bottomEdge = tOffset.dy + child!.size.height;
 
-      final Rect stickyHeaderRect = Rect.fromLTWH(tableOffset.dx, tableTopEdge + _offsetY, child!.size.width, headerHeight);
+      final Rect rect = Rect.fromLTWH(tOffset.dx, topEdge + _offsetY, child!.size.width, headerHeight);
 
-      if (position.dy >= tableTopEdge && position.dy <= tableBottomEdge && stickyHeaderRect.contains(position)) {
-        final Offset translatedPosition = position.translate(0.0, -_offsetY);
-
-        final bool hitChild = child!.hitTest(result, position: translatedPosition);
+      if (position.dy >= topEdge && position.dy <= bottomEdge && rect.contains(position)) {
+        final bool hitChild = child!.hitTest(result, position: position.translate(0.0, -_offsetY));
 
         if (!hitChild) {
           result.add(BoxHitTestEntry(this, position));
@@ -121,14 +119,8 @@ class WidgetsTableBox extends RenderProxyBox {
     if (child == null) return false;
 
     if (_offsetY > 0.0) {
-      final double headerTop = _offsetY;
-      final double headerBottom = _offsetY + headerHeight;
-
-      if (position.dy >= headerTop && position.dy <= headerBottom) {
-        final Offset translatedPosition = position.translate(0.0, -_offsetY);
-        final bool hitChild = child!.hitTest(result, position: translatedPosition);
-
-        if (!hitChild) {
+      if (position.dy >= _offsetY && position.dy <= (_offsetY + headerHeight)) {
+        if (!child!.hitTest(result, position: position.translate(0.0, -_offsetY))) {
           result.add(BoxHitTestEntry(this, position));
         }
 
