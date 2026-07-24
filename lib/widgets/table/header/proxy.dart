@@ -14,12 +14,13 @@ class WidgetsTableHeaderProxy extends SingleChildRenderObjectWidget {
   const WidgetsTableHeaderProxy({
     super.key,
     required this.controller,
+    required DataTable2 child,
+
     this.headerHeight = 50.0,
     this.rowHeight = 42.0,
     this.topOffset = 70.0,
     this.minHeight = 126.0,
     this.background = Colors.black,
-    required DataTable2 child,
   }) : super(child: child);
 
   @override

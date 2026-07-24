@@ -18,7 +18,7 @@ class WidgetsTableHeaderBox extends RenderProxyBox {
     required this.rowHeight,
     required this.topOffset,
     required this.minHeight,
-    this.background = Colors.black,
+    required this.background,
   }) {
     controller.addListener(_onScrollUpdate);
   }
