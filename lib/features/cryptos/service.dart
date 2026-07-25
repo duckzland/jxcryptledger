@@ -10,7 +10,8 @@ import '../../system/settings/repository.dart';
 import '../../system/settings/keys.dart';
 import '../../core/log.dart';
 import 'model.dart';
-import 'parser.dart';
+import 'parsers/legacy.dart';
+import 'parsers/pro_v1.dart';
 import 'repository.dart';
 
 class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
@@ -33,6 +34,10 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
     return repo.get(id.toString());
   }
 
+  int? getIdBySymbol(String symbol) {
+    return repo.getIdBySymbol(symbol);
+  }
+
   Future<bool> fetch() async {
     if (_isFetching) return false;
 
@@ -44,12 +49,22 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
       final endpoint = settingsRepo.getByKey<String>(SettingKey.dataEndpoint) ?? SettingKey.dataEndpoint.defaultValue;
       final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
 
+      final isLegacy = endpoint.contains("generated/core/crypto/cryptos.json");
+      final isCustom = !endpoint.contains("coinmarketcap.com");
+
+      bool needAuth = isCustom || endpoint == "https://pro-api.coinmarketcap.com/v1/cryptocurrency/map";
+      Map<String, dynamic> query = isLegacy ? {} : {'listing_status': 'active', 'aux': 'is_active,status'};
+
       final headers = <String, String>{};
-      if (authKey != null && authKey.isNotEmpty) {
-        headers['Authorization'] = authKey;
+      if (authKey != null && authKey.isNotEmpty && needAuth) {
+        if (!isCustom) {
+          headers['X-CMC_PRO_API_KEY'] = authKey;
+        } else {
+          headers['Authorization'] = authKey;
+        }
       }
 
-      final url = Uri.parse(endpoint);
+      final url = Uri.parse(endpoint).replace(queryParameters: query);
       final resp = await http.get(url, headers: headers);
 
       if (resp.statusCode != 200) {
@@ -61,7 +76,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
         );
       }
 
-      final parsed = await compute(cryptosParser, {"body": resp.body});
+      final parsed = await compute(isLegacy ? cryptosParsersLegacy : cryptosParsersProV1, {"body": resp.body});
       if (parsed.isEmpty) {
         throw NetworkingException(
           AppErrorCode.netEmptyResponse,

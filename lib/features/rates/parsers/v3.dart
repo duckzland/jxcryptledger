@@ -1,15 +1,10 @@
 import 'dart:convert';
 import 'package:decimal/decimal.dart';
 
-import 'model.dart';
+import '../model.dart';
+import 'result.dart';
 
-class RatesParserResult {
-  final List<RatesModel> rates;
-
-  RatesParserResult(this.rates);
-}
-
-RatesParserResult parseRatesJson(String body) {
+RatesParserResult parseRatesJsonV3(String body) {
   final data = jsonDecode(body);
 
   final dataNode = data['data'];

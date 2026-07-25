@@ -69,6 +69,10 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
                   showDialogBeforeImport: true,
                   onImport: (String json) async {
                     await _controller.importDatabase(json);
+                    setState(() {
+                      _buildCount++;
+                      _buffer = {};
+                    });
                   },
                   evaluator: (s) {},
                 ),
@@ -115,6 +119,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
         child: Padding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
           child: WidgetsPanel(
+            key: Key("settings-panel-$_buildCount"),
             child: Form(
               key: _formKey,
               child: ListView.separated(

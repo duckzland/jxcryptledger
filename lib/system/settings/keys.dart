@@ -8,9 +8,10 @@ enum SettingKey {
     isUserEditable: true,
     required: true,
     label: 'Cryptos Endpoint',
-    defaultValue: "https://s3.coinmarketcap.com/generated/core/crypto/cryptos.json",
+    defaultValue: "https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/map",
+    // defaultValue: "https://s3.coinmarketcap.com/generated/core/crypto/cryptos.json",
     validator: _validateUrl,
-    hintText: "https://example.com/cryptos.json",
+    hintText: "https://example.com/public-api/v1/cryptocurrency/map",
   ),
 
   exchangeEndpoint(
@@ -18,9 +19,10 @@ enum SettingKey {
     isUserEditable: true,
     required: true,
     label: 'Exchange Endpoint',
-    defaultValue: "https://api.coinmarketcap.com/data-api/v3/tools/price-conversion",
+    defaultValue: "https://pro-api.coinmarketcap.com/public-api/v2/tools/price-conversion",
+    // defaultValue: "https://api.coinmarketcap.com/data-api/v3/tools/price-conversion",
     validator: _validateUrl,
-    hintText: "https://example.com/exchange",
+    hintText: "https://example.com/public-api/v2/tools/price-conversion",
   ),
 
   altSeasonEndpoint(
@@ -28,9 +30,10 @@ enum SettingKey {
     isUserEditable: true,
     required: true,
     label: 'Alt Season Endpoint',
-    defaultValue: "https://api.coinmarketcap.com/data-api/v3/altcoin-season/chart",
+    defaultValue: "https://pro-api.coinmarketcap.com/public-api/v1/altcoin-season-index/latest",
+    // defaultValue: "https://api.coinmarketcap.com/data-api/v3/altcoin-season/chart",
     validator: _validateUrl,
-    hintText: "https://example.com/altseason",
+    hintText: "https://example.com/public-api/v1/altcoin-season-index/latest",
   ),
 
   fearGreedEndpoint(
@@ -38,9 +41,10 @@ enum SettingKey {
     isUserEditable: true,
     required: true,
     label: 'Fear & Greed Endpoint',
-    defaultValue: "https://api.coinmarketcap.com/data-api/v3/fear-greed/chart",
+    defaultValue: "https://pro-api.coinmarketcap.com/public-api/v3/fear-and-greed/latest",
+    // defaultValue: "https://api.coinmarketcap.com/data-api/v3/fear-greed/chart",
     validator: _validateUrl,
-    hintText: "https://example.com/feargreed",
+    hintText: "https://example.com/public-api/v3/fear-and-greed/latest",
   ),
 
   cmc100Endpoint(
@@ -48,9 +52,10 @@ enum SettingKey {
     isUserEditable: true,
     required: true,
     label: 'CMC Top 100 Endpoint',
-    defaultValue: "https://api.coinmarketcap.com/data-api/v3/top100/supplement",
+    defaultValue: "https://pro-api.coinmarketcap.com/public-api/v3/index/cmc100-latest",
+    // defaultValue: "https://api.coinmarketcap.com/data-api/v3/top100/supplement",
     validator: _validateUrl,
-    hintText: "https://example.com/top100",
+    hintText: "https://example.com/public-api/v3/index/cmc100-latest",
   ),
 
   marketCapEndpoint(
@@ -58,9 +63,10 @@ enum SettingKey {
     isUserEditable: true,
     required: true,
     label: 'Market Cap Endpoint',
-    defaultValue: "https://api.coinmarketcap.com/data-api/v4/global-metrics/quotes/historical",
+    defaultValue: "https://pro-api.coinmarketcap.com/public-api/v1/global-metrics/quotes/latest",
+    // defaultValue: "https://api.coinmarketcap.com/data-api/v4/global-metrics/quotes/historical",
     validator: _validateUrl,
-    hintText: "https://example.com/marketcap",
+    hintText: "https://example.com/public-api/v1/global-metrics/quotes/latest",
   ),
 
   rsiEndpoint(
@@ -70,7 +76,7 @@ enum SettingKey {
     label: 'RSI Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/rsi/heatmap/overall",
     validator: _validateUrl,
-    hintText: "https://example.com/rsi",
+    hintText: "https://example.com/data-api/v3/cryptocurrency/rsi/heatmap/overall",
   ),
 
   etfEndpoint(
@@ -80,7 +86,7 @@ enum SettingKey {
     label: 'ETF Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/etf/overview/netflow/chart",
     validator: _validateUrl,
-    hintText: "https://example.com/etf",
+    hintText: "https://example.com/data-api/v3/etf/overview/netflow/chart",
   ),
 
   dominanceEndpoint(
@@ -90,7 +96,7 @@ enum SettingKey {
     label: 'Dominance Endpoint',
     defaultValue: "https://api.coinmarketcap.com/data-api/v3/global-metrics/dominance/overview",
     validator: _validateUrl,
-    hintText: "https://example.com/dominance",
+    hintText: "https://example.com/data-api/v3/global-metrics/dominance/overview",
   ),
 
   authorizationKey(

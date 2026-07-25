@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:pinyin/pinyin.dart';
 
-List<Map<String, dynamic>> cryptosParser(Map args) {
+List<Map<String, dynamic>> cryptosParsersLegacy(Map args) {
   final String body = args['body'];
 
   final decoded = jsonDecode(body);
@@ -19,7 +19,7 @@ List<Map<String, dynamic>> cryptosParser(Map args) {
 
       String name = item[1] as String;
 
-      if (id == 0) {
+      if (id == 0 || isActive != 1) {
         continue;
       }
 

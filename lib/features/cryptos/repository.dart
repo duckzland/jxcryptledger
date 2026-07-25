@@ -30,4 +30,14 @@ class CryptosRepository extends CoreBaseRepository<CryptosModel> with CoreMixins
     _symbolCache = {for (var c in all) c.uuid: c.symbol};
     return _symbolCache!;
   }
+
+  int? getIdBySymbol(String symbol) {
+    final map = getSymbolMap();
+    for (final entry in map.entries) {
+      if (entry.value == symbol) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
 }

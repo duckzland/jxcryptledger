@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:jxledger/features/rates/parsers/pro_v2.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
@@ -11,7 +12,8 @@ import '../../system/settings/keys.dart';
 import '../../system/settings/repository.dart';
 import 'mixins/helper.dart';
 import 'model.dart';
-import 'parser.dart';
+import 'parsers/result.dart';
+import 'parsers/v3.dart';
 import 'repository.dart';
 
 class RatesService extends CoreBaseService<RatesModel, RatesRepository> with RatesMixinsHelper {
@@ -105,12 +107,36 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
     broadcasterEmit(IpcAction.refreshRates, 'start', '', Uint8List(0));
 
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
+    final isLegacy = endpoint.contains('v2');
+    final isFreePlan = endpoint.contains("https://pro-api.coinmarketcap.com/public-api");
+    final isCustom = !endpoint.contains("coinmarketcap.com");
+
+    // @TODO: Add settings for the final amount.
+    final maxPayload = isFreePlan ? 1 : (isCustom ? 40 : 8);
+
     try {
       final jobs = List<(int, int)>.from(_queue);
       _queue.clear();
 
       final grouped = _groupJobs(jobs);
-      final jobQueue = grouped.entries.map((e) => MapEntry(e.key, e.value.toList())).toList();
+      List<MapEntry<int, List<int>>> jobQueue;
+
+      if (!isLegacy) {
+        jobQueue = grouped.entries.map((e) => MapEntry(e.key, e.value.toList())).toList();
+      } else {
+        jobQueue = grouped.entries.expand((e) {
+          final tids = e.value.toList();
+          final chunks = <MapEntry<int, List<int>>>[];
+
+          for (var i = 0; i < tids.length; i += maxPayload) {
+            final slice = tids.sublist(i, (i + maxPayload > tids.length) ? tids.length : i + maxPayload);
+            chunks.add(MapEntry(e.key, slice));
+          }
+
+          return chunks;
+        }).toList();
+      }
 
       await _runWorkers(jobQueue);
     } finally {
@@ -265,9 +291,17 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     final endpoint = settingsRepo.getByKey<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
     final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
 
+    final isCustom = !endpoint.contains("coinmarketcap.com");
+    final isLegacy = endpoint.contains('v2');
+    final needAuth = isCustom || endpoint.contains("https://pro-api.coinmarketcap.com/v");
+
     final headers = <String, String>{};
-    if (authKey != null && authKey.isNotEmpty) {
-      headers['Authorization'] = authKey;
+    if (authKey != null && authKey.isNotEmpty && needAuth) {
+      if (!isCustom) {
+        headers['X-CMC_PRO_API_KEY'] = authKey;
+      } else {
+        headers['Authorization'] = authKey;
+      }
     }
 
     final uri = Uri.parse(
@@ -291,7 +325,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     RatesParserResult parsed;
 
     try {
-      parsed = await compute(parseRatesJson, resp.body);
+      parsed = isLegacy ? parseRatesJsonV2(resp.body) : await compute(parseRatesJsonV3, resp.body);
     } catch (e) {
       throw NetworkingException(
         AppErrorCode.netParseFailure,

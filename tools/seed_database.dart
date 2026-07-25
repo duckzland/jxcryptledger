@@ -13,7 +13,7 @@ import 'package:jxledger/features/archives/adapter.dart';
 import 'package:jxledger/features/archives/model.dart';
 import 'package:jxledger/features/cryptos/adapter.dart';
 import 'package:jxledger/features/cryptos/model.dart';
-import 'package:jxledger/features/cryptos/parser.dart';
+import 'package:jxledger/features/cryptos/parsers/legacy.dart';
 import 'package:jxledger/features/rates/adapter.dart';
 import 'package:jxledger/features/rates/model.dart';
 import 'package:jxledger/system/settings/adapter.dart';
@@ -69,7 +69,7 @@ Future<bool> fetchCryptos({required String endpoint, required Box<CryptosModel> 
     }
 
     final body = await response.transform(utf8.decoder).join();
-    final parsed = cryptosParser({"body": body});
+    final parsed = cryptosParsersLegacy({"body": body});
 
     if (parsed.isEmpty) {
       logln("Failed to fetch cryptos: empty parsed list");

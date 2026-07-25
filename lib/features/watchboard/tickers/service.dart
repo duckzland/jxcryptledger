@@ -39,9 +39,16 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final uri = Uri.parse(endpoint).replace(queryParameters: query);
     final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
 
+    final isCustom = !endpoint.contains("coinmarketcap.com");
+    final needAuth = isCustom || endpoint.contains("https://pro-api.coinmarketcap.com/v");
+
     final headers = <String, String>{};
-    if (authKey != null && authKey.isNotEmpty) {
-      headers['Authorization'] = authKey;
+    if (authKey != null && authKey.isNotEmpty && needAuth) {
+      if (!isCustom) {
+        headers['X-CMC_PRO_API_KEY'] = authKey;
+      } else {
+        headers['Authorization'] = authKey;
+      }
     }
 
     final resp = await http.get(uri, headers: headers);
@@ -70,14 +77,28 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<bool> fetchAltSeason() async {
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, 1).millisecondsSinceEpoch ~/ 1000;
-    final end = DateTime(now.year, now.month + 1, 0).millisecondsSinceEpoch ~/ 1000;
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.altSeasonEndpoint) ?? SettingKey.altSeasonEndpoint.defaultValue;
+    final isLegacy = endpoint.contains("data-api/v3/altcoin-season/chart");
 
-    final body = await _fetchJson(SettingKey.altSeasonEndpoint, query: {"start": start.toString(), "end": end.toString()});
+    Map<String, String> query = {};
 
-    final nowObj = body["data"]["historicalValues"]["now"];
-    final index = nowObj["altcoinIndex"].toString();
+    if (isLegacy) {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, 1).millisecondsSinceEpoch ~/ 1000;
+      final end = DateTime(now.year, now.month + 1, 0).millisecondsSinceEpoch ~/ 1000;
+      query = {"start": start.toString(), "end": end.toString()};
+    }
+
+    final body = await _fetchJson(SettingKey.altSeasonEndpoint, query: query);
+
+    String index;
+
+    if (isLegacy) {
+      final nowObj = body["data"]["historicalValues"]["now"];
+      index = nowObj["altcoinIndex"].toString();
+    } else {
+      index = body["data"]["altcoin_index"].toString();
+    }
 
     repo.updateByType(TickerType.altcoinIndex.index, index);
 
@@ -85,14 +106,28 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<bool> fetchFearGreed() async {
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, 1).millisecondsSinceEpoch ~/ 1000;
-    final end = DateTime(now.year, now.month + 1, 0).millisecondsSinceEpoch ~/ 1000;
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.fearGreedEndpoint) ?? SettingKey.fearGreedEndpoint.defaultValue;
+    final isLegacy = endpoint.contains("data-api/v3/fear-greed/chart");
 
-    final body = await _fetchJson(SettingKey.fearGreedEndpoint, query: {"start": start.toString(), "end": end.toString()});
+    Map<String, String> query = {};
 
-    final nowObj = body["data"]["historicalValues"]["now"];
-    final score = nowObj["score"].toString();
+    if (isLegacy) {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, 1).millisecondsSinceEpoch ~/ 1000;
+      final end = DateTime(now.year, now.month + 1, 0).millisecondsSinceEpoch ~/ 1000;
+
+      query = {"start": start.toString(), "end": end.toString()};
+    }
+
+    final body = await _fetchJson(SettingKey.fearGreedEndpoint, query: query);
+
+    String score;
+    if (isLegacy) {
+      final nowObj = body["data"]["historicalValues"]["now"];
+      score = nowObj["score"].toString();
+    } else {
+      score = body['data']['value'].toString();
+    }
 
     repo.updateByType(TickerType.fearGreed.index, score);
 
@@ -100,14 +135,28 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<bool> fetchCmc100() async {
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, 1).millisecondsSinceEpoch ~/ 1000;
-    final end = DateTime(now.year, now.month + 1, 0).millisecondsSinceEpoch ~/ 1000;
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.cmc100Endpoint) ?? SettingKey.cmc100Endpoint.defaultValue;
+    final isLegacy = endpoint.contains("data-api/v3/top100/supplement");
 
-    final body = await _fetchJson(SettingKey.cmc100Endpoint, query: {"start": start.toString(), "end": end.toString()});
+    Map<String, String> query = {};
 
-    final summary = body["data"]["summaryData"]["currentValue"];
-    final value = summary["value"].toString();
+    if (isLegacy) {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, 1).millisecondsSinceEpoch ~/ 1000;
+      final end = DateTime(now.year, now.month + 1, 0).millisecondsSinceEpoch ~/ 1000;
+
+      query = {"start": start.toString(), "end": end.toString()};
+    }
+
+    final body = await _fetchJson(SettingKey.cmc100Endpoint, query: query);
+
+    String value;
+    if (isLegacy) {
+      final summary = body["data"]["summaryData"]["currentValue"];
+      value = summary["value"].toString();
+    } else {
+      value = body["data"]["value"].toString();
+    }
 
     repo.updateByType(TickerType.cmc100.index, value);
 
@@ -115,11 +164,23 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<bool> fetchMarketCap() async {
-    final body = await _fetchJson(SettingKey.marketCapEndpoint, query: {"convertId": "2781", "range": "30d"});
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.marketCapEndpoint) ?? SettingKey.marketCapEndpoint.defaultValue;
+    final isLegacy = endpoint.contains("data-api/v4/global-metrics/quotes/historical");
 
-    final nowCap = body["data"]["historicalValues"]["now"]["marketCap"].toString();
+    Map<String, String> query = isLegacy ? {"convertId": "2781", "range": "30d"} : {"convert": "USD", "aux": "btc_dominance"};
 
-    repo.updateByType(TickerType.marketCap.index, nowCap);
+    final body = await _fetchJson(SettingKey.marketCapEndpoint, query: query);
+
+    if (isLegacy) {
+      final marketCap = body["data"]["historicalValues"]["now"]["marketCap"].toString();
+      repo.updateByType(TickerType.marketCap.index, marketCap);
+    } else {
+      final marketCap = body["data"]["quote"]["USD"]["total_market_cap"].toString();
+      repo.updateByType(TickerType.marketCap.index, marketCap);
+
+      final dominanceBtc = body["data"]["btc_dominance"].toString();
+      repo.updateByType(TickerType.dominance.index, dominanceBtc);
+    }
 
     return true;
   }
@@ -156,6 +217,15 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<bool> fetchDominance() async {
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.marketCapEndpoint) ?? SettingKey.marketCapEndpoint.defaultValue;
+    final isLegacy = endpoint.contains("data-api/v4/global-metrics/quotes/historical");
+
+    // New marketcap will populate the dominance!
+    if (!isLegacy) {
+      logln("Skipping dominance");
+      return true;
+    }
+
     final body = await _fetchJson(SettingKey.dominanceEndpoint);
 
     final dominanceList = body["data"]["dominance"] as List<dynamic>;
@@ -170,6 +240,8 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final all = repo.extract();
 
     final types = all.map((tix) => TickerType.values[tix.type]).toSet();
+
+    if (types.isEmpty) {}
 
     final jobs = <Future<void>>[];
 

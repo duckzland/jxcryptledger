@@ -11,6 +11,7 @@ build/
 coverage/
 scripts/
 symbols/
+notes/
 
 # --- Secrets ---
 .env
