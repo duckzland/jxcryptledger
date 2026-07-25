@@ -15,6 +15,15 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
   TickersService(super.repo, this.settingsRepo);
 
+  @override
+  Future<void> init() async {
+    repo.init();
+    if (repo.isEmpty()) {
+      await populate();
+    }
+    broadcasterListen();
+  }
+
   Future<void> populate({bool fetchRate = true}) async {
     for (final tx in defaultTickers) {
       await repo.add(tx);
