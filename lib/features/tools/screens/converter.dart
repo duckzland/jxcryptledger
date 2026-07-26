@@ -9,6 +9,7 @@ import '../../../widgets/fields/amount.dart';
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
+import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
 import '../../../widgets/fields/crypto_search.dart';
 
@@ -54,30 +55,40 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
+                    ),
 
                     const SizedBox(width: 5),
 
-                    Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
+                    ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.arrow_forward, size: 24)),
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.arrow_forward, size: 24)),
 
-                    Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
+                    ),
 
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 10),
 
-                    _buildCryptoInputColumn(
-                      "",
-                      WidgetsButtonsAction(
+                    WidgetsHeader(
+                      subtitle: " ",
+                      subtitleFontSize: 13,
+                      spacing: 10,
+                      child: WidgetsButtonsAction(
                         icon: Icons.swap_horiz,
                         tooltip: "Convert",
                         padding: const EdgeInsets.all(0),
                         iconSize: 24,
-                        minimumSize: const Size(54, 54),
+                        minimumSize: const Size(52, 52),
+                        initialState: WidgetsButtonActionState.action,
+                        filledMode: true,
                         evaluator: (s) {
                           final int source = rateableSource ?? -1;
                           final int target = rateableTarget ?? -1;
-                          final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
+                          final double amount = _sourceAmount == null ? -1 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? -1;
 
                           if (source < 0 || target < 0 || amount < 0) {
                             s.disable();
@@ -109,15 +120,21 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
               children: [
                 Row(
                   children: [
-                    Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
+                    ),
                   ],
                 ),
 
                 Row(
                   children: [
-                    Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
+                    ),
                     const SizedBox(width: 10),
                     _buildCryptoInputColumn(
                       "",
@@ -218,7 +235,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   }
 
   Widget _buildCalculatedResult() {
-    final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
+    final double source = _sourceAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? 0;
     final double rate = rateableValue ?? -1;
     final double reversedRate = _reversedRate ?? -1;
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "UNK" : "UNK";

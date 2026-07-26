@@ -8,6 +8,7 @@ import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/fields/amount.dart';
+import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
 import '../../../widgets/fields/crypto_search.dart';
 
@@ -61,23 +62,38 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
+                    ),
 
                     const SizedBox(width: 5),
 
-                    Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
+                    ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.arrow_forward, size: 24)),
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.arrow_forward, size: 24)),
 
-                    Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
+                    ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.clear, size: 24)),
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.clear, size: 24)),
 
-                    Expanded(child: _buildCryptoInputColumn("Sell Rate:", _buildRatesAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "Sell Rate:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
+                    ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 55), child: Icon(Icons.swap_horiz, size: 24)),
+                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.swap_horiz, size: 24)),
 
-                    Expanded(child: _buildCryptoInputColumn("Buyback Rate:", _buildRatesRevertAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(
+                        subtitle: "Buyback Rate:",
+                        subtitleFontSize: 13,
+                        spacing: 10,
+                        child: _buildRatesRevertAmountField(),
+                      ),
+                    ),
                   ],
                 ),
 
@@ -97,17 +113,36 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
               children: [
                 Row(
                   children: [
-                    Expanded(child: _buildCryptoInputColumn("From:", _buildSourceAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: _buildCryptoInputColumn("", _buildSourceCryptoField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
+                    ),
                   ],
                 ),
-                Row(children: [Expanded(child: _buildCryptoInputColumn("To:", _buildResultCryptoField()))]),
                 Row(
                   children: [
-                    Expanded(child: _buildCryptoInputColumn("Sell Rate:", _buildRatesAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: WidgetsHeader(subtitle: "Sell Rate:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: _buildCryptoInputColumn("Buyback Rate:", _buildRatesRevertAmountField())),
+                    Expanded(
+                      child: WidgetsHeader(
+                        subtitle: "Buyback Rate:",
+                        subtitleFontSize: 13,
+                        spacing: 10,
+                        child: _buildRatesRevertAmountField(),
+                      ),
+                    ),
                   ],
                 ),
 
@@ -119,17 +154,6 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
           }
         },
       ),
-    );
-  }
-
-  Widget _buildCryptoInputColumn(String label, Widget amountField) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-        const SizedBox(height: 20),
-        amountField,
-      ],
     );
   }
 
@@ -234,7 +258,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   }
 
   Widget _buildCalculatedResult() {
-    final double source = _sourceAmount == null ? 0.0 : double.tryParse(_sourceAmount!) ?? 0;
+    final double source = _sourceAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? 0;
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
 
