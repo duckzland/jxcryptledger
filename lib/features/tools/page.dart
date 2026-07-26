@@ -55,16 +55,13 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
         child: Padding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start, // top alignment
+            mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             spacing: 12,
             children: [
               Expanded(
                 child: WidgetsPanel(
-                  child: Align(
-                    alignment: Alignment.topCenter, // aligns to top
-                    child: _buildScreen(),
-                  ),
+                  child: Align(alignment: Alignment.topCenter, child: _buildScreen()),
                 ),
               ),
             ],

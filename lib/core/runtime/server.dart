@@ -101,10 +101,6 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     } catch (_) {}
 
     try {
-      lifecycleListener.dispose();
-    } catch (_) {}
-
-    try {
       broadcasterDispose();
     } catch (_) {}
 
@@ -117,6 +113,10 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     } catch (_) {}
     try {
       await ipcServer.dispose();
+    } catch (_) {}
+
+    try {
+      lifecycleListener.dispose();
     } catch (_) {}
 
     try {
