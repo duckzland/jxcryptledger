@@ -113,7 +113,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     final isCustom = !endpoint.contains("coinmarketcap.com");
 
     // @TODO: Add settings for the final amount.
-    final maxPayload = isFreePlan ? 1 : (isCustom ? 40 : 8);
+    final maxPayload = isFreePlan ? 1 : (isCustom ? 40 : 1);
 
     try {
       final jobs = List<(int, int)>.from(_queue);
