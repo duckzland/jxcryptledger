@@ -118,70 +118,39 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
-                    ),
-                  ],
+                WidgetsHeader(title: "From:", spacing: 10, children: [_buildSourceAmountField(), _buildSourceCryptoField()]),
+
+                WidgetsHeader(title: "To:", spacing: 10, child: _buildResultCryptoField()),
+
+                WidgetsButtonsAction(
+                  label: "Convert",
+                  iconSize: 24,
+                  initialState: WidgetsButtonActionState.action,
+                  filledMode: true,
+                  evaluator: (s) {
+                    final int source = rateableSource ?? -1;
+                    final int target = rateableTarget ?? -1;
+                    final double amount = _sourceAmount == null ? -1 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? -1;
+
+                    if (source < 0 || target < 0 || amount < 0) {
+                      s.disable();
+                    } else {
+                      s.action();
+                    }
+                  },
+                  onPressed: (_) {
+                    rateableGetRate(silent: true);
+                  },
                 ),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
-                    ),
-                    const SizedBox(width: 10),
-                    _buildCryptoInputColumn(
-                      "",
-                      WidgetsButtonsAction(
-                        icon: Icons.swap_horiz,
-                        tooltip: "Convert",
-                        padding: const EdgeInsets.all(0),
-                        iconSize: 24,
-                        minimumSize: const Size(54, 54),
-                        evaluator: (s) {
-                          final int source = rateableSource ?? -1;
-                          final int target = rateableTarget ?? -1;
-                          final double amount = _sourceAmount == null ? -1 : double.tryParse(_sourceAmount!) ?? -1;
-
-                          if (source < 0 || target < 0 || amount < 0) {
-                            s.disable();
-                          } else {
-                            s.action();
-                          }
-                        },
-                        onPressed: (_) {
-                          rateableGetRate(silent: true);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-                _buildCalculatedResult(),
+                const SizedBox(height: 50),
+                _buildCalculatedResult(mini: true),
                 const SizedBox(height: 28),
               ],
             );
           }
         },
       ),
-    );
-  }
-
-  Widget _buildCryptoInputColumn(String label, Widget amountField) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-        const SizedBox(height: 20),
-        amountField,
-      ],
     );
   }
 
@@ -234,7 +203,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
     );
   }
 
-  Widget _buildCalculatedResult() {
+  Widget _buildCalculatedResult({bool mini = false}) {
     final double source = _sourceAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? 0;
     final double rate = rateableValue ?? -1;
     final double reversedRate = _reversedRate ?? -1;
@@ -259,20 +228,20 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
       children: [
         Text(
           "${Utils.formatSmartDouble(source)} $sourceSymbol to $targetSymbol",
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: TextStyle(fontSize: mini ? 13 : 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
         Text(
           "${Utils.formatSmartDouble(resultValue)} $targetSymbol",
-          style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          style: TextStyle(fontSize: mini ? 28 : 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
         Text(
           "1 $targetSymbol = ${Utils.formatSmartDouble(rate)} $sourceSymbol",
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: TextStyle(fontSize: mini ? 12 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         Text(
           "1 $sourceSymbol = ${Utils.formatSmartDouble(reversedRate)} $targetSymbol",
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: TextStyle(fontSize: mini ? 11 : 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
       ],
     );

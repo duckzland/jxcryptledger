@@ -111,43 +111,16 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: WidgetsHeader(subtitle: "Sell Rate:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: WidgetsHeader(
-                        subtitle: "Buyback Rate:",
-                        subtitleFontSize: 13,
-                        spacing: 10,
-                        child: _buildRatesRevertAmountField(),
-                      ),
-                    ),
-                  ],
-                ),
+                WidgetsHeader(title: "From:", spacing: 10, children: [_buildSourceAmountField(), _buildSourceCryptoField()]),
 
-                const SizedBox(height: 20),
-                _buildCalculatedResult(),
+                WidgetsHeader(title: "To:", spacing: 10, child: _buildResultCryptoField()),
+
+                WidgetsHeader(title: "Sell Rate:", spacing: 10, child: _buildRatesAmountField()),
+
+                WidgetsHeader(title: "Buyback Rate:", spacing: 10, child: _buildRatesRevertAmountField()),
+
+                const SizedBox(height: 50),
+                _buildCalculatedResult(mini: true),
                 const SizedBox(height: 28),
               ],
             );
@@ -257,7 +230,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => rateableTarget = id));
   }
 
-  Widget _buildCalculatedResult() {
+  Widget _buildCalculatedResult({bool mini = false}) {
     final double source = _sourceAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? 0;
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
@@ -286,12 +259,12 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       children: [
         Text(
           returnRate > 0 ? "Returned amout" : "Calculated Amount",
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+          style: TextStyle(fontSize: mini ? 13 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
         Text(
           "${Utils.formatSmartDouble(resultValue)} $currentSymbol",
-          style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          style: TextStyle(fontSize: mini ? 28 : 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
 
         if (returnRate > 0 && profit != 0) ...[
@@ -308,13 +281,16 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
               crossAxisAlignment: CrossAxisAlignment.center,
 
               children: [
-                Text("Net Profit/Loss:", style: const TextStyle(fontSize: 14, color: AppTheme.textMuted)),
+                Text(
+                  "Net Profit/Loss:",
+                  style: TextStyle(fontSize: mini ? 12 : 14, color: AppTheme.textMuted),
+                ),
                 const SizedBox(width: 8),
                 WidgetsBalanceText(
                   text: "${Utils.formatSmartDouble(profit)} $sourceSymbol",
                   value: resultValue,
                   comparator: source,
-                  fontSize: 18,
+                  fontSize: mini ? 14 : 18,
                   fontWeight: FontWeight.w600,
                   hidePrefix: profit < 0,
                 ),
