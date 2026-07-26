@@ -1,8 +1,8 @@
-# Transaction Tree Example (Root → Leaves → Terminal States)
+# Transaction Tree Example (Root → Leaves → Terminal States → Finalized)
 
-This is a simulated transaction tree showing multiple branches and mixed statuses (active, partial, inactive, closed). Useful for visualizing how rules apply across a full structure.
+This is a simulated transaction tree showing multiple branches and mixed statuses (active, partial, inactive, closed, finalized). Useful for visualizing how rules apply across a full structure.
 
-ROOT (tid=R1)
+ROOT (tid=R1) — **finalized**
 │
 ├── LEAF A (tid=A1) — active
 │   ├── LEAF A1-1 (tid=A11) — partial
@@ -17,21 +17,23 @@ ROOT (tid=R1)
 │
 └── LEAF C (tid=C1) — closed
     ├── TERMINAL (tid=C11) — closed
-    └── TERMINAL (tid=C12) — closed
+    └── TERMINAL (tid=C12) — finalized
 
 ## Legend
 
-- **ROOT** — pid=0, rid=0, closable=true, balance=rrAmount.
-- **LEAF** — any non-root node with no children.
-- **TERMINAL** — leaf with no further descendants.
-- **active** — balance > 0, may have children.
-- **partial** — has children, not all closed.
-- **inactive** — no children, balance=0.
-- **closed** — fully resolved, has valid targetCloser.
+- **ROOT** — pid=0, rid=0, closable=true, balance=rrAmount.  
+- **LEAF** — any non-root node with no children.  
+- **TERMINAL** — leaf with no further descendants.  
+- **active** — balance > 0, may have children.  
+- **partial** — has children, not all closed.  
+- **inactive** — no children, balance=0.  
+- **closed** — fully resolved, has valid targetCloser.  
+- **finalized** — terminal lock-down state; root or leaf cannot be updated further once invariants are satisfied.  
 
 ## Notes
 
-- Branch A shows mixed states: active → partial → active/closed.
-- Branch B shows a partial leaf whose terminal children are all closed.
-- Branch C shows a fully closed branch.
-- This structure is valid under your rule engine and demonstrates all major status transitions.
+- Branch A shows mixed states: active → partial → active/closed.  
+- Branch B shows a partial leaf whose terminal children are all closed.  
+- Branch C shows a fully closed branch, with one terminal finalized.  
+- The root transaction itself is finalized, demonstrating the terminal state of the entire tree.  
+- This structure is valid under the rule engine and demonstrates all major status transitions including **finalization**.
