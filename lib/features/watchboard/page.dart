@@ -249,19 +249,14 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
 
     actionbarRegister("Crypto Watchboard");
 
+    final tickers = ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers());
+    final panels = ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels());
+
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),
       padding: const EdgeInsets.only(left: 16, right: 16),
       spacing: 12,
-      children: [
-        if (_enableTickers) ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
-
-        Flexible(
-          flex: 10,
-          fit: FlexFit.loose,
-          child: ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels()),
-        ),
-      ],
+      children: _enableTickers ? [if (_enableTickers) tickers, Flexible(flex: 10, fit: FlexFit.loose, child: panels)] : [panels],
     );
   }
 
