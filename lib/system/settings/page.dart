@@ -118,20 +118,18 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
       boxConstraints: const BoxConstraints(maxWidth: 1024),
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       children: [
-        Expanded(
-          child: WidgetsPanel(
-            key: Key("settings-panel-$_buildCount"),
-            child: Form(
-              key: _formKey,
-              child: ListView.separated(
-                controller: scrollToUtil.controller,
-                padding: const EdgeInsets.only(bottom: 20),
-                itemCount: editableKeys.length + 1,
-                separatorBuilder: (context, index) => const SizedBox(height: 30),
-                itemBuilder: (context, index) {
-                  return _buildItem(index, editableKeys);
-                },
-              ),
+        WidgetsPanel(
+          key: Key("settings-panel-$_buildCount"),
+          child: Form(
+            key: _formKey,
+            child: ListView.separated(
+              controller: scrollToUtil.controller,
+              padding: const EdgeInsets.only(bottom: 20),
+              itemCount: editableKeys.length + 1,
+              separatorBuilder: (context, index) => const SizedBox(height: 30),
+              itemBuilder: (context, index) {
+                return _buildItem(index, editableKeys);
+              },
             ),
           ),
         ),
