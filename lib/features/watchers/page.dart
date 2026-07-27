@@ -194,11 +194,8 @@ class _WatchersPageState extends State<WatchersPage>
 
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),
-      padding: const EdgeInsets.only(left: 16, right: 16),
-      children: [
-        Expanded(child: _buildTable()),
-        const SizedBox(height: 1),
-      ],
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      children: [_buildTable()],
     );
   }
 

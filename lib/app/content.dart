@@ -10,12 +10,18 @@ class AppContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      spacing: spacing,
-      children: children,
-    );
+    Widget content;
+
+    if (children.length > 1) {
+      content = Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: spacing,
+        children: children,
+      );
+    } else {
+      content = children.first;
+    }
 
     if (padding != null) {
       content = Padding(padding: padding!, child: content);

@@ -54,10 +54,8 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
       boxConstraints: const BoxConstraints(maxWidth: 1600),
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       children: [
-        Expanded(
-          child: WidgetsPanel(
-            child: Align(alignment: Alignment.topCenter, child: _buildScreen()),
-          ),
+        WidgetsPanel(
+          child: Align(alignment: Alignment.topCenter, child: _buildScreen()),
         ),
       ],
     );

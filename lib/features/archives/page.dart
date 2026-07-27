@@ -184,7 +184,7 @@ class _ArchivesPageState extends State<ArchivesPage>
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      children: [Expanded(child: _buildTable())],
+      children: [_buildTable()],
     );
   }
 

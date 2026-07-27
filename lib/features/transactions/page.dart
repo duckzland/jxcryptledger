@@ -460,10 +460,7 @@ class TransactionsPageState extends State<TransactionsPage>
       );
     }
 
-    return AppContent(
-      boxConstraints: const BoxConstraints(maxWidth: 1600),
-      children: [Expanded(child: _buildScreen())],
-    );
+    return AppContent(boxConstraints: const BoxConstraints(maxWidth: 1600), children: [_buildScreen()]);
   }
 
   Widget _buildForm(BuildContext dialogContext) {
