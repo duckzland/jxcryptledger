@@ -308,6 +308,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     }
 
     actionbarRegister("Crypto Watchboard");
+
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),
       padding: const EdgeInsets.only(left: 16, right: 16),
@@ -376,18 +377,17 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         final effectiveWidth = baseWidth + spacing;
         final maxPerRow = (constraints.maxWidth / effectiveWidth).floor().clamp(1, totalTickers);
 
-        int perRow;
+        int perRow = 2;
         if (maxPerRow >= 8) {
           perRow = 8;
         } else if (maxPerRow >= 4) {
           perRow = 4;
-        } else if (maxPerRow >= 2) {
-          perRow = 2;
-        } else {
-          perRow = 2;
         }
 
-        final rows = (totalTickers / perRow).ceil();
+        int rows = (totalTickers / perRow).ceil();
+        if (rows > 2) {
+          rows = 2;
+        }
         final newWidth = (constraints.maxWidth / perRow) - spacing;
         final tickerHeight = itemHeight * rows + ((rows - 1) * spacing);
 

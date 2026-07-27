@@ -11,12 +11,12 @@ import '../../../widgets/panel.dart';
 import '../../../widgets/table/column.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
-import '../controller.dart';
 import '../dialogs/details.dart';
 import '../mixins/flags.dart';
 import '../widgets/buttons/action.dart';
-import '../model.dart';
 import '../widgets/status_text.dart';
+import '../model.dart';
+import '../controller.dart';
 
 class TransactionsJournalView extends StatefulWidget {
   final List<TransactionsModel> transactions;
