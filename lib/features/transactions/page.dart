@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jxledger/app/content.dart';
 
 import '../../app/layout.dart';
 import '../../core/runtime/locator.dart';
@@ -459,8 +460,9 @@ class TransactionsPageState extends State<TransactionsPage>
       );
     }
 
-    return Center(
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1600), child: _buildScreen()),
+    return AppContent(
+      boxConstraints: const BoxConstraints(maxWidth: 1600),
+      children: [Expanded(child: _buildScreen())],
     );
   }
 

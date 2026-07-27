@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
+import '../../app/content.dart';
 import '../../app/exceptions.dart';
 import '../../app/layout.dart';
 import '../../core/runtime/locator.dart';
@@ -307,31 +308,24 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     }
 
     actionbarRegister("Crypto Watchboard");
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16),
-          child: Column(
-            spacing: 12,
+    return AppContent(
+      boxConstraints: const BoxConstraints(maxWidth: 1600),
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      children: [
+        if (_enableTickers)
+          Row(
             children: [
-              if (_enableTickers)
-                Row(
-                  children: [
-                    Expanded(
-                      child: ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
-                    ),
-                  ],
-                ),
-              Flexible(
-                flex: 10,
-                fit: FlexFit.loose,
-                child: ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels()),
+              Expanded(
+                child: ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
               ),
             ],
           ),
+        Flexible(
+          flex: 10,
+          fit: FlexFit.loose,
+          child: ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels()),
         ),
-      ),
+      ],
     );
   }
 

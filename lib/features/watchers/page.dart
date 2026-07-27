@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
+import '../../app/content.dart';
 import '../../app/exceptions.dart';
 import '../../app/theme.dart';
 import '../../core/runtime/locator.dart';
@@ -190,20 +191,14 @@ class _WatchersPageState extends State<WatchersPage>
     }
 
     actionbarRegister("Rate Watchers");
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16),
-          child: Column(
-            spacing: 12,
-            children: [
-              Expanded(child: _buildTable()),
-              const SizedBox(height: 1),
-            ],
-          ),
-        ),
-      ),
+
+    return AppContent(
+      boxConstraints: const BoxConstraints(maxWidth: 1600),
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      children: [
+        Expanded(child: _buildTable()),
+        const SizedBox(height: 1),
+      ],
     );
   }
 

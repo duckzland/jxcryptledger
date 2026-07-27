@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/content.dart';
 import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
@@ -113,11 +114,11 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
   Widget build(BuildContext context) {
     final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1024),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+    return AppContent(
+      boxConstraints: const BoxConstraints(maxWidth: 1024),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      children: [
+        Expanded(
           child: WidgetsPanel(
             key: Key("settings-panel-$_buildCount"),
             child: Form(
@@ -134,7 +135,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 

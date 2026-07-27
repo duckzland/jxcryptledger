@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
+import '../../app/content.dart';
 import '../../app/exceptions.dart';
 import '../../core/runtime/locator.dart';
 import '../../core/scrollto.dart';
@@ -179,14 +180,11 @@ class _ArchivesPageState extends State<ArchivesPage>
     }
 
     actionbarRegister("Data Archives");
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-          child: Column(spacing: 12, children: [Expanded(child: _buildTable())]),
-        ),
-      ),
+
+    return AppContent(
+      boxConstraints: const BoxConstraints(maxWidth: 1600),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      children: [Expanded(child: _buildTable())],
     );
   }
 

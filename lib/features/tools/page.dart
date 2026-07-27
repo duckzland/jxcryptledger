@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/content.dart';
 import '../../core/runtime/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/state.dart';
@@ -49,25 +50,16 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
       actionbarRemove();
       return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.');
     }
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 12,
-            children: [
-              Expanded(
-                child: WidgetsPanel(
-                  child: Align(alignment: Alignment.topCenter, child: _buildScreen()),
-                ),
-              ),
-            ],
+    return AppContent(
+      boxConstraints: const BoxConstraints(maxWidth: 1600),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      children: [
+        Expanded(
+          child: WidgetsPanel(
+            child: Align(alignment: Alignment.topCenter, child: _buildScreen()),
           ),
         ),
-      ),
+      ],
     );
   }
 
