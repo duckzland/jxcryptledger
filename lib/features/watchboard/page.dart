@@ -135,16 +135,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               evaluator: (s) {
                 _enableTickers ? s.primary() : s.normal();
               },
-              onPressed: (_) {
-                _debounceTimer?.cancel();
-                _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-                  setState(() {
-                    _enableTickers = !_enableTickers;
-                  });
-                  AppLayout.refreshBar?.call();
-                  states.set('px-enable-tickers', _enableTickers);
-                });
-              },
+              onPressed: _actionToggleTickers,
             ),
             WidgetsButtonsAction(
               key: _enableDrag ? const Key("panel-drag-allowed") : const Key("panel-drag-disabled"),
@@ -157,33 +148,9 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               evaluator: (s) {
                 _enableDrag ? s.primary() : s.normal();
               },
-              onPressed: (_) {
-                _debounceTimer?.cancel();
-                _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-                  final now = DateTime.now();
-                  if (now.difference(_lastPress).inMilliseconds < 500) {
-                    return;
-                  }
-                  setState(() {
-                    _lastPress = now;
-                    _enableDrag = !_enableDrag;
-                  });
-
-                  AppLayout.refreshBar?.call();
-
-                  widgetsNotifyClear();
-                  widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
-
-                  states.set('px-enable-drag', _enableDrag);
-                });
-              },
+              onPressed: _actionToggleDrag,
             ),
-            WidgetsDialogsShowForm(
-              key: const Key("add-button"),
-              tooltip: "Add new watchboard",
-              buildForm: _buildForm,
-              evaluator: (s) => s.action(),
-            ),
+            WidgetsDialogsShowForm(key: const Key("add-button"), tooltip: "Add new watchboard", buildForm: _buildForm),
           ],
         ),
         const WidgetsSeparator(),
@@ -202,7 +169,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
                   "This will delete all linked watchboard entry.\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Delete",
-              actionStartCallback: _pxController.wipeLinked,
+              actionStartCallback: _actionWipeLinked,
               actionSuccessMessage: "All linked watchboard deleted.",
               actionErrorMessage: "Failed to delete linked watchboard.",
             ),
@@ -219,18 +186,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
                   "This will update all the linked watchboard.\n"
                   "This action cannot be undone.",
               dialogConfirmLabel: "Update",
-              actionCompleteCallback: () async {
-                try {
-                  bool updated = await _pxController.updateLinked();
-                  if (updated) {
-                    widgetsNotifySuccess("All linked watchboard updated.");
-                  } else {
-                    widgetsNotifyWarning("Linked watchboard checked, but no additional data requires updating.");
-                  }
-                } catch (e) {
-                  rethrow;
-                }
-              },
+              actionCompleteCallback: _actionUpdateLinked,
               actionErrorMessage: "Failed to update linked watchboard.",
             ),
           ],
@@ -243,13 +199,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               key: const Key("import-button-batch"),
               tooltip: "Import watchboard to database",
               showDialogBeforeImport: true,
-              onImport: (String json) async {
-                await _pxController.importDatabase(json);
-                _pxController.scheduleRates();
-                await _tixController.refreshRates();
-                states.remove('px-offset');
-              },
-              evaluator: (s) {},
+              onImport: _actionImport,
             ),
             WidgetsDialogsExport(
               key: const Key("export-button-batch"),
@@ -265,13 +215,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               dialogMessage:
                   "This will delete all watchboard entries.\n"
                   "This action cannot be undone.",
-              onWipe: () async {
-                await _pxController.clear();
-                await _tixController.wipe();
-
-                await _tixController.populate();
-                states.remove('px-offset');
-              },
+              onWipe: _actionWipe,
               isEmpty: _pxController.isEmpty,
             ),
           ],
@@ -289,6 +233,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
 
     if (_pxController.isEmpty()) {
       actionbarRemove();
+
       return WidgetsScreensEmpty(
         title: "Add Watchboard",
         addTitle: "Add New",
@@ -297,12 +242,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         importTitle: "Import",
         importTooltip: "Import watchboard to database",
         importEvaluator: () => true,
-        importCallback: (json) async {
-          await _pxController.importDatabase(json);
-          _pxController.scheduleRates();
-          await _tixController.refreshRates();
-          states.remove('px-offset');
-        },
+        importCallback: _actionImport,
         addForm: _buildForm,
       );
     }
@@ -312,15 +252,10 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),
       padding: const EdgeInsets.only(left: 16, right: 16),
+      spacing: 12,
       children: [
-        if (_enableTickers)
-          Row(
-            children: [
-              Expanded(
-                child: ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
-              ),
-            ],
-          ),
+        if (_enableTickers) ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers()),
+
         Flexible(
           flex: 10,
           fit: FlexFit.loose,
@@ -444,5 +379,70 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         },
       ),
     );
+  }
+
+  Future<void> _actionImport(String json) async {
+    await _pxController.importDatabase(json);
+    _pxController.scheduleRates();
+    await _tixController.refreshRates();
+    states.remove('px-offset');
+  }
+
+  Future<void> _actionWipe() async {
+    await _pxController.clear();
+    await _tixController.wipe();
+
+    await _tixController.populate();
+    states.remove('px-offset');
+  }
+
+  Future<void> _actionUpdateLinked() async {
+    try {
+      bool updated = await _pxController.updateLinked();
+      if (updated) {
+        widgetsNotifySuccess("All linked watchboard updated.");
+      } else {
+        widgetsNotifyWarning("Linked watchboard checked, but no additional data requires updating.");
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> _actionWipeLinked() async {
+    await _pxController.wipeLinked();
+    setState(() {});
+  }
+
+  void _actionToggleDrag(WidgetsButtonsActionState s) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      final now = DateTime.now();
+      if (now.difference(_lastPress).inMilliseconds < 500) {
+        return;
+      }
+      setState(() {
+        _lastPress = now;
+        _enableDrag = !_enableDrag;
+      });
+
+      AppLayout.refreshBar?.call();
+
+      widgetsNotifyClear();
+      widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
+
+      states.set('px-enable-drag', _enableDrag);
+    });
+  }
+
+  void _actionToggleTickers(WidgetsButtonsActionState s) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _enableTickers = !_enableTickers;
+      });
+      AppLayout.refreshBar?.call();
+      states.set('px-enable-tickers', _enableTickers);
+    });
   }
 }
