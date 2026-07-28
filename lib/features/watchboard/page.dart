@@ -71,8 +71,8 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     _enableDrag = states.get('px-enable-drag', defaultValue: false);
     _enableTickers = states.get('px-enable-tickers', defaultValue: true);
 
-    txs = _pxController.items;
-    tickers = _tixController.items;
+    txs = [..._pxController.items];
+    tickers = [..._tixController.items];
 
     txs.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
     tickers.sort((a, b) => a.order.compareTo(b.order));
@@ -330,7 +330,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   void _onPanelsControllerChanged() {
     if (!mounted) return;
     final oldEmpty = txs.isEmpty;
-    txs = _pxController.items;
+    txs = [..._pxController.items];
     txs.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
 
     _hasLinked = _pxController.hasLinked();
@@ -345,7 +345,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
   void _onTickersControllerChanged() {
     if (!mounted) return;
     setState(() {
-      tickers = _tixController.items;
+      tickers = [..._tixController.items];
       tickers.sort((a, b) => a.order.compareTo(b.order));
     });
   }
