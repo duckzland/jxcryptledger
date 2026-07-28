@@ -74,6 +74,9 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     txs = _pxController.items;
     tickers = _tixController.items;
 
+    txs.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
+    tickers.sort((a, b) => a.order.compareTo(b.order));
+
     actionbarRegister("Crypto Watchboard");
   }
 
@@ -86,33 +89,6 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
     _cryptosController.removeListener(_onCryptosControllerChanged);
 
     super.dispose();
-  }
-
-  void _onCryptosControllerChanged() {
-    if (mounted) {
-      setState(() {});
-      AppLayout.refreshBar?.call();
-    }
-  }
-
-  void _onPanelsControllerChanged() {
-    if (!mounted) return;
-    final oldEmpty = txs.isEmpty;
-    txs = _pxController.items;
-    _hasLinked = _pxController.hasLinked();
-
-    final nowEmpty = txs.isEmpty;
-    if (oldEmpty != nowEmpty) {
-      AppLayout.refreshBar?.call();
-      setState(() {});
-    }
-  }
-
-  void _onTickersControllerChanged() {
-    if (!mounted) return;
-    setState(() {
-      tickers = _tixController.items;
-    });
   }
 
   @override
@@ -132,9 +108,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               iconSize: 20,
               minimumSize: const Size(40, 40),
               tooltip: _enableTickers ? "Hide Watchboard Tickers" : "Show Watchboard Tickers",
-              evaluator: (s) {
-                _enableTickers ? s.primary() : s.normal();
-              },
+              evaluator: _evaluatorTickerToggle,
               onPressed: _actionToggleTickers,
             ),
             WidgetsButtonsAction(
@@ -145,9 +119,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               iconSize: 20,
               minimumSize: const Size(40, 40),
               tooltip: _enableDrag ? "Turn off watchboard dragging" : "Turn on watchboard dragging",
-              evaluator: (s) {
-                _enableDrag ? s.primary() : s.normal();
-              },
+              evaluator: _evaluatorDragToggle,
               onPressed: _actionToggleDrag,
             ),
             WidgetsDialogsShowForm(key: const Key("add-button"), tooltip: "Add new watchboard", buildForm: _buildForm),
@@ -161,9 +133,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               icon: Icons.delete_forever,
               initialState: WidgetsButtonActionState.error,
               tooltip: "Delete linked watchboard",
-              evaluator: (s) {
-                _hasLinked ? s.error() : s.disable();
-              },
+              evaluator: _evaluatorDeleteLinked,
               dialogTitle: "Delete All Linked Watchboard",
               dialogMessage:
                   "This will delete all linked watchboard entry.\n"
@@ -178,9 +148,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
               icon: Icons.line_axis,
               initialState: WidgetsButtonActionState.primary,
               tooltip: "Update linked watchboard",
-              evaluator: (s) {
-                _hasLinked ? s.primary() : s.disable();
-              },
+              evaluator: _evaluatorUpdateLinked,
               dialogTitle: "Update Linked Watchboard",
               dialogMessage:
                   "This will update all the linked watchboard.\n"
@@ -256,17 +224,15 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
       boxConstraints: const BoxConstraints(maxWidth: 1600),
       padding: const EdgeInsets.only(left: 16, right: 16),
       spacing: 12,
-      children: _enableTickers ? [if (_enableTickers) tickers, Flexible(flex: 10, fit: FlexFit.loose, child: panels)] : [panels],
+      children: _enableTickers ? [tickers, Flexible(flex: 10, fit: FlexFit.loose, child: panels)] : [panels],
     );
   }
 
   Widget _buildPanels() {
-    txs.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
-
     return ReorderableGridView.builder(
       controller: scrollUtil.controller,
       padding: const EdgeInsets.only(bottom: 12),
-      gridDelegate: SliverGridDelegateWithMinWidth(
+      gridDelegate: const SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
         itemHeight: 105,
         mainAxisSpacing: 12,
@@ -276,34 +242,20 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
       dragEnabled: _enableDrag,
       dragStartDelay: const Duration(microseconds: 10),
       itemCount: txs.length,
-      itemBuilder: (context, index) {
-        final tx = txs[index];
-        return PanelsDisplay(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
-      },
-      dragWidgetBuilder: (index, child) {
-        return Material(color: Colors.transparent, elevation: 0, child: child);
-      },
-      onReorder: (oldIndex, newIndex) {
-        final moved = txs.removeAt(oldIndex);
-        txs.insert(newIndex, moved);
-
-        for (var i = 0; i < txs.length; i++) {
-          txs[i].order = i;
-        }
-        _pxController.updateOrder(txs);
-      },
+      itemBuilder: _panelItemBuilder,
+      dragWidgetBuilder: _buildDragElement,
+      onReorder: _panelActionDrag,
     );
   }
 
   Widget _buildTickers() {
-    final items = tickers.toList()..sort((a, b) => a.order.compareTo(b.order));
-
     return LayoutBuilder(
       builder: (context, constraints) {
         const baseWidth = 140.0;
         const spacing = 8.0;
         const totalTickers = 8;
         const itemHeight = 47.0;
+
         final effectiveWidth = baseWidth + spacing;
         final maxPerRow = (constraints.maxWidth / effectiveWidth).floor().clamp(1, totalTickers);
 
@@ -318,6 +270,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         if (rows > 2) {
           rows = 2;
         }
+
         final newWidth = (constraints.maxWidth / perRow) - spacing;
         final tickerHeight = itemHeight * rows + ((rows - 1) * spacing);
 
@@ -333,23 +286,10 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
             ),
             dragEnabled: _enableDrag,
             dragStartDelay: const Duration(microseconds: 10),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final tx = items[index];
-              return TickersDisplay(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
-            },
-            dragWidgetBuilder: (index, child) {
-              return Material(color: Colors.transparent, elevation: 0, child: child);
-            },
-            onReorder: (oldIndex, newIndex) {
-              final moved = items.removeAt(oldIndex);
-              items.insert(newIndex, moved);
-
-              for (var i = 0; i < items.length; i++) {
-                items[i].order = i;
-              }
-              _tixController.updateOrder(items);
-            },
+            itemCount: tickers.length,
+            itemBuilder: _tickerItemBuilder,
+            dragWidgetBuilder: _buildDragElement,
+            onReorder: _tickerActionDrag,
           ),
         );
       },
@@ -374,6 +314,56 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
         },
       ),
     );
+  }
+
+  Widget _buildDragElement(int index, Widget child) {
+    return Material(color: Colors.transparent, elevation: 0, child: child);
+  }
+
+  void _onCryptosControllerChanged() {
+    if (mounted) {
+      setState(() {});
+      AppLayout.refreshBar?.call();
+    }
+  }
+
+  void _onPanelsControllerChanged() {
+    if (!mounted) return;
+    final oldEmpty = txs.isEmpty;
+    txs = _pxController.items;
+    txs.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
+
+    _hasLinked = _pxController.hasLinked();
+
+    final nowEmpty = txs.isEmpty;
+    if (oldEmpty != nowEmpty) {
+      AppLayout.refreshBar?.call();
+      setState(() {});
+    }
+  }
+
+  void _onTickersControllerChanged() {
+    if (!mounted) return;
+    setState(() {
+      tickers = _tixController.items;
+      tickers.sort((a, b) => a.order.compareTo(b.order));
+    });
+  }
+
+  void _evaluatorTickerToggle(WidgetsButtonsActionState s) {
+    _enableTickers ? s.primary() : s.normal();
+  }
+
+  void _evaluatorDragToggle(WidgetsButtonsActionState s) {
+    _enableDrag ? s.primary() : s.normal();
+  }
+
+  void _evaluatorDeleteLinked(WidgetsButtonsActionState s) {
+    _hasLinked ? s.error() : s.disable();
+  }
+
+  void _evaluatorUpdateLinked(WidgetsButtonsActionState s) {
+    _hasLinked ? s.primary() : s.disable();
   }
 
   Future<void> _actionImport(String json) async {
@@ -439,5 +429,41 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
       AppLayout.refreshBar?.call();
       states.set('px-enable-tickers', _enableTickers);
     });
+  }
+
+  Widget _panelItemBuilder(BuildContext context, int index) {
+    final tx = txs[index];
+    return PanelsDisplay(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
+  }
+
+  void _panelActionDrag(int oldIndex, int newIndex) {
+    setState(() {
+      final moved = txs.removeAt(oldIndex);
+      txs.insert(newIndex, moved);
+
+      for (var i = 0; i < txs.length; i++) {
+        txs[i].order = i;
+      }
+    });
+
+    _pxController.updateOrder(txs);
+  }
+
+  Widget _tickerItemBuilder(BuildContext context, int index) {
+    final tx = tickers[index];
+    return TickersDisplay(key: ValueKey(tx.tid), tix: tx, isDragging: _enableDrag);
+  }
+
+  void _tickerActionDrag(int oldIndex, int newIndex) {
+    setState(() {
+      final moved = tickers.removeAt(oldIndex);
+      tickers.insert(newIndex, moved);
+
+      for (var i = 0; i < tickers.length; i++) {
+        tickers[i].order = i;
+      }
+    });
+
+    _tixController.updateOrder(tickers);
   }
 }
