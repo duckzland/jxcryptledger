@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../mixins/state.dart';
 import '../../widgets/buttons/action.dart';
 import 'screens/board.dart';
-import 'screens/bubble/layout.dart';
+import 'screens/bubble.dart';
 import 'screens/dominance.dart';
 import 'screens/market.dart';
 

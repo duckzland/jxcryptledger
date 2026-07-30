@@ -268,7 +268,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
   }
 
   void _processTxs() {
-    final stablecoins = {'usdt', 'usdc', 'dai', 'fdusd', 'usde', 'tusd', 'busd', 'pyusd', 'usdd', 'frax'};
+    final stablecoins = {'usdt', 'usdc', 'dai', 'fdusd', 'usde', 'tusd', 'busd', 'pyusd', 'usdd', 'frax', 'usdg'};
 
     final volatileCoins = _controller.items.where((m) {
       final symbol = m.symbol.toLowerCase().trim();
