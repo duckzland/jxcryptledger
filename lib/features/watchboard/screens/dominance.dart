@@ -5,6 +5,7 @@ import '../../../../core/runtime/locator.dart';
 import '../../../../mixins/action_bar.dart';
 import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';
+import '../../../core/utils.dart';
 import '../markets/controller.dart';
 import '../markets/model.dart';
 
@@ -18,8 +19,6 @@ class WatchboardScreensDominance extends StatefulWidget {
 
 class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance> with MixinsActionBar<WatchboardScreensDominance> {
   late List<MarketsModel> txs;
-
-  List<Map<String, dynamic>> bars = [];
 
   MarketsController get _controller => locator<MarketsController>();
 
@@ -57,19 +56,19 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
         LayoutBuilder(
           builder: (context, constraints) {
             const double baseGap = 10.0;
-            const double rowHeight = 36.0;
+            const double barHeight = 36.0;
 
             return ListView.builder(
               controller: scrollUtil.controller,
               padding: EdgeInsets.zero,
-              itemExtent: rowHeight + baseGap,
-              itemCount: bars.length,
+              itemExtent: barHeight + baseGap,
+              itemCount: txs.length,
               itemBuilder: (context, index) {
-                final item = bars[index];
+                final tx = txs[index];
 
-                final double percent1h = item['_percent1h'] as double;
-                final double rawDominance = item['_dominance'] as double;
-                final double progressFraction = (rawDominance / 100.0) + 0.01;
+                final double percent1h = tx.percent1h ?? 0.0;
+                final double rawDominance = tx.dominance ?? 0.0;
+                final double progressFraction = ((rawDominance.toDouble() / 100.0) + 0.01).clamp(0.01, 1.00);
 
                 return Padding(
                   padding: EdgeInsets.only(bottom: baseGap, right: 8),
@@ -79,37 +78,31 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
                       SizedBox(
                         width: 80.0,
                         child: Text(
-                          item['symbol'] ?? '',
+                          tx.symbol.toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.clip,
                           textAlign: TextAlign.right,
-                          style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
 
                       Expanded(
-                        child: Container(
-                          height: rowHeight,
-                          decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: AppTheme.borderRadius),
-                          child: ClipRRect(
-                            borderRadius: AppTheme.borderRadius,
-                            child: LinearProgressIndicator(
-                              value: progressFraction,
-                              valueColor: AlwaysStoppedAnimation<Color>(percent1h >= 0 ? AppTheme.green : AppTheme.red),
-                              backgroundColor: AppTheme.inputBg,
-                              borderRadius: AppTheme.borderRadius,
-                            ),
-                          ),
+                        child: LinearProgressIndicator(
+                          minHeight: barHeight,
+                          value: progressFraction,
+                          valueColor: AlwaysStoppedAnimation<Color>(percent1h >= 0 ? AppTheme.green : AppTheme.red),
+                          backgroundColor: AppTheme.inputBg,
+                          borderRadius: AppTheme.borderRadius,
                         ),
                       ),
 
                       SizedBox(
                         width: 40.0,
                         child: Text(
-                          item['dominance'] ?? '',
+                          Utils.formatSmartDouble(tx.dominance ?? 0.0, maxDecimals: 2),
                           maxLines: 1,
                           textAlign: TextAlign.left,
-                          style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500),
+                          style: TextStyle(color: AppTheme.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
