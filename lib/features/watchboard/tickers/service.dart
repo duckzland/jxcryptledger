@@ -6,19 +6,21 @@ import '../../../core/abstracts/service.dart';
 import '../../../core/log.dart';
 import '../../../system/settings/keys.dart';
 import '../../../system/settings/repository.dart';
+import '../markets/service.dart';
 import 'mixins/helper.dart';
 import 'model.dart';
 import 'repository.dart';
 
 class TickersService extends CoreBaseService<TickersModel, TickersRepository> with TickersMixinsHelper {
   final SettingsRepository settingsRepo;
+  final MarketsService marketsService;
 
-  TickersService(super.repo, this.settingsRepo);
+  TickersService(super.repo, this.settingsRepo, this.marketsService);
 
   @override
   Future<void> init() async {
-    repo.init();
-    if (repo.isEmpty()) {
+    await repo.init();
+    if (repo.isEmpty() || repo.count() < 16) {
       await populate();
     }
     broadcasterListen();
@@ -26,7 +28,9 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
   Future<void> populate({bool fetchRate = true}) async {
     for (final tx in defaultTickers) {
-      await repo.add(tx);
+      if (repo.get(tx.uuid) == null) {
+        await repo.add(tx);
+      }
     }
 
     if (fetchRate) {
@@ -236,6 +240,48 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
+  Future<bool> fetchMarketGainerLoser() async {
+    if (marketsService.isEmpty()) {
+      await marketsService.refreshRates();
+    }
+
+    final markets = marketsService.extract();
+
+    final top100 = markets.where((m) => m.rank <= 100).toList();
+
+    final sorted100_1h = [...top100]..sort((a, b) => (b.percent1h ?? 0).compareTo(a.percent1h ?? 0));
+    final gainer100_1h = sorted100_1h.first;
+    final loser100_1h = sorted100_1h.last;
+
+    final sorted100_24h = [...top100]..sort((a, b) => (b.percent24h ?? 0).compareTo(a.percent24h ?? 0));
+    final gainer100_24h = sorted100_24h.first;
+    final loser100_24h = sorted100_24h.last;
+
+    final next100 = markets.where((m) => m.rank > 100 && m.rank <= 200).toList();
+
+    final sorted200_1h = [...next100]..sort((a, b) => (b.percent1h ?? 0).compareTo(a.percent1h ?? 0));
+    final gainer200_1h = sorted200_1h.first;
+    final loser200_1h = sorted200_1h.last;
+
+    final sorted200_24h = [...next100]..sort((a, b) => (b.percent24h ?? 0).compareTo(a.percent24h ?? 0));
+    final gainer200_24h = sorted200_24h.first;
+    final loser200_24h = sorted200_24h.last;
+
+    repo.updateByType(TickerType.topGainer100_1h.index, gainer100_1h.percent1h.toString(), title: '${gainer100_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topGainer100_24h.index, gainer100_24h.percent24h.toString(), title: '${gainer100_24h.symbol} - 24h');
+
+    repo.updateByType(TickerType.topLoser100_1h.index, loser100_1h.percent1h.toString(), title: '${loser100_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topLoser100_24h.index, loser100_24h.percent24h.toString(), title: '${loser100_24h.symbol} - 24h');
+
+    repo.updateByType(TickerType.topGainer200_1h.index, gainer200_1h.percent1h.toString(), title: '${gainer200_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topGainer200_24h.index, gainer200_24h.percent24h.toString(), title: '${gainer200_24h.symbol} - 24h');
+
+    repo.updateByType(TickerType.topLoser200_1h.index, loser200_1h.percent1h.toString(), title: '${loser200_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topLoser200_24h.index, loser200_24h.percent24h.toString(), title: '${loser200_24h.symbol} - 24h');
+
+    return true;
+  }
+
   Future<void> refreshRates() async {
     final all = repo.extract();
 
@@ -248,23 +294,44 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     if (types.contains(TickerType.altcoinIndex)) {
       jobs.add(fetchAltSeason());
     }
+
     if (types.contains(TickerType.fearGreed)) {
       jobs.add(fetchFearGreed());
     }
+
     if (types.contains(TickerType.cmc100)) {
       jobs.add(fetchCmc100());
     }
+
     if (types.contains(TickerType.marketCap)) {
       jobs.add(fetchMarketCap());
     }
+
     if (types.contains(TickerType.dominance)) {
       jobs.add(fetchDominance());
     }
+
     if (types.contains(TickerType.etf)) {
       jobs.add(fetchEtf());
     }
+
     if (types.contains(TickerType.pulse)) {
       jobs.add(fetchRsi());
+    }
+
+    const mgmlTypes = {
+      TickerType.topGainer100_1h,
+      TickerType.topGainer100_24h,
+      TickerType.topGainer200_1h,
+      TickerType.topGainer200_24h,
+      TickerType.topLoser100_1h,
+      TickerType.topLoser100_24h,
+      TickerType.topLoser200_1h,
+      TickerType.topLoser200_24h,
+    };
+
+    if (types.any(mgmlTypes.contains)) {
+      jobs.add(fetchMarketGainerLoser());
     }
 
     await Future.wait(jobs);

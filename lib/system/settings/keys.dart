@@ -99,6 +99,16 @@ enum SettingKey {
     hintText: "https://example.com/data-api/v3/global-metrics/dominance/overview",
   ),
 
+  marketEndpoint(
+    type: SettingType.string,
+    isUserEditable: true,
+    required: true,
+    label: 'Market Endpoint',
+    defaultValue: "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest",
+    validator: _validateUrl,
+    hintText: "https://example.com/public-api/v3/cryptocurrency/listings/latest",
+  ),
+
   authorizationKey(
     type: SettingType.string,
     isUserEditable: true,

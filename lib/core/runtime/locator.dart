@@ -12,6 +12,9 @@ import '../../features/rates/controller.dart';
 import '../../features/cryptos/repository.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/cryptos/controller.dart';
+import '../../features/watchboard/markets/controller.dart';
+import '../../features/watchboard/markets/repository.dart';
+import '../../features/watchboard/markets/service.dart';
 import '../../system/settings/controller.dart';
 import '../../system/settings/repository.dart';
 import '../../system/settings/service.dart';
@@ -88,7 +91,14 @@ void setupLocator() {
   // Tickers
   locator.registerLazySingleton<TickersRepository>(() => TickersRepository());
   locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>()));
-  locator.registerLazySingleton<TickersService>(() => TickersService(locator<TickersRepository>(), locator<SettingsRepository>()));
+  locator.registerLazySingleton<TickersService>(
+    () => TickersService(locator<TickersRepository>(), locator<SettingsRepository>(), locator<MarketsService>()),
+  );
+
+  // Markets
+  locator.registerLazySingleton<MarketsRepository>(() => MarketsRepository());
+  locator.registerLazySingleton<MarketsController>(() => MarketsController(locator<MarketsRepository>()));
+  locator.registerLazySingleton<MarketsService>(() => MarketsService(locator<MarketsRepository>(), locator<SettingsRepository>()));
 
   // Archives
   locator.registerLazySingleton<ArchivesRepository>(() => ArchivesRepository());

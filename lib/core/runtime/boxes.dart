@@ -11,8 +11,10 @@ import '../../../features/rates/model.dart';
 import '../../../features/transactions/model.dart';
 import '../../../features/watchboard/panels/model.dart';
 import '../../../features/watchboard/tickers/model.dart';
+import '../../../features/watchboard/markets/model.dart';
 import '../../../features/watchers/model.dart';
 import '../../../system/unlock/status.dart';
+
 import '../log.dart';
 
 class CoreRuntimeBoxes extends IpcBoxes {
@@ -54,6 +56,8 @@ class CoreRuntimeBoxes extends IpcBoxes {
       await openOrRebuildBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
 
       await openOrRebuildBox<TickersModel>('tickers_box', encryptionCipher: null, crashRecovery: false);
+
+      await openOrRebuildBox<MarketsModel>('markets_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
       logln("Failed to decrypt boxes (wrong password): ${e.toString()}");
       return SystemUnlockStatus.error;

@@ -24,7 +24,7 @@ abstract class CoreBaseService<T extends CoreModelWithId, R extends CoreBaseRepo
   IpcServer get ipcServer => locator<IpcServer>();
 
   Future<void> init() async {
-    repo.init();
+    await repo.init();
     broadcasterListen();
   }
 

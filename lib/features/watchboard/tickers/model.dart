@@ -2,7 +2,25 @@ import '../../../app/exceptions.dart';
 import '../../../core/abstracts/models/with_id.dart';
 import '../../../core/utils.dart';
 
-enum TickerType { marketCap, cmc100, rsi, pulse, etf, dominance, fearGreed, altcoinIndex, unknown }
+enum TickerType {
+  marketCap,
+  cmc100,
+  rsi,
+  pulse,
+  etf,
+  dominance,
+  fearGreed,
+  altcoinIndex,
+  topGainer100_1h,
+  topGainer100_24h,
+  topLoser100_1h,
+  topLoser100_24h,
+  topGainer200_1h,
+  topGainer200_24h,
+  topLoser200_1h,
+  topLoser200_24h,
+  unknown,
+}
 
 enum TickerFormat {
   nodecimal,
@@ -123,6 +141,22 @@ class TickersModel implements CoreModelWithId {
         return TickerType.fearGreed;
       case 7:
         return TickerType.altcoinIndex;
+      case 8:
+        return TickerType.topGainer100_1h;
+      case 9:
+        return TickerType.topGainer100_24h;
+      case 10:
+        return TickerType.topLoser100_1h;
+      case 11:
+        return TickerType.topLoser100_24h;
+      case 12:
+        return TickerType.topGainer200_1h;
+      case 13:
+        return TickerType.topGainer200_24h;
+      case 14:
+        return TickerType.topLoser200_1h;
+      case 15:
+        return TickerType.topLoser200_24h;
       default:
         return TickerType.unknown;
     }

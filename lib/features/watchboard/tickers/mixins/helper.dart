@@ -46,5 +46,62 @@ mixin TickersMixinsHelper {
       title: "Dominance",
       order: 7,
     ),
+
+    TickersModel(
+      tid: "topGainer100_1h",
+      type: TickerType.topGainer100_1h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 8,
+    ),
+    TickersModel(
+      tid: "topGainer100_24h",
+      type: TickerType.topGainer100_24h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 9,
+    ),
+    TickersModel(
+      tid: "topLoser100_1h",
+      type: TickerType.topLoser100_1h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 10,
+    ),
+    TickersModel(
+      tid: "topLoser100_24h",
+      type: TickerType.topLoser100_24h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 11,
+    ),
+    TickersModel(
+      tid: "topGainer200_1h",
+      type: TickerType.topGainer200_1h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 12,
+    ),
+    TickersModel(
+      tid: "topGainer200_24h",
+      type: TickerType.topGainer200_24h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 13,
+    ),
+    TickersModel(
+      tid: "topLoser200_1h",
+      type: TickerType.topLoser200_1h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 14,
+    ),
+    TickersModel(
+      tid: "topLoser200_24h",
+      type: TickerType.topLoser200_24h.index,
+      format: TickerFormat.shortPercentageWithSign.index,
+      title: "   ",
+      order: 15,
+    ),
   ];
 }

@@ -149,6 +149,18 @@ class _TickersDisplayState extends State<TickersDisplay> {
           if (pct >= 25) return AppTheme.orange;
           return AppTheme.darkRed;
 
+        case TickerType.topGainer100_1h:
+        case TickerType.topGainer100_24h:
+        case TickerType.topGainer200_1h:
+        case TickerType.topGainer200_24h:
+          return AppTheme.green;
+
+        case TickerType.topLoser100_1h:
+        case TickerType.topLoser100_24h:
+        case TickerType.topLoser200_1h:
+        case TickerType.topLoser200_24h:
+          return AppTheme.red;
+
         case TickerType.unknown:
           return AppTheme.darkGrey;
       }

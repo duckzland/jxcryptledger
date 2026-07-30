@@ -137,6 +137,15 @@ class AppErrorCode {
   static const int panelBasicInvalidDigit = 7004;
   static const int panelBasicInvalidOrder = 7005;
   static const int panelBasicInvalidTid = 7006;
+
+  static const int marketInvalidTid = 8001;
+  static const int marketInvalidName = 8002;
+  static const int marketInvalidSymbol = 8003;
+  static const int marketInvalidRank = 8004;
+  static const int marketInvalidSupply = 8005;
+  static const int marketInvalidNumeric = 8006;
+  static const int marketInvalidPercent = 8007;
+  static const int marketInvalidMeta = 8008;
 }
 
 class ValidationException extends CoreBaseException {

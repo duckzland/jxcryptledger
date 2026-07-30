@@ -6,12 +6,16 @@ class TickersRepository extends CoreBaseRepository<TickersModel> with CoreMixins
   @override
   String get boxName => 'tickers_box';
 
-  Future<void> updateByType(int type, String newVal) async {
+  Future<void> updateByType(int type, String newVal, {String? title}) async {
     TickersModel? model;
     try {
       model = box.values.firstWhere((m) => m.type == type);
     } catch (_) {
       return;
+    }
+
+    if (title != null) {
+      model = model.copyWith(title: title);
     }
 
     model.value = newVal;

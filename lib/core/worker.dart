@@ -1,14 +1,15 @@
 import 'dart:async';
 
-import '../app/router.dart';
-import 'mode.dart';
-import 'runtime/locator.dart';
-import 'log.dart';
 import '../features/rates/service.dart';
 import '../features/transactions/service.dart';
 import '../features/watchboard/panels/service.dart';
 import '../features/watchboard/tickers/service.dart';
+import '../features/watchboard/markets/service.dart';
 import '../features/watchers/service.dart';
+import '../app/router.dart';
+import 'mode.dart';
+import 'runtime/locator.dart';
+import 'log.dart';
 
 class CoreWorker {
   Timer? _timer;
@@ -23,6 +24,7 @@ class CoreWorker {
     final watchers = locator<WatchersService>();
     final tickers = locator<TickersService>();
     final transactions = locator<TransactionsService>();
+    final market = locator<MarketsService>();
 
     logln("[WORKER] Registering used rates.");
     panels.scheduleRates();
@@ -73,6 +75,11 @@ class CoreWorker {
       if (!panels.isEmpty()) {
         logln("[WORKER] Refreshing tickers rates");
         await tickers.refreshRates();
+      }
+
+      if (!panels.isEmpty()) {
+        logln("[WORKER] Refreshing market rates");
+        await market.refreshRates();
       }
     });
   }

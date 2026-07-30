@@ -85,6 +85,10 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
     return box.isEmpty;
   }
 
+  int count() {
+    return box.length;
+  }
+
   void receive(IpcBroadcastEvent event) {
     box.receive(event);
   }

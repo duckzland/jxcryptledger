@@ -12,10 +12,13 @@ import '../../../features/watchboard/panels/adapter.dart';
 import '../../../features/watchboard/panels/model.dart';
 import '../../../features/watchboard/tickers/adapter.dart';
 import '../../../features/watchboard/tickers/model.dart';
+import '../../../features/watchboard/markets/adapter.dart';
+import '../../features/watchboard/markets/model.dart';
 import '../../../features/watchers/adapter.dart';
 import '../../../features/watchers/model.dart';
 import '../../../system/settings/adapter.dart';
 import '../../../system/settings/model.dart';
+
 import '../../ipc/database/adapters.dart';
 
 class CoreRuntimeAdapters extends IpcAdapters {
@@ -28,6 +31,7 @@ class CoreRuntimeAdapters extends IpcAdapters {
     'transactions_box': TransactionsAdapter(),
     'panels_box': PanelsAdapter(),
     'tickers_box': TickersAdapter(),
+    'markets_box': MarketsAdapter(),
     'archives_box': ArchivesAdapter(),
   };
 
@@ -41,6 +45,7 @@ class CoreRuntimeAdapters extends IpcAdapters {
     Hive.registerAdapter<WatchersModel>(WatchersAdapter());
     Hive.registerAdapter<PanelsModel>(PanelsAdapter());
     Hive.registerAdapter<TickersModel>(TickersAdapter());
+    Hive.registerAdapter<MarketsModel>(MarketsAdapter());
     Hive.registerAdapter<ArchivesModel>(ArchivesAdapter());
     Hive.registerAdapter<SettingsModel>(SettingsAdapter());
   }

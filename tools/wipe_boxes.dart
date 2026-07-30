@@ -28,6 +28,7 @@ Future<void> main() async {
     'watchers_box',
     'panels_box',
     'tickers_box',
+    'markets_box',
     'archives_box',
   ];
 

@@ -217,14 +217,14 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
 
     actionbarRegister("Crypto Watchboard");
 
-    final tickers = ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers());
-    final panels = ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels());
+    final tickersView = ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers());
+    final panelsView = ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels());
 
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),
       padding: const EdgeInsets.only(left: 16, right: 16),
-      spacing: 12,
-      children: _enableTickers ? [tickers, Flexible(flex: 10, fit: FlexFit.loose, child: panels)] : [panels],
+      spacing: 10,
+      children: _enableTickers ? [tickersView, Flexible(flex: 10, fit: FlexFit.loose, child: panelsView)] : [panelsView],
     );
   }
 
@@ -253,11 +253,11 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
       builder: (context, constraints) {
         const baseWidth = 140.0;
         const spacing = 8.0;
-        const totalTickers = 8;
+        const total = 16;
         const itemHeight = 47.0;
 
         final effectiveWidth = baseWidth + spacing;
-        final maxPerRow = (constraints.maxWidth / effectiveWidth).floor().clamp(1, totalTickers);
+        final maxPerRow = (constraints.maxWidth / effectiveWidth).floor().clamp(1, total);
 
         int perRow = 2;
         if (maxPerRow >= 8) {
@@ -266,16 +266,16 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState, Mixin
           perRow = 4;
         }
 
-        int rows = (totalTickers / perRow).ceil();
+        int rows = (total / perRow).ceil();
         if (rows > 2) {
           rows = 2;
         }
 
         final newWidth = (constraints.maxWidth / perRow) - spacing;
-        final tickerHeight = itemHeight * rows + ((rows - 1) * spacing);
+        final height = itemHeight * rows + ((rows - 1) * spacing);
 
         return SizedBox(
-          height: tickerHeight,
+          height: height,
           child: ReorderableGridView.builder(
             gridDelegate: SliverGridDelegateWithMinWidth(
               minCrossAxisExtent: newWidth > 140 ? newWidth : 140,

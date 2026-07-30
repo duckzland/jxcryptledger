@@ -1,19 +1,20 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../../mixins/state.dart';
 import '../../system/encryption/service.dart';
+import '../../system/settings/controller.dart';
 import '../../features/archives/controller.dart';
 import '../../features/cryptos/controller.dart';
 import '../../features/rates/controller.dart';
-import '../../system/settings/controller.dart';
 import '../../features/transactions/controller.dart';
 import '../../features/watchboard/panels/controller.dart';
 import '../../features/watchboard/tickers/controller.dart';
+import '../../features/watchboard/markets/controller.dart';
 import '../../features/watchers/controller.dart';
-import '../abstracts/runtime.dart';
+import '../../mixins/state.dart';
 import '../../ipc/action.dart';
 import '../../ipc/client.dart';
+import '../abstracts/runtime.dart';
 import '../log.dart';
 import '../mode.dart';
 import 'locator.dart';
@@ -26,6 +27,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
   final WatchersController _watchersController = locator<WatchersController>();
   final PanelsController _panelsController = locator<PanelsController>();
   final TickersController _tickersController = locator<TickersController>();
+  final MarketsController _marketsController = locator<MarketsController>();
   final TransactionsController _transactionsController = locator<TransactionsController>();
   final CryptosController _cryptosController = locator<CryptosController>();
   final ArchivesController _archivesController = locator<ArchivesController>();
@@ -120,6 +122,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
     await _watchersController.init();
     await _panelsController.init();
     await _tickersController.init();
+    await _marketsController.init();
     await _cryptosController.init();
     await _archivesController.init();
     await _transactionsController.init();
@@ -132,6 +135,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
     _watchersController.dispose();
     _panelsController.dispose();
     _tickersController.dispose();
+    _marketsController.dispose();
     _cryptosController.dispose();
     _archivesController.dispose();
     _transactionsController.dispose();
