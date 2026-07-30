@@ -15,47 +15,61 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
 
   MarketsService(super.repo, this.settingsRepo);
 
+  bool _isFetching = false;
+
   @override
   Future<void> init() async {
     await repo.init();
     broadcasterListen();
+
     if (repo.isEmpty()) {
       await refreshRates();
     }
   }
 
   Future<bool> refreshRates() async {
-    final endpoint = settingsRepo.getByKey<String>(SettingKey.marketEndpoint) ?? SettingKey.marketEndpoint.defaultValue;
-    final uri = Uri.parse(endpoint).replace(queryParameters: {"start": "1", "limit": "200", "convert": "USD"});
-    final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
+    if (_isFetching) return true;
 
-    final isCustom = !endpoint.contains("coinmarketcap.com");
-    final needAuth = isCustom || endpoint.contains("https://pro-api.coinmarketcap.com/v");
+    _isFetching = true;
 
-    final headers = <String, String>{};
-    if (authKey != null && authKey.isNotEmpty && needAuth) {
-      if (!isCustom) {
-        headers['X-CMC_PRO_API_KEY'] = authKey;
-      } else {
-        headers['Authorization'] = authKey;
+    try {
+      final endpoint = settingsRepo.getByKey<String>(SettingKey.marketEndpoint) ?? SettingKey.marketEndpoint.defaultValue;
+      final uri = Uri.parse(endpoint).replace(queryParameters: {"start": "1", "limit": "200", "convert": "USD"});
+      final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
+
+      final isCustom = !endpoint.contains("coinmarketcap.com");
+      final needAuth = isCustom || endpoint.contains("https://pro-api.coinmarketcap.com/v");
+
+      final headers = <String, String>{};
+      if (authKey != null && authKey.isNotEmpty && needAuth) {
+        if (!isCustom) {
+          headers['X-CMC_PRO_API_KEY'] = authKey;
+        } else {
+          headers['Authorization'] = authKey;
+        }
       }
+
+      final resp = await http.get(uri, headers: headers);
+      if (resp.statusCode != 200) {
+        throw NetworkingException(
+          AppErrorCode.netHttpFailure,
+          "Markets fetch failed: HTTP [${resp.statusCode}][$uri]",
+          "Unable to retrieve data from the server.",
+          details: resp.statusCode,
+        );
+      }
+
+      logln('[MARKETS] Fetching from : $uri [${resp.statusCode}]');
+
+      final markets = await compute(parseMarketsV3, resp.body);
+
+      await repo.replace(markets);
+    } catch (e) {
+      logln('[MARKETS] Failed to retrieve new market data: $e');
+      return false;
+    } finally {
+      _isFetching = false;
     }
-
-    final resp = await http.get(uri, headers: headers);
-    if (resp.statusCode != 200) {
-      throw NetworkingException(
-        AppErrorCode.netHttpFailure,
-        "Markets fetch failed: HTTP [${resp.statusCode}][$uri]",
-        "Unable to retrieve data from the server.",
-        details: resp.statusCode,
-      );
-    }
-
-    logln('[MARKETS] Fetching from : $uri [${resp.statusCode}]');
-
-    final markets = await compute(parseMarketsV3, resp.body);
-
-    await repo.replace(markets);
 
     return true;
   }

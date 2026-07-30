@@ -198,13 +198,9 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
 
   @override
   Widget build(BuildContext context) {
-    actionbarRemove();
-
     if (_cryptosController.isEmpty()) {
       return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.');
     }
-
-    actionbarRegister("Crypto Watchboard");
 
     if (_pxController.isEmpty()) {
       return WidgetsScreensEmpty(

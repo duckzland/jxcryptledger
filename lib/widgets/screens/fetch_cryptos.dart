@@ -24,21 +24,24 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
 
     try {
       await _cryptosController.fetch();
-      widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-      _cryptosController.generateSymbolMap();
-      s.action();
+      if (_cryptosController.isNotEmpty()) {
+        widgetsNotifySuccess("Successfully retrieved Cryptocurrency list.");
+        _cryptosController.generateSymbolMap();
+      } else {
+        widgetsNotifyError("Failed to retrieve Cryptocurrency list. Please check your internet connection.");
+      }
       setState(() {});
     } catch (e) {
       if (e is NetworkingException) {
         widgetsNotifyError(e.userMessage);
       }
     } finally {
-      s.reset();
+      s.action();
     }
   }
 
   void _evaluator(WidgetsButtonsActionState s) async {
-    _cryptosController.isFetching ? s.progress() : s.reset();
+    _cryptosController.isFetching ? s.progress() : s.action();
   }
 
   @override

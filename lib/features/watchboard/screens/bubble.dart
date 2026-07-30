@@ -6,6 +6,7 @@ import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/action_bar.dart';
+import '../../../widgets/screens/notice.dart';
 import '../markets/controller.dart';
 import '../markets/model.dart';
 
@@ -49,6 +50,10 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
   @override
   Widget build(BuildContext context) {
     actionbarRegister("Crypto Bubbles");
+
+    if (_controller.isEmpty()) {
+      return WidgetsScreensNotice(title: "No market data available");
+    }
 
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),

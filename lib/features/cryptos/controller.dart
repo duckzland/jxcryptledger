@@ -65,7 +65,9 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
 
   Future<void> fetch() async {
     isFetching = true;
+    debounceNotify();
     await ipcClient.send(op: IpcAction.refreshCryptos, action: "action");
     isFetching = false;
+    debounceNotify();
   }
 }

@@ -13,6 +13,7 @@ import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/screens/notice.dart';
 import '../../../widgets/table/column.dart';
 import '../markets/controller.dart';
 import '../markets/model.dart';
@@ -82,6 +83,10 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   @override
   Widget build(BuildContext context) {
     actionbarRegister("Crypto Market");
+
+    if (_controller.isEmpty()) {
+      return WidgetsScreensNotice(title: "No market data available");
+    }
 
     return AppContent(
       boxConstraints: const BoxConstraints(maxWidth: 1600),
