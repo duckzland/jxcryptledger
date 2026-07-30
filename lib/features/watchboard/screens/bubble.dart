@@ -139,16 +139,25 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     double bubbleMargin = 12.0;
     int maxAllowedBubbles = 100;
 
+    if (currentSize.width < 1200) {
+      maxRadius = 110.0;
+      minRadius = 20.0;
+      bubbleMargin = 8.0;
+      maxAllowedBubbles = 50;
+    }
+
+    if (currentSize.width < 800) {
+      maxRadius = 90.0;
+      minRadius = 20.0;
+      bubbleMargin = 8.0;
+      maxAllowedBubbles = 40;
+    }
+
     if (currentSize.width < 560) {
       maxRadius = 65.0;
       minRadius = 16.0;
       bubbleMargin = 6.0;
       maxAllowedBubbles = 25;
-    } else if (currentSize.width < 1000) {
-      maxRadius = 110.0;
-      minRadius = 20.0;
-      bubbleMargin = 8.0;
-      maxAllowedBubbles = 50;
     }
 
     if (maxRadius > currentSize.width) maxRadius = currentSize.width / 2;
