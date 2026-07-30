@@ -131,36 +131,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     }
   }
 
-  List<Map<String, dynamic>> _buildRows() {
-    final rx = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
-      final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-
-      rx.add({
-        'date': tx.timestampAsFormattedDate,
-        'balance': '${tx.balanceText} $resultSymbol',
-        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceSymbol',
-        'result': tx.isCapital ? ' - ' : '${tx.rrAmountText} $resultSymbol',
-        'rate': tx.isCapital ? ' - ' : '${tx.rateText} $resultSymbol/$sourceSymbol',
-        'status': tx.statusText,
-        'tx': tx,
-        'note': tx.noteText,
-        'uuid': tx.uuid,
-
-        '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.rrAmount,
-        '_balanceSymbol': resultSymbol,
-        '_sourceValue': tx.srAmount,
-        '_sourceSymbol': sourceSymbol,
-        '_resultValue': tx.rrAmount,
-        '_resultSymbol': resultSymbol,
-      });
-    }
-    return rx;
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -226,6 +196,36 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         }).toList(),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _buildRows() {
+    final rx = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
+      final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
+
+      rx.add({
+        'date': tx.timestampAsFormattedDate,
+        'balance': '${tx.balanceText} $resultSymbol',
+        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceSymbol',
+        'result': tx.isCapital ? ' - ' : '${tx.rrAmountText} $resultSymbol',
+        'rate': tx.isCapital ? ' - ' : '${tx.rateText} $resultSymbol/$sourceSymbol',
+        'status': tx.statusText,
+        'tx': tx,
+        'note': tx.noteText,
+        'uuid': tx.uuid,
+
+        '_timestamp': tx.sanitizedTimestamp,
+        '_balanceValue': tx.rrAmount,
+        '_balanceSymbol': resultSymbol,
+        '_sourceValue': tx.srAmount,
+        '_sourceSymbol': sourceSymbol,
+        '_resultValue': tx.rrAmount,
+        '_resultSymbol': resultSymbol,
+      });
+    }
+    return rx;
   }
 
   List<TransactionsModel> _processTx() {

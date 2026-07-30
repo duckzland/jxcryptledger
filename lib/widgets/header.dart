@@ -11,6 +11,7 @@ class WidgetsHeader extends StatelessWidget {
 
   final bool reversed;
   final bool centered;
+  final bool byside;
 
   final double titleFontSize;
   final double subtitleFontSize;
@@ -34,6 +35,7 @@ class WidgetsHeader extends StatelessWidget {
     this.subtitleFontSize = 11,
     this.subtitleFontWeight = FontWeight.w400,
 
+    this.byside = false,
     this.reversed = false,
     this.centered = false,
     this.spacing = 1,
@@ -70,11 +72,20 @@ class WidgetsHeader extends StatelessWidget {
       items = [...items, ...children!];
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      spacing: spacing,
-      children: items,
-    );
+    if (byside == false) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        spacing: spacing,
+        children: items,
+      );
+    } else {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        spacing: spacing,
+        children: items,
+      );
+    }
   }
 }

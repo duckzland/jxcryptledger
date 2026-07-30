@@ -89,4 +89,12 @@ class Utils {
 
     return timestamp;
   }
+
+  static String formatShortCurrency(double val) {
+    if (val >= 1e12) return "${(val / 1e12).toStringAsFixed(2)}T";
+    if (val >= 1e9) return "${(val / 1e9).toStringAsFixed(2)}B";
+    if (val >= 1e6) return "${(val / 1e6).toStringAsFixed(2)}M";
+    if (val >= 1e3) return "${(val / 1e3).toStringAsFixed(2)}K";
+    return val.toStringAsFixed(2);
+  }
 }
