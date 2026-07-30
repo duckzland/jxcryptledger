@@ -204,6 +204,8 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
       return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.');
     }
 
+    actionbarRegister("Crypto Watchboard");
+
     if (_pxController.isEmpty()) {
       return WidgetsScreensEmpty(
         title: "Add Watchboard",
@@ -217,8 +219,6 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
         addForm: _buildForm,
       );
     }
-
-    actionbarRegister("Crypto Watchboard");
 
     final tickersView = ListenableBuilder(listenable: _tixController, builder: (_, _) => _buildTickers());
     final panelsView = ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels());
