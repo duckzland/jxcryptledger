@@ -258,6 +258,7 @@ class IpcServer {
     }
   }
 
+  // @todo: Unify error with broadcast and pack the error object as payload with encryption, also mutate the client to accept it
   void error(Socket client, int activeReqId) {
     if (_isDisposing) return;
     final errorPacket = IpcPacket(reqId: activeReqId, op: IpcAction.error.code, action: '', key: '', payload: Uint8List(0));

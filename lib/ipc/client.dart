@@ -152,6 +152,8 @@ class IpcClient {
         case IpcAction.unknown:
           throw StateError('[IPC] Cannot transmit database for unknown action.');
 
+        // @todo: create proper callback for error
+        case IpcAction.error:
         case IpcAction.unlock:
         case IpcAction.shutdown:
           break;
@@ -202,6 +204,8 @@ class IpcClient {
           logln("[IPC] Refusing to process unknown request op");
           break;
 
+        // @todo: create proper callback for error
+        case IpcAction.error:
         case IpcAction.shutdown:
         case IpcAction.unlock:
           if (currentPacket.reqId == -1) {
