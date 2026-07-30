@@ -89,13 +89,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
                     decoration: BoxDecoration(
                       color: percent1h >= 0 ? AppTheme.green : AppTheme.red,
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (percent1h >= 0 ? AppTheme.green : AppTheme.red).withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                      border: Border.all(color: AppTheme.cardBorder, width: 1.0),
                     ),
                     child: Center(
                       child: Padding(
@@ -252,34 +246,33 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
         if ((b['y'] as double) + bRadius > currentSize.height) b['y'] = currentSize.height - bRadius;
       }
 
-      for (int step = 0; step < 2; step++) {
-        for (int i = 0; i < nextBubbles.length; i++) {
-          for (int j = i + 1; j < nextBubbles.length; j++) {
-            final b1 = nextBubbles[i];
-            final b2 = nextBubbles[j];
+      for (int i = 0; i < nextBubbles.length; i++) {
+        for (int j = i + 1; j < nextBubbles.length; j++) {
+          final b1 = nextBubbles[i];
+          final b2 = nextBubbles[j];
 
-            final double b1X = b1['x'] as double;
-            final double b1Y = b1['y'] as double;
-            final double b1R = b1['radius'] as double;
-            final double b2X = b2['x'] as double;
-            final double b2Y = b2['y'] as double;
-            final double b2R = b2['radius'] as double;
+          final double b1X = b1['x'] as double;
+          final double b1Y = b1['y'] as double;
+          final double b1R = b1['radius'] as double;
 
-            double dx = b2X - b1X;
-            double dy = b2Y - b1Y;
-            double distance = sqrt(dx * dx + dy * dy);
-            double minDist = b1R + b2R + bubbleMargin;
+          final double b2X = b2['x'] as double;
+          final double b2Y = b2['y'] as double;
+          final double b2R = b2['radius'] as double;
 
-            if (distance < minDist) {
-              double overlap = minDist - distance;
-              double nx = distance == 0 ? 1.0 : dx / distance;
-              double ny = distance == 0 ? 0.0 : dy / distance;
+          double dx = b2X - b1X;
+          double dy = b2Y - b1Y;
+          double distance = sqrt(dx * dx + dy * dy);
+          double minDist = b1R + b2R + bubbleMargin;
 
-              b1['x'] = b1X - nx * overlap * 0.5;
-              b1['y'] = b1Y - ny * overlap * 0.5;
-              b2['x'] = b2X + nx * overlap * 0.5;
-              b2['y'] = b2Y + ny * overlap * 0.5;
-            }
+          if (distance < minDist) {
+            double overlap = minDist - distance;
+            double nx = distance == 0 ? 1.0 : dx / distance;
+            double ny = distance == 0 ? 0.0 : dy / distance;
+
+            b1['x'] = b1X - nx * overlap * 0.5;
+            b1['y'] = b1Y - ny * overlap * 0.5;
+            b2['x'] = b2X + nx * overlap * 0.5;
+            b2['y'] = b2Y + ny * overlap * 0.5;
           }
         }
       }
