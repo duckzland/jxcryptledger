@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:jxledger/widgets/panel.dart';
 
 import '../../../../app/content.dart';
 import '../../../../core/runtime/locator.dart';
@@ -21,7 +22,7 @@ class WatchboardScreensDominance extends StatefulWidget {
 class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance> with MixinsActionBar<WatchboardScreensDominance> {
   late List<MarketsModel> txs;
 
-  List<Map<String, dynamic>> grids = [];
+  List<Map<String, dynamic>> bars = [];
 
   MarketsController get _controller => locator<MarketsController>();
 
@@ -56,192 +57,98 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
       spacing: 10,
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            int cols = 24;
-            const double minSquarePx = 30.0;
-            const double baseGap = 10.0;
+        WidgetsPanel(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const double baseGap = 10.0;
+              const double rowHeight = 36.0;
 
-            if (constraints.maxWidth / 24 < minSquarePx) {
-              cols = 12;
-              if (constraints.maxWidth / 12 < minSquarePx) {
-                cols = 6;
-              }
-            }
+              _generateBars(constraints.maxWidth, baseGap);
 
-            final double squareW = constraints.maxWidth / cols;
-            final double squareH = squareW;
+              return ListView.builder(
+                controller: scrollUtil.controller,
+                padding: EdgeInsets.zero,
+                itemExtent: rowHeight + baseGap,
+                itemCount: bars.length,
+                itemBuilder: (context, index) {
+                  final item = bars[index];
 
-            _generateMasonryGrid(cols, squareW, squareH, baseGap);
+                  final double barWidth = item['layoutW'] as double;
+                  final double percent1h = item['_percent1h'] as double;
 
-            double totalCalculatedHeight = 0.0;
-            for (final item in grids) {
-              final double itemBottom = (item['layoutY'] as double) + (item['layoutH'] as double) + baseGap;
-              if (itemBottom > totalCalculatedHeight) {
-                totalCalculatedHeight = itemBottom;
-              }
-            }
-
-            return SingleChildScrollView(
-              controller: scrollUtil.controller,
-              child: SizedBox(
-                height: totalCalculatedHeight,
-                width: constraints.maxWidth,
-                child: Stack(
-                  children: grids.map((item) {
-                    final double left = item['layoutX'] as double;
-                    final double top = item['layoutY'] as double;
-                    final double width = item['layoutW'] as double;
-                    final double height = item['layoutH'] as double;
-
-                    final double minDimension = min(width, height);
-                    final String symbolText = (item['symbol'] ?? '').toString().toUpperCase();
-                    final String dominanceText = item['dominance'];
-
-                    final int symbolLength = symbolText.isNotEmpty ? symbolText.length : 3;
-                    final int percentLength = dominanceText.isNotEmpty ? dominanceText.length : 5;
-
-                    final double fontSizeSymbol = ((minDimension * 0.95) / symbolLength).clamp(14.0, 46.0);
-                    final double fontSizePercent = ((minDimension * 1.0) / percentLength).clamp(12.0, 16.0);
-                    final bool showPercentage = minDimension > 45.0;
-
-                    return Positioned(
-                      left: left,
-                      top: top,
-                      width: width,
-                      height: height,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: item['_percent1h'] >= 0 ? AppTheme.green : AppTheme.red,
-                          borderRadius: AppTheme.borderRadius,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          spacing: 2,
-                          children: [
-                            Text(
-                              symbolText,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.clip,
-                              style: TextStyle(color: AppTheme.text, fontSize: fontSizeSymbol, fontWeight: FontWeight.w600, height: 1),
-                            ),
-                            if (showPercentage) ...[
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: baseGap),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: barWidth,
+                          height: rowHeight,
+                          padding: const EdgeInsets.symmetric(horizontal: baseGap),
+                          decoration: BoxDecoration(
+                            color: percent1h >= 0 ? AppTheme.green : AppTheme.red,
+                            borderRadius: AppTheme.borderRadius,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                               Text(
-                                dominanceText,
-                                textAlign: TextAlign.center,
+                                item['symbol'] ?? '',
                                 maxLines: 1,
-                                overflow: TextOverflow.clip,
-                                style: TextStyle(color: AppTheme.text, fontSize: fontSizePercent, fontWeight: FontWeight.w400),
+                                style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.bold),
+                              ),
+
+                              Text(
+                                item['dominance'] ?? '',
+                                maxLines: 1,
+                                style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500),
                               ),
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            );
-          },
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
     );
   }
 
-  void _generateMasonryGrid(int cols, double squareW, double squareH, double gap) {
+  void _generateBars(double maxWidth, double gap) {
     final dataList = _generateItems();
     if (dataList.isEmpty) return;
 
-    const int maxRowsBuffer = 300;
-    final List<List<bool>> occupied = List.generate(maxRowsBuffer, (_) => List.filled(cols, false));
+    const double rightLabelReservedSpace = 0;
+    final double safeBarMaxLaneWidth = maxWidth - rightLabelReservedSpace;
 
-    final int itemsToRender = dataList.length;
+    final double maxDominanceInPool = dataList.fold(
+      0.01,
+      (prev, current) => (current['_dominance'] as double) > prev ? (current['_dominance'] as double) : prev,
+    );
 
-    for (int i = 0; i < itemsToRender; i++) {
-      final item = dataList[i];
+    for (final item in dataList) {
+      final double dominance = item['_dominance'] as double;
 
-      int spanW = 2;
-      int spanH = 1;
+      double logCurrent = log(1.0 + dominance);
+      double logMaxCap = log(1.0 + maxDominanceInPool);
 
-      if (i == 0) {
-        spanW = cols >= 24 ? 10 : (cols >= 12 ? 8 : 6);
-        spanH = 6;
-      } else if (i == 1) {
-        spanW = cols >= 24 ? 8 : (cols >= 12 ? 6 : 4);
-        spanH = 4;
-      } else if (i >= 2 && i <= 16) {
-        spanW = cols >= 24 ? 6 : 4;
-        spanH = 3;
-      } else if (i >= 17 && i <= 69) {
-        spanW = 4;
-        spanH = 2;
-      } else {
-        spanW = 2;
-        spanH = 1;
-      }
+      double dynamicScaleFactor = logCurrent / logMaxCap;
 
-      int targetRow = -1;
-      int targetCol = -1;
-      bool spaceFound = false;
+      double calculatedWidth = (dynamicScaleFactor * safeBarMaxLaneWidth);
 
-      for (int r = 0; r < maxRowsBuffer - spanH; r++) {
-        for (int c = 0; c < cols - spanW + 1; c++) {
-          if (!occupied[r][c]) {
-            bool fits = true;
-            for (int h = 0; h < spanH; h++) {
-              for (int w = 0; w < spanW; w++) {
-                if (occupied[r + h][c + w]) {
-                  fits = false;
-                  break;
-                }
-              }
-              if (!fits) break;
-            }
+      double minAllowedFloor = min(140.0, safeBarMaxLaneWidth);
+      double finalBarWidth = max(minAllowedFloor, calculatedWidth);
 
-            if (fits) {
-              targetRow = r;
-              targetCol = c;
-              spaceFound = true;
-              break;
-            }
-          }
-        }
-        if (spaceFound) break;
-      }
-
-      if (!spaceFound) {
-        spanW = 2;
-        spanH = 2;
-        for (int r = 0; r < maxRowsBuffer - 2; r++) {
-          for (int c = 0; c < cols - 1; c++) {
-            if (!occupied[r][c] && !occupied[r + 1][c] && !occupied[r][c + 1] && !occupied[r + 1][c + 1]) {
-              targetRow = r;
-              targetCol = c;
-              spaceFound = true;
-              break;
-            }
-          }
-          if (spaceFound) break;
-        }
-      }
-
-      if (!spaceFound) continue;
-
-      for (int h = 0; h < spanH; h++) {
-        for (int w = 0; w < spanW; w++) {
-          occupied[targetRow + h][targetCol + w] = true;
-        }
-      }
-
-      item['layoutX'] = targetCol * squareW;
-      item['layoutY'] = targetRow * squareH;
-      item['layoutW'] = (spanW * squareW) - gap;
-      item['layoutH'] = (spanH * squareH) - gap;
+      item['layoutW'] = min(finalBarWidth, safeBarMaxLaneWidth);
+      item['layoutH'] = 36.0;
+      item['layoutX'] = 0.0;
+      item['layoutY'] = 0.0;
     }
 
-    grids = dataList.where((item) => item.containsKey('layoutX')).toList();
+    bars = dataList;
   }
 
   List<Map<String, dynamic>> _generateItems() {
@@ -250,7 +157,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
     for (final m in txs) {
       items.add({
         'uuid': m.tid,
-        'symbol': m.symbol,
+        'symbol': m.symbol.toString().toUpperCase(),
         'dominance': Utils.formatSmartDouble(m.dominance ?? 0.0, maxDecimals: 2, smartDecimal: false),
         '_dominance': m.dominance ?? 0.0,
         '_percent1h': m.percent1h ?? 0.0,
