@@ -44,7 +44,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
   late final TickersController _tixController;
   late final CryptosController _cryptosController;
 
-  final scrollUtil = ScrollTo('px-offset-board');
+  final scrollUtil = ScrollTo('px-group-offset-board');
   late List<PanelsModel> txs;
   late List<TickersModel> tickers;
 
@@ -70,8 +70,8 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
 
     _hasLinked = _pxController.hasLinked();
 
-    _enableDrag = states.get('px-enable-drag', defaultValue: false);
-    _enableTickers = states.get('px-enable-tickers', defaultValue: true);
+    _enableDrag = states.get('px-group-enable-drag', defaultValue: false);
+    _enableTickers = states.get('px-group-enable-tickers', defaultValue: true);
 
     txs = [..._pxController.items];
     tickers = [..._tixController.items];
@@ -390,7 +390,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     await _pxController.importDatabase(json);
     _pxController.scheduleRates();
     await _tixController.refreshRates();
-    states.remove('px-offset');
+    states.remove('px-group-offset-board');
     setState(() {});
   }
 
@@ -398,7 +398,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     await _pxController.clear();
     await _tixController.wipe();
     await _tixController.populate();
-    states.remove('px-offset');
+    states.remove('px-group-offset-board');
   }
 
   Future<void> _actionUpdateLinked() async {
@@ -438,7 +438,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
       widgetsNotifyClear();
       widgetsNotifySuccess(_enableDrag ? "Watchboard dragging enabled." : "Watchboard dragging disabled.");
 
-      states.set('px-enable-drag', _enableDrag);
+      states.set('px-group-enable-drag', _enableDrag);
     });
   }
 
@@ -449,7 +449,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
         _enableTickers = !_enableTickers;
       });
       AppLayout.refreshBar?.call();
-      states.set('px-enable-tickers', _enableTickers);
+      states.set('px-group-enable-tickers', _enableTickers);
     });
   }
 

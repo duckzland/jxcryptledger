@@ -6,8 +6,10 @@ import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../mixins/action_bar.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/screens/notice.dart';
+import '../../../widgets/separator.dart';
 import '../markets/controller.dart';
 import '../markets/model.dart';
 
@@ -20,21 +22,25 @@ class WatchboardScreensBubble extends StatefulWidget {
 }
 
 class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
-    with MixinsActionBar<WatchboardScreensBubble>, SingleTickerProviderStateMixin {
+    with MixinsState, MixinsActionBar<WatchboardScreensBubble>, SingleTickerProviderStateMixin {
   late List<MarketsModel> txs;
   List<Map<String, dynamic>> bubbles = [];
 
   Size _lastSize = Size.zero;
   Size _currentSize = Size.zero;
 
+  int _filterMode = 0;
+  int _filterPrice = 0;
+
   MarketsController get _controller => locator<MarketsController>();
 
   @override
   void initState() {
     super.initState();
-    txs = [..._controller.items];
-    _processTxs();
     _controller.addListener(onMarketChange);
+    _filterMode = states.get('px-group-filter-bubbles', defaultValue: 0);
+    _filterPrice = states.get('px-group-price-bubbles', defaultValue: 0);
+    _processTxs();
   }
 
   @override
@@ -45,7 +51,62 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
 
   @override
   Widget actionbarLeftAction() {
-    return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: [widget.screenNavigation]);
+    List<Widget> navigation = [widget.screenNavigation];
+    if (_controller.isNotEmpty()) {
+      navigation = [
+        widget.screenNavigation,
+        const WidgetsSeparator(),
+        DropdownMenu<int>(
+          initialSelection: _filterMode,
+          alignmentOffset: const Offset(0, 3),
+          requestFocusOnTap: false,
+          inputDecorationTheme: Theme.of(
+            context,
+          ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
+          showTrailingIcon: false,
+          dropdownMenuEntries: [
+            const DropdownMenuEntry<int>(value: 0, label: "Show All"),
+            const DropdownMenuEntry<int>(value: 1, label: "Top 50"),
+            const DropdownMenuEntry<int>(value: 2, label: "Top 100"),
+            const DropdownMenuEntry<int>(value: 3, label: "Top 200"),
+          ],
+          onSelected: (value) {
+            if (value == null) return;
+            setState(() {
+              _filterMode = value;
+              _processTxs();
+            });
+            states.set('px-group-filter-bubbles', value);
+          },
+        ),
+        DropdownMenu<int>(
+          initialSelection: _filterPrice,
+          alignmentOffset: const Offset(0, 3),
+          requestFocusOnTap: false,
+          inputDecorationTheme: Theme.of(
+            context,
+          ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38, maxWidth: 60)),
+          showTrailingIcon: false,
+          dropdownMenuEntries: [
+            const DropdownMenuEntry<int>(value: 0, label: "1h"),
+            const DropdownMenuEntry<int>(value: 1, label: "24h"),
+            const DropdownMenuEntry<int>(value: 2, label: "7d"),
+            const DropdownMenuEntry<int>(value: 3, label: "30d"),
+            const DropdownMenuEntry<int>(value: 4, label: "60d"),
+            const DropdownMenuEntry<int>(value: 5, label: "90d"),
+          ],
+          onSelected: (value) {
+            if (value == null) return;
+            setState(() {
+              _filterPrice = value;
+              _processTxs();
+            });
+            states.set('px-group-price-bubbles', value);
+          },
+        ),
+      ];
+    }
+    return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: navigation);
   }
 
   @override
@@ -116,7 +177,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
                   height: diameter,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: (tx.percent1h ?? 0) >= 0 ? AppTheme.green : AppTheme.red,
+                      color: _getSelectedValue(tx) >= 0 ? AppTheme.green : AppTheme.red,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppTheme.background, width: 3.0),
                     ),
@@ -137,7 +198,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
                             ),
                             if (showPercentage)
                               Text(
-                                "${(tx.percent1h ?? 0) >= 0 ? '+' : ''}${tx.percent1hText}%",
+                                "${_getSelectedValue(tx) >= 0 ? '+' : ''}${_getSelectedText(tx)}%",
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.clip,
@@ -192,7 +253,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     if (maxRadius > currentSize.width) maxRadius = currentSize.width / 2;
     if (maxRadius > currentSize.height) maxRadius = currentSize.height / 2;
 
-    dataList.sort((a, b) => ((b['tx'] as MarketsModel).percent1h ?? 0).abs().compareTo(((a['tx'] as MarketsModel).percent1h ?? 0).abs()));
+    dataList.sort((a, b) => _getSelectedValue(b['tx'] as MarketsModel).abs().compareTo(_getSelectedValue(a['tx'] as MarketsModel).abs()));
     final activeItems = dataList.take(maxAllowedBubbles).toList();
 
     final List<Map<String, dynamic>> nextBubbles = [];
@@ -327,14 +388,83 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
   }
 
   void onMarketChange() {
-    txs = [..._controller.items];
-    _processTxs();
-    _generateBubble(_currentSize, _lastSize);
-    setState(() {});
+    setState(() {
+      _processTxs();
+    });
   }
 
   void _processTxs() {
-    final volatileCoins = _controller.items.where((m) => !m.isStableCoin).toList()..sort((a, b) => a.rank.compareTo(b.rank));
-    txs = volatileCoins.take(100).toList();
+    txs = [..._controller.items];
+    txs = txs.where((m) => !m.isStableCoin).toList();
+    switch (_filterMode) {
+      case 1:
+        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 50).toList();
+        break;
+
+      case 2:
+        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 100).toList();
+        break;
+
+      case 3:
+        txs = txs.where((tx) => tx.rank >= 101 && tx.rank <= 200).toList();
+        break;
+
+      default:
+        break;
+    }
+
+    txs.sort((a, b) => a.rank.compareTo(b.rank));
+
+    _generateBubble(_currentSize, _lastSize);
+  }
+
+  double _getSelectedValue(MarketsModel tx) {
+    switch (_filterPrice) {
+      case 0:
+        return tx.percent1h ?? 0;
+
+      case 1:
+        return tx.percent24h ?? 0;
+
+      case 2:
+        return tx.percent7d ?? 0;
+
+      case 3:
+        return tx.percent30d ?? 0;
+
+      case 4:
+        return tx.percent60d ?? 0;
+
+      case 5:
+        return tx.percent90d ?? 0;
+
+      default:
+        return 0;
+    }
+  }
+
+  String _getSelectedText(MarketsModel tx) {
+    switch (_filterPrice) {
+      case 0:
+        return tx.percent1hText;
+
+      case 1:
+        return tx.percent24hText;
+
+      case 2:
+        return tx.percent7dText;
+
+      case 3:
+        return tx.percent30dText;
+
+      case 4:
+        return tx.percent60dText;
+
+      case 5:
+        return tx.percent90dText;
+
+      default:
+        return "";
+    }
   }
 }

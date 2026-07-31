@@ -29,6 +29,8 @@ class MarketsModel implements CoreModelWithId {
   final String _percent24hText;
   final String _percent7dText;
   final String _percent30dText;
+  final String _percent60dText;
+  final String _percent90dText;
   final String _marketCapText;
   final String _dominanceText;
 
@@ -66,6 +68,8 @@ class MarketsModel implements CoreModelWithId {
        _percent24hText = Utils.formatSmartDouble(percent24h ?? 0, maxDecimals: 2, smartDecimal: false),
        _percent7dText = Utils.formatSmartDouble(percent7d ?? 0, maxDecimals: 2, smartDecimal: false),
        _percent30dText = Utils.formatSmartDouble(percent30d ?? 0, maxDecimals: 2, smartDecimal: false),
+       _percent60dText = Utils.formatSmartDouble(percent60d ?? 0, maxDecimals: 2, smartDecimal: false),
+       _percent90dText = Utils.formatSmartDouble(percent90d ?? 0, maxDecimals: 2, smartDecimal: false),
        _marketCapText = Utils.formatShortCurrency(marketCap ?? 0),
        _dominanceText = Utils.formatSmartDouble(dominance ?? 0.0, maxDecimals: 2),
        _tags = ((meta?['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const []),
@@ -237,6 +241,8 @@ class MarketsModel implements CoreModelWithId {
   String get percent24hText => _percent24hText;
   String get percent7dText => _percent7dText;
   String get percent30dText => _percent30dText;
+  String get percent60dText => _percent60dText;
+  String get percent90dText => _percent90dText;
   String get marketCapText => _marketCapText;
   String get dominanceText => _dominanceText;
 

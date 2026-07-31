@@ -6,8 +6,10 @@ import '../../../../mixins/action_bar.dart';
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/screens/notice.dart';
+import '../../../widgets/separator.dart';
 import '../markets/controller.dart';
 import '../markets/model.dart';
 
@@ -19,17 +21,21 @@ class WatchboardScreensDominance extends StatefulWidget {
   State<WatchboardScreensDominance> createState() => _WatchboardScreensDominanceState();
 }
 
-class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance> with MixinsActionBar<WatchboardScreensDominance> {
+class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
+    with MixinsState, MixinsActionBar<WatchboardScreensDominance> {
   late List<MarketsModel> txs;
 
   MarketsController get _controller => locator<MarketsController>();
 
-  final scrollUtil = ScrollTo('px-offset-dominance');
+  final scrollUtil = ScrollTo('px-group-offset-dominance');
+
+  int _filterMode = 0;
 
   @override
   void initState() {
     super.initState();
-    txs = [..._controller.items];
+    _filterMode = states.get('px-group-filter-dominance', defaultValue: 0);
+
     _processTxs();
     _controller.addListener(onMarketChange);
   }
@@ -43,7 +49,37 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
 
   @override
   Widget actionbarLeftAction() {
-    return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: [widget.screenNavigation]);
+    List<Widget> navigation = [widget.screenNavigation];
+    if (_controller.isNotEmpty()) {
+      navigation = [
+        widget.screenNavigation,
+        const WidgetsSeparator(),
+        DropdownMenu<int>(
+          initialSelection: _filterMode,
+          alignmentOffset: const Offset(0, 3),
+          requestFocusOnTap: false,
+          inputDecorationTheme: Theme.of(
+            context,
+          ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
+          showTrailingIcon: false,
+          dropdownMenuEntries: [
+            const DropdownMenuEntry<int>(value: 0, label: "Show All"),
+            const DropdownMenuEntry<int>(value: 1, label: "Top 50"),
+            const DropdownMenuEntry<int>(value: 2, label: "Top 100"),
+            const DropdownMenuEntry<int>(value: 3, label: "Top 200"),
+          ],
+          onSelected: (value) {
+            if (value == null) return;
+            setState(() {
+              _filterMode = value;
+              _processTxs();
+            });
+            states.set('px-group-filter-dominance', value);
+          },
+        ),
+      ];
+    }
+    return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: navigation);
   }
 
   @override
@@ -146,13 +182,31 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
   }
 
   void onMarketChange() {
-    txs = [..._controller.items];
-    _processTxs();
-    setState(() {});
+    setState(() {
+      _processTxs();
+    });
   }
 
   void _processTxs() {
-    final volatileCoins = _controller.items.where((m) => !m.isStableCoin).toList()..sort((a, b) => a.rank.compareTo(b.rank));
-    txs = volatileCoins.take(100).toList();
+    txs = [..._controller.items];
+    txs = txs.where((m) => !m.isStableCoin).toList();
+    switch (_filterMode) {
+      case 1:
+        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 50).toList();
+        break;
+
+      case 2:
+        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 100).toList();
+        break;
+
+      case 3:
+        txs = txs.where((tx) => tx.rank >= 101 && tx.rank <= 200).toList();
+        break;
+
+      default:
+        break;
+    }
+
+    txs.sort((a, b) => a.rank.compareTo(b.rank));
   }
 }
