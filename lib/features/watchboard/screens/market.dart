@@ -54,7 +54,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
 
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).rank, col, asc),
-      1: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).symbol.trim().toLowerCase(), col, asc),
+      1: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).symbol, col, asc),
       2: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).price ?? 0, col, asc),
       3: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent1h ?? 0, col, asc),
       4: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent24h ?? 0, col, asc),
