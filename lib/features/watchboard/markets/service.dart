@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/abstracts/service.dart';
+import '../../../ipc/action.dart';
 import '../../../system/settings/keys.dart';
 import '../../../system/settings/repository.dart';
 import '../../../app/exceptions.dart';
@@ -19,8 +20,7 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
 
   @override
   Future<void> init() async {
-    await repo.init();
-    broadcasterListen();
+    await super.init();
 
     if (repo.isEmpty()) {
       await refreshRates();
@@ -31,6 +31,8 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
     if (_isFetching) return true;
 
     _isFetching = true;
+
+    broadcasterEmit(IpcAction.refreshMarket, 'start', '', Uint8List(0));
 
     try {
       final endpoint = settingsRepo.getByKey<String>(SettingKey.marketEndpoint) ?? SettingKey.marketEndpoint.defaultValue;
@@ -64,13 +66,16 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
       final markets = await compute(parseMarketsV3, resp.body);
 
       await repo.replace(markets);
+
+      return true;
+    } on NetworkingException {
+      rethrow;
     } catch (e) {
       logln('[MARKETS] Failed to retrieve new market data: $e');
       return false;
     } finally {
       _isFetching = false;
+      broadcasterEmit(IpcAction.refreshMarket, 'complete', '', Uint8List(0));
     }
-
-    return true;
   }
 }

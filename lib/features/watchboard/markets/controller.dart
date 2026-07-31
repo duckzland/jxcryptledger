@@ -1,11 +1,60 @@
 import '../../../core/abstracts/controller.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
+import '../../../ipc/action.dart';
+import '../../../ipc/event.dart';
 import 'model.dart';
 import 'repository.dart';
 
 class MarketsController extends CoreBaseController<MarketsModel, MarketsRepository>
     with CoreMixinsControllersIdGenerator<MarketsModel, MarketsRepository> {
   MarketsController(super.repo);
+
+  late bool isFetching;
+  late bool hasMarkets;
+
+  @override
+  Future<void> init() async {
+    super.init();
+
+    isFetching = false;
+    hasMarkets = !repo.isEmpty();
+  }
+
+  @override
+  void broadcasterAction(IpcBroadcastEvent event) {
+    super.broadcasterAction(event);
+
+    if (event.action == repo.boxName) {
+      if (hasMarkets != !repo.isEmpty()) {
+        hasMarkets = !repo.isEmpty();
+        debounceNotify();
+      }
+    }
+
+    if (event.actionCode == IpcAction.refreshMarket) {
+      if (event.action == "start") {
+        if (!isFetching) {
+          isFetching = true;
+          debounceNotify();
+        }
+      }
+
+      if (event.action == "complete") {
+        if (isFetching) {
+          isFetching = false;
+          debounceNotify();
+        }
+      }
+    }
+  }
+
+  Future<void> refreshRates() async {
+    isFetching = true;
+    debounceNotify();
+    await ipcClient.send(op: IpcAction.refreshMarket, action: "action");
+    isFetching = false;
+    debounceNotify();
+  }
 
   bool isBothEqual(MarketsModel a, MarketsModel b) {
     return a.tid == b.tid &&

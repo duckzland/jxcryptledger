@@ -32,6 +32,7 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
       }
       setState(() {});
     } catch (e) {
+      // This is pre IPC. Need new way!.
       if (e is NetworkingException) {
         widgetsNotifyError(e.userMessage);
       }

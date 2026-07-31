@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../app/content.dart';
 import '../../../../core/runtime/locator.dart';
 import '../../../../mixins/action_bar.dart';
+import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';
 import '../../../core/utils.dart';
+import '../../../widgets/notify.dart';
 import '../../../widgets/screens/notice.dart';
 import '../markets/controller.dart';
 import '../markets/model.dart';
@@ -50,7 +52,30 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
     actionbarRegister("Crypto Dominance");
 
     if (_controller.isEmpty()) {
-      return WidgetsScreensNotice(title: "No market data available");
+      return WidgetsScreensNotice(
+        title: "No market data available",
+        btnTitle: "Download",
+        btnTooltip: "Retrieve latest market data",
+        btnEvaluator: (s) {
+          _controller.isFetching ? s.progress() : s.action();
+        },
+        btnCallback: () async {
+          try {
+            await _controller.refreshRates();
+            if (_controller.isNotEmpty()) {
+              widgetsNotifySuccess("Successfully retrieved latest market data.");
+            } else {
+              widgetsNotifyError("Failed to retrieve market data. Please check your internet connection.");
+            }
+            setState(() {});
+          } catch (e) {
+            // This is pre IPC. Need new way!.
+            if (e is NetworkingException) {
+              widgetsNotifyError(e.userMessage);
+            }
+          }
+        },
+      );
     }
 
     return AppContent(

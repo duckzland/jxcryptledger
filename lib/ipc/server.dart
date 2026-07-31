@@ -8,6 +8,7 @@ import '../core/runtime/locator.dart';
 import '../features/cryptos/service.dart';
 import '../features/notification/service.dart';
 import '../features/rates/service.dart';
+import '../features/watchboard/markets/service.dart';
 import '../features/watchboard/tickers/service.dart';
 import '../system/unlock/status.dart';
 import 'action.dart';
@@ -169,6 +170,11 @@ class IpcServer {
           case IpcAction.refreshCryptos:
             final service = locator<CryptosService>();
             await service.fetch();
+            break;
+
+          case IpcAction.refreshMarket:
+            final service = locator<MarketsService>();
+            await service.refreshRates();
             break;
 
           case IpcAction.notification:

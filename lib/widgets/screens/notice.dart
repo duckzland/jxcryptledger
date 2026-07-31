@@ -8,20 +8,10 @@ class WidgetsScreensNotice extends StatelessWidget {
   final String? btnTitle;
   final String? btnTooltip;
 
-  final bool Function()? btnEvaluator;
+  final void Function(WidgetsButtonsActionState s)? btnEvaluator;
   final Future<void> Function()? btnCallback;
 
   const WidgetsScreensNotice({super.key, required this.title, this.btnTitle, this.btnTooltip, this.btnEvaluator, this.btnCallback});
-
-  void _evaluateAction(WidgetsButtonsActionState s) {
-    if (btnEvaluator == null) return;
-
-    if (btnEvaluator?.call() == false) {
-      s.disable();
-    } else {
-      s.action();
-    }
-  }
 
   void _callbackAction(WidgetsButtonsActionState s) async {
     s.progress();
@@ -50,7 +40,7 @@ class WidgetsScreensNotice extends StatelessWidget {
                   tooltip: btnTooltip,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                   initialState: WidgetsButtonActionState.action,
-                  evaluator: _evaluateAction,
+                  evaluator: btnEvaluator,
                   filledMode: true,
                   onPressed: _callbackAction,
                 ),
