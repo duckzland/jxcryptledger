@@ -1,247 +1,150 @@
 #include "runner/utils.h"
 #include <windows.h>
-#include <string.h>
-#include <wchar.h>
+#include <string>
+#include <vector>
+#include <comdef.h>
+#include <WbemIdl.h>
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
+#pragma comment(lib, "wbemuuid.lib")
 
-#define NULL 0
+extern bool g_IsDevelopmentMode;
 
-#pragma comment(lib, "wtsapi32.lib")
-
-typedef long(__stdcall *pfnNtQueryInformationProcess)(void *, unsigned long, void *, unsigned long, unsigned long *);
-
-static pfnNtQueryInformationProcess g_NtQueryInformationProcess = nullptr;
-
-void initialize_ntdll_functions()
-{
-    if (g_NtQueryInformationProcess == nullptr)
-    {
-        HMODULE hModule = GetModuleHandleA("ntdll.dll");
-        if (hModule)
-        {
-            g_NtQueryInformationProcess = (pfnNtQueryInformationProcess)GetProcAddress(hModule, "NtQueryInformationProcess");
-        }
-    }
-}
-
-struct WTS_PROCESS_INFOW
-{
-    unsigned long SessionId;
-    unsigned long ProcessId;
-    wchar_t *pProcessName;
-    void *pUserSid;
+struct ProcessMatch {
+    DWORD pid;
+    std::wstring cmdLine;
 };
 
-struct PROCESS_BASIC_INFORMATION_MIN
-{
-    void *Reserved1;
-    void *PebBaseAddress;
-    void *Reserved2[2];
-    unsigned long long UniqueProcessId;
-    void *Reserved3;
+struct WmiBridge {
+    IWbemLocator* pLoc = nullptr;
+    IWbemServices* pSvc = nullptr;
+    bool initialized = false;
+
+    WmiBridge() {
+        HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) {
+            return; 
+        }
+
+        hr = CoInitializeSecurity(
+            nullptr, -1, nullptr, nullptr, 
+            RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, 
+            nullptr, EOAC_NONE, nullptr
+        );
+
+        hr = CoCreateInstance(CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&pLoc);
+        if (SUCCEEDED(hr)) {
+            hr = pLoc->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &pSvc);
+            if (SUCCEEDED(hr)) {
+                CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE);
+                initialized = true; 
+            }
+        }
+    }
+
+    ~WmiBridge() {
+        if (pSvc) pSvc->Release();
+        if (pLoc) pLoc->Release();
+        CoUninitialize();
+    }
 };
 
-struct UNICODE_STRING_MIN
-{
-    unsigned short Length;
-    unsigned short MaximumLength;
-    wchar_t *Buffer;
-};
-
-extern "C"
-{
-    __declspec(dllimport) int __stdcall WTSEnumerateProcessesW(void *hServer, unsigned long Reserved, unsigned long Version, WTS_PROCESS_INFOW **ppProcessInfo, unsigned long *pCount);
-    __declspec(dllimport) void __stdcall WTSFreeMemory(void *pMemory);
-    __declspec(dllimport) void *__stdcall OpenProcess(unsigned long dwDesiredAccess, int bInheritHandle, unsigned long dwProcessId);
-    __declspec(dllimport) int __stdcall CloseHandle(void *hObject);
-    __declspec(dllimport) int __stdcall ReadProcessMemory(void *hProcess, const void *lpBaseAddress, void *lpBuffer, unsigned long long nSize, unsigned long long *lpNumberOfBytesRead);
-}
-
-bool evaluate_matrix_rules(bool is_dev_mode, bool as_server, bool hasServer, bool hasDevelopment)
-{
-    if (as_server)
-    {
-        if (is_dev_mode)
-        {
-            return (hasServer && hasDevelopment);
-        }
-        else
-        {
-            return (hasServer && !hasDevelopment);
-        }
-    }
-    else
-    {
-        if (is_dev_mode)
-        {
-            if (hasDevelopment && hasServer)
-            {
-                return true;
-            }
-            if (!hasDevelopment)
-            {
-                return true;
-            }
-            return false;
-        }
-        else
-        {
-            if (hasServer || hasDevelopment)
-            {
-                return true;
-            }
-            return false;
-        }
+bool evaluate_matrix_rules(bool is_dev_mode, bool as_server, bool hasServer, bool hasDevelopment) {
+    if (as_server) {
+        return is_dev_mode ? (hasServer && hasDevelopment) : (hasServer && !hasDevelopment);
+    } else {
+        return is_dev_mode ? (!hasDevelopment || (hasDevelopment && hasServer)) : (hasServer || hasDevelopment);
     }
 }
 
-bool check_process(unsigned long pid, bool as_server = false)
-{
-    if (pid == GetCurrentProcessId())
-    {
-        wchar_t *myCmd = GetCommandLineW();
-        if (myCmd == NULL)
-            return false;
+std::vector<ProcessMatch> get_target_processes_wmi_cached(const std::wstring& targetExe) {
+    std::vector<ProcessMatch> matches;
+    
+    static WmiBridge bridge;
+    if (!bridge.initialized) return matches;
 
-        bool selfHasServer = (wcsstr(myCmd, L"--server") != NULL);
-        bool selfHasDevelopment = (wcsstr(myCmd, L"--development") != NULL);
+    IEnumWbemClassObject* pEnumerator = nullptr;
+    std::wstring query = L"SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = '" + targetExe + L"'";
+    
+    HRESULT hr = bridge.pSvc->ExecQuery(_bstr_t(L"WQL"), _bstr_t(query.c_str()), WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &pEnumerator);
+    if (FAILED(hr)) return matches;
 
-        return evaluate_matrix_rules(g_IsDevelopmentMode, as_server, selfHasServer, selfHasDevelopment);
-    }
+    IWbemClassObject* pclsObj = nullptr;
+    ULONG uReturn = 0;
+    
+    while (pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == 0) {
+        VARIANT vtPid, vtCmd;
+        VariantInit(&vtPid);
+        VariantInit(&vtCmd);
 
-    if (!g_NtQueryInformationProcess)
-        return false;
-
-    void *hProcess = OpenProcess(0x1000 /* PROCESS_QUERY_LIMITED_INFORMATION */ | 0x0010 /* PROCESS_VM_READ */, 0, pid);
-    if (!hProcess)
-    {
-        hProcess = OpenProcess(0x0400 /* PROCESS_QUERY_INFORMATION */ | 0x0010 /* PROCESS_VM_READ */, 0, pid);
-    }
-    if (!hProcess)
-        return false;
-
-    bool isValid = false;
-    PROCESS_BASIC_INFORMATION_MIN pbi;
-    unsigned long retLen = 0;
-
-    if (g_NtQueryInformationProcess(hProcess, 0, &pbi, sizeof(pbi), &retLen) == 0)
-    {
-        unsigned long long pebAddress = (unsigned long long)pbi.PebBaseAddress;
-        unsigned long long processParametersAddress = 0;
-        unsigned long long bytesRead = 0;
-
-        if (ReadProcessMemory(hProcess, (const void *)(pebAddress + 0x20),
-                              &processParametersAddress, sizeof(processParametersAddress), &bytesRead))
-        {
-            UNICODE_STRING_MIN cmdLine;
-            if (ReadProcessMemory(hProcess, (const void *)(processParametersAddress + 0x70),
-                                  &cmdLine, sizeof(cmdLine), &bytesRead))
-            {
-                size_t charactersToRead = cmdLine.Length / sizeof(wchar_t);
-                if (charactersToRead > 0)
-                {
-                    wchar_t *cmdLineBuffer = new wchar_t[charactersToRead + 1];
-                    memset(cmdLineBuffer, 0, (charactersToRead + 1) * sizeof(wchar_t));
-
-                    if (ReadProcessMemory(hProcess, cmdLine.Buffer,
-                                          cmdLineBuffer, cmdLine.Length, &bytesRead))
-                    {
-                        size_t charactersRead = bytesRead / sizeof(wchar_t);
-                        if (charactersRead > charactersToRead)
-                        {
-                            charactersRead = charactersToRead;
-                        }
-                        cmdLineBuffer[charactersRead] = L'\0';
-
-                        bool hasServer = (wcsstr(cmdLineBuffer, L"--server") != NULL);
-                        bool hasDevelopment = (wcsstr(cmdLineBuffer, L"--development") != NULL);
-
-                        isValid = evaluate_matrix_rules(g_IsDevelopmentMode, as_server, hasServer, hasDevelopment);
-                    }
-                    else
-                    {
-                        isValid = false;
-                    }
-                    delete[] cmdLineBuffer;
-                }
+        if (SUCCEEDED(pclsObj->Get(L"ProcessId", 0, &vtPid, nullptr, nullptr)) && vtPid.vt == VT_I4) {
+            std::wstring cmdLine = L"";
+            if (SUCCEEDED(pclsObj->Get(L"CommandLine", 0, &vtCmd, nullptr, nullptr)) && vtCmd.vt == VT_BSTR && vtCmd.bstrVal != nullptr) {
+                cmdLine = vtCmd.bstrVal;
             }
+            matches.push_back({ (DWORD)vtPid.lVal, cmdLine });
         }
-    }
 
-    CloseHandle(hProcess);
-    return isValid;
+        VariantClear(&vtPid);
+        VariantClear(&vtCmd);
+        pclsObj->Release();
+    }
+    pEnumerator->Release();
+    return matches;
 }
 
-extern "C"
-{
-    __declspec(dllexport) int get_active_process_pids(int *outPids, int maxCount)
-    {
-        initialize_ntdll_functions();
+extern "C" {
+    __declspec(dllexport) int get_active_process_pids(int *outPids, int maxCount) {
+        if (!outPids || maxCount <= 0) return 0;
 
-        WTS_PROCESS_INFOW *pProcesses = NULL;
-        unsigned long processCount = 0;
+        std::vector<ProcessMatch> processes = get_target_processes_wmi_cached(L"jxledger.exe");
         int foundCount = 0;
+        DWORD currentPid = GetCurrentProcessId();
 
-        if (WTSEnumerateProcessesW(NULL, 0, 1, &pProcesses, &processCount))
-        {
-            for (unsigned long i = 0; i < processCount; i++)
-            {
-                wchar_t *procName = pProcesses[i].pProcessName;
-                unsigned long targetPid = pProcesses[i].ProcessId;
-
-                if (procName != NULL && targetPid != 0)
-                {
-                    if (_wcsicmp(procName, L"jxledger.exe") == 0)
-                    {
-                        if (check_process(targetPid, false))
-                        {
-                            continue;
-                        }
-
-                        if (foundCount < maxCount)
-                        {
-                            outPids[foundCount++] = (int)targetPid;
-                        }
-                    }
-                }
+        for (const auto& proc : processes) {
+            if (foundCount >= maxCount) {
+                break;
             }
-            WTSFreeMemory(pProcesses);
+
+            std::wstring cmd = proc.cmdLine;
+            if (cmd.empty()) continue;
+
+            if (proc.pid == currentPid) {
+                wchar_t* myCmd = GetCommandLineW();
+                if (myCmd) cmd = myCmd;
+            }
+
+            bool hasServer = (cmd.find(L"--server") != std::wstring::npos);
+            bool hasDevelopment = (cmd.find(L"--development") != std::wstring::npos);
+
+            if (evaluate_matrix_rules(g_IsDevelopmentMode, false, hasServer, hasDevelopment)) {
+                continue; 
+            }
+
+            outPids[foundCount++] = (int)proc.pid;
         }
         return foundCount;
     }
 
-    __declspec(dllexport) int is_server_instance_running()
-    {
-        initialize_ntdll_functions();
+    __declspec(dllexport) int is_server_instance_running() {
+        std::vector<ProcessMatch> processes = get_target_processes_wmi_cached(L"jxledger.exe");
+        DWORD currentPid = GetCurrentProcessId();
 
-        WTS_PROCESS_INFOW *pProcesses = NULL;
-        unsigned long processCount = 0;
-        int serverFound = 0;
+        for (const auto& proc : processes) {
+            std::wstring cmd = proc.cmdLine;
+            if (cmd.empty()) continue;
 
-        if (WTSEnumerateProcessesW(NULL, 0, 1, &pProcesses, &processCount))
-        {
-            for (unsigned long i = 0; i < processCount; i++)
-            {
-                wchar_t *procName = pProcesses[i].pProcessName;
-                unsigned long targetPid = pProcesses[i].ProcessId;
-
-                if (procName != NULL && targetPid != 0)
-                {
-                    if (_wcsicmp(procName, L"jxledger.exe") == 0)
-                    {
-                        if (check_process(targetPid, true))
-                        {
-                            serverFound = 1;
-                            break;
-                        }
-                    }
-                }
+            if (proc.pid == currentPid) {
+                wchar_t* myCmd = GetCommandLineW();
+                if (myCmd) cmd = myCmd;
             }
-            WTSFreeMemory(pProcesses);
+
+            bool hasServer = (cmd.find(L"--server") != std::wstring::npos);
+            bool hasDevelopment = (cmd.find(L"--development") != std::wstring::npos);
+
+            if (evaluate_matrix_rules(g_IsDevelopmentMode, true, hasServer, hasDevelopment)) {
+                return 1; 
+            }
         }
-        return serverFound;
+        return 0;
     }
 }
