@@ -2,7 +2,6 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/content.dart';
-import '../../../app/exceptions.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/action_bar.dart';
@@ -12,13 +11,13 @@ import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/header.dart';
-import '../../../widgets/notify.dart';
 import '../../../widgets/panel.dart';
-import '../../../widgets/screens/notice.dart';
 import '../../../widgets/separator.dart';
 import '../../../widgets/table/column.dart';
 import '../markets/controller.dart';
+import '../markets/mixins/filterable.dart';
 import '../markets/model.dart';
+import '../markets/widgets/notice.dart';
 
 class WatchboardScreensMarket extends StatefulWidget {
   final Widget screenNavigation;
@@ -34,17 +33,19 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
         MixinsTable,
         MixinsSortableTable<WatchboardScreensMarket>,
         MixinsScrollToTable<WatchboardScreensMarket, MarketsModel>,
-        MixinsActionBar<WatchboardScreensMarket> {
+        MixinsActionBar<WatchboardScreensMarket>,
+        WatchboardMarketsMixinsFilterable<WatchboardScreensMarket> {
   late List<MarketsModel> txs;
   MarketsController get _controller => locator<MarketsController>();
-
-  int _filterMode = 0;
 
   @override
   String get sortableKey => "px-group-market";
 
   @override
   final scrollToUtil = ScrollTo('px-group-offset-market');
+
+  @override
+  String get marketFilterableKey => "px-group-market";
 
   @override
   void initState() {
@@ -65,8 +66,6 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
 
     sortableAscending = states.get("[np]-$sortableKey-sortable-ascending", defaultValue: true);
 
-    _filterMode = states.get('px-group-filter-market', defaultValue: 0);
-
     _processTxs();
   }
 
@@ -78,36 +77,16 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   }
 
   @override
+  void marketFilterableOnPriceFiltering(int value) => onMarketChange();
+
+  @override
+  void marketFilterableOnPercentFiltering(int value) => onMarketChange();
+
+  @override
   Widget actionbarLeftAction() {
     List<Widget> navigation = [widget.screenNavigation];
     if (_controller.isNotEmpty()) {
-      navigation = [
-        widget.screenNavigation,
-        const WidgetsSeparator(),
-        DropdownMenu<int>(
-          initialSelection: _filterMode,
-          alignmentOffset: const Offset(0, 3),
-          requestFocusOnTap: false,
-          inputDecorationTheme: Theme.of(
-            context,
-          ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
-          showTrailingIcon: false,
-          dropdownMenuEntries: [
-            const DropdownMenuEntry<int>(value: 0, label: "Show All"),
-            const DropdownMenuEntry<int>(value: 1, label: "Top 50"),
-            const DropdownMenuEntry<int>(value: 2, label: "Top 100"),
-            const DropdownMenuEntry<int>(value: 3, label: "Top 200"),
-          ],
-          onSelected: (value) {
-            if (value == null) return;
-            setState(() {
-              _filterMode = value;
-              _processTxs();
-            });
-            states.set('px-group-filter-market', value);
-          },
-        ),
-      ];
+      navigation = [widget.screenNavigation, const WidgetsSeparator(), marketFilterableRankFilters()];
     }
     return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: navigation);
   }
@@ -117,30 +96,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     actionbarRegister("Crypto Market");
 
     if (_controller.isEmpty()) {
-      return WidgetsScreensNotice(
-        title: "No market data available",
-        btnTitle: "Download",
-        btnTooltip: "Retrieve latest market data",
-        btnEvaluator: (s) {
-          _controller.isFetching ? s.progress() : s.action();
-        },
-        btnCallback: () async {
-          try {
-            await _controller.refreshRates();
-            if (_controller.isNotEmpty()) {
-              widgetsNotifySuccess("Successfully retrieved latest market data.");
-            } else {
-              widgetsNotifyError("Failed to retrieve market data. Please check your internet connection.");
-            }
-            setState(() {});
-          } catch (e) {
-            // This is pre IPC. Need new way!.
-            if (e is NetworkingException) {
-              widgetsNotifyError(e.userMessage);
-            }
-          }
-        },
-      );
+      return WatchboardsMarketsWidgetsNotice(callback: () => setState(() {}));
     }
 
     return AppContent(
@@ -223,24 +179,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
 
   void _processTxs() {
     txs = [..._controller.items];
-
-    switch (_filterMode) {
-      case 1:
-        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 50).toList();
-        break;
-
-      case 2:
-        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 100).toList();
-        break;
-
-      case 3:
-        txs = txs.where((tx) => tx.rank >= 101 && tx.rank <= 200).toList();
-        break;
-
-      default:
-        break;
-    }
-
+    txs = marketFilterableFilter(txs);
     rows = _buildRows();
 
     sortableApplySorting(pauseRefresh: true);

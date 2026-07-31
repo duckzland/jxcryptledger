@@ -2,16 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../app/content.dart';
-import '../../../app/exceptions.dart';
-import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/state.dart';
-import '../../../widgets/notify.dart';
-import '../../../widgets/screens/notice.dart';
 import '../../../widgets/separator.dart';
 import '../markets/controller.dart';
+import '../markets/mixins/filterable.dart';
 import '../markets/model.dart';
+import '../markets/widgets/bubble.dart';
+import '../markets/widgets/notice.dart';
 
 class WatchboardScreensBubble extends StatefulWidget {
   final Widget screenNavigation;
@@ -22,24 +21,26 @@ class WatchboardScreensBubble extends StatefulWidget {
 }
 
 class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
-    with MixinsState, MixinsActionBar<WatchboardScreensBubble>, SingleTickerProviderStateMixin {
+    with
+        MixinsState,
+        MixinsActionBar<WatchboardScreensBubble>,
+        WatchboardMarketsMixinsFilterable<WatchboardScreensBubble>,
+        SingleTickerProviderStateMixin {
   late List<MarketsModel> txs;
   List<Map<String, dynamic>> bubbles = [];
 
   Size _lastSize = Size.zero;
   Size _currentSize = Size.zero;
 
-  int _filterMode = 0;
-  int _filterPrice = 0;
-
   MarketsController get _controller => locator<MarketsController>();
+
+  @override
+  String get marketFilterableKey => "px-group-bubbles";
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(onMarketChange);
-    _filterMode = states.get('px-group-filter-bubbles', defaultValue: 0);
-    _filterPrice = states.get('px-group-price-bubbles', defaultValue: 0);
     _processTxs();
   }
 
@@ -50,61 +51,16 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
   }
 
   @override
+  void marketFilterableOnPriceFiltering(int value) => onMarketChange();
+
+  @override
+  void marketFilterableOnPercentFiltering(int value) => onMarketChange();
+
+  @override
   Widget actionbarLeftAction() {
     List<Widget> navigation = [widget.screenNavigation];
     if (_controller.isNotEmpty()) {
-      navigation = [
-        widget.screenNavigation,
-        const WidgetsSeparator(),
-        DropdownMenu<int>(
-          initialSelection: _filterMode,
-          alignmentOffset: const Offset(0, 3),
-          requestFocusOnTap: false,
-          inputDecorationTheme: Theme.of(
-            context,
-          ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
-          showTrailingIcon: false,
-          dropdownMenuEntries: [
-            const DropdownMenuEntry<int>(value: 0, label: "Show All"),
-            const DropdownMenuEntry<int>(value: 1, label: "Top 50"),
-            const DropdownMenuEntry<int>(value: 2, label: "Top 100"),
-            const DropdownMenuEntry<int>(value: 3, label: "Top 200"),
-          ],
-          onSelected: (value) {
-            if (value == null) return;
-            setState(() {
-              _filterMode = value;
-              _processTxs();
-            });
-            states.set('px-group-filter-bubbles', value);
-          },
-        ),
-        DropdownMenu<int>(
-          initialSelection: _filterPrice,
-          alignmentOffset: const Offset(0, 3),
-          requestFocusOnTap: false,
-          inputDecorationTheme: Theme.of(
-            context,
-          ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38, maxWidth: 60)),
-          showTrailingIcon: false,
-          dropdownMenuEntries: [
-            const DropdownMenuEntry<int>(value: 0, label: "1h"),
-            const DropdownMenuEntry<int>(value: 1, label: "24h"),
-            const DropdownMenuEntry<int>(value: 2, label: "7d"),
-            const DropdownMenuEntry<int>(value: 3, label: "30d"),
-            const DropdownMenuEntry<int>(value: 4, label: "60d"),
-            const DropdownMenuEntry<int>(value: 5, label: "90d"),
-          ],
-          onSelected: (value) {
-            if (value == null) return;
-            setState(() {
-              _filterPrice = value;
-              _processTxs();
-            });
-            states.set('px-group-price-bubbles', value);
-          },
-        ),
-      ];
+      navigation = [widget.screenNavigation, const WidgetsSeparator(), marketFilterableRankFilters(), marketFilterablePercentFilters()];
     }
     return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: navigation);
   }
@@ -114,30 +70,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     actionbarRegister("Crypto Bubbles");
 
     if (_controller.isEmpty()) {
-      return WidgetsScreensNotice(
-        title: "No market data available",
-        btnTitle: "Download",
-        btnTooltip: "Retrieve latest market data",
-        btnEvaluator: (s) {
-          _controller.isFetching ? s.progress() : s.action();
-        },
-        btnCallback: () async {
-          try {
-            await _controller.refreshRates();
-            if (_controller.isNotEmpty()) {
-              widgetsNotifySuccess("Successfully retrieved latest market data.");
-            } else {
-              widgetsNotifyError("Failed to retrieve market data. Please check your internet connection.");
-            }
-            setState(() {});
-          } catch (e) {
-            // This is pre IPC. Need new way!.
-            if (e is NetworkingException) {
-              widgetsNotifyError(e.userMessage);
-            }
-          }
-        },
-      );
+      return WatchboardsMarketsWidgetsNotice(callback: () => setState(() {}));
     }
 
     return AppContent(
@@ -156,59 +89,14 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
 
             return Stack(
               children: bubbles.map((item) {
-                final MarketsModel tx = item['tx'];
-
-                final double bx = item['x'] as double;
-                final double by = item['y'] as double;
-                final double bradius = item['radius'] as double;
-
-                final double diameter = bradius * 2;
-                final double left = bx - bradius;
-                final double top = by - bradius;
-
-                final double fontSizeSymbol = (bradius * 0.36).clamp(8.0, 50.0);
-                final double fontSizePercent = (bradius * 0.28).clamp(9.0, 16.0);
-                final bool showPercentage = bradius > 30.0;
-
-                return Positioned(
-                  left: left,
-                  top: top,
-                  width: diameter,
-                  height: diameter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: _getSelectedValue(tx) >= 0 ? AppTheme.green : AppTheme.red,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.background, width: 3.0),
-                    ),
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          spacing: 2,
-                          children: [
-                            Text(
-                              tx.symbol.toUpperCase(),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.clip,
-                              style: TextStyle(color: AppTheme.text, fontSize: fontSizeSymbol, fontWeight: FontWeight.w600, height: 1),
-                            ),
-                            if (showPercentage)
-                              Text(
-                                "${_getSelectedValue(tx) >= 0 ? '+' : ''}${_getSelectedText(tx)}%",
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.clip,
-                                style: TextStyle(color: AppTheme.text, fontSize: fontSizePercent, fontWeight: FontWeight.w400),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                final tx = item['tx'] as MarketsModel;
+                return WatchboardsMarketsWidgetsBubble(
+                  tx: tx,
+                  x: item['x'] as double,
+                  y: item['y'] as double,
+                  radius: item['radius'] as double,
+                  value: marketFilterableGetPercentageValue(tx),
+                  text: marketFilterableGetPercentageText(tx),
                 );
               }).toList(),
             );
@@ -253,7 +141,11 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     if (maxRadius > currentSize.width) maxRadius = currentSize.width / 2;
     if (maxRadius > currentSize.height) maxRadius = currentSize.height / 2;
 
-    dataList.sort((a, b) => _getSelectedValue(b['tx'] as MarketsModel).abs().compareTo(_getSelectedValue(a['tx'] as MarketsModel).abs()));
+    dataList.sort(
+      (a, b) => marketFilterableGetPercentageValue(
+        b['tx'] as MarketsModel,
+      ).abs().compareTo(marketFilterableGetPercentageValue(a['tx'] as MarketsModel).abs()),
+    );
     final activeItems = dataList.take(maxAllowedBubbles).toList();
 
     final List<Map<String, dynamic>> nextBubbles = [];
@@ -396,75 +288,10 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
   void _processTxs() {
     txs = [..._controller.items];
     txs = txs.where((m) => !m.isStableCoin).toList();
-    switch (_filterMode) {
-      case 1:
-        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 50).toList();
-        break;
-
-      case 2:
-        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 100).toList();
-        break;
-
-      case 3:
-        txs = txs.where((tx) => tx.rank >= 101 && tx.rank <= 200).toList();
-        break;
-
-      default:
-        break;
-    }
+    txs = marketFilterableFilter(txs);
 
     txs.sort((a, b) => a.rank.compareTo(b.rank));
 
     _generateBubble(_currentSize, _lastSize);
-  }
-
-  double _getSelectedValue(MarketsModel tx) {
-    switch (_filterPrice) {
-      case 0:
-        return tx.percent1h ?? 0;
-
-      case 1:
-        return tx.percent24h ?? 0;
-
-      case 2:
-        return tx.percent7d ?? 0;
-
-      case 3:
-        return tx.percent30d ?? 0;
-
-      case 4:
-        return tx.percent60d ?? 0;
-
-      case 5:
-        return tx.percent90d ?? 0;
-
-      default:
-        return 0;
-    }
-  }
-
-  String _getSelectedText(MarketsModel tx) {
-    switch (_filterPrice) {
-      case 0:
-        return tx.percent1hText;
-
-      case 1:
-        return tx.percent24hText;
-
-      case 2:
-        return tx.percent7dText;
-
-      case 3:
-        return tx.percent30dText;
-
-      case 4:
-        return tx.percent60dText;
-
-      case 5:
-        return tx.percent90dText;
-
-      default:
-        return "";
-    }
   }
 }

@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../../app/content.dart';
 import '../../../../core/runtime/locator.dart';
 import '../../../../mixins/action_bar.dart';
-import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/state.dart';
-import '../../../widgets/notify.dart';
-import '../../../widgets/screens/notice.dart';
 import '../../../widgets/separator.dart';
 import '../markets/controller.dart';
+import '../markets/mixins/filterable.dart';
 import '../markets/model.dart';
+import '../markets/widgets/notice.dart';
 
 class WatchboardScreensDominance extends StatefulWidget {
   final Widget screenNavigation;
@@ -22,20 +21,19 @@ class WatchboardScreensDominance extends StatefulWidget {
 }
 
 class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
-    with MixinsState, MixinsActionBar<WatchboardScreensDominance> {
+    with MixinsState, MixinsActionBar<WatchboardScreensDominance>, WatchboardMarketsMixinsFilterable<WatchboardScreensDominance> {
   late List<MarketsModel> txs;
 
   MarketsController get _controller => locator<MarketsController>();
 
   final scrollUtil = ScrollTo('px-group-offset-dominance');
 
-  int _filterMode = 0;
+  @override
+  String get marketFilterableKey => "px-group-dominance";
 
   @override
   void initState() {
     super.initState();
-    _filterMode = states.get('px-group-filter-dominance', defaultValue: 0);
-
     _processTxs();
     _controller.addListener(onMarketChange);
   }
@@ -48,36 +46,16 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
   }
 
   @override
+  void marketFilterableOnPriceFiltering(int value) => onMarketChange();
+
+  @override
+  void marketFilterableOnPercentFiltering(int value) => onMarketChange();
+
+  @override
   Widget actionbarLeftAction() {
     List<Widget> navigation = [widget.screenNavigation];
     if (_controller.isNotEmpty()) {
-      navigation = [
-        widget.screenNavigation,
-        const WidgetsSeparator(),
-        DropdownMenu<int>(
-          initialSelection: _filterMode,
-          alignmentOffset: const Offset(0, 3),
-          requestFocusOnTap: false,
-          inputDecorationTheme: Theme.of(
-            context,
-          ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
-          showTrailingIcon: false,
-          dropdownMenuEntries: [
-            const DropdownMenuEntry<int>(value: 0, label: "Show All"),
-            const DropdownMenuEntry<int>(value: 1, label: "Top 50"),
-            const DropdownMenuEntry<int>(value: 2, label: "Top 100"),
-            const DropdownMenuEntry<int>(value: 3, label: "Top 200"),
-          ],
-          onSelected: (value) {
-            if (value == null) return;
-            setState(() {
-              _filterMode = value;
-              _processTxs();
-            });
-            states.set('px-group-filter-dominance', value);
-          },
-        ),
-      ];
+      navigation = [widget.screenNavigation, const WidgetsSeparator(), marketFilterableRankFilters()];
     }
     return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: navigation);
   }
@@ -87,30 +65,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
     actionbarRegister("Crypto Dominance");
 
     if (_controller.isEmpty()) {
-      return WidgetsScreensNotice(
-        title: "No market data available",
-        btnTitle: "Download",
-        btnTooltip: "Retrieve latest market data",
-        btnEvaluator: (s) {
-          _controller.isFetching ? s.progress() : s.action();
-        },
-        btnCallback: () async {
-          try {
-            await _controller.refreshRates();
-            if (_controller.isNotEmpty()) {
-              widgetsNotifySuccess("Successfully retrieved latest market data.");
-            } else {
-              widgetsNotifyError("Failed to retrieve market data. Please check your internet connection.");
-            }
-            setState(() {});
-          } catch (e) {
-            // This is pre IPC. Need new way!.
-            if (e is NetworkingException) {
-              widgetsNotifyError(e.userMessage);
-            }
-          }
-        },
-      );
+      return WatchboardsMarketsWidgetsNotice(callback: () => setState(() {}));
     }
 
     return AppContent(
@@ -190,23 +145,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
   void _processTxs() {
     txs = [..._controller.items];
     txs = txs.where((m) => !m.isStableCoin).toList();
-    switch (_filterMode) {
-      case 1:
-        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 50).toList();
-        break;
-
-      case 2:
-        txs = txs.where((tx) => tx.rank >= 1 && tx.rank <= 100).toList();
-        break;
-
-      case 3:
-        txs = txs.where((tx) => tx.rank >= 101 && tx.rank <= 200).toList();
-        break;
-
-      default:
-        break;
-    }
-
+    txs = marketFilterableFilter(txs);
     txs.sort((a, b) => a.rank.compareTo(b.rank));
   }
 }

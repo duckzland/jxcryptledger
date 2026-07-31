@@ -8,10 +8,20 @@ class WidgetsScreensNotice extends StatelessWidget {
   final String? btnTitle;
   final String? btnTooltip;
 
+  final IconData icon;
+
   final void Function(WidgetsButtonsActionState s)? btnEvaluator;
   final Future<void> Function()? btnCallback;
 
-  const WidgetsScreensNotice({super.key, required this.title, this.btnTitle, this.btnTooltip, this.btnEvaluator, this.btnCallback});
+  const WidgetsScreensNotice({
+    super.key,
+    required this.title,
+    this.icon = Icons.add_circle_outline,
+    this.btnTitle,
+    this.btnTooltip,
+    this.btnEvaluator,
+    this.btnCallback,
+  });
 
   void _callbackAction(WidgetsButtonsActionState s) async {
     s.progress();
@@ -26,7 +36,7 @@ class WidgetsScreensNotice extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.add_circle_outline, size: 60, color: AppTheme.separator),
+          Icon(icon, size: 60, color: AppTheme.separator),
           const SizedBox(height: 16),
           Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
