@@ -137,8 +137,8 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
           dotEvaluator: (menuController) {
             return [
               WidgetsButtonActionState.action,
-              WidgetsButtonActionState.error,
-              WidgetsButtonActionState.primary,
+              if (_hasLinked) WidgetsButtonActionState.error,
+              if (_hasLinked) WidgetsButtonActionState.primary,
               WidgetsButtonActionState.primary,
               WidgetsButtonActionState.action,
               WidgetsButtonActionState.error,
@@ -159,36 +159,36 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
               },
             ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.delete_forever,
-              initialState: WidgetsButtonActionState.error,
-              label: "Delete Linked",
-              tooltip: "Delete linked watchboard",
-              evaluator: _evaluatorDeleteLinked,
-              dialogTitle: "Delete All Linked Watchboard",
-              dialogMessage:
-                  "This will delete all linked watchboard entry.\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Delete",
-              actionStartCallback: _actionWipeLinked,
-              actionSuccessMessage: "All linked watchboard deleted.",
-              actionErrorMessage: "Failed to delete linked watchboard.",
-            ),
+            if (_hasLinked)
+              WidgetsDialogsAlert(
+                icon: Icons.delete_forever,
+                initialState: WidgetsButtonActionState.error,
+                label: "Delete Linked",
+                tooltip: "Delete linked watchboard",
+                dialogTitle: "Delete All Linked Watchboard",
+                dialogMessage:
+                    "This will delete all linked watchboard entry.\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Delete",
+                actionStartCallback: _actionWipeLinked,
+                actionSuccessMessage: "All linked watchboard deleted.",
+                actionErrorMessage: "Failed to delete linked watchboard.",
+              ),
 
-            WidgetsDialogsAlert(
-              icon: Icons.line_axis,
-              initialState: WidgetsButtonActionState.primary,
-              label: "Update Linked",
-              tooltip: "Update linked watchboard",
-              evaluator: _evaluatorUpdateLinked,
-              dialogTitle: "Update Linked Watchboard",
-              dialogMessage:
-                  "This will update all the linked watchboard.\n"
-                  "This action cannot be undone.",
-              dialogConfirmLabel: "Update",
-              actionCompleteCallback: _actionUpdateLinked,
-              actionErrorMessage: "Failed to update linked watchboard.",
-            ),
+            if (_hasLinked)
+              WidgetsDialogsAlert(
+                icon: Icons.line_axis,
+                initialState: WidgetsButtonActionState.primary,
+                label: "Update Linked",
+                tooltip: "Update linked watchboard",
+                dialogTitle: "Update Linked Watchboard",
+                dialogMessage:
+                    "This will update all the linked watchboard.\n"
+                    "This action cannot be undone.",
+                dialogConfirmLabel: "Update",
+                actionCompleteCallback: _actionUpdateLinked,
+                actionErrorMessage: "Failed to update linked watchboard.",
+              ),
 
             WidgetsDialogsImport(
               key: const Key("import-button-batch"),
@@ -386,14 +386,6 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     _enableDrag ? s.primary() : s.normal();
   }
 
-  void _evaluatorDeleteLinked(WidgetsButtonsActionState s) {
-    _hasLinked ? s.error() : s.disable();
-  }
-
-  void _evaluatorUpdateLinked(WidgetsButtonsActionState s) {
-    _hasLinked ? s.primary() : s.disable();
-  }
-
   Future<void> _actionImport(String json) async {
     await _pxController.importDatabase(json);
     _pxController.scheduleRates();
@@ -425,7 +417,9 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
 
   Future<void> _actionWipeLinked() async {
     await _pxController.wipeLinked();
-    setState(() {});
+    setState(() {
+      _hasLinked = false;
+    });
   }
 
   void _actionToggleDrag(WidgetsButtonsActionState s) {
