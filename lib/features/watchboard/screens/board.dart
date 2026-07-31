@@ -11,6 +11,7 @@ import '../../../core/scrollto.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/buttons/action.dart';
+import '../../../widgets/buttons/dropdown.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/dialogs/show_form.dart';
 import '../../../widgets/dialogs/export.dart';
@@ -77,8 +78,6 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
 
     txs.sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
     tickers.sort((a, b) => a.order.compareTo(b.order));
-
-    actionbarRegister("Crypto Watchboard");
   }
 
   @override
@@ -125,16 +124,45 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
               evaluator: _evaluatorDragToggle,
               onPressed: _actionToggleDrag,
             ),
-            WidgetsDialogsShowForm(key: const Key("add-button"), tooltip: "Add new watchboard", buildForm: _buildForm),
           ],
         ),
         const WidgetsSeparator(),
-        Wrap(
-          spacing: 4,
+        WidgetsButtonsDropdown(
+          maxVisible: 1,
+          iconWidth: 34,
+          iconHeight: 34,
+          menuWidth: 130,
+          menuAlignRight: true,
+          listener: _pxController,
+          dotEvaluator: (menuController) {
+            return [
+              WidgetsButtonActionState.action,
+              WidgetsButtonActionState.error,
+              WidgetsButtonActionState.primary,
+              WidgetsButtonActionState.primary,
+              WidgetsButtonActionState.action,
+              WidgetsButtonActionState.error,
+            ];
+          },
           children: [
+            WidgetsDialogsShowForm(
+              key: const Key("add-button"),
+              label: "Create New",
+              tooltip: "Add new watchboard",
+              buildForm: _buildForm,
+              evaluator: (s) {
+                if (_cryptosController.isEmpty()) {
+                  s.disable();
+                } else {
+                  s.action();
+                }
+              },
+            ),
+
             WidgetsDialogsAlert(
               icon: Icons.delete_forever,
               initialState: WidgetsButtonActionState.error,
+              label: "Delete Linked",
               tooltip: "Delete linked watchboard",
               evaluator: _evaluatorDeleteLinked,
               dialogTitle: "Delete All Linked Watchboard",
@@ -150,6 +178,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
             WidgetsDialogsAlert(
               icon: Icons.line_axis,
               initialState: WidgetsButtonActionState.primary,
+              label: "Update Linked",
               tooltip: "Update linked watchboard",
               evaluator: _evaluatorUpdateLinked,
               dialogTitle: "Update Linked Watchboard",
@@ -160,20 +189,17 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
               actionCompleteCallback: _actionUpdateLinked,
               actionErrorMessage: "Failed to update linked watchboard.",
             ),
-          ],
-        ),
-        const WidgetsSeparator(),
-        Wrap(
-          spacing: 4,
-          children: [
+
             WidgetsDialogsImport(
               key: const Key("import-button-batch"),
+              label: "Import DB",
               tooltip: "Import watchboard to database",
               showDialogBeforeImport: true,
               onImport: _actionImport,
             ),
             WidgetsDialogsExport(
               key: const Key("export-button-batch"),
+              label: "Export DB",
               tooltip: "Export watchboard from database",
               suggestedPrefix: "watchboards_",
               onExport: _pxController.exportDatabase,
@@ -181,6 +207,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
             ),
             WidgetsDialogsReset(
               key: const Key("reset-button-batch"),
+              label: "Reset DB",
               tooltip: "Reset watchboard database",
               dialogTitle: "Reset Watchboard Database",
               dialogMessage:
@@ -198,6 +225,8 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
 
   @override
   Widget build(BuildContext context) {
+    actionbarRegister("Crypto Watchboard");
+
     if (_cryptosController.isEmpty()) {
       return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.');
     }
@@ -370,6 +399,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     _pxController.scheduleRates();
     await _tixController.refreshRates();
     states.remove('px-offset');
+    setState(() {});
   }
 
   Future<void> _actionWipe() async {

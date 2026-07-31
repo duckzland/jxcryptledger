@@ -25,16 +25,26 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
   bool get isFetching => _isFetching;
   bool get isPaused => _paused != null;
   bool get hasRates => !repo.isEmpty();
+
   Timer? _watchdog;
   Timer? _paused;
 
   final List<(int sourceId, int targetId)> _queue = [];
+  List<(int sourceId, int targetId)> _inProcessQueue = [];
   Timer? _debounce;
+
+  late String endpoint;
+  late String authKey;
+  late bool isCustom;
+  late bool isLegacy;
+  late bool isFreePlan;
+  late bool needAuth;
 
   @override
   Future<void> init() async {
     await repo.init();
     await repo.cleanupOldRates();
+    _detectSettings();
   }
 
   @override
@@ -43,6 +53,16 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     _watchdog?.cancel();
     _paused?.cancel();
     await super.dispose();
+  }
+
+  void _detectSettings() {
+    endpoint = settingsRepo.getByKey<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
+    authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey) ?? "";
+
+    isFreePlan = endpoint.contains("https://pro-api.coinmarketcap.com/public-api");
+    isCustom = !endpoint.contains("coinmarketcap.com");
+    isLegacy = endpoint.contains('v2');
+    needAuth = isCustom || endpoint.contains("https://pro-api.coinmarketcap.com/v");
   }
 
   Future<void> deleteById(int sourceId, int targetId) async {
@@ -69,7 +89,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
   void addQueue(int sourceId, int targetId, {bool force = false}) {
     if (!isValidPair(sourceId, targetId)) return;
 
-    if (_queue.contains((sourceId, targetId))) return;
+    if (_queue.contains((sourceId, targetId)) || _inProcessQueue.contains((sourceId, targetId))) return;
 
     // logln("[RATES] Adding to queue $sourceId - $targetId");
 
@@ -104,19 +124,15 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
     _isFetching = force ? false : true;
     _startWatchdog();
+    _detectSettings();
 
     broadcasterEmit(IpcAction.refreshRates, 'start', '', Uint8List(0));
 
-    final endpoint = settingsRepo.getByKey<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
-    final isLegacy = endpoint.contains('v2');
-    final isFreePlan = endpoint.contains("https://pro-api.coinmarketcap.com/public-api");
-    final isCustom = !endpoint.contains("coinmarketcap.com");
-
-    // @TODO: Add settings for the final amount.
     final maxPayload = isFreePlan ? 1 : (isCustom ? 40 : 1);
 
     try {
       final jobs = List<(int, int)>.from(_queue);
+      _inProcessQueue = List<(int, int)>.from(_queue);
       _queue.clear();
 
       final grouped = _groupJobs(jobs);
@@ -140,6 +156,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
       await _runWorkers(jobQueue);
     } finally {
+      _inProcessQueue.clear();
       _watchdog?.cancel();
       _isFetching = false;
 
@@ -250,12 +267,12 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
           return;
         }
 
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(Duration(milliseconds: isFreePlan ? 5000 : 100));
       }
     }
 
     if (jobQueue.isNotEmpty) {
-      const maxWorkers = 5;
+      final maxWorkers = isFreePlan ? 1 : 5;
       final workersToStart = jobQueue.length == 1 ? 1 : maxWorkers.clamp(1, jobQueue.length);
       await Future.wait(List.generate(workersToStart, (_) => worker()), eagerError: false);
     }
@@ -288,15 +305,8 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       );
     }
 
-    final endpoint = settingsRepo.getByKey<String>(SettingKey.exchangeEndpoint) ?? SettingKey.exchangeEndpoint.defaultValue;
-    final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
-
-    final isCustom = !endpoint.contains("coinmarketcap.com");
-    final isLegacy = endpoint.contains('v2');
-    final needAuth = isCustom || endpoint.contains("https://pro-api.coinmarketcap.com/v");
-
     final headers = <String, String>{};
-    if (authKey != null && authKey.isNotEmpty && needAuth) {
+    if (authKey.isNotEmpty && needAuth) {
       if (!isCustom) {
         headers['X-CMC_PRO_API_KEY'] = authKey;
       } else {
