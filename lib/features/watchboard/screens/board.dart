@@ -397,7 +397,6 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
   Future<void> _actionWipe() async {
     await _pxController.clear();
     await _tixController.wipe();
-
     await _tixController.populate();
     states.remove('px-offset');
   }

@@ -5,7 +5,6 @@ import '../../../app/content.dart';
 import '../../../app/exceptions.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/scrollto.dart';
-import '../../../core/utils.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';
@@ -52,14 +51,14 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     _controller.addListener(onMarketChange);
 
     sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => d['_rank'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => d['name'] as String, col, asc),
-      2: (col, asc) => sortableOnSort((d) => d['_price'] as double?, col, asc),
-      3: (col, asc) => sortableOnSort((d) => d['_percent1h'] as double?, col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['_percent24h'] as double?, col, asc),
-      5: (col, asc) => sortableOnSort((d) => d['_percent7d'] as double?, col, asc),
-      6: (col, asc) => sortableOnSort((d) => d['_percent30d'] as double?, col, asc),
-      7: (col, asc) => sortableOnSort((d) => d['_marketCap'] as double?, col, asc),
+      0: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).rank, col, asc),
+      1: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).symbol.trim().toLowerCase(), col, asc),
+      2: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).price ?? 0, col, asc),
+      3: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent1h ?? 0, col, asc),
+      4: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent24h ?? 0, col, asc),
+      5: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent7d ?? 0, col, asc),
+      6: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent30d ?? 0, col, asc),
+      7: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).marketCap ?? 0, col, asc),
     };
 
     sortableAscending = states.get("[np]-$sortableKey-sortable-ascending", defaultValue: true);
@@ -126,7 +125,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
             columnSpacing: 12,
             horizontalMargin: 12,
             headingRowHeight: tableHeadingHeight,
-            dataRowHeight: tableRowHeight,
+            dataRowHeight: tableRowHeight * 1.2,
             showCheckboxColumn: false,
             sortColumnIndex: sortableColumnIndex,
             sortAscending: sortableAscending,
@@ -137,7 +136,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
             columns: [
               WidgetsTableColumn(label: const Text('#'), fixedWidth: 40, onSort: sortableSorters[0]),
               WidgetsTableColumn(label: const Text('Name'), size: ColumnSize.L, onSort: sortableSorters[1]),
-              WidgetsTableColumn(label: const Text('Price'), size: ColumnSize.M, onSort: sortableSorters[2]),
+              WidgetsTableColumn(label: const Text('Price'), size: ColumnSize.S, onSort: sortableSorters[2]),
               WidgetsTableColumn(label: const Text('1h %'), size: ColumnSize.S, onSort: sortableSorters[3]),
               WidgetsTableColumn(label: const Text('24h %'), size: ColumnSize.S, onSort: sortableSorters[4]),
               WidgetsTableColumn(label: const Text('7d %'), size: ColumnSize.S, onSort: sortableSorters[5]),
@@ -145,17 +144,28 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
               WidgetsTableColumn(label: const Text('M.Cap'), size: ColumnSize.S, onSort: sortableSorters[7]),
             ],
             rows: rows.map((r) {
+              final MarketsModel tx = r['tx'];
               return DataRow2(
-                key: ValueKey(r['uuid']),
+                key: ValueKey(tx.uuid),
                 cells: [
-                  DataCell(Text(r['rank'])),
-                  DataCell(WidgetsHeader(title: r['name'], subtitle: r['symbol'], byside: true, spacing: 5)),
-                  DataCell(Text(r['price'])),
-                  DataCell(WidgetsBalanceText(text: r['percent1h'], value: r['_percent1h'] ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: r['percent24h'], value: r['_percent24h'] ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: r['percent7d'], value: r['_percent7d'] ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: r['percent30d'], value: r['_percent30d'] ?? 0, comparator: 0)),
-                  DataCell(Text(r['marketCap'])),
+                  DataCell(Text(tx.rankText)),
+                  DataCell(
+                    WidgetsHeader(
+                      title: tx.name,
+                      subtitle: tx.symbol,
+                      spacing: 1,
+                      reversed: true,
+                      titleFontSize: 13,
+                      titleFontWeight: FontWeight.w500,
+                      subtitleFontSize: 10,
+                    ),
+                  ),
+                  DataCell(Text(tx.priceText)),
+                  DataCell(WidgetsBalanceText(text: tx.percent1hText, value: tx.percent1h ?? 0, comparator: 0)),
+                  DataCell(WidgetsBalanceText(text: tx.percent24hText, value: tx.percent24h ?? 0, comparator: 0)),
+                  DataCell(WidgetsBalanceText(text: tx.percent7dText, value: tx.percent7d ?? 0, comparator: 0)),
+                  DataCell(WidgetsBalanceText(text: tx.percent30dText, value: tx.percent30d ?? 0, comparator: 0)),
+                  DataCell(Text(tx.marketCapText)),
                 ],
               );
             }).toList(),
@@ -169,27 +179,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     final rx = <Map<String, dynamic>>[];
 
     for (final m in txs) {
-      rx.add({
-        'uuid': m.uuid,
-
-        'name': m.name,
-        'symbol': m.symbol,
-        'rank': m.rank.toString(),
-        'price': Utils.formatSmartDouble(m.price ?? 0),
-        'percent1h': Utils.formatSmartDouble(m.percent1h ?? 0, maxDecimals: 2, smartDecimal: false),
-        'percent24h': Utils.formatSmartDouble(m.percent24h ?? 0, maxDecimals: 2, smartDecimal: false),
-        'percent7d': Utils.formatSmartDouble(m.percent7d ?? 0, maxDecimals: 2, smartDecimal: false),
-        'percent30d': Utils.formatSmartDouble(m.percent30d ?? 0, maxDecimals: 2, smartDecimal: false),
-        'marketCap': Utils.formatShortCurrency(m.marketCap ?? 0),
-
-        '_rank': m.rank,
-        '_price': m.price,
-        '_percent1h': m.percent1h,
-        '_percent24h': m.percent24h,
-        '_percent7d': m.percent7d,
-        '_percent30d': m.percent30d,
-        '_marketCap': m.marketCap,
-      });
+      rx.add({'tx': m});
     }
     return rx;
   }

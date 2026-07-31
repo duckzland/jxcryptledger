@@ -1,5 +1,6 @@
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/models/with_id.dart';
+import '../../../core/utils.dart';
 
 class MarketsModel implements CoreModelWithId {
   final String tid;
@@ -178,5 +179,46 @@ class MarketsModel implements CoreModelWithId {
       dominance: dominance ?? this.dominance,
       meta: meta ?? this.meta,
     );
+  }
+
+  String get rankText => rank.toString();
+
+  String get priceText => Utils.formatSmartDouble(price ?? 0);
+
+  String get percent1hText => Utils.formatSmartDouble(percent1h ?? 0, maxDecimals: 2, smartDecimal: false);
+
+  String get percent24hText => Utils.formatSmartDouble(percent24h ?? 0, maxDecimals: 2, smartDecimal: false);
+
+  String get percent7dText => Utils.formatSmartDouble(percent7d ?? 0, maxDecimals: 2, smartDecimal: false);
+
+  String get percent30dText => Utils.formatSmartDouble(percent30d ?? 0, maxDecimals: 2, smartDecimal: false);
+
+  String get marketCapText => Utils.formatShortCurrency(marketCap ?? 0);
+
+  String get dominanceText => Utils.formatSmartDouble(dominance ?? 0.0, maxDecimals: 2);
+
+  bool get isStableCoin {
+    const stablecoins = {
+      'usdt',
+      'usdc',
+      'dai',
+      'fdusd',
+      'usde',
+      'tusd',
+      'busd',
+      'pyusd',
+      'usdd',
+      'frax',
+      'usdg',
+      'gho',
+      'lusd',
+      'crvusd',
+      'rlusd',
+      'usd1',
+      'usdy',
+      'u',
+    };
+
+    return stablecoins.contains(symbol.toLowerCase());
   }
 }

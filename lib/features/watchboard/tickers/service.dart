@@ -247,7 +247,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
     final markets = marketsService.extract();
 
-    final top100 = markets.where((m) => m.rank <= 100).toList();
+    final top100 = markets.where((m) => m.rank <= 100 && !m.isStableCoin).toList();
 
     final sorted100_1h = [...top100]..sort((a, b) => (b.percent1h ?? 0).compareTo(a.percent1h ?? 0));
     final gainer100_1h = sorted100_1h.first;
@@ -257,7 +257,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final gainer100_24h = sorted100_24h.first;
     final loser100_24h = sorted100_24h.last;
 
-    final next100 = markets.where((m) => m.rank > 100 && m.rank <= 200).toList();
+    final next100 = markets.where((m) => m.rank > 100 && m.rank <= 200 && !m.isStableCoin).toList();
 
     final sorted200_1h = [...next100]..sort((a, b) => (b.percent1h ?? 0).compareTo(a.percent1h ?? 0));
     final gainer200_1h = sorted200_1h.first;
@@ -267,17 +267,17 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final gainer200_24h = sorted200_24h.first;
     final loser200_24h = sorted200_24h.last;
 
-    repo.updateByType(TickerType.topGainer100_1h.index, gainer100_1h.percent1h.toString(), title: '${gainer100_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topGainer100_24h.index, gainer100_24h.percent24h.toString(), title: '${gainer100_24h.symbol} - 24h');
+    repo.updateByType(TickerType.topGainer100_1h.index, gainer100_1h.percent1hText, title: '${gainer100_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topGainer100_24h.index, gainer100_24h.percent24hText, title: '${gainer100_24h.symbol} - 24h');
 
-    repo.updateByType(TickerType.topLoser100_1h.index, loser100_1h.percent1h.toString(), title: '${loser100_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topLoser100_24h.index, loser100_24h.percent24h.toString(), title: '${loser100_24h.symbol} - 24h');
+    repo.updateByType(TickerType.topLoser100_1h.index, loser100_1h.percent1hText, title: '${loser100_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topLoser100_24h.index, loser100_24h.percent24hText, title: '${loser100_24h.symbol} - 24h');
 
-    repo.updateByType(TickerType.topGainer200_1h.index, gainer200_1h.percent1h.toString(), title: '${gainer200_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topGainer200_24h.index, gainer200_24h.percent24h.toString(), title: '${gainer200_24h.symbol} - 24h');
+    repo.updateByType(TickerType.topGainer200_1h.index, gainer200_1h.percent1hText, title: '${gainer200_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topGainer200_24h.index, gainer200_24h.percent24hText, title: '${gainer200_24h.symbol} - 24h');
 
-    repo.updateByType(TickerType.topLoser200_1h.index, loser200_1h.percent1h.toString(), title: '${loser200_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topLoser200_24h.index, loser200_24h.percent24h.toString(), title: '${loser200_24h.symbol} - 24h');
+    repo.updateByType(TickerType.topLoser200_1h.index, loser200_1h.percent1hText, title: '${loser200_1h.symbol} - 1h');
+    repo.updateByType(TickerType.topLoser200_24h.index, loser200_24h.percent24hText, title: '${loser200_24h.symbol} - 24h');
 
     return true;
   }

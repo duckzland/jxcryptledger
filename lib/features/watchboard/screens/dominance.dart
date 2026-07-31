@@ -6,7 +6,6 @@ import '../../../../mixins/action_bar.dart';
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';
-import '../../../core/utils.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/screens/notice.dart';
 import '../markets/controller.dart';
@@ -129,7 +128,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
                       SizedBox(
                         width: 40.0,
                         child: Text(
-                          Utils.formatSmartDouble(tx.dominance ?? 0.0, maxDecimals: 2),
+                          tx.dominanceText,
                           maxLines: 1,
                           textAlign: TextAlign.left,
                           style: TextStyle(color: AppTheme.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
@@ -153,15 +152,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
   }
 
   void _processTxs() {
-    final stablecoins = {'usdt', 'usdc', 'dai', 'fdusd', 'usde', 'tusd', 'busd', 'pyusd', 'usdd', 'frax', 'usdg'};
-
-    final volatileCoins = _controller.items.where((m) {
-      final symbol = m.symbol.toLowerCase().trim();
-      return !stablecoins.contains(symbol);
-    }).toList();
-
-    volatileCoins.sort((a, b) => a.rank.compareTo(b.rank));
-
+    final volatileCoins = _controller.items.where((m) => !m.isStableCoin).toList()..sort((a, b) => a.rank.compareTo(b.rank));
     txs = volatileCoins.take(100).toList();
   }
 }

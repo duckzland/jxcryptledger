@@ -5,7 +5,6 @@ import '../../../app/content.dart';
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
-import '../../../core/utils.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/screens/notice.dart';
@@ -96,7 +95,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
 
             return Stack(
               children: bubbles.map((item) {
-                final percent1h = item['_percentage'] as double;
+                final MarketsModel tx = item['tx'];
 
                 final double bx = item['x'] as double;
                 final double by = item['y'] as double;
@@ -117,7 +116,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
                   height: diameter,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: percent1h >= 0 ? AppTheme.green : AppTheme.red,
+                      color: (tx.percent1h ?? 0) >= 0 ? AppTheme.green : AppTheme.red,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppTheme.background, width: 3.0),
                     ),
@@ -130,7 +129,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
                           spacing: 2,
                           children: [
                             Text(
-                              item['symbol'] ?? '',
+                              tx.symbol.toUpperCase(),
                               textAlign: TextAlign.center,
                               maxLines: 1,
                               overflow: TextOverflow.clip,
@@ -138,7 +137,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
                             ),
                             if (showPercentage)
                               Text(
-                                "${percent1h >= 0 ? '+' : ''}${item['percentage']}%",
+                                "${(tx.percent1h ?? 0) >= 0 ? '+' : ''}${tx.percent1hText}%",
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.clip,
@@ -193,11 +192,11 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     if (maxRadius > currentSize.width) maxRadius = currentSize.width / 2;
     if (maxRadius > currentSize.height) maxRadius = currentSize.height / 2;
 
-    dataList.sort((a, b) => (b['_percentage'] as double).abs().compareTo((a['_percentage'] as double).abs()));
+    dataList.sort((a, b) => ((b['tx'] as MarketsModel).percent1h ?? 0).abs().compareTo(((a['tx'] as MarketsModel).percent1h ?? 0).abs()));
     final activeItems = dataList.take(maxAllowedBubbles).toList();
 
     final List<Map<String, dynamic>> nextBubbles = [];
-    final Map<String, Map<String, dynamic>> existingMap = {for (var b in bubbles) b['uuid'].toString(): b};
+    final Map<String, Map<String, dynamic>> existingMap = {for (var b in bubbles) (b['tx'] as MarketsModel).uuid: b};
 
     double scaleX = (oldSize != Size.zero && oldSize.width > 0) ? currentSize.width / oldSize.width : 1.0;
     double scaleY = (oldSize != Size.zero && oldSize.height > 0) ? currentSize.height / oldSize.height : 1.0;
@@ -207,7 +206,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
 
     for (int i = 0; i < activeItems.length; i++) {
       final item = activeItems[i];
-      final String uuid = item['uuid'].toString();
+      final MarketsModel tx = item['tx'];
 
       double targetRadius;
       if (i == 0) {
@@ -229,10 +228,8 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
       targetRadius = targetRadius.clamp(minRadius, maxRadius);
       final double doubleRadius = targetRadius.toDouble();
 
-      if (existingMap.containsKey(uuid)) {
-        final oldMap = existingMap[uuid]!;
-        oldMap['percentage'] = item['percentage'];
-        oldMap['_percentage'] = item['_percentage'];
+      if (existingMap.containsKey(tx.uuid)) {
+        final oldMap = existingMap[tx.uuid]!;
         oldMap['radius'] = doubleRadius;
 
         oldMap['x'] = (oldMap['x'] as double) * scaleX;
@@ -324,12 +321,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     final items = <Map<String, dynamic>>[];
 
     for (final m in txs) {
-      items.add({
-        'uuid': m.tid,
-        'symbol': m.symbol.toString().toUpperCase(),
-        'percentage': Utils.formatSmartDouble(m.percent1h ?? 0.0, maxDecimals: 2, smartDecimal: false),
-        '_percentage': m.percent1h ?? 0.0,
-      });
+      items.add({'tx': m});
     }
     return items;
   }
@@ -342,15 +334,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
   }
 
   void _processTxs() {
-    final stablecoins = {'usdt', 'usdc', 'dai', 'fdusd', 'usde', 'tusd', 'busd', 'pyusd', 'usdd', 'frax', 'usdg'};
-
-    final volatileCoins = _controller.items.where((m) {
-      final symbol = m.symbol.toLowerCase().trim();
-      return !stablecoins.contains(symbol);
-    }).toList();
-
-    volatileCoins.sort((a, b) => a.rank.compareTo(b.rank));
-
+    final volatileCoins = _controller.items.where((m) => !m.isStableCoin).toList()..sort((a, b) => a.rank.compareTo(b.rank));
     txs = volatileCoins.take(100).toList();
   }
 }
