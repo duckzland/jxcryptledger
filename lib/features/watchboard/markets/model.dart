@@ -21,7 +21,20 @@ class MarketsModel implements CoreModelWithId {
   final double? percent90d;
   final double? marketCap;
   final double? dominance;
-  Map<String, dynamic> meta;
+  final Map<String, dynamic> meta;
+
+  final String _rankText;
+  final String _priceText;
+  final String _percent1hText;
+  final String _percent24hText;
+  final String _percent7dText;
+  final String _percent30dText;
+  final String _marketCapText;
+  final String _dominanceText;
+
+  final List<String> _tags;
+
+  final bool _isStableCoin;
 
   @override
   String get uuid => tid;
@@ -46,7 +59,17 @@ class MarketsModel implements CoreModelWithId {
     this.marketCap,
     this.dominance,
     Map<String, dynamic>? meta,
-  }) : meta = meta ?? {} {
+  }) : meta = meta ?? {},
+       _rankText = rank.toString(),
+       _priceText = Utils.formatSmartDouble(price ?? 0),
+       _percent1hText = Utils.formatSmartDouble(percent1h ?? 0, maxDecimals: 2, smartDecimal: false),
+       _percent24hText = Utils.formatSmartDouble(percent24h ?? 0, maxDecimals: 2, smartDecimal: false),
+       _percent7dText = Utils.formatSmartDouble(percent7d ?? 0, maxDecimals: 2, smartDecimal: false),
+       _percent30dText = Utils.formatSmartDouble(percent30d ?? 0, maxDecimals: 2, smartDecimal: false),
+       _marketCapText = Utils.formatShortCurrency(marketCap ?? 0),
+       _dominanceText = Utils.formatSmartDouble(dominance ?? 0.0, maxDecimals: 2),
+       _tags = ((meta?['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const []),
+       _isStableCoin = _checkIsStableCoin(symbol, meta ?? {}) {
     if (tid.isEmpty) {
       throw ValidationException(AppErrorCode.marketInvalidTid, "tid cannot be empty.", "Please enter a market ID.");
     }
@@ -181,23 +204,10 @@ class MarketsModel implements CoreModelWithId {
     );
   }
 
-  String get rankText => rank.toString();
+  static bool _checkIsStableCoin(String symbol, Map<String, dynamic> meta) {
+    final tags = (meta['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const [];
+    if (tags.contains('stablecoin')) return true;
 
-  String get priceText => Utils.formatSmartDouble(price ?? 0);
-
-  String get percent1hText => Utils.formatSmartDouble(percent1h ?? 0, maxDecimals: 2, smartDecimal: false);
-
-  String get percent24hText => Utils.formatSmartDouble(percent24h ?? 0, maxDecimals: 2, smartDecimal: false);
-
-  String get percent7dText => Utils.formatSmartDouble(percent7d ?? 0, maxDecimals: 2, smartDecimal: false);
-
-  String get percent30dText => Utils.formatSmartDouble(percent30d ?? 0, maxDecimals: 2, smartDecimal: false);
-
-  String get marketCapText => Utils.formatShortCurrency(marketCap ?? 0);
-
-  String get dominanceText => Utils.formatSmartDouble(dominance ?? 0.0, maxDecimals: 2);
-
-  bool get isStableCoin {
     const stablecoins = {
       'usdt',
       'usdc',
@@ -218,7 +228,19 @@ class MarketsModel implements CoreModelWithId {
       'usdy',
       'u',
     };
-
     return stablecoins.contains(symbol.toLowerCase());
   }
+
+  String get rankText => _rankText;
+  String get priceText => _priceText;
+  String get percent1hText => _percent1hText;
+  String get percent24hText => _percent24hText;
+  String get percent7dText => _percent7dText;
+  String get percent30dText => _percent30dText;
+  String get marketCapText => _marketCapText;
+  String get dominanceText => _dominanceText;
+
+  List<String> get tags => _tags;
+
+  bool get isStableCoin => _isStableCoin;
 }
