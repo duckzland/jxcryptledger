@@ -63,8 +63,6 @@ class TransactionsPageState extends State<TransactionsPage>
 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
-
-    actionbarRegister("Trading View");
   }
 
   @override
@@ -459,6 +457,8 @@ class TransactionsPageState extends State<TransactionsPage>
         addForm: _buildForm,
       );
     }
+
+    actionbarRegister("Trading View");
 
     return AppContent(boxConstraints: const BoxConstraints(maxWidth: 1600), children: [_buildScreen()]);
   }
