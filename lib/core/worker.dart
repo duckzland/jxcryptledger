@@ -77,10 +77,8 @@ class CoreWorker {
         await tickers.refreshRates();
       }
 
-      if (!panels.isEmpty()) {
-        logln("[WORKER] Refreshing market rates");
-        await market.refreshRates();
-      }
+      logln("[WORKER] Refreshing market rates");
+      await market.refreshRates();
     });
   }
 
