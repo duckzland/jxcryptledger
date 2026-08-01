@@ -114,92 +114,69 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
 
     double maxRadius = 150.0;
     double minRadius = 24.0;
-    double bubbleMargin = 12.0;
-    int maxAllowedBubbles = 100;
+    double margin = 12.0;
+    int maxSlot = 100;
 
     if (currentSize.width < 1200) {
       maxRadius = 110.0;
       minRadius = 20.0;
-      bubbleMargin = 8.0;
-      maxAllowedBubbles = 50;
+      margin = 8.0;
+      maxSlot = 50;
     }
 
     if (currentSize.width < 800) {
       maxRadius = 90.0;
       minRadius = 20.0;
-      bubbleMargin = 8.0;
-      maxAllowedBubbles = 40;
+      margin = 8.0;
+      maxSlot = 40;
     }
 
     if (currentSize.width < 560) {
       maxRadius = 65.0;
       minRadius = 16.0;
-      bubbleMargin = 6.0;
-      maxAllowedBubbles = 25;
+      margin = 6.0;
+      maxSlot = 25;
     }
 
     if (maxRadius > currentSize.width) maxRadius = currentSize.width / 2;
     if (maxRadius > currentSize.height) maxRadius = currentSize.height / 2;
 
-    final List<Map<String, dynamic>> nextBubbles = [];
-    final Map<String, Map<String, dynamic>> existingMap = {for (var b in slots) (b['uuid'] as String): b};
-
-    double scaleX = (oldSize != Size.zero && oldSize.width > 0) ? currentSize.width / oldSize.width : 1.0;
-    double scaleY = (oldSize != Size.zero && oldSize.height > 0) ? currentSize.height / oldSize.height : 1.0;
-
     double angle = 0.0;
-    final double goldenRatio = (1 + sqrt(5)) / 2;
+    final double ratio = (1 + sqrt(5)) / 2;
 
-    for (int i = 0; i < maxAllowedBubbles; i++) {
-      double targetRadius;
+    slots.clear();
+
+    for (int i = 0; i < maxSlot; i++) {
+      double radius = minRadius;
+
       if (i == 0) {
-        targetRadius = maxRadius;
+        radius = maxRadius;
       } else if (i == 1) {
-        targetRadius = maxRadius * 0.90;
+        radius = maxRadius * 0.90;
       } else if (i == 2) {
-        targetRadius = maxRadius * 0.80;
+        radius = maxRadius * 0.80;
       } else if (i == 3) {
-        targetRadius = maxRadius * 0.73;
+        radius = maxRadius * 0.73;
       } else if (i >= 4 && i <= 9) {
-        targetRadius = maxRadius * (0.66 - ((i - 4) * 0.03));
-      } else if (i >= 10 && i <= 24) {
-        targetRadius = maxRadius * (0.46 - ((i - 10) * 0.015));
-      } else {
-        targetRadius = minRadius;
+        radius = maxRadius * (0.66 - ((i - 4) * 0.03));
+      } else if (i >= 10 && i <= 34) {
+        radius = maxRadius * (0.46 - ((i - 10) * 0.015));
       }
 
-      targetRadius = targetRadius.clamp(minRadius, maxRadius);
-      final double doubleRadius = targetRadius.toDouble();
+      radius = radius.clamp(minRadius, maxRadius);
 
-      if (existingMap.containsKey(i.toString())) {
-        final oldMap = existingMap[i.toString()]!;
-        oldMap['radius'] = doubleRadius;
+      double rDist = sqrt(i) * (maxRadius * 0.6);
+      angle += ratio * 2 * pi;
 
-        oldMap['x'] = (oldMap['x'] as double) * scaleX;
-        oldMap['y'] = (oldMap['y'] as double) * scaleY;
+      double startX = (currentSize.width / 2) + cos(angle) * rDist;
+      double startY = (currentSize.height / 2) + sin(angle) * rDist;
 
-        nextBubbles.add(oldMap);
-      } else {
-        double rDist = sqrt(i) * (maxRadius * 0.6);
-        angle += goldenRatio * 2 * pi;
-
-        double startX = (currentSize.width / 2) + cos(angle) * rDist;
-        double startY = (currentSize.height / 2) + sin(angle) * rDist;
-
-        final double minX = doubleRadius;
-        final double maxX = (currentSize.width - doubleRadius).clamp(minX, currentSize.width);
-        final double minY = doubleRadius;
-        final double maxY = (currentSize.height - doubleRadius).clamp(minY, currentSize.height);
-
-        Map<String, dynamic> item = {
-          'uuid': i.toString(),
-          'radius': doubleRadius,
-          'x': startX.clamp(minX, maxX),
-          'y': startY.clamp(minY, maxY),
-        };
-
-        nextBubbles.add(item);
-      }
+      slots.add({
+        'uuid': i.toString(),
+        'radius': radius,
+        'x': startX.clamp(radius, (currentSize.width - radius).clamp(radius, currentSize.width)),
+        'y': startY.clamp(radius, (currentSize.height - radius).clamp(radius, currentSize.height)),
+      });
     }
 
     const double gravityForce = 0.35;
@@ -208,7 +185,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     final double centerY = currentSize.height / 2;
 
     for (int pass = 0; pass < relaxationIterations; pass++) {
-      for (var b in nextBubbles) {
+      for (var b in slots) {
         final double bX = b['x'] as double;
         final double bY = b['y'] as double;
         final double bRadius = b['radius'] as double;
@@ -228,10 +205,10 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
         if ((b['y'] as double) + bRadius > currentSize.height) b['y'] = currentSize.height - bRadius;
       }
 
-      for (int i = 0; i < nextBubbles.length; i++) {
-        for (int j = i + 1; j < nextBubbles.length; j++) {
-          final b1 = nextBubbles[i];
-          final b2 = nextBubbles[j];
+      for (int i = 0; i < slots.length; i++) {
+        for (int j = i + 1; j < slots.length; j++) {
+          final b1 = slots[i];
+          final b2 = slots[j];
 
           final double b1X = b1['x'] as double;
           final double b1Y = b1['y'] as double;
@@ -244,7 +221,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
           double dx = b2X - b1X;
           double dy = b2Y - b1Y;
           double distance = sqrt(dx * dx + dy * dy);
-          double minDist = b1R + b2R + bubbleMargin;
+          double minDist = b1R + b2R + margin;
 
           if (distance < minDist) {
             double overlap = minDist - distance;
@@ -259,18 +236,15 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
         }
       }
     }
-
-    slots = nextBubbles;
   }
 
   void _assignBubbles() {
     if (txs.isEmpty) return;
 
     final atxs = [...txs];
-    final maxAllowedBubbles = slots.length;
 
     atxs.sort((a, b) => marketFilterableGetPercentageValue(b).abs().compareTo(marketFilterableGetPercentageValue(a).abs()));
-    final activeItems = atxs.take(maxAllowedBubbles).toList();
+    final activeItems = atxs.take(slots.length).toList();
 
     bubbles.clear();
 
