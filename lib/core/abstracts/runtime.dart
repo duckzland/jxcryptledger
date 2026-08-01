@@ -55,7 +55,7 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
   }
 
   Future<void> bindLifecycle() async {
-    lifecycleListener = AppLifecycleListener(
+    lifecycleListener ??= AppLifecycleListener(
       onExitRequested: () async {
         try {
           await shutdown();
