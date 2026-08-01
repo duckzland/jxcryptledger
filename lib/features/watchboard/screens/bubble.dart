@@ -94,6 +94,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
               children: bubbles.map((item) {
                 final tx = item['tx'] as MarketsModel;
                 return WatchboardsMarketsWidgetsBubble(
+                  key: ObjectKey(item),
                   tx: tx,
                   x: item['x'] as double,
                   y: item['y'] as double,
