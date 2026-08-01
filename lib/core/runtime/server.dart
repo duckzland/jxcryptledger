@@ -2,28 +2,27 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../../system/encryption/service.dart';
-import '../../system/settings/keys.dart';
-import '../../system/settings/service.dart';
 import '../../features/archives/service.dart';
 import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
 import '../../features/transactions/service.dart';
+import '../../features/watchboard/markets/service.dart';
 import '../../features/watchboard/panels/service.dart';
 import '../../features/watchboard/tickers/service.dart';
-import '../../features/watchboard/markets/service.dart';
 import '../../features/watchers/service.dart';
-import '../../system/unlock/status.dart';
-import '../../ipc/database/adapters.dart';
-import '../../ipc/database/database.dart';
 import '../../ipc/action.dart';
 import '../../ipc/client.dart';
+import '../../ipc/database/adapters.dart';
+import '../../ipc/database/database.dart';
+import '../../system/encryption/service.dart';
+import '../../system/settings/keys.dart';
+import '../../system/settings/service.dart';
+import '../../system/unlock/status.dart';
 import '../abstracts/runtime.dart';
 import '../log.dart';
 import '../mode.dart';
 import '../worker.dart';
-
 import 'boxes.dart';
 import 'locator.dart';
 import 'migration.dart';
@@ -118,7 +117,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     } catch (_) {}
 
     try {
-      lifecycleListener.dispose();
+      lifecycleListener?.dispose();
     } catch (_) {}
 
     try {

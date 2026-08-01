@@ -24,7 +24,7 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
   @override
   IpcServer get ipcServer => locator<IpcServer>();
 
-  late final AppLifecycleListener lifecycleListener;
+  late final AppLifecycleListener? lifecycleListener;
 
   Future<void> init();
 
