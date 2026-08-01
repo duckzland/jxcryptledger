@@ -28,6 +28,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
         SingleTickerProviderStateMixin {
   late List<MarketsModel> txs;
   List<Map<String, dynamic>> bubbles = [];
+  List<Map<String, dynamic>> slots = [];
 
   Size _lastSize = Size.zero;
   Size _currentSize = Size.zero;
@@ -83,9 +84,11 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
             _currentSize = Size(constraints.maxWidth, constraints.maxHeight);
 
             if (_lastSize != _currentSize) {
-              _generateBubble(_currentSize, _lastSize);
+              _generateSlots(_currentSize, _lastSize);
               _lastSize = _currentSize;
             }
+
+            _assignBubbles();
 
             return Stack(
               children: bubbles.map((item) {
@@ -106,11 +109,8 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     );
   }
 
-  void _generateBubble(Size currentSize, Size oldSize) {
+  void _generateSlots(Size currentSize, Size oldSize) {
     if (txs.isEmpty || currentSize == Size.zero) return;
-
-    final dataList = _generateItems();
-    if (dataList.isEmpty) return;
 
     double maxRadius = 150.0;
     double minRadius = 24.0;
@@ -141,15 +141,8 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     if (maxRadius > currentSize.width) maxRadius = currentSize.width / 2;
     if (maxRadius > currentSize.height) maxRadius = currentSize.height / 2;
 
-    dataList.sort(
-      (a, b) => marketFilterableGetPercentageValue(
-        b['tx'] as MarketsModel,
-      ).abs().compareTo(marketFilterableGetPercentageValue(a['tx'] as MarketsModel).abs()),
-    );
-    final activeItems = dataList.take(maxAllowedBubbles).toList();
-
     final List<Map<String, dynamic>> nextBubbles = [];
-    final Map<String, Map<String, dynamic>> existingMap = {for (var b in bubbles) (b['tx'] as MarketsModel).uuid: b};
+    final Map<String, Map<String, dynamic>> existingMap = {for (var b in slots) (b['uuid'] as String): b};
 
     double scaleX = (oldSize != Size.zero && oldSize.width > 0) ? currentSize.width / oldSize.width : 1.0;
     double scaleY = (oldSize != Size.zero && oldSize.height > 0) ? currentSize.height / oldSize.height : 1.0;
@@ -157,10 +150,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     double angle = 0.0;
     final double goldenRatio = (1 + sqrt(5)) / 2;
 
-    for (int i = 0; i < activeItems.length; i++) {
-      final item = activeItems[i];
-      final MarketsModel tx = item['tx'];
-
+    for (int i = 0; i < maxAllowedBubbles; i++) {
       double targetRadius;
       if (i == 0) {
         targetRadius = maxRadius;
@@ -181,8 +171,8 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
       targetRadius = targetRadius.clamp(minRadius, maxRadius);
       final double doubleRadius = targetRadius.toDouble();
 
-      if (existingMap.containsKey(tx.uuid)) {
-        final oldMap = existingMap[tx.uuid]!;
+      if (existingMap.containsKey(i.toString())) {
+        final oldMap = existingMap[i.toString()]!;
         oldMap['radius'] = doubleRadius;
 
         oldMap['x'] = (oldMap['x'] as double) * scaleX;
@@ -201,9 +191,12 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
         final double minY = doubleRadius;
         final double maxY = (currentSize.height - doubleRadius).clamp(minY, currentSize.height);
 
-        item['radius'] = doubleRadius;
-        item['x'] = startX.clamp(minX, maxX);
-        item['y'] = startY.clamp(minY, maxY);
+        Map<String, dynamic> item = {
+          'uuid': i.toString(),
+          'radius': doubleRadius,
+          'x': startX.clamp(minX, maxX),
+          'y': startY.clamp(minY, maxY),
+        };
 
         nextBubbles.add(item);
       }
@@ -267,16 +260,25 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
       }
     }
 
-    bubbles = nextBubbles;
+    slots = nextBubbles;
   }
 
-  List<Map<String, dynamic>> _generateItems() {
-    final items = <Map<String, dynamic>>[];
+  void _assignBubbles() {
+    if (txs.isEmpty) return;
 
-    for (final m in txs) {
-      items.add({'tx': m});
+    final atxs = [...txs];
+    final maxAllowedBubbles = slots.length;
+
+    atxs.sort((a, b) => marketFilterableGetPercentageValue(b).abs().compareTo(marketFilterableGetPercentageValue(a).abs()));
+    final activeItems = atxs.take(maxAllowedBubbles).toList();
+
+    bubbles.clear();
+
+    for (int i = 0; i < activeItems.length; i++) {
+      final slot = slots[i];
+      slot['tx'] = activeItems[i];
+      bubbles.add(slot);
     }
-    return items;
   }
 
   void onMarketChange() {
@@ -289,9 +291,8 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     txs = [..._controller.items];
     txs = txs.where((m) => !m.isStableCoin).toList();
     txs = marketFilterableFilter(txs);
-
     txs.sort((a, b) => a.rank.compareTo(b.rank));
 
-    _generateBubble(_currentSize, _lastSize);
+    _assignBubbles();
   }
 }
