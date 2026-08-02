@@ -70,11 +70,16 @@ class _TickersDisplayState extends State<TickersDisplay> {
                         overflow: TextOverflow.visible,
                         style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
                       ),
-                      Text(
-                        tix.getContent(),
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                        child: Text(
+                          tix.getContent(),
+                          key: ValueKey(tix.getContent()),
+                          softWrap: false,
+                          overflow: TextOverflow.visible,
+                          style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ]
                   : [

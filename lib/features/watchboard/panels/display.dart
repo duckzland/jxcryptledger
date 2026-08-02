@@ -80,11 +80,16 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
         ? [
             Text(fromText, style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600)),
             Flexible(
-              child: Text(
-                toText,
-                softWrap: false,
-                overflow: TextOverflow.visible,
-                style: const TextStyle(height: 1.3, fontSize: 25, fontWeight: FontWeight.w700),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                child: Text(
+                  toText,
+                  key: ValueKey(toText),
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(height: 1.3, fontSize: 25, fontWeight: FontWeight.w700),
+                ),
               ),
             ),
             Text(rateText, style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),

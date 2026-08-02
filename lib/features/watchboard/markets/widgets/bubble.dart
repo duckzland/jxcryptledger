@@ -65,15 +65,15 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
     final symbolStyle = TextStyle(color: AppTheme.text, fontSize: fontSizeSymbol, fontWeight: FontWeight.w600, height: 1);
     final percentStyle = TextStyle(color: AppTheme.text, fontSize: fontSizePercent, fontWeight: FontWeight.w400);
 
-    final textSize = measureText("W${widget.tx.symbol}W", symbolStyle);
+    final textSize = measureText("#W${widget.tx.symbol}W#", symbolStyle);
+
+    currentDiameter += _calcExtraRadius(widget.value);
 
     if (currentDiameter < textSize.width) {
       currentDiameter = textSize.width;
       left = widget.x - (currentDiameter / 2);
       top = widget.y - (currentDiameter / 2);
     }
-
-    currentDiameter += _calcExtraRadius(widget.value);
 
     double prevDiameter = _diameter;
     _diameter = currentDiameter;
@@ -126,16 +126,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
                     ),
                   ),
                   if (showPercentage)
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                      child: Text(
-                        "${widget.value >= 0 ? '+' : ''}${widget.text}%",
-                        key: ValueKey(widget.value),
-                        textAlign: TextAlign.center,
-                        style: percentStyle,
-                      ),
-                    ),
+                    Text("${widget.value >= 0 ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
                 ],
               ),
             ),
@@ -151,7 +142,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
       textDirection: TextDirection.ltr,
     )..layout();
 
-    return painter.size; // width & height in logical pixels
+    return painter.size;
   }
 
   double _calcExtraRadius(double value) {
