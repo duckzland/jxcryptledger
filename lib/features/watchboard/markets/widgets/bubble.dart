@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
-import '../../../../core/log.dart';
 import '../model.dart';
 
 class WatchboardsMarketsWidgetsBubble extends StatefulWidget {
@@ -28,6 +27,17 @@ class WatchboardsMarketsWidgetsBubble extends StatefulWidget {
 }
 
 class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidgetsBubble> {
+  late double _diameter;
+  late Color _bgColor;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _diameter = widget.radius * 2;
+    _bgColor = widget.value >= 0 ? AppTheme.green : AppTheme.red;
+  }
+
   @override
   void didUpdateWidget(covariant WatchboardsMarketsWidgetsBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -43,77 +53,108 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
 
   @override
   Widget build(BuildContext context) {
-    double diameter = widget.radius * 2;
+    double currentDiameter = widget.radius * 2;
     double left = widget.x - widget.radius;
     double top = widget.y - widget.radius;
 
+    final currentColor = widget.value >= 0 ? AppTheme.green : AppTheme.red;
     final fontSizeSymbol = (widget.radius * 0.36).clamp(8.0, 50.0);
     final fontSizePercent = (widget.radius * 0.28).clamp(8.0, 16.0);
     final showPercentage = widget.radius > 30.0;
 
-    final neededWidth = (widget.tx.symbol.length + 2) * (fontSizeSymbol * 0.8);
-    if (diameter < neededWidth) {
-      diameter = neededWidth;
-      left = widget.x - (diameter / 2);
-      top = widget.y - (diameter / 2);
+    final symbolStyle = TextStyle(color: AppTheme.text, fontSize: fontSizeSymbol, fontWeight: FontWeight.w600, height: 1);
+    final percentStyle = TextStyle(color: AppTheme.text, fontSize: fontSizePercent, fontWeight: FontWeight.w400);
+
+    final textSize = measureText("W${widget.tx.symbol}W", symbolStyle);
+
+    if (currentDiameter < textSize.width) {
+      currentDiameter = textSize.width;
+      left = widget.x - (currentDiameter / 2);
+      top = widget.y - (currentDiameter / 2);
     }
 
-    diameter += calcExtraRadius(widget.value);
+    currentDiameter += _calcExtraRadius(widget.value);
 
-    logln("Bubbles ${widget.tx.symbol}, $top, $left, $diameter");
+    double prevDiameter = _diameter;
+    _diameter = currentDiameter;
+
+    Color prevColor = _bgColor;
+    _bgColor = currentColor;
 
     return AnimatedPositioned(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 200),
       curve: Curves.linear,
       left: left,
       top: top,
-      width: diameter,
-      height: diameter,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: diameter,
-        height: diameter,
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: widget.value >= 0 ? AppTheme.green : AppTheme.red,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppTheme.background, width: 3.0),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                child: Text(
-                  widget.tx.symbol.toUpperCase(),
-                  key: ValueKey(widget.tx.symbol),
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.text, fontSize: fontSizeSymbol, fontWeight: FontWeight.w600, height: 1),
+      width: currentDiameter,
+      height: currentDiameter,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: prevDiameter, end: currentDiameter),
+        curve: Curves.linear,
+        duration: const Duration(milliseconds: 200),
+        builder: (context, nd, child) {
+          return TweenAnimationBuilder<Color?>(
+            tween: ColorTween(begin: prevColor, end: currentColor),
+            curve: Curves.linear,
+            duration: const Duration(milliseconds: 200),
+            builder: (context, color, child) {
+              return Container(
+                width: nd,
+                height: nd,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.background, width: 3.0),
                 ),
-              ),
-              if (showPercentage)
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                  child: Text(
-                    "${widget.value >= 0 ? '+' : ''}${widget.text}%",
-                    key: ValueKey(widget.value),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.text, fontSize: fontSizePercent, fontWeight: FontWeight.w400),
+                child: child,
+              );
+            },
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                    child: Text(
+                      widget.tx.symbol.toUpperCase(),
+                      key: ValueKey(widget.tx.symbol),
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      style: symbolStyle,
+                    ),
                   ),
-                ),
-            ],
-          ),
-        ),
+                  if (showPercentage)
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                      child: Text(
+                        "${widget.value >= 0 ? '+' : ''}${widget.text}%",
+                        key: ValueKey(widget.value),
+                        textAlign: TextAlign.center,
+                        style: percentStyle,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  double calcExtraRadius(double value) {
+  Size measureText(String text, TextStyle style) {
+    final TextPainter painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    return painter.size; // width & height in logical pixels
+  }
+
+  double _calcExtraRadius(double value) {
     const double maxRadius = 10.0;
     if (value == 0) return 0.0;
 
