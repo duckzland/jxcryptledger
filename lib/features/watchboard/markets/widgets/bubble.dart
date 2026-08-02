@@ -27,14 +27,11 @@ class WatchboardsMarketsWidgetsBubble extends StatefulWidget {
 }
 
 class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidgetsBubble> {
-  late double _diameter;
   late Color _bgColor;
 
   @override
   void initState() {
     super.initState();
-
-    _diameter = widget.radius * 2;
     _bgColor = widget.value >= 0 ? AppTheme.green : AppTheme.red;
   }
 
@@ -53,7 +50,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
 
   @override
   Widget build(BuildContext context) {
-    double currentDiameter = widget.radius * 2;
+    double diameter = widget.radius * 2;
     double left = widget.x - widget.radius;
     double top = widget.y - widget.radius;
 
@@ -67,16 +64,17 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
 
     final textSize = measureText("#W${widget.tx.symbol}W#", symbolStyle);
 
-    currentDiameter += _calcExtraRadius(widget.value);
+    diameter += _calcExtraRadius(widget.value);
 
-    if (currentDiameter < textSize.width) {
-      currentDiameter = textSize.width;
-      left = widget.x - (currentDiameter / 2);
-      top = widget.y - (currentDiameter / 2);
+    if (diameter < textSize.width) {
+      diameter = textSize.width;
+      left = widget.x - (diameter / 2);
+      top = widget.y - (diameter / 2);
     }
 
-    double prevDiameter = _diameter;
-    _diameter = currentDiameter;
+    diameter = double.parse(diameter.toStringAsFixed(2));
+    top = double.parse(top.toStringAsFixed(2));
+    left = double.parse(left.toStringAsFixed(2));
 
     Color prevColor = _bgColor;
     _bgColor = currentColor;
@@ -86,52 +84,47 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
       curve: Curves.linear,
       left: left,
       top: top,
-      width: currentDiameter,
-      height: currentDiameter,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: prevDiameter, end: currentDiameter),
+      width: diameter,
+      height: diameter,
+      child: TweenAnimationBuilder<Color?>(
+        tween: ColorTween(begin: showPercentage ? prevColor : currentColor, end: currentColor),
         curve: Curves.linear,
         duration: const Duration(milliseconds: 200),
-        builder: (context, nd, child) {
-          return TweenAnimationBuilder<Color?>(
-            tween: ColorTween(begin: prevColor, end: currentColor),
-            curve: Curves.linear,
-            duration: const Duration(milliseconds: 200),
-            builder: (context, color, child) {
-              return Container(
-                width: nd,
-                height: nd,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.background, width: 3.0),
-                ),
-                child: child,
-              );
-            },
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                    child: Text(
-                      widget.tx.symbol.toUpperCase(),
-                      key: ValueKey(widget.tx.symbol),
-                      maxLines: 1,
-                      textAlign: TextAlign.center,
-                      style: symbolStyle,
-                    ),
-                  ),
-                  if (showPercentage)
-                    Text("${widget.value >= 0 ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
-                ],
-              ),
+        builder: (context, color, child) {
+          return Container(
+            width: diameter,
+            height: diameter,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppTheme.background, width: 3.0),
             ),
+            child: child,
           );
         },
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              (showPercentage)
+                  ? AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                      child: Text(
+                        widget.tx.symbol.toUpperCase(),
+                        key: ValueKey(widget.tx.symbol),
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        style: symbolStyle,
+                      ),
+                    )
+                  : Text(widget.tx.symbol.toUpperCase(), maxLines: 1, textAlign: TextAlign.center, style: symbolStyle),
+
+              if (showPercentage) Text("${widget.value >= 0 ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
+            ],
+          ),
+        ),
       ),
     );
   }
