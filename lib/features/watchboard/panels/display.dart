@@ -82,6 +82,8 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
             Flexible(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.elasticIn,
+                switchOutCurve: Curves.elasticOut,
                 transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
                 child: Text(
                   toText,

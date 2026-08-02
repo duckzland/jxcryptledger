@@ -1,7 +1,7 @@
 import '../model.dart';
 
 mixin TickersMixinsHelper {
-  final List<TickersModel> defaultTickers = [
+  List<TickersModel> get defaultTickers => [
     TickersModel(
       tid: "market_cap",
       type: TickerType.marketCap.index,

@@ -78,4 +78,16 @@ class MarketsController extends CoreBaseController<MarketsModel, MarketsReposito
         a.meta.length == b.meta.length &&
         a.meta.keys.every((k) => b.meta.containsKey(k) && a.meta[k] == b.meta[k]);
   }
+
+  bool isBothEqualGroup(List<MarketsModel> a, List<MarketsModel> b) {
+    if (a.length != b.length) return false;
+
+    for (int i = 0; i < a.length; i++) {
+      if (!isBothEqual(a[i], b[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }

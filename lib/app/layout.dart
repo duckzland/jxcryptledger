@@ -272,11 +272,11 @@ class _AppLayoutState extends State<AppLayout> {
 
   Widget _buildActions() {
     return Padding(
-      padding: EdgeInsets.only(right: 16.0),
+      padding: const EdgeInsets.only(right: 16.0),
       child: Row(
         spacing: 8,
         children: [
-          WidgetsSeparator(padding: EdgeInsets.only(left: 8, right: 8)),
+          const WidgetsSeparator(padding: EdgeInsets.only(left: 8, right: 8)),
           Wrap(
             spacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -284,29 +284,31 @@ class _AppLayoutState extends State<AppLayout> {
               ListenableBuilder(
                 listenable: _cryptosController,
                 builder: (context, _) {
-                  return WidgetsButtonsAction(
-                    key: const Key("refresh-crypto"),
-                    icon: Icons.refresh,
-                    padding: const EdgeInsets.all(8),
-                    iconSize: 20,
-                    minimumSize: const Size(40, 40),
-                    tooltip: "Refresh Cryptos",
-                    evaluator: (s) {
-                      _cryptosController.isFetching ? s.progress() : s.reset();
-                    },
-                    onPressed: (s) async {
-                      s.progress();
-                      try {
-                        await _cryptosController.fetch();
-                        widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
-                      } catch (e) {
-                        if (e is NetworkingException) {
-                          widgetsNotifyError(e.userMessage);
+                  return RepaintBoundary(
+                    child: WidgetsButtonsAction(
+                      key: const Key("refresh-crypto"),
+                      icon: Icons.refresh,
+                      padding: const EdgeInsets.all(8),
+                      iconSize: 20,
+                      minimumSize: const Size(40, 40),
+                      tooltip: "Refresh Cryptos",
+                      evaluator: (s) {
+                        _cryptosController.isFetching ? s.progress() : s.reset();
+                      },
+                      onPressed: (s) async {
+                        s.progress();
+                        try {
+                          await _cryptosController.fetch();
+                          widgetsNotifySuccess("Cryptocurrency list successfully retrieved.");
+                        } catch (e) {
+                          if (e is NetworkingException) {
+                            widgetsNotifyError(e.userMessage);
+                          }
+                        } finally {
+                          s.reset();
                         }
-                      } finally {
-                        s.reset();
-                      }
-                    },
+                      },
+                    ),
                   );
                 },
               ),
@@ -315,29 +317,31 @@ class _AppLayoutState extends State<AppLayout> {
                 listenable: _ratesController,
                 builder: (context, _) {
                   return _ratesController.hasRates
-                      ? WidgetsButtonsAction(
-                          key: const Key("refresh-rates"),
-                          icon: Icons.autorenew,
-                          padding: const EdgeInsets.all(8),
-                          iconSize: 20,
-                          minimumSize: const Size(40, 40),
-                          tooltip: "Refresh Rates",
-                          evaluator: (s) {
-                            _ratesController.isFetching ? s.progress() : s.reset();
-                          },
-                          onPressed: (s) async {
-                            s.progress();
-                            try {
-                              await _ratesController.refreshRates();
-                              widgetsNotifySuccess("Refreshed rates from exchange.");
-                            } catch (e) {
-                              if (e is NetworkingException) {
-                                widgetsNotifyError(e.userMessage);
+                      ? RepaintBoundary(
+                          child: WidgetsButtonsAction(
+                            key: const Key("refresh-rates"),
+                            icon: Icons.autorenew,
+                            padding: const EdgeInsets.all(8),
+                            iconSize: 20,
+                            minimumSize: const Size(40, 40),
+                            tooltip: "Refresh Rates",
+                            evaluator: (s) {
+                              _ratesController.isFetching ? s.progress() : s.reset();
+                            },
+                            onPressed: (s) async {
+                              s.progress();
+                              try {
+                                await _ratesController.refreshRates();
+                                widgetsNotifySuccess("Refreshed rates from exchange.");
+                              } catch (e) {
+                                if (e is NetworkingException) {
+                                  widgetsNotifyError(e.userMessage);
+                                }
+                              } finally {
+                                s.reset();
                               }
-                            } finally {
-                              s.reset();
-                            }
-                          },
+                            },
+                          ),
                         )
                       : SizedBox.shrink();
                 },

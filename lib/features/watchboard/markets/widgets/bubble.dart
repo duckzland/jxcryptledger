@@ -62,14 +62,15 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
     final symbolStyle = TextStyle(color: AppTheme.text, fontSize: fontSizeSymbol, fontWeight: FontWeight.w600, height: 1);
     final percentStyle = TextStyle(color: AppTheme.text, fontSize: fontSizePercent, fontWeight: FontWeight.w400);
 
-    final textSize = measureText("#W${widget.tx.symbol}W#", symbolStyle);
-
     diameter += _calcExtraRadius(widget.value);
 
-    if (diameter < textSize.width) {
-      diameter = textSize.width;
-      left = widget.x - (diameter / 2);
-      top = widget.y - (diameter / 2);
+    if (widget.tx.symbol.length > 4) {
+      final textSize = measureText("#W${widget.tx.symbol}W#", symbolStyle);
+      if (diameter < textSize.width) {
+        diameter = textSize.width;
+        left = widget.x - (diameter / 2);
+        top = widget.y - (diameter / 2);
+      }
     }
 
     diameter = double.parse(diameter.toStringAsFixed(2));

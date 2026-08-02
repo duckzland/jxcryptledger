@@ -92,15 +92,14 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
 
             return Stack(
               children: bubbles.map((item) {
-                final tx = item['tx'] as MarketsModel;
                 return WatchboardsMarketsWidgetsBubble(
                   key: ObjectKey(item),
-                  tx: tx,
+                  tx: item['tx'] as MarketsModel,
                   x: item['x'] as double,
                   y: item['y'] as double,
                   radius: item['radius'] as double,
-                  value: marketFilterableGetPercentageValue(tx),
-                  text: marketFilterableGetPercentageText(tx),
+                  value: marketFilterableGetPercentageValue(item['tx'] as MarketsModel),
+                  text: marketFilterableGetPercentageText(item['tx'] as MarketsModel),
                 );
               }).toList(),
             );
@@ -237,6 +236,13 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
         }
       }
     }
+
+    // Normalizing decimals to prevent flutter key become invalid too soon.
+    for (final item in slots) {
+      item['radius'] = double.parse(item['radius'].toStringAsFixed(2));
+      item['x'] = double.parse(item['x'].toStringAsFixed(2));
+      item['y'] = double.parse(item['y'].toStringAsFixed(2));
+    }
   }
 
   void _assignBubbles() {
@@ -257,6 +263,10 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
   }
 
   void onMarketChange() {
+    if (_controller.isBothEqualGroup(txs, _controller.items)) {
+      return;
+    }
+
     setState(() {
       _processTxs();
     });

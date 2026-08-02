@@ -20,6 +20,7 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
 
   Widget marketFilterableRankFilters() {
     return DropdownMenu<int>(
+      key: Key("market-rank-filter"),
       initialSelection: marketFilterableRank,
       alignmentOffset: const Offset(0, 3),
       requestFocusOnTap: false,
@@ -43,6 +44,7 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
 
   Widget marketFilterablePercentFilters() {
     return DropdownMenu<int>(
+      key: Key("market-percent-filter"),
       initialSelection: marketFilterablePercent,
       alignmentOffset: const Offset(0, 3),
       requestFocusOnTap: false,
