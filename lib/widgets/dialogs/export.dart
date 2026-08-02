@@ -173,7 +173,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
       radius: widget.plainMode ? 0.0 : widget.radius,
       padding: widget.padding,
       minimumSize: widget.minimumSize,
-      initialState: widget.plainMode ? WidgetsButtonActionState.normal : widget.initialState,
+      initialState: widget.initialState,
       evaluator: evaluator,
       filledMode: widget.filledMode,
       ghostMode: widget.ghostMode,

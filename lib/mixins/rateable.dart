@@ -76,7 +76,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
       }
 
       final hasNewRate = rate != rateableValue;
-      rateableAmount = Utils.formatSmartDouble(rate, smartDecimal: false).replaceAll(",", "");
+      rateableAmount = Utils.formatSmartDouble(rate, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
       rateableValue = rate;
 
       rateableGetCallback.call(hasNewRate);
@@ -114,7 +114,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     if (reverse && parsed != 0.0 && parsed != 1.0) {
       parsed = Math.divide(1, parsed);
     }
-    return Utils.formatSmartDouble(parsed, smartDecimal: false).replaceAll(",", "");
+    return Utils.formatSmartDouble(parsed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
   }
 
   double rateableParseToDouble(String text, {bool reverse = false}) {

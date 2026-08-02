@@ -72,7 +72,9 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
     if (widget.initialValue != null) {
       final val = widget.initialValue!;
-      _controller.text = val == "" ? val : Utils.formatSmartDouble(double.tryParse(Utils.sanitizeNumber(val)) ?? 0.0, smartDecimal: false);
+      _controller.text = val == ""
+          ? val
+          : Utils.formatSmartDouble(double.tryParse(Utils.sanitizeNumber(val)) ?? 0.0, smartDecimal: false, maxDecimals: 18);
     }
 
     _helperText = widget.helperText;
@@ -91,7 +93,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
   @override
   void suffixOnUseMax() {
-    final String maxValue = Utils.formatSmartDouble(widget.useMax!, smartDecimal: false).replaceAll(",", "");
+    final String maxValue = Utils.formatSmartDouble(widget.useMax ?? 0.0, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
 
     _controller.text = maxValue;
     widget.onChanged?.call(maxValue);
@@ -117,7 +119,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
       final sanitized = Utils.sanitizeNumber(_controller.text);
       final parsed = double.parse(sanitized);
       final reversed = Math.divide(1, parsed);
-      _controller.text = Utils.formatSmartDouble(reversed, smartDecimal: false).replaceAll(",", "");
+      _controller.text = Utils.formatSmartDouble(reversed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
       widget.onChanged?.call(reversed.toString());
       widget.onReversing?.call();
       setState(() {});

@@ -3,6 +3,7 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/models/exportable.dart';
 import '../../core/abstracts/models/with_id.dart';
 import '../../core/abstracts/models/rateable.dart';
+import '../../core/math.dart';
 import '../../core/utils.dart';
 
 enum TransactionStatus { inactive, active, partial, closed, finalized, unknown }
@@ -349,13 +350,13 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
   String get rrAmountText => Utils.formatSmartDouble(rrAmount);
   String get balanceText => Utils.formatSmartDouble(balance);
   String get rateText => Utils.formatSmartDouble(rateDouble);
-  String get rateReversedText => Utils.formatSmartDouble(1 / rateDouble);
+  String get rateReversedText => Utils.formatSmartDouble(Math.divide(1, rateDouble));
 
-  String get srAmountTextRaw => Utils.formatSmartDouble(srAmount, smartDecimal: false);
-  String get rrAmountTextRaw => Utils.formatSmartDouble(rrAmount, smartDecimal: false);
-  String get balanceTextRaw => Utils.formatSmartDouble(balance, smartDecimal: false);
-  String get rateTextRaw => Utils.formatSmartDouble(rateDouble, smartDecimal: false);
-  String get rateReversedTextRaw => Utils.formatSmartDouble(1 / rateDouble, smartDecimal: false);
+  String get srAmountTextRaw => Utils.formatSmartDouble(srAmount, smartDecimal: false, maxDecimals: 18);
+  String get rrAmountTextRaw => Utils.formatSmartDouble(rrAmount, smartDecimal: false, maxDecimals: 18);
+  String get balanceTextRaw => Utils.formatSmartDouble(balance, smartDecimal: false, maxDecimals: 18);
+  String get rateTextRaw => Utils.formatSmartDouble(rateDouble, smartDecimal: false, maxDecimals: 18);
+  String get rateReversedTextRaw => Utils.formatSmartDouble(Math.divide(1, rateDouble), smartDecimal: false, maxDecimals: 18);
 
   Decimal get rate {
     if (srAmount <= 0 || rrAmount <= 0) return Decimal.zero;
