@@ -17,7 +17,7 @@ void main() {
     });
 
     test('Multiplication', () {
-      expect(Math.multiply(0.00008, 1000000).toString(), "80.0");
+      expect(Math.multiply(0.00008, 1000000.0).toString(), "80.0");
     });
 
     test('Division', () {
@@ -40,17 +40,17 @@ void main() {
 
     test('Multiplication with extreme scale', () {
       // Multiply tiny by huge
-      expect(Math.multiply(0.0000000000000001, 10000000000000000).toString(), "1.0");
+      expect(Math.multiply(0.0000000000000001, 10000000000000000.0).toString(), "1.0");
     });
 
     test('Division with repeating decimal', () {
       // The result isnt 100% accurate as it will be rounded to 18 decimals
-      expect(Math.divide(1, 3).toString(), "0.3333333333333333");
+      expect(Math.divide(1.0, 3.0).toString(), "0.3333333333333333");
     });
 
     test('Division with irrational-like ratio exact', () {
       // The result isnt 100% accurate as it will be rounded to 18 decimals
-      expect(Math.divide(22, 7).toString(), "3.142857142857143");
+      expect(Math.divide(22.0, 7.0).toString(), "3.142857142857143");
     });
 
     test('Subtraction with many decimals exact', () {
@@ -102,7 +102,7 @@ void main() {
 
     test('Division: split 1 ETH among 7 people exact', () {
       // The result isnt 100% accurate as it will be rounded to 18 decimals
-      expect(Math.divide(1, 7).toString(), "0.14285714285714285");
+      expect(Math.divide(1.0, 7.0).toString(), "0.14285714285714285");
     });
   });
 }

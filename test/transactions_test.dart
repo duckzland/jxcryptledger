@@ -1067,4 +1067,257 @@ void main() async {
       expect(updatedLeaf22.closable, true);
     });
   });
+
+  group('Edge cases', () {
+    late TransactionsRepository repo;
+    late Box<TransactionsModel> box;
+
+    setUp(() async {
+      box = await Hive.openBox<TransactionsModel>('transactions_test');
+      await box.clear();
+      repo = TransactionsRepository();
+      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.boxNameDefault = 'transactions_test';
+    });
+    test('root -> leaf with ugly fractional balance rounding', () async {
+      final root = TransactionsModel(
+        tid: 'rootFrac',
+        rid: '0',
+        pid: '0',
+        srAmount: Decimal.parse('2.87777'),
+        srId: 1,
+        rrAmount: Decimal.parse('2.87777'),
+        rrId: 2,
+        balance: Decimal.parse('2.87777'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(root);
+
+      // Simulate a trade that consumes almost all of root’s balance
+      final leaf = TransactionsModel(
+        tid: 'leafFrac',
+        rid: 'rootFrac',
+        pid: 'rootFrac',
+        srAmount: Decimal.parse('2.8777699999999999999999999999'),
+        srId: 2,
+        rrAmount: Decimal.parse('2.8777699999999999999999999999'),
+        rrId: 3,
+        balance: Decimal.parse('2.8777699999999999999999999999'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(leaf);
+
+      final updatedRoot = box.get('rootFrac')!;
+      final updatedLeaf = box.get('leafFrac')!;
+
+      // Expect root balance to be a microscopic remainder
+      // This is the "bad rounding crap" case
+      expect(updatedRoot.balance <= Decimal.parse('0.0000000000000000000000014'), true);
+
+      // Root should be marked partial, not finalized, because it still has nonzero balance
+      expect(updatedRoot.statusEnum, TransactionStatus.partial);
+
+      // Leaf is active since it has no children
+      expect(updatedLeaf.statusEnum, TransactionStatus.active);
+    });
+
+    test('root -> leaf leaves exact 18-decimal remainder', () async {
+      final root = TransactionsModel(
+        tid: 'rootPrecise',
+        rid: '0',
+        pid: '0',
+        srAmount: Decimal.parse('1.000000000000000001'),
+        srId: 1,
+        rrAmount: Decimal.parse('1.000000000000000001'),
+        rrId: 2,
+        balance: Decimal.parse('1.000000000000000001'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(root);
+
+      final leaf = TransactionsModel(
+        tid: 'leafPrecise',
+        rid: 'rootPrecise',
+        pid: 'rootPrecise',
+        srAmount: Decimal.parse('1.000000000000000000'),
+        srId: 2,
+        rrAmount: Decimal.parse('1.000000000000000000'),
+        rrId: 3,
+        balance: Decimal.parse('1.000000000000000000'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(leaf);
+
+      final updatedRoot = box.get('rootPrecise')!;
+      final updatedLeaf = box.get('leafPrecise')!;
+
+      // Root should have exactly 0.000000000000000001 left
+      expect(updatedRoot.balance, Decimal.parse('0.000000000000000001'));
+
+      // Root is partial because it still has nonzero balance
+      expect(updatedRoot.statusEnum, TransactionStatus.partial);
+
+      // Leaf is active since it has no children
+      expect(updatedLeaf.statusEnum, TransactionStatus.active);
+    });
+
+    test('txA -> txB -> txC close propagation with 18-decimal precision', () async {
+      final txA = TransactionsModel(
+        tid: 'txA',
+        rid: '0',
+        pid: '0',
+        srAmount: Decimal.parse('10.000000000000000000'),
+        srId: 1,
+        rrAmount: Decimal.parse('10.000000000000000000'),
+        rrId: 3,
+        balance: Decimal.parse('10.000000000000000000'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+      await repo.add(txA);
+
+      final txB = TransactionsModel(
+        tid: 'txB',
+        rid: 'txA',
+        pid: 'txA',
+        srAmount: Decimal.parse('6.000000000000000000'),
+        srId: 3,
+        rrAmount: Decimal.parse('6.000000000000000000'),
+        rrId: 7,
+        balance: Decimal.parse('6.000000000000000000'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+      await repo.add(txB);
+
+      final txC = TransactionsModel(
+        tid: 'txC',
+        rid: 'txB',
+        pid: 'txB',
+        srAmount: Decimal.parse('6.000000000000000000'),
+        srId: 7,
+        rrAmount: Decimal.parse('6.000000000000000000'),
+        rrId: 3, // matches txA rrId, so closable
+        balance: Decimal.parse('6.000000000000000000'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+      await repo.add(txC);
+
+      // Check balances before close
+      final updatedA = box.get('txA')!;
+      final updatedB = box.get('txB')!;
+      final updatedC = box.get('txC')!;
+
+      expect(updatedA.balance, Decimal.parse('4.000000000000000000')); // 10 - 6
+      expect(updatedA.statusEnum, TransactionStatus.partial);
+
+      expect(updatedB.balance, Decimal.zero); // fully consumed by txC
+      expect(updatedB.statusEnum, TransactionStatus.inactive);
+
+      expect(updatedC.balance, Decimal.parse('6.000000000000000000'));
+      expect(updatedC.statusEnum, TransactionStatus.active);
+      expect(updatedC.closable, true);
+
+      // Now close txC
+      await repo.close(updatedC);
+
+      final closedA = box.get('txA')!;
+      final closedB = box.get('txB')!;
+      final closedC = box.get('txC')!;
+
+      // txC’s balance should propagate back up to txA
+      expect(closedA.balance, Decimal.parse('10.000000000000000000'));
+      expect(closedA.statusEnum, TransactionStatus.active);
+
+      // txB remains partial (it was just a conduit)
+      expect(closedB.statusEnum, TransactionStatus.inactive);
+
+      // txC is closed
+      expect(closedC.statusEnum, TransactionStatus.closed);
+    });
+
+    test('double vs decimal subtraction and transaction propagation', () async {
+      // --- Double fails ---
+      double d1 = 0.3489440039038948;
+      double d2 = 0.3489440039038947;
+      double diffDouble = d1 - d2;
+
+      // Double cannot represent these exactly, so the subtraction is ugly
+      expect(diffDouble.toString(), isNot('0.0000000000000001'));
+
+      // --- Decimal succeeds ---
+      final dec1 = Decimal.parse('0.3489440039038948');
+      final dec2 = Decimal.parse('0.3489440039038947');
+      final diffDecimal = dec1 - dec2;
+
+      // Decimal preserves exact digits
+      expect(diffDecimal, Decimal.parse('0.0000000000000001'));
+
+      // --- Transactions with Decimal should not fail like double ---
+      final root = TransactionsModel(
+        tid: 'rootFrac',
+        rid: '0',
+        pid: '0',
+        srAmount: Decimal.parse('0.3489440039038948'),
+        srId: 1,
+        rrAmount: Decimal.parse('0.3489440039038948'),
+        rrId: 2,
+        balance: Decimal.parse('0.3489440039038948'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+      await repo.add(root);
+
+      final leaf = TransactionsModel(
+        tid: 'leafFrac',
+        rid: 'rootFrac',
+        pid: 'rootFrac',
+        srAmount: Decimal.parse('0.3489440039038947'),
+        srId: 2,
+        rrAmount: Decimal.parse('0.3489440039038947'),
+        rrId: 3,
+        balance: Decimal.parse('0.3489440039038947'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+      await repo.add(leaf);
+
+      final updatedRoot = box.get('rootFrac')!;
+      final updatedLeaf = box.get('leafFrac')!;
+
+      // Root should have exactly 0.0000000000000001 left
+      expect(updatedRoot.balance, Decimal.parse('0.0000000000000001'));
+      expect(updatedRoot.statusEnum, TransactionStatus.partial);
+
+      // Leaf is active
+      expect(updatedLeaf.statusEnum, TransactionStatus.active);
+    });
+  });
 }
