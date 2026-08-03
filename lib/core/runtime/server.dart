@@ -155,78 +155,68 @@ class CoreRuntimeServer extends CoreBaseRuntime {
   Future<void> bootServices() async {
     try {
       await _settingsService.init();
-      logln("SettingsService initialized.");
     } catch (e) {
-      logln("SettingsService FAILED: $e");
+      logln("SettingsService failed to initialize: $e");
     }
 
     try {
       await _notificationService.init();
-      logln("NotificationService initialized.");
     } catch (e) {
-      logln("NotificationService FAILED: $e");
+      logln("NotificationService failed to initialize: $e");
     }
 
     try {
       await _ratesService.init();
-      logln("RatesService initialized.");
     } catch (e) {
-      logln("RatesService FAILED: $e");
+      logln("RatesService failed to initialize: $e");
     }
 
     try {
       await _watchersService.init();
-      logln("WatchersService initialized.");
     } catch (e) {
-      logln("WatchersService FAILED: $e");
+      logln("WatchersService failed to initialize: $e");
     }
 
     try {
       await _panelsService.init();
-      logln("PanelsService initialized.");
     } catch (e) {
-      logln("PanelsService FAILED: $e");
+      logln("PanelsService failed to initialize: $e");
     }
 
     try {
       await _tickersService.init();
-      logln("TickersService initialized.");
     } catch (e) {
-      logln("TickersService FAILED: $e");
+      logln("TickersService failed to initialize: $e");
     }
 
     try {
       await _marketsService.init();
-      logln("MarketsService initialized.");
     } catch (e) {
-      logln("MarketsService FAILED: $e");
+      logln("MarketsService failed to initialize: $e");
     }
 
     try {
       await _cryptosService.init();
-      logln("CryptosService initialized.");
     } catch (e) {
-      logln("CryptosService FAILED: $e");
+      logln("CryptosService failed to initialize: $e");
     }
 
     try {
       await _archivesService.init();
-      logln("ArchivesService initialized.");
     } catch (e) {
-      logln("ArchivesService FAILED: $e");
+      logln("ArchivesService failed to initialize: $e");
     }
 
     try {
       await _transactionsService.init();
-      logln("TransactionsService initialized.");
     } catch (e) {
-      logln("TransactionsService FAILED: $e");
+      logln("TransactionsService failed to initialize: $e");
     }
 
     try {
       appWorker.start();
     } catch (e) {
-      logln("WorkerService FAILED: $e");
+      logln("WorkerService failed to initialize: $e");
     }
 
     logln("Server services started.");

@@ -51,7 +51,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       settingsBox = await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
-      logln("Open Box: settings_box");
     } catch (e) {
       logln("Failed to open settings_box: $e");
       return SystemUnlockStatus.error;
@@ -69,7 +68,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
-      logln("Open Box: transactions_box");
     } catch (e) {
       logln("Failed to open transactions_box: $e");
       return SystemUnlockStatus.error;
@@ -77,7 +75,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
-      logln("Open Box: panels_box");
     } catch (e) {
       logln("Failed to open panels_box: $e");
       return SystemUnlockStatus.error;
@@ -85,7 +82,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openBox<ArchivesModel>('archives_box', encryptionCipher: cipher, crashRecovery: false);
-      logln("Open Box: archives_box");
     } catch (e) {
       logln("Failed to open archives_box: $e");
       return SystemUnlockStatus.error;
@@ -93,7 +89,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openOrRebuildBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
-      logln("Open Box: cryptos_box");
     } catch (e) {
       logln("Failed to open cryptos_box: $e");
       return SystemUnlockStatus.error;
@@ -101,7 +96,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openOrRebuildBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
-      logln("Open Box: rates_box");
     } catch (e) {
       logln("Failed to open rates_box: $e");
       return SystemUnlockStatus.error;
@@ -109,7 +103,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openOrRebuildBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
-      logln("Open Box: watchers_box");
     } catch (e) {
       logln("Failed to open watchers_box: $e");
       return SystemUnlockStatus.error;
@@ -117,7 +110,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openOrRebuildBox<TickersModel>('tickers_box', encryptionCipher: null, crashRecovery: false);
-      logln("Open Box: tickers_box");
     } catch (e) {
       logln("Failed to open tickers_box: $e");
       return SystemUnlockStatus.error;
@@ -125,7 +117,6 @@ class CoreRuntimeBoxes extends IpcBoxes {
 
     try {
       await openOrRebuildBox<MarketsModel>('markets_box', encryptionCipher: null, crashRecovery: false);
-      logln("Open Box: markets_box");
     } catch (e) {
       logln("Failed to open markets_box: $e");
       return SystemUnlockStatus.error;

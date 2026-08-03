@@ -30,6 +30,7 @@ import 'package:jxledger/features/watchers/model.dart';
 
 final env = DotEnv()..load();
 final AesGcm aes = AesGcm.with256bits();
+final String latestDB = "v1.2.0";
 
 final List<int> staticCmcIds = [1, 2, 52, 1831, 2010, 6636, 5426, 5805, 3890, 1975, 512, 1958, 1321, 328, 3794];
 final Map<int, String> staticCmcSymbol = {
@@ -255,9 +256,11 @@ Future<void> main(List<String> args) async {
     SettingsModel(keyId: SettingKey.vaultInitialized.id, type: SettingKey.vaultInitialized.type, value: encryptedMarker),
   );
 
+  logln("Marking dbversion to ${env['DB_VERSION'] ?? latestDB}");
+
   await settingsBox.put(
     SettingKey.migrateVersion.id,
-    SettingsModel(keyId: SettingKey.migrateVersion.id, type: SettingKey.migrateVersion.type, value: env['DB_VERSION']),
+    SettingsModel(keyId: SettingKey.migrateVersion.id, type: SettingKey.migrateVersion.type, value: env['DB_VERSION'] ?? latestDB),
   );
 
   final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');

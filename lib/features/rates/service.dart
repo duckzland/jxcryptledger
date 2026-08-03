@@ -268,12 +268,17 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
           return;
         }
 
-        await Future.delayed(Duration(milliseconds: isFreePlan ? 5000 : 100));
+        await Future.delayed(Duration(milliseconds: isFreePlan ? (60000 / 50 / jobQueue.length).ceil() : 100));
       }
     }
 
     if (jobQueue.isNotEmpty) {
-      final maxWorkers = isFreePlan ? 1 : 5;
+      int maxWorkers = 5;
+
+      if (isFreePlan) {
+        maxWorkers = jobQueue.length < 50 ? jobQueue.length : 1;
+      }
+
       final workersToStart = jobQueue.length == 1 ? 1 : maxWorkers.clamp(1, jobQueue.length);
       await Future.wait(List.generate(workersToStart, (_) => worker()), eagerError: false);
     }
@@ -340,7 +345,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     } catch (e) {
       throw NetworkingException(
         AppErrorCode.netParseFailure,
-        "Rates fetch failed: failed to parse with error",
+        "Rates fetch failed: failed to parse with error: $e",
         "The server returned invalid rates data.",
         details: e,
       );

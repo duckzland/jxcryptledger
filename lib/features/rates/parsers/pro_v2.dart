@@ -38,12 +38,13 @@ RatesParserResult parseRatesJsonV2(String body) {
 
   for (final entry in quotes.entries) {
     final q = entry.value as Map<String, dynamic>;
+    final parsedId = int.tryParse(entry.key);
 
-    final targetSymbol = entry.key;
-    final targetId = cryptoService.getIdBySymbol(entry.key);
+    final targetId = parsedId ?? cryptoService.getIdBySymbol(entry.key);
+    final targetSymbol = parsedId != null ? cryptoService.getSymbol(parsedId) : entry.key;
     final targetAmount = (q['price'] as Object?).toDecimal();
 
-    if (targetId == null || targetAmount == null) {
+    if (targetId == null || targetAmount == null || targetSymbol == null) {
       continue;
     }
 
