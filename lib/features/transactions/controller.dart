@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../app/exceptions.dart';
@@ -273,10 +274,10 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return true;
   }
 
-  double getCapitalBalance(TransactionsModel tx) {
+  Decimal getCapitalBalance(TransactionsModel tx) {
     final children = repo.getLeaf(tx);
-    final double spent = children.fold<double>(0.0, (sum, leaf) => Math.add(sum, leaf.srAmount));
-    final double balance = Math.subtract(tx.rrAmount, spent);
+    final Decimal spent = children.fold<Decimal>(Decimal.zero, (sum, leaf) => Math.add(sum, leaf.srAmount));
+    final Decimal balance = Math.subtract(tx.rrAmount, spent);
 
     return balance;
   }
@@ -285,8 +286,8 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return repo.collectAllRoots();
   }
 
-  double collectAllTerminalResultAmount(TransactionsModel tx) {
-    double balance = 0;
+  Decimal collectAllTerminalResultAmount(TransactionsModel tx) {
+    Decimal balance = Decimal.zero;
     final leaves = repo.collectAllTerminalLeaves();
 
     for (final ltx in leaves) {
@@ -297,9 +298,9 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return balance;
   }
 
-  double collectBranchTotalResultAmount(TransactionsModel tx) {
+  Decimal collectBranchTotalResultAmount(TransactionsModel tx) {
     final txs = repo.collectAllLeaves(tx);
-    double balance = 0;
+    Decimal balance = Decimal.zero;
     for (final rtx in txs) {
       if (rtx.rrId == tx.srId && (rtx.isActive || rtx.isPartial)) {
         balance = Math.add(balance, rtx.balance);
@@ -309,30 +310,30 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return balance;
   }
 
-  Map<int, double> collectBranchActiveAmount(TransactionsModel tx) {
+  Map<int, Decimal> collectBranchActiveAmount(TransactionsModel tx) {
     final txs = repo.collectAllLeaves(tx);
 
-    final Map<int, double> branchAmounts = {};
+    final Map<int, Decimal> branchAmounts = {};
 
     for (final rtx in txs) {
       if ((rtx.isActive || rtx.isPartial) && rtx.tid != tx.tid) {
         final key = rtx.rrId;
-        branchAmounts[key] = Math.add(branchAmounts[key] ?? 0, rtx.balance);
+        branchAmounts[key] = Math.add(branchAmounts[key] ?? Decimal.zero, rtx.balance);
       }
     }
 
     return branchAmounts;
   }
 
-  Map<int, double> collectBranchFinalizedAmount(TransactionsModel tx) {
+  Map<int, Decimal> collectBranchFinalizedAmount(TransactionsModel tx) {
     final txs = repo.collectAllLeaves(tx);
 
-    final Map<int, double> branchAmounts = {};
+    final Map<int, Decimal> branchAmounts = {};
 
     for (final rtx in txs) {
       if ((rtx.isFinalized) && rtx.tid != tx.tid) {
         final key = rtx.rrId;
-        branchAmounts[key] = Math.add(branchAmounts[key] ?? 0, rtx.balance);
+        branchAmounts[key] = Math.add(branchAmounts[key] ?? Decimal.zero, rtx.balance);
       }
     }
 

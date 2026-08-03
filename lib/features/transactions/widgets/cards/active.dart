@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:data_table_2/data_table_2.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
@@ -86,32 +87,32 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   late String _sourceSymbol;
   late String _resultSymbol;
 
-  double _currentRate = 0;
-  double _averageRate = 0;
-  double _totalSourceBalance = 0;
-  double _totalBalance = 0;
-  double _totalPL = 0;
-  double _totalProfit = 0;
-  double _totalLoss = 0;
-  double _plPercentage = 0;
-  double? _customRate;
+  Decimal _currentRate = Decimal.zero;
+  Decimal _averageRate = Decimal.zero;
+  Decimal _totalSourceBalance = Decimal.zero;
+  Decimal _totalBalance = Decimal.zero;
+  Decimal _totalPL = Decimal.zero;
+  Decimal _totalProfit = Decimal.zero;
+  Decimal _totalLoss = Decimal.zero;
+  Decimal _plPercentage = Decimal.zero;
+  Decimal? _customRate;
 
   bool _isReversed = false;
   bool _isOpen = true;
 
   Timer? _debounce;
 
-  double? get effectiveMarketRate {
+  Decimal? get effectiveMarketRate {
     final m = rateableValue;
     if (m == null) return null;
 
-    return _isReversed ? (m == 0 ? null : Math.divide(1, m)) : m;
+    return _isReversed ? (m == Decimal.zero ? null : Math.divide(Decimal.one, m)) : m;
   }
 
-  double? get nonReversedEffectiveRate {
+  Decimal? get nonReversedEffectiveRate {
     final c = _customRate;
     if (c != null) {
-      return _isReversed ? Math.divide(1, c) : c;
+      return _isReversed ? Math.divide(Decimal.one, c) : c;
     }
 
     final m = rateableValue;
@@ -315,7 +316,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                     title: "Custom Rates",
                     suffixText: _isReversed ? _resultSymbol : _sourceSymbol,
                     helperText: _averageRate.toStringAsFixed(8),
-                    initialValue: _customRate != null ? Utils.formatSmartDouble(_customRate!) : "",
+                    initialValue: _customRate != null ? Utils.formatSmartDecimal(_customRate!) : "",
                     allowCopy: false,
                     allowRate: true,
                     onRetrievingRate: _rateAmountRetrieveAction,
@@ -340,7 +341,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
             srid: widget.srid,
             rrid: widget.rrid,
             txs: txs,
-            rate: nonReversedEffectiveRate ?? 0,
+            rate: nonReversedEffectiveRate ?? Decimal.zero,
             balance: _calc.totalActiveSourceBalance(txs),
             linkableKey: "active-screen",
             selectedRows: selectableSelectedRows,
@@ -495,7 +496,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           horizontalMargin: 12,
           headingRowHeight: tableHeadingHeight,
           dataRowHeight: tableRowHeight,
-          sortColumnIndex: (_currentRate == 0.0 && sortableColumnIndex > 4) ? null : sortableColumnIndex,
+          sortColumnIndex: (_currentRate == Decimal.zero && sortableColumnIndex > 4) ? null : sortableColumnIndex,
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: tableColumns,
@@ -506,34 +507,34 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   }
 
   List<Map<String, dynamic>> _buildRows() {
-    final currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    final currentRate = _customRate ?? effectiveMarketRate ?? Decimal.zero;
     final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      double rowRate = currentRate;
-      double currentValue = 0;
-      double profitLoss = 0;
+      Decimal rowRate = currentRate;
+      Decimal currentValue = Decimal.zero;
+      Decimal profitLoss = Decimal.zero;
+      Decimal currentSrAmount = tx.srAmount;
       double profitLevel = 0;
       double profitLossPercentage = 0;
-      double currentSrAmount = tx.srAmount;
 
       if (tx.isFinalized) {
-        profitLoss = 0;
+        profitLoss = Decimal.zero;
         profitLevel = 0;
-        rowRate = tx.rateDouble;
+        rowRate = tx.rate;
         currentValue = tx.balance;
-      } else if (currentRate != 0 && tx.balance != 0 && !tx.isClosed) {
+      } else if (currentRate != Decimal.zero && tx.balance != Decimal.zero && !tx.isClosed) {
         if (tx.isPartial) {
           currentSrAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
         }
 
         currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
         profitLoss = Math.subtract(currentValue, currentSrAmount);
-        profitLossPercentage = Math.multiply(Math.divide(profitLoss, currentSrAmount), 100);
+        profitLossPercentage = Math.multiply(Math.divide(profitLoss, currentSrAmount).toDouble(), 100);
 
-        if (profitLoss > 0) {
+        if (profitLoss > Decimal.zero) {
           profitLevel = 1;
-        } else if (profitLoss < 0) {
+        } else if (profitLoss < Decimal.zero) {
           profitLevel = -1;
         }
       }
@@ -543,9 +544,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         'to': tx.rrAmountText,
         'balance': tx.balanceText,
         'exchangedRate': _isReversed ? tx.rateReversedText : tx.rateText,
-        'currentRate': currentRate == 0 ? null : Utils.formatSmartDouble(rowRate),
-        'currentValue': currentRate == 0 ? null : Utils.formatSmartDouble(currentValue),
-        'profitLoss': currentRate == 0 ? null : Utils.formatSmartDouble(profitLoss),
+        'currentRate': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(rowRate),
+        'currentValue': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(currentValue),
+        'profitLoss': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(profitLoss),
         'profitLossPercentage': currentRate == 0 ? null : Utils.formatSmartDouble(profitLossPercentage, maxDecimals: 2),
         'profitLevel': profitLevel,
         'status': tx.statusText,
@@ -559,7 +560,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         '_targetValue': tx.rrAmount,
         '_sourceValue': tx.srAmount,
         '_balanceValue': tx.balance,
-        '_exchangedRateValue': tx.rateDouble,
+        '_exchangedRateValue': tx.rate,
         '_currentValue': currentValue,
         '_profitLossValue': profitLoss,
         '_profitLossPercentage': profitLossPercentage,
@@ -585,43 +586,48 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                 TransactionsWidgetsPanelItem(
                   title: 'Total Balance',
                   subtitle: isCapital
-                      ? '${Utils.formatSmartDouble(_totalBalance)} $_sourceSymbol'
-                      : '${Utils.formatSmartDouble(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDouble(_totalBalance)} $_resultSymbol',
+                      ? '${Utils.formatSmartDecimal(_totalBalance)} $_sourceSymbol'
+                      : '${Utils.formatSmartDecimal(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDecimal(_totalBalance)} $_resultSymbol',
                   value: 0,
                   comparator: 0,
                 ),
 
                 if (!isCapital)
-                  TransactionsWidgetsPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDouble(_averageRate), value: 0, comparator: 0),
+                  TransactionsWidgetsPanelItem(
+                    title: 'Avg Rate',
+                    subtitle: Utils.formatSmartDecimal(_averageRate),
+                    value: 0,
+                    comparator: 0,
+                  ),
 
-                if (_plPercentage != 0 && _plPercentage.isFinite && !isCapital) ...[
-                  if (_totalProfit != 0.0 && _totalLoss != 0.0)
+                if (_plPercentage != Decimal.zero && !isCapital) ...[
+                  if (_totalProfit != Decimal.zero && _totalLoss != Decimal.zero)
                     TransactionsWidgetsPanelItem(
                       title: 'Profit',
-                      subtitle: Utils.formatSmartDouble(_totalProfit),
-                      value: _totalProfit,
+                      subtitle: Utils.formatSmartDecimal(_totalProfit),
+                      value: _totalProfit.toDouble(),
                       comparator: 0,
                     ),
 
-                  if (_totalProfit != 0.0 && _totalLoss != 0.0)
+                  if (_totalProfit != Decimal.zero && _totalLoss != Decimal.zero)
                     TransactionsWidgetsPanelItem(
                       title: 'Loss',
-                      subtitle: Utils.formatSmartDouble(_totalLoss),
-                      value: _totalLoss,
+                      subtitle: Utils.formatSmartDecimal(_totalLoss),
+                      value: _totalLoss.toDouble(),
                       comparator: 0,
                     ),
 
                   TransactionsWidgetsPanelItem(
                     title: 'Total P/L',
-                    subtitle: "${Utils.formatSmartDouble(_totalPL)} $_sourceSymbol",
-                    value: _plPercentage,
+                    subtitle: "${Utils.formatSmartDecimal(_totalPL)} $_sourceSymbol",
+                    value: _plPercentage.toDouble(),
                     comparator: 0,
                   ),
 
                   TransactionsWidgetsPanelItem(
                     title: 'P/L %',
-                    subtitle: '${Utils.formatSmartDouble(_plPercentage, maxDecimals: 2)}%',
-                    value: _plPercentage,
+                    subtitle: '${Utils.formatSmartDecimal(_plPercentage, maxDecimals: 2)}%',
+                    value: _plPercentage.toDouble(),
                     comparator: 0,
                   ),
                 ],
@@ -644,7 +650,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
 
     _averageRate = _calc.averageExchangedRate(stxs, reverse: _isReversed);
-    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    _currentRate = _customRate ?? effectiveMarketRate ?? Decimal.zero;
     _totalSourceBalance = _calc.totalSourceBalance(stxs, shrinkPartial: true);
     _totalBalance = _calc.totalBalance(stxs);
     _totalPL = _calc.totalProfitLoss(atxs, _currentRate, reverse: _isReversed, shrinkPartial: true);
@@ -656,11 +662,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   void _reverseRateAction(WidgetsButtonsActionState s) {
     _isReversed = !_isReversed;
     if (_customRate != null) {
-      _setCustomRate(Math.divide(1, _customRate!));
+      _setCustomRate(Math.divide(Decimal.one, _customRate!));
     }
 
     // BugFix: Dont link to rateable to prevent double inversing!
-    _currentRate = _customRate ?? effectiveMarketRate ?? 0.0;
+    _currentRate = _customRate ?? effectiveMarketRate ?? Decimal.zero;
     _calculateProfitLoss();
     rows = _buildRows();
     sortableApplySorting();
@@ -682,7 +688,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    final newValue = double.tryParse(value);
+    final newValue = Decimal.tryParse(value);
     if (_customRate != newValue) {
       _debounce = Timer(const Duration(milliseconds: 100), () {
         _setCustomRate(newValue);
@@ -707,7 +713,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     widget.onToggleChanged.call();
   }
 
-  void _setCustomRate(double? rate) {
+  void _setCustomRate(Decimal? rate) {
     _customRate = rate;
     if (_customRate == null) {
       states.remove("[np]-$cardKey-custom-rate");

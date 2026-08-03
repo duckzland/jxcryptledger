@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
+
 import '../../core/abstracts/controller.dart';
 import '../../ipc/action.dart';
 import '../../ipc/event.dart';
@@ -51,19 +53,19 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
     }
   }
 
-  double getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
+  Decimal getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
     if (sourceId == targetId) {
-      return 1;
+      return Decimal.one;
     }
 
     if (!throwable) {
-      if (!isValidPair(sourceId, targetId)) return -9999;
+      if (!isValidPair(sourceId, targetId)) return Decimal.fromInt(-9999);
     } else {
       validateIds(sourceId, targetId);
     }
 
     final existing = repo.get("$sourceId-$targetId");
-    return existing?.rate.toDouble() ?? -9999;
+    return existing?.rate ?? Decimal.fromInt(-9999);
   }
 
   void addQueue(int sourceId, int targetId, {bool force = true}) {

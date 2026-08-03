@@ -39,7 +39,7 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
       final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? "UNK";
       final targetSymbol = _cryptosController.getSymbol(tx.rrId) ?? "UNK";
 
-      message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDouble(tx.rates)}.";
+      message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDecimal(tx.rates)}.";
     }
 
     await ipcClient.send(op: IpcAction.notification, action: 'action', key: "notification", payload: message);

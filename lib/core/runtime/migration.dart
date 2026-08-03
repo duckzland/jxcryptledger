@@ -1,4 +1,5 @@
 import '../../ipc/database/migration.dart';
+import 'migrator/db.dart';
 
 class CoreRuntimeMigration extends IpcMigration {
   @override
@@ -8,6 +9,7 @@ class CoreRuntimeMigration extends IpcMigration {
 
   @override
   Future<void> migrateAfterUnlock() async {
-    // Nothing to migrate after v1.1.0
+    final m = MigratorDB();
+    await m.execute();
   }
 }

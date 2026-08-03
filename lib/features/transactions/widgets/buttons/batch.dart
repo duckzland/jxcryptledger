@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/runtime/locator.dart';
@@ -33,8 +34,8 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
 
   final double menuWidth;
 
-  final double? rate;
-  final double? balance;
+  final Decimal? rate;
+  final Decimal? balance;
 
   final String? linkableKey;
 
@@ -173,7 +174,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
       );
     }
 
-    if (isLinkable && balance != null && balance! > 0) {
+    if (isLinkable && balance != null && balance! > Decimal.zero) {
       buttons.add(
         WidgetsDialogsShowForm(
           key: const Key("add-watchboard-button"),
@@ -245,7 +246,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
       if (isRefundable) WidgetsButtonActionState.error,
       if (isClosable) WidgetsButtonActionState.warning,
       if (isFinalizable) WidgetsButtonActionState.warning,
-      if (isLinkable && balance != null && balance! > 0)
+      if (isLinkable && balance != null && balance! > Decimal.zero)
         linkedPanel == null
             ? (controller.isOpen ? WidgetsButtonActionState.reversed : WidgetsButtonActionState.muted)
             : WidgetsButtonActionState.action,

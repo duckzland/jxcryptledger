@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
+import '../../core/extensions/decimals.dart';
 import '../../core/abstracts/models/with_id.dart';
-import '../../core/math.dart';
 import '../../core/utils.dart';
 
 class RatesModel implements CoreModelWithId {
@@ -44,10 +44,10 @@ class RatesModel implements CoreModelWithId {
     return RatesModel(
       sourceSymbol: map['sourceSymbol'] as String,
       sourceId: map['sourceId'] is int ? map['sourceId'] as int : 0,
-      sourceAmount: Decimal.parse(map['sourceAmount'] as String),
+      sourceAmount: (map['sourceAmount'] as Object?).toDecimal() ?? Decimal.zero,
       targetSymbol: map['targetSymbol'] as String,
       targetId: map['sourceId'] is int ? map['sourceId'] as int : 0,
-      targetAmount: Decimal.parse(map['targetAmount'] as String),
+      targetAmount: (map['targetAmount'] as Object?).toDecimal() ?? Decimal.zero,
       timestamp: map['timestamp'] != null
           ? Utils.sanitizeTimestamp((map['timestamp'] as num).toInt())
           : DateTime.now().toUtc().microsecondsSinceEpoch,
@@ -74,7 +74,7 @@ class RatesModel implements CoreModelWithId {
     );
   }
 
-  String get rateText => Utils.formatSmartDouble(rateDouble, smartDecimal: false, maxDecimals: 18);
+  String get rateText => Utils.formatSmartDecimal(rate, smartDecimal: false, maxDecimals: 18);
 
   Decimal get rate {
     if (sourceAmount <= Decimal.zero || targetAmount <= Decimal.zero) {
@@ -82,16 +82,5 @@ class RatesModel implements CoreModelWithId {
     }
 
     return (targetAmount / sourceAmount).toDecimal(scaleOnInfinitePrecision: 18);
-  }
-
-  double get rateDouble {
-    final double s = sourceAmount.toDouble();
-    final double t = targetAmount.toDouble();
-
-    if (s <= 0 || t <= 0) return 0.0;
-
-    final double r = Math.divide(s, t);
-
-    return r.isFinite ? r : 0.0;
   }
 }

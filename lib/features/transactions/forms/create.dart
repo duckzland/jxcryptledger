@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
@@ -288,10 +289,10 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
         rid: '0',
         pid: '0',
         srId: _selectedSrId ?? 0,
-        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
+        srAmount: _srAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? Decimal.zero,
         rrId: _selectedRrId ?? 0,
-        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        rrAmount: _rrAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero,
+        balance: _rrAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero,
         status: TransactionStatus.active.index,
         timestamp: Utils.dateToTimestamp(_selectedDate),
         closable: true,

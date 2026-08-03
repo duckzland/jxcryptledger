@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+
 import '../../../core/abstracts/controller.dart';
 import '../../../ipc/action.dart';
 import '../../../ipc/event.dart';
@@ -30,7 +32,7 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   }
 
   @override
-  Future<void> processNewRate(PanelsModel tx, double newRate) async {
+  Future<void> processNewRate(PanelsModel tx, Decimal newRate) async {
     if (newRate != tx.rate) {
       tx.setRate(newRate);
       await repo.update(tx);
@@ -77,7 +79,7 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
 
   Future<bool> updateLinked() async {
     final txs = _txRepo.extract();
-    final Map<String, double> grouped = {};
+    final Map<String, Decimal> grouped = {};
     int updateCount = 0;
 
     for (final tx in txs) {
@@ -85,7 +87,7 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
         continue;
       }
       final pairKey = "${tx.srId}-${tx.rrId}";
-      grouped[pairKey] = Math.add(grouped[pairKey] ?? 0.0, tx.srAmount);
+      grouped[pairKey] = Math.add(grouped[pairKey] ?? Decimal.zero, tx.srAmount);
     }
 
     for (final wx in items) {
@@ -102,9 +104,9 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
           final srid = match.group(1);
           final rrid = match.group(2);
           final pairKey = "$srid-$rrid";
-          final totalAmount = grouped[pairKey] ?? 0.0;
+          final totalAmount = grouped[pairKey] ?? Decimal.zero;
 
-          if (totalAmount == 0.0) {
+          if (totalAmount == Decimal.zero) {
             final meta = {...wx.meta};
             meta.remove('txLink');
             final nwx = wx.copyWith(meta: meta);

@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
@@ -179,7 +180,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
 
   Widget _buildSourceAmountField() {
     final data = widget.initialData;
-    final balance = data?.balance ?? 0.0;
+    final balance = data?.balance ?? Decimal.zero;
     final rrid = data?.rrId ?? 0;
     final symbol = _cryptoController.getSymbol(rrid);
 
@@ -284,10 +285,10 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
         rid: _saveRidField(),
         pid: parent.tid,
         srId: parent.rrId,
-        srAmount: _srAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0,
+        srAmount: _srAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? Decimal.zero,
         rrId: _selectedRrId ?? 0,
-        rrAmount: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
-        balance: _rrAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0,
+        rrAmount: _rrAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero,
+        balance: _rrAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero,
         status: TransactionStatus.active.index,
         timestamp: Utils.dateToTimestamp(_selectedDate),
         closable: false,

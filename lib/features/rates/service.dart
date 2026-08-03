@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:jxledger/features/rates/parsers/pro_v2.dart';
@@ -70,20 +71,20 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     await repo.delete("$sourceId-$targetId");
   }
 
-  double getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
+  Decimal getStoredRate(int sourceId, int targetId, {bool throwable = false}) {
     // Source and target is the same coin the rate is always 1
     if (sourceId == targetId) {
-      return 1;
+      return Decimal.one;
     }
 
     if (!throwable) {
-      if (!isValidPair(sourceId, targetId)) return -9999;
+      if (!isValidPair(sourceId, targetId)) return Decimal.fromInt(-9999);
     } else {
       validateIds(sourceId, targetId);
     }
 
     final existing = repo.get("$sourceId-$targetId");
-    return existing?.rate.toDouble() ?? -9999;
+    return existing?.rate ?? Decimal.fromInt(-9999);
   }
 
   void addQueue(int sourceId, int targetId, {bool force = false}) {

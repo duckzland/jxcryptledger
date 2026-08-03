@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils.dart';
@@ -16,7 +17,7 @@ class PanelsForm extends StatefulWidget {
   final void Function(Object? error)? onSave;
   final PanelsModel? initialData;
   final int? initialSrId;
-  final double? initialSrAmount;
+  final Decimal? initialSrAmount;
   final int? initialRrId;
   final String? linkedToTx;
 
@@ -48,7 +49,7 @@ class _PanelsFormState extends State<PanelsForm> {
   String? _srAmountText;
   String? _sourceSymbol;
 
-  double? _rate;
+  Decimal? _rate;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -66,7 +67,7 @@ class _PanelsFormState extends State<PanelsForm> {
     _selectedRrId = widget.initialRrId ?? data?.rrId;
     _digit = data?.digit ?? 6;
     _order = data?.order ?? _tixController.nextHighestOrder();
-    _rate = data?.rate ?? -9999;
+    _rate = data?.rate ?? Decimal.fromInt(-9999);
 
     _srAmountText = Utils.sanitizeNumber((widget.initialSrAmount ?? data?.srAmount ?? "").toString());
 
@@ -82,7 +83,7 @@ class _PanelsFormState extends State<PanelsForm> {
 
     if (rate == -9999) {
       _rateController.addQueue(_selectedSrId!, _selectedRrId!);
-      meta["oldRate"] = rate;
+      meta["oldRate"] = rate.toString();
     } else {
       _rate = rate;
     }
@@ -94,11 +95,11 @@ class _PanelsFormState extends State<PanelsForm> {
     try {
       final model = PanelsModel(
         tid: _tid!,
-        srAmount: double.tryParse(Utils.sanitizeNumber(_srAmountText ?? '0')) ?? 0.0,
+        srAmount: Decimal.tryParse(Utils.sanitizeNumber(_srAmountText ?? '0')) ?? Decimal.zero,
         srId: _selectedSrId!,
         rrId: _selectedRrId!,
         digit: _digit!,
-        rate: _rate ?? 0.0,
+        rate: _rate ?? Decimal.zero,
         order: _order,
         meta: meta,
       );

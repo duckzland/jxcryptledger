@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:data_table_2/data_table_2.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
@@ -46,7 +47,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   final _formKey = GlobalKey<FormState>();
 
   late String _selectedSymbol;
-  late double _sourceAmount;
+  late Decimal _sourceAmount;
   late List<TransactionsModel> txs;
 
   Color? _accentColor;
@@ -170,15 +171,15 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Widget _buildTable() {
     rows = <Map<String, dynamic>>[];
 
-    final double rate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
+    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
-    final bool showRate = rate > 0 && targetSymbol.isNotEmpty;
+    final bool showRate = rate > Decimal.zero && targetSymbol.isNotEmpty;
 
     for (final tx in txs) {
       final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-      final double amount = Math.multiply(tx.rrAmount, rate);
+      final Decimal amount = Math.multiply(tx.rrAmount, rate);
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
@@ -244,12 +245,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   Widget _buildTotal() {
-    final double rate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
-    final double source = _sourceAmount;
-    final double resultValue = Math.multiply(source, rate);
+    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+    final Decimal source = _sourceAmount;
+    final Decimal resultValue = Math.multiply(source, rate);
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
-    final bool showRate = rate > 0 && targetSymbol.isNotEmpty;
+    final bool showRate = rate > Decimal.zero && targetSymbol.isNotEmpty;
 
     return SizedBox(
       width: double.infinity,
@@ -264,10 +265,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         columns: [
           const DataColumn2(label: Text('        Total'), fixedWidth: 130),
           const DataColumn2(label: Text(' '), size: ColumnSize.M),
-          DataColumn2(label: Text('${Utils.formatSmartDouble(_sourceAmount, smartDecimal: false)} $_selectedSymbol'), size: ColumnSize.M),
+          DataColumn2(label: Text('${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol'), size: ColumnSize.M),
           if (showRate) const DataColumn2(label: Text(''), size: ColumnSize.M),
           if (showRate)
-            DataColumn2(label: Text('${Utils.formatSmartDouble(resultValue, smartDecimal: false)} $targetSymbol'), size: ColumnSize.M),
+            DataColumn2(label: Text('${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol'), size: ColumnSize.M),
         ],
         rows: [],
       ),
@@ -376,7 +377,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return TextField(
       controller: TextEditingController(
         text: selectableHasSelectedRows()
-            ? "${Utils.formatSmartDouble(_sourceAmount, smartDecimal: false)} $_selectedSymbol"
+            ? "${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol"
             : "No transaction selected",
       ),
       readOnly: true,
@@ -458,8 +459,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
     _sourceAmount = _calc.totalActiveBalance(atxs);
 
-    final double entryRate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
-    final double resultValue = Math.multiply(_sourceAmount, entryRate);
+    final Decimal entryRate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+    final Decimal resultValue = Math.multiply(_sourceAmount, entryRate);
 
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
@@ -469,7 +470,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       spacing: 10,
       child: TextField(
         controller: TextEditingController(
-          text: (_sourceAmount <= 0 || entryRate <= 0) ? "" : "${Utils.formatSmartDouble(resultValue, smartDecimal: false)} $targetSymbol",
+          text: (_sourceAmount <= Decimal.zero || entryRate <= Decimal.zero)
+              ? ""
+              : "${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol",
         ),
         readOnly: true,
         style: const TextStyle(fontSize: 16),
@@ -480,16 +483,16 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final double rate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
+    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
     final stxs = [...txs];
 
     final selectedTxIds = selectableGetSelectedRows();
     stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid) && (tx.isActive || tx.isPartial));
 
-    if (stxs.isEmpty || rate <= 0) return;
+    if (stxs.isEmpty || rate <= Decimal.zero) return;
 
     for (final tx in stxs) {
-      final double amount = Math.multiply(tx.balance, rate);
+      final Decimal amount = Math.multiply(tx.balance, rate);
       final meta = Map<String, dynamic>.from(tx.meta);
 
       if (_noteEntry != null) {

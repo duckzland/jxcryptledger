@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/math.dart';
@@ -24,7 +25,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   late final CryptosController _cryptosController;
 
   String? _sourceAmount;
-  double? _reversedRate;
+  Decimal? _reversedRate;
 
   Timer? _debounce;
 
@@ -204,15 +205,15 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   }
 
   Widget _buildCalculatedResult({bool mini = false}) {
-    final double source = _sourceAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? 0;
-    final double rate = rateableValue ?? -1;
-    final double reversedRate = _reversedRate ?? -1;
+    final Decimal source = _sourceAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? Decimal.zero;
+    final Decimal rate = rateableValue ?? Decimal.fromInt(-1);
+    final Decimal reversedRate = _reversedRate ?? Decimal.fromInt(-1);
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "UNK" : "UNK";
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "UNK" : "UNK";
 
-    if (source <= 0 ||
-        rate < 0 ||
-        reversedRate < 0 ||
+    if (source <= Decimal.zero ||
+        rate < Decimal.zero ||
+        reversedRate < Decimal.zero ||
         sourceSymbol == "UNK" ||
         targetSymbol == "UNK" ||
         targetSymbol == "" ||
@@ -220,27 +221,27 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
       return const Text("");
     }
 
-    final double resultValue = source * rate;
+    final Decimal resultValue = source * rate;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          "${Utils.formatSmartDouble(source)} $sourceSymbol to $targetSymbol",
+          "${Utils.formatSmartDecimal(source)} $sourceSymbol to $targetSymbol",
           style: TextStyle(fontSize: mini ? 13 : 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
         Text(
-          "${Utils.formatSmartDouble(resultValue)} $targetSymbol",
+          "${Utils.formatSmartDecimal(resultValue)} $targetSymbol",
           style: TextStyle(fontSize: mini ? 28 : 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
         Text(
-          "1 $targetSymbol = ${Utils.formatSmartDouble(rate)} $sourceSymbol",
+          "1 $targetSymbol = ${Utils.formatSmartDecimal(rate)} $sourceSymbol",
           style: TextStyle(fontSize: mini ? 12 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         Text(
-          "1 $sourceSymbol = ${Utils.formatSmartDouble(reversedRate)} $targetSymbol",
+          "1 $sourceSymbol = ${Utils.formatSmartDecimal(reversedRate)} $targetSymbol",
           style: TextStyle(fontSize: mini ? 11 : 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
       ],
@@ -249,8 +250,8 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
 
   @override
   void rateableGetCallback(bool hasNewRate) {
-    if (rateableValue != null && rateableValue! > 0) {
-      _reversedRate = Math.divide(1, rateableValue!);
+    if (rateableValue != null && rateableValue! > Decimal.zero) {
+      _reversedRate = Math.divide(Decimal.one, rateableValue!);
     }
   }
 }

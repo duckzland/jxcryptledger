@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart' show Decimal;
+
 import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
 import '../../core/math.dart';
@@ -65,7 +67,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       final balance = Math.subtract(ptx.balance, ntx.srAmount);
       final nptx = ptx.copyWith(
         balance: balance,
-        status: balance <= 0 ? TransactionStatus.inactive.index : TransactionStatus.partial.index,
+        status: balance <= Decimal.zero ? TransactionStatus.inactive.index : TransactionStatus.partial.index,
       );
 
       logln("[ADD] Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}");
@@ -113,11 +115,11 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       await box.put(ntx.tid, ntx);
 
       if (otx.srAmount != tx.srAmount && ptx.rrId == otx.srId) {
-        double balance = ptx.balance;
+        Decimal balance = ptx.balance;
         if (otx.srAmount > tx.srAmount) {
           balance = Math.add(balance, Math.subtract(otx.srAmount, tx.srAmount));
         } else {
-          double spent = Math.subtract(tx.srAmount, otx.srAmount);
+          Decimal spent = Math.subtract(tx.srAmount, otx.srAmount);
           if (balance >= spent) {
             balance = Math.subtract(balance, spent);
           }
@@ -127,7 +129,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
         final nptx = ptx.copyWith(
           balance: balance,
-          status: balance > 0 ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
+          status: balance > Decimal.zero ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
         );
 
         // Force to revalidate!
@@ -205,7 +207,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
     final updatedTarget = target.copyWith(balance: Math.add(target.balance, tx.balance), status: newStatus);
 
-    final closedTx = tx.copyWith(balance: 0, status: TransactionStatus.closed.index);
+    final closedTx = tx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
 
     if (debugLogs) {
       logln(
@@ -324,10 +326,10 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return parent;
   }
 
-  double getCapitalBalance(TransactionsModel tx) {
+  Decimal getCapitalBalance(TransactionsModel tx) {
     final children = getLeaf(tx);
-    final double spent = children.fold<double>(0.0, (sum, leaf) => Math.add(sum, leaf.srAmount));
-    final double balance = Math.subtract(tx.rrAmount, spent);
+    final Decimal spent = children.fold<Decimal>(Decimal.zero, (sum, leaf) => Math.add(sum, leaf.srAmount));
+    final Decimal balance = Math.subtract(tx.rrAmount, spent);
     return balance;
   }
 

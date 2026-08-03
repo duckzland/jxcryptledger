@@ -1,6 +1,8 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/math.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/panel.dart';
@@ -69,14 +71,15 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
     String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
 
-    final fromText = "${Utils.formatSmartDouble(tix.srAmount)} $sourceSymbol to $targetSymbol";
-    final toText = "${Utils.formatSmartDouble((tix.rate * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
-    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDouble(tix.rate, maxDecimals: tix.digit)} $targetSymbol";
-    final inverseText = "1 $targetSymbol = ${Utils.formatSmartDouble((1 / tix.rate), maxDecimals: tix.digit)} $sourceSymbol";
+    final fromText = "${Utils.formatSmartDecimal(tix.srAmount)} $sourceSymbol to $targetSymbol";
+    final toText = "${Utils.formatSmartDecimal((tix.rate * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
+    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDecimal(tix.rate, maxDecimals: tix.digit)} $targetSymbol";
+    final inverseText =
+        "1 $targetSymbol = ${Utils.formatSmartDecimal(Math.divide(Decimal.one, tix.rate), maxDecimals: tix.digit)} $sourceSymbol";
 
     final bool isThisOneActive = _activePanelId == widget.tix.tid;
 
-    final text = tix.rate > 0
+    final text = tix.rate > Decimal.zero
         ? [
             Text(fromText, style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600)),
             Flexible(

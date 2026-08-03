@@ -9,6 +9,7 @@ import 'package:dotenv/dotenv.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:jxledger/core/abstracts/models/exportable.dart';
 import 'package:jxledger/core/log.dart';
+import 'package:jxledger/core/math.dart';
 import 'package:jxledger/features/archives/adapter.dart';
 import 'package:jxledger/features/archives/model.dart';
 import 'package:jxledger/features/cryptos/adapter.dart';
@@ -117,9 +118,9 @@ Future<Uint8List> derivePasswordKey(String password, String salt) async {
   return Uint8List.fromList(await secretKey.extractBytes());
 }
 
-Future<TransactionsModel> createChild(String label, Box repo, TransactionsModel parent, double srAmount, int rrId) async {
+Future<TransactionsModel> createChild(String label, Box repo, TransactionsModel parent, Decimal srAmount, int rrId) async {
   final tid = generateId();
-  final rrAmount = srAmount * 2;
+  final rrAmount = srAmount * Decimal.fromInt(2);
 
   if (parent.rrId == rrId) {
     rrId += 1;
@@ -254,6 +255,11 @@ Future<void> main(List<String> args) async {
     SettingsModel(keyId: SettingKey.vaultInitialized.id, type: SettingKey.vaultInitialized.type, value: encryptedMarker),
   );
 
+  await settingsBox.put(
+    SettingKey.migrateVersion.id,
+    SettingsModel(keyId: SettingKey.migrateVersion.id, type: SettingKey.migrateVersion.type, value: env['DB_VERSION']),
+  );
+
   final cryptosBox = await Hive.openBox<CryptosModel>('cryptos_box');
 
   final txRepo = await Hive.openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
@@ -281,11 +287,11 @@ Future<void> main(List<String> args) async {
         tid: rootTid,
         pid: '0',
         rid: '0',
-        srAmount: 1000,
+        srAmount: Decimal.fromInt(1000),
         srId: pickCmcId(r),
-        rrAmount: 100000,
+        rrAmount: Decimal.fromInt(100000),
         rrId: pickCmcId(r + 1),
-        balance: 100000,
+        balance: Decimal.fromInt(100000),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
@@ -301,30 +307,30 @@ Future<void> main(List<String> args) async {
 
     for (final root in roots) {
       // Branch A
-      final a = await createChild("A", txRepo, root, root.balance * 0.5, pickCmcId(10));
-      final a1 = await createChild("A1", txRepo, a, a.balance / 2, pickCmcId(11));
-      await createChild("A11", txRepo, a1, a1.balance / 2, pickCmcId(12));
-      await createChild("A12", txRepo, a1, a1.balance / 2, pickCmcId(13));
-      // final a11 = await createChild("A11", txRepo, a1, a1.balance / 2, pickCmcId(12));
-      // final a12 = await createChild("A12", txRepo, a1, a1.balance / 2, pickCmcId(13));
+      final a = await createChild("A", txRepo, root, Math.divide(root.balance, Decimal.fromInt(2)), pickCmcId(10));
+      final a1 = await createChild("A1", txRepo, a, Math.divide(a.balance, Decimal.fromInt(2)), pickCmcId(11));
+      await createChild("A11", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(12));
+      await createChild("A12", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(13));
+      // final a11 = await createChild("A11", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(12));
+      // final a12 = await createChild("A12", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(13));
 
-      final a2 = await createChild("A2", txRepo, a, a.balance / 2, pickCmcId(14));
-      await createChild("A21", txRepo, a2, a2.balance / 3, pickCmcId(15));
-      // final a21 = await createChild("A21", txRepo, a2, a2.balance / 3, pickCmcId(15));
+      final a2 = await createChild("A2", txRepo, a, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(14));
+      await createChild("A21", txRepo, a2, Math.divide(a2.balance, Decimal.fromInt(3)), pickCmcId(15));
+      // final a21 = await createChild("A21", txRepo, a2, Math.divide(a2.balance, Decimal.fromInt(3)), pickCmcId(15));
 
       // Branch B
-      final b = await createChild("B", txRepo, root, root.balance * 0.25, pickCmcId(16));
-      await createChild("B1", txRepo, b, b.balance / 2, pickCmcId(17));
-      await createChild("B2", txRepo, b, b.balance / 2, b.srId);
-      // final b1 = await createChild("B1", txRepo, b, b.balance / 2, pickCmcId(17));
-      // final b2 = await createChild("B2", txRepo, b, b.balance / 2, b.srId);
+      final b = await createChild("B", txRepo, root, Math.divide(root.balance, Decimal.fromInt(4)), pickCmcId(16));
+      await createChild("B1", txRepo, b, Math.divide(b.balance, Decimal.fromInt(2)), pickCmcId(17));
+      await createChild("B2", txRepo, b, Math.divide(b.balance, Decimal.fromInt(2)), b.srId);
+      // final b1 = await createChild("B1", txRepo, Math.divide(b.balance, Decimal.fromInt(2)), pickCmcId(17));
+      // final b2 = await createChild("B2", txRepo, Math.divide(b.balance, Decimal.fromInt(2)), b.srId);
 
       // Branch C
-      final c = await createChild("C", txRepo, root, root.balance * 0.25, pickCmcId(19));
-      await createChild("C1", txRepo, c, c.balance / 2, c.srId);
-      await createChild("C2", txRepo, c, c.balance / 2, root.rrId);
-      // final c1 = await createChild("C1", txRepo, c, c.balance / 2, c.srId);
-      // final c2 = await createChild("C2", txRepo, c, c.balance / 2, root.rrId
+      final c = await createChild("C", txRepo, root, Math.divide(root.balance, Decimal.fromInt(4)), pickCmcId(19));
+      await createChild("C1", txRepo, c, Math.divide(c.balance, Decimal.fromInt(2)), c.srId);
+      await createChild("C2", txRepo, c, Math.divide(c.balance, Decimal.fromInt(2)), root.rrId);
+      // final c1 = await createChild("C1", Math.divide(c.balance, Decimal.fromInt(2)), c.srId);
+      // final c2 = await createChild("C2", Math.divide(c.balance, Decimal.fromInt(2)), root.rrId);
 
       // Test Close
       // logln("Closing: c1");
@@ -335,7 +341,7 @@ Future<void> main(List<String> args) async {
 
       // Test decreasing amount
       // logln("Decreasing: b2 balance");
-      // final b2Decrease = b2.copyWith(srAmount: b2.balance / 4);
+      // final b2Decrease = b2.copyWith(srAmount: Math.divide(b2.balance, Decimal.fromInt(4)));
       // await txRepo.update(b2Decrease);
     }
   }
@@ -350,7 +356,7 @@ Future<void> main(List<String> args) async {
           wid: generateId(),
           srId: tx.srId,
           rrId: tx.rrId,
-          rates: (tx.rrAmount / tx.srAmount) * 1.5,
+          rates: Math.multiply(Math.divide(tx.rrAmount, tx.srAmount), Decimal.fromInt(2)),
           sent: 0,
           operator: 2,
           limit: 10,
@@ -375,7 +381,7 @@ Future<void> main(List<String> args) async {
           srAmount: tx.srAmount,
           rrId: tx.rrId,
           digit: 6,
-          rate: tx.rrAmount / tx.srAmount,
+          rate: Math.divide(tx.rrAmount, tx.srAmount),
           order: i,
           meta: {},
         ),

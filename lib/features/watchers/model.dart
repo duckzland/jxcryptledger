@@ -1,7 +1,10 @@
+import 'package:decimal/decimal.dart';
+
 import '../../app/exceptions.dart';
 import '../../core/abstracts/models/exportable.dart';
 import '../../core/abstracts/models/with_id.dart';
 import '../../core/abstracts/models/rateable.dart';
+import '../../core/extensions/decimals.dart';
 
 enum WatchersOperator { equal, lessThan, greaterThan }
 
@@ -10,7 +13,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
   final int sent;
   final int operator;
   final int limit;
-  final double rates;
+  final Decimal rates;
   final int duration;
   final String message;
   final int timestamp;
@@ -58,7 +61,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
       );
     }
 
-    if (rates <= 0) {
+    if (rates <= Decimal.zero) {
       throw ValidationException(AppErrorCode.watcherRateInvalid, "rates must be greater than zero.", "Enter a valid target rate.");
     }
 
@@ -94,7 +97,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
       wid: json['wid'] as String,
       srId: json['srId'] as int,
       rrId: json['rrId'] as int,
-      rates: (json['rates'] as num).toDouble(),
+      rates: (json['rates'] as Object?).toDecimal() ?? Decimal.zero,
       sent: json['sent'] as int,
       operator: json['operator'] as int,
       limit: json['limit'] as int,
@@ -111,7 +114,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
       'wid': wid,
       'srId': srId,
       'rrId': rrId,
-      'rates': rates,
+      'rates': rates.toString(),
       'sent': sent,
       'operator': operator,
       'limit': limit,
@@ -126,7 +129,7 @@ class WatchersModel implements CoreModelWithId, CoreModelExportable, CoreModelRa
     String? wid,
     int? srId,
     int? rrId,
-    double? rates,
+    Decimal? rates,
     int? sent,
     int? operator,
     int? limit,

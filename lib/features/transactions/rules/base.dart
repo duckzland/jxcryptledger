@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+
 import '../../../core/math.dart';
 import '../model.dart';
 import '../repository.dart';
@@ -48,7 +50,7 @@ abstract class TransactionsRulesBase {
   }
 
   void txCheckHasEnoughBalance(int code, String message) {
-    if (tx.balance <= 0) {
+    if (tx.balance <= Decimal.zero) {
       throw ValidationException(code, "$mode transaction has negative balance (tid=${tx.tid})", message, silent: silent);
     }
   }
@@ -210,7 +212,7 @@ abstract class TransactionsRulesBase {
 
   void otxCheckPositiveBalance(int code, String message) {
     final TransactionsModel? otx = origTx;
-    if (otx != null && otx.balance <= 0) {
+    if (otx != null && otx.balance <= Decimal.zero) {
       throw ValidationException(code, "$mode balance <= 0 (tid=${tx.tid})", message, silent: silent);
     }
   }
@@ -218,10 +220,10 @@ abstract class TransactionsRulesBase {
   void otxCheckBalanceIsZero(int code, String message) {
     final TransactionsModel? otx = origTx;
     final childList = leafChildren;
-    final spent = childList.fold<double>(0.0, (sum, leaf) => Math.add(sum, leaf.srAmount));
-    final balance = otx == null ? -99999 : Math.subtract(otx.rrAmount, spent);
+    final spent = childList.fold<Decimal>(Decimal.zero, (sum, leaf) => Math.add(sum, leaf.srAmount));
+    final balance = otx == null ? Decimal.fromInt(-99999) : Math.subtract(otx.rrAmount, spent);
 
-    if (balance > 0) {
+    if (balance > Decimal.zero) {
       throw ValidationException(
         AppErrorCode.txUpdateInactiveRequiresZeroBalance,
         "$mode balance is not zero. (tid=${tx.tid})",

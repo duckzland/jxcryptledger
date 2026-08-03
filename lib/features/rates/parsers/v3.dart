@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:decimal/decimal.dart';
 
+import '../../../core/extensions/decimals.dart';
 import '../model.dart';
 import 'result.dart';
 
@@ -14,7 +15,7 @@ RatesParserResult parseRatesJsonV3(String body) {
 
   final sourceSymbol = dataNode['symbol'] as String?;
   final sourceIdStr = dataNode['id']?.toString();
-  final sourceAmount = (dataNode['amount'] as num?)?.toDouble();
+  final sourceAmount = (dataNode['amount'] as Object?).toDecimal();
 
   if (sourceSymbol == null || sourceIdStr == null || sourceAmount == null) {
     throw const FormatException('Missing source fields');
@@ -33,22 +34,19 @@ RatesParserResult parseRatesJsonV3(String body) {
   for (final q in quotes) {
     final targetSymbol = q['symbol'] as String?;
     final targetId = q['cryptoId'] as int?;
-    final priceRaw = q['price'];
+    final targetAmount = (q['price'] as Object?).toDecimal();
 
-    if (targetSymbol == null || targetId == null || priceRaw == null) {
+    if (targetSymbol == null || targetId == null || targetAmount == null) {
       continue;
     }
 
-    // price can be string or number
-    final priceStr = priceRaw.toString();
-    final targetAmount = Decimal.parse(priceStr);
     final reversed = Decimal.one / targetAmount;
 
     rates.add(
       RatesModel(
         sourceSymbol: sourceSymbol,
         sourceId: sourceId,
-        sourceAmount: Decimal.parse(sourceAmount.toString()),
+        sourceAmount: sourceAmount,
         targetSymbol: targetSymbol,
         targetId: targetId,
         targetAmount: targetAmount,

@@ -1,4 +1,5 @@
 import 'package:data_table_2/data_table_2.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
@@ -76,10 +77,10 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   late String _resultSymbol;
 
-  double _totalCapital = 0;
-  double _currentHolding = 0;
-  double _finalizedBalance = 0;
-  double _profitLoss = 0;
+  Decimal _totalCapital = Decimal.zero;
+  Decimal _currentHolding = Decimal.zero;
+  Decimal _finalizedBalance = Decimal.zero;
+  Decimal _profitLoss = Decimal.zero;
   double _profitLossPercentage = 0;
 
   bool _isOpen = true;
@@ -251,35 +252,35 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               spacing: 16,
               children: [
-                if (_totalCapital > 0)
+                if (_totalCapital > Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Total Capital",
-                    subtitle: "${Utils.formatSmartDouble(_totalCapital)} $_resultSymbol",
+                    subtitle: "${Utils.formatSmartDecimal(_totalCapital)} $_resultSymbol",
                     value: 0,
                     comparator: 0,
                   ),
-                if (_currentHolding > 0)
+                if (_currentHolding > Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Current Balance",
-                    subtitle: "${Utils.formatSmartDouble(_currentHolding)} $_resultSymbol",
+                    subtitle: "${Utils.formatSmartDecimal(_currentHolding)} $_resultSymbol",
                     value: 0,
                     comparator: 0,
                   ),
-                if (_finalizedBalance > 0)
+                if (_finalizedBalance > Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Finalized Balance",
-                    subtitle: "${Utils.formatSmartDouble(_finalizedBalance)} $_resultSymbol",
+                    subtitle: "${Utils.formatSmartDecimal(_finalizedBalance)} $_resultSymbol",
                     value: 0,
                     comparator: 0,
                   ),
-                if (_totalCapital > 0 && _profitLossPercentage != 0)
+                if (_totalCapital > Decimal.zero && _profitLossPercentage != 0)
                   TransactionsWidgetsPanelItem(
                     title: "Profit/Loss",
-                    subtitle: "${Utils.formatSmartDouble(_profitLoss)} $_resultSymbol",
+                    subtitle: "${Utils.formatSmartDecimal(_profitLoss)} $_resultSymbol",
                     value: _profitLossPercentage,
                     comparator: 0,
                   ),
-                if (_totalCapital > 0 && _profitLossPercentage != 0)
+                if (_totalCapital > Decimal.zero && _profitLossPercentage != 0)
                   TransactionsWidgetsPanelItem(
                     title: "Profit/Loss %",
                     subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
@@ -399,7 +400,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.balance,
         '_sourceValue': tx.srAmount,
-        '_exchangedRateValue': tx.rateDouble,
+        '_exchangedRateValue': tx.rate,
       });
     }
 
@@ -419,7 +420,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     }
 
     // Extract all roots for the same srId as this group!
-    double capital = 0;
+    Decimal capital = Decimal.zero;
     final roots = txController.collectAllRoots();
     for (final rtx in roots) {
       if (rtx.srId == widget.id) {
@@ -430,13 +431,15 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     final finalizedBalance = _calc.totalFinalizedBalance(stxs);
     final balance = _calc.totalActiveBalance(stxs);
     final totalBalance = Math.add(balance, finalizedBalance);
-    final profitPercentage = (capital == 0) ? 0.0 : (Math.divide(Math.subtract(totalBalance, capital), capital) * 100);
+    final profitPercentage = (capital == Decimal.zero)
+        ? Decimal.zero
+        : (Math.divide(Math.subtract(totalBalance, capital), capital) * Decimal.fromInt(100));
 
     _totalCapital = capital;
     _currentHolding = balance;
     _finalizedBalance = finalizedBalance;
     _profitLoss = Math.subtract(totalBalance, capital);
-    _profitLossPercentage = profitPercentage;
+    _profitLossPercentage = profitPercentage.toDouble();
   }
 
   void _toggleShowAction(WidgetsButtonsActionState b) {

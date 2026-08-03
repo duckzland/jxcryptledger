@@ -13,7 +13,7 @@ import '../../../features/watchboard/panels/model.dart';
 import '../../../features/watchboard/tickers/adapter.dart';
 import '../../../features/watchboard/tickers/model.dart';
 import '../../../features/watchboard/markets/adapter.dart';
-import '../../features/watchboard/markets/model.dart';
+import '../../../features/watchboard/markets/model.dart';
 import '../../../features/watchers/adapter.dart';
 import '../../../features/watchers/model.dart';
 import '../../../system/settings/adapter.dart';

@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
@@ -381,10 +382,10 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
       final srAmount = _saveSourceAmountField();
       final timestamp = _selectedDate != null ? Utils.dateToTimestamp(_selectedDate) : data.timestamp;
       final meta = _saveMetaField();
-      double balance = _saveBalanceField();
+      Decimal balance = _saveBalanceField();
 
       int rrId = _saveResultCryptoField();
-      double rrAmount = _saveResultAmountField();
+      Decimal rrAmount = _saveResultAmountField();
 
       if (_isCapital) {
         rrAmount = srAmount;
@@ -419,11 +420,11 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     }
   }
 
-  double _saveBalanceField() {
+  Decimal _saveBalanceField() {
     final data = widget.initialData!;
 
     if (_rrAmount != null) {
-      final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
+      final proposed = Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero;
       if (isRoot) return proposed;
       if (isLeaf && _isActive) return proposed;
     }
@@ -439,10 +440,10 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     return data.srId;
   }
 
-  double _saveSourceAmountField() {
+  Decimal _saveSourceAmountField() {
     final data = widget.initialData!;
     if (_srAmount != null) {
-      final proposed = double.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? 0;
+      final proposed = Decimal.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? Decimal.zero;
       if (isRoot) return proposed;
       if (isLeaf && _isActive) return proposed;
     }
@@ -458,11 +459,11 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     return data.rrId;
   }
 
-  double _saveResultAmountField() {
+  Decimal _saveResultAmountField() {
     final data = widget.initialData!;
 
     if (_rrAmount != null) {
-      final proposed = double.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? 0;
+      final proposed = Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero;
       if (isRoot) return proposed;
       if (isLeaf && _isActive) return proposed;
     }

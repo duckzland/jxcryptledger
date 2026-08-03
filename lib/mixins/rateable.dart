@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../app/exceptions.dart';
@@ -20,7 +21,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
 
   int? rateableSource;
   int? rateableTarget;
-  double? rateableValue;
+  Decimal? rateableValue;
   String? rateableAmount;
 
   bool get rateableAllow => (rateableSource ?? 0) > 0 && (rateableTarget ?? 0) > 0;
@@ -67,7 +68,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
       }
 
       final rate = rateableController.getStoredRate(reversed ? target : source, reversed ? source : target, throwable: true);
-      if (rate == -9999) {
+      if (rate == Decimal.fromInt(-9999)) {
         rateableController.addQueue(source, target, force: rateableForceFetch);
         if (rateableIsTemporary) {
           rateableTemporary.add((source, target));
@@ -76,7 +77,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
       }
 
       final hasNewRate = rate != rateableValue;
-      rateableAmount = Utils.formatSmartDouble(rate, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
+      rateableAmount = Utils.formatSmartDecimal(rate, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
       rateableValue = rate;
 
       rateableGetCallback.call(hasNewRate);
@@ -117,11 +118,12 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     return Utils.formatSmartDouble(parsed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
   }
 
-  double rateableParseToDouble(String text, {bool reverse = false}) {
+  Decimal rateableParseToDecimal(String text, {bool reverse = false}) {
     final sanitized = Utils.sanitizeNumber(text);
-    double parsed = double.tryParse(sanitized) ?? 0.0;
-    if (reverse && parsed != 0.0 && parsed != 1.0) {
-      parsed = Math.divide(1, parsed);
+    Decimal parsed = Decimal.tryParse(sanitized) ?? Decimal.zero;
+
+    if (reverse && parsed != Decimal.zero && parsed != Decimal.one) {
+      parsed = Math.divide(Decimal.one, parsed);
     }
     return parsed;
   }

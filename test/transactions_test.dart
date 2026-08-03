@@ -1,10 +1,12 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:jxledger/app/exceptions.dart';
 import 'package:jxledger/features/transactions/adapter.dart';
 import 'package:jxledger/features/transactions/model.dart';
-import 'faker/hive.dart';
 import 'package:jxledger/features/transactions/repository.dart';
+
+import 'faker/hive.dart';
 
 void main() async {
   // Initialize Hive in memory for testing
@@ -35,19 +37,19 @@ void main() async {
       }
 
       try {
-        await repo.update(tx.copyWith(srAmount: -1));
+        await repo.update(tx.copyWith(srAmount: Decimal.fromInt(-1)));
       } on ValidationException catch (e) {
         expect(e.code, 1005);
       }
 
       try {
-        await repo.update(tx.copyWith(rrAmount: -1));
+        await repo.update(tx.copyWith(rrAmount: Decimal.fromInt(-1)));
       } on ValidationException catch (e) {
         expect(e.code, 1006);
       }
 
       try {
-        await repo.update(tx.copyWith(balance: -1));
+        await repo.update(tx.copyWith(balance: Decimal.fromInt(-1)));
       } on ValidationException catch (e) {
         expect(e.code, 1007);
       }
@@ -142,11 +144,11 @@ void main() async {
         tid: 'root',
         rid: '0',
         pid: '0',
-        srAmount: 100,
+        srAmount: Decimal.fromInt(100),
         srId: 1,
-        rrAmount: 100,
+        rrAmount: Decimal.fromInt(100),
         rrId: 2,
-        balance: 100,
+        balance: Decimal.fromInt(100),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -168,12 +170,12 @@ void main() async {
       expect(r.pid, '0');
 
       final rr = r.copyWith(
-        balance: 80, // Balance isn't guarded. Maybe we need to guard this?
+        balance: Decimal.fromInt(80), // Balance isn't guarded. Maybe we need to guard this?
         status: TransactionStatus.active.index,
       );
       await repo.update(rr);
 
-      expect(rr.balance, 80);
+      expect(rr.balance, Decimal.fromInt(80));
 
       // Test root against basic validation rules
       await testBasicTxValidation(rr);
@@ -190,11 +192,11 @@ void main() async {
         tid: 'root',
         rid: '0',
         pid: '0',
-        srAmount: 100,
+        srAmount: Decimal.fromInt(100),
         srId: 1,
-        rrAmount: 100,
+        rrAmount: Decimal.fromInt(100),
         rrId: 1,
-        balance: 100,
+        balance: Decimal.fromInt(100),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -216,12 +218,12 @@ void main() async {
       expect(r.pid, '0');
 
       final rr = r.copyWith(
-        balance: 80, // Balance isn't guarded. Maybe we need to guard this?
+        balance: Decimal.fromInt(80), // Balance isn't guarded. Maybe we need to guard this?
         status: TransactionStatus.active.index,
       );
       await repo.update(rr);
 
-      expect(rr.balance, 80);
+      expect(rr.balance, Decimal.fromInt(80));
 
       // Test root against basic validation rules
       await testBasicTxValidation(rr);
@@ -238,11 +240,11 @@ void main() async {
         tid: 'root',
         rid: '0',
         pid: '0',
-        srAmount: 200,
+        srAmount: Decimal.fromInt(200),
         srId: 1,
-        rrAmount: 200,
+        rrAmount: Decimal.fromInt(200),
         rrId: 2,
-        balance: 200,
+        balance: Decimal.fromInt(200),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -255,11 +257,11 @@ void main() async {
         tid: 'leaf_1',
         rid: 'root',
         pid: 'root',
-        srAmount: 120,
+        srAmount: Decimal.fromInt(120),
         srId: 2,
-        rrAmount: 120,
+        rrAmount: Decimal.fromInt(120),
         rrId: 3,
-        balance: 120,
+        balance: Decimal.fromInt(120),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -282,13 +284,13 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 80
-      expect(rr.balance, 80);
+      expect(rr.balance, Decimal.fromInt(80));
 
       // 2. root status should be partial
       expect(rr.statusEnum, TransactionStatus.partial);
 
       // 3. leaf_1 balance should be 120
-      expect(leaf_1.balance, 120);
+      expect(leaf_1.balance, Decimal.fromInt(120));
 
       // 4. leaf_1 status should be active
       expect(leaf_1.statusEnum, TransactionStatus.active);
@@ -313,11 +315,11 @@ void main() async {
         tid: 'leaf_1c',
         rid: 'root',
         pid: 'root',
-        srAmount: 80,
+        srAmount: Decimal.fromInt(80),
         srId: 2,
-        rrAmount: 120,
+        rrAmount: Decimal.fromInt(120),
         rrId: 3,
-        balance: 120,
+        balance: Decimal.fromInt(120),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -331,13 +333,13 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 0
-      expect(rrr.balance, 0);
+      expect(rrr.balance, Decimal.fromInt(0));
 
       // 2. root status should be inactive
       expect(rrr.statusEnum, TransactionStatus.inactive);
 
       // 3. leaf_1c balance should be 120
-      expect(leaf_1c.balance, 120);
+      expect(leaf_1c.balance, Decimal.fromInt(120));
 
       // 4. leaf_1c status should be active
       expect(leaf_1c.statusEnum, TransactionStatus.active);
@@ -367,7 +369,7 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 80
-      expect(rrrr.balance, 80);
+      expect(rrrr.balance, Decimal.fromInt(80));
 
       // 2. root status should be partial
       expect(rrrr.statusEnum, TransactionStatus.partial);
@@ -379,11 +381,11 @@ void main() async {
         tid: 'leaf_2',
         rid: 'root',
         pid: 'leaf_1',
-        srAmount: 50,
+        srAmount: Decimal.fromInt(50),
         srId: 3,
-        rrAmount: 50,
+        rrAmount: Decimal.fromInt(50),
         rrId: 2,
-        balance: 50,
+        balance: Decimal.fromInt(50),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -409,13 +411,13 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 80
-      expect(rrrrr.balance, 80);
+      expect(rrrrr.balance, Decimal.fromInt(80));
 
       // 2. root status should be partial
       expect(rrrrr.statusEnum, TransactionStatus.partial);
 
       // 3. leaf_1 balance should be 70
-      expect(l1.balance, 70);
+      expect(l1.balance, Decimal.fromInt(70));
 
       // 4. leaf_1 status should be partial
       expect(l1.statusEnum, TransactionStatus.partial);
@@ -450,7 +452,7 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 130
-      expect(rrrrrr.balance, 130);
+      expect(rrrrrr.balance, Decimal.fromInt(130));
 
       // 2. root status should be partial as leaf_1 is still partial
       expect(rrrrrr.statusEnum, TransactionStatus.partial);
@@ -459,13 +461,13 @@ void main() async {
       expect(l2.statusEnum, TransactionStatus.closed);
 
       // 4. leaf_2 balance should be 0
-      expect(l2.balance, 0);
+      expect(l2.balance, Decimal.fromInt(0));
 
       // 5. leaf_1 status should be still partial
       expect(ll1.statusEnum, TransactionStatus.partial);
 
       // 6. leaf_1 balance should be still 70
-      expect(ll1.balance, 70);
+      expect(ll1.balance, Decimal.fromInt(70));
 
       // 7. leaf_1 should not be closable because its coin type is different from root
       expect(ll1.closable, false);
@@ -528,11 +530,11 @@ void main() async {
         tid: 'root',
         rid: '0',
         pid: '0',
-        srAmount: 200,
+        srAmount: Decimal.fromInt(200),
         srId: 2,
-        rrAmount: 200,
+        rrAmount: Decimal.fromInt(200),
         rrId: 2,
-        balance: 200,
+        balance: Decimal.fromInt(200),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -545,11 +547,11 @@ void main() async {
         tid: 'leaf_1',
         rid: 'root',
         pid: 'root',
-        srAmount: 120,
+        srAmount: Decimal.fromInt(120),
         srId: 2,
-        rrAmount: 120,
+        rrAmount: Decimal.fromInt(120),
         rrId: 3,
-        balance: 120,
+        balance: Decimal.fromInt(120),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -572,13 +574,13 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 80
-      expect(rr.balance, 80);
+      expect(rr.balance, Decimal.fromInt(80));
 
       // 2. root status should be partial
       expect(rr.statusEnum, TransactionStatus.partial);
 
       // 3. leaf_1 balance should be 120
-      expect(leaf_1.balance, 120);
+      expect(leaf_1.balance, Decimal.fromInt(120));
 
       // 4. leaf_1 status should be active
       expect(leaf_1.statusEnum, TransactionStatus.active);
@@ -603,11 +605,11 @@ void main() async {
         tid: 'leaf_1c',
         rid: 'root',
         pid: 'root',
-        srAmount: 80,
+        srAmount: Decimal.fromInt(80),
         srId: 2,
-        rrAmount: 120,
+        rrAmount: Decimal.fromInt(120),
         rrId: 3,
-        balance: 120,
+        balance: Decimal.fromInt(120),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -621,13 +623,13 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 0
-      expect(rrr.balance, 0);
+      expect(rrr.balance, Decimal.fromInt(0));
 
       // 2. root status should be inactive
       expect(rrr.statusEnum, TransactionStatus.inactive);
 
       // 3. leaf_1c balance should be 120
-      expect(leaf_1c.balance, 120);
+      expect(leaf_1c.balance, Decimal.fromInt(120));
 
       // 4. leaf_1c status should be active
       expect(leaf_1c.statusEnum, TransactionStatus.active);
@@ -657,7 +659,7 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 80
-      expect(rrrr.balance, 80);
+      expect(rrrr.balance, Decimal.fromInt(80));
 
       // 2. root status should be partial
       expect(rrrr.statusEnum, TransactionStatus.partial);
@@ -669,11 +671,11 @@ void main() async {
         tid: 'leaf_2',
         rid: 'root',
         pid: 'leaf_1',
-        srAmount: 50,
+        srAmount: Decimal.fromInt(50),
         srId: 3,
-        rrAmount: 50,
+        rrAmount: Decimal.fromInt(50),
         rrId: 2,
-        balance: 50,
+        balance: Decimal.fromInt(50),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -699,13 +701,13 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 80
-      expect(rrrrr.balance, 80);
+      expect(rrrrr.balance, Decimal.fromInt(80));
 
       // 2. root status should be partial
       expect(rrrrr.statusEnum, TransactionStatus.partial);
 
       // 3. leaf_1 balance should be 70
-      expect(l1.balance, 70);
+      expect(l1.balance, Decimal.fromInt(70));
 
       // 4. leaf_1 status should be partial
       expect(l1.statusEnum, TransactionStatus.partial);
@@ -740,7 +742,7 @@ void main() async {
 
       // CHECKPOINT:
       // 1. root balance should be 130
-      expect(rrrrrr.balance, 130);
+      expect(rrrrrr.balance, Decimal.fromInt(130));
 
       // 2. root status should be partial as leaf_1 is still partial
       expect(rrrrrr.statusEnum, TransactionStatus.partial);
@@ -749,13 +751,13 @@ void main() async {
       expect(l2.statusEnum, TransactionStatus.closed);
 
       // 4. leaf_2 balance should be 0
-      expect(l2.balance, 0);
+      expect(l2.balance, Decimal.fromInt(0));
 
       // 5. leaf_1 status should be still partial
       expect(ll1.statusEnum, TransactionStatus.partial);
 
       // 6. leaf_1 balance should be still 70
-      expect(ll1.balance, 70);
+      expect(ll1.balance, Decimal.fromInt(70));
 
       // 7. leaf_1 should not be closable because its coin type is different from root
       expect(ll1.closable, false);
@@ -829,11 +831,11 @@ void main() async {
         tid: 'root',
         rid: '0',
         pid: '0',
-        srAmount: 100,
+        srAmount: Decimal.fromInt(100),
         srId: 1,
-        rrAmount: 100,
+        rrAmount: Decimal.fromInt(100),
         rrId: 2,
-        balance: 100,
+        balance: Decimal.fromInt(100),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -846,11 +848,11 @@ void main() async {
         tid: 'leaf1',
         rid: 'root',
         pid: 'root',
-        srAmount: 40,
+        srAmount: Decimal.fromInt(40),
         srId: 2,
-        rrAmount: 40,
+        rrAmount: Decimal.fromInt(40),
         rrId: 3,
-        balance: 40,
+        balance: Decimal.fromInt(40),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -860,7 +862,7 @@ void main() async {
       await repo.add(leaf);
 
       final updatedRoot = box.get('root')!;
-      expect(updatedRoot.balance, 60);
+      expect(updatedRoot.balance, Decimal.fromInt(60));
       expect(updatedRoot.statusEnum, TransactionStatus.partial);
     });
 
@@ -869,11 +871,11 @@ void main() async {
         tid: 'root2',
         rid: '0',
         pid: '0',
-        srAmount: 200,
+        srAmount: Decimal.fromInt(200),
         srId: 1,
-        rrAmount: 200,
+        rrAmount: Decimal.fromInt(200),
         rrId: 2,
-        balance: 200,
+        balance: Decimal.fromInt(200),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -886,11 +888,11 @@ void main() async {
         tid: 'leaf21',
         rid: 'root2',
         pid: 'root2',
-        srAmount: 120,
+        srAmount: Decimal.fromInt(120),
         srId: 2,
-        rrAmount: 120,
+        rrAmount: Decimal.fromInt(120),
         rrId: 3,
-        balance: 120,
+        balance: Decimal.fromInt(120),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -903,11 +905,11 @@ void main() async {
         tid: 'leaf22',
         rid: 'root2',
         pid: 'leaf21',
-        srAmount: 50,
+        srAmount: Decimal.fromInt(50),
         srId: 3,
-        rrAmount: 50,
+        rrAmount: Decimal.fromInt(50),
         rrId: 2, // This is the same as root to test closable logic
-        balance: 50,
+        balance: Decimal.fromInt(50),
         status: TransactionStatus.active.index,
         closable: false, // This is intentionally false to test if it gets updated to true
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -917,19 +919,19 @@ void main() async {
       await repo.add(leaf2);
 
       final updatedRoot = box.get('root2')!;
-      expect(updatedRoot.balance, 80); // 200 - 120
+      expect(updatedRoot.balance, Decimal.fromInt(80)); // 200 - 120
 
       // The root is still partial because leaf21 doesnt use all of its balance
       expect(updatedRoot.statusEnum, TransactionStatus.partial);
 
       final updatedLeaf21 = box.get('leaf21')!;
-      expect(updatedLeaf21.balance, 70); // 120 - 50
+      expect(updatedLeaf21.balance, Decimal.fromInt(70)); // 120 - 50
 
       // The leaf21 is still partial because leaf22 doesnt use all of its balance
       expect(updatedLeaf21.statusEnum, TransactionStatus.partial);
 
       final updatedLeaf22 = box.get('leaf22')!;
-      expect(updatedLeaf22.balance, 50); // 50
+      expect(updatedLeaf22.balance, Decimal.fromInt(50)); // 50
 
       // Leaf22 is active because it has no children
       expect(updatedLeaf22.statusEnum, TransactionStatus.active);
@@ -956,11 +958,11 @@ void main() async {
         tid: 'root',
         rid: '0',
         pid: '0',
-        srAmount: 100,
+        srAmount: Decimal.fromInt(100),
         srId: 2,
-        rrAmount: 100,
+        rrAmount: Decimal.fromInt(100),
         rrId: 2,
-        balance: 100,
+        balance: Decimal.fromInt(100),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -973,11 +975,11 @@ void main() async {
         tid: 'leaf1',
         rid: 'root',
         pid: 'root',
-        srAmount: 40,
+        srAmount: Decimal.fromInt(40),
         srId: 2,
-        rrAmount: 40,
+        rrAmount: Decimal.fromInt(40),
         rrId: 3,
-        balance: 40,
+        balance: Decimal.fromInt(40),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -987,7 +989,7 @@ void main() async {
       await repo.add(leaf);
 
       final updatedRoot = box.get('root')!;
-      expect(updatedRoot.balance, 60);
+      expect(updatedRoot.balance, Decimal.fromInt(60));
       expect(updatedRoot.statusEnum, TransactionStatus.partial);
     });
 
@@ -996,11 +998,11 @@ void main() async {
         tid: 'root2',
         rid: '0',
         pid: '0',
-        srAmount: 200,
+        srAmount: Decimal.fromInt(200),
         srId: 1,
-        rrAmount: 200,
+        rrAmount: Decimal.fromInt(200),
         rrId: 2,
-        balance: 200,
+        balance: Decimal.fromInt(200),
         status: TransactionStatus.active.index,
         closable: true,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -1013,11 +1015,11 @@ void main() async {
         tid: 'leaf21',
         rid: 'root2',
         pid: 'root2',
-        srAmount: 120,
+        srAmount: Decimal.fromInt(120),
         srId: 2,
-        rrAmount: 120,
+        rrAmount: Decimal.fromInt(120),
         rrId: 3,
-        balance: 120,
+        balance: Decimal.fromInt(120),
         status: TransactionStatus.active.index,
         closable: false,
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -1030,11 +1032,11 @@ void main() async {
         tid: 'leaf22',
         rid: 'root2',
         pid: 'leaf21',
-        srAmount: 50,
+        srAmount: Decimal.fromInt(50),
         srId: 3,
-        rrAmount: 50,
+        rrAmount: Decimal.fromInt(50),
         rrId: 2, // This is the same as root to test closable logic
-        balance: 50,
+        balance: Decimal.fromInt(50),
         status: TransactionStatus.active.index,
         closable: false, // This is intentionally false to test if it gets updated to true
         timestamp: DateTime.now().microsecondsSinceEpoch,
@@ -1044,19 +1046,19 @@ void main() async {
       await repo.add(leaf2);
 
       final updatedRoot = box.get('root2')!;
-      expect(updatedRoot.balance, 80); // 200 - 120
+      expect(updatedRoot.balance, Decimal.fromInt(80)); // 200 - 120
 
       // The root is still partial because leaf21 doesnt use all of its balance
       expect(updatedRoot.statusEnum, TransactionStatus.partial);
 
       final updatedLeaf21 = box.get('leaf21')!;
-      expect(updatedLeaf21.balance, 70); // 120 - 50
+      expect(updatedLeaf21.balance, Decimal.fromInt(70)); // 120 - 50
 
       // The leaf21 is still partial because leaf22 doesnt use all of its balance
       expect(updatedLeaf21.statusEnum, TransactionStatus.partial);
 
       final updatedLeaf22 = box.get('leaf22')!;
-      expect(updatedLeaf22.balance, 50); // 50
+      expect(updatedLeaf22.balance, Decimal.fromInt(50)); // 50
 
       // Leaf22 is active because it has no children
       expect(updatedLeaf22.statusEnum, TransactionStatus.active);

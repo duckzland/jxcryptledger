@@ -14,6 +14,7 @@ import '../../features/watchers/controller.dart';
 import '../../mixins/state.dart';
 import '../../ipc/action.dart';
 import '../../ipc/client.dart';
+import '../../system/settings/keys.dart';
 import '../abstracts/runtime.dart';
 import '../log.dart';
 import '../mode.dart';
@@ -161,6 +162,8 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
     }
 
     logln("Password correct, vault unlocked");
+
+    CoreMode.dbVersion = _settingsController.getByKey(SettingKey.migrateVersion, defaultValue: "v1.1.0");
 
     await checkDatabaseExists();
     await bootServices();

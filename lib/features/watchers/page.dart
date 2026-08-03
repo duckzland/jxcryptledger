@@ -293,7 +293,7 @@ class _WatchersPageState extends State<WatchersPage>
         'from': sourceSymbol,
         'to': resultSymbol,
         'ops': tx.operatorText,
-        'rate': Utils.formatSmartDouble(tx.rates),
+        'rate': Utils.formatSmartDecimal(tx.rates),
         'sent': tx.sent.toString(),
         'limit': tx.limit.toString(),
         'duration': "${tx.duration}m",

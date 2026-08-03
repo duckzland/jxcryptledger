@@ -3,6 +3,7 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/models/exportable.dart';
 import '../../core/abstracts/models/with_id.dart';
 import '../../core/abstracts/models/rateable.dart';
+import '../../core/extensions/decimals.dart';
 import '../../core/math.dart';
 import '../../core/utils.dart';
 
@@ -12,9 +13,9 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
   final String tid;
   final String rid;
   final String pid;
-  final double srAmount;
-  final double rrAmount;
-  final double balance;
+  final Decimal srAmount;
+  final Decimal rrAmount;
+  final Decimal balance;
   final int status;
   final bool closable;
   final int timestamp;
@@ -47,6 +48,7 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     if (tid.isEmpty) {
       throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be empty.", "Please enter a transaction ID.");
     }
+
     if (tid == '0') {
       throw ValidationException(AppErrorCode.txBasicInvalidTid, "tid cannot be '0'.", "This transaction ID is not allowed.");
     }
@@ -54,6 +56,7 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     if (rid.isEmpty) {
       throw ValidationException(AppErrorCode.txBasicInvalidRid, "rid cannot be empty.", "Please enter a reference ID.");
     }
+
     if (pid.isEmpty) {
       throw ValidationException(AppErrorCode.txBasicInvalidPid, "pid cannot be empty.", "Please enter a parent reference.");
     }
@@ -70,21 +73,23 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     }
 
     // --- Amounts ---
-    if (srAmount <= 0) {
+    if (srAmount <= Decimal.zero) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidSrAmount,
         "srAmount must be > 0 (srAmount=$srAmount).",
         "Source amount must be greater than zero.",
       );
     }
-    if (rrAmount <= 0) {
+
+    if (rrAmount <= Decimal.zero) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidRrAmount,
         "rrAmount must be > 0 (rrAmount=$rrAmount).",
         "Result amount must be greater than zero.",
       );
     }
-    if (balance < 0) {
+
+    if (balance < Decimal.zero) {
       throw ValidationException(
         AppErrorCode.txBasicInvalidBalance,
         "balance must be >= 0 (balance=$balance).",
@@ -96,9 +101,11 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     if (srId <= 0) {
       throw ValidationException(AppErrorCode.txBasicInvalidSrId, "srId must be > 0 (srId=$srId).", "Please select a valid source account.");
     }
+
     if (rrId <= 0) {
       throw ValidationException(AppErrorCode.txBasicInvalidRrId, "rrId must be > 0 (rrId=$rrId).", "Please select a valid target account.");
     }
+
     if (srId == rrId && !isCapital) {
       throw ValidationException(
         AppErrorCode.txBasicSrIdEqualsRrId,
@@ -150,11 +157,11 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
       tid: map['tid'] as String,
       rid: map['rid'] as String,
       pid: map['pid'] as String,
-      srAmount: (map['srAmount'] as num).toDouble(),
+      srAmount: map['srAmount'] as Decimal,
       srId: map['srId'] as int,
-      rrAmount: (map['rrAmount'] as num).toDouble(),
+      rrAmount: map['rrAmount'] as Decimal,
       rrId: map['rrId'] as int,
-      balance: (map['balance'] as num).toDouble(),
+      balance: map['balance'] as Decimal,
       status: map['status'] as int,
       closable: map['closable'] as bool,
       timestamp: map['timestamp'] as int,
@@ -166,12 +173,12 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     String? tid,
     String? rid,
     String? pid,
-    double? srAmount,
+    Decimal? srAmount,
     int? srId,
-    double? rrAmount,
+    Decimal? rrAmount,
     int? rrId,
+    Decimal? balance,
     int? timestamp,
-    double? balance,
     int? status,
     bool? closable,
     Map<String, dynamic>? meta,
@@ -198,11 +205,11 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
       'tid': tid,
       'rid': rid,
       'pid': pid,
-      'srAmount': srAmount,
+      'srAmount': srAmount.toString(),
       'srId': srId,
-      'rrAmount': rrAmount,
+      'rrAmount': rrAmount.toString(),
       'rrId': rrId,
-      'balance': balance,
+      'balance': balance.toString(),
       'status': status,
       'closable': closable,
       'timestamp': timestamp,
@@ -235,20 +242,24 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     if (json['tid'] is! String) {
       throw ValidationException(AppErrorCode.txJsonInvalidTidType, "tid must be a string.", "Invalid transaction data.");
     }
+
     if (json['rid'] is! String) {
       throw ValidationException(AppErrorCode.txJsonInvalidRidType, "rid must be a string.", "Invalid transaction data.");
     }
+
     if (json['pid'] is! String) {
       throw ValidationException(AppErrorCode.txJsonInvalidPidType, "pid must be a string.", "Invalid transaction data.");
     }
 
-    if (json['srAmount'] is! num) {
+    if (json['srAmount'] is! num && !(json['srAmount'] is String && Decimal.tryParse(json['srAmount'] as String) != null)) {
       throw ValidationException(AppErrorCode.txJsonInvalidSrAmountType, "srAmount must be numeric.", "Invalid transaction data.");
     }
-    if (json['rrAmount'] is! num) {
+
+    if (json['rrAmount'] is! num && !(json['rrAmount'] is String && Decimal.tryParse(json['rrAmount'] as String) != null)) {
       throw ValidationException(AppErrorCode.txJsonInvalidRrAmountType, "rrAmount must be numeric.", "Invalid transaction data.");
     }
-    if (json['balance'] is! num) {
+
+    if (json['balance'] is! num && !(json['balance'] is String && Decimal.tryParse(json['balance'] as String) != null)) {
       throw ValidationException(AppErrorCode.txJsonInvalidBalanceType, "balance must be numeric.", "Invalid transaction data.");
     }
 
@@ -279,11 +290,11 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
       tid: json['tid'] as String,
       rid: json['rid'] as String,
       pid: json['pid'] as String,
-      srAmount: (json['srAmount'] as num).toDouble(),
+      srAmount: (json['srAmount'] as Object?).toDecimal() ?? Decimal.zero,
       srId: (json['srId'] as num).toInt(),
-      rrAmount: (json['rrAmount'] as num).toDouble(),
+      rrAmount: (json['rrAmount'] as Object?).toDecimal() ?? Decimal.zero,
       rrId: (json['rrId'] as num).toInt(),
-      balance: (json['balance'] as num).toDouble(),
+      balance: (json['balance'] as Object?).toDecimal() ?? Decimal.zero,
       status: (json['status'] as num).toInt(),
       closable: json['closable'] as bool,
       timestamp: (json['timestamp'] as num).toInt(),
@@ -346,28 +357,21 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     return null;
   }
 
-  String get srAmountText => Utils.formatSmartDouble(srAmount);
-  String get rrAmountText => Utils.formatSmartDouble(rrAmount);
-  String get balanceText => Utils.formatSmartDouble(balance);
-  String get rateText => Utils.formatSmartDouble(rateDouble);
-  String get rateReversedText => Utils.formatSmartDouble(Math.divide(1, rateDouble));
+  String get srAmountText => Utils.formatSmartDecimal(srAmount);
+  String get rrAmountText => Utils.formatSmartDecimal(rrAmount);
+  String get balanceText => Utils.formatSmartDecimal(balance);
+  String get rateText => Utils.formatSmartDecimal(rate);
+  String get rateReversedText => Utils.formatSmartDecimal(Math.divide(Decimal.one, rate));
 
-  String get srAmountTextRaw => Utils.formatSmartDouble(srAmount, smartDecimal: false, maxDecimals: 18);
-  String get rrAmountTextRaw => Utils.formatSmartDouble(rrAmount, smartDecimal: false, maxDecimals: 18);
-  String get balanceTextRaw => Utils.formatSmartDouble(balance, smartDecimal: false, maxDecimals: 18);
-  String get rateTextRaw => Utils.formatSmartDouble(rateDouble, smartDecimal: false, maxDecimals: 18);
-  String get rateReversedTextRaw => Utils.formatSmartDouble(Math.divide(1, rateDouble), smartDecimal: false, maxDecimals: 18);
+  String get srAmountTextRaw => Utils.formatSmartDecimal(srAmount, smartDecimal: false, maxDecimals: 18);
+  String get rrAmountTextRaw => Utils.formatSmartDecimal(rrAmount, smartDecimal: false, maxDecimals: 18);
+  String get balanceTextRaw => Utils.formatSmartDecimal(balance, smartDecimal: false, maxDecimals: 18);
+  String get rateTextRaw => Utils.formatSmartDecimal(rate, smartDecimal: false, maxDecimals: 18);
+  String get rateReversedTextRaw => Utils.formatSmartDecimal(Math.divide(Decimal.one, rate), smartDecimal: false, maxDecimals: 18);
 
   Decimal get rate {
-    if (srAmount <= 0 || rrAmount <= 0) return Decimal.zero;
-    final r = rrAmount / srAmount;
-    return Decimal.parse(r.toString());
-  }
-
-  double get rateDouble {
-    if (srAmount <= 0 || rrAmount <= 0) return 0.0;
-    final r = rrAmount / srAmount;
-    return r.isFinite ? r : 0.0;
+    if (srAmount <= Decimal.zero || rrAmount <= Decimal.zero) return Decimal.zero;
+    return Math.divide(rrAmount, srAmount);
   }
 
   @override
@@ -432,6 +436,6 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
   }
 
   bool get hasBalance {
-    return balance > 0;
+    return balance > Decimal.zero;
   }
 }

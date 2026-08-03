@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+
 import '../../../features/rates/service.dart';
 import '../../abstracts/models/rateable.dart';
 import '../../abstracts/models/with_id.dart';
@@ -44,7 +46,7 @@ mixin CoreMixinsServicesRateable<T extends CoreModelWithId, R extends CoreBaseRe
     }
   }
 
-  Future<void> processNewRate(T tx, double newRate) async {}
+  Future<void> processNewRate(T tx, Decimal newRate) async {}
 
   Future<void> refreshRates() async {
     await rateableService.refreshRates();

@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:jxledger/core/math.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
@@ -231,43 +233,50 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   }
 
   Widget _buildCalculatedResult({bool mini = false}) {
-    final double source = _sourceAmount == null ? 0.0 : double.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? 0;
+    final Decimal source = _sourceAmount == null ? Decimal.zero : Decimal.tryParse(Utils.sanitizeNumber(_sourceAmount!)) ?? Decimal.zero;
     final String sourceSymbol = rateableSource != null ? _cryptosController.getSymbol(rateableSource!) ?? "" : "";
     final String targetSymbol = rateableTarget != null ? _cryptosController.getSymbol(rateableTarget!) ?? "" : "";
 
-    final double entryRate = rateableAmount == null ? 0.0 : rateableParseToDouble(rateableAmount!, reverse: _isReversed);
-    final double returnRate = _ratesRevertAmount == null ? 0.0 : rateableParseToDouble(_ratesRevertAmount!, reverse: _isReversed);
+    final Decimal entryRate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+    final Decimal returnRate = _ratesRevertAmount == null
+        ? Decimal.zero
+        : rateableParseToDecimal(_ratesRevertAmount!, reverse: _isReversed);
 
-    if (source <= 0 || entryRate <= 0 || targetSymbol == "UNK" || sourceSymbol == "UNK" || targetSymbol == "" || sourceSymbol == "") {
+    if (source <= Decimal.zero ||
+        entryRate <= Decimal.zero ||
+        targetSymbol == "UNK" ||
+        sourceSymbol == "UNK" ||
+        targetSymbol == "" ||
+        sourceSymbol == "") {
       return const Text("");
     }
 
-    final double stage1Balance = source * entryRate;
-    double resultValue = stage1Balance;
-    double profit = 0;
+    final Decimal stage1Balance = source * entryRate;
+    Decimal resultValue = stage1Balance;
+    Decimal profit = Decimal.zero;
 
-    if (returnRate > 0) {
-      resultValue = stage1Balance / returnRate;
+    if (returnRate > Decimal.zero) {
+      resultValue = Math.divide(stage1Balance, returnRate);
       profit = resultValue - source;
     }
 
-    final String currentSymbol = (returnRate > 0) ? sourceSymbol : targetSymbol;
+    final String currentSymbol = (returnRate > Decimal.zero) ? sourceSymbol : targetSymbol;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          returnRate > 0 ? "Returned amout" : "Calculated Amount",
+          returnRate > Decimal.zero ? "Returned amout" : "Calculated Amount",
           style: TextStyle(fontSize: mini ? 13 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
         Text(
-          "${Utils.formatSmartDouble(resultValue)} $currentSymbol",
+          "${Utils.formatSmartDecimal(resultValue)} $currentSymbol",
           style: TextStyle(fontSize: mini ? 28 : 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
 
-        if (returnRate > 0 && profit != 0) ...[
+        if (returnRate > Decimal.zero && profit != Decimal.zero) ...[
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -287,12 +296,12 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
                 ),
                 const SizedBox(width: 8),
                 WidgetsBalanceText(
-                  text: "${Utils.formatSmartDouble(profit)} $sourceSymbol",
-                  value: resultValue,
-                  comparator: source,
+                  text: "${Utils.formatSmartDecimal(profit)} $sourceSymbol",
+                  value: resultValue.toDouble(),
+                  comparator: source.toDouble(),
                   fontSize: mini ? 14 : 18,
                   fontWeight: FontWeight.w600,
-                  hidePrefix: profit < 0,
+                  hidePrefix: profit < Decimal.zero,
                 ),
               ],
             ),

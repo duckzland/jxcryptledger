@@ -6,4 +6,5 @@ class CoreMode {
   static bool isUnlocked = false;
   static String ipcPipeName = "";
   static String path = "";
+  static String dbVersion = "";
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -18,7 +19,7 @@ class WidgetsFieldsAmount extends StatefulWidget {
   final bool allowCopy;
   final bool allowReverse;
   final bool allowRate;
-  final double? useMax;
+  final Decimal? useMax;
   final bool disposeController;
 
   final TextEditingController? controller;
@@ -93,7 +94,11 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
   @override
   void suffixOnUseMax() {
-    final String maxValue = Utils.formatSmartDouble(widget.useMax ?? 0.0, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
+    final String maxValue = Utils.formatSmartDecimal(
+      widget.useMax ?? Decimal.zero,
+      smartDecimal: false,
+      maxDecimals: 18,
+    ).replaceAll(",", "");
 
     _controller.text = maxValue;
     widget.onChanged?.call(maxValue);
@@ -117,9 +122,9 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
   void suffixOnReverse() {
     try {
       final sanitized = Utils.sanitizeNumber(_controller.text);
-      final parsed = double.parse(sanitized);
-      final reversed = Math.divide(1, parsed);
-      _controller.text = Utils.formatSmartDouble(reversed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
+      final parsed = Decimal.parse(sanitized);
+      final reversed = Math.divide(Decimal.one, parsed);
+      _controller.text = Utils.formatSmartDecimal(reversed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
       widget.onChanged?.call(reversed.toString());
       widget.onReversing?.call();
       setState(() {});
@@ -182,17 +187,17 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
     }
 
     final sanitized = Utils.sanitizeNumber(value);
-    final parsed = double.tryParse(sanitized);
+    final parsed = Decimal.tryParse(sanitized);
 
     if (parsed == null) {
       return 'Enter a valid number';
     }
 
-    if (!widget.allowNegative && parsed < 0) {
+    if (!widget.allowNegative && parsed < Decimal.zero) {
       return 'Negative amounts are not allowed';
     }
 
-    if (parsed == 0) {
+    if (parsed == Decimal.zero) {
       return 'Amount must not be zero';
     }
 

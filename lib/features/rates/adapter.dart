@@ -1,6 +1,6 @@
-import 'package:decimal/decimal.dart';
 import 'package:hive_ce/hive_ce.dart';
 
+import '../../core/extensions/decimals.dart';
 import 'model.dart';
 
 class RatesAdapter extends TypeAdapter<RatesModel> {
@@ -12,10 +12,10 @@ class RatesAdapter extends TypeAdapter<RatesModel> {
     return RatesModel(
       sourceSymbol: reader.readString(),
       sourceId: reader.readInt(),
-      sourceAmount: Decimal.parse(reader.readString()),
+      sourceAmount: reader.readDecimal(),
       targetSymbol: reader.readString(),
       targetId: reader.readInt(),
-      targetAmount: Decimal.parse(reader.readString()),
+      targetAmount: reader.readDecimal(),
       timestamp: reader.readInt(),
     );
   }
@@ -24,10 +24,10 @@ class RatesAdapter extends TypeAdapter<RatesModel> {
   void write(BinaryWriter writer, RatesModel obj) {
     writer.writeString(obj.sourceSymbol);
     writer.writeInt(obj.sourceId);
-    writer.writeString(obj.sourceAmount.toString());
+    writer.writeDecimal(obj.sourceAmount);
     writer.writeString(obj.targetSymbol);
     writer.writeInt(obj.targetId);
-    writer.writeString(obj.targetAmount.toString());
+    writer.writeDecimal(obj.targetAmount);
     writer.writeInt(obj.timestamp);
   }
 }

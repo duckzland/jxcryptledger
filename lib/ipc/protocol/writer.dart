@@ -2,7 +2,10 @@
 
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:decimal/decimal.dart';
 import 'package:hive_ce/hive_ce.dart';
+
+import '../../core/extensions/decimals.dart';
 
 class IpcWriter implements BinaryWriter {
   final BytesBuilder _builder = BytesBuilder();
@@ -153,6 +156,9 @@ class IpcWriter implements BinaryWriter {
       if (withTypeId) writeByte(9);
       write(value.key);
       write(value.value);
+    } else if (value is Decimal) {
+      if (withTypeId) writeByte(10);
+      writeDecimal(value);
     } else {
       throw UnsupportedError(
         'Unsupported runtime type: ${value.runtimeType}. '

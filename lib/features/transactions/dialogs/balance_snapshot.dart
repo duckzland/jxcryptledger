@@ -1,5 +1,5 @@
-
 import 'package:data_table_2/data_table_2.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
@@ -30,11 +30,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   TransactionsController get _txController => locator<TransactionsController>();
   RatesController get _rateController => locator<RatesController>();
 
-  final Map<int, double> _cachedRates = {};
+  final Map<int, Decimal> _cachedRates = {};
 
-  double get tradeCapital {
+  Decimal get tradeCapital {
     final data = widget.initialData;
-    return data?.srAmount ?? 0;
+    return data?.srAmount ?? Decimal.zero;
   }
 
   String get tradeSourceSymbol {
@@ -91,9 +91,9 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
   void _populateRates() {
     for (final tx in tradableLeaves) {
-      double rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+      Decimal rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
 
-      if (rate == -9999) {
+      if (rate == Decimal.fromInt(-9999)) {
         _rateController.addQueue(tx.rrId, tradeSourceId);
       } else {
         _cachedRates[tx.rrId] = rate;
@@ -125,9 +125,9 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     for (final tx in txs) {
       final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-      double rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+      Decimal rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
 
-      if (rate == -9999) {
+      if (rate == Decimal.fromInt(-9999)) {
         if (_cachedRates[tx.rrId] != null) {
           rate = _cachedRates[tx.rrId]!;
         }
@@ -135,7 +135,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         _cachedRates[tx.rrId] = rate;
       }
 
-      final amount = rate == -9999 ? 0.0 : tx.balance * rate;
+      final amount = rate == Decimal.fromInt(-9999) ? Decimal.zero : tx.balance * rate;
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
@@ -143,8 +143,10 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             ? 'Balance ${tx.balanceText} $resultSymbol'
             : '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
         'balance': '${tx.balanceText} $resultSymbol',
-        'rate': rate == -9999 || tx.rrId == tradeSourceId ? "-" : "1 $resultSymbol = ${Utils.formatSmartDouble(rate)} $tradeSourceSymbol",
-        'amount': rate == -9999 ? "" : "${Utils.formatSmartDouble(amount)} $tradeSourceSymbol",
+        'rate': rate == Decimal.fromInt(-9999) || tx.rrId == tradeSourceId
+            ? "-"
+            : "1 $resultSymbol = ${Utils.formatSmartDecimal(rate)} $tradeSourceSymbol",
+        'amount': rate == Decimal.fromInt(-9999) ? "" : "${Utils.formatSmartDecimal(amount)} $tradeSourceSymbol",
         'uuid': tx.uuid,
         'tx': tx,
       });
@@ -153,20 +155,20 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     return rows;
   }
 
-  double? _getTotalAmount(List<TransactionsModel> txs) {
-    double? total;
+  Decimal? _getTotalAmount(List<TransactionsModel> txs) {
+    Decimal? total;
 
     for (final tx in txs) {
-      double rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+      Decimal rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
 
-      if (rate == -9999 && _cachedRates[tx.rrId] != null) {
+      if (rate == Decimal.fromInt(-9999) && _cachedRates[tx.rrId] != null) {
         rate = _cachedRates[tx.rrId]!;
       }
 
-      final amount = rate == -9999 ? 0.0 : tx.balance * rate;
+      final amount = rate == Decimal.fromInt(-9999) ? Decimal.zero : tx.balance * rate;
 
-      if (rate != -9999) {
-        total = (total ?? 0.0) + amount;
+      if (rate != Decimal.fromInt(-9999)) {
+        total = (total ?? Decimal.zero) + amount;
       }
     }
 
@@ -223,7 +225,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
       return SizedBox.shrink();
     }
 
-    final total = '${Utils.formatSmartDouble(ttl)} $tradeSourceSymbol';
+    final total = '${Utils.formatSmartDecimal(ttl)} $tradeSourceSymbol';
     final pl = Math.subtract(ttl, tradeCapital);
 
     return SizedBox(
@@ -251,7 +253,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
               const DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(
-                Text("${Utils.formatSmartDouble(tradeCapital)} $tradeSourceSymbol", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text(total, style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -263,7 +265,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             cells: [
               const DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDouble(pl)} $tradeSourceSymbol", value: pl, comparator: 0)),
+              DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDecimal(pl)} $tradeSourceSymbol", value: pl.toDouble(), comparator: 0)),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
             ],

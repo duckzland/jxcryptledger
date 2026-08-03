@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+
 import '../../../core/abstracts/service.dart';
 import '../../../core/mixins/services/rateable.dart';
 import '../../core/log.dart';
@@ -15,7 +17,7 @@ class WatchersService extends CoreBaseService<WatchersModel, WatchersRepository>
   WatchersService(super.repo, this.notificationService, this.cryptosService);
 
   @override
-  Future<void> processNewRate(WatchersModel tx, double newRate) async {
+  Future<void> processNewRate(WatchersModel tx, Decimal newRate) async {
     logln("[WATCHERS] Evaluating ${tx.srId}-${tx.rrId}");
 
     if (tx.isSpent) return;
@@ -48,7 +50,7 @@ class WatchersService extends CoreBaseService<WatchersModel, WatchersRepository>
       final sourceSymbol = cryptosService.getSymbol(tx.srId) ?? "UNK";
       final targetSymbol = cryptosService.getSymbol(tx.rrId) ?? "UNK";
 
-      message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDouble(tx.rates)}.";
+      message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDecimal(tx.rates)}.";
     }
 
     await notificationService.show(message);

@@ -1,4 +1,5 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -59,20 +60,20 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   bool _hasLeaf = false;
   bool _leavesClosed = false;
 
-  double _capital = 0;
-  double _balance = 0;
-  double _finalized = 0;
-  double _profit = 0;
-  double _profitPercentage = 0;
-  double _rBalance = 0;
-  double _rFinalized = 0;
-  double _rProfit = 0;
-  double _rProfitPercentage = 0;
+  Decimal _capital = Decimal.zero;
+  Decimal _balance = Decimal.zero;
+  Decimal _finalized = Decimal.zero;
+  Decimal _profit = Decimal.zero;
+  Decimal _profitPercentage = Decimal.zero;
+  Decimal _rBalance = Decimal.zero;
+  Decimal _rFinalized = Decimal.zero;
+  Decimal _rProfit = Decimal.zero;
+  Decimal _rProfitPercentage = Decimal.zero;
 
   Color _bgColor = AppTheme.tableRowBg;
   Color _fgColor = AppTheme.text;
 
-  Map<int, double> _activeBranchAmounts = {};
+  Map<int, Decimal> _activeBranchAmounts = {};
 
   double _panelHeight = 37;
 
@@ -96,9 +97,9 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
       return;
     }
 
-    bool showBalance = _hasLeaf && _rBalance > 0 && _rBalance != widget.tx.balance;
-    bool showAvailable = widget.tx.balance > 0;
-    bool showFinalized = _rFinalized != 0;
+    bool showBalance = _hasLeaf && _rBalance > Decimal.zero && _rBalance != widget.tx.balance;
+    bool showAvailable = widget.tx.balance > Decimal.zero;
+    bool showFinalized = _rFinalized != Decimal.zero;
 
     if (showBalance || showAvailable || showFinalized) {
       if (_calculateData(onlyUpdateIfChanged: true, tx: widget.tx)) {
@@ -152,15 +153,17 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
     final finalizedBranchAmounts = _txController.collectBranchFinalizedAmount(atx);
 
     final capital = atx.srAmount;
-    final balance = activeBranchAmounts[atx.srId] ?? 0;
-    final finalized = finalizedBranchAmounts[atx.srId] ?? 0;
+    final balance = activeBranchAmounts[atx.srId] ?? Decimal.zero;
+    final finalized = finalizedBranchAmounts[atx.srId] ?? Decimal.zero;
     final profit = Math.subtract(Math.add(balance, finalized), capital);
-    final profitPercentage = (capital == 0 ? 0 : Math.multiply(Math.divide(profit, capital), 100)) as double;
+    final profitPercentage = (capital == Decimal.zero ? Decimal.zero : Math.multiply(Math.divide(profit, capital), Decimal.fromInt(100)));
 
-    final rBalance = Math.add(activeBranchAmounts[atx.rrId] ?? 0, atx.balance);
-    final rFinalized = finalizedBranchAmounts[atx.rrId] ?? 0;
+    final rBalance = Math.add(activeBranchAmounts[atx.rrId] ?? Decimal.zero, atx.balance);
+    final rFinalized = finalizedBranchAmounts[atx.rrId] ?? Decimal.zero;
     final rProfit = Math.subtract(Math.add(rBalance, rFinalized), atx.rrAmount);
-    final rProfitPercentage = (atx.rrAmount == 0 ? 0 : Math.multiply(Math.divide(rProfit, atx.rrAmount), 100)) as double;
+    final rProfitPercentage = (atx.rrAmount == Decimal.zero
+        ? Decimal.zero
+        : Math.multiply(Math.divide(rProfit, atx.rrAmount), Decimal.fromInt(100)));
 
     final changed =
         capital != _capital ||
@@ -227,7 +230,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
           children: [
             LayoutId(id: 'left', child: _buildLeftGroup()),
             if (_activeBranchAmounts.entries.isNotEmpty) LayoutId(id: 'middle', child: _buildMiddleGroup()),
-            if (!(!_hasLeaf || _balance <= 0)) LayoutId(id: 'right', child: _buildRightGroup()),
+            if (!(!_hasLeaf || _balance <= Decimal.zero)) LayoutId(id: 'right', child: _buildRightGroup()),
             LayoutId(
               id: 'trailing',
               child: Padding(
@@ -259,14 +262,14 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   }
 
   Widget _buildLeftGroup() {
-    bool showBalance = _hasLeaf && _rBalance > 0 && _rBalance != _tx.balance;
-    bool showAvailable = _tx.balance > 0;
-    bool showFinalized = _rFinalized != 0;
+    bool showBalance = _hasLeaf && _rBalance > Decimal.zero && _rBalance != _tx.balance;
+    bool showAvailable = _tx.balance > Decimal.zero;
+    bool showFinalized = _rFinalized != Decimal.zero;
 
     Color plColor = _fgColor;
-    if (_rProfitPercentage > 0) {
+    if (_rProfitPercentage > Decimal.zero) {
       plColor = AppTheme.profit;
-    } else if (_rProfitPercentage < 0) {
+    } else if (_rProfitPercentage < Decimal.zero) {
       plColor = AppTheme.loss;
     }
 
@@ -309,17 +312,17 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
             if (showAvailable) WidgetsHeader(titleColor: _fgColor, title: _tx.balanceText, subtitle: "Avail. $rrSymbol", reversed: true),
 
             if (showBalance)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_rBalance), subtitle: "Bal. $rrSymbol", reversed: true),
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_rBalance), subtitle: "Bal. $rrSymbol", reversed: true),
 
             if (showFinalized)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_rFinalized), subtitle: "Fin. $rrSymbol", reversed: true),
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_rFinalized), subtitle: "Fin. $rrSymbol", reversed: true),
 
             if (showBalance || _leavesClosed)
               WidgetsHeader(
                 titleColor: plColor,
                 title:
-                    "${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfit)}"
-                    "(${_rProfit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_rProfitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
+                    "${_rProfit >= Decimal.zero ? '+' : ''}${Utils.formatSmartDecimal(_rProfit)}"
+                    "(${_rProfit >= Decimal.zero ? '+' : ''}${Utils.formatSmartDecimal(_rProfitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
                 subtitle: "P/L $rrSymbol (%)",
                 reversed: true,
               ),
@@ -330,12 +333,12 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   }
 
   Widget _buildRightGroup() {
-    if (!_hasLeaf || _balance <= 0 || isCapital) return const SizedBox.shrink();
+    if (!_hasLeaf || _balance <= Decimal.zero || isCapital) return const SizedBox.shrink();
 
     Color plColor = _fgColor;
-    if (_profitPercentage > 0) {
+    if (_profitPercentage > Decimal.zero) {
       plColor = AppTheme.profit;
-    } else if (_profitPercentage < 0) {
+    } else if (_profitPercentage < Decimal.zero) {
       plColor = AppTheme.loss;
     }
 
@@ -363,16 +366,16 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
           mainAxisSize: MainAxisSize.min,
           spacing: 15,
           children: [
-            WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_capital), subtitle: "Cap. $srSymbol", reversed: true),
-            if (_balance > 0)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_balance), subtitle: "Bal. $srSymbol", reversed: true),
-            if (_finalized > 0)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDouble(_finalized), subtitle: "Fin. $srSymbol", reversed: true),
+            WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_capital), subtitle: "Cap. $srSymbol", reversed: true),
+            if (_balance > Decimal.zero)
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_balance), subtitle: "Bal. $srSymbol", reversed: true),
+            if (_finalized > Decimal.zero)
+              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_finalized), subtitle: "Fin. $srSymbol", reversed: true),
             WidgetsHeader(
               titleColor: plColor,
               title:
-                  "${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profit)}"
-                  "(${_profit >= 0 ? '+' : ''}${Utils.formatSmartDouble(_profitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
+                  "${_profit >= Decimal.zero ? '+' : ''}${Utils.formatSmartDecimal(_profit)}"
+                  "(${_profit >= Decimal.zero ? '+' : ''}${Utils.formatSmartDecimal(_profitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
               subtitle: "P/L $srSymbol (%)",
               reversed: true,
             ),
@@ -405,7 +408,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
           mainAxisSize: MainAxisSize.min,
           children: _activeBranchAmounts.entries.map((entry) {
             final symbol = _cryptosController.getSymbol(entry.key) ?? '';
-            final amount = Utils.formatSmartDouble(entry.value);
+            final amount = Utils.formatSmartDecimal(entry.value);
 
             return WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: "Bal. $symbol", reversed: true);
           }).toList(),

@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/utils.dart';
@@ -17,7 +18,7 @@ class WatchersForm extends StatefulWidget {
   final WatchersModel? initialData;
   final int? initialSrId;
   final int? initialRrId;
-  final double? initialRate;
+  final Decimal? initialRate;
   final String? linkedToTx;
 
   const WatchersForm({
@@ -73,7 +74,7 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       rateableTarget = widget.initialRrId;
     }
 
-    if (widget.initialRate != null && widget.initialRate! > 0) {
+    if (widget.initialRate != null && widget.initialRate! > Decimal.zero) {
       rateableAmount = Utils.sanitizeNumber(widget.initialRate.toString());
     }
   }
@@ -295,7 +296,7 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
         wid: _wid!,
         srId: rateableSource!,
         rrId: rateableTarget!,
-        rates: double.tryParse(Utils.sanitizeNumber(rateableAmount ?? "0")) ?? 0,
+        rates: Decimal.tryParse(Utils.sanitizeNumber(rateableAmount ?? "0")) ?? Decimal.zero,
         sent: _sent!,
         operator: int.tryParse(_operator ?? "2") ?? 2,
         limit: int.tryParse(_limitCount ?? "0") ?? 0,

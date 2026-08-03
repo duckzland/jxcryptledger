@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:jxledger/ipc/action.dart';
 import 'package:jxledger/ipc/box.dart';
@@ -41,15 +42,16 @@ Future<String> _testPipeName() async {
   return '$path/jxledger-$suffix.sock';
 }
 
-TransactionsModel makeTx(String tid, {double balance = 0.0}) {
+TransactionsModel makeTx(String tid, {Decimal? balance}) {
+  balance ??= Decimal.zero;
   return TransactionsModel(
     tid: tid,
     pid: 'p-$tid',
     rid: 'r-$tid',
     srId: 111,
     rrId: 222,
-    srAmount: 1.0,
-    rrAmount: 2.0,
+    srAmount: Decimal.fromInt(1),
+    rrAmount: Decimal.fromInt(2),
     balance: balance,
     status: 0,
     closable: true,
@@ -213,10 +215,10 @@ void main() {
     late TransactionsModel txD;
 
     setUp(() {
-      txA = makeTx("123", balance: 3.0);
-      txB = makeTx("a", balance: 10.0);
-      txC = makeTx("b", balance: 20.0);
-      txD = makeTx("99", balance: 5.0);
+      txA = makeTx("123", balance: Decimal.fromInt(3));
+      txB = makeTx("a", balance: Decimal.fromInt(10));
+      txC = makeTx("b", balance: Decimal.fromInt(20));
+      txD = makeTx("99", balance: Decimal.fromInt(5));
     });
 
     test('toBytes with put serializes TransactionsModel using adapter', () {
@@ -226,7 +228,7 @@ void main() {
       final decoded = converter.fromBytes(IpcAction.put, 'transactions_box', bytes);
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
-      expect(decoded.balance, equals(3.0));
+      expect(decoded.balance, equals(Decimal.fromInt(3)));
     });
 
     test('toBytes with multiPut serializes multiple TransactionsModel payloads', () {
@@ -242,9 +244,9 @@ void main() {
       final decodedTx2 = decoded[1] as TransactionsModel;
 
       expect(decodedTx1.tid, equals('a'));
-      expect(decodedTx1.balance, equals(10.0));
+      expect(decodedTx1.balance, equals(Decimal.fromInt(10)));
       expect(decodedTx2.tid, equals('b'));
-      expect(decodedTx2.balance, equals(20.0));
+      expect(decodedTx2.balance, equals(Decimal.fromInt(20)));
     });
 
     test('toBytes with unlock returns raw payload', () {
@@ -268,7 +270,7 @@ void main() {
       expect(decoded.length, equals(1));
       final decodedTx = decoded.first as TransactionsModel;
       expect(decodedTx.tid, equals('123'));
-      expect(decodedTx.balance, equals(3.0));
+      expect(decodedTx.balance, equals(Decimal.fromInt(3)));
     });
 
     test('fromSenderBytes with clear returns int32 or 0 for empty', () {
@@ -291,7 +293,7 @@ void main() {
       final txDecoded = converter.fromBytes(IpcAction.put, 'transactions_box', decodedGood);
       expect(txDecoded, isA<TransactionsModel>());
       expect((txDecoded as TransactionsModel).tid, equals('99'));
-      expect(txDecoded.balance, equals(5.0));
+      expect(txDecoded.balance, equals(Decimal.fromInt(5)));
 
       final decodedBad = converter.fromBytes(IpcAction.unlock, 'transactions_box', bad);
       expect(decodedBad, isNull);
@@ -303,7 +305,7 @@ void main() {
 
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
-      expect(decoded.balance, equals(3.0));
+      expect(decoded.balance, equals(Decimal.fromInt(3)));
     });
 
     test('fromBytes with multiPut decodes multiple TransactionsModel items', () {
@@ -318,9 +320,9 @@ void main() {
       final decodedTx2 = decoded[1] as TransactionsModel;
 
       expect(decodedTx1.tid, equals('a'));
-      expect(decodedTx1.balance, equals(10.0));
+      expect(decodedTx1.balance, equals(Decimal.fromInt(10)));
       expect(decodedTx2.tid, equals('b'));
-      expect(decodedTx2.balance, equals(20.0));
+      expect(decodedTx2.balance, equals(Decimal.fromInt(20)));
     });
   });
 
@@ -615,25 +617,25 @@ void main() {
     });
 
     test('init populates items from client', () async {
-      client.stubResponse(IpcAction.extract, [makeTx('id1', balance: 10.0), makeTx('id2', balance: 20.0)]);
+      client.stubResponse(IpcAction.extract, [makeTx('id1', balance: Decimal.fromInt(10)), makeTx('id2', balance: Decimal.fromInt(20))]);
 
       await box.init();
       expect(box.length, equals(2));
       expect(box.get('id1')?.tid, equals('id1'));
-      expect(box.get('id2')?.balance, equals(20.0));
+      expect(box.get('id2')?.balance, equals(Decimal.fromInt(20)));
     });
 
     test('put sends to client and stores item', () async {
-      final tx = makeTx('idX', balance: 99.0);
+      final tx = makeTx('idX', balance: Decimal.fromInt(99));
       await box.put(tx.tid, tx);
 
       expect(client.lastOp, equals(IpcAction.put));
-      expect(box.get('idX')?.balance, equals(99.0));
+      expect(box.get('idX')?.balance, equals(Decimal.fromInt(99)));
     });
 
     test('clear empties items and returns count', () async {
       client.stubResponse(IpcAction.clear, 5);
-      box.items['id'] = makeTx('id', balance: 5.0);
+      box.items['id'] = makeTx('id', balance: Decimal.fromInt(5));
 
       final count = await box.clear();
       expect(count, equals(5));
@@ -641,7 +643,7 @@ void main() {
     });
 
     test('delete removes item and sends to client', () async {
-      final tx = makeTx('idY', balance: 7.0);
+      final tx = makeTx('idY', balance: Decimal.fromInt(7));
       box.items[tx.tid] = tx;
 
       await box.delete(tx.tid);
@@ -650,7 +652,7 @@ void main() {
     });
 
     test('addAll sends multiPut and merges items', () async {
-      final txs = [makeTx('a', balance: 1.0), makeTx('b', balance: 2.0)];
+      final txs = [makeTx('a', balance: Decimal.fromInt(1)), makeTx('b', balance: Decimal.fromInt(2))];
       await box.addAll(txs);
 
       expect(client.lastOp, equals(IpcAction.multiPut));
@@ -658,8 +660,8 @@ void main() {
     });
 
     test('replace sends replace and resets items', () async {
-      box.items['old'] = makeTx('old', balance: 3.0);
-      final txs = [makeTx('new1', balance: 4.0), makeTx('new2', balance: 5.0)];
+      box.items['old'] = makeTx('old', balance: Decimal.fromInt(3));
+      final txs = [makeTx('new1', balance: Decimal.fromInt(4)), makeTx('new2', balance: Decimal.fromInt(5))];
       await box.replace(txs);
 
       expect(client.lastOp, equals(IpcAction.replace));
@@ -702,13 +704,13 @@ void main() {
     });
 
     test('add/update/remove delegate to put/delete', () async {
-      final tx = makeTx('idZ', balance: 11.0);
+      final tx = makeTx('idZ', balance: Decimal.fromInt(11));
       await box.add(tx);
       expect(box.get('idZ'), equals(tx));
 
-      final updated = makeTx('idZ', balance: 12.0);
+      final updated = makeTx('idZ', balance: Decimal.fromInt(12));
       await box.update(updated);
-      expect(box.get('idZ')?.balance, equals(12.0));
+      expect(box.get('idZ')?.balance, equals(Decimal.fromInt(12)));
 
       await box.remove(updated);
       expect(box.get('idZ'), isNull);
@@ -876,7 +878,7 @@ void main() {
         expect(event.key, equals('52'));
         final data = event.payload as TransactionsModel;
         expect(data.uuid, equals('52'));
-        expect(data.balance, equals(3.0));
+        expect(data.balance, equals(Decimal.fromInt(3)));
         expect(data, isA<TransactionsModel>());
       });
 
@@ -900,7 +902,7 @@ void main() {
         expect(event.key, equals('42'));
         final data = event.payload as TransactionsModel;
         expect(data.uuid, equals('42'));
-        expect(data.balance, equals(6.0));
+        expect(data.balance, equals(Decimal.fromInt(6)));
         expect(data, isA<TransactionsModel>());
       });
 
@@ -922,12 +924,12 @@ void main() {
 
       // Testing sending via client 1
       await Future.delayed(const Duration(milliseconds: 150));
-      final tx1 = makeTx("42", balance: 6.0);
+      final tx1 = makeTx("42", balance: Decimal.fromInt(6));
       client1.send(op: IpcAction.put, action: 'transactions_box', key: '42', payload: tx1);
 
       // Testing sending via client 2
       await Future.delayed(const Duration(milliseconds: 150));
-      final tx2 = makeTx("52", balance: 3.0);
+      final tx2 = makeTx("52", balance: Decimal.fromInt(3));
       client2.send(op: IpcAction.put, action: 'transactions_box', key: '52', payload: tx2);
     });
   });

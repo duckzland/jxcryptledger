@@ -3,6 +3,62 @@ import 'package:decimal/decimal.dart';
 class Utils {
   Utils._();
 
+  static String formatSmartDecimal(
+    Decimal value, {
+    int maxDecimals = 6,
+    int minDecimals = 0,
+    int limitDecimals = 18,
+    bool smartDecimal = true,
+  }) {
+    if (value == Decimal.zero) return "0";
+
+    Decimal dec = value.round(scale: limitDecimals);
+
+    int effectivePrecision = maxDecimals;
+
+    if (value.abs() > Decimal.zero && value.abs() < Decimal.one) {
+      String s = dec.toString();
+      if (s.contains('.')) {
+        String fraction = s.split('.')[1];
+        int firstSignificantIndex = fraction.indexOf(RegExp(r'[1-9]'));
+        if (firstSignificantIndex != -1) {
+          effectivePrecision = firstSignificantIndex + maxDecimals;
+        }
+      }
+    }
+
+    if (effectivePrecision > limitDecimals) {
+      effectivePrecision = limitDecimals;
+    }
+
+    if (smartDecimal && value.abs() > Decimal.fromInt(100)) {
+      effectivePrecision = 4;
+    }
+
+    if (smartDecimal && value.abs() > Decimal.fromInt(1000)) {
+      effectivePrecision = 2;
+    }
+
+    dec = dec.round(scale: effectivePrecision);
+
+    String s = dec.toString();
+
+    if (!s.contains('.')) {
+      return s.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+    }
+
+    final parts = s.split('.');
+    String intPart = parts[0].replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+    String fracPart = parts[1];
+
+    fracPart = fracPart.replaceFirst(RegExp(r'0+$'), '');
+    if (fracPart.length < minDecimals) {
+      fracPart = fracPart.padRight(minDecimals, '0');
+    }
+
+    return fracPart.isEmpty ? intPart : '$intPart.$fracPart';
+  }
+
   static String formatSmartDouble(double value, {int maxDecimals = 6, int minDecimals = 0, int limitDecimals = 18, smartDecimal = true}) {
     if (!value.isFinite) {
       if (value.isNaN) return 'NaN';

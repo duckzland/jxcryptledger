@@ -1,4 +1,5 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
@@ -104,7 +105,7 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
   }
 
   Widget _buildCard() {
-    bool showAvailable = _tx.balance > 0;
+    bool showAvailable = _tx.balance > Decimal.zero;
 
     final srSymbol = _cryptosController.getSymbol(_tx.srId) ?? '';
     final rrSymbol = _cryptosController.getSymbol(_tx.rrId) ?? '';

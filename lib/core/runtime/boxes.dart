@@ -14,8 +14,10 @@ import '../../../features/watchboard/tickers/model.dart';
 import '../../../features/watchboard/markets/model.dart';
 import '../../../features/watchers/model.dart';
 import '../../../system/unlock/status.dart';
-
+import '../../system/settings/keys.dart';
+import '../../system/settings/model.dart';
 import '../log.dart';
+import '../mode.dart';
 
 class CoreRuntimeBoxes extends IpcBoxes {
   @override
@@ -35,31 +37,97 @@ class CoreRuntimeBoxes extends IpcBoxes {
   @override
   Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
     final isFirstRun = !await exists();
+    HiveAesCipher cipher;
+
+    Box? settingsBox;
 
     try {
-      HiveAesCipher cipher;
       await SystemEncryptionService.instance.loadKey(keyBytes);
       cipher = HiveAesCipher(keyBytes);
-
-      await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
-
-      await openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
-
-      await openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
-
-      await openBox<ArchivesModel>('archives_box', encryptionCipher: cipher, crashRecovery: false);
-
-      await openOrRebuildBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
-
-      await openOrRebuildBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
-
-      await openOrRebuildBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
-
-      await openOrRebuildBox<TickersModel>('tickers_box', encryptionCipher: null, crashRecovery: false);
-
-      await openOrRebuildBox<MarketsModel>('markets_box', encryptionCipher: null, crashRecovery: false);
     } catch (e) {
-      logln("Failed to decrypt boxes (wrong password): ${e.toString()}");
+      logln("Failed to generate cipher for unlocking: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      settingsBox = await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
+      logln("Open Box: settings_box");
+    } catch (e) {
+      logln("Failed to open settings_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      if (settingsBox != null) {
+        SettingsModel? setting = settingsBox.get(SettingKey.migrateVersion.id);
+        CoreMode.dbVersion = (setting?.value ?? SettingKey.migrateVersion.defaultValue) as String;
+      }
+    } catch (e) {
+      logln("Failed to set database version: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openBox<TransactionsModel>('transactions_box', encryptionCipher: cipher, crashRecovery: false);
+      logln("Open Box: transactions_box");
+    } catch (e) {
+      logln("Failed to open transactions_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openBox<PanelsModel>('panels_box', encryptionCipher: cipher, crashRecovery: false);
+      logln("Open Box: panels_box");
+    } catch (e) {
+      logln("Failed to open panels_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openBox<ArchivesModel>('archives_box', encryptionCipher: cipher, crashRecovery: false);
+      logln("Open Box: archives_box");
+    } catch (e) {
+      logln("Failed to open archives_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openOrRebuildBox<CryptosModel>('cryptos_box', encryptionCipher: null, crashRecovery: false);
+      logln("Open Box: cryptos_box");
+    } catch (e) {
+      logln("Failed to open cryptos_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openOrRebuildBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
+      logln("Open Box: rates_box");
+    } catch (e) {
+      logln("Failed to open rates_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openOrRebuildBox<WatchersModel>('watchers_box', encryptionCipher: null, crashRecovery: false);
+      logln("Open Box: watchers_box");
+    } catch (e) {
+      logln("Failed to open watchers_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openOrRebuildBox<TickersModel>('tickers_box', encryptionCipher: null, crashRecovery: false);
+      logln("Open Box: tickers_box");
+    } catch (e) {
+      logln("Failed to open tickers_box: $e");
+      return SystemUnlockStatus.error;
+    }
+
+    try {
+      await openOrRebuildBox<MarketsModel>('markets_box', encryptionCipher: null, crashRecovery: false);
+      logln("Open Box: markets_box");
+    } catch (e) {
+      logln("Failed to open markets_box: $e");
       return SystemUnlockStatus.error;
     }
 

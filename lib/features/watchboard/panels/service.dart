@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+
 import '../../../core/abstracts/service.dart';
 import '../../../core/mixins/services/rateable.dart';
 import 'model.dart';
@@ -7,7 +9,7 @@ class PanelsService extends CoreBaseService<PanelsModel, PanelsRepository> with 
   PanelsService(super.repo);
 
   @override
-  Future<void> processNewRate(PanelsModel tx, double newRate) async {
+  Future<void> processNewRate(PanelsModel tx, Decimal newRate) async {
     if (newRate != tx.rate) {
       tx.setRate(newRate);
       await repo.update(tx);
