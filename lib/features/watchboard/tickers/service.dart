@@ -285,39 +285,32 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
   Future<void> refreshRates() async {
     final all = repo.extract();
-
     final types = all.map((tix) => TickerType.values[tix.type]).toSet();
 
-    if (types.isEmpty) {}
+    if (types.isEmpty) return;
 
-    final jobs = <Future<void>>[];
+    final taskQueue = <Future<void> Function()>[];
 
     if (types.contains(TickerType.altcoinIndex)) {
-      jobs.add(fetchAltSeason());
+      taskQueue.add(() => fetchAltSeason());
     }
-
     if (types.contains(TickerType.fearGreed)) {
-      jobs.add(fetchFearGreed());
+      taskQueue.add(() => fetchFearGreed());
     }
-
     if (types.contains(TickerType.cmc100)) {
-      jobs.add(fetchCmc100());
+      taskQueue.add(() => fetchCmc100());
     }
-
     if (types.contains(TickerType.marketCap)) {
-      jobs.add(fetchMarketCap());
+      taskQueue.add(() => fetchMarketCap());
     }
-
     if (types.contains(TickerType.dominance)) {
-      jobs.add(fetchDominance());
+      taskQueue.add(() => fetchDominance());
     }
-
     if (types.contains(TickerType.etf)) {
-      jobs.add(fetchEtf());
+      taskQueue.add(() => fetchEtf());
     }
-
     if (types.contains(TickerType.pulse)) {
-      jobs.add(fetchRsi());
+      taskQueue.add(() => fetchRsi());
     }
 
     const mgmlTypes = {
@@ -332,12 +325,26 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     };
 
     if (types.any(mgmlTypes.contains)) {
-      jobs.add(fetchMarketGainerLoser());
+      taskQueue.add(() => fetchMarketGainerLoser());
     }
 
-    await Future.wait(jobs);
+    try {
+      final jobs = List.generate(taskQueue.length, (index) async {
+        if (index > 0) {
+          await Future.delayed(Duration(milliseconds: index * 200));
+        }
 
-    logln("[TICKERS] Fetching new ticker data completed");
+        try {
+          await taskQueue[index]();
+        } catch (e) {
+          logln("[TICKERS] Job index $index failed to execute: $e");
+        }
+      });
+
+      await Future.wait(jobs, eagerError: false);
+    } finally {
+      logln("[TICKERS] Fetching new ticker data completed");
+    }
   }
 
   Map<String, dynamic> parseJson(String body) {

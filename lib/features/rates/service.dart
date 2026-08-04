@@ -67,7 +67,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
   }
 
   Future<void> deleteById(int sourceId, int targetId) async {
-    logln('[RATES] Deleting $sourceId-$targetId.');
+    // logln('[RATES] Deleting $sourceId-$targetId.');
     await repo.delete("$sourceId-$targetId");
   }
 
@@ -161,6 +161,8 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       _watchdog?.cancel();
       _isFetching = false;
 
+      logln('[RATES] Process queue completed');
+
       broadcasterEmit(IpcAction.refreshRates, 'complete', '', Uint8List(0));
     }
   }
@@ -247,40 +249,58 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
   }
 
   Future<void> _runWorkers(List<MapEntry<int, List<int>>> jobQueue) async {
-    Future<void> worker({int maxWorker = 5}) async {
-      while (jobQueue.isNotEmpty) {
-        MapEntry<int, List<int>>? job;
+    if (jobQueue.isEmpty) return;
 
-        try {
-          if (jobQueue.isEmpty) break;
-          job = jobQueue.removeAt(0);
-        } catch (_) {
-          break;
-        }
+    final iterator = jobQueue.iterator;
+    int hasFailed = 0;
+
+    Future<void> worker(int maxWorkers, int workerIndex) async {
+      if (workerIndex > 0) {
+        final initialDelay = workerIndex * 200;
+        await Future.delayed(Duration(milliseconds: initialDelay));
+      }
+
+      workerloop:
+      while (hasFailed != 2 && iterator.moveNext()) {
+        final job = iterator.current;
 
         try {
           await _fetchInternal(job.key, job.value);
         } catch (e) {
-          logln('[RATES] Unexpected worker error for ${job.key}: $e');
-
-          jobQueue.clear();
-          _pauseOperation();
-          break;
+          if (e is NetworkingException && e.details as int == 429) {
+            final code = e.details as int;
+            switch (code) {
+              case 429:
+                logln('[RATES] Rate limited, stopping worker and pausing job: $e');
+                hasFailed = 2;
+                while (iterator.moveNext()) {}
+                break workerloop;
+              default:
+                break;
+            }
+          } else {
+            hasFailed = 1;
+            logln('[RATES] Unexpected worker error for ${job.key}: $e');
+          }
         }
 
-        await Future.delayed(Duration(milliseconds: isFreePlan ? (jobQueue.isNotEmpty ? (60000 / 30 / maxWorker).ceil() : 600) : 100));
+        if (hasFailed == 2) break;
+
+        final delayMs = isFreePlan ? (60000 / 30 / maxWorkers).ceil() : 300;
+        await Future.delayed(Duration(milliseconds: delayMs));
       }
     }
 
-    if (jobQueue.isNotEmpty) {
-      int maxWorkers = 5;
+    int maxWorkers = 5;
+    if (isFreePlan) {
+      maxWorkers = jobQueue.length < maxWorkers ? jobQueue.length : 1;
+    }
 
-      if (isFreePlan) {
-        maxWorkers = jobQueue.length < maxWorkers ? jobQueue.length : 1;
-      }
+    final workersToStart = jobQueue.length == 1 ? 1 : maxWorkers.clamp(1, jobQueue.length);
+    await Future.wait(List.generate(workersToStart, (index) => worker(maxWorkers, index)), eagerError: false);
 
-      final workersToStart = jobQueue.length == 1 ? 1 : maxWorkers.clamp(1, jobQueue.length);
-      await Future.wait(List.generate(workersToStart, (_) => worker(maxWorker: maxWorkers)), eagerError: false);
+    if (hasFailed == 2) {
+      _pauseOperation();
     }
   }
 
