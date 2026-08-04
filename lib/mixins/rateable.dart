@@ -111,11 +111,11 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
 
   String rateableParseToString(String text, {bool reverse = false}) {
     final sanitized = Utils.sanitizeNumber(text);
-    double parsed = double.tryParse(sanitized) ?? 0.0;
-    if (reverse && parsed != 0.0 && parsed != 1.0) {
-      parsed = Math.divide(1, parsed);
+    Decimal parsed = Decimal.tryParse(sanitized) ?? Decimal.zero;
+    if (reverse && parsed != Decimal.zero && parsed != Decimal.one) {
+      parsed = Math.divide(Decimal.one, parsed);
     }
-    return Utils.formatSmartDouble(parsed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
+    return Utils.formatSmartDecimal(parsed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
   }
 
   Decimal rateableParseToDecimal(String text, {bool reverse = false}) {

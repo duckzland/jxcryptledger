@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/models/with_id.dart';
 import '../../../core/utils.dart';
@@ -8,19 +10,19 @@ class MarketsModel implements CoreModelWithId {
   final String symbol;
   final int rank;
   final bool isInfinite;
-  final double? totalSupply;
-  final double? maxSupply;
-  final double? price;
-  final double? volume24h;
-  final double? volumeChange24h;
-  final double? percent1h;
-  final double? percent24h;
-  final double? percent7d;
-  final double? percent30d;
-  final double? percent60d;
-  final double? percent90d;
-  final double? marketCap;
-  final double? dominance;
+  final Decimal? totalSupply;
+  final Decimal? maxSupply;
+  final Decimal? price;
+  final Decimal? volume24h;
+  final Decimal? volumeChange24h;
+  final Decimal? percent1h;
+  final Decimal? percent24h;
+  final Decimal? percent7d;
+  final Decimal? percent30d;
+  final Decimal? percent60d;
+  final Decimal? percent90d;
+  final Decimal? marketCap;
+  final Decimal? dominance;
   final Map<String, dynamic> meta;
 
   final String _rankText;
@@ -35,7 +37,6 @@ class MarketsModel implements CoreModelWithId {
   final String _dominanceText;
 
   final List<String> _tags;
-
   final bool _isStableCoin;
 
   @override
@@ -63,56 +64,43 @@ class MarketsModel implements CoreModelWithId {
     Map<String, dynamic>? meta,
   }) : meta = meta ?? {},
        _rankText = rank.toString(),
-       _priceText = Utils.formatSmartDouble(price ?? 0),
-       _percent1hText = Utils.formatSmartDouble(percent1h ?? 0, maxDecimals: 2, smartDecimal: false),
-       _percent24hText = Utils.formatSmartDouble(percent24h ?? 0, maxDecimals: 2, smartDecimal: false),
-       _percent7dText = Utils.formatSmartDouble(percent7d ?? 0, maxDecimals: 2, smartDecimal: false),
-       _percent30dText = Utils.formatSmartDouble(percent30d ?? 0, maxDecimals: 2, smartDecimal: false),
-       _percent60dText = Utils.formatSmartDouble(percent60d ?? 0, maxDecimals: 2, smartDecimal: false),
-       _percent90dText = Utils.formatSmartDouble(percent90d ?? 0, maxDecimals: 2, smartDecimal: false),
-       _marketCapText = Utils.formatShortCurrency(marketCap ?? 0),
-       _dominanceText = Utils.formatSmartDouble(dominance ?? 0.0, maxDecimals: 2),
+       _priceText = Utils.formatSmartDecimal(price ?? Decimal.zero),
+       _percent1hText = Utils.formatSmartDecimal(percent1h ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
+       _percent24hText = Utils.formatSmartDecimal(percent24h ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
+       _percent7dText = Utils.formatSmartDecimal(percent7d ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
+       _percent30dText = Utils.formatSmartDecimal(percent30d ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
+       _percent60dText = Utils.formatSmartDecimal(percent60d ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
+       _percent90dText = Utils.formatSmartDecimal(percent90d ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
+       _marketCapText = Utils.formatShortCurrency(marketCap ?? Decimal.zero),
+       _dominanceText = Utils.formatSmartDecimal(dominance ?? Decimal.zero, maxDecimals: 2),
        _tags = ((meta?['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const []),
        _isStableCoin = _checkIsStableCoin(symbol, meta ?? {}) {
     if (tid.isEmpty) {
       throw ValidationException(AppErrorCode.marketInvalidTid, "tid cannot be empty.", "Please enter a market ID.");
     }
-
     if (tid == '0') {
       throw ValidationException(AppErrorCode.marketInvalidTid, "tid cannot be '0'.", "This market ID is not allowed.");
     }
-
     if (name.isEmpty) {
       throw ValidationException(AppErrorCode.marketInvalidName, "name cannot be empty.", "Invalid market data.");
     }
-
     if (symbol.isEmpty) {
       throw ValidationException(AppErrorCode.marketInvalidSymbol, "symbol cannot be empty.", "Invalid market data.");
     }
-
     if (rank < 0) {
       throw ValidationException(AppErrorCode.marketInvalidRank, "rank must be >= 0.", "Invalid ranking.");
     }
-
-    if (price != null && price! < 0) {
+    if (price != null && price! < Decimal.zero) {
       throw ValidationException(AppErrorCode.marketInvalidNumeric, "price must be non-negative.", "Invalid market data.");
     }
-
-    if (volume24h != null && volume24h! < 0) {
+    if (volume24h != null && volume24h! < Decimal.zero) {
       throw ValidationException(AppErrorCode.marketInvalidNumeric, "volume24h must be non-negative.", "Invalid market data.");
     }
-
-    if (marketCap != null && marketCap! < 0) {
+    if (marketCap != null && marketCap! < Decimal.zero) {
       throw ValidationException(AppErrorCode.marketInvalidNumeric, "marketCap must be non-negative.", "Invalid market data.");
     }
-
-    if (dominance != null && dominance! < 0) {
+    if (dominance != null && dominance! < Decimal.zero) {
       throw ValidationException(AppErrorCode.marketInvalidNumeric, "dominance must be non-negative.", "Invalid market data.");
-    }
-
-    final percents = [percent1h, percent24h, percent7d, percent30d, percent60d, percent90d];
-    if (percents.any((p) => p != null && p.isNaN)) {
-      throw ValidationException(AppErrorCode.marketInvalidPercent, "percent values must be a valid number.", "Invalid percentage data.");
     }
   }
 
@@ -147,19 +135,19 @@ class MarketsModel implements CoreModelWithId {
       symbol: map['symbol'] as String,
       rank: map['rank'] as int,
       isInfinite: map['isInfinite'] as bool,
-      totalSupply: (map['totalSupply'] as num?)?.toDouble(),
-      maxSupply: (map['maxSupply'] as num?)?.toDouble(),
-      price: (map['price'] as num?)?.toDouble(),
-      volume24h: (map['volume24h'] as num?)?.toDouble(),
-      volumeChange24h: (map['volumeChange24h'] as num?)?.toDouble(),
-      percent1h: (map['percent1h'] as num?)?.toDouble(),
-      percent24h: (map['percent24h'] as num?)?.toDouble(),
-      percent7d: (map['percent7d'] as num?)?.toDouble(),
-      percent30d: (map['percent30d'] as num?)?.toDouble(),
-      percent60d: (map['percent60d'] as num?)?.toDouble(),
-      percent90d: (map['percent90d'] as num?)?.toDouble(),
-      marketCap: (map['marketCap'] as num?)?.toDouble(),
-      dominance: (map['dominance'] as num?)?.toDouble(),
+      totalSupply: map['totalSupply'] as Decimal?,
+      maxSupply: map['maxSupply'] as Decimal?,
+      price: map['price'] as Decimal?,
+      volume24h: map['volume24h'] as Decimal?,
+      volumeChange24h: map['volumeChange24h'] as Decimal?,
+      percent1h: map['percent1h'] as Decimal?,
+      percent24h: map['percent24h'] as Decimal?,
+      percent7d: map['percent7d'] as Decimal?,
+      percent30d: map['percent30d'] as Decimal?,
+      percent60d: map['percent60d'] as Decimal?,
+      percent90d: map['percent90d'] as Decimal?,
+      marketCap: map['marketCap'] as Decimal?,
+      dominance: map['dominance'] as Decimal?,
       meta: map['meta'] != null ? Map<String, dynamic>.from(map['meta']) : {},
     );
   }
@@ -170,19 +158,19 @@ class MarketsModel implements CoreModelWithId {
     String? symbol,
     int? rank,
     bool? isInfinite,
-    double? totalSupply,
-    double? maxSupply,
-    double? price,
-    double? volume24h,
-    double? volumeChange24h,
-    double? percent1h,
-    double? percent24h,
-    double? percent7d,
-    double? percent30d,
-    double? percent60d,
-    double? percent90d,
-    double? marketCap,
-    double? dominance,
+    Decimal? totalSupply,
+    Decimal? maxSupply,
+    Decimal? price,
+    Decimal? volume24h,
+    Decimal? volumeChange24h,
+    Decimal? percent1h,
+    Decimal? percent24h,
+    Decimal? percent7d,
+    Decimal? percent30d,
+    Decimal? percent60d,
+    Decimal? percent90d,
+    Decimal? marketCap,
+    Decimal? dominance,
     Map<String, dynamic>? meta,
   }) {
     return MarketsModel(

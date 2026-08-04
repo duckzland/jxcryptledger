@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../../core/extensions/decimals.dart';
 import '../model.dart';
 
 List<MarketsModel> parseMarketsV3(String body) {
@@ -18,19 +19,19 @@ List<MarketsModel> parseMarketsV3(String body) {
         symbol: item['symbol'] as String,
         rank: item['cmc_rank'] as int,
         isInfinite: item['infinite_supply'] as bool,
-        totalSupply: (item['total_supply'] as num?)?.toDouble(),
-        maxSupply: (item['max_supply'] as num?)?.toDouble(),
-        price: (quote['price'] as num?)?.toDouble(),
-        volume24h: (quote['volume_24h'] as num?)?.toDouble(),
-        volumeChange24h: (quote['volume_change_24h'] as num?)?.toDouble(),
-        percent1h: (quote['percent_change_1h'] as num?)?.toDouble(),
-        percent24h: (quote['percent_change_24h'] as num?)?.toDouble(),
-        percent7d: (quote['percent_change_7d'] as num?)?.toDouble(),
-        percent30d: (quote['percent_change_30d'] as num?)?.toDouble(),
-        percent60d: (quote['percent_change_60d'] as num?)?.toDouble(),
-        percent90d: (quote['percent_change_90d'] as num?)?.toDouble(),
-        marketCap: (quote['market_cap'] as num?)?.toDouble(),
-        dominance: (quote['market_cap_dominance'] as num?)?.toDouble(),
+        totalSupply: (item['total_supply'] as Object?)?.toDecimal(),
+        maxSupply: (item['max_supply'] as Object?)?.toDecimal(),
+        price: (quote['price'] as Object?)?.toDecimal(),
+        volume24h: (quote['volume_24h'] as Object?)?.toDecimal(),
+        volumeChange24h: (quote['volume_change_24h'] as Object?)?.toDecimal(),
+        percent1h: (quote['percent_change_1h'] as Object?)?.toDecimal(),
+        percent24h: (quote['percent_change_24h'] as Object?)?.toDecimal(),
+        percent7d: (quote['percent_change_7d'] as Object?)?.toDecimal(),
+        percent30d: (quote['percent_change_30d'] as Object?)?.toDecimal(),
+        percent60d: (quote['percent_change_60d'] as Object?)?.toDecimal(),
+        percent90d: (quote['percent_change_90d'] as Object?)?.toDecimal(),
+        marketCap: (quote['market_cap'] as Object?)?.toDecimal(),
+        dominance: (quote['market_cap_dominance'] as Object?)?.toDecimal(),
         meta: {
           'slug': item['slug'],
           'tags': item['tags'],

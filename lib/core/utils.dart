@@ -146,11 +146,28 @@ class Utils {
     return timestamp;
   }
 
-  static String formatShortCurrency(double val) {
-    if (val >= 1e12) return "${(val / 1e12).toStringAsFixed(2)}T";
-    if (val >= 1e9) return "${(val / 1e9).toStringAsFixed(2)}B";
-    if (val >= 1e6) return "${(val / 1e6).toStringAsFixed(2)}M";
-    if (val >= 1e3) return "${(val / 1e3).toStringAsFixed(2)}K";
-    return val.toStringAsFixed(2);
+  static String formatShortCurrency(Decimal val) {
+    final thousand = Decimal.fromInt(1000);
+    final million = Decimal.fromInt(1000000);
+    final billion = Decimal.fromInt(1000000000);
+    final trillion = Decimal.fromInt(1000000000000);
+
+    if (val >= trillion) {
+      return "${(val / trillion).toDecimal().round(scale: 2)}T";
+    }
+
+    if (val >= billion) {
+      return "${(val / billion).toDecimal().round(scale: 2)}B";
+    }
+
+    if (val >= million) {
+      return "${(val / million).toDecimal().round(scale: 2)}M";
+    }
+
+    if (val >= thousand) {
+      return "${(val / thousand).toDecimal().round(scale: 2)}K";
+    }
+
+    return val.round(scale: 2).toString();
   }
 }

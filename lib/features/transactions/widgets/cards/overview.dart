@@ -81,7 +81,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   Decimal _currentHolding = Decimal.zero;
   Decimal _finalizedBalance = Decimal.zero;
   Decimal _profitLoss = Decimal.zero;
-  double _profitLossPercentage = 0;
+  Decimal _profitLossPercentage = Decimal.zero;
 
   bool _isOpen = true;
 
@@ -273,18 +273,18 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                     value: 0,
                     comparator: 0,
                   ),
-                if (_totalCapital > Decimal.zero && _profitLossPercentage != 0)
+                if (_totalCapital > Decimal.zero && _profitLossPercentage != Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Profit/Loss",
                     subtitle: "${Utils.formatSmartDecimal(_profitLoss)} $_resultSymbol",
-                    value: _profitLossPercentage,
+                    value: _profitLossPercentage.toDouble(),
                     comparator: 0,
                   ),
-                if (_totalCapital > Decimal.zero && _profitLossPercentage != 0)
+                if (_totalCapital > Decimal.zero && _profitLossPercentage != Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Profit/Loss %",
-                    subtitle: "${Utils.formatSmartDouble(_profitLossPercentage, maxDecimals: 2)}%",
-                    value: _profitLossPercentage,
+                    subtitle: "${Utils.formatSmartDecimal(_profitLossPercentage, maxDecimals: 2)}%",
+                    value: _profitLossPercentage.toDouble(),
                     comparator: 0,
                   ),
               ],
@@ -439,7 +439,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _currentHolding = balance;
     _finalizedBalance = finalizedBalance;
     _profitLoss = Math.subtract(totalBalance, capital);
-    _profitLossPercentage = profitPercentage.toDouble();
+    _profitLossPercentage = profitPercentage;
   }
 
   void _toggleShowAction(WidgetsButtonsActionState b) {

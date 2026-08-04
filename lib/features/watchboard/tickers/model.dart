@@ -1,3 +1,5 @@
+import 'package:decimal/decimal.dart';
+
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/models/with_id.dart';
 import '../../../core/utils.dart';
@@ -170,7 +172,7 @@ class TickersModel implements CoreModelWithId {
     final raw = value;
     final fmt = (format >= 0 && format < TickerFormat.values.length) ? TickerFormat.values[format] : TickerFormat.raw;
 
-    final val = double.tryParse(raw);
+    final val = Decimal.tryParse(raw);
     if (val == null) {
       return raw;
     }
@@ -183,13 +185,13 @@ class TickersModel implements CoreModelWithId {
         return val.toStringAsFixed(2);
 
       case TickerFormat.normalCurrency:
-        return "\$${Utils.formatSmartDouble(val, maxDecimals: 2)}";
+        return "\$${Utils.formatSmartDecimal(val, maxDecimals: 2)}";
 
       case TickerFormat.shortCurrency:
         return _formatShortCurrency(val);
 
       case TickerFormat.shortCurrencyWithSign:
-        final sign = val < 0 ? "-" : "+";
+        final sign = val < Decimal.zero ? "-" : "+";
         return "$sign${_formatShortCurrency(val.abs())}";
 
       case TickerFormat.percentage:
@@ -199,7 +201,7 @@ class TickersModel implements CoreModelWithId {
         return "${val.toStringAsFixed(2)}%";
 
       case TickerFormat.shortPercentageWithSign:
-        final sign = val < 0 ? "" : "+";
+        final sign = val < Decimal.zero ? "" : "+";
         return "$sign${val.toStringAsFixed(2)}%";
 
       case TickerFormat.raw:
@@ -207,11 +209,28 @@ class TickersModel implements CoreModelWithId {
     }
   }
 
-  String _formatShortCurrency(double val) {
-    if (val >= 1e12) return "${(val / 1e12).toStringAsFixed(2)}T";
-    if (val >= 1e9) return "${(val / 1e9).toStringAsFixed(2)}B";
-    if (val >= 1e6) return "${(val / 1e6).toStringAsFixed(2)}M";
-    if (val >= 1e3) return "${(val / 1e3).toStringAsFixed(2)}K";
-    return val.toStringAsFixed(2);
+  String _formatShortCurrency(Decimal val) {
+    final thousand = Decimal.fromInt(1000);
+    final million = Decimal.fromInt(1000000);
+    final billion = Decimal.fromInt(1000000000);
+    final trillion = Decimal.fromInt(1000000000000);
+
+    if (val >= trillion) {
+      return "${(val / trillion).toDecimal().round(scale: 2)}T";
+    }
+
+    if (val >= billion) {
+      return "${(val / billion).toDecimal().round(scale: 2)}B";
+    }
+
+    if (val >= million) {
+      return "${(val / million).toDecimal().round(scale: 2)}M";
+    }
+
+    if (val >= thousand) {
+      return "${(val / thousand).toDecimal().round(scale: 2)}K";
+    }
+
+    return val.round(scale: 2).toString();
   }
 }

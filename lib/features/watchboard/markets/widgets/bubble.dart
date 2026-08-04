@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
@@ -9,7 +10,7 @@ class WatchboardsMarketsWidgetsBubble extends StatefulWidget {
   final double x;
   final double y;
   final double radius;
-  final double value;
+  final Decimal value;
   final String text;
 
   const WatchboardsMarketsWidgetsBubble({
@@ -32,7 +33,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
   @override
   void initState() {
     super.initState();
-    _bgColor = widget.value >= 0 ? AppTheme.green : AppTheme.red;
+    _bgColor = widget.value >= Decimal.zero ? AppTheme.green : AppTheme.red;
   }
 
   @override
@@ -54,7 +55,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
     double left = widget.x - widget.radius;
     double top = widget.y - widget.radius;
 
-    final currentColor = widget.value >= 0 ? AppTheme.green : AppTheme.red;
+    final currentColor = widget.value >= Decimal.zero ? AppTheme.green : AppTheme.red;
     final fontSizeSymbol = (widget.radius * 0.36).clamp(8.0, 50.0);
     final fontSizePercent = (widget.radius * 0.28).clamp(8.0, 16.0);
     final showPercentage = widget.radius > 30.0;
@@ -122,7 +123,8 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
                     )
                   : Text(widget.tx.symbol.toUpperCase(), maxLines: 1, textAlign: TextAlign.center, style: symbolStyle),
 
-              if (showPercentage) Text("${widget.value >= 0 ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
+              if (showPercentage)
+                Text("${widget.value >= Decimal.zero ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
             ],
           ),
         ),
@@ -139,17 +141,17 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
     return painter.size;
   }
 
-  double _calcExtraRadius(double value) {
+  double _calcExtraRadius(Decimal value) {
     const double maxRadius = 10.0;
-    if (value == 0) return 0.0;
+    if (value == Decimal.zero) return 0.0;
 
-    double absVal = value.abs();
+    double absVal = value.toDouble().abs();
     double magnitude = math.pow(10, (math.log(absVal) / math.log(10)).floor()).toDouble();
     double normalized = absVal / magnitude;
 
     if (normalized > 10.0) normalized = 10.0;
     double radius = (normalized / 10.0) * maxRadius;
 
-    return value.isNegative ? -radius : radius;
+    return value.toDouble().isNegative ? -radius : radius;
   }
 }

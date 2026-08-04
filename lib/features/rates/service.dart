@@ -102,7 +102,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
   void _startWatchdog() {
     _watchdog?.cancel();
-    _watchdog = Timer(const Duration(seconds: 60), () {
+    _watchdog = Timer(const Duration(seconds: 65), () {
       logln('[RATES] Watchdog triggered — forcing unlock.');
       _isFetching = false;
     });
@@ -247,15 +247,15 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
   }
 
   Future<void> _runWorkers(List<MapEntry<int, List<int>>> jobQueue) async {
-    Future<void> worker() async {
+    Future<void> worker({int maxWorker = 5}) async {
       while (jobQueue.isNotEmpty) {
         MapEntry<int, List<int>>? job;
 
         try {
-          if (jobQueue.isEmpty) return;
+          if (jobQueue.isEmpty) break;
           job = jobQueue.removeAt(0);
         } catch (_) {
-          return;
+          break;
         }
 
         try {
@@ -265,10 +265,10 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
           jobQueue.clear();
           _pauseOperation();
-          return;
+          break;
         }
 
-        await Future.delayed(Duration(milliseconds: isFreePlan ? (60000 / 50 / jobQueue.length).ceil() : 100));
+        await Future.delayed(Duration(milliseconds: isFreePlan ? (jobQueue.isNotEmpty ? (60000 / 30 / maxWorker).ceil() : 600) : 100));
       }
     }
 
@@ -276,11 +276,11 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       int maxWorkers = 5;
 
       if (isFreePlan) {
-        maxWorkers = jobQueue.length < 50 ? jobQueue.length : 1;
+        maxWorkers = jobQueue.length < maxWorkers ? jobQueue.length : 1;
       }
 
       final workersToStart = jobQueue.length == 1 ? 1 : maxWorkers.clamp(1, jobQueue.length);
-      await Future.wait(List.generate(workersToStart, (_) => worker()), eagerError: false);
+      await Future.wait(List.generate(workersToStart, (_) => worker(maxWorker: maxWorkers)), eagerError: false);
     }
   }
 

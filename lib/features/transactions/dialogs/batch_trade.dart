@@ -235,7 +235,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 DataCell(Text(r['transaction'] ?? '')),
                 DataCell(Text(r['balance'] ?? '')),
                 if (showRate) DataCell(rateText),
-                if (showRate) DataCell(Text('${Utils.formatSmartDouble(r['amount'] ?? 0, smartDecimal: false)} $targetSymbol')),
+                if (showRate) DataCell(Text('${Utils.formatSmartDecimal(r['amount'] ?? Decimal.zero, smartDecimal: false)} $targetSymbol')),
               ],
             );
           }),

@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../mixins/state.dart';
@@ -89,28 +90,28 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
     return txs;
   }
 
-  double marketFilterableGetPercentageValue(MarketsModel tx) {
+  Decimal marketFilterableGetPercentageValue(MarketsModel tx) {
     switch (marketFilterablePercent) {
       case 0:
-        return tx.percent1h ?? 0;
+        return tx.percent1h ?? Decimal.zero;
 
       case 1:
-        return tx.percent24h ?? 0;
+        return tx.percent24h ?? Decimal.zero;
 
       case 2:
-        return tx.percent7d ?? 0;
+        return tx.percent7d ?? Decimal.zero;
 
       case 3:
-        return tx.percent30d ?? 0;
+        return tx.percent30d ?? Decimal.zero;
 
       case 4:
-        return tx.percent60d ?? 0;
+        return tx.percent60d ?? Decimal.zero;
 
       case 5:
-        return tx.percent90d ?? 0;
+        return tx.percent90d ?? Decimal.zero;
 
       default:
-        return 0;
+        return Decimal.zero;
     }
   }
 

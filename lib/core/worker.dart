@@ -12,7 +12,8 @@ import 'runtime/locator.dart';
 import 'log.dart';
 
 class CoreWorker {
-  Timer? _timer;
+  Timer? _everyMinutesWorker;
+  Timer? _everyFiveMinutesWorker;
   bool _started = false;
 
   void start() {
@@ -31,7 +32,7 @@ class CoreWorker {
     watchers.scheduleRates();
     transactions.scheduleRates();
 
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
+    _everyMinutesWorker = Timer.periodic(const Duration(minutes: 1), (_) async {
       bool mustAlwaysFetchRate = false;
 
       if (!CoreMode.isServer) {
@@ -76,15 +77,21 @@ class CoreWorker {
         logln("[WORKER] Refreshing tickers rates");
         await tickers.refreshRates();
       }
+    });
 
+    _everyFiveMinutesWorker = Timer.periodic(const Duration(minutes: 5), (_) async {
       logln("[WORKER] Refreshing market rates");
       await market.refreshRates();
     });
   }
 
   void stop() {
-    _timer?.cancel();
-    _timer = null;
+    _everyFiveMinutesWorker?.cancel();
+    _everyFiveMinutesWorker = null;
+
+    _everyMinutesWorker?.cancel();
+    _everyMinutesWorker = null;
+
     _started = false;
   }
 }

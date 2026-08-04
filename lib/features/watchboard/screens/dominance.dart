@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/content.dart';
@@ -86,8 +87,8 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
               itemBuilder: (context, index) {
                 final tx = txs[index];
 
-                final double percent1h = tx.percent1h ?? 0.0;
-                final double rawDominance = tx.dominance ?? 0.0;
+                final Decimal percent1h = tx.percent1h ?? Decimal.zero;
+                final Decimal rawDominance = tx.dominance ?? Decimal.zero;
                 final double progressFraction = ((rawDominance.toDouble() / 100.0) + 0.01).clamp(0.01, 1.00);
 
                 return Padding(
@@ -110,7 +111,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
                         child: LinearProgressIndicator(
                           minHeight: barHeight,
                           value: progressFraction,
-                          valueColor: AlwaysStoppedAnimation<Color>(percent1h >= 0 ? AppTheme.green : AppTheme.red),
+                          valueColor: AlwaysStoppedAnimation<Color>(percent1h >= Decimal.zero ? AppTheme.green : AppTheme.red),
                           backgroundColor: AppTheme.inputBg,
                           borderRadius: AppTheme.borderRadius,
                         ),

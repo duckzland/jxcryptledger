@@ -7,6 +7,15 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
 
   @override
   bool validate() {
+    final otx = origTx;
+    final targetCloser = targetParentCloser;
+    final children = leafChildren;
+    final hasChildren = children.isNotEmpty;
+
+    if (tx.isRoot && !hasChildren) {
+      return true;
+    }
+
     otxCheckExists(AppErrorCode.txUpdateNotFound, "This transaction can no longer be found.");
 
     otxCheckValidRootId(AppErrorCode.txUpdateRootPidRid, "This transaction cannot be changed in that way.");
@@ -22,11 +31,6 @@ class TransactionsRulesUpdate extends TransactionsRulesBase {
       AppErrorCode.txUpdateParentInsufficientBalance,
       "This transaction cannot change its source amounts because the parent has insufficient balance.",
     );
-
-    final otx = origTx;
-    final targetCloser = targetParentCloser;
-    final children = leafChildren;
-    final hasChildren = children.isNotEmpty;
 
     if (tx.status != otx!.status) {
       switch (tx.statusEnum) {

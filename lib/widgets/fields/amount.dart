@@ -73,9 +73,9 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
     if (widget.initialValue != null) {
       final val = widget.initialValue!;
-      _controller.text = val == ""
+      _controller.text = val.isEmpty
           ? val
-          : Utils.formatSmartDouble(double.tryParse(Utils.sanitizeNumber(val)) ?? 0.0, smartDecimal: false, maxDecimals: 18);
+          : Utils.formatSmartDecimal(Decimal.tryParse(Utils.sanitizeNumber(val)) ?? Decimal.zero, smartDecimal: false, maxDecimals: 18);
     }
 
     _helperText = widget.helperText;
@@ -186,6 +186,11 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
       return 'Amount is required';
     }
 
+    final invalidChars = RegExp(r'[^0-9\+\-\,\.]');
+    if (invalidChars.hasMatch(value)) {
+      return 'Enter a valid number';
+    }
+
     final sanitized = Utils.sanitizeNumber(value);
     final parsed = Decimal.tryParse(sanitized);
 
@@ -194,7 +199,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
     }
 
     if (!widget.allowNegative && parsed < Decimal.zero) {
-      return 'Negative amounts are not allowed';
+      return 'Negative not allowed';
     }
 
     if (parsed == Decimal.zero) {

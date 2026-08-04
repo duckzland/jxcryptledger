@@ -515,8 +515,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       Decimal currentValue = Decimal.zero;
       Decimal profitLoss = Decimal.zero;
       Decimal currentSrAmount = tx.srAmount;
+      Decimal profitLossPercentage = Decimal.zero;
+
       double profitLevel = 0;
-      double profitLossPercentage = 0;
 
       if (tx.isFinalized) {
         profitLoss = Decimal.zero;
@@ -530,7 +531,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
         currentValue = _isReversed ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
         profitLoss = Math.subtract(currentValue, currentSrAmount);
-        profitLossPercentage = Math.multiply(Math.divide(profitLoss, currentSrAmount).toDouble(), 100);
+        profitLossPercentage = Math.multiply(Math.divide(profitLoss, currentSrAmount), Decimal.fromInt(100));
 
         if (profitLoss > Decimal.zero) {
           profitLevel = 1;
@@ -547,7 +548,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         'currentRate': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(rowRate),
         'currentValue': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(currentValue),
         'profitLoss': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(profitLoss),
-        'profitLossPercentage': currentRate == 0 ? null : Utils.formatSmartDouble(profitLossPercentage, maxDecimals: 2),
+        'profitLossPercentage': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(profitLossPercentage, maxDecimals: 2),
         'profitLevel': profitLevel,
         'status': tx.statusText,
         'date': tx.timestampAsFormattedDate,

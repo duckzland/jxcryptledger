@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:decimal/decimal.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../app/exceptions.dart';
@@ -196,10 +197,10 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     );
 
     final overall = body["data"]["overall"];
-    final overBought = (overall["overboughtPercentage"] as num?)?.toDouble() ?? 0.0;
-    final overSold = (overall["oversoldPercentage"] as num?)?.toDouble() ?? 0.0;
-    final avgRsi = overall["averageRsi"].toString();
+    final overBought = overall["overboughtPercentage"] != null ? Decimal.parse(overall["overboughtPercentage"].toString()) : Decimal.zero;
+    final overSold = overall["oversoldPercentage"] != null ? Decimal.parse(overall["oversoldPercentage"].toString()) : Decimal.zero;
 
+    final avgRsi = overall["averageRsi"].toString();
     final pulse = overBought - overSold;
 
     repo.updateByType(TickerType.rsi.index, avgRsi);
@@ -249,21 +250,21 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
     final top100 = markets.where((m) => m.rank <= 100 && !m.isStableCoin).toList();
 
-    final sorted100_1h = [...top100]..sort((a, b) => (b.percent1h ?? 0).compareTo(a.percent1h ?? 0));
+    final sorted100_1h = [...top100]..sort((a, b) => (b.percent1h ?? Decimal.zero).compareTo(a.percent1h ?? Decimal.zero));
     final gainer100_1h = sorted100_1h.first;
     final loser100_1h = sorted100_1h.last;
 
-    final sorted100_24h = [...top100]..sort((a, b) => (b.percent24h ?? 0).compareTo(a.percent24h ?? 0));
+    final sorted100_24h = [...top100]..sort((a, b) => (b.percent24h ?? Decimal.zero).compareTo(a.percent24h ?? Decimal.zero));
     final gainer100_24h = sorted100_24h.first;
     final loser100_24h = sorted100_24h.last;
 
     final next100 = markets.where((m) => m.rank > 100 && m.rank <= 200 && !m.isStableCoin).toList();
 
-    final sorted200_1h = [...next100]..sort((a, b) => (b.percent1h ?? 0).compareTo(a.percent1h ?? 0));
+    final sorted200_1h = [...next100]..sort((a, b) => (b.percent1h ?? Decimal.zero).compareTo(a.percent1h ?? Decimal.zero));
     final gainer200_1h = sorted200_1h.first;
     final loser200_1h = sorted200_1h.last;
 
-    final sorted200_24h = [...next100]..sort((a, b) => (b.percent24h ?? 0).compareTo(a.percent24h ?? 0));
+    final sorted200_24h = [...next100]..sort((a, b) => (b.percent24h ?? Decimal.zero).compareTo(a.percent24h ?? Decimal.zero));
     final gainer200_24h = sorted200_24h.first;
     final loser200_24h = sorted200_24h.last;
 
