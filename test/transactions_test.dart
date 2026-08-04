@@ -185,6 +185,149 @@ void main() async {
       expect(repo.isEmpty(), true);
     });
 
+    test('preserves precise Decimal values through repository create/update/trade/close/finalize flows', () async {
+      await box.clear();
+
+      final root = TransactionsModel(
+        tid: 'root',
+        rid: '0',
+        pid: '0',
+        srAmount: Decimal.parse('100.1234567890123456789'),
+        srId: 1,
+        rrAmount: Decimal.parse('100.1234567890123456789'),
+        rrId: 2,
+        balance: Decimal.parse('100.1234567890123456789'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(root);
+
+      final createdRoot = box.get('root')!;
+      expect(createdRoot.srAmount, Decimal.parse('100.1234567890123456789'));
+      expect(createdRoot.rrAmount, Decimal.parse('100.1234567890123456789'));
+      expect(createdRoot.balance, Decimal.parse('100.1234567890123456789'));
+
+      final editedRoot = createdRoot.copyWith(
+        srAmount: Decimal.parse('101.1234567890123456789'),
+        rrAmount: Decimal.parse('101.1234567890123456789'),
+        balance: Decimal.parse('101.1234567890123456789'),
+      );
+      await repo.update(editedRoot);
+
+      final updatedRoot = box.get('root')!;
+      expect(updatedRoot.srAmount, Decimal.parse('101.1234567890123456789'));
+      expect(updatedRoot.rrAmount, Decimal.parse('101.1234567890123456789'));
+      expect(updatedRoot.balance, Decimal.parse('101.1234567890123456789'));
+
+      final tradeChild = TransactionsModel(
+        tid: 'trade_child',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.parse('40.1234567890123456789'),
+        srId: 2,
+        rrAmount: Decimal.parse('40.1234567890123456789'),
+        rrId: 3,
+        balance: Decimal.parse('40.1234567890123456789'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(tradeChild);
+
+      final parentAfterTrade = box.get('root')!;
+      expect(parentAfterTrade.balance, Decimal.parse('61'));
+      expect(parentAfterTrade.statusEnum, TransactionStatus.partial);
+
+      final updatedTradeChild = box
+          .get('trade_child')!
+          .copyWith(
+            srAmount: Decimal.parse('25.9876543210987654321'),
+            rrAmount: Decimal.parse('25.9876543210987654321'),
+            balance: Decimal.parse('25.9876543210987654321'),
+          );
+      await repo.update(updatedTradeChild);
+
+      final storedTradeChild = box.get('trade_child')!;
+      expect(storedTradeChild.srAmount, Decimal.parse('25.9876543210987654321'));
+      expect(storedTradeChild.rrAmount, Decimal.parse('25.9876543210987654321'));
+      expect(storedTradeChild.balance, Decimal.parse('25.9876543210987654321'));
+
+      final parentAfterEdit = box.get('root')!;
+      expect(parentAfterEdit.balance, Decimal.parse('75.1358024679135802468'));
+
+      final parentNode = TransactionsModel(
+        tid: 'parent_node',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.parse('10.9876543210987654321'),
+        srId: 2,
+        rrAmount: Decimal.parse('10.9876543210987654321'),
+        rrId: 3,
+        balance: Decimal.parse('10.9876543210987654321'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(parentNode);
+      final rootAfterParent = box.get('root')!;
+      expect(rootAfterParent.balance, Decimal.parse('64.1481481468148148147'));
+
+      final closeableLeaf = TransactionsModel(
+        tid: 'closeable_leaf',
+        rid: 'root',
+        pid: 'parent_node',
+        srAmount: Decimal.parse('5.1234567890123456789'),
+        srId: 3,
+        rrAmount: Decimal.parse('5.1234567890123456789'),
+        rrId: 2,
+        balance: Decimal.parse('5.1234567890123456789'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: DateTime.now().microsecondsSinceEpoch,
+        meta: {},
+      );
+
+      await repo.add(closeableLeaf);
+      final parentAfterLeaf = box.get('parent_node')!;
+      expect(parentAfterLeaf.balance, Decimal.parse('5.8641975320864197532'));
+
+      final updatedLeaf = box
+          .get('closeable_leaf')!
+          .copyWith(
+            srAmount: Decimal.parse('4.1111111111111111111'),
+            rrAmount: Decimal.parse('4.1111111111111111111'),
+            balance: Decimal.parse('4.1111111111111111111'),
+          );
+      await repo.update(updatedLeaf);
+
+      final storedLeaf = box.get('closeable_leaf')!;
+      expect(storedLeaf.srAmount, Decimal.parse('4.1111111111111111111'));
+      expect(storedLeaf.rrAmount, Decimal.parse('4.1111111111111111111'));
+      expect(storedLeaf.balance, Decimal.parse('4.1111111111111111111'));
+
+      await repo.close(storedLeaf);
+
+      final closedLeaf = box.get('closeable_leaf')!;
+      expect(closedLeaf.statusEnum, TransactionStatus.closed);
+      expect(closedLeaf.balance, Decimal.zero);
+
+      final parentAfterClose = box.get('parent_node')!;
+      expect(parentAfterClose.balance, Decimal.parse('6.876543209987654321'));
+
+      await repo.finalize(parentAfterClose);
+
+      final finalizedParent = box.get('parent_node')!;
+      expect(finalizedParent.statusEnum, TransactionStatus.finalized);
+      expect(finalizedParent.balance, Decimal.parse('6.876543209987654321'));
+    });
+
     test('root -> Capital Mode, Add, Update and Remove', () async {
       await box.clear();
 

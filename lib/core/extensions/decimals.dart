@@ -1,6 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:hive_ce/hive.dart';
 
+import '../utils.dart';
+
 extension CoreExtensionsDecimalReader on BinaryReader {
   Decimal readDecimal() {
     final String rawStr = readString();
@@ -17,11 +19,14 @@ extension CoreExtensionsDecimalWriter on BinaryWriter {
 extension CoreExtensionsDecimalObject on Object? {
   Decimal? toDecimal() {
     if (this == null) return null;
+    if (this is Decimal) {
+      return this as Decimal;
+    }
     if (this is num) {
-      return Decimal.parse((this as num).toString());
+      return Utils.parseDecimalFromObject(this);
     }
     if (this is String) {
-      return Decimal.tryParse(this as String);
+      return Utils.parseDecimal(this as String);
     }
     return null;
   }

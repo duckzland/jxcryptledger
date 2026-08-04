@@ -424,7 +424,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     final data = widget.initialData!;
 
     if (_rrAmount != null) {
-      final proposed = Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero;
+      final proposed = Utils.parseDecimal(_rrAmount!);
       if (isRoot) return proposed;
       if (isLeaf && _isActive) return proposed;
     }
@@ -443,7 +443,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   Decimal _saveSourceAmountField() {
     final data = widget.initialData!;
     if (_srAmount != null) {
-      final proposed = Decimal.tryParse(Utils.sanitizeNumber(_srAmount!)) ?? Decimal.zero;
+      final proposed = Utils.parseDecimal(_srAmount!);
       if (isRoot) return proposed;
       if (isLeaf && _isActive) return proposed;
     }
@@ -463,7 +463,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
     final data = widget.initialData!;
 
     if (_rrAmount != null) {
-      final proposed = Decimal.tryParse(Utils.sanitizeNumber(_rrAmount!)) ?? Decimal.zero;
+      final proposed = Utils.parseDecimal(_rrAmount!);
       if (isRoot) return proposed;
       if (isLeaf && _isActive) return proposed;
     }

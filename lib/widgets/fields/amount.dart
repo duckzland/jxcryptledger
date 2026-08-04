@@ -73,9 +73,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
     if (widget.initialValue != null) {
       final val = widget.initialValue!;
-      _controller.text = val.isEmpty
-          ? val
-          : Utils.formatSmartDecimal(Decimal.tryParse(Utils.sanitizeNumber(val)) ?? Decimal.zero, smartDecimal: false, maxDecimals: 18);
+      _controller.text = val.isEmpty ? val : Utils.formatSmartDecimal(Utils.parseDecimal(val), smartDecimal: false, maxDecimals: 18);
     }
 
     _helperText = widget.helperText;
@@ -121,8 +119,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
   @override
   void suffixOnReverse() {
     try {
-      final sanitized = Utils.sanitizeNumber(_controller.text);
-      final parsed = Decimal.parse(sanitized);
+      final parsed = Utils.parseDecimal(_controller.text);
       final reversed = Math.divide(Decimal.one, parsed);
       _controller.text = Utils.formatSmartDecimal(reversed, smartDecimal: false, maxDecimals: 18).replaceAll(",", "");
       widget.onChanged?.call(reversed.toString());
@@ -191,10 +188,13 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
       return 'Enter a valid number';
     }
 
-    final sanitized = Utils.sanitizeNumber(value);
-    final parsed = Decimal.tryParse(sanitized);
+    final parsed = Utils.parseDecimal(value);
 
-    if (parsed == null) {
+    if (parsed == Decimal.zero &&
+        value.trim().isNotEmpty &&
+        value.trim() != '0' &&
+        value.trim() != '+0' &&
+        value.trim() != '-0') {
       return 'Enter a valid number';
     }
 

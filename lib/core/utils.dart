@@ -115,7 +115,27 @@ class Utils {
   }
 
   static String sanitizeNumber(String input) {
-    return input.replaceAll(RegExp(r'[^0-9\.\-]'), '');
+    return input.replaceAll(RegExp(r'[^0-9\+\.\-]'), '');
+  }
+
+  static Decimal parseDecimal(String? input, {Decimal? fallback}) {
+    if (input == null) return fallback ?? Decimal.zero;
+
+    final sanitized = sanitizeNumber(input.trim());
+    if (sanitized.isEmpty) return fallback ?? Decimal.zero;
+
+    try {
+      return Decimal.parse(sanitized);
+    } catch (_) {
+      return fallback ?? Decimal.zero;
+    }
+  }
+
+  static Decimal parseDecimalFromObject(Object? value, {Decimal? fallback}) {
+    if (value is Decimal) return value;
+    if (value is String) return parseDecimal(value, fallback: fallback);
+    if (value is num) return Decimal.parse(value.toString());
+    return fallback ?? Decimal.zero;
   }
 
   static int dateToTimestamp(DateTime? date) {
