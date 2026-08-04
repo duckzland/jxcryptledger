@@ -5,16 +5,12 @@ import '../../features/watchboard/panels/model.dart';
 import '../../features/watchers/model.dart';
 import '../../features/transactions/model.dart';
 import '../../system/settings/keys.dart';
-import '../../system/settings/service.dart';
+import '../../system/settings/model.dart';
 import '../../ipc/database/migration.dart';
 import '../log.dart';
 import '../mode.dart';
-import 'locator.dart';
 
 class CoreRuntimeMigration extends IpcMigration {
-  SettingsService get service => locator<SettingsService>();
-  String? currver = "";
-
   @override
   Future<void> migrateBeforeUnlock() async {
     // Nothing to migrate after v1.1.0
@@ -22,43 +18,51 @@ class CoreRuntimeMigration extends IpcMigration {
 
   @override
   Future<void> migrateAfterUnlock() async {
-    currver ??= service.getByKey(SettingKey.migrateVersion, defaultValue: SettingKey.migrateVersion.defaultValue);
+    logln("[MIGRATION] Migrating database to ${CoreMode.dbVersion}");
 
-    switch (currver) {
-      case "v1.1.0":
-        final txBox = Hive.box<TransactionsModel>('transactions_box');
-        final pxBox = Hive.box<PanelsModel>('panels_box');
-        final wxBox = Hive.box<WatchersModel>('watchers_box');
-        final mxBox = Hive.box<MarketsModel>('markets_box');
+    try {
+      switch (CoreMode.dbVersion) {
+        case "v1.1.0":
+          final txBox = Hive.box<TransactionsModel>('transactions_box');
+          final pxBox = Hive.box<PanelsModel>('panels_box');
+          final wxBox = Hive.box<WatchersModel>('watchers_box');
+          final mxBox = Hive.box<MarketsModel>('markets_box');
+          final sxbox = Hive.box<SettingsModel>("settings_box");
 
-        final Map<dynamic, TransactionsModel> txMap = Map.from(txBox.toMap());
-        final Map<dynamic, PanelsModel> pxMap = Map.from(pxBox.toMap());
-        final Map<dynamic, WatchersModel> wxMap = Map.from(wxBox.toMap());
-        final Map<dynamic, MarketsModel> mxMap = Map.from(mxBox.toMap());
+          final Map<dynamic, TransactionsModel> txMap = Map.from(txBox.toMap());
+          final Map<dynamic, PanelsModel> pxMap = Map.from(pxBox.toMap());
+          final Map<dynamic, WatchersModel> wxMap = Map.from(wxBox.toMap());
+          final Map<dynamic, MarketsModel> mxMap = Map.from(mxBox.toMap());
 
-        await txBox.clear();
-        await pxBox.clear();
-        await wxBox.clear();
-        await mxBox.clear();
+          await txBox.clear();
+          await pxBox.clear();
+          await wxBox.clear();
+          await mxBox.clear();
 
-        await txBox.putAll(txMap);
-        await pxBox.putAll(pxMap);
-        await wxBox.putAll(wxMap);
-        await mxBox.putAll(mxMap);
+          await txBox.putAll(txMap);
+          await pxBox.putAll(pxMap);
+          await wxBox.putAll(wxMap);
+          await mxBox.putAll(mxMap);
 
-        await txBox.flush();
-        await pxBox.flush();
-        await wxBox.flush();
-        await mxBox.flush();
+          await txBox.flush();
+          await pxBox.flush();
+          await wxBox.flush();
+          await mxBox.flush();
 
-        CoreMode.dbVersion = "v1.2.0";
+          await sxbox.put(
+            SettingKey.migrateVersion.id,
+            SettingsModel(keyId: SettingKey.migrateVersion.id, type: SettingKey.migrateVersion.type, value: "v1.2.0"),
+          );
 
-        await service.save(SettingKey.migrateVersion, CoreMode.dbVersion);
+          CoreMode.dbVersion = "v1.2.0";
 
-        logln("[MIGRATION] Upgrading database to ${CoreMode.dbVersion}");
-        break;
-      default:
-        break;
+          logln("[MIGRATION] Upgrading database to ${CoreMode.dbVersion}");
+          break;
+        default:
+          break;
+      }
+    } catch (e) {
+      logln("[MIGRATION] Failed upgrading database to ${CoreMode.dbVersion}: $e");
     }
   }
 }

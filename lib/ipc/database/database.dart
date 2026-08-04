@@ -35,7 +35,7 @@ class IpcDatabase {
     if (unlocked == null || !unlocked!.isUnlocked()) {
       final status = await boxes.unlock(keyBytes);
       if (status.isUnlocked()) {
-        migration.migrateAfterUnlock();
+        await migration.migrateAfterUnlock();
       }
 
       unlocked = status;

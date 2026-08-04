@@ -50,7 +50,7 @@ class CoreRuntimeBoxes extends IpcBoxes {
     }
 
     try {
-      settingsBox = await openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
+      settingsBox = await openBox<SettingsModel>('settings_box', encryptionCipher: cipher, crashRecovery: false);
     } catch (e) {
       logln("Failed to open settings_box: $e");
       return SystemUnlockStatus.error;
@@ -60,6 +60,7 @@ class CoreRuntimeBoxes extends IpcBoxes {
       if (settingsBox != null) {
         SettingsModel? setting = settingsBox.get(SettingKey.migrateVersion.id);
         CoreMode.dbVersion = (setting?.value ?? SettingKey.migrateVersion.defaultValue) as String;
+        logln("Using database version ${CoreMode.dbVersion}");
       }
     } catch (e) {
       logln("Failed to set database version: $e");
