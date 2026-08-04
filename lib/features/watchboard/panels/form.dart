@@ -81,7 +81,7 @@ class _PanelsFormState extends State<PanelsForm> {
     final Map<String, dynamic> meta = {};
     final rate = _rateController.getStoredRate(_selectedSrId!, _selectedRrId!);
 
-    if (rate == -9999) {
+    if (rate == Decimal.fromInt(-9999)) {
       _rateController.addQueue(_selectedSrId!, _selectedRrId!);
       meta["oldRate"] = rate.toString();
     } else {

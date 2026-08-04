@@ -389,7 +389,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           onSort: sortableSorters[4],
         ),
 
-      if (_currentRate != 0.0 && !isCapital) ...[
+      if (_currentRate != Decimal.zero && !isCapital) ...[
         DataColumn2(
           size: ColumnSize.S,
           label: WidgetsHeader(
@@ -417,7 +417,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       WidgetsTableColumn(
         label: const Text('Status '),
         fixedWidth: 80,
-        onSort: (_currentRate == 0.0) ? sortableSorters[5] : sortableSorters[9],
+        onSort: (_currentRate == Decimal.zero) ? sortableSorters[5] : sortableSorters[9],
       ),
       const DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
@@ -446,7 +446,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),
           if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),
 
-          if (_currentRate != 0 && !isCapital) ...[
+          if (_currentRate != Decimal.zero && !isCapital) ...[
             DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
             DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
             DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),

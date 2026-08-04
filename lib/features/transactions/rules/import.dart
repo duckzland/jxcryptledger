@@ -83,7 +83,7 @@ class TransactionsRulesImport {
     for (final tx in txs) {
       final list = children[tx.tid] ?? [];
 
-      if (tx.balance == 0) {
+      if (tx.balance == Decimal.zero) {
         if (tx.status != TransactionStatus.inactive.index && tx.status != TransactionStatus.closed.index) {
           throw ValidationException(
             AppErrorCode.txImportZeroBalanceNotInactive,

@@ -102,7 +102,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
           ]
         : [
             Text(
-              tix.rate == -9999 ? "Fetching new rate..." : "Loading...",
+              tix.rate == Decimal.fromInt(-9999) ? "Fetching new rate..." : "Loading...",
               style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ];

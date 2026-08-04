@@ -38,7 +38,7 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
     for (final tx in items) {
       final rx = tx as CoreModelRateable;
       final current = rateableController.getStoredRate(rx.srId, rx.rrId);
-      if (current == -9999) {
+      if (current == Decimal.fromInt(-9999)) {
         rateableController.addQueue(rx.srId, rx.rrId);
         continue;
       }
