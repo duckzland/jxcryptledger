@@ -40,7 +40,7 @@ RatesParserResult parseRatesJsonV3(String body) {
       continue;
     }
 
-    final reversed = (Decimal.one / targetAmount).toDecimal(scaleOnInfinitePrecision: 100);
+    final reversed = (Decimal.one / targetAmount).toDecimal(scaleOnInfinitePrecision: 18);
 
     rates.add(
       RatesModel(
@@ -54,7 +54,6 @@ RatesParserResult parseRatesJsonV3(String body) {
       ),
     );
 
-    // Added reversed rates so lookups can invert the amount while keeping the stored values precise.
     rates.add(
       RatesModel(
         sourceAmount: sourceAmount,

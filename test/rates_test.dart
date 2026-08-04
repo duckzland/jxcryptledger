@@ -54,7 +54,7 @@ void main() {
       expect(storedReverse.sourceAmount, Decimal.parse('1.2345678901234567890123456789'));
       expect(
         storedReverse.targetAmount,
-        (Decimal.one / Decimal.parse('3.1415926535897932384626433832795')).toDecimal(scaleOnInfinitePrecision: 100),
+        (Decimal.one / Decimal.parse('3.1415926535897932384626433832795')).toDecimal(scaleOnInfinitePrecision: 18),
       );
     });
   });
