@@ -66,46 +66,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    final tix = widget.tix;
-
-    String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
-    String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
-
-    final fromText = "${Utils.formatSmartDecimal(tix.srAmount)} $sourceSymbol to $targetSymbol";
-    final toText = "${Utils.formatSmartDecimal((tix.rate * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
-    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDecimal(tix.rate, maxDecimals: tix.digit)} $targetSymbol";
-    final inverseText =
-        "1 $targetSymbol = ${Utils.formatSmartDecimal(Math.divide(Decimal.one, tix.rate), maxDecimals: tix.digit)} $sourceSymbol";
-
     final bool isThisOneActive = _activePanelId == widget.tix.tid;
-
-    final text = tix.rate > Decimal.zero
-        ? [
-            Text(fromText, style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600)),
-            Flexible(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                switchInCurve: Curves.elasticIn,
-                switchOutCurve: Curves.elasticOut,
-                transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                child: Text(
-                  toText,
-                  key: ValueKey(toText),
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: const TextStyle(height: 1.3, fontSize: 25, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-            Text(rateText, style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
-            Text(inverseText, style: const TextStyle(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400)),
-          ]
-        : [
-            Text(
-              tix.rate == Decimal.fromInt(-9999) ? "Fetching new rate..." : "Loading...",
-              style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ];
 
     final targetColor = _resolveBackground();
     bool colorChanged = targetColor != _currentColor;
@@ -120,7 +81,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
       duration: const Duration(milliseconds: 300),
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
       curve: Curves.easeInOut,
-      builder: (context, Color? animatedBgColor, child) {
+      builder: (buildContext, Color? animatedBgColor, child) {
         return MouseRegion(
           cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.click,
           child: GestureDetector(
@@ -138,7 +99,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
-                        children: text,
+                        children: _buildText(),
                       ),
                     ),
                   ),
@@ -185,6 +146,53 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
         );
       },
     );
+  }
+
+  List<Widget> _buildText() {
+    final tix = widget.tix;
+
+    String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
+    String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
+
+    final fromText = "${Utils.formatSmartDecimal(tix.srAmount)} $sourceSymbol to $targetSymbol";
+    final toText = "${Utils.formatSmartDecimal((tix.rate * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
+    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDecimal(tix.rate, maxDecimals: tix.digit)} $targetSymbol";
+    final inverseText =
+        "1 $targetSymbol = ${Utils.formatSmartDecimal(Math.divide(Decimal.one, tix.rate), maxDecimals: tix.digit)} $sourceSymbol";
+
+    final fromStyle = const TextStyle(height: 1.2, fontWeight: FontWeight.w600);
+    final toStyle = const TextStyle(height: 1.3, fontWeight: FontWeight.w700);
+
+    final fromFontSize = fromText.length > 18 ? 12.0 : 13.0;
+    final toFontSize = toText.length > 18 ? 22.0 : 25.0;
+
+    final text = tix.rate > Decimal.zero
+        ? [
+            Text(fromText, style: fromStyle.copyWith(fontSize: fromFontSize)),
+            Flexible(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                child: Text(
+                  toText,
+                  key: ValueKey(toText),
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: toStyle.copyWith(fontSize: toFontSize),
+                ),
+              ),
+            ),
+            Text(rateText, style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
+            Text(inverseText, style: const TextStyle(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400)),
+          ]
+        : [
+            Text(
+              tix.rate == Decimal.fromInt(-9999) ? "Fetching new rate..." : "Loading...",
+              style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ];
+
+    return text;
   }
 
   Color _resolveBackground() {
