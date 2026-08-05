@@ -140,6 +140,10 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     rateableSource = widget.srid;
     rateableTarget = widget.rrid;
 
+    // Fast queue and trigger for preventing lag when scrolling
+    rateableAddToQueue(rateableSource!, rateableTarget!, true);
+    rateableGetRate(refresh: false, silent: true);
+
     _isOpen = widget.isOpen;
     _customRate = states.get("[np]-$cardKey-custom-rate", defaultValue: null);
     _isReversed = states.get("[np]-$cardKey-is-reversed", defaultValue: false);

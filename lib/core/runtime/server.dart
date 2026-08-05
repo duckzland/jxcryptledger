@@ -41,7 +41,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
   final ArchivesService _archivesService = locator<ArchivesService>();
   final NotificationService _notificationService = locator<NotificationService>();
 
-  final CorePooler appWorker = locator<CorePooler>();
+  final CorePooler appPooler = locator<CorePooler>();
 
   Timer? _serverWatchdog;
 
@@ -214,7 +214,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     }
 
     try {
-      appWorker.start();
+      appPooler.start();
     } catch (e) {
       logln("WorkerService failed to initialize: $e");
     }
@@ -234,7 +234,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     await _archivesService.dispose();
     await _transactionsService.dispose();
 
-    appWorker.stop();
+    appPooler.stop();
 
     logln("Server services stopped.");
   }

@@ -386,6 +386,8 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     if (txA.tid != txB.tid ||
         txA.rid != txB.rid ||
         txA.pid != txB.pid ||
+        txA.srId != txB.srId ||
+        txA.rrId != txB.rrId ||
         txA.srAmount != txB.srAmount ||
         txA.rrAmount != txB.rrAmount ||
         txA.balance != txB.balance ||

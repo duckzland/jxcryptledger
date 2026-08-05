@@ -125,4 +125,8 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
     }
     return parsed;
   }
+
+  void rateableAddToQueue(int source, int target, bool force) {
+    rateableController.addQueue(source, target, force: force);
+  }
 }

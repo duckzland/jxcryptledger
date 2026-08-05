@@ -101,7 +101,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
       return;
     }
 
-    if (!txController.isEqualToItems(txs)) {
+    if (!txController.isEqualToItems(oldWidget.transactions)) {
       setState(() {
         final tx = txController.findNew(txs);
         txs = widget.transactions;

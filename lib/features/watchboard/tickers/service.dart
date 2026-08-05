@@ -300,7 +300,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
           id: TickerType.altcoinIndex.index,
           payload: const [],
           callback: (_, _) async => await fetchAltSeason(),
-          isFreePlan: false, // per-request, but each is atomic
+          isFreePlan: false,
         ),
       );
     }

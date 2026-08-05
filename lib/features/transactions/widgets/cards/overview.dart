@@ -7,6 +7,7 @@ import '../../../../core/runtime/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../mixins/actionable.dart';
+import '../../../../mixins/rateable.dart';
 import '../../../../mixins/selectable_table.dart';
 import '../../../../mixins/sortable_table.dart';
 import '../../../../mixins/state.dart';
@@ -69,6 +70,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         MixinsTable,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsWidgetsCardsOverview>,
+        MixinsRateable<TransactionsWidgetsCardsOverview>,
         TransactionsMixinsActions,
         TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
@@ -79,6 +81,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   Decimal _totalCapital = Decimal.zero;
   Decimal _currentHolding = Decimal.zero;
+  Decimal _currentUsd = Decimal.zero;
   Decimal _finalizedBalance = Decimal.zero;
   Decimal _profitLoss = Decimal.zero;
   Decimal _profitLossPercentage = Decimal.zero;
@@ -106,11 +109,21 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
-      2: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
+      1: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
+      2: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
       3: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      4: (col, asc) => sortableOnSort((d) => d['_currentUsdValue'] as double, col, asc),
+      5: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
+
+    rateableIsTemporary = false;
+    rateableWithField = false;
+    rateableSource = widget.id;
+    rateableTarget = 825; // USDT
+
+    // Fast queue and trigger for preventing lag when scrolling
+    rateableAddToQueue(rateableSource!, rateableTarget!, true);
+    rateableGetRate(refresh: false, silent: true);
 
     checkForClosable();
     checkForDeletable();
@@ -121,11 +134,10 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _calculateProfitLoss();
     rows = _buildRows();
     sortableApplySorting(pauseRefresh: true);
-  }
 
-  @override
-  void dispose() {
-    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      rateableGetRate(refresh: false, silent: true);
+    });
   }
 
   @override
@@ -158,6 +170,20 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _calculateProfitLoss();
     rows = _buildRows();
     sortableApplySorting();
+  }
+
+  @override
+  void rateableUpdateRate() {
+    rateableGetRate(refresh: false, silent: true);
+  }
+
+  @override
+  void rateableGetCallback(bool hasNewRate) {
+    if (hasNewRate) {
+      _calculateProfitLoss();
+      rows = _buildRows();
+      sortableApplySorting();
+    }
   }
 
   @override
@@ -259,6 +285,13 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                     value: 0,
                     comparator: 0,
                   ),
+                if (_currentUsd > Decimal.zero)
+                  TransactionsWidgetsPanelItem(
+                    title: "Balance",
+                    subtitle: "${Utils.formatSmartDecimal(_currentUsd, limitDecimals: 2)} USDT",
+                    value: 0,
+                    comparator: 0,
+                  ),
                 if (_currentHolding > Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Current Balance",
@@ -299,10 +332,20 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     final canSelect = isActive && rows.length > 1;
     final tableColumns = [
       WidgetsTableColumn(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsTableColumn(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
-      WidgetsTableColumn(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
-      WidgetsTableColumn(label: const Text('Exchanged Rate'), size: ColumnSize.S, onSort: sortableSorters[3]),
-      WidgetsTableColumn(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[4]),
+      WidgetsTableColumn(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(
+        label: WidgetsHeader(title: 'Balance', subtitle: _resultSymbol),
+        size: ColumnSize.S,
+        onSort: sortableSorters[2],
+      ),
+      WidgetsTableColumn(
+        label: const WidgetsHeader(title: 'Balance', subtitle: 'USDT'),
+        size: ColumnSize.S,
+        onSort: sortableSorters[4],
+      ),
+      WidgetsTableColumn(label: const Text('Exchanged Rate'), size: ColumnSize.M, onSort: sortableSorters[3]),
+
+      WidgetsTableColumn(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
       const DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {
@@ -326,6 +369,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
           DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
           DataCell(Text(r['source'])),
           DataCell(Text(r['balance'])),
+          DataCell(Text(r['currentUsdValue'])),
           DataCell(Text(r['exchangedRate'])),
           DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
           DataCell(
@@ -385,6 +429,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
     for (final tx in txs) {
       final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
+      final usdValue = Math.multiply(tx.balance, rateableValue ?? Decimal.zero);
 
       rx.add({
         'balance': '${tx.balanceText} $_resultSymbol',
@@ -395,12 +440,14 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         'tx': tx,
         'uuid': tx.uuid,
         'note': tx.noteText,
+        'currentUsdValue': usdValue != Decimal.zero ? Utils.formatSmartDecimal(usdValue, limitDecimals: 2) : '-',
 
         '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,
         '_balanceValue': tx.balance,
         '_sourceValue': tx.srAmount,
         '_exchangedRateValue': tx.rate,
+        '_currentUsdValue': usdValue.toDouble(),
       });
     }
 
@@ -440,6 +487,14 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _finalizedBalance = finalizedBalance;
     _profitLoss = Math.subtract(totalBalance, capital);
     _profitLossPercentage = profitPercentage;
+
+    _currentUsd = Decimal.zero;
+    if (rateableValue != null) {
+      for (final tx in stxs) {
+        final txUsd = Math.multiply(tx.balance, rateableValue ?? Decimal.zero);
+        _currentUsd = Math.add(_currentUsd, txUsd);
+      }
+    }
   }
 
   void _toggleShowAction(WidgetsButtonsActionState b) {
