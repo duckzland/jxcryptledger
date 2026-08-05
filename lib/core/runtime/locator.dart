@@ -32,7 +32,7 @@ import '../../features/watchers/controller.dart';
 import '../../features/watchers/repository.dart';
 import '../../features/watchers/service.dart';
 import '../../ipc/client.dart';
-import '../worker.dart';
+import '../pooler.dart';
 import 'adapters.dart';
 import 'client.dart';
 import 'server.dart';
@@ -71,7 +71,7 @@ void setupLocator() {
   locator.registerLazySingleton<RatesController>(() => RatesController(locator<RatesRepository>()));
 
   // Workers
-  locator.registerLazySingleton<CoreWorker>(() => CoreWorker());
+  locator.registerLazySingleton<CorePooler>(() => CorePooler());
 
   // Watchers
   locator.registerLazySingleton<WatchersRepository>(() => WatchersRepository());

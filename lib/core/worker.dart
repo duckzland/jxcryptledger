@@ -1,97 +1,99 @@
 import 'dart:async';
 
-import '../features/rates/service.dart';
-import '../features/transactions/service.dart';
-import '../features/watchboard/panels/service.dart';
-import '../features/watchboard/tickers/service.dart';
-import '../features/watchboard/markets/service.dart';
-import '../features/watchers/service.dart';
-import '../app/router.dart';
-import 'mode.dart';
-import 'runtime/locator.dart';
+import '../app/exceptions.dart';
 import 'log.dart';
 
 class CoreWorker {
-  Timer? _everyMinutesWorker;
-  Timer? _everyFiveMinutesWorker;
-  bool _started = false;
+  bool isFetching = false;
+  Timer? _watchdog;
+  Timer? _paused;
 
-  void start() {
-    if (_started) return;
-    _started = true;
+  bool get isPaused => _paused != null;
 
-    final rates = locator<RatesService>();
-    final panels = locator<PanelsService>();
-    final watchers = locator<WatchersService>();
-    final tickers = locator<TickersService>();
-    final transactions = locator<TransactionsService>();
-    final market = locator<MarketsService>();
+  void dispose() {
+    _watchdog?.cancel();
+    _paused?.cancel();
+  }
 
-    logln("[WORKER] Registering used rates.");
-    panels.scheduleRates();
-    watchers.scheduleRates();
-    transactions.scheduleRates();
+  void _startWatchdog() {
+    _watchdog?.cancel();
+    _watchdog = Timer(const Duration(seconds: 65), () {
+      logln('[WORKER] Watchdog triggered — forcing unlock.');
+      isFetching = false;
+    });
+  }
 
-    _everyMinutesWorker = Timer.periodic(const Duration(minutes: 1), (_) async {
-      bool mustAlwaysFetchRate = false;
+  void _pauseOperation() {
+    logln('[WORKER] Pausing operation.');
+    _paused?.cancel();
+    _paused = Timer(const Duration(seconds: 60), () {
+      logln('[WORKER] Resuming operation.');
+      _paused?.cancel();
+      _paused = null;
+    });
+  }
 
-      if (!CoreMode.isServer) {
-        final current = AppRouter.router.routerDelegate.currentConfiguration.uri.toString();
-        if (current == "/tools") {
-          mustAlwaysFetchRate = true;
-        }
+  Future<void> run(List<CoreWorkerJob> jobs) async {
+    if (jobs.isEmpty) return;
+
+    isFetching = true;
+    _startWatchdog();
+
+    final iterator = jobs.iterator;
+    final hasFreePlanJob = jobs.any((j) => j.isFreePlan);
+
+    int hasFailed = 0;
+    int maxWorkers = 5;
+
+    Future<void> worker(int maxWorkers, int workerIndex) async {
+      if (workerIndex > 0) {
+        await Future.delayed(Duration(milliseconds: workerIndex * (hasFreePlanJob ? 500 : 200)));
       }
 
-      final pxs = panels.getAllRateID();
-      final wxs = watchers.getAllRateID();
-      final txs = transactions.getAllRateID();
-      final uxs = [...pxs, ...wxs, ...txs];
+      while (hasFailed != 2 && iterator.moveNext()) {
+        final job = iterator.current;
 
-      if (uxs.isNotEmpty) {
-        logln("[WORKER] Trying to clean old rates");
-        final rxs = rates.extract();
-        for (final rx in rxs) {
-          final key = '${rx.sourceId}-${rx.targetId}';
-          if (!uxs.contains(key)) {
-            await rates.deleteById(rx.sourceId, rx.targetId);
+        try {
+          await job.callback(job.id, job.payload);
+        } catch (e) {
+          if (e is NetworkingException && e.details as int == 429) {
+            logln('[WORKER] Rate limited, stopping worker: $e');
+            hasFailed = 2;
+            while (iterator.moveNext()) {}
+            break;
+          } else {
+            hasFailed = 1;
+            logln('[WORKER] Unexpected error for job ${job.id}: $e');
           }
         }
-      }
 
-      if (!panels.isEmpty() || !watchers.isEmpty() || !transactions.isEmpty() || mustAlwaysFetchRate) {
-        logln("[WORKER] Refreshing transactions rates");
-        await rates.refreshRates();
-      }
+        if (hasFailed == 2) break;
 
-      if (!watchers.isEmpty()) {
-        logln("[WORKER] Processing watchers");
-        await watchers.onRatesUpdated();
+        final delayMs = job.isFreePlan ? (60000 / 30 / maxWorkers).ceil() : 300;
+        await Future.delayed(Duration(milliseconds: delayMs));
       }
+    }
 
-      if (!panels.isEmpty()) {
-        logln("[WORKER] Processing panels");
-        await panels.onRatesUpdated();
-      }
+    if (hasFreePlanJob) {
+      maxWorkers = jobs.length < maxWorkers ? jobs.length : 1;
+    }
 
-      if (!panels.isEmpty()) {
-        logln("[WORKER] Refreshing tickers rates");
-        await tickers.refreshRates();
-      }
-    });
+    final workersToStart = jobs.length == 1 ? 1 : maxWorkers.clamp(1, jobs.length);
 
-    _everyFiveMinutesWorker = Timer.periodic(const Duration(minutes: 5), (_) async {
-      logln("[WORKER] Refreshing market rates");
-      await market.refreshRates();
-    });
+    await Future.wait(List.generate(workersToStart, (i) => worker(maxWorkers, i)), eagerError: false);
+
+    if (hasFailed == 2) _pauseOperation();
+
+    _watchdog?.cancel();
+    isFetching = false;
   }
+}
 
-  void stop() {
-    _everyFiveMinutesWorker?.cancel();
-    _everyFiveMinutesWorker = null;
+class CoreWorkerJob {
+  final int id;
+  final List<int> payload;
+  final Future<void> Function(int, List<int>) callback;
+  final bool isFreePlan;
 
-    _everyMinutesWorker?.cancel();
-    _everyMinutesWorker = null;
-
-    _started = false;
-  }
+  CoreWorkerJob({required this.id, required this.payload, required this.callback, required this.isFreePlan});
 }

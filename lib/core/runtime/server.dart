@@ -22,7 +22,7 @@ import '../../system/unlock/status.dart';
 import '../abstracts/runtime.dart';
 import '../log.dart';
 import '../mode.dart';
-import '../worker.dart';
+import '../pooler.dart';
 import 'boxes.dart';
 import 'locator.dart';
 import 'migration.dart';
@@ -41,7 +41,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
   final ArchivesService _archivesService = locator<ArchivesService>();
   final NotificationService _notificationService = locator<NotificationService>();
 
-  final CoreWorker appWorker = locator<CoreWorker>();
+  final CorePooler appWorker = locator<CorePooler>();
 
   Timer? _serverWatchdog;
 

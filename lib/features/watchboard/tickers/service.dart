@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/service.dart';
 import '../../../core/log.dart';
+import '../../../core/worker.dart';
 import '../../../system/settings/keys.dart';
 import '../../../system/settings/repository.dart';
 import '../markets/service.dart';
@@ -15,6 +16,7 @@ import 'repository.dart';
 class TickersService extends CoreBaseService<TickersModel, TickersRepository> with TickersMixinsHelper {
   final SettingsRepository settingsRepo;
   final MarketsService marketsService;
+  final CoreWorker worker = CoreWorker();
 
   TickersService(super.repo, this.settingsRepo, this.marketsService);
 
@@ -284,6 +286,90 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<void> refreshRates() async {
+    final all = repo.extract();
+    final types = all.map((tix) => TickerType.values[tix.type]).toSet();
+
+    if (types.isEmpty) return;
+
+    final jobs = <CoreWorkerJob>[];
+
+    if (types.contains(TickerType.altcoinIndex)) {
+      jobs.add(
+        CoreWorkerJob(
+          id: TickerType.altcoinIndex.index,
+          payload: const [],
+          callback: (_, __) async => await fetchAltSeason(),
+          isFreePlan: false, // per-request, but each is atomic
+        ),
+      );
+    }
+    if (types.contains(TickerType.fearGreed)) {
+      jobs.add(
+        CoreWorkerJob(
+          id: TickerType.fearGreed.index,
+          payload: const [],
+          callback: (_, __) async => await fetchFearGreed(),
+          isFreePlan: false,
+        ),
+      );
+    }
+    if (types.contains(TickerType.cmc100)) {
+      jobs.add(
+        CoreWorkerJob(id: TickerType.cmc100.index, payload: const [], callback: (_, __) async => await fetchCmc100(), isFreePlan: false),
+      );
+    }
+    if (types.contains(TickerType.marketCap)) {
+      jobs.add(
+        CoreWorkerJob(
+          id: TickerType.marketCap.index,
+          payload: const [],
+          callback: (_, __) async => await fetchMarketCap(),
+          isFreePlan: false,
+        ),
+      );
+    }
+    if (types.contains(TickerType.dominance)) {
+      jobs.add(
+        CoreWorkerJob(
+          id: TickerType.dominance.index,
+          payload: const [],
+          callback: (_, __) async => await fetchDominance(),
+          isFreePlan: false,
+        ),
+      );
+    }
+    if (types.contains(TickerType.etf)) {
+      jobs.add(CoreWorkerJob(id: TickerType.etf.index, payload: const [], callback: (_, __) async => await fetchEtf(), isFreePlan: false));
+    }
+    if (types.contains(TickerType.pulse)) {
+      jobs.add(
+        CoreWorkerJob(id: TickerType.pulse.index, payload: const [], callback: (_, __) async => await fetchRsi(), isFreePlan: false),
+      );
+    }
+
+    const mgmlTypes = {
+      TickerType.topGainer100_1h,
+      TickerType.topGainer100_24h,
+      TickerType.topGainer200_1h,
+      TickerType.topGainer200_24h,
+      TickerType.topLoser100_1h,
+      TickerType.topLoser100_24h,
+      TickerType.topLoser200_1h,
+      TickerType.topLoser200_24h,
+    };
+
+    if (types.any(mgmlTypes.contains)) {
+      jobs.add(CoreWorkerJob(id: 999, payload: const [], callback: (_, _) async => await fetchMarketGainerLoser(), isFreePlan: false));
+    }
+
+    try {
+      await worker.run(jobs);
+    } finally {
+      logln("[TICKERS] Fetching new ticker data completed");
+    }
+  }
+
+  Future<void> refreshRates2() async {
     final all = repo.extract();
     final types = all.map((tix) => TickerType.values[tix.type]).toSet();
 

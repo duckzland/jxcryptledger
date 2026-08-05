@@ -7,6 +7,7 @@ import 'package:jxledger/features/rates/parsers/pro_v2.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
+import '../../core/worker.dart';
 import '../../ipc/action.dart';
 import '../../core/log.dart';
 import '../../system/settings/keys.dart';
@@ -19,16 +20,13 @@ import 'repository.dart';
 
 class RatesService extends CoreBaseService<RatesModel, RatesRepository> with RatesMixinsHelper {
   final SettingsRepository settingsRepo;
+  final CoreWorker worker = CoreWorker();
 
   RatesService(super.repo, this.settingsRepo);
 
-  bool _isFetching = false;
-  bool get isFetching => _isFetching;
-  bool get isPaused => _paused != null;
+  bool get isFetching => worker.isFetching;
+  bool get isPaused => worker.isPaused;
   bool get hasRates => !repo.isEmpty();
-
-  Timer? _watchdog;
-  Timer? _paused;
 
   final List<(int sourceId, int targetId)> _queue = [];
   List<(int sourceId, int targetId)> _inProcessQueue = [];
@@ -51,8 +49,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
   @override
   Future<void> dispose() async {
     _debounce?.cancel();
-    _watchdog?.cancel();
-    _paused?.cancel();
+    worker.dispose();
     await super.dispose();
   }
 
@@ -100,31 +97,12 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     _debounce = Timer(const Duration(milliseconds: 10), () => _processQueue(force));
   }
 
-  void _startWatchdog() {
-    _watchdog?.cancel();
-    _watchdog = Timer(const Duration(seconds: 65), () {
-      logln('[RATES] Watchdog triggered — forcing unlock.');
-      _isFetching = false;
-    });
-  }
-
-  void _pauseOperation() {
-    logln('[RATES] Pausing operation.');
-    _paused?.cancel();
-    _paused = Timer(const Duration(seconds: 60), () {
-      logln('[RATES] Resuming operation.');
-      _paused?.cancel();
-      _paused = null;
-    });
-  }
-
   Future<void> _processQueue(bool force) async {
     if (isFetching) return;
     if (isPaused) return;
     if (_queue.isEmpty) return;
 
-    _isFetching = force ? false : true;
-    _startWatchdog();
+    worker.isFetching = force ? false : true;
     _detectSettings();
 
     broadcasterEmit(IpcAction.refreshRates, 'start', '', Uint8List(0));
@@ -155,11 +133,14 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
         }).toList();
       }
 
-      await _runWorkers(jobQueue);
+      final workerJobs = jobQueue
+          .map((entry) => CoreWorkerJob(id: entry.key, payload: entry.value, callback: _fetchInternal, isFreePlan: isFreePlan))
+          .toList();
+
+      await worker.run(workerJobs);
     } finally {
       _inProcessQueue.clear();
-      _watchdog?.cancel();
-      _isFetching = false;
+      worker.isFetching = false;
 
       logln('[RATES] Process queue completed');
 
@@ -246,62 +227,6 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     }
 
     return grouped;
-  }
-
-  Future<void> _runWorkers(List<MapEntry<int, List<int>>> jobQueue) async {
-    if (jobQueue.isEmpty) return;
-
-    final iterator = jobQueue.iterator;
-    int hasFailed = 0;
-
-    Future<void> worker(int maxWorkers, int workerIndex) async {
-      if (workerIndex > 0) {
-        final initialDelay = workerIndex * 200;
-        await Future.delayed(Duration(milliseconds: initialDelay));
-      }
-
-      workerloop:
-      while (hasFailed != 2 && iterator.moveNext()) {
-        final job = iterator.current;
-
-        try {
-          await _fetchInternal(job.key, job.value);
-        } catch (e) {
-          if (e is NetworkingException && e.details as int == 429) {
-            final code = e.details as int;
-            switch (code) {
-              case 429:
-                logln('[RATES] Rate limited, stopping worker and pausing job: $e');
-                hasFailed = 2;
-                while (iterator.moveNext()) {}
-                break workerloop;
-              default:
-                break;
-            }
-          } else {
-            hasFailed = 1;
-            logln('[RATES] Unexpected worker error for ${job.key}: $e');
-          }
-        }
-
-        if (hasFailed == 2) break;
-
-        final delayMs = isFreePlan ? (60000 / 30 / maxWorkers).ceil() : 300;
-        await Future.delayed(Duration(milliseconds: delayMs));
-      }
-    }
-
-    int maxWorkers = 5;
-    if (isFreePlan) {
-      maxWorkers = jobQueue.length < maxWorkers ? jobQueue.length : 1;
-    }
-
-    final workersToStart = jobQueue.length == 1 ? 1 : maxWorkers.clamp(1, jobQueue.length);
-    await Future.wait(List.generate(workersToStart, (index) => worker(maxWorkers, index)), eagerError: false);
-
-    if (hasFailed == 2) {
-      _pauseOperation();
-    }
   }
 
   Future<void> _fetchInternal(int sourceId, List<int> targetIds) async {
