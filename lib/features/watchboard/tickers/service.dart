@@ -5,7 +5,8 @@ import 'package:http/http.dart' as http;
 import '../../../app/exceptions.dart';
 import '../../../core/abstracts/service.dart';
 import '../../../core/log.dart';
-import '../../../core/worker.dart';
+import '../../../core/worker/job.dart';
+import '../../../core/worker/processor.dart';
 import '../../../system/settings/keys.dart';
 import '../../../system/settings/repository.dart';
 import '../markets/service.dart';
@@ -16,7 +17,7 @@ import 'repository.dart';
 class TickersService extends CoreBaseService<TickersModel, TickersRepository> with TickersMixinsHelper {
   final SettingsRepository settingsRepo;
   final MarketsService marketsService;
-  final CoreWorker worker = CoreWorker();
+  final CoreWorkerProcessor worker = CoreWorkerProcessor();
 
   TickersService(super.repo, this.settingsRepo, this.marketsService);
 

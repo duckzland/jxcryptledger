@@ -7,7 +7,8 @@ import 'package:jxledger/features/rates/parsers/pro_v2.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
-import '../../core/worker.dart';
+import '../../core/worker/job.dart';
+import '../../core/worker/processor.dart';
 import '../../ipc/action.dart';
 import '../../core/log.dart';
 import '../../system/settings/keys.dart';
@@ -20,7 +21,7 @@ import 'repository.dart';
 
 class RatesService extends CoreBaseService<RatesModel, RatesRepository> with RatesMixinsHelper {
   final SettingsRepository settingsRepo;
-  final CoreWorker worker = CoreWorker();
+  final CoreWorkerProcessor worker = CoreWorkerProcessor();
 
   RatesService(super.repo, this.settingsRepo);
 

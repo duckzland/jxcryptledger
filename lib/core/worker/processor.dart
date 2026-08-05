@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import '../app/exceptions.dart';
-import 'log.dart';
+import '../../app/exceptions.dart';
+import '../log.dart';
+import 'job.dart';
 
-class CoreWorker {
+class CoreWorkerProcessor {
   bool isFetching = false;
   Timer? _watchdog;
   Timer? _paused;
@@ -87,13 +88,4 @@ class CoreWorker {
     _watchdog?.cancel();
     isFetching = false;
   }
-}
-
-class CoreWorkerJob {
-  final int id;
-  final List<int> payload;
-  final Future<void> Function(int, List<int>) callback;
-  final bool isFreePlan;
-
-  CoreWorkerJob({required this.id, required this.payload, required this.callback, required this.isFreePlan});
 }
