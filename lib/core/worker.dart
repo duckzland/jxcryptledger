@@ -26,7 +26,7 @@ class CoreWorker {
   void _pauseOperation() {
     logln('[WORKER] Pausing operation.');
     _paused?.cancel();
-    _paused = Timer(const Duration(seconds: 60), () {
+    _paused = Timer(const Duration(seconds: 61), () {
       logln('[WORKER] Resuming operation.');
       _paused?.cancel();
       _paused = null;
