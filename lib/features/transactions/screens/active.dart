@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/scrollto.dart';
+import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';
 import '../../cryptos/controller.dart';
@@ -35,7 +36,7 @@ class TransactionsActiveView extends StatefulWidget {
 }
 
 class _TransactionsActiveViewState extends State<TransactionsActiveView>
-    with MixinsState, MixinsScrollToGroup<TransactionsActiveView, TransactionsModel> {
+    with MixinsState, MixinsRateable<TransactionsActiveView>, MixinsScrollToGroup<TransactionsActiveView, TransactionsModel> {
   late final TransactionsController txController;
   late final CryptosController _cryptosController;
   late List<TransactionsModel> txs;
@@ -62,6 +63,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
     groups = _processTx();
     groupKeys = groups.keys.toList();
+    _registerRates();
 
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
@@ -100,6 +102,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
         _sortMode = widget.sortMode;
         groups = _processTx();
         groupKeys = groups.keys.toList();
+        _registerRates();
       });
       return;
     }
@@ -114,6 +117,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
         groups = _processTx();
         groupKeys = groups.keys.toList();
+        _registerRates();
         key = (tx != null) ? "${tx.srId}-${tx.rrId}" : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
 
         if (key != "") {
@@ -266,5 +270,12 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
   void _toggleAction() {
     setState(() {});
+  }
+
+  void _registerRates() {
+    for (final key in groupKeys) {
+      final parts = key.split('-');
+      rateableAddToQueue(825, int.parse(parts[1]), true);
+    }
   }
 }

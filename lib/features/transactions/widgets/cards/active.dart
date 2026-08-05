@@ -139,9 +139,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     rateableIsTemporary = false;
     rateableSource = widget.srid;
     rateableTarget = widget.rrid;
-
-    // Fast queue and trigger for preventing lag when scrolling
-    rateableAddToQueue(rateableSource!, rateableTarget!, true);
     rateableGetRate(refresh: false, silent: true);
 
     _isOpen = widget.isOpen;

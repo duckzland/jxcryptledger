@@ -119,10 +119,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     rateableIsTemporary = false;
     rateableWithField = false;
     rateableSource = widget.id;
-    rateableTarget = 825; // USDT
-
-    // Fast queue and trigger for preventing lag when scrolling
-    rateableAddToQueue(rateableSource!, rateableTarget!, true);
+    rateableTarget = 825;
     rateableGetRate(refresh: false, silent: true);
 
     checkForClosable();
@@ -166,6 +163,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     checkForFinalizable();
     checkForRefundable();
     checkForUpdatable();
+
+    rateableGetRate(refresh: false, silent: true);
 
     _calculateProfitLoss();
     rows = _buildRows();

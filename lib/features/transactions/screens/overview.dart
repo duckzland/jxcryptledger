@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/scrollto.dart';
+import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';
 import '../../cryptos/controller.dart';
@@ -35,7 +36,7 @@ class TransactionsOverviewView extends StatefulWidget {
 }
 
 class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
-    with MixinsState, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
+    with MixinsState, MixinsRateable<TransactionsOverviewView>, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
   TransactionsController get txController => locator<TransactionsController>();
   CryptosController get _cryptosController => locator<CryptosController>();
 
@@ -59,6 +60,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     _sortMode = widget.sortMode;
     groups = _processTx();
     groupKeys = groups.keys.toList();
+    _registerRates();
 
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
@@ -97,6 +99,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         _sortMode = widget.sortMode;
         groups = _processTx();
         groupKeys = groups.keys.toList();
+        _registerRates();
       });
       return;
     }
@@ -111,6 +114,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
 
         groups = _processTx();
         groupKeys = groups.keys.toList();
+        _registerRates();
         key = (tx != null) ? tx.rrId.toString() : scrollToGroupGetDifferenceKey(groups, oldGroups) ?? "";
 
         if (key != "") {
@@ -200,6 +204,12 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
         },
       ),
     );
+  }
+
+  void _registerRates() {
+    for (final rrid in groupKeys) {
+      rateableAddToQueue(825, int.parse(rrid), true);
+    }
   }
 
   Map<String, List<TransactionsModel>> _processTx() {

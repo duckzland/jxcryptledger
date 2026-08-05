@@ -89,17 +89,18 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     if (!isValidPair(sourceId, targetId)) return;
 
     if (_queue.contains((sourceId, targetId)) || _inProcessQueue.contains((sourceId, targetId))) return;
+    if (_queue.contains((targetId, sourceId)) || _inProcessQueue.contains((targetId, sourceId))) return;
 
     // logln("[RATES] Adding to queue $sourceId - $targetId");
 
     _queue.add((sourceId, targetId));
 
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 10), () => _processQueue(force));
+    _debounce = Timer(const Duration(milliseconds: 300), () => _processQueue(force));
   }
 
   Future<void> _processQueue(bool force) async {
-    if (isFetching) return;
+    if (isFetching && !force) return;
     if (isPaused) return;
     if (_queue.isEmpty) return;
 
@@ -138,7 +139,13 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
           .map((entry) => CoreWorkerJob(id: entry.key, payload: entry.value, callback: _fetchInternal, isFreePlan: isFreePlan))
           .toList();
 
-      await worker.run(workerJobs);
+      if (force) {
+        // spin up a new worker lane
+        final tempWorker = CoreWorkerProcessor();
+        await tempWorker.run(workerJobs);
+      } else {
+        await worker.run(workerJobs);
+      }
     } finally {
       _inProcessQueue.clear();
       worker.isFetching = false;
