@@ -299,7 +299,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.altcoinIndex.index,
           payload: const [],
-          callback: (_, __) async => await fetchAltSeason(),
+          callback: (_, _) async => await fetchAltSeason(),
           isFreePlan: false, // per-request, but each is atomic
         ),
       );
@@ -309,14 +309,14 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.fearGreed.index,
           payload: const [],
-          callback: (_, __) async => await fetchFearGreed(),
+          callback: (_, _) async => await fetchFearGreed(),
           isFreePlan: false,
         ),
       );
     }
     if (types.contains(TickerType.cmc100)) {
       jobs.add(
-        CoreWorkerJob(id: TickerType.cmc100.index, payload: const [], callback: (_, __) async => await fetchCmc100(), isFreePlan: false),
+        CoreWorkerJob(id: TickerType.cmc100.index, payload: const [], callback: (_, _) async => await fetchCmc100(), isFreePlan: false),
       );
     }
     if (types.contains(TickerType.marketCap)) {
@@ -324,7 +324,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.marketCap.index,
           payload: const [],
-          callback: (_, __) async => await fetchMarketCap(),
+          callback: (_, _) async => await fetchMarketCap(),
           isFreePlan: false,
         ),
       );
@@ -334,17 +334,17 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.dominance.index,
           payload: const [],
-          callback: (_, __) async => await fetchDominance(),
+          callback: (_, _) async => await fetchDominance(),
           isFreePlan: false,
         ),
       );
     }
     if (types.contains(TickerType.etf)) {
-      jobs.add(CoreWorkerJob(id: TickerType.etf.index, payload: const [], callback: (_, __) async => await fetchEtf(), isFreePlan: false));
+      jobs.add(CoreWorkerJob(id: TickerType.etf.index, payload: const [], callback: (_, _) async => await fetchEtf(), isFreePlan: false));
     }
     if (types.contains(TickerType.pulse)) {
       jobs.add(
-        CoreWorkerJob(id: TickerType.pulse.index, payload: const [], callback: (_, __) async => await fetchRsi(), isFreePlan: false),
+        CoreWorkerJob(id: TickerType.pulse.index, payload: const [], callback: (_, _) async => await fetchRsi(), isFreePlan: false),
       );
     }
 
