@@ -192,7 +192,7 @@ class TickersModel implements CoreModelWithId {
         return val.toStringAsFixed(2);
 
       case TickerFormat.normalCurrency:
-        return "\$${Utils.formatSmartDecimal(val, maxDecimals: 2)}";
+        return "\$${Utils.formatSmartDecimal(val, limitDecimals: 2)}";
 
       case TickerFormat.shortCurrency:
         return _formatShortCurrency(val);

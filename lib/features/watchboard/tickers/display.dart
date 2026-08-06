@@ -76,7 +76,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
                         end: double.tryParse(tix.value) ?? 0.0,
                         style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
                         formatter: (val) {
-                          return tix.formatValue(val.toStringAsPrecision(2));
+                          return tix.formatValue(val.toString());
                         },
                       ),
                     ]
