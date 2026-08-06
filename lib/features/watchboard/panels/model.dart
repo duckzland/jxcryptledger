@@ -198,4 +198,11 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
   bool get isLinked {
     return meta.containsKey('txLink');
   }
+
+  Decimal get oldRate {
+    final oldRateStr = meta["oldRate"]?.toString();
+    if (oldRateStr == null || oldRateStr.isEmpty) return Decimal.zero;
+
+    return Decimal.tryParse(oldRateStr) ?? Decimal.zero;
+  }
 }

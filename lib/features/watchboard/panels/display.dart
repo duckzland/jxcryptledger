@@ -5,6 +5,7 @@ import '../../../app/theme.dart';
 import '../../../core/math.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
+import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
 import '../../watchers/controller.dart';
@@ -156,12 +157,8 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
     final fromText = "${Utils.formatSmartDecimal(tix.srAmount)} $sourceSymbol to $targetSymbol";
     final toText = "${Utils.formatSmartDecimal((tix.rate * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
-    final rateText = "1 $sourceSymbol = ${Utils.formatSmartDecimal(tix.rate, maxDecimals: tix.digit)} $targetSymbol";
-    final inverseText =
-        "1 $targetSymbol = ${Utils.formatSmartDecimal(Math.divide(Decimal.one, tix.rate), maxDecimals: tix.digit)} $sourceSymbol";
-
     final fromStyle = const TextStyle(height: 1.2, fontWeight: FontWeight.w600);
-    final toStyle = const TextStyle(height: 1.3, fontWeight: FontWeight.w700);
+    final toStyle = const TextStyle(height: 1.3, fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]);
 
     final fromFontSize = fromText.length > 18 ? 12.0 : 13.0;
     final toFontSize = toText.length > 18 ? 22.0 : 25.0;
@@ -169,21 +166,35 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     final text = tix.rate > Decimal.zero
         ? [
             Text(fromText, style: fromStyle.copyWith(fontSize: fromFontSize)),
-            Flexible(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                child: Text(
-                  toText,
-                  key: ValueKey(toText),
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: toStyle.copyWith(fontSize: toFontSize),
-                ),
-              ),
+            WidgetsNumbersFlow(
+              begin: Math.multiply(tix.oldRate, tix.srAmount).toDouble(),
+              end: Math.multiply(tix.rate, tix.srAmount).toDouble(),
+              suffix: " $targetSymbol",
+              style: toStyle.copyWith(fontSize: toFontSize),
+              formatter: (val) {
+                return Utils.formatSmartDouble(val, maxDecimals: tix.digit, smartDecimal: true);
+              },
             ),
-            Text(rateText, style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
-            Text(inverseText, style: const TextStyle(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400)),
+            WidgetsNumbersFlow(
+              begin: tix.oldRate.toDouble(),
+              end: tix.rate.toDouble(),
+              prefix: "1 $sourceSymbol = ",
+              suffix: " $targetSymbol",
+              style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400),
+              formatter: (val) {
+                return Utils.formatSmartDouble(val, maxDecimals: tix.digit);
+              },
+            ),
+            WidgetsNumbersFlow(
+              begin: Math.divide(Decimal.one, tix.oldRate).toDouble(),
+              end: Math.divide(Decimal.one, tix.rate).toDouble(),
+              prefix: "1 $targetSymbol = ",
+              suffix: " $sourceSymbol",
+              style: const TextStyle(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400),
+              formatter: (val) {
+                return Utils.formatSmartDouble(val, maxDecimals: tix.digit);
+              },
+            ),
           ]
         : [
             Text(

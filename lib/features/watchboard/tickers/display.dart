@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
+import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
 import 'controller.dart';
 import 'model.dart';
@@ -70,16 +71,13 @@ class _TickersDisplayState extends State<TickersDisplay> {
                         overflow: TextOverflow.visible,
                         style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
                       ),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                        child: Text(
-                          tix.getContent(),
-                          key: ValueKey(tix.getContent()),
-                          softWrap: false,
-                          overflow: TextOverflow.visible,
-                          style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
-                        ),
+                      WidgetsNumbersFlow(
+                        begin: double.tryParse(tix.oldValue) ?? 0.0,
+                        end: double.tryParse(tix.value) ?? 0.0,
+                        style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                        formatter: (val) {
+                          return tix.formatValue(val.toStringAsPrecision(2));
+                        },
                       ),
                     ]
                   : [

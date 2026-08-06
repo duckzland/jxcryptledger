@@ -125,6 +125,10 @@ class TickersModel implements CoreModelWithId {
     }
   }
 
+  String get oldValue {
+    return meta['oldValue'] as String;
+  }
+
   TickerType getType() {
     switch (type) {
       case 0:
@@ -169,7 +173,10 @@ class TickersModel implements CoreModelWithId {
   }
 
   String getContent() {
-    final raw = value;
+    return formatValue(value);
+  }
+
+  String formatValue(String raw) {
     final fmt = (format >= 0 && format < TickerFormat.values.length) ? TickerFormat.values[format] : TickerFormat.raw;
 
     final val = Decimal.tryParse(raw);
@@ -195,7 +202,7 @@ class TickersModel implements CoreModelWithId {
         return "$sign${_formatShortCurrency(val.abs())}";
 
       case TickerFormat.percentage:
-        return "$raw/100";
+        return "${val.toStringAsFixed(0)}/100";
 
       case TickerFormat.shortPercentage:
         return "${val.toStringAsFixed(2)}%";
