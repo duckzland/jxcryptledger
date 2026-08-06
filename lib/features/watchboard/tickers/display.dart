@@ -55,9 +55,9 @@ class _TickersDisplayState extends State<TickersDisplay> {
     _currentValue = tix.value;
 
     return TweenAnimationBuilder<Color?>(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
-      curve: Curves.easeInOut,
+      curve: Curves.easeOut,
       builder: (context, Color? animatedBgColor, child) {
         return MouseRegion(
           cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic,
