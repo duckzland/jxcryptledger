@@ -21,6 +21,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
   TickersController get _controller => locator<TickersController>();
 
   Color _currentColor = AppTheme.darkGrey;
+  String? _currentValue;
 
   @override
   void initState() {
@@ -49,6 +50,10 @@ class _TickersDisplayState extends State<TickersDisplay> {
     final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
     _currentColor = targetColor;
 
+    final currentValue = _currentValue;
+
+    _currentValue = tix.value;
+
     return TweenAnimationBuilder<Color?>(
       duration: const Duration(milliseconds: 300),
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
@@ -72,9 +77,11 @@ class _TickersDisplayState extends State<TickersDisplay> {
                         style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
                       ),
                       WidgetsNumbersFlow(
-                        begin: double.tryParse(tix.oldValue) ?? 0.0,
+                        begin: currentValue != null ? double.tryParse(tix.oldValue) ?? 0.0 : null,
                         end: double.tryParse(tix.value) ?? 0.0,
                         style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                        duration: const Duration(milliseconds: 1200),
+                        curve: Curves.easeOut,
                         formatter: (val) {
                           return tix.formatValue(val.toString());
                         },

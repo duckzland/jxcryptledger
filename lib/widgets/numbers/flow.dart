@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WidgetsNumbersFlow extends StatelessWidget {
-  final double begin;
+  final double? begin;
   final double end;
   final Duration duration;
   final Curve curve;
@@ -12,13 +12,13 @@ class WidgetsNumbersFlow extends StatelessWidget {
 
   const WidgetsNumbersFlow({
     super.key,
-    required this.begin,
     required this.end,
+    this.begin,
     this.prefix = '',
     this.suffix = '',
     this.formatter,
-    this.duration = const Duration(milliseconds: 400),
-    this.curve = Curves.easeInOutCubic,
+    this.duration = const Duration(milliseconds: 800),
+    this.curve = Curves.easeInOut,
     this.style = const TextStyle(),
   });
 

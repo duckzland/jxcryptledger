@@ -15,10 +15,9 @@ import 'buttons.dart';
 
 class PanelsDisplay extends StatefulWidget {
   final PanelsModel tix;
-  final double? prevRate;
   final bool isDragging;
 
-  const PanelsDisplay({super.key, required this.tix, required this.isDragging, this.prevRate});
+  const PanelsDisplay({super.key, required this.tix, required this.isDragging});
 
   @override
   State<PanelsDisplay> createState() => _PanelsDisplayState();
@@ -34,6 +33,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
   static dynamic _activePanelId;
 
   Color _currentColor = AppTheme.panelBg;
+  Decimal? _rate;
 
   @override
   void initState() {
@@ -79,9 +79,9 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     _currentColor = targetColor;
 
     return TweenAnimationBuilder<Color?>(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
-      curve: Curves.easeInOut,
+      curve: Curves.easeOut,
       builder: (buildContext, Color? animatedBgColor, child) {
         return MouseRegion(
           cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.click,
@@ -155,46 +155,40 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
     String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
 
+    final pv = Utils.formatSmartDecimal(Math.multiply(tix.oldRate, tix.srAmount), maxDecimals: tix.digit, smartDecimal: true);
+    final tv = Utils.formatSmartDecimal(Math.multiply(tix.rate, tix.srAmount), maxDecimals: tix.digit, smartDecimal: true);
+
+    final tr = Utils.formatSmartDecimal(tix.rate, maxDecimals: tix.digit);
+    final rtr = Utils.formatSmartDecimal(Math.divide(Decimal.one, tix.rate), maxDecimals: tix.digit);
+
     final fromText = "${Utils.formatSmartDecimal(tix.srAmount)} $sourceSymbol to $targetSymbol";
-    final toText = "${Utils.formatSmartDecimal((tix.rate * tix.srAmount), maxDecimals: tix.digit, smartDecimal: true)} $targetSymbol";
+    final toText = "$tv $targetSymbol";
+
     final fromStyle = const TextStyle(height: 1.2, fontWeight: FontWeight.w600);
     final toStyle = const TextStyle(height: 1.3, fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]);
 
     final fromFontSize = fromText.length > 18 ? 12.0 : 13.0;
     final toFontSize = toText.length > 18 ? 22.0 : 25.0;
 
+    final rate = _rate;
+    _rate = tix.oldRate;
+
     final text = tix.rate > Decimal.zero
         ? [
             Text(fromText, style: fromStyle.copyWith(fontSize: fromFontSize)),
             WidgetsNumbersFlow(
-              begin: Math.multiply(tix.oldRate, tix.srAmount).toDouble(),
-              end: Math.multiply(tix.rate, tix.srAmount).toDouble(),
+              begin: rate != null ? (double.tryParse(pv.replaceAll(",", "")) ?? 0.0) : null,
+              end: double.tryParse(tv.replaceAll(",", "")) ?? 0.0,
               suffix: " $targetSymbol",
               style: toStyle.copyWith(fontSize: toFontSize),
+              duration: const Duration(milliseconds: 1200),
+              curve: Curves.easeOut,
               formatter: (val) {
                 return Utils.formatSmartDouble(val, maxDecimals: tix.digit, smartDecimal: true);
               },
             ),
-            WidgetsNumbersFlow(
-              begin: tix.oldRate.toDouble(),
-              end: tix.rate.toDouble(),
-              prefix: "1 $sourceSymbol = ",
-              suffix: " $targetSymbol",
-              style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400),
-              formatter: (val) {
-                return Utils.formatSmartDouble(val, maxDecimals: tix.digit);
-              },
-            ),
-            WidgetsNumbersFlow(
-              begin: Math.divide(Decimal.one, tix.oldRate).toDouble(),
-              end: Math.divide(Decimal.one, tix.rate).toDouble(),
-              prefix: "1 $targetSymbol = ",
-              suffix: " $sourceSymbol",
-              style: const TextStyle(height: 1.1, fontSize: 11, fontWeight: FontWeight.w400),
-              formatter: (val) {
-                return Utils.formatSmartDouble(val, maxDecimals: tix.digit);
-              },
-            ),
+            Text("1 $sourceSymbol = $tr $targetSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
+            Text("1 $targetSymbol = $rtr $sourceSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
           ]
         : [
             Text(
