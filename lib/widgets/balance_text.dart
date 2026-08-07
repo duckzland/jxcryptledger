@@ -19,7 +19,7 @@ class WidgetsBalanceText extends StatelessWidget {
     required this.comparator,
     this.fontSize,
     this.hidePrefix,
-    this.animated = true,
+    this.animated = false,
     this.fontWeight,
   });
 
