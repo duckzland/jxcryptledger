@@ -148,10 +148,14 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
                     ),
                   ),
                   DataCell(Text(tx.priceText)),
-                  DataCell(WidgetsBalanceText(text: tx.percent1hText, value: tx.percent1h?.toDouble() ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: tx.percent24hText, value: tx.percent24h?.toDouble() ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: tx.percent7dText, value: tx.percent7d?.toDouble() ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: tx.percent30dText, value: tx.percent30d?.toDouble() ?? 0, comparator: 0)),
+                  DataCell(WidgetsBalanceText(text: tx.percent1hText, value: tx.percent1h?.toDouble() ?? 0, comparator: 0, animated: true)),
+                  DataCell(
+                    WidgetsBalanceText(text: tx.percent24hText, value: tx.percent24h?.toDouble() ?? 0, comparator: 0, animated: true),
+                  ),
+                  DataCell(WidgetsBalanceText(text: tx.percent7dText, value: tx.percent7d?.toDouble() ?? 0, comparator: 0, animated: true)),
+                  DataCell(
+                    WidgetsBalanceText(text: tx.percent30dText, value: tx.percent30d?.toDouble() ?? 0, comparator: 0, animated: true),
+                  ),
                   DataCell(Text(tx.marketCapText)),
                 ],
               );

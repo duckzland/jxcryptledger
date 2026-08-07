@@ -60,40 +60,43 @@ class _TickersDisplayState extends State<TickersDisplay> {
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
       curve: Curves.fastEaseInToSlowEaseOut,
       builder: (context, Color? animatedBgColor, child) {
-        return MouseRegion(
-          cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic,
-          child: WidgetsPanel(
-            padding: const EdgeInsets.all(0),
-            background: animatedBgColor,
-            borderColor: mutedColor,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: tix.getContent() != ""
-                  ? [
-                      Text(
-                        tix.getTitle(),
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
-                      ),
-                      WidgetsNumbersFlow(
-                        begin: currentValue != null ? oldContent : null,
-                        end: tix.formatValue(_currentValue ?? ""),
-                        style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
-                      ),
-                    ]
-                  : [
-                      Text(
-                        "Loading...",
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: const TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-            ),
+        Widget content = WidgetsPanel(
+          padding: const EdgeInsets.all(0),
+          background: animatedBgColor,
+          borderColor: mutedColor,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: tix.getContent() != ""
+                ? [
+                    Text(
+                      tix.getTitle(),
+                      softWrap: false,
+                      overflow: TextOverflow.visible,
+                      style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
+                    ),
+                    WidgetsNumbersFlow(
+                      begin: currentValue != null ? oldContent : null,
+                      end: tix.formatValue(_currentValue ?? ""),
+                      style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                    ),
+                  ]
+                : [
+                    Text(
+                      "Loading...",
+                      softWrap: false,
+                      overflow: TextOverflow.visible,
+                      style: const TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
+                    ),
+                  ],
           ),
         );
+
+        if (animatedBgColor != targetColor) {
+          content = RepaintBoundary(child: content);
+        }
+
+        return MouseRegion(cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic, child: content);
       },
     );
   }

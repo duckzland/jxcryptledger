@@ -83,6 +83,24 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
       curve: Curves.easeOut,
       builder: (buildContext, Color? animatedBgColor, child) {
+        Widget content = WidgetsPanel(
+          padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
+          background: animatedBgColor,
+          borderColor: mutedColor,
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: _buildText(),
+            ),
+          ),
+        );
+
+        if (animatedBgColor != targetColor) {
+          content = RepaintBoundary(child: content);
+        }
+
         return MouseRegion(
           cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.click,
           child: GestureDetector(
@@ -91,19 +109,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
               width: double.infinity,
               child: Stack(
                 children: [
-                  WidgetsPanel(
-                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
-                    background: animatedBgColor,
-                    borderColor: mutedColor,
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: _buildText(),
-                      ),
-                    ),
-                  ),
+                  content,
 
                   ListenableBuilder(
                     listenable: _wxController,

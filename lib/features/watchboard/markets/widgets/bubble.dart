@@ -93,7 +93,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
         curve: Curves.linear,
         duration: const Duration(milliseconds: 200),
         builder: (context, color, child) {
-          return Container(
+          Widget content = Container(
             width: diameter,
             height: diameter,
             decoration: BoxDecoration(
@@ -103,6 +103,12 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
             ),
             child: child,
           );
+
+          if (currentColor != color) {
+            content = RepaintBoundary(child: content);
+          }
+
+          return content;
         },
         child: Center(
           child: Column(
