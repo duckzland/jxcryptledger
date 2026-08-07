@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../app/theme.dart';
+import 'numbers/flow.dart';
 
 class WidgetsBalanceText extends StatelessWidget {
   final String text;
@@ -8,6 +9,7 @@ class WidgetsBalanceText extends StatelessWidget {
   final double comparator;
   final double? fontSize;
   final bool? hidePrefix;
+  final bool? animated;
   final FontWeight? fontWeight;
 
   const WidgetsBalanceText({
@@ -17,6 +19,7 @@ class WidgetsBalanceText extends StatelessWidget {
     required this.comparator,
     this.fontSize,
     this.hidePrefix,
+    this.animated = true,
     this.fontWeight,
   });
 
@@ -57,8 +60,17 @@ class WidgetsBalanceText extends StatelessWidget {
     final color = _colorForMode(mode);
     final prefix = _prefixForMode(mode);
 
-    return Text(
-      "$prefix$text",
+    if (animated == null || !animated!) {
+      return Text(
+        "$prefix$text",
+        style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
+      );
+    }
+
+    return WidgetsNumbersFlow(
+      begin: "",
+      end: text,
+      prefix: prefix,
       style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
     );
   }

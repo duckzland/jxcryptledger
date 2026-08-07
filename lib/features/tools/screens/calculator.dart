@@ -11,6 +11,7 @@ import '../../../mixins/rateable.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/header.dart';
+import '../../../widgets/numbers/flow.dart';
 import '../../cryptos/controller.dart';
 import '../../../widgets/fields/crypto_search.dart';
 
@@ -271,8 +272,10 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
           style: TextStyle(fontSize: mini ? 13 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
-        Text(
-          "${Utils.formatSmartDecimal(resultValue)} $currentSymbol",
+        WidgetsNumbersFlow(
+          begin: "",
+          end: Utils.formatSmartDecimal(resultValue),
+          suffix: " $currentSymbol",
           style: TextStyle(fontSize: mini ? 28 : 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
 

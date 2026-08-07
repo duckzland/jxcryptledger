@@ -11,6 +11,7 @@ import '../../../app/theme.dart';
 import '../../../core/runtime/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
+import '../../../widgets/numbers/flow.dart';
 import '../../cryptos/controller.dart';
 import '../../../widgets/fields/crypto_search.dart';
 
@@ -232,10 +233,13 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
           style: TextStyle(fontSize: mini ? 13 : 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         const SizedBox(height: 4),
-        Text(
-          "${Utils.formatSmartDecimal(resultValue)} $targetSymbol",
+        WidgetsNumbersFlow(
+          begin: "",
+          end: Utils.formatSmartDecimal(resultValue),
+          suffix: " $targetSymbol",
           style: TextStyle(fontSize: mini ? 28 : 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
+
         Text(
           "1 $targetSymbol = ${Utils.formatSmartDecimal(rate)} $sourceSymbol",
           style: TextStyle(fontSize: mini ? 12 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),

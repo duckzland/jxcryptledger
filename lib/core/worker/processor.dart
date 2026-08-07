@@ -119,7 +119,7 @@ class CoreWorkerProcessor {
       _client = null;
       isFetching = false;
       if (!_masterAborter!.isCompleted) {
-        _masterAborter!.completeError(TimeoutException('[WORKER] Watchdog forcefully terminated hanging execution.'));
+        _masterAborter!.complete();
       }
     }
   }
