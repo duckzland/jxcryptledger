@@ -51,13 +51,14 @@ class _TickersDisplayState extends State<TickersDisplay> {
     _currentColor = targetColor;
 
     final currentValue = _currentValue;
+    final oldContent = currentValue != null ? tix.formatValue(currentValue) : null;
 
     _currentValue = tix.value;
 
     return TweenAnimationBuilder<Color?>(
       duration: const Duration(milliseconds: 400),
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
-      curve: Curves.easeOut,
+      curve: Curves.fastEaseInToSlowEaseOut,
       builder: (context, Color? animatedBgColor, child) {
         return MouseRegion(
           cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic,
@@ -77,14 +78,11 @@ class _TickersDisplayState extends State<TickersDisplay> {
                         style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
                       ),
                       WidgetsNumbersFlow(
-                        begin: currentValue != null ? double.tryParse(tix.oldValue) ?? 0.0 : null,
-                        end: double.tryParse(tix.value) ?? 0.0,
+                        begin: currentValue != null ? oldContent : null,
+                        end: tix.getContent(),
                         style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
-                        duration: const Duration(milliseconds: 1200),
-                        curve: Curves.easeOut,
-                        formatter: (val) {
-                          return tix.formatValue(val.toString());
-                        },
+                        duration: const Duration(milliseconds: 2000),
+                        curve: Curves.easeInOut,
                       ),
                     ]
                   : [

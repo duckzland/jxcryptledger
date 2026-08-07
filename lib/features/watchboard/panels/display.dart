@@ -155,8 +155,18 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     String sourceSymbol = _cryptosController.getSymbol(tix.srId) ?? "";
     String targetSymbol = _cryptosController.getSymbol(tix.rrId) ?? "";
 
-    final pv = Utils.formatSmartDecimal(Math.multiply(tix.oldRate, tix.srAmount), maxDecimals: tix.digit, smartDecimal: true);
-    final tv = Utils.formatSmartDecimal(Math.multiply(tix.rate, tix.srAmount), maxDecimals: tix.digit, smartDecimal: true);
+    final pv = Utils.formatSmartDecimal(
+      Math.multiply(tix.oldRate, tix.srAmount),
+      maxDecimals: tix.digit,
+      smartDecimal: true,
+      limitDecimals: 15,
+    );
+    final tv = Utils.formatSmartDecimal(
+      Math.multiply(tix.rate, tix.srAmount),
+      maxDecimals: tix.digit,
+      smartDecimal: true,
+      limitDecimals: 15,
+    );
 
     final tr = Utils.formatSmartDecimal(tix.rate, maxDecimals: tix.digit);
     final rtr = Utils.formatSmartDecimal(Math.divide(Decimal.one, tix.rate), maxDecimals: tix.digit);
@@ -177,15 +187,12 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
         ? [
             Text(fromText, style: fromStyle.copyWith(fontSize: fromFontSize)),
             WidgetsNumbersFlow(
-              begin: rate != null ? (double.tryParse(pv.replaceAll(",", "")) ?? 0.0) : null,
-              end: double.tryParse(tv.replaceAll(",", "")) ?? 0.0,
+              begin: rate != null ? pv : null,
+              end: tv,
               suffix: " $targetSymbol",
               style: toStyle.copyWith(fontSize: toFontSize),
-              duration: const Duration(milliseconds: 1200),
-              curve: Curves.easeOut,
-              formatter: (val) {
-                return Utils.formatSmartDouble(val, maxDecimals: tix.digit, smartDecimal: true);
-              },
+              duration: const Duration(milliseconds: 2000),
+              curve: Curves.easeInOut,
             ),
             Text("1 $sourceSymbol = $tr $targetSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
             Text("1 $targetSymbol = $rtr $sourceSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
