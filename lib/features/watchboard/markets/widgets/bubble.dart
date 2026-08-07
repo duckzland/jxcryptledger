@@ -99,7 +99,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              border: const Border.all(color: AppTheme.background, width: 3.0),
+              border: Border.all(color: AppTheme.background, width: 3.0),
             ),
             child: child,
           );
