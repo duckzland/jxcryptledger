@@ -61,24 +61,60 @@ class WidgetsNumberFlowTween extends Tween<String> {
       }
     }
 
-    final slotCount = math.max(1, digitPositions.length);
-    final totalSteps = slotCount * 6;
-    final progressIndex = (t.clamp(0.0, 1.0) * totalSteps).floor();
-    final slotIndex = (progressIndex / 6).floor();
-    final slotProgress = ((progressIndex % 6) / 6).clamp(0.0, 1.0);
+    if (digitPositions.isEmpty) return safeTargetValue;
 
-    final activeDigits = <int>[];
+    int firstChangingDigitOrder = -1;
     for (int digitOrder = 0; digitOrder < digitPositions.length; digitOrder++) {
       final position = digitPositions[digitOrder];
       final startChar = startChars.length > position ? startChars[position] : '0';
       final targetChar = targetChars[position];
 
-      if (_isDigit(startChar) && _isDigit(targetChar) && startChar != targetChar) {
-        activeDigits.add(digitOrder);
+      if (startChar != targetChar && _isDigit(startChar) && _isDigit(targetChar)) {
+        firstChangingDigitOrder = digitOrder;
+        break;
       }
     }
 
+    if (firstChangingDigitOrder == -1) return safeTargetValue;
+
+    final slotWeights = <double>[];
+    double totalStepsSum = 0.0;
+
+    for (int digitOrder = 0; digitOrder < digitPositions.length; digitOrder++) {
+      if (digitOrder < firstChangingDigitOrder) {
+        slotWeights.add(0.0);
+        continue;
+      }
+
+      final position = digitPositions[digitOrder];
+      final startChar = startChars.length > position ? startChars[position] : '0';
+      final targetChar = targetChars[position];
+
+      int sDigit = int.parse(_isDigit(startChar) ? startChar : '0');
+      final tDigit = int.parse(_isDigit(targetChar) ? targetChar : '0');
+
+      if (startChar == targetChar) {
+        sDigit = 0;
+      }
+
+      final double distance = (tDigit - sDigit).abs().toDouble();
+      final double weight = math.max(2.0, distance);
+
+      slotWeights.add(weight);
+      totalStepsSum += weight;
+    }
+
+    final accumulatedWeights = List<double>.filled(digitPositions.length, 0.0);
+    double rightToLeftAccumulator = 0.0;
+
+    for (int digitOrder = digitPositions.length - 1; digitOrder >= firstChangingDigitOrder; digitOrder--) {
+      accumulatedWeights[digitOrder] = rightToLeftAccumulator;
+      rightToLeftAccumulator += slotWeights[digitOrder];
+    }
+
+    const double staggerFactor = 0.4;
     final resultChars = List<String>.from(targetChars);
+
     for (int digitOrder = 0; digitOrder < digitPositions.length; digitOrder++) {
       final position = digitPositions[digitOrder];
       final startChar = startChars.length > position ? startChars[position] : '0';
@@ -89,24 +125,28 @@ class WidgetsNumberFlowTween extends Tween<String> {
         continue;
       }
 
-      if (startChar == targetChar) {
+      if (digitOrder < firstChangingDigitOrder) {
         resultChars[position] = targetChar;
         continue;
       }
 
-      final startDigit = int.parse(startChar);
-      final targetDigit = int.parse(targetChar);
-      final activeIndex = activeDigits.indexOf(digitOrder);
+      final double currentSlotWeight = slotWeights[digitOrder];
+      final double slotStart = (accumulatedWeights[digitOrder] * staggerFactor) / totalStepsSum;
+      final double slotEnd = (slotStart + (currentSlotWeight / totalStepsSum)).clamp(0.0, 1.0);
 
-      if (activeIndex < 0) {
-        resultChars[position] = targetChar;
-      } else if (activeIndex < slotIndex) {
-        resultChars[position] = targetChar;
-      } else if (activeIndex == slotIndex) {
-        resultChars[position] = _stepDigit(startDigit, targetDigit, slotProgress).toString();
-      } else {
-        resultChars[position] = startChar;
+      double slotProgress = 0.0;
+      if (t > slotStart) {
+        slotProgress = ((t - slotStart) / (slotEnd - slotStart)).clamp(0.0, 1.0);
       }
+
+      int startDigit = int.parse(startChar);
+      final targetDigit = int.parse(targetChar);
+
+      if (startChar == targetChar) {
+        startDigit = 0;
+      }
+
+      resultChars[position] = _stepDigit(startDigit, targetDigit, slotProgress).toString();
     }
 
     return resultChars.join();
@@ -117,12 +157,8 @@ class WidgetsNumberFlowTween extends Tween<String> {
   }
 
   static int _stepDigit(int start, int target, double progress) {
-    if (start == target) return start;
-
-    final span = (target - start).abs();
-    final steps = span.clamp(1, 6);
-    final stepIndex = (progress * steps).round();
-    final direction = target >= start ? 1 : -1;
-    return (start + (direction * stepIndex)).clamp(0, 9);
+    if (progress <= 0.0) return start;
+    if (progress >= 1.0) return target;
+    return (start + (target - start) * progress).round().clamp(0, 9);
   }
 }

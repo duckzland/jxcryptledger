@@ -79,9 +79,9 @@ class _TickersDisplayState extends State<TickersDisplay> {
                       ),
                       WidgetsNumbersFlow(
                         begin: currentValue != null ? oldContent : null,
-                        end: tix.getContent(),
+                        end: tix.formatValue(_currentValue ?? ""),
                         style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
-                        duration: const Duration(milliseconds: 2000),
+                        duration: const Duration(milliseconds: 1000),
                         curve: Curves.easeInOut,
                       ),
                     ]
