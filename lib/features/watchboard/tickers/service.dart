@@ -42,7 +42,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     }
   }
 
-  Future<Map<String, dynamic>> _fetchJson(SettingKey key, {Map<String, String>? query}) async {
+  Future<Map<String, dynamic>> _fetchJson(SettingKey key, {Map<String, String>? query, http.Client? fetcher}) async {
     final endpoint = settingsRepo.getByKey<String>(key) ?? key.defaultValue;
     final uri = Uri.parse(endpoint).replace(queryParameters: query);
     final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
@@ -59,7 +59,17 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       }
     }
 
-    final resp = await http.get(uri, headers: headers);
+    final client = fetcher ?? http.Client();
+    final http.Response resp;
+
+    try {
+      resp = await client.get(uri, headers: headers);
+    } finally {
+      if (fetcher == null) {
+        client.close();
+      }
+    }
+
     if (resp.statusCode != 200) {
       throw NetworkingException(
         AppErrorCode.netHttpFailure,
@@ -84,7 +94,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     }
   }
 
-  Future<bool> fetchAltSeason() async {
+  Future<bool> fetchAltSeason(http.Client? fetcher) async {
     final endpoint = settingsRepo.getByKey<String>(SettingKey.altSeasonEndpoint) ?? SettingKey.altSeasonEndpoint.defaultValue;
     final isLegacy = endpoint.contains("data-api/v3/altcoin-season/chart");
 
@@ -97,7 +107,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       query = {"start": start.toString(), "end": end.toString()};
     }
 
-    final body = await _fetchJson(SettingKey.altSeasonEndpoint, query: query);
+    final body = await _fetchJson(SettingKey.altSeasonEndpoint, query: query, fetcher: fetcher);
 
     String index;
 
@@ -113,7 +123,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
-  Future<bool> fetchFearGreed() async {
+  Future<bool> fetchFearGreed(http.Client? fetcher) async {
     final endpoint = settingsRepo.getByKey<String>(SettingKey.fearGreedEndpoint) ?? SettingKey.fearGreedEndpoint.defaultValue;
     final isLegacy = endpoint.contains("data-api/v3/fear-greed/chart");
 
@@ -127,7 +137,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       query = {"start": start.toString(), "end": end.toString()};
     }
 
-    final body = await _fetchJson(SettingKey.fearGreedEndpoint, query: query);
+    final body = await _fetchJson(SettingKey.fearGreedEndpoint, query: query, fetcher: fetcher);
 
     String score;
     if (isLegacy) {
@@ -142,7 +152,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
-  Future<bool> fetchCmc100() async {
+  Future<bool> fetchCmc100(http.Client? fetcher) async {
     final endpoint = settingsRepo.getByKey<String>(SettingKey.cmc100Endpoint) ?? SettingKey.cmc100Endpoint.defaultValue;
     final isLegacy = endpoint.contains("data-api/v3/top100/supplement");
 
@@ -156,7 +166,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       query = {"start": start.toString(), "end": end.toString()};
     }
 
-    final body = await _fetchJson(SettingKey.cmc100Endpoint, query: query);
+    final body = await _fetchJson(SettingKey.cmc100Endpoint, query: query, fetcher: fetcher);
 
     String value;
     if (isLegacy) {
@@ -171,13 +181,13 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
-  Future<bool> fetchMarketCap() async {
+  Future<bool> fetchMarketCap(http.Client? fetcher) async {
     final endpoint = settingsRepo.getByKey<String>(SettingKey.marketCapEndpoint) ?? SettingKey.marketCapEndpoint.defaultValue;
     final isLegacy = endpoint.contains("data-api/v4/global-metrics/quotes/historical");
 
     Map<String, String> query = isLegacy ? {"convertId": "2781", "range": "30d"} : {"convert": "USD", "aux": "btc_dominance"};
 
-    final body = await _fetchJson(SettingKey.marketCapEndpoint, query: query);
+    final body = await _fetchJson(SettingKey.marketCapEndpoint, query: query, fetcher: fetcher);
 
     if (isLegacy) {
       final marketCap = body["data"]["historicalValues"]["now"]["marketCap"].toString();
@@ -193,10 +203,11 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
-  Future<bool> fetchRsi() async {
+  Future<bool> fetchRsi(http.Client? fetcher) async {
     final body = await _fetchJson(
       SettingKey.rsiEndpoint,
       query: {"timeframe": "4h", "rsiPeriod": "14", "volume24Range.min": "1000000", "marketCapRange.min": "50000000"},
+      fetcher: fetcher,
     );
 
     final overall = body["data"]["overall"];
@@ -212,8 +223,8 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
-  Future<bool> fetchEtf() async {
-    final body = await _fetchJson(SettingKey.etfEndpoint, query: {"category": "all", "range": "30d"});
+  Future<bool> fetchEtf(http.Client? fetcher) async {
+    final body = await _fetchJson(SettingKey.etfEndpoint, query: {"category": "all", "range": "30d"}, fetcher: fetcher);
 
     // final total = body["data"]["total"].toString();
     // final btcValue = body["data"]["totalBtcValue"].toString();
@@ -224,7 +235,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
-  Future<bool> fetchDominance() async {
+  Future<bool> fetchDominance(http.Client? fetcher) async {
     final endpoint = settingsRepo.getByKey<String>(SettingKey.marketCapEndpoint) ?? SettingKey.marketCapEndpoint.defaultValue;
     final isLegacy = endpoint.contains("data-api/v4/global-metrics/quotes/historical");
 
@@ -234,7 +245,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       return true;
     }
 
-    final body = await _fetchJson(SettingKey.dominanceEndpoint);
+    final body = await _fetchJson(SettingKey.dominanceEndpoint, fetcher: fetcher);
 
     final dominanceList = body["data"]["dominance"] as List<dynamic>;
     final btc = dominanceList[0]["mcProportion"].toString();
@@ -244,7 +255,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     return true;
   }
 
-  Future<bool> fetchMarketGainerLoser() async {
+  Future<bool> fetchMarketGainerLoser(http.Client? fetcher) async {
     if (marketsService.isEmpty()) {
       await marketsService.refreshRates();
     }
@@ -299,7 +310,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.altcoinIndex.index,
           payload: const [],
-          callback: (_, _) async => await fetchAltSeason(),
+          callback: (_, _, {http.Client? fetcher}) async => await fetchAltSeason(fetcher),
           isFreePlan: false,
         ),
       );
@@ -309,14 +320,19 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.fearGreed.index,
           payload: const [],
-          callback: (_, _) async => await fetchFearGreed(),
+          callback: (_, _, {http.Client? fetcher}) async => await fetchFearGreed(fetcher),
           isFreePlan: false,
         ),
       );
     }
     if (types.contains(TickerType.cmc100)) {
       jobs.add(
-        CoreWorkerJob(id: TickerType.cmc100.index, payload: const [], callback: (_, _) async => await fetchCmc100(), isFreePlan: false),
+        CoreWorkerJob(
+          id: TickerType.cmc100.index,
+          payload: const [],
+          callback: (_, _, {http.Client? fetcher}) async => await fetchCmc100(fetcher),
+          isFreePlan: false,
+        ),
       );
     }
     if (types.contains(TickerType.marketCap)) {
@@ -324,7 +340,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.marketCap.index,
           payload: const [],
-          callback: (_, _) async => await fetchMarketCap(),
+          callback: (_, _, {http.Client? fetcher}) async => await fetchMarketCap(fetcher),
           isFreePlan: false,
         ),
       );
@@ -334,17 +350,29 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
         CoreWorkerJob(
           id: TickerType.dominance.index,
           payload: const [],
-          callback: (_, _) async => await fetchDominance(),
+          callback: (_, _, {http.Client? fetcher}) async => await fetchDominance(fetcher),
           isFreePlan: false,
         ),
       );
     }
     if (types.contains(TickerType.etf)) {
-      jobs.add(CoreWorkerJob(id: TickerType.etf.index, payload: const [], callback: (_, _) async => await fetchEtf(), isFreePlan: false));
+      jobs.add(
+        CoreWorkerJob(
+          id: TickerType.etf.index,
+          payload: const [],
+          callback: (_, _, {http.Client? fetcher}) async => await fetchEtf(fetcher),
+          isFreePlan: false,
+        ),
+      );
     }
     if (types.contains(TickerType.pulse)) {
       jobs.add(
-        CoreWorkerJob(id: TickerType.pulse.index, payload: const [], callback: (_, _) async => await fetchRsi(), isFreePlan: false),
+        CoreWorkerJob(
+          id: TickerType.pulse.index,
+          payload: const [],
+          callback: (_, _, {http.Client? fetcher}) async => await fetchRsi(fetcher),
+          isFreePlan: false,
+        ),
       );
     }
 
@@ -360,75 +388,18 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     };
 
     if (types.any(mgmlTypes.contains)) {
-      jobs.add(CoreWorkerJob(id: 999, payload: const [], callback: (_, _) async => await fetchMarketGainerLoser(), isFreePlan: false));
+      jobs.add(
+        CoreWorkerJob(
+          id: 999,
+          payload: const [],
+          callback: (_, _, {http.Client? fetcher}) async => await fetchMarketGainerLoser(fetcher),
+          isFreePlan: false,
+        ),
+      );
     }
 
     try {
       await worker.run(jobs);
-    } finally {
-      logln("[TICKERS] Fetching new ticker data completed");
-    }
-  }
-
-  Future<void> refreshRates2() async {
-    final all = repo.extract();
-    final types = all.map((tix) => TickerType.values[tix.type]).toSet();
-
-    if (types.isEmpty) return;
-
-    final taskQueue = <Future<void> Function()>[];
-
-    if (types.contains(TickerType.altcoinIndex)) {
-      taskQueue.add(() => fetchAltSeason());
-    }
-    if (types.contains(TickerType.fearGreed)) {
-      taskQueue.add(() => fetchFearGreed());
-    }
-    if (types.contains(TickerType.cmc100)) {
-      taskQueue.add(() => fetchCmc100());
-    }
-    if (types.contains(TickerType.marketCap)) {
-      taskQueue.add(() => fetchMarketCap());
-    }
-    if (types.contains(TickerType.dominance)) {
-      taskQueue.add(() => fetchDominance());
-    }
-    if (types.contains(TickerType.etf)) {
-      taskQueue.add(() => fetchEtf());
-    }
-    if (types.contains(TickerType.pulse)) {
-      taskQueue.add(() => fetchRsi());
-    }
-
-    const mgmlTypes = {
-      TickerType.topGainer100_1h,
-      TickerType.topGainer100_24h,
-      TickerType.topGainer200_1h,
-      TickerType.topGainer200_24h,
-      TickerType.topLoser100_1h,
-      TickerType.topLoser100_24h,
-      TickerType.topLoser200_1h,
-      TickerType.topLoser200_24h,
-    };
-
-    if (types.any(mgmlTypes.contains)) {
-      taskQueue.add(() => fetchMarketGainerLoser());
-    }
-
-    try {
-      final jobs = List.generate(taskQueue.length, (index) async {
-        if (index > 0) {
-          await Future.delayed(Duration(milliseconds: index * 200));
-        }
-
-        try {
-          await taskQueue[index]();
-        } catch (e) {
-          logln("[TICKERS] Job index $index failed to execute: $e");
-        }
-      });
-
-      await Future.wait(jobs, eagerError: false);
     } finally {
       logln("[TICKERS] Fetching new ticker data completed");
     }

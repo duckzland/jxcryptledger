@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:http/http.dart' as http;
+
 import '../../app/exceptions.dart';
 import '../log.dart';
 import 'job.dart';
@@ -9,11 +11,20 @@ class CoreWorkerProcessor {
   Timer? _watchdog;
   Timer? _paused;
 
+  http.Client? _client;
+  Completer<void>? _masterAborter;
+
   bool get isPaused => _paused != null;
+  http.Client get client => _client ??= http.Client();
 
   void dispose() {
+    _client?.close();
     _watchdog?.cancel();
     _paused?.cancel();
+
+    if (_masterAborter != null && !_masterAborter!.isCompleted) {
+      _masterAborter!.completeError(Exception('[WORKER] Processor was disposed.'));
+    }
   }
 
   void _startWatchdog() {
@@ -21,6 +32,13 @@ class CoreWorkerProcessor {
     _watchdog = Timer(const Duration(seconds: 65), () {
       logln('[WORKER] Watchdog triggered — forcing unlock.');
       isFetching = false;
+
+      _client?.close();
+      _client = null;
+
+      if (_masterAborter != null && !_masterAborter!.isCompleted) {
+        _masterAborter!.completeError(TimeoutException('[WORKER] Watchdog forcefully terminated hanging execution.'));
+      }
     });
   }
 
@@ -38,6 +56,12 @@ class CoreWorkerProcessor {
     if (jobs.isEmpty) return;
 
     isFetching = true;
+
+    if (_masterAborter != null && !_masterAborter!.isCompleted) {
+      _masterAborter!.completeError(TimeoutException('[WORKER] Terminated by subsequent batch invocation.'));
+    }
+
+    _masterAborter = Completer<void>();
     _startWatchdog();
 
     final iterator = jobs.iterator;
@@ -55,7 +79,7 @@ class CoreWorkerProcessor {
         final job = iterator.current;
 
         try {
-          await job.callback(job.id, job.payload);
+          await job.callback(job.id, job.payload, fetcher: client);
         } catch (e) {
           if (e is NetworkingException && e.details as int == 429) {
             logln('[WORKER] Rate limited, stopping worker: $e');
@@ -81,11 +105,22 @@ class CoreWorkerProcessor {
 
     final workersToStart = jobs.length == 1 ? 1 : maxWorkers.clamp(1, jobs.length);
 
-    await Future.wait(List.generate(workersToStart, (i) => worker(maxWorkers, i)), eagerError: false);
-
-    if (hasFailed == 2) _pauseOperation();
-
-    _watchdog?.cancel();
-    isFetching = false;
+    try {
+      await Future.any([
+        Future.wait(List.generate(workersToStart, (i) => worker(maxWorkers, i)), eagerError: false),
+        _masterAborter!.future,
+      ]);
+    } catch (e) {
+      logln('[WORKER] Master thread forcefully detached: $e');
+    } finally {
+      if (hasFailed == 2) _pauseOperation();
+      _watchdog?.cancel();
+      _client?.close();
+      _client = null;
+      isFetching = false;
+      if (!_masterAborter!.isCompleted) {
+        _masterAborter!.completeError(TimeoutException('[WORKER] Watchdog forcefully terminated hanging execution.'));
+      }
+    }
   }
 }

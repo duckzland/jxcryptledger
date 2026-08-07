@@ -49,6 +49,9 @@ class WidgetsNumberFlowTween extends Tween<String> {
     final safeStartValue = (startValue ?? end).toString();
     final safeTargetValue = (targetValue ?? end).toString();
 
+    if (t <= 0.0) return safeStartValue;
+    if (t >= 1.0) return safeTargetValue;
+
     if (safeStartValue.isEmpty && safeTargetValue.isEmpty) return '';
 
     final startChars = safeStartValue.split('');

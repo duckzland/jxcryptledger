@@ -28,7 +28,7 @@ void main() {
 
     test('handles shorter start vs longer end', () {
       final tween = WidgetsNumberFlowTween(begin: '123', end: '123456');
-      expect(tween.lerp(0.0), '123000');
+      expect(tween.lerp(0.0), '123');
       expect(tween.lerp(1.0), '123456');
       final mid = tween.lerp(0.5);
       expect(mid.startsWith('123'), isTrue);

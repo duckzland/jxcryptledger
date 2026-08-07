@@ -140,7 +140,6 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
           .toList();
 
       if (force) {
-        // spin up a new worker lane
         final tempWorker = CoreWorkerProcessor();
         await tempWorker.run(workerJobs);
       } else {
@@ -237,7 +236,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     return grouped;
   }
 
-  Future<void> _fetchInternal(int sourceId, List<int> targetIds) async {
+  Future<void> _fetchInternal(int sourceId, List<int> targetIds, {http.Client? fetcher}) async {
     if (cryptosRepo.isEmpty()) {
       throw NetworkingException(
         AppErrorCode.netMissingCryptos,
@@ -277,7 +276,16 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       endpoint,
     ).replace(queryParameters: {'amount': '1', 'id': sourceId.toString(), 'convert_id': validTargets.join(',')});
 
-    final resp = await http.get(uri, headers: headers);
+    final client = fetcher ?? http.Client();
+    final http.Response resp;
+
+    try {
+      resp = await client.get(uri, headers: headers);
+    } finally {
+      if (fetcher == null) {
+        client.close();
+      }
+    }
 
     // logln('[RATES] Fetching rates : ${sourceId.toString()} ${validTargets.join(',')}');
     logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
