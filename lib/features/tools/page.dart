@@ -136,18 +136,15 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
     switch (_viewMode) {
       case ToolsViewMode.calculator:
         actionbarRegister("Calculator");
-
-        return ToolsCalculatorView();
+        return ToolsCalculatorView(key: const ValueKey('tool-calculator'));
 
       case ToolsViewMode.converter:
         actionbarRegister("Converter");
-
-        return ToolsConverterView();
+        return ToolsConverterView(key: const ValueKey('tool-converter'));
 
       case ToolsViewMode.qrcode:
         actionbarRegister("QR Code Generator");
-
-        return ToolsQRGeneratorView();
+        return ToolsQRGeneratorView(key: const ValueKey('tool-qrcode'));
     }
   }
 }

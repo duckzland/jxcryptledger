@@ -40,7 +40,7 @@ class _AppLayoutState extends State<AppLayout> {
     _actions.value = _actions.value;
   }
 
-  List<Map<String, Object>> menus = [
+  List<Map<String, Object>> get menus => [
     {
       "icon": Icons.account_balance_wallet,
       "title": "Manage transactions",
@@ -388,7 +388,9 @@ class _AppLayoutState extends State<AppLayout> {
             }
           },
           onPressed: (s) {
-            context.go(menu['target'] as String);
+            Router.neglect(context, () {
+              context.go(menu['target'] as String);
+            });
           },
         ),
       );

@@ -128,15 +128,17 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState {
 
   @override
   Widget build(BuildContext context) {
+    final navHandler = _registerNavigation();
+
     switch (_viewMode) {
       case WatchboardViewMode.board:
-        return WatchboardScreensBoard(screenNavigation: _registerNavigation());
+        return WatchboardScreensBoard(key: const ValueKey('wb-board'), screenNavigation: navHandler);
       case WatchboardViewMode.market:
-        return WatchboardScreensMarket(screenNavigation: _registerNavigation());
+        return WatchboardScreensMarket(key: const ValueKey('wb-market'), screenNavigation: navHandler);
       case WatchboardViewMode.bubble:
-        return WatchboardScreensBubble(screenNavigation: _registerNavigation());
+        return WatchboardScreensBubble(key: const ValueKey('wb-bubble'), screenNavigation: navHandler);
       case WatchboardViewMode.dominance:
-        return WatchboardScreensDominance(screenNavigation: _registerNavigation());
+        return WatchboardScreensDominance(key: const ValueKey('wb-dominance'), screenNavigation: navHandler);
     }
   }
 }

@@ -540,6 +540,8 @@ class TransactionsPageState extends State<TransactionsPage>
     );
   }
 
+  void _handleStatusChange() {}
+
   Widget _buildScreen() {
     switch (_viewMode) {
       case TransactionsViewMode.overview:
@@ -548,6 +550,7 @@ class TransactionsPageState extends State<TransactionsPage>
         states.remove("tx-toggle-panels");
 
         return Padding(
+          key: const ValueKey('tx-screen-overview'),
           padding: const EdgeInsets.only(left: 16, right: 16),
           child: TransactionsOverviewView(
             transactions: txs,
@@ -555,7 +558,7 @@ class TransactionsPageState extends State<TransactionsPage>
             filterMode: _filterMode,
             sortMode: _sortMode,
             txsFlags: fxs,
-            onStatusChanged: () {},
+            onStatusChanged: _handleStatusChange,
           ),
         );
 
@@ -565,6 +568,7 @@ class TransactionsPageState extends State<TransactionsPage>
         states.remove("tx-toggle-panels");
 
         return Padding(
+          key: const ValueKey('tx-screen-active'),
           padding: const EdgeInsets.only(left: 16, right: 16),
           child: TransactionsActiveView(
             transactions: txs,
@@ -572,7 +576,7 @@ class TransactionsPageState extends State<TransactionsPage>
             filterMode: _filterMode,
             sortMode: _sortMode,
             txsFlags: fxs,
-            onStatusChanged: () {},
+            onStatusChanged: _handleStatusChange,
           ),
         );
 
@@ -580,8 +584,9 @@ class TransactionsPageState extends State<TransactionsPage>
         actionbarRegister("Transaction Overview");
 
         return Padding(
+          key: const ValueKey('tx-screen-journal'),
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-          child: TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: fxs, onStatusChanged: () {}),
+          child: TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: fxs, onStatusChanged: _handleStatusChange),
         );
 
       case TransactionsViewMode.history:
@@ -591,13 +596,14 @@ class TransactionsPageState extends State<TransactionsPage>
         states.remove("tx-toggle-panels");
 
         return Padding(
+          key: const ValueKey('tx-screen-history'),
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
           child: TransactionHistory(
             sortMode: _sortMode,
             transactions: txs,
             txsFlags: fxs,
             panelsAction: toggleAction,
-            onStatusChanged: () {},
+            onStatusChanged: _handleStatusChange,
           ),
         );
     }

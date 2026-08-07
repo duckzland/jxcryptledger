@@ -37,7 +37,7 @@ class MarketsModel implements CoreModelWithId {
   final String _dominanceText;
 
   final List<String> _tags;
-  final bool _isStableCoin;
+  bool? _isStableCoin;
 
   @override
   String get uuid => tid;
@@ -73,8 +73,7 @@ class MarketsModel implements CoreModelWithId {
        _percent90dText = Utils.formatSmartDecimal(percent90d ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
        _marketCapText = Utils.formatShortCurrency(marketCap ?? Decimal.zero),
        _dominanceText = Utils.formatSmartDecimal(dominance ?? Decimal.zero, maxDecimals: 2),
-       _tags = ((meta?['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const []),
-       _isStableCoin = _checkIsStableCoin(symbol, meta ?? {}) {
+       _tags = ((meta?['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const []) {
     if (tid.isEmpty) {
       throw ValidationException(AppErrorCode.marketInvalidTid, "tid cannot be empty.", "Please enter a market ID.");
     }
@@ -196,7 +195,7 @@ class MarketsModel implements CoreModelWithId {
     );
   }
 
-  static bool _checkIsStableCoin(String symbol, Map<String, dynamic> meta) {
+  bool _checkIsStableCoin(String symbol, Map<String, dynamic> meta) {
     final tags = (meta['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const [];
     if (tags.contains('stablecoin')) return true;
 
@@ -236,5 +235,8 @@ class MarketsModel implements CoreModelWithId {
 
   List<String> get tags => _tags;
 
-  bool get isStableCoin => _isStableCoin;
+  bool get isStableCoin {
+    _isStableCoin ??= _checkIsStableCoin(symbol, meta);
+    return _isStableCoin!;
+  }
 }
