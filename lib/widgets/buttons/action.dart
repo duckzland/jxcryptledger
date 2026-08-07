@@ -169,6 +169,10 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
       button = Tooltip(message: widget.tooltip!, child: button);
     }
 
+    if (_inProgress) {
+      button = RepaintBoundary(child: button);
+    }
+
     if (widget.listener != null) {
       return ListenableBuilder(
         listenable: widget.listener!,

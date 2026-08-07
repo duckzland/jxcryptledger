@@ -191,8 +191,6 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
               end: tv,
               suffix: " $targetSymbol",
               style: toStyle.copyWith(fontSize: toFontSize),
-              duration: const Duration(milliseconds: 2000),
-              curve: Curves.easeInOut,
             ),
             Text("1 $sourceSymbol = $tr $targetSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
             Text("1 $targetSymbol = $rtr $sourceSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),

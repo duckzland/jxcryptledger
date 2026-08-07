@@ -29,10 +29,16 @@ class WidgetsNumbersFlow extends StatelessWidget {
       duration: duration,
       curve: curve,
       builder: (context, value, child) {
-        return Text(
+        Widget output = Text(
           '$prefix$value$suffix',
           style: style.copyWith(fontFeatures: [...(style.fontFeatures ?? []), const FontFeature.tabularFigures()]),
         );
+
+        if (value != end) {
+          output = RepaintBoundary(child: output);
+        }
+
+        return output;
       },
     );
   }
