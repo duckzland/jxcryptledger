@@ -3,10 +3,9 @@ name: Desktop Build & Release
 on:
   push:
     tags:
-      - "v*" # Triggers on tags like v1.0.0
+      - "v*"
 
 jobs:
-  # Windows build disabled for now as it isn't installable without proper certificates.
   build-windows:
     runs-on: windows-latest
     steps:
@@ -23,7 +22,6 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      # Locks SDK, rc.exe problematic with image
       - name: Set up Visual Studio Developer Paths (Forced SDK 10.0.26100.0)
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -86,7 +84,6 @@ jobs:
           rm -rf libs/
 
   create-release:
-    # Windows build is disabled for now
     needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     permissions:
