@@ -30,7 +30,7 @@ import '../server.dart';
 
 final GetIt locator = GetIt.instance;
 
-void setupLocator() {
+Future<void> init() async {
   // IpcClient
   locator.registerLazySingleton<IpcAdapters>(() => CoreRuntimeAdapters());
   locator.registerLazySingleton<IpcClient>(() => IpcClient(locator<IpcAdapters>()));
@@ -89,8 +89,6 @@ void setupLocator() {
 
   // Higher level boots, this will most likely depends on the lower level to boot first.
   locator.registerLazySingleton<CoreRuntimeServer>(() => CoreRuntimeServer());
-}
 
-Future<void> init() async {
   await locator<CoreRuntimeServer>().init();
 }

@@ -1,6 +1,5 @@
 import 'package:get_it/get_it.dart';
 import 'package:jxledger/ipc/database/adapters.dart';
-import 'package:jxledger/ipc/server.dart';
 
 import '../../../features/archives/controller.dart';
 import '../../../features/archives/repository.dart';
@@ -27,13 +26,10 @@ import '../client.dart';
 
 final GetIt locator = GetIt.instance;
 
-void setupLocator() {
+Future<void> init() async {
   // IpcClient
   locator.registerLazySingleton<IpcAdapters>(() => CoreRuntimeAdapters());
   locator.registerLazySingleton<IpcClient>(() => IpcClient(locator<IpcAdapters>()));
-
-  // IpcServer
-  locator.registerLazySingleton<IpcServer>(() => IpcServer());
 
   // Settings
   locator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
@@ -76,8 +72,6 @@ void setupLocator() {
 
   // Higher level boots, this will most likely depends on the lower level to boot first.
   locator.registerLazySingleton<CoreRuntimeClient>(() => CoreRuntimeClient());
-}
 
-Future<void> init() async {
   await locator<CoreRuntimeClient>().init();
 }

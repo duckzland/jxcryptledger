@@ -29,12 +29,11 @@ Future<void> main(List<String> args) async {
 
   if (args.contains("--server")) {
     await server.loadLibrary();
-    server.setupLocator();
     await server.init();
   } else {
     await client.loadLibrary();
-    client.setupLocator();
     await client.init();
+
     runApp(AppRoot());
   }
 }
