@@ -8,7 +8,7 @@ import '../../../mixins/rateable.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../app/theme.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/numbers/flow.dart';

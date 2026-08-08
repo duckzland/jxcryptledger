@@ -1,4 +1,4 @@
-import '../core/runtime/locator.dart';
+import '../core/runtime/locators/client.dart';
 import '../system/settings/states.dart';
 
 mixin MixinsState {

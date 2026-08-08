@@ -18,7 +18,7 @@ import '../../system/settings/keys.dart';
 import '../abstracts/runtime.dart';
 import '../log.dart';
 import '../mode.dart';
-import 'locator.dart';
+import 'locators/client.dart';
 
 class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
   CoreRuntimeClient();

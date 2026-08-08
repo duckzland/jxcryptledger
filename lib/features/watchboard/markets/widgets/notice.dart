@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/exceptions.dart';
-import '../../../../core/runtime/locator.dart';
+import '../../../../core/runtime/locators/client.dart';
 import '../../../../widgets/notify.dart';
 import '../../../../widgets/screens/notice.dart';
 import '../controller.dart';

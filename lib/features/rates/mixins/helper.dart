@@ -1,5 +1,5 @@
 import '../../../app/exceptions.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../cryptos/repository.dart';
 
 mixin RatesMixinsHelper {

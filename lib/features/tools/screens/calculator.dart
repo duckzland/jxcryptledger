@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:jxledger/core/math.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
 import '../../../widgets/balance_text.dart';

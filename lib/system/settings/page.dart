@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/content.dart';
-import '../../core/runtime/locator.dart';
+import '../../core/runtime/locators/client.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../widgets/buttons/action.dart';

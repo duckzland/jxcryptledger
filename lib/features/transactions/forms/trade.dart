@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';

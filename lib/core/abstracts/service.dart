@@ -2,7 +2,7 @@ import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/client.dart';
 import '../../ipc/event.dart';
 import '../../ipc/server.dart';
-import '../runtime/locator.dart';
+import '../runtime/locators/client.dart';
 import '../mode.dart';
 import '../mixins/box.dart';
 import 'models/with_id.dart';

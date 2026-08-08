@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/content.dart';
-import '../../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../../../mixins/action_bar.dart';
 import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';

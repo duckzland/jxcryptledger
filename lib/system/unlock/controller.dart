@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:jxledger/core/runtime/client.dart';
 
 import '../../core/mode.dart';
-import '../../core/runtime/locator.dart';
+import '../../core/runtime/locators/client.dart';
 import '../../core/log.dart';
 
 class SystemUnlockController extends ChangeNotifier {

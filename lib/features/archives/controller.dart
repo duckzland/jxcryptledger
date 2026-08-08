@@ -2,7 +2,7 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/controller.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
-import '../../core/runtime/locator.dart';
+import '../../core/runtime/locators/client.dart';
 import '../../system/settings/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';

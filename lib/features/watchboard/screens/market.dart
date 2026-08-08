@@ -2,7 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/content.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/scrollto_table.dart';

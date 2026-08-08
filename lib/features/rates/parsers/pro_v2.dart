@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 
 import '../../../core/extensions/decimals.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../cryptos/service.dart';
 import '../model.dart';
 import 'result.dart';

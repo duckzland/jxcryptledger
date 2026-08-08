@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
 import 'controller.dart';

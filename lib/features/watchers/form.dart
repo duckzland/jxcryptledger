@@ -6,7 +6,7 @@ import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../app/exceptions.dart';
-import '../../core/runtime/locator.dart';
+import '../../core/runtime/locators/client.dart';
 import '../../mixins/rateable.dart';
 import '../../widgets/buttons/action.dart';
 import '../../widgets/header.dart';

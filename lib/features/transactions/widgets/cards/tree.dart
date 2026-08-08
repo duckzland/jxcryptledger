@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../../app/theme.dart';
-import '../../../../core/runtime/locator.dart';
+import '../../../../core/runtime/locators/client.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../widgets/header.dart';

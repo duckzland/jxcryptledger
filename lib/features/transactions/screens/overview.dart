@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locator.dart';
+import '../../../core/runtime/locators/client.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';

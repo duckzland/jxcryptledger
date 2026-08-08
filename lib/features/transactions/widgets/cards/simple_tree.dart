@@ -3,7 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
-import '../../../../core/runtime/locator.dart';
+import '../../../../core/runtime/locators/client.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/layouts/wrapped_two_columns.dart';
 import '../../../../widgets/with_tooltip.dart';

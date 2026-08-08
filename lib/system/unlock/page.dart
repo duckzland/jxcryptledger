@@ -4,7 +4,7 @@ import 'package:jxledger/ipc/event.dart';
 
 import '../../app/constants.dart';
 import '../../app/theme.dart';
-import '../../core/runtime/locator.dart';
+import '../../core/runtime/locators/client.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';

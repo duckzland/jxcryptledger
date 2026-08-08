@@ -24,7 +24,7 @@ import '../log.dart';
 import '../mode.dart';
 import '../pooler.dart';
 import 'boxes.dart';
-import 'locator.dart';
+import 'locators/client.dart';
 import 'migration.dart';
 
 class CoreRuntimeServer extends CoreBaseRuntime {

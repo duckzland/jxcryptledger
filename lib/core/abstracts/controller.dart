@@ -7,7 +7,7 @@ import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
 import '../mode.dart';
 import '../mixins/box.dart';
-import '../runtime/locator.dart';
+import '../runtime/locators/client.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 

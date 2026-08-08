@@ -6,9 +6,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app/constants.dart';
 import 'app/root.dart';
-import 'core/runtime/client.dart';
-import 'core/runtime/server.dart';
-import 'core/runtime/locator.dart';
+
+import 'core/runtime/locators/server.dart' deferred as server;
+import 'core/runtime/locators/client.dart' deferred as client;
 
 Future<void> main(List<String> args) async {
   if (Platform.isWindows == false && Platform.isLinux == false) {
@@ -27,12 +27,14 @@ Future<void> main(List<String> args) async {
     dotenv.loadFromString(envString: "APP_SALT=$appSalt");
   }
 
-  setupLocator();
-
   if (args.contains("--server")) {
-    await locator<CoreRuntimeServer>().init();
+    await server.loadLibrary();
+    server.setupLocator();
+    await server.init();
   } else {
-    await locator<CoreRuntimeClient>().init();
+    await client.loadLibrary();
+    client.setupLocator();
+    await client.init();
     runApp(AppRoot());
   }
 }

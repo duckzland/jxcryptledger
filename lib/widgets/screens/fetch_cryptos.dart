@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 import '../../app/exceptions.dart';
-import '../../core/runtime/locator.dart';
+import '../../core/runtime/locators/client.dart';
 import '../../features/cryptos/controller.dart';
 import '../buttons/action.dart';
 import '../notify.dart';

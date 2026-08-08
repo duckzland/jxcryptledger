@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
-import '../../../../core/runtime/locator.dart';
+import '../../../../core/runtime/locators/client.dart';
 import '../../../../mixins/actionable.dart';
 import '../../../../mixins/rateable.dart';
 import '../../../../mixins/selectable_table.dart';

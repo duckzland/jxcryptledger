@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/runtime/locator.dart';
+import '../../../../core/runtime/locators/client.dart';
 import '../../../../mixins/actionable.dart';
 import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/buttons/dropdown.dart';
