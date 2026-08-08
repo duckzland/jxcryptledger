@@ -50,8 +50,8 @@ class SystemEncryptionService {
 
     final data = base64Decode(encryptedBase64);
 
-    const nonceLength = 12;
-    const macLength = 16;
+    final nonceLength = 12;
+    final macLength = 16;
 
     final nonce = data.sublist(0, nonceLength);
     final mac = Mac(data.sublist(data.length - macLength));

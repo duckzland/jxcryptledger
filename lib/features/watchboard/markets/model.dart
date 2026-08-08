@@ -73,7 +73,7 @@ class MarketsModel implements CoreModelWithId {
        _percent90dText = Utils.formatSmartDecimal(percent90d ?? Decimal.zero, maxDecimals: 2, smartDecimal: false),
        _marketCapText = Utils.formatShortCurrency(marketCap ?? Decimal.zero),
        _dominanceText = Utils.formatSmartDecimal(dominance ?? Decimal.zero, maxDecimals: 2),
-       _tags = ((meta?['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const []) {
+       _tags = ((meta?['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? []) {
     if (tid.isEmpty) {
       throw ValidationException(AppErrorCode.marketInvalidTid, "tid cannot be empty.", "Please enter a market ID.");
     }
@@ -196,10 +196,10 @@ class MarketsModel implements CoreModelWithId {
   }
 
   bool _checkIsStableCoin(String symbol, Map<String, dynamic> meta) {
-    final tags = (meta['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? const [];
+    final tags = (meta['tags'] as List?)?.map((t) => t.toString().toLowerCase()).toList() ?? [];
     if (tags.contains('stablecoin')) return true;
 
-    const stablecoins = {
+    final stablecoins = {
       'usdt',
       'usdc',
       'dai',

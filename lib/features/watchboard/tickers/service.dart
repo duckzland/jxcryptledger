@@ -309,7 +309,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: TickerType.altcoinIndex.index,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchAltSeason(fetcher),
           isFreePlan: false,
         ),
@@ -319,7 +319,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: TickerType.fearGreed.index,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchFearGreed(fetcher),
           isFreePlan: false,
         ),
@@ -329,7 +329,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: TickerType.cmc100.index,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchCmc100(fetcher),
           isFreePlan: false,
         ),
@@ -339,7 +339,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: TickerType.marketCap.index,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchMarketCap(fetcher),
           isFreePlan: false,
         ),
@@ -349,7 +349,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: TickerType.dominance.index,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchDominance(fetcher),
           isFreePlan: false,
         ),
@@ -359,7 +359,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: TickerType.etf.index,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchEtf(fetcher),
           isFreePlan: false,
         ),
@@ -369,14 +369,14 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: TickerType.pulse.index,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchRsi(fetcher),
           isFreePlan: false,
         ),
       );
     }
 
-    const mgmlTypes = {
+    final mgmlTypes = {
       TickerType.topGainer100_1h,
       TickerType.topGainer100_24h,
       TickerType.topGainer200_1h,
@@ -391,7 +391,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       jobs.add(
         CoreWorkerJob(
           id: 999,
-          payload: const [],
+          payload: [],
           callback: (_, _, {http.Client? fetcher}) async => await fetchMarketGainerLoser(fetcher),
           isFreePlan: false,
         ),

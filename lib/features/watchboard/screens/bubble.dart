@@ -179,8 +179,8 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
       });
     }
 
-    const double gravityForce = 0.35;
-    const int relaxationIterations = 90;
+    final double gravityForce = 0.35;
+    final int relaxationIterations = 90;
     final double centerX = currentSize.width / 2;
     final double centerY = currentSize.height / 2;
 

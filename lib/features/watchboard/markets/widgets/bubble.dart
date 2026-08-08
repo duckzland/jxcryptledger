@@ -148,7 +148,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
   }
 
   double _calcExtraRadius(Decimal value) {
-    const double maxRadius = 10.0;
+    final double maxRadius = 10.0;
     if (value == Decimal.zero) return 0.0;
 
     double absVal = value.toDouble().abs();

@@ -148,7 +148,7 @@ Future<TransactionsModel> createChild(String label, Box repo, TransactionsModel 
 }
 
 String generateId() {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  final chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   final random = Random();
 
   while (true) {

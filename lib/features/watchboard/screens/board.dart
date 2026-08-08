@@ -279,10 +279,10 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
   Widget _buildTickers() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const baseWidth = 140.0;
-        const spacing = 8.0;
-        const total = 16;
-        const itemHeight = 47.0;
+        final baseWidth = 140.0;
+        final spacing = 8.0;
+        final total = 16;
+        final itemHeight = 47.0;
 
         final effectiveWidth = baseWidth + spacing;
         final maxPerRow = (constraints.maxWidth / effectiveWidth).floor().clamp(1, total);

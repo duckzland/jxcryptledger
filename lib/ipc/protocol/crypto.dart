@@ -14,7 +14,7 @@ class IpcCrypto {
   }
 
   static Uint8List createSessionKey(int length) {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = Random.secure();
     return utf8.encode(List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join());
   }

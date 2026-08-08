@@ -14,7 +14,7 @@ class WidgetsLayoutsWrappedTwoColumns extends MultiChildLayoutDelegate {
   void performLayout(Size size) {
     Size? left, right, middle, trailing;
     int totalRows = 0;
-    const double gap = 16.0;
+    double gap = 16.0;
     double currentHeight = 0;
 
     if (size.width < 260) {
@@ -138,7 +138,7 @@ class WidgetsLayoutsWrappedTwoColumns extends MultiChildLayoutDelegate {
           positionChild('trailing', Offset(size.width - trailing.width, 0));
         }
         if (middle != null) {
-          const double gap = 16.0;
+          double gap = 16.0;
           positionChild('middle', Offset(0, row1Height + gap));
           currentHeight += middle.height + gap;
         }

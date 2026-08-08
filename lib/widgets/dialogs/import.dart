@@ -112,7 +112,7 @@ class WidgetsDialogsImport extends StatefulWidget {
 class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
   Future<void> _selectAndImport() async {
     try {
-      const typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
+      final typeGroup = XTypeGroup(label: 'JSON', extensions: ['json']);
       final file = await openFile(acceptedTypeGroups: [typeGroup]);
 
       if (file == null) {

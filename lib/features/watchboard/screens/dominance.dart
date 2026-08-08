@@ -76,8 +76,8 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            const double baseGap = 10.0;
-            const double barHeight = 36.0;
+            final double baseGap = 10.0;
+            final double barHeight = 36.0;
 
             return ListView.builder(
               controller: scrollUtil.controller,

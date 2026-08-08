@@ -121,7 +121,7 @@ class WidgetsNumberFlowTween extends Tween<String> {
       rightToLeftAccumulator += slotWeights[digitOrder];
     }
 
-    const double staggerFactor = 0.4;
+    final double staggerFactor = 0.4;
     final resultChars = List<String>.from(targetChars);
 
     for (int digitOrder = 0; digitOrder < digitPositions.length; digitOrder++) {

@@ -218,7 +218,7 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
   }
 
   factory TransactionsModel.fromJson(Map<String, dynamic> json) {
-    const requiredKeys = [
+    final requiredKeys = [
       'tid',
       'rid',
       'pid',

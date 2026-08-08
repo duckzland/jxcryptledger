@@ -117,7 +117,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
             sortColumnIndex: sortableColumnIndex,
             sortAscending: sortableAscending,
             isHorizontalScrollBarVisible: false,
-            empty: const Center(
+            empty: Center(
               child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ),
             columns: [
