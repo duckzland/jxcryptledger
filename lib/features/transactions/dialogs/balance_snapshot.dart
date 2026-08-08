@@ -104,11 +104,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
+      insetPadding: EdgeInsets.all(24),
+      constraints: BoxConstraints(maxWidth: 1200),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 20,
@@ -252,11 +252,9 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             cells: [
               DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataCell(
-                Text("${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol", style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
+              DataCell(Text("${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol", style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataCell(Text(total, style: const TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text(total, style: TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
           DataRow(
@@ -281,7 +279,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
   Widget _buildButtonPanel() {
     return Padding(
-      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      padding: EdgeInsets.only(top: 15.0, bottom: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context))],

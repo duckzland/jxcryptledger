@@ -22,8 +22,8 @@ class TransactionsWidgetsPanelItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-        const SizedBox(height: 1),
+        Text(title, style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        SizedBox(height: 1),
         RepaintBoundary(
           child: WidgetsBalanceText(text: subtitle, value: value, comparator: comparator, fontSize: 13),
         ),

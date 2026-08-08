@@ -61,7 +61,7 @@ class IpcBoxes {
           await Hive.box<T>(name).close();
         }
 
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(Duration(milliseconds: 100));
 
         await Hive.deleteBoxFromDisk(name);
         box = await openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);

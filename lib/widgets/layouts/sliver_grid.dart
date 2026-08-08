@@ -7,7 +7,7 @@ class SliverGridDelegateWithMinWidth extends SliverGridDelegate {
   final double crossAxisSpacing;
   final double horizontalPadding;
 
-  const SliverGridDelegateWithMinWidth({
+  SliverGridDelegateWithMinWidth({
     required this.minCrossAxisExtent,
     required this.itemHeight,
     this.mainAxisSpacing = 0,

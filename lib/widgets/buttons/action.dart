@@ -148,7 +148,7 @@ class WidgetsButtonsActionState extends State<WidgetsButtonsAction> {
           }
           return AppTheme.buttonFg;
         }),
-        padding: WidgetStateProperty.all(widget.padding ?? const EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
+        padding: WidgetStateProperty.all(widget.padding ?? EdgeInsets.symmetric(horizontal: 48, vertical: 16)),
         minimumSize: WidgetStateProperty.all(widget.minimumSize ?? Size.zero),
       ),
       onPressed: _disabled || _inProgress || _isActive

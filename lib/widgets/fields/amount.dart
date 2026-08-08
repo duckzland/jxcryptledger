@@ -160,17 +160,17 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
                   if (widget.allowClean && _controller.text != "") suffixIconClean('Reset amount'),
 
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                 ],
               )
             : null,
       ),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+      keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
       validator: _validateAmount,
       enabled: widget.enabled,
       onChanged: (value) {
         _debounce?.cancel();
-        _debounce = Timer(const Duration(milliseconds: 100), () {
+        _debounce = Timer(Duration(milliseconds: 100), () {
           widget.onChanged?.call(value);
           setState(() {});
         });
@@ -190,11 +190,7 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
 
     final parsed = Utils.parseDecimal(value);
 
-    if (parsed == Decimal.zero &&
-        value.trim().isNotEmpty &&
-        value.trim() != '0' &&
-        value.trim() != '+0' &&
-        value.trim() != '-0') {
+    if (parsed == Decimal.zero && value.trim().isNotEmpty && value.trim() != '0' && value.trim() != '+0' && value.trim() != '-0') {
       return 'Enter a valid number';
     }
 

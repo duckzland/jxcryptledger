@@ -212,7 +212,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
       margin: EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 0),
       color: _bgColor,
       child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),
+        padding: EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),
         child: CustomMultiChildLayout(
           key: ValueKey(_tx.statusEnum),
           delegate: WidgetsLayoutsWrappedTwoColumns(
@@ -300,7 +300,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
       child: SingleChildScrollView(
         controller: controller,
         scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: NeverScrollableScrollPhysics(),
         child: Row(
           spacing: 20,
           mainAxisSize: MainAxisSize.min,
@@ -361,7 +361,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
       child: SingleChildScrollView(
         controller: controller,
         scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: NeverScrollableScrollPhysics(),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           spacing: 15,
@@ -402,7 +402,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
       child: SingleChildScrollView(
         controller: controller,
         scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: NeverScrollableScrollPhysics(),
         child: Row(
           spacing: 25,
           mainAxisSize: MainAxisSize.min,

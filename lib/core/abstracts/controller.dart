@@ -58,7 +58,7 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   void debounceNotify() {
     if (!CoreMode.isServer) {
       _notifyTimer?.cancel();
-      _notifyTimer = Timer(const Duration(milliseconds: 32), () {
+      _notifyTimer = Timer(Duration(milliseconds: 32), () {
         notifyListeners();
       });
     }

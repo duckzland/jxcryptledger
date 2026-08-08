@@ -26,11 +26,11 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
     const divider = Divider(height: 1, thickness: 1);
 
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
+      insetPadding: EdgeInsets.all(24.0),
+      constraints: BoxConstraints(maxWidth: 1200),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 30,
@@ -62,7 +62,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
               ),
 
               Padding(
-                padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                padding: EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Center(
                   child: WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context)),
                 ),
@@ -128,19 +128,19 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
     return TreeView.indexed(
       key: PageStorageKey('detail-tree-history-${tx.uuid}'),
       tree: root,
-      padding: const EdgeInsets.only(left: 0),
+      padding: EdgeInsets.only(left: 0),
       showRootNode: false,
-      indentation: const Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
+      indentation: Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
       expansionBehavior: ExpansionBehavior.scrollToLastChild,
       animation: kAlwaysCompleteAnimation,
       expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
         tree: node,
         color: AppTheme.text,
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+        padding: EdgeInsets.symmetric(horizontal: 22, vertical: 24),
         alignment: Alignment.topRight,
       ),
       onTreeReady: (controller) {
-        Future.delayed(const Duration(milliseconds: 100), () {
+        Future.delayed(Duration(milliseconds: 100), () {
           for (final child in root.childrenAsList) {
             controller.expandAllChildren(child as IndexedTreeNode<TransactionsModel>, recursive: true);
           }

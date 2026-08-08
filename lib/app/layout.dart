@@ -141,7 +141,7 @@ class _AppLayoutState extends State<AppLayout> {
             ),
             actions: (!showMenu) ? [_buildActions()] : [],
           ),
-          body: Padding(padding: const EdgeInsets.only(left: 0, right: 0, top: 8, bottom: 8), child: widget.child),
+          body: Padding(padding: EdgeInsets.only(left: 0, right: 0, top: 8, bottom: 8), child: widget.child),
         );
       },
     );
@@ -180,13 +180,11 @@ class _AppLayoutState extends State<AppLayout> {
             height: 60,
             color: AppTheme.menuHeaderBg,
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(horizontal: 20),
             child: ValueListenableBuilder<String?>(
               valueListenable: _title,
               builder: (_, title, _) {
-                return title != null
-                    ? Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16))
-                    : const SizedBox.shrink();
+                return title != null ? Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)) : const SizedBox.shrink();
               },
             ),
           ),
@@ -197,7 +195,7 @@ class _AppLayoutState extends State<AppLayout> {
 
           ListTile(
             key: Key('refresh-cryptos'),
-            leading: const Icon(Icons.refresh),
+            leading: Icon(Icons.refresh),
             title: Text("Refresh Cryptos"),
             onTap: () async {
               Navigator.pop(context);
@@ -214,7 +212,7 @@ class _AppLayoutState extends State<AppLayout> {
           if (hasRates)
             ListTile(
               key: Key('refresh-rates'),
-              leading: const Icon(Icons.autorenew),
+              leading: Icon(Icons.autorenew),
               title: Text("Refresh Rates"),
               onTap: () async {
                 Navigator.pop(context);
@@ -233,7 +231,7 @@ class _AppLayoutState extends State<AppLayout> {
 
           ListTile(
             key: Key('close-menu'),
-            leading: const Icon(Icons.close),
+            leading: Icon(Icons.close),
             title: Text("Close Menu"),
             onTap: () {
               Navigator.pop(context);
@@ -249,8 +247,8 @@ class _AppLayoutState extends State<AppLayout> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Container(
-          padding: const EdgeInsets.only(left: 16.0),
-          decoration: const BoxDecoration(
+          padding: EdgeInsets.only(left: 16.0),
+          decoration: BoxDecoration(
             color: AppTheme.appBarTitleBg,
             borderRadius: BorderRadius.only(topRight: Radius.circular(4), bottomRight: Radius.circular(4)),
           ),
@@ -274,11 +272,11 @@ class _AppLayoutState extends State<AppLayout> {
 
   Widget _buildActions() {
     return Padding(
-      padding: const EdgeInsets.only(right: 16.0),
+      padding: EdgeInsets.only(right: 16.0),
       child: Row(
         spacing: 8,
         children: [
-          const WidgetsSeparator(padding: EdgeInsets.only(left: 8, right: 8)),
+          WidgetsSeparator(padding: EdgeInsets.only(left: 8, right: 8)),
           Wrap(
             spacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -289,7 +287,7 @@ class _AppLayoutState extends State<AppLayout> {
                   return WidgetsButtonsAction(
                     key: const Key("refresh-crypto"),
                     icon: Icons.refresh,
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     iconSize: 20,
                     minimumSize: const Size(40, 40),
                     tooltip: "Refresh Cryptos",
@@ -320,7 +318,7 @@ class _AppLayoutState extends State<AppLayout> {
                       ? WidgetsButtonsAction(
                           key: const Key("refresh-rates"),
                           icon: Icons.autorenew,
-                          padding: const EdgeInsets.all(8),
+                          padding: EdgeInsets.all(8),
                           iconSize: 20,
                           minimumSize: const Size(40, 40),
                           tooltip: "Refresh Rates",
@@ -341,7 +339,7 @@ class _AppLayoutState extends State<AppLayout> {
                             }
                           },
                         )
-                      : SizedBox.shrink();
+                      : const SizedBox.shrink();
                 },
               ),
             ],
@@ -356,7 +354,7 @@ class _AppLayoutState extends State<AppLayout> {
       builder: (context) => WidgetsButtonsAction(
         key: const Key("menu-toggler"),
         icon: Icons.menu,
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(8),
         iconSize: 20,
         minimumSize: const Size(40, 40),
         tooltip: "Open menu",
@@ -377,7 +375,7 @@ class _AppLayoutState extends State<AppLayout> {
         WidgetsButtonsAction(
           key: ValueKey(menu['target']),
           icon: menu['icon'] as IconData,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: menu['title'] as String,

@@ -160,7 +160,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
       return Center(
         child: Text(
           _filterMode == 0 ? "No active transactions available" : "No transactions available",
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       );
     }

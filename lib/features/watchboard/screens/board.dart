@@ -105,7 +105,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
             WidgetsButtonsAction(
               key: _enableTickers ? const Key("ticker-shown") : const Key("ticker-hidden"),
               icon: Icons.remove_red_eye,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               initialState: WidgetsButtonActionState.normal,
               iconSize: 20,
               minimumSize: const Size(40, 40),
@@ -116,7 +116,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
             WidgetsButtonsAction(
               key: _enableDrag ? const Key("panel-drag-allowed") : const Key("panel-drag-disabled"),
               icon: Icons.drag_indicator,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               initialState: WidgetsButtonActionState.normal,
               iconSize: 20,
               minimumSize: const Size(40, 40),
@@ -249,8 +249,8 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     final panelsView = ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels());
 
     return AppContent(
-      boxConstraints: const BoxConstraints(maxWidth: 1600),
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      boxConstraints: BoxConstraints(maxWidth: 1600),
+      padding: EdgeInsets.only(left: 16, right: 16),
       spacing: 10,
       children: _enableTickers ? [tickersView, Flexible(flex: 10, fit: FlexFit.loose, child: panelsView)] : [panelsView],
     );
@@ -259,8 +259,8 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
   Widget _buildPanels() {
     return ReorderableGridView.builder(
       controller: scrollUtil.controller,
-      padding: const EdgeInsets.only(bottom: 12),
-      gridDelegate: const SliverGridDelegateWithMinWidth(
+      padding: EdgeInsets.only(bottom: 12),
+      gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
         itemHeight: 105,
         mainAxisSpacing: 12,
@@ -268,7 +268,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
         horizontalPadding: 12,
       ),
       dragEnabled: _enableDrag,
-      dragStartDelay: const Duration(microseconds: 10),
+      dragStartDelay: Duration(microseconds: 10),
       itemCount: txs.length,
       itemBuilder: _panelItemBuilder,
       dragWidgetBuilder: _buildDragElement,
@@ -313,7 +313,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
               horizontalPadding: 8,
             ),
             dragEnabled: _enableDrag,
-            dragStartDelay: const Duration(microseconds: 10),
+            dragStartDelay: Duration(microseconds: 10),
             itemCount: tickers.length,
             itemBuilder: _tickerItemBuilder,
             dragWidgetBuilder: _buildDragElement,
@@ -423,7 +423,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
 
   void _actionToggleDrag(WidgetsButtonsActionState s) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _debounceTimer = Timer(Duration(milliseconds: 500), () {
       final now = DateTime.now();
       if (now.difference(_lastPress).inMilliseconds < 500) {
         return;
@@ -444,7 +444,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
 
   void _actionToggleTickers(WidgetsButtonsActionState s) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _debounceTimer = Timer(Duration(milliseconds: 500), () {
       setState(() {
         _enableTickers = !_enableTickers;
       });

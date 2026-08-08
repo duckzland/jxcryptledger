@@ -115,8 +115,8 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
     final editableKeys = SettingKey.values.where((k) => k.isUserEditable).toList();
 
     return AppContent(
-      boxConstraints: const BoxConstraints(maxWidth: 1024),
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      boxConstraints: BoxConstraints(maxWidth: 1024),
+      padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
       children: [
         WidgetsPanel(
           key: Key("settings-panel-$_buildCount"),
@@ -124,9 +124,9 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
             key: _formKey,
             child: ListView.separated(
               controller: scrollToUtil.controller,
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: EdgeInsets.only(bottom: 20),
               itemCount: editableKeys.length + 1,
-              separatorBuilder: (context, index) => const SizedBox(height: 30),
+              separatorBuilder: (context, index) => SizedBox(height: 30),
               itemBuilder: (context, index) {
                 return _buildItem(index, editableKeys);
               },
@@ -146,7 +146,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
   Widget _buildItem(int index, List<SettingKey> editableKeys) {
     if (index == editableKeys.length) {
       return Padding(
-        padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+        padding: EdgeInsets.only(top: 15.0, bottom: 5),
         child: Wrap(
           direction: Axis.horizontal,
           runSpacing: 20,
@@ -182,7 +182,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
                 });
               },
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(boolVal ? 'Enabled' : 'Disabled'),
           ],
         );
@@ -299,7 +299,7 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
       dialogTitle: "Reset Settings",
       dialogMessage: "Are you sure you want to reset all settings to default values?",
       dialogConfirmLabel: "Reset",
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
       filledMode: true,
       actionStartCallback: () async {
         Map<SettingKey, dynamic> newBuff = {};

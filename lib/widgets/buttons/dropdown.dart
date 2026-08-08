@@ -37,7 +37,7 @@ class WidgetsButtonsDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (children.isEmpty) {
-      return const SizedBox();
+      return SizedBox();
     }
 
     if (listener != null) {
@@ -149,7 +149,7 @@ class WidgetsButtonsDropdown extends StatelessWidget {
     Widget dot(WidgetsButtonActionState s) => Container(
       width: dotSize,
       height: dotSize,
-      margin: const EdgeInsets.all(2),
+      margin: EdgeInsets.all(2),
       decoration: BoxDecoration(color: s.background, shape: BoxShape.circle),
     );
 

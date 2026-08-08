@@ -91,10 +91,10 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 0),
+      margin: EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 0),
       color: _bgColor,
       child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),
+        padding: EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),
         child: CustomMultiChildLayout(
           key: ValueKey(_tx.statusEnum),
           delegate: WidgetsLayoutsWrappedTwoColumns(onWrapChanged: (int totalRows, double currentHeight) {}, currentHeight: 37),
@@ -134,7 +134,7 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
       child: SingleChildScrollView(
         controller: controller,
         scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: NeverScrollableScrollPhysics(),
         child: Row(
           spacing: 20,
           mainAxisSize: MainAxisSize.max,

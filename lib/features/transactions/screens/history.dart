@@ -127,19 +127,19 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
         key: PageStorageKey('tree-history-$_sortMode'),
         tree: _root,
         showRootNode: false,
-        indentation: const Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
+        indentation: Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
         expansionBehavior: ExpansionBehavior.scrollToLastChild,
         animation: kAlwaysCompleteAnimation,
         scrollController: _autoScrollController,
         expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
           tree: node,
           color: AppTheme.text,
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 24),
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 24),
           alignment: Alignment.topRight,
         ),
         onTreeReady: (controller) {
           scrollController = controller;
-          Future.delayed(const Duration(milliseconds: 100), () {
+          Future.delayed(Duration(milliseconds: 100), () {
             if (!mounted) return;
 
             for (final child in _root.childrenAsList) {

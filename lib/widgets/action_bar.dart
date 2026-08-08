@@ -72,7 +72,7 @@ class WidgetsActionBar extends StatelessWidget {
                       ? SliverToBoxAdapter(
                           key: centerKey,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
                             child: Row(mainAxisSize: MainAxisSize.min, spacing: 16, children: [?mainActions]),
                           ),
                         )

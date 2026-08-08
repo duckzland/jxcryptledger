@@ -837,9 +837,9 @@ void main() {
       };
 
       await server.start();
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
       await client.start();
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
 
       addTearDown(() async {
         await client.dispose();
@@ -867,7 +867,7 @@ void main() {
       final sessionKey = server.sessionKey;
 
       // Booting the client 1
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
       final client1 = IpcClient(AdaptersFaker());
       client1.pipeName = pipeName;
       await client1.start();
@@ -883,14 +883,14 @@ void main() {
       });
 
       // Handshaking for client 1
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
       final handshakeBytes = await client1.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
       expect(handshakeBytes, equals(sessionKey));
       client1.localKey = keyBytes;
       client1.sessionKey = handshakeBytes;
 
       // Booting the client 2
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
       CoreMode.isServer = false;
       final client2 = IpcClient(AdaptersFaker());
       client2.pipeName = pipeName;
@@ -907,7 +907,7 @@ void main() {
       });
 
       // Client 2 handshaking
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
       final handshakeBytes2 = await client2.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
       expect(handshakeBytes2, equals(sessionKey));
       client2.localKey = keyBytes;
@@ -923,12 +923,12 @@ void main() {
       });
 
       // Testing sending via client 1
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
       final tx1 = makeTx("42", balance: Decimal.fromInt(6));
       client1.send(op: IpcAction.put, action: 'transactions_box', key: '42', payload: tx1);
 
       // Testing sending via client 2
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
       final tx2 = makeTx("52", balance: Decimal.fromInt(3));
       client2.send(op: IpcAction.put, action: 'transactions_box', key: '52', payload: tx2);
     });

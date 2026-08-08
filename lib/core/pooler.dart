@@ -32,7 +32,7 @@ class CorePooler {
     watchers.scheduleRates();
     transactions.scheduleRates();
 
-    _everyMinutesWorker = Timer.periodic(const Duration(minutes: 1), (_) async {
+    _everyMinutesWorker = Timer.periodic(Duration(minutes: 1), (_) async {
       bool mustAlwaysFetchRate = false;
 
       if (!CoreMode.isServer) {
@@ -79,7 +79,7 @@ class CorePooler {
       }
     });
 
-    _everyFiveMinutesWorker = Timer.periodic(const Duration(minutes: 5), (_) async {
+    _everyFiveMinutesWorker = Timer.periodic(Duration(minutes: 5), (_) async {
       logln("[POOLER] Refreshing market rates");
       await market.refreshRates();
     });

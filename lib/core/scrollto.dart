@@ -28,7 +28,7 @@ class ScrollTo with MixinsState {
       return;
     }
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 50), () {
+    _debounce = Timer(Duration(milliseconds: 50), () {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         controller.jumpTo(offset);
       });
@@ -46,7 +46,7 @@ class ScrollTo with MixinsState {
 
     // Need to calculate the maxscroll at the very late!
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), () {
+    _debounce = Timer(Duration(milliseconds: 200), () {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         controller.jumpTo(controller.position.maxScrollExtent);
       });

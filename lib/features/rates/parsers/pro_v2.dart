@@ -15,7 +15,7 @@ RatesParserResult parseRatesJsonV2(String body) {
 
   final dataNode = data['data'];
   if (dataNode == null) {
-    throw const FormatException('Missing data node');
+    throw FormatException('Missing data node');
   }
 
   final sourceSymbol = dataNode['symbol'] as String?;
@@ -23,7 +23,7 @@ RatesParserResult parseRatesJsonV2(String body) {
   final sourceAmount = (dataNode['amount'] as Object?).toDecimal();
 
   if (sourceSymbol == null || sourceIdStr == null || sourceAmount == null) {
-    throw const FormatException('Missing source fields');
+    throw FormatException('Missing source fields');
   }
 
   final sourceId = int.parse(sourceIdStr);
@@ -31,7 +31,7 @@ RatesParserResult parseRatesJsonV2(String body) {
   final quotes = dataNode['quote'] as Map<String, dynamic>?;
 
   if (quotes == null) {
-    throw const FormatException('Missing quote array');
+    throw FormatException('Missing quote array');
   }
 
   final List<RatesModel> rates = [];

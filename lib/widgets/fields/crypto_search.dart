@@ -113,7 +113,7 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
 
                           if (widget.allowClean && _controller.text != "") suffixIconClean('Reset selection'),
 
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                         ],
                       )
                     : null,
@@ -127,18 +127,18 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
           },
           itemBuilder: (context, CryptosModel suggestion) {
             return Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '${suggestion.symbol} (#${suggestion.uuid})',
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   Text(
                     suggestion.name,
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -150,12 +150,12 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
             widget.onSelected?.call(suggestion.uuid);
           },
           emptyBuilder: (context) {
-            return const Padding(padding: EdgeInsets.all(8.0), child: Text('No cryptos found'));
+            return Padding(padding: EdgeInsets.all(8.0), child: Text('No cryptos found'));
           },
           loadingBuilder: (context) {
-            return const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator());
+            return Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator());
           },
-          debounceDuration: const Duration(milliseconds: 50),
+          debounceDuration: Duration(milliseconds: 50),
           hideOnEmpty: true,
           hideOnLoading: false,
           autoFlipDirection: true,

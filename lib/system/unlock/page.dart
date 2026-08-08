@@ -78,8 +78,8 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('v$appVersion', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+              padding: EdgeInsets.all(8.0),
+              child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
             ),
           ),
         ],
@@ -134,7 +134,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
           Text(
             error!,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppTheme.inputErrorText),
+            style: TextStyle(color: AppTheme.inputErrorText),
           ),
 
         Row(

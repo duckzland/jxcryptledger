@@ -75,7 +75,7 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   Widget build(BuildContext context) {
     final btnIconSize = 18.0;
     final btnSize = const Size(40, 40);
-    final btnPadding = const EdgeInsets.only(left: 6, right: 6, top: 6, bottom: 6);
+    final btnPadding = EdgeInsets.only(left: 6, right: 6, top: 6, bottom: 6);
 
     final List<Widget> buttons = [];
     final List<WidgetsButtonActionState> states = [];

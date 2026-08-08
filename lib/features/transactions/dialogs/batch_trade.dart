@@ -89,11 +89,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
+      insetPadding: EdgeInsets.all(24),
+      constraints: BoxConstraints(maxWidth: 1200),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 16,
@@ -127,7 +127,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
               if (txs.isEmpty) Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               Padding(
-                padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                padding: EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Wrap(
                   direction: Axis.horizontal,
                   runSpacing: 20,
@@ -140,7 +140,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     if (txs.isNotEmpty)
                       WidgetsDialogsAlert(
                         label: "Trade",
-                        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                        padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                         filledMode: true,
                         dialogTitle: "Trade Confirmation",
                         dialogMessage: "This action cannot be undone.",
@@ -298,22 +298,19 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                         child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildFromAmountField()),
                       ),
 
-                      const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.clear, size: 24)),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.clear, size: 24)),
 
                       Expanded(
                         child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
                       ),
 
-                      const Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
 
                       Expanded(
                         child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
                       ),
 
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40),
-                        child: Icon(Icons.arrow_forward, size: 24),
-                      ),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
 
                       Expanded(child: _buildCalculatedResult()),
                     ],
@@ -381,7 +378,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             : "No transaction selected",
       ),
       readOnly: true,
-      style: const TextStyle(fontSize: 16),
+      style: TextStyle(fontSize: 16),
     );
   }
 
@@ -404,7 +401,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         if (value != rateableAmount) {
-          _debounce = Timer(const Duration(milliseconds: 100), () {
+          _debounce = Timer(Duration(milliseconds: 100), () {
             setState(() {
               rateableAmount = value;
             });
@@ -475,7 +472,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               : "${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol",
         ),
         readOnly: true,
-        style: const TextStyle(fontSize: 16),
+        style: TextStyle(fontSize: 16),
       ),
     );
   }

@@ -51,8 +51,8 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
       return WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before using tools.');
     }
     return AppContent(
-      boxConstraints: const BoxConstraints(maxWidth: 1600),
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      boxConstraints: BoxConstraints(maxWidth: 1600),
+      padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
       children: [
         WidgetsPanel(
           child: Align(alignment: Alignment.topCenter, child: _buildScreen()),
@@ -68,7 +68,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
       children: [
         WidgetsButtonsAction(
           icon: Icons.calculate,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "Calculator",
@@ -89,7 +89,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
 
         WidgetsButtonsAction(
           icon: Icons.swap_horiz,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "Converter",
@@ -110,7 +110,7 @@ class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, 
 
         WidgetsButtonsAction(
           icon: Icons.qr_code_2,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "QR Generator",

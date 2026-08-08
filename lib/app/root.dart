@@ -29,7 +29,7 @@ class _AppRootState extends State<AppRoot> with MixinsState {
 
         return MediaQuery(
           data: mq.copyWith(textScaler: TextScaler.noScaling),
-          child: ScrollConfiguration(behavior: const AppScrollBehavior(), child: child!),
+          child: ScrollConfiguration(behavior: AppScrollBehavior(), child: child!),
         );
       },
     );

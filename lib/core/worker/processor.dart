@@ -29,7 +29,7 @@ class CoreWorkerProcessor {
 
   void _startWatchdog() {
     _watchdog?.cancel();
-    _watchdog = Timer(const Duration(seconds: 65), () {
+    _watchdog = Timer(Duration(seconds: 65), () {
       logln('[WORKER] Watchdog triggered — forcing unlock.');
       isFetching = false;
 
@@ -45,7 +45,7 @@ class CoreWorkerProcessor {
   void _pauseOperation() {
     logln('[WORKER] Pausing operation.');
     _paused?.cancel();
-    _paused = Timer(const Duration(seconds: 61), () {
+    _paused = Timer(Duration(seconds: 61), () {
       logln('[WORKER] Resuming operation.');
       _paused?.cancel();
       _paused = null;

@@ -69,25 +69,25 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
                       child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
                     ),
 
-                    const SizedBox(width: 5),
+                    SizedBox(width: 5),
 
                     Expanded(
                       child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
                     ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.arrow_forward, size: 24)),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.arrow_forward, size: 24)),
 
                     Expanded(
                       child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
                     ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.clear, size: 24)),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.clear, size: 24)),
 
                     Expanded(
                       child: WidgetsHeader(subtitle: "Sell Rate:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
                     ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.swap_horiz, size: 24)),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.swap_horiz, size: 24)),
 
                     Expanded(
                       child: WidgetsHeader(
@@ -102,7 +102,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
 
                 _buildCalculatedResult(),
 
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
               ],
             );
           } else {
@@ -122,9 +122,9 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
 
                 WidgetsHeader(title: "Buyback Rate:", spacing: 10, child: _buildRatesRevertAmountField()),
 
-                const SizedBox(height: 50),
+                SizedBox(height: 50),
                 _buildCalculatedResult(mini: true),
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
               ],
             );
           }
@@ -144,7 +144,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         if (_ratesRevertAmount != value) {
-          _debounce = Timer(const Duration(milliseconds: 100), () {
+          _debounce = Timer(Duration(milliseconds: 100), () {
             setState(() {
               _ratesRevertAmount = value;
             });
@@ -187,7 +187,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         if (rateableAmount != value) {
-          _debounce = Timer(const Duration(milliseconds: 100), () {
+          _debounce = Timer(Duration(milliseconds: 100), () {
             setState(() {
               rateableAmount = value;
             });
@@ -216,7 +216,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       onChanged: (value) {
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-        _debounce = Timer(const Duration(milliseconds: 100), () {
+        _debounce = Timer(Duration(milliseconds: 100), () {
           setState(() {
             _sourceAmount = value;
           });
@@ -271,7 +271,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
           returnRate > Decimal.zero ? "Returned amout" : "Calculated Amount",
           style: TextStyle(fontSize: mini ? 13 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         WidgetsNumbersFlow(
           begin: "",
           end: Utils.formatSmartDecimal(resultValue),
@@ -280,9 +280,9 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
         ),
 
         if (returnRate > Decimal.zero && profit != Decimal.zero) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
               color: AppTheme.tableRowBg,
               borderRadius: BorderRadius.circular(100),
@@ -297,7 +297,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
                   "Net Profit/Loss:",
                   style: TextStyle(fontSize: mini ? 12 : 14, color: AppTheme.textMuted),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 WidgetsBalanceText(
                   text: "${Utils.formatSmartDecimal(profit)} $sourceSymbol",
                   value: resultValue.toDouble(),

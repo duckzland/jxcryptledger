@@ -196,7 +196,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   Widget _buildHeader() {
     final title = Padding(
-      padding: const EdgeInsets.only(top: 5),
+      padding: EdgeInsets.only(top: 5),
       child: WidgetsHeader(
         key: Key("title-${widget.id}"),
         title: _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin',

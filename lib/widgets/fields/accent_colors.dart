@@ -53,7 +53,7 @@ class WidgetsFieldsAccentColors extends FormField<Color> {
                    child: Stack(
                      children: [
                        Container(
-                         margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                         margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                          width: 30,
                          height: 30,
                          decoration: BoxDecoration(
@@ -62,9 +62,8 @@ class WidgetsFieldsAccentColors extends FormField<Color> {
                            border: Border.all(color: color == Colors.transparent ? AppTheme.inputBorder : Colors.transparent, width: 1),
                          ),
                        ),
-                       if (color == Colors.transparent)
-                         const Positioned.fill(child: Icon(Icons.close, color: AppTheme.inputBorder, size: 18)),
-                       if (isSelected) const Positioned.fill(child: Icon(Icons.check, color: Colors.white, size: 18)),
+                       if (color == Colors.transparent) Positioned.fill(child: Icon(Icons.close, color: AppTheme.inputBorder, size: 18)),
+                       if (isSelected) Positioned.fill(child: Icon(Icons.check, color: Colors.white, size: 18)),
                      ],
                    ),
                  ),

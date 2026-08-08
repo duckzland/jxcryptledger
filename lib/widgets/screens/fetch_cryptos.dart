@@ -52,16 +52,16 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.cloud_download_outlined, size: 60, color: AppTheme.separator),
-          const SizedBox(height: 16),
+          Icon(Icons.cloud_download_outlined, size: 60, color: AppTheme.separator),
+          SizedBox(height: 16),
           Text('Cryptocurrency data not available', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             widget.description,
-            style: const TextStyle(fontSize: 14, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 14, color: AppTheme.textMuted),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           ListenableBuilder(
             listenable: _cryptosController,
             builder: (context, _) {
@@ -70,7 +70,7 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
                 iconSize: 16,
                 label: "Download",
                 initialState: WidgetsButtonActionState.action,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                 minimumSize: const Size(40, 40),
                 onPressed: _fetchCryptos,
                 filledMode: true,

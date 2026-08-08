@@ -21,7 +21,7 @@ void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
       content: Text(
         msg,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: AppTheme.notifyFgSuccess, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'Inter'),
+        style: TextStyle(color: AppTheme.notifyFgSuccess, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'Inter'),
       ),
     ),
   );
@@ -36,7 +36,7 @@ void widgetsNotifyError(String msg, {BuildContext? ctx}) {
       content: Text(
         msg,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: AppTheme.notifyFgError, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'Inter'),
+        style: TextStyle(color: AppTheme.notifyFgError, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'Inter'),
       ),
     ),
   );
@@ -51,7 +51,7 @@ void widgetsNotifyWarning(String msg, {BuildContext? ctx}) {
       content: Text(
         msg,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: AppTheme.notifyFgWarning, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'Inter'),
+        style: TextStyle(color: AppTheme.notifyFgWarning, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'Inter'),
       ),
     ),
   );

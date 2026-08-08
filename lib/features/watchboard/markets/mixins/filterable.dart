@@ -23,17 +23,15 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
     return DropdownMenu<int>(
       key: Key("market-rank-filter"),
       initialSelection: marketFilterableRank,
-      alignmentOffset: const Offset(0, 3),
+      alignmentOffset: Offset(0, 3),
       requestFocusOnTap: false,
-      inputDecorationTheme: Theme.of(
-        context,
-      ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
+      inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(isDense: true, constraints: BoxConstraints(maxHeight: 38)),
       showTrailingIcon: false,
       dropdownMenuEntries: [
-        const DropdownMenuEntry<int>(value: 0, label: "Show All"),
-        const DropdownMenuEntry<int>(value: 1, label: "Top 50"),
-        const DropdownMenuEntry<int>(value: 2, label: "Top 100"),
-        const DropdownMenuEntry<int>(value: 3, label: "Top 200"),
+        DropdownMenuEntry<int>(value: 0, label: "Show All"),
+        DropdownMenuEntry<int>(value: 1, label: "Top 50"),
+        DropdownMenuEntry<int>(value: 2, label: "Top 100"),
+        DropdownMenuEntry<int>(value: 3, label: "Top 200"),
       ],
       onSelected: (value) {
         marketFilterableRank = value ?? 0;
@@ -47,19 +45,19 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
     return DropdownMenu<int>(
       key: Key("market-percent-filter"),
       initialSelection: marketFilterablePercent,
-      alignmentOffset: const Offset(0, 3),
+      alignmentOffset: Offset(0, 3),
       requestFocusOnTap: false,
       inputDecorationTheme: Theme.of(
         context,
-      ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38, maxWidth: 60)),
+      ).inputDecorationTheme.copyWith(isDense: true, constraints: BoxConstraints(maxHeight: 38, maxWidth: 60)),
       showTrailingIcon: false,
       dropdownMenuEntries: [
-        const DropdownMenuEntry<int>(value: 0, label: "1h"),
-        const DropdownMenuEntry<int>(value: 1, label: "24h"),
-        const DropdownMenuEntry<int>(value: 2, label: "7d"),
-        const DropdownMenuEntry<int>(value: 3, label: "30d"),
-        const DropdownMenuEntry<int>(value: 4, label: "60d"),
-        const DropdownMenuEntry<int>(value: 5, label: "90d"),
+        DropdownMenuEntry<int>(value: 0, label: "1h"),
+        DropdownMenuEntry<int>(value: 1, label: "24h"),
+        DropdownMenuEntry<int>(value: 2, label: "7d"),
+        DropdownMenuEntry<int>(value: 3, label: "30d"),
+        DropdownMenuEntry<int>(value: 4, label: "60d"),
+        DropdownMenuEntry<int>(value: 5, label: "90d"),
       ],
       onSelected: (value) {
         marketFilterablePercent = value ?? 0;

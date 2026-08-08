@@ -198,7 +198,7 @@ class AppTheme {
 
       hoverColor: Colors.transparent,
 
-      suffixIconConstraints: const BoxConstraints(maxHeight: 48),
+      suffixIconConstraints: BoxConstraints(maxHeight: 48),
 
       errorBorder: const OutlineInputBorder(
         borderRadius: borderRadius,

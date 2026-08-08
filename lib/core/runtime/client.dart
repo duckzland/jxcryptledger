@@ -93,7 +93,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
   @override
   Future<bool> reconnect(IpcClient client) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(Duration(milliseconds: 500));
 
     if (shouldSpawn() && !isServerAvailable()) {
       await spawnServer();
@@ -101,12 +101,12 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
     await waitForServer();
 
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(Duration(milliseconds: 50));
 
     if (isServerAvailable()) {
       await client.start();
 
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(Duration(milliseconds: 100));
 
       if (SystemEncryptionService.instance.isUnlocked()) {
         client.localKey = await SystemEncryptionService.instance.getRawKeyBytes();

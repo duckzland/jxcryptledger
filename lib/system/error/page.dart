@@ -30,8 +30,8 @@ class _SystemErrorPageState extends State<SystemErrorPage> {
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('v$appVersion', style: const TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+              padding: EdgeInsets.all(8.0),
+              child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
             ),
           ),
         ],
@@ -44,7 +44,7 @@ class _SystemErrorPageState extends State<SystemErrorPage> {
       spacing: 20,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+        Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
         Text(
           "Critical Error",
           textAlign: TextAlign.center,

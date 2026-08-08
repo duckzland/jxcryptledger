@@ -59,10 +59,10 @@ class WidgetsScreensEmpty extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.add_circle_outline, size: 60, color: AppTheme.separator),
-          const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 24),
+          Icon(Icons.add_circle_outline, size: 60, color: AppTheme.separator),
+          SizedBox(height: 16),
+          Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          SizedBox(height: 24),
           Wrap(
             spacing: 20,
             children: [
@@ -73,7 +73,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
                   iconSize: 16,
                   label: addTitle,
                   tooltip: addTooltip,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                   buildForm: addForm,
                   evaluator: _evaluateAddNew,
                   filledMode: true,
@@ -85,7 +85,7 @@ class WidgetsScreensEmpty extends StatelessWidget {
                   tooltip: importTooltip,
                   icon: Icons.arrow_downward,
                   iconSize: 16,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                   showDialogBeforeImport: false,
                   initialState: WidgetsButtonActionState.action,
                   onImport: importCallback,

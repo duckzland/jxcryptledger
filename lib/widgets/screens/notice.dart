@@ -37,9 +37,9 @@ class WidgetsScreensNotice extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, size: 60, color: AppTheme.separator),
-          const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 24),
+          SizedBox(height: 16),
+          Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          SizedBox(height: 24),
           Wrap(
             spacing: 20,
             children: [
@@ -48,7 +48,7 @@ class WidgetsScreensNotice extends StatelessWidget {
                   key: const Key("action-button"),
                   label: btnTitle,
                   tooltip: btnTooltip,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                   initialState: WidgetsButtonActionState.action,
                   evaluator: btnEvaluator,
                   filledMode: true,

@@ -79,11 +79,11 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
+      insetPadding: EdgeInsets.all(24),
+      constraints: BoxConstraints(maxWidth: 1200),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 16,
@@ -94,7 +94,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
               if (txs.isNotEmpty) _buildTable(),
               if (txs.isEmpty) Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               Padding(
-                padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                padding: EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Wrap(
                   direction: Axis.horizontal,
                   runSpacing: 20,
@@ -107,7 +107,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
                     if (txs.isNotEmpty)
                       WidgetsDialogsAlert(
                         label: "Update",
-                        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                        padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                         filledMode: true,
                         dialogTitle: "Update Confirmation",
                         dialogMessage: "This action is irreversible and  will override any existing note and accents",

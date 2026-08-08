@@ -59,7 +59,7 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
       onExitRequested: () async {
         try {
           await shutdown();
-          await Future.delayed(const Duration(milliseconds: 350));
+          await Future.delayed(Duration(milliseconds: 350));
           return AppExitResponse.exit;
         } catch (e) {
           logln("Failed to clean exit: $e");
@@ -122,7 +122,7 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
           return true;
         }
       } catch (_) {
-        await Future.delayed(const Duration(milliseconds: 150));
+        await Future.delayed(Duration(milliseconds: 150));
       }
     }
 

@@ -38,7 +38,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState {
         WidgetsButtonsAction(
           key: const Key("view-board"),
           icon: Icons.space_dashboard,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "Crypto Board",
@@ -60,7 +60,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState {
         WidgetsButtonsAction(
           key: const Key("view-market"),
           icon: Icons.view_list,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "Crypto Market",
@@ -82,7 +82,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState {
         WidgetsButtonsAction(
           key: const Key("view-bubble"),
           icon: Icons.bubble_chart,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "Crypto Bubble",
@@ -104,7 +104,7 @@ class _WatchboardPageState extends State<WatchboardPage> with MixinsState {
         WidgetsButtonsAction(
           key: const Key("view-dominance"),
           icon: Icons.leaderboard,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           iconSize: 20,
           minimumSize: const Size(40, 40),
           tooltip: "Crypto Dominance",

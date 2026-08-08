@@ -79,12 +79,12 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     _currentColor = targetColor;
 
     return TweenAnimationBuilder<Color?>(
-      duration: const Duration(milliseconds: 400),
+      duration: Duration(milliseconds: 400),
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
       curve: Curves.easeOut,
       builder: (buildContext, Color? animatedBgColor, child) {
         Widget content = WidgetsPanel(
-          padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
+          padding: EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
           background: animatedBgColor,
           borderColor: mutedColor,
           child: SizedBox(
@@ -180,8 +180,8 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     final fromText = "${Utils.formatSmartDecimal(tix.srAmount)} $sourceSymbol to $targetSymbol";
     final toText = "$tv $targetSymbol";
 
-    final fromStyle = const TextStyle(height: 1.2, fontWeight: FontWeight.w600);
-    final toStyle = const TextStyle(height: 1.3, fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]);
+    final fromStyle = TextStyle(height: 1.2, fontWeight: FontWeight.w600);
+    final toStyle = TextStyle(height: 1.3, fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]);
 
     final fromFontSize = fromText.length > 18 ? 12.0 : 13.0;
     final toFontSize = toText.length > 18 ? 22.0 : 25.0;
@@ -198,13 +198,13 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
               suffix: " $targetSymbol",
               style: toStyle.copyWith(fontSize: toFontSize),
             ),
-            Text("1 $sourceSymbol = $tr $targetSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
-            Text("1 $targetSymbol = $rtr $sourceSymbol", style: const TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
+            Text("1 $sourceSymbol = $tr $targetSymbol", style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
+            Text("1 $targetSymbol = $rtr $sourceSymbol", style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
           ]
         : [
             Text(
               tix.rate == Decimal.fromInt(-9999) ? "Fetching new rate..." : "Loading...",
-              style: const TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(height: 1.2, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ];
 

@@ -116,11 +116,11 @@ class _PanelsFormState extends State<PanelsForm> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
+      insetPadding: EdgeInsets.all(24),
+      constraints: BoxConstraints(maxWidth: 1200),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -212,7 +212,7 @@ class _PanelsFormState extends State<PanelsForm> {
       spacing: 10,
       child: TextFormField(
         initialValue: _digit?.toString(),
-        decoration: const InputDecoration(labelText: "Digit"),
+        decoration: InputDecoration(labelText: "Digit"),
         keyboardType: TextInputType.number,
         onChanged: (v) => _digit = int.tryParse(v),
       ),
@@ -225,13 +225,13 @@ class _PanelsFormState extends State<PanelsForm> {
 
   Widget _buildTitle() {
     final isEdit = widget.initialData != null;
-    return Text(isEdit ? 'Edit Watchboard' : 'New Watchboard', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text(isEdit ? 'Edit Watchboard' : 'New Watchboard', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildButtons() {
     final isEdit = widget.initialData != null;
     return Padding(
-      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      padding: EdgeInsets.only(top: 15.0, bottom: 5),
       child: Wrap(
         direction: Axis.horizontal,
         runSpacing: 14,

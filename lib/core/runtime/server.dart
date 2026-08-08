@@ -86,7 +86,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     logln("Connected to IPC server at Named Pipe: ${CoreMode.ipcPipeName}");
 
-    _serverWatchdog = Timer.periodic(const Duration(seconds: 5), (_) async {
+    _serverWatchdog = Timer.periodic(Duration(seconds: 5), (_) async {
       shutdownWhenNoClient();
     });
 
@@ -135,12 +135,12 @@ class CoreRuntimeServer extends CoreBaseRuntime {
   Future<bool> reconnect(IpcClient client) async {
     await waitForServer();
 
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(Duration(milliseconds: 50));
 
     if (isServerAvailable()) {
       await client.start();
 
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(Duration(milliseconds: 100));
 
       if (SystemEncryptionService.instance.isUnlocked()) {
         client.localKey = await SystemEncryptionService.instance.getRawKeyBytes();

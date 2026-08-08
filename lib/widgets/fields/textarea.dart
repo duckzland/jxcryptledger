@@ -52,7 +52,7 @@ class _WidgetsFieldsTextareaState extends State<WidgetsFieldsTextarea> {
       enabled: widget.enabled,
       onChanged: (value) {
         _debounce?.cancel();
-        _debounce = Timer(const Duration(milliseconds: 100), () {
+        _debounce = Timer(Duration(milliseconds: 100), () {
           widget.onChanged?.call(value);
           setState(() {});
         });

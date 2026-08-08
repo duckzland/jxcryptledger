@@ -56,12 +56,12 @@ class _TickersDisplayState extends State<TickersDisplay> {
     _currentValue = tix.value;
 
     return TweenAnimationBuilder<Color?>(
-      duration: const Duration(milliseconds: 400),
+      duration: Duration(milliseconds: 400),
       tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
       curve: Curves.fastEaseInToSlowEaseOut,
       builder: (context, Color? animatedBgColor, child) {
         Widget content = WidgetsPanel(
-          padding: const EdgeInsets.all(0),
+          padding: EdgeInsets.all(0),
           background: animatedBgColor,
           borderColor: mutedColor,
           child: Column(
@@ -73,12 +73,12 @@ class _TickersDisplayState extends State<TickersDisplay> {
                       tix.getTitle(),
                       softWrap: false,
                       overflow: TextOverflow.visible,
-                      style: const TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
+                      style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
                     ),
                     WidgetsNumbersFlow(
                       begin: currentValue != null ? oldContent : null,
                       end: tix.formatValue(_currentValue ?? ""),
-                      style: const TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
                     ),
                   ]
                 : [
@@ -86,7 +86,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
                       "Loading...",
                       softWrap: false,
                       overflow: TextOverflow.visible,
-                      style: const TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
                     ),
                   ],
           ),

@@ -193,8 +193,8 @@ class _WatchersPageState extends State<WatchersPage>
     actionbarRegister("Rate Watchers");
 
     return AppContent(
-      boxConstraints: const BoxConstraints(maxWidth: 1600),
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      boxConstraints: BoxConstraints(maxWidth: 1600),
+      padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
       children: [_buildTable()],
     );
   }

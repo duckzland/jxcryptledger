@@ -33,7 +33,7 @@ class _ToolsQRGeneratorViewState extends State<ToolsQRGeneratorView> {
             helperText: "Enter any text to generate the QRCode...",
             onChanged: (value) {
               _debounce?.cancel();
-              _debounce = Timer(const Duration(milliseconds: 120), () {
+              _debounce = Timer(Duration(milliseconds: 120), () {
                 setState(() {
                   _inputText = value.trim().isEmpty ? null : value.trim();
                 });
@@ -41,7 +41,7 @@ class _ToolsQRGeneratorViewState extends State<ToolsQRGeneratorView> {
             },
           ),
 
-          const SizedBox(height: 30),
+          SizedBox(height: 30),
           Center(child: _buildBarcodeResult()),
         ],
       ),
@@ -63,10 +63,10 @@ class _ToolsQRGeneratorViewState extends State<ToolsQRGeneratorView> {
           "Generated QRCode",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
 
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),

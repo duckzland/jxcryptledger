@@ -20,21 +20,21 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
         }
         return AppTheme.textMuted;
       }),
-      padding: WidgetStateProperty.all(const EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
+      padding: WidgetStateProperty.all(EdgeInsets.only(left: 3.0, right: 3.0, top: 5.0, bottom: 5.0)),
       minimumSize: WidgetStateProperty.all(const Size(16, 16)),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
   Widget suffixIconText() {
-    return Text("$suffixText ", style: const TextStyle(color: AppTheme.textMuted));
+    return Text("$suffixText ", style: TextStyle(color: AppTheme.textMuted));
   }
 
   Widget suffixIconUseMax(String tooltip) {
     return IconButton(
-      icon: const Icon(Icons.keyboard_double_arrow_up),
+      icon: Icon(Icons.keyboard_double_arrow_up),
       iconSize: 16,
-      constraints: const BoxConstraints(),
+      constraints: BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -45,9 +45,9 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
 
   Widget suffixIconCopy(String tooltip) {
     return IconButton(
-      icon: const Icon(Icons.copy),
+      icon: Icon(Icons.copy),
       iconSize: 16,
-      constraints: const BoxConstraints(),
+      constraints: BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -58,9 +58,9 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
 
   Widget suffixIconClean(String tooltip) {
     return IconButton(
-      icon: const Icon(Icons.close),
+      icon: Icon(Icons.close),
       iconSize: 16,
-      constraints: const BoxConstraints(),
+      constraints: BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -71,9 +71,9 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
 
   Widget suffixIconReverse(String tooltip) {
     return IconButton(
-      icon: const Icon(Icons.swap_horiz),
+      icon: Icon(Icons.swap_horiz),
       iconSize: 16,
-      constraints: const BoxConstraints(),
+      constraints: BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -84,9 +84,9 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
 
   Widget suffixIconRate(String tooltip) {
     return IconButton(
-      icon: const Icon(Icons.download),
+      icon: Icon(Icons.download),
       iconSize: 16,
-      constraints: const BoxConstraints(),
+      constraints: BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,

@@ -114,22 +114,22 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
+      insetPadding: EdgeInsets.all(24),
+      constraints: BoxConstraints(maxWidth: 1200),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 20,
             children: [
-              if (txs.isNotEmpty) Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isNotEmpty) Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               if (txs.isNotEmpty) _buildTable(),
 
-              if (txs.isEmpty) Text(emptyMessage, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isEmpty) Text(emptyMessage, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
               Padding(
-                padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                padding: EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Wrap(
                   direction: Axis.horizontal,
                   runSpacing: 20,
@@ -142,7 +142,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                     if (txs.isNotEmpty)
                       WidgetsDialogsAlert(
                         label: buttonLabel,
-                        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                        padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                         filledMode: true,
                         dialogTitle: confirmTitle,
                         dialogMessage: confirmMessage,

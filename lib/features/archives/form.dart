@@ -38,11 +38,11 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1600),
+      insetPadding: EdgeInsets.all(24.0),
+      constraints: BoxConstraints(maxWidth: 1600),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: _canArchive()
               ? Form(
                   key: _formKey,
@@ -103,7 +103,7 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
 
   Widget _buildButtons() {
     return Padding(
-      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      padding: EdgeInsets.only(top: 15.0, bottom: 5),
       child: Wrap(
         direction: Axis.horizontal,
         runSpacing: 14,

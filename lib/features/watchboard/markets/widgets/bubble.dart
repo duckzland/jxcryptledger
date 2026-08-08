@@ -82,7 +82,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
     _bgColor = currentColor;
 
     return AnimatedPositioned(
-      duration: const Duration(milliseconds: 200),
+      duration: Duration(milliseconds: 200),
       curve: Curves.linear,
       left: left,
       top: top,
@@ -91,7 +91,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
       child: TweenAnimationBuilder<Color?>(
         tween: ColorTween(begin: showPercentage ? prevColor : currentColor, end: currentColor),
         curve: Curves.linear,
-        duration: const Duration(milliseconds: 200),
+        duration: Duration(milliseconds: 200),
         builder: (context, color, child) {
           Widget content = Container(
             width: diameter,
@@ -117,7 +117,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
             children: [
               (showPercentage)
                   ? AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
+                      duration: Duration(milliseconds: 200),
                       transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
                       child: Text(
                         widget.tx.symbol.toUpperCase(),

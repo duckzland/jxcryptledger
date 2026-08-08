@@ -29,7 +29,7 @@ class PanelsButtons extends StatelessWidget with MixinsActionable {
         WidgetsDialogsShowForm(
           icon: Icons.add_alarm,
           initialState: WidgetsButtonActionState.action,
-          padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+          padding: EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 16,
           minimumSize: const Size(34, 34),
           tooltip: wix == null ? "Add new rate notification" : "Edit linked rate notification",
@@ -63,7 +63,7 @@ class PanelsButtons extends StatelessWidget with MixinsActionable {
           icon: Icons.edit,
           tooltip: "Edit this watchboard",
           initialState: WidgetsButtonActionState.normal,
-          padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+          padding: EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 16,
           minimumSize: const Size(34, 34),
           buildForm: (dialogContext) {
@@ -86,7 +86,7 @@ class PanelsButtons extends StatelessWidget with MixinsActionable {
           icon: Icons.delete,
           initialState: WidgetsButtonActionState.error,
           tooltip: "Delete this watchboard",
-          padding: const EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
+          padding: EdgeInsets.only(left: 4, right: 4, top: 2, bottom: 2),
           iconSize: 18,
           minimumSize: const Size(34, 34),
           dialogTitle: "Delete Watchboard",

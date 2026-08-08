@@ -58,7 +58,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
     final targetSymbol = cryptosController.getSymbol(tx.rrId) ?? "";
 
     final btnSize = const Size(34, 34);
-    final btnPadding = const EdgeInsets.only(left: 4, right: 4, top: 4, bottom: 4);
+    final btnPadding = EdgeInsets.only(left: 4, right: 4, top: 4, bottom: 4);
     final iconSize = 16.0;
 
     final List<Widget> buttons = [];
@@ -226,7 +226,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
   Future<void> _actionRefund(TransactionsModel tx) async {
     if (onExit != null) {
       onExit?.call();
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
     }
     await txController.removeLeaf(tx);
   }
@@ -234,7 +234,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
   Future<void> _actionDelete(TransactionsModel tx) async {
     if (onExit != null) {
       onExit?.call();
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(Duration(milliseconds: 150));
     }
     await txController.removeRoot(tx);
   }

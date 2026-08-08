@@ -82,11 +82,11 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1600),
+      insetPadding: EdgeInsets.all(24),
+      constraints: BoxConstraints(maxWidth: 1600),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -173,7 +173,7 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
         requestFocusOnTap: false,
         label: Text("Operator"),
         expandedInsets: EdgeInsets.zero,
-        dropdownMenuEntries: const [
+        dropdownMenuEntries: [
           DropdownMenuEntry<String>(value: "0", label: "Rate = target rate"),
           DropdownMenuEntry<String>(value: "1", label: "Rate < target rate"),
           DropdownMenuEntry<String>(value: "2", label: "Rate > target rate"),
@@ -221,7 +221,7 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       spacing: 10,
       child: TextFormField(
         initialValue: _limitCount,
-        decoration: const InputDecoration(labelText: "Times to send"),
+        decoration: InputDecoration(labelText: "Times to send"),
         keyboardType: TextInputType.number,
         onChanged: (v) => _limitCount = v,
       ),
@@ -235,7 +235,7 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       spacing: 10,
       child: TextFormField(
         initialValue: _durationMinutes,
-        decoration: const InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
+        decoration: InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
         keyboardType: TextInputType.number,
         onChanged: (v) => _durationMinutes = v,
       ),
@@ -262,13 +262,13 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
 
   Widget _buildTitle() {
     final isEdit = widget.initialData != null;
-    return Text(isEdit ? 'Edit Rate Watcher' : 'New Rate Watcher', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text(isEdit ? 'Edit Rate Watcher' : 'New Rate Watcher', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildButtons() {
     final isEdit = widget.initialData != null;
     return Padding(
-      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+      padding: EdgeInsets.only(top: 15.0, bottom: 5),
       child: Wrap(
         direction: Axis.horizontal,
         runSpacing: 14,

@@ -296,7 +296,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   Widget _buildActions() {
     final btnIconSize = 18.0;
     final btnSize = const Size(40, 40);
-    final btnPadding = const EdgeInsets.all(0);
+    final btnPadding = EdgeInsets.all(0);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -692,7 +692,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
     final newValue = Decimal.tryParse(value);
     if (_customRate != newValue) {
-      _debounce = Timer(const Duration(milliseconds: 100), () {
+      _debounce = Timer(Duration(milliseconds: 100), () {
         _setCustomRate(newValue);
         rateableGetRate(refresh: false, silent: true);
       });

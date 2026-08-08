@@ -96,7 +96,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     _queue.add((sourceId, targetId));
 
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () => _processQueue(force));
+    _debounce = Timer(Duration(milliseconds: 300), () => _processQueue(force));
   }
 
   Future<void> _processQueue(bool force) async {

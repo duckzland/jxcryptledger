@@ -153,7 +153,7 @@ class TransactionsPageState extends State<TransactionsPage>
             WidgetsButtonsAction(
               key: const Key("view-active"),
               icon: Icons.show_chart,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               iconSize: 20,
               minimumSize: const Size(40, 40),
               tooltip: "Active Trading",
@@ -177,7 +177,7 @@ class TransactionsPageState extends State<TransactionsPage>
             WidgetsButtonsAction(
               key: const Key("view-balance"),
               icon: Icons.account_balance_wallet_outlined,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               iconSize: 20,
               minimumSize: const Size(40, 40),
               tooltip: "Balance Overview",
@@ -201,7 +201,7 @@ class TransactionsPageState extends State<TransactionsPage>
             WidgetsButtonsAction(
               key: const Key("view-journal"),
               icon: Icons.article_outlined,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               iconSize: 20,
               minimumSize: const Size(40, 40),
               tooltip: "Journal View",
@@ -225,7 +225,7 @@ class TransactionsPageState extends State<TransactionsPage>
             WidgetsButtonsAction(
               key: const Key("view-history"),
               icon: Icons.history,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               iconSize: 20,
               minimumSize: const Size(40, 40),
               tooltip: "History View",
@@ -268,7 +268,7 @@ class TransactionsPageState extends State<TransactionsPage>
               WidgetsButtonsAction(
                 key: const Key("toggle-hide-button"),
                 icon: Icons.expand_less,
-                padding: const EdgeInsets.all(0),
+                padding: EdgeInsets.all(0),
                 iconSize: 18,
                 minimumSize: const Size(40, 40),
                 tooltip: "Hide content",
@@ -280,7 +280,7 @@ class TransactionsPageState extends State<TransactionsPage>
               WidgetsButtonsAction(
                 key: const Key("toggle-show-button"),
                 icon: Icons.expand_more,
-                padding: const EdgeInsets.all(0),
+                padding: EdgeInsets.all(0),
                 iconSize: 18,
                 minimumSize: const Size(40, 40),
                 tooltip: "Show content",
@@ -398,7 +398,7 @@ class TransactionsPageState extends State<TransactionsPage>
               label: "Import DB",
               iconSize: 20,
               minimumSize: const Size(40, 40),
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               showDialogBeforeImport: true,
               onImport: (String json) async {
                 await txController.importDatabase(json);
@@ -460,7 +460,7 @@ class TransactionsPageState extends State<TransactionsPage>
 
     actionbarRegister("Trading View");
 
-    return AppContent(boxConstraints: const BoxConstraints(maxWidth: 1600), children: [_buildScreen()]);
+    return AppContent(boxConstraints: BoxConstraints(maxWidth: 1600), children: [_buildScreen()]);
   }
 
   Widget _buildForm(BuildContext dialogContext) {
@@ -475,11 +475,9 @@ class TransactionsPageState extends State<TransactionsPage>
   Widget _buildSorter() {
     return DropdownMenu<int>(
       initialSelection: _sortMode,
-      alignmentOffset: const Offset(0, 3),
+      alignmentOffset: Offset(0, 3),
       requestFocusOnTap: false,
-      inputDecorationTheme: Theme.of(
-        context,
-      ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
+      inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(isDense: true, constraints: BoxConstraints(maxHeight: 38)),
       showTrailingIcon: false,
       dropdownMenuEntries: _sortableOptions.entries.map((e) {
         return DropdownMenuEntry<int>(value: e.key, label: e.value);
@@ -510,11 +508,9 @@ class TransactionsPageState extends State<TransactionsPage>
     return DropdownMenu<int>(
       initialSelection: _filterableOptions.containsKey(_filterMode) ? _filterMode : _filterableOptions.keys.first,
       requestFocusOnTap: false,
-      alignmentOffset: const Offset(0, 3),
+      alignmentOffset: Offset(0, 3),
       showTrailingIcon: false,
-      inputDecorationTheme: Theme.of(
-        context,
-      ).inputDecorationTheme.copyWith(isDense: true, constraints: const BoxConstraints(maxHeight: 38)),
+      inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(isDense: true, constraints: BoxConstraints(maxHeight: 38)),
       dropdownMenuEntries: _filterableOptions.entries.map((e) {
         return DropdownMenuEntry<int>(value: e.key, label: e.value);
       }).toList(),
@@ -551,7 +547,7 @@ class TransactionsPageState extends State<TransactionsPage>
 
         return Padding(
           key: const ValueKey('tx-screen-overview'),
-          padding: const EdgeInsets.only(left: 16, right: 16),
+          padding: EdgeInsets.only(left: 16, right: 16),
           child: TransactionsOverviewView(
             transactions: txs,
             panelsAction: toggleAction,
@@ -569,7 +565,7 @@ class TransactionsPageState extends State<TransactionsPage>
 
         return Padding(
           key: const ValueKey('tx-screen-active'),
-          padding: const EdgeInsets.only(left: 16, right: 16),
+          padding: EdgeInsets.only(left: 16, right: 16),
           child: TransactionsActiveView(
             transactions: txs,
             panelsAction: toggleAction,
@@ -585,7 +581,7 @@ class TransactionsPageState extends State<TransactionsPage>
 
         return Padding(
           key: const ValueKey('tx-screen-journal'),
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+          padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
           child: TransactionsJournalView(filterMode: _filterMode, transactions: txs, txsFlags: fxs, onStatusChanged: _handleStatusChange),
         );
 
@@ -597,7 +593,7 @@ class TransactionsPageState extends State<TransactionsPage>
 
         return Padding(
           key: const ValueKey('tx-screen-history'),
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+          padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
           child: TransactionHistory(
             sortMode: _sortMode,
             transactions: txs,

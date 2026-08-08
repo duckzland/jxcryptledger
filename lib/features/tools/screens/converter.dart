@@ -61,19 +61,19 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                       child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildSourceAmountField()),
                     ),
 
-                    const SizedBox(width: 5),
+                    SizedBox(width: 5),
 
                     Expanded(
                       child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildSourceCryptoField()),
                     ),
 
-                    const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.arrow_forward, size: 24)),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 38), child: Icon(Icons.arrow_forward, size: 24)),
 
                     Expanded(
                       child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
                     ),
 
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
 
                     WidgetsHeader(
                       subtitle: " ",
@@ -82,7 +82,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                       child: WidgetsButtonsAction(
                         icon: Icons.swap_horiz,
                         tooltip: "Convert",
-                        padding: const EdgeInsets.all(0),
+                        padding: EdgeInsets.all(0),
                         iconSize: 24,
                         minimumSize: const Size(52, 52),
                         initialState: WidgetsButtonActionState.action,
@@ -108,7 +108,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
 
                 _buildCalculatedResult(),
 
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
               ],
             );
           } else {
@@ -145,9 +145,9 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                   },
                 ),
 
-                const SizedBox(height: 50),
+                SizedBox(height: 50),
                 _buildCalculatedResult(mini: true),
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
               ],
             );
           }
@@ -232,7 +232,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
           "${Utils.formatSmartDecimal(source)} $sourceSymbol to $targetSymbol",
           style: TextStyle(fontSize: mini ? 13 : 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         WidgetsNumbersFlow(
           begin: "",
           end: Utils.formatSmartDecimal(resultValue),
