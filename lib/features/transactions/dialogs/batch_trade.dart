@@ -125,7 +125,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 ),
               if (txs.isNotEmpty) _buildCalculator(),
               if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
-              if (txs.isEmpty) const Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isEmpty) Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               Padding(
                 padding: const EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Wrap(
@@ -210,11 +210,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
         columns: [
-          const DataColumn2(label: Text('Date '), fixedWidth: 100),
-          const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-          const DataColumn2(label: Text('Balance '), size: ColumnSize.M),
-          if (showRate) const DataColumn2(label: Text('Rate '), size: ColumnSize.M),
-          if (showRate) const DataColumn2(label: Text('Amount '), size: ColumnSize.M),
+          DataColumn2(label: Text('Date '), fixedWidth: 100),
+          DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+          DataColumn2(label: Text('Balance '), size: ColumnSize.M),
+          if (showRate) DataColumn2(label: Text('Rate '), size: ColumnSize.M),
+          if (showRate) DataColumn2(label: Text('Amount '), size: ColumnSize.M),
         ],
         rows: [
           ...rows.map((r) {
@@ -263,10 +263,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         dataRowHeight: AppTheme.tableDataRowMinHeight,
         isHorizontalScrollBarVisible: false,
         columns: [
-          const DataColumn2(label: Text('        Total'), fixedWidth: 130),
-          const DataColumn2(label: Text(' '), size: ColumnSize.M),
+          DataColumn2(label: Text('        Total'), fixedWidth: 130),
+          DataColumn2(label: Text(' '), size: ColumnSize.M),
           DataColumn2(label: Text('${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol'), size: ColumnSize.M),
-          if (showRate) const DataColumn2(label: Text(''), size: ColumnSize.M),
+          if (showRate) DataColumn2(label: Text(''), size: ColumnSize.M),
           if (showRate)
             DataColumn2(label: Text('${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol'), size: ColumnSize.M),
         ],

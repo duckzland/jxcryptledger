@@ -1,4 +1,3 @@
-
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
@@ -215,9 +214,9 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: const Text('Date '), fixedWidth: 100),
-          DataColumn2(label: const Text('Transactions '), size: ColumnSize.M),
-          DataColumn2(label: const Text('Balance '), size: ColumnSize.M),
+          DataColumn2(label: Text('Date '), fixedWidth: 100),
+          DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+          DataColumn2(label: Text('Balance '), size: ColumnSize.M),
         ],
         rows: [
           ...rows.map((r) {

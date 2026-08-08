@@ -228,7 +228,7 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     actionbarRegister("Crypto Watchboard");
 
     if (_cryptosController.isEmpty()) {
-      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.');
+      return WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding watchboard.');
     }
 
     if (_pxController.isEmpty()) {

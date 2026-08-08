@@ -85,7 +85,7 @@ class AppRouter {
             key: state.pageKey,
             child: AppLayout(
               title: "Transactions",
-              child: const AppPage(child: TransactionsPage()),
+              child: AppPage(child: TransactionsPage()),
             ),
           );
         },
@@ -97,7 +97,7 @@ class AppRouter {
             key: state.pageKey,
             child: AppLayout(
               title: "Watchboard",
-              child: const AppPage(child: WatchboardPage()),
+              child: AppPage(child: WatchboardPage()),
             ),
           );
         },
@@ -109,7 +109,7 @@ class AppRouter {
             key: state.pageKey,
             child: AppLayout(
               title: "Rate Watchers",
-              child: const AppPage(child: WatchersPage()),
+              child: AppPage(child: WatchersPage()),
             ),
           );
         },
@@ -121,7 +121,7 @@ class AppRouter {
             key: state.pageKey,
             child: AppLayout(
               title: "Data Archives",
-              child: const AppPage(child: ArchivesPage()),
+              child: AppPage(child: ArchivesPage()),
             ),
           );
         },
@@ -133,7 +133,7 @@ class AppRouter {
             key: state.pageKey,
             child: AppLayout(
               title: "Tools",
-              child: const AppPage(child: ToolsPage()),
+              child: AppPage(child: ToolsPage()),
             ),
           );
         },
@@ -145,7 +145,7 @@ class AppRouter {
             key: state.pageKey,
             child: AppLayout(
               title: "Settings",
-              child: const AppPage(child: SettingsPage()),
+              child: AppPage(child: SettingsPage()),
             ),
           );
         },

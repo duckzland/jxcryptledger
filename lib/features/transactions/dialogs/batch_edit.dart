@@ -88,11 +88,11 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 16,
             children: [
-              if (txs.isNotEmpty) const Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isNotEmpty) Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
               if (txs.isNotEmpty) _buildForm(),
               if (txs.isNotEmpty) _buildTable(),
-              if (txs.isEmpty) const Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isEmpty) Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               Padding(
                 padding: const EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Wrap(
@@ -169,10 +169,10 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
         columns: [
-          const DataColumn2(label: Text('Date '), fixedWidth: 100),
-          const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-          const DataColumn2(label: Text('Balance '), size: ColumnSize.M),
-          const DataColumn2(label: Text('Status '), fixedWidth: 140),
+          DataColumn2(label: Text('Date '), fixedWidth: 100),
+          DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+          DataColumn2(label: Text('Balance '), size: ColumnSize.M),
+          DataColumn2(label: Text('Status '), fixedWidth: 140),
         ],
         rows: [
           ...rows.map((r) {

@@ -6,6 +6,7 @@ class AppContent extends StatelessWidget {
   final List<Widget> children;
   final bool centering;
   final double spacing;
+  
   const AppContent({super.key, this.boxConstraints, this.padding, this.centering = true, this.spacing = 12, required this.children});
 
   @override

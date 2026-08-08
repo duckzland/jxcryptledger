@@ -330,22 +330,22 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   Widget _buildTable() {
     final canSelect = isActive && rows.length > 1;
     final tableColumns = [
-      WidgetsTableColumn(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsTableColumn(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+      WidgetsTableColumn(label: Text('From'), size: ColumnSize.M, onSort: sortableSorters[1]),
       WidgetsTableColumn(
         label: WidgetsHeader(title: 'Balance', subtitle: _resultSymbol),
         size: ColumnSize.S,
         onSort: sortableSorters[2],
       ),
       WidgetsTableColumn(
-        label: const WidgetsHeader(title: 'Balance', subtitle: 'USDT'),
+        label: WidgetsHeader(title: 'Balance', subtitle: 'USDT'),
         size: ColumnSize.S,
         onSort: sortableSorters[4],
       ),
-      WidgetsTableColumn(label: const Text('Exchanged Rate'), size: ColumnSize.M, onSort: sortableSorters[3]),
+      WidgetsTableColumn(label: Text('Exchanged Rate'), size: ColumnSize.M, onSort: sortableSorters[3]),
 
-      WidgetsTableColumn(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
-      const DataColumn2(label: Text('Actions'), fixedWidth: 100),
+      WidgetsTableColumn(label: Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
+      DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {
       final tx = r['tx'] as TransactionsModel;

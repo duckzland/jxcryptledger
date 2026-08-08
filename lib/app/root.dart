@@ -5,6 +5,7 @@ import 'scroll_behavior.dart';
 import 'theme.dart';
 
 class AppRoot extends StatefulWidget {
+  
   const AppRoot({super.key});
 
   @override

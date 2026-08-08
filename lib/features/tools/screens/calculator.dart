@@ -249,7 +249,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
         sourceSymbol == "UNK" ||
         targetSymbol == "" ||
         sourceSymbol == "") {
-      return const Text("");
+      return Text("");
     }
 
     final Decimal stage1Balance = source * entryRate;
@@ -305,6 +305,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
                   fontSize: mini ? 14 : 18,
                   fontWeight: FontWeight.w600,
                   hidePrefix: profit < Decimal.zero,
+                  animated: true,
                 ),
               ],
             ),

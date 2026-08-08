@@ -362,7 +362,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   Widget _buildTable() {
     final canSelect = !isCapital && rows.length > 1;
     final tableColumns = [
-      WidgetsTableColumn(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+      WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
       WidgetsTableColumn(
         size: ColumnSize.S,
         label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount', subtitle: _sourceSymbol),
@@ -410,17 +410,17 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         ),
         WidgetsTableColumn(
           fixedWidth: 100,
-          label: const WidgetsHeader(title: 'P/L', subtitle: "%"),
+          label: WidgetsHeader(title: 'P/L', subtitle: "%"),
           onSort: sortableSorters[8],
         ),
       ],
 
       WidgetsTableColumn(
-        label: const Text('Status '),
+        label: Text('Status '),
         fixedWidth: 80,
         onSort: (_currentRate == Decimal.zero) ? sortableSorters[5] : sortableSorters[9],
       ),
-      const DataColumn2(label: Text('Actions'), fixedWidth: 100),
+      DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
 
     final tableRows = rows.map((r) {

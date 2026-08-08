@@ -144,7 +144,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
             ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+                  Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
                   const Spacer(),
                   SizedBox(
                     height: 20,
@@ -162,10 +162,10 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
                           : null,
                     ),
                   ),
-                  const Text("Set as capital"),
+                  Text("Set as capital"),
                 ],
               )
-            : const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+            : Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
         Row(
           spacing: 12,
           children: [
@@ -205,7 +205,7 @@ class _TransactionFormEditState extends State<TransactionFormEdit> {
   }
 
   Widget _buildTitle() {
-    return const Text('Edit Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text('Edit Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildSourceAmountField() {

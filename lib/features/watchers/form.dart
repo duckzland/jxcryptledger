@@ -171,7 +171,7 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       child: DropdownMenu<String>(
         initialSelection: _operator,
         requestFocusOnTap: false,
-        label: const Text("Operator"),
+        label: Text("Operator"),
         expandedInsets: EdgeInsets.zero,
         dropdownMenuEntries: const [
           DropdownMenuEntry<String>(value: "0", label: "Rate = target rate"),

@@ -67,12 +67,12 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
         initialSelection: _type,
         requestFocusOnTap: false,
         expandedInsets: EdgeInsets.zero,
-        label: const Text("Data Type"),
+        label: Text("Data Type"),
         dropdownMenuEntries: [
-          if (_txController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "transactions", label: "Transactions Data"),
-          if (_pxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchboards", label: "Watchboards Data"),
-          if (_wxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "watchers", label: "Rate Watchers Data"),
-          if (_sxController.items.isNotEmpty) const DropdownMenuEntry<String>(value: "settings", label: "Settings Data"),
+          if (_txController.items.isNotEmpty) DropdownMenuEntry<String>(value: "transactions", label: "Transactions Data"),
+          if (_pxController.items.isNotEmpty) DropdownMenuEntry<String>(value: "watchboards", label: "Watchboards Data"),
+          if (_wxController.items.isNotEmpty) DropdownMenuEntry<String>(value: "watchers", label: "Rate Watchers Data"),
+          if (_sxController.items.isNotEmpty) DropdownMenuEntry<String>(value: "settings", label: "Settings Data"),
         ],
         onSelected: (String? newValue) {
           if (newValue == null) return;
@@ -98,7 +98,7 @@ class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<Archive
   }
 
   Widget _buildTitle() {
-    return const Text('Create New Archive', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text('Create New Archive', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildButtons() {

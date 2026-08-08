@@ -194,11 +194,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         showCheckboxColumn: false,
         isHorizontalScrollBarVisible: false,
         columns: [
-          const DataColumn2(label: Text('Date '), fixedWidth: 100),
-          const DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-          const DataColumn2(label: Text('Balance '), size: ColumnSize.S),
-          const DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
-          const DataColumn2(label: Text('Return '), size: ColumnSize.S),
+          DataColumn2(label: Text('Date '), fixedWidth: 100),
+          DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+          DataColumn2(label: Text('Balance '), size: ColumnSize.S),
+          DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
+          DataColumn2(label: Text('Return '), size: ColumnSize.S),
         ],
         rows: [
           ...rows.map((r) {
@@ -239,23 +239,23 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
         columns: [
-          const DataColumn2(label: SizedBox.shrink(), fixedWidth: 100),
-          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.M),
-          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
-          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
-          const DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
+          DataColumn2(label: SizedBox.shrink(), fixedWidth: 100),
+          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.M),
+          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
+          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
+          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
         ],
         rows: [
           DataRow(
             key: ValueKey('total-row'),
             color: WidgetStateProperty.all(AppTheme.tableHeaderBg),
             cells: [
-              const DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
-              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(
                 Text("${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol", style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
-              const DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text(total, style: const TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
@@ -263,11 +263,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             key: ValueKey('profit-row'),
             color: WidgetStateProperty.all(AppTheme.tableHeaderBg),
             cells: [
-              const DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
-              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDecimal(pl)} $tradeSourceSymbol", value: pl.toDouble(), comparator: 0)),
-              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-              const DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
         ],
@@ -276,7 +276,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   }
 
   Widget _buildTitle() {
-    return const Text("Balance Snapshot", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text("Balance Snapshot", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildButtonPanel() {

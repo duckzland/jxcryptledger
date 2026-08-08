@@ -10,7 +10,7 @@ import '../notify.dart';
 class WidgetsScreensFetchCryptos extends StatefulWidget {
   final String description;
 
-  const WidgetsScreensFetchCryptos({super.key, required this.description});
+  WidgetsScreensFetchCryptos({super.key, required this.description});
 
   @override
   State<WidgetsScreensFetchCryptos> createState() => _WidgetsScreensFetchCryptosState();
@@ -54,7 +54,7 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
         children: [
           const Icon(Icons.cloud_download_outlined, size: 60, color: AppTheme.separator),
           const SizedBox(height: 16),
-          const Text('Cryptocurrency data not available', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          Text('Cryptocurrency data not available', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Text(
             widget.description,

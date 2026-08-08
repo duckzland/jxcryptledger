@@ -45,12 +45,12 @@ class _SystemErrorPageState extends State<SystemErrorPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
-        const Text(
+        Text(
           "Critical Error",
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.redAccent),
         ),
-        const Text(
+        Text(
           "Oops, something went wrong.\n"
           "The app has paused to keep your data safe.\n\n"
           "Please restart the app.\n"

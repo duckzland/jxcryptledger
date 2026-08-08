@@ -33,6 +33,6 @@ Future<void> main(List<String> args) async {
     await locator<CoreRuntimeServer>().init();
   } else {
     await locator<CoreRuntimeClient>().init();
-    runApp(const AppRoot());
+    runApp(AppRoot());
   }
 }

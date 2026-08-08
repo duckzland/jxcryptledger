@@ -440,7 +440,7 @@ class TransactionsPageState extends State<TransactionsPage>
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.');
+      return WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.');
     }
 
     if (txs.isEmpty) {

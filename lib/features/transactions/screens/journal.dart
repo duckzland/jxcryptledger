@@ -152,12 +152,12 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
           child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         ),
         columns: [
-          WidgetsTableColumn(label: const Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: const Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
-          WidgetsTableColumn(label: const Text('To'), size: ColumnSize.M, onSort: sortableSorters[3]),
-          WidgetsTableColumn(label: const Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
+          WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+          WidgetsTableColumn(label: Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
+          WidgetsTableColumn(label: Text('To'), size: ColumnSize.M, onSort: sortableSorters[3]),
+          WidgetsTableColumn(label: Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
           WidgetsTableColumn(label: Text('Rate'), size: ColumnSize.S),
-          WidgetsTableColumn(label: const Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
+          WidgetsTableColumn(label: Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
           WidgetsTableColumn(label: Text('Actions'), fixedWidth: 100),
         ],
         rows: rows.map((r) {

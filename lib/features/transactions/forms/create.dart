@@ -131,7 +131,7 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+            Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
             const Spacer(),
             SizedBox(
               height: 20,
@@ -142,7 +142,7 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
                 onChanged: (v) => setState(() => _isCapital = v!),
               ),
             ),
-            const Text("Set as capital"),
+            Text("Set as capital"),
           ],
         ),
         Row(
@@ -184,7 +184,7 @@ class _TransactionFormCreateState extends State<TransactionFormCreate> {
   }
 
   Widget _buildTitle() {
-    return const Text('New Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
+    return Text('New Transaction', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
   Widget _buildSourceAmountField() {

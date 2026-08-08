@@ -165,7 +165,9 @@ class _AppLayoutState extends State<AppLayout> {
           selectedTileColor: AppTheme.primary,
           onTap: () {
             Navigator.pop(context);
-            context.go(menu['target'] as String);
+            Router.neglect(context, () {
+              context.go(menu['target'] as String);
+            });
           },
         ),
       );
@@ -196,7 +198,7 @@ class _AppLayoutState extends State<AppLayout> {
           ListTile(
             key: Key('refresh-cryptos'),
             leading: const Icon(Icons.refresh),
-            title: const Text("Refresh Cryptos"),
+            title: Text("Refresh Cryptos"),
             onTap: () async {
               Navigator.pop(context);
               try {
@@ -213,7 +215,7 @@ class _AppLayoutState extends State<AppLayout> {
             ListTile(
               key: Key('refresh-rates'),
               leading: const Icon(Icons.autorenew),
-              title: const Text("Refresh Rates"),
+              title: Text("Refresh Rates"),
               onTap: () async {
                 Navigator.pop(context);
                 try {
@@ -232,7 +234,7 @@ class _AppLayoutState extends State<AppLayout> {
           ListTile(
             key: Key('close-menu'),
             leading: const Icon(Icons.close),
-            title: const Text("Close Menu"),
+            title: Text("Close Menu"),
             onTap: () {
               Navigator.pop(context);
             },

@@ -219,7 +219,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
         targetSymbol == "UNK" ||
         targetSymbol == "" ||
         sourceSymbol == "") {
-      return const Text("");
+      return Text("");
     }
 
     final Decimal resultValue = source * rate;

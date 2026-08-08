@@ -35,7 +35,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 30,
             children: [
-              const Text("Transaction Information", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              Text("Transaction Information", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
               _buildInformation(),
 

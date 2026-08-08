@@ -11,17 +11,17 @@ class TransactionsWidgetsStatusText extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status) {
       case TransactionStatus.active:
-        return const Text('Active');
+        return Text('Active');
       case TransactionStatus.inactive:
-        return const Text('Inactive');
+        return Text('Inactive');
       case TransactionStatus.partial:
-        return const Text('Partial');
+        return Text('Partial');
       case TransactionStatus.closed:
-        return const Text('Closed');
+        return Text('Closed');
       case TransactionStatus.finalized:
-        return const Text('Finalized');
+        return Text('Finalized');
       case TransactionStatus.unknown:
-        return const Text('Unknown');
+        return Text('Unknown');
     }
   }
 }

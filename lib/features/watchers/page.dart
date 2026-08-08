@@ -172,7 +172,7 @@ class _WatchersPageState extends State<WatchersPage>
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.');
+      return WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding rate watcher.');
     }
 
     if (_wxController.items.isEmpty) {
@@ -247,14 +247,14 @@ class _WatchersPageState extends State<WatchersPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: const Text("From"), onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: const Text("To"), onSort: sortableSorters[1]),
-          WidgetsTableColumn(label: const Text("Ops"), onSort: sortableSorters[2]),
-          WidgetsTableColumn(label: const Text("Rate"), onSort: sortableSorters[3]),
-          WidgetsTableColumn(label: const Text("Sent"), onSort: sortableSorters[5]),
-          WidgetsTableColumn(label: const Text("Limit"), onSort: sortableSorters[6]),
-          WidgetsTableColumn(label: const Text("Duration"), onSort: sortableSorters[7]),
-          const DataColumn2(label: Text("Action"), fixedWidth: 110),
+          WidgetsTableColumn(label: Text("From"), onSort: sortableSorters[0]),
+          WidgetsTableColumn(label: Text("To"), onSort: sortableSorters[1]),
+          WidgetsTableColumn(label: Text("Ops"), onSort: sortableSorters[2]),
+          WidgetsTableColumn(label: Text("Rate"), onSort: sortableSorters[3]),
+          WidgetsTableColumn(label: Text("Sent"), onSort: sortableSorters[5]),
+          WidgetsTableColumn(label: Text("Limit"), onSort: sortableSorters[6]),
+          WidgetsTableColumn(label: Text("Duration"), onSort: sortableSorters[7]),
+          DataColumn2(label: Text("Action"), fixedWidth: 110),
         ],
         rows: table.map((r) {
           return DataRow(

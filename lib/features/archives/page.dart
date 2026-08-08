@@ -159,7 +159,7 @@ class _ArchivesPageState extends State<ArchivesPage>
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
-      return const WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before archiving.');
+      return WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before archiving.');
     }
 
     if (_controller.items.isEmpty) {
@@ -223,10 +223,10 @@ class _ArchivesPageState extends State<ArchivesPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: const Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: const Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
-          const DataColumn2(label: Text("Notes")),
-          const DataColumn2(label: Text("Action"), fixedWidth: 80),
+          WidgetsTableColumn(label: Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
+          WidgetsTableColumn(label: Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
+          DataColumn2(label: Text("Notes")),
+          DataColumn2(label: Text("Action"), fixedWidth: 80),
         ],
         rows: rows.map((r) {
           return DataRow(

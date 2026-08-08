@@ -141,7 +141,7 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Checkbox(value: showPassword, onChanged: (v) => setState(() => showPassword = v!)),
-            const Text("Show password"),
+            Text("Show password"),
           ],
         ),
 
