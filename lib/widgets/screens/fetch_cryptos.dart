@@ -10,7 +10,7 @@ import '../notify.dart';
 class WidgetsScreensFetchCryptos extends StatefulWidget {
   final String description;
 
-  WidgetsScreensFetchCryptos({super.key, required this.description});
+  const WidgetsScreensFetchCryptos({super.key, required this.description});
 
   @override
   State<WidgetsScreensFetchCryptos> createState() => _WidgetsScreensFetchCryptosState();
