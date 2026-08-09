@@ -4,7 +4,7 @@ import '../../ipc/box.dart';
 import '../../ipc/client.dart';
 import '../../ipc/database/adapters.dart';
 import '../../ipc/event.dart';
-import '../runtime/locators/client.dart';
+import '../runtime/locators/ipc.dart';
 import 'models/with_id.dart';
 
 abstract class CoreBaseRepository<T extends CoreModelWithId> {

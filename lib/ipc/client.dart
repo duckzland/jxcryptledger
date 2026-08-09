@@ -130,8 +130,12 @@ class IpcClient {
 
   Future<dynamic> send({required IpcAction op, required String action, dynamic key, dynamic payload}) async {
     Uint8List? bytes = converter.toBytes(op, action, payload);
-
-    final resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
+    dynamic resultBytes;
+    try {
+      resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
+    } catch (e) {
+      logln("$e");
+    }
 
     return converter.fromBytes(op, action, resultBytes);
   }

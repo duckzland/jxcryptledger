@@ -5,9 +5,9 @@ import '../../ipc/client.dart';
 import '../../ipc/event.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
+import '../runtime/locators/ipc.dart';
 import '../mode.dart';
 import '../mixins/box.dart';
-import '../runtime/locators/client.dart';
 import 'models/with_id.dart';
 import 'repository.dart';
 

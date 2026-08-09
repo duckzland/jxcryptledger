@@ -3,10 +3,10 @@ import '../../core/log.dart';
 import 'controller.dart';
 import 'keys.dart';
 
-class StateService {
+class StateController {
   SettingsController controller;
 
-  StateService(this.controller);
+  StateController(this.controller);
 
   final Map<String, dynamic> _state = {};
 

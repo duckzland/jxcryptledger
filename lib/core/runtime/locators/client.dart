@@ -1,5 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:jxledger/ipc/database/adapters.dart';
 
 import '../../../features/archives/controller.dart';
 import '../../../features/archives/repository.dart';
@@ -21,17 +20,15 @@ import '../../../features/transactions/controller.dart';
 import '../../../features/transactions/repository.dart';
 import '../../../features/watchers/controller.dart';
 import '../../../features/watchers/repository.dart';
-import '../../../ipc/client.dart';
 import '../../../system/unlock/controller.dart';
-import '../adapters.dart';
 import '../client.dart';
+import './ipc.dart' as ipc;
 
 final GetIt locator = GetIt.instance;
 
 Future<void> init() async {
-  // IpcClient
-  locator.registerLazySingleton<IpcAdapters>(() => CoreRuntimeAdapters());
-  locator.registerLazySingleton<IpcClient>(() => IpcClient(locator<IpcAdapters>()));
+  // IPC
+  ipc.init();
 
   // Systems
   locator.registerLazySingleton<SystemUnlockController>(() => SystemUnlockController());
@@ -42,7 +39,7 @@ Future<void> init() async {
   locator.registerLazySingleton<SettingsController>(() => SettingsController(locator<SettingsRepository>()));
 
   // States
-  locator.registerLazySingleton<StateService>(() => StateService(locator<SettingsController>()));
+  locator.registerLazySingleton<StateController>(() => StateController(locator<SettingsController>()));
 
   // Transactions
   locator.registerLazySingleton<TransactionsRepository>(() => TransactionsRepository());

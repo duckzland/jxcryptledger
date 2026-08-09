@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../app/exceptions.dart';
 import '../core/math.dart';
-import '../core/runtime/locators/client.dart';
 import '../core/utils.dart';
+import '../core/runtime/locators/client.dart';
 import '../features/rates/controller.dart';
 import '../widgets/notify.dart';
 

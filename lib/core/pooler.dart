@@ -7,8 +7,9 @@ import '../features/watchboard/tickers/service.dart';
 import '../features/watchboard/markets/service.dart';
 import '../features/watchers/service.dart';
 import '../app/router.dart';
+
+import 'runtime/locators/server.dart';
 import 'mode.dart';
-import 'runtime/locators/client.dart';
 import 'log.dart';
 
 class CorePooler {

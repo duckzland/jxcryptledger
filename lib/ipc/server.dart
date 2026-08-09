@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import '../core/abstracts/models/with_id.dart';
 import '../core/log.dart';
-import '../core/runtime/locators/client.dart';
+import '../core/runtime/locators/server.dart';
 import '../features/cryptos/service.dart';
 import '../features/notification/service.dart';
 import '../features/rates/service.dart';
