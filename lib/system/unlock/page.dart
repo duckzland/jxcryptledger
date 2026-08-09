@@ -8,20 +8,21 @@ import '../../core/runtime/locators/client.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
+import '../../widgets/async_loader.dart';
 import '../../widgets/buttons/action.dart';
 import '../../widgets/header.dart';
 import 'controller.dart';
 
 class SystemUnlockPage extends StatefulWidget {
-  final SystemUnlockController controller;
-
-  const SystemUnlockPage({super.key, required this.controller});
+  const SystemUnlockPage({super.key});
 
   @override
   State<SystemUnlockPage> createState() => _SystemUnlockPageState();
 }
 
 class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroadcaster {
+  final SystemUnlockController controller = SystemUnlockController();
+
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
 
@@ -31,26 +32,36 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
   @override
   IpcServer get ipcServer => locator<IpcServer>();
 
-  late bool isFirstRun;
+  late bool isFirstRun = false;
 
   bool _isProcessing = false;
+
+  late final Future<void> _initFuture;
 
   @override
   void initState() {
     super.initState();
-    _password.addListener(() => setState(() {}));
-    _confirm.addListener(() => setState(() {}));
-    widget.controller.init();
-    isFirstRun = widget.controller.isFirstRun;
+    _password.addListener(_updateState);
+    _confirm.addListener(_updateState);
+    _initFuture = controller.init().then((_) {
+      isFirstRun = controller.isFirstRun;
+    });
     broadcasterListen();
   }
 
   @override
   void dispose() {
+    _password.removeListener(_updateState);
+    _confirm.removeListener(_updateState);
     _password.dispose();
     _confirm.dispose();
+    controller.dispose();
     broadcasterDispose();
     super.dispose();
+  }
+
+  void _updateState() {
+    setState(() {});
   }
 
   bool showPassword = false;
@@ -71,18 +82,21 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+    return WidgetsAsyncLoader(
+      future: _initFuture,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -245,13 +259,15 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
       error = null;
     });
 
-    final ok = await widget.controller.unlock(_password.text);
+    final ok = await controller.unlock(_password.text);
 
     if (!mounted) return;
 
     if (ok) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.go("/transactions");
+        Router.neglect(context, () {
+          context.go("/transactions");
+        });
       });
     } else {
       setState(() {
@@ -267,13 +283,15 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
       error = null;
     });
 
-    final ok = await widget.controller.unlock(_password.text);
+    final ok = await controller.unlock(_password.text);
 
     if (!mounted) return;
 
     if (ok) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.go("/transactions");
+        Router.neglect(context, () {
+          context.go("/transactions");
+        });
       });
     } else {
       setState(() {

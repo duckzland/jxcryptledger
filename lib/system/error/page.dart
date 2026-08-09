@@ -2,39 +2,44 @@ import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
 import '../../app/theme.dart';
+import '../../widgets/async_loader.dart';
 import 'controller.dart';
 
 class SystemErrorPage extends StatefulWidget {
-  final SystemErrorController controller;
-
-  const SystemErrorPage({super.key, required this.controller});
+  const SystemErrorPage({super.key});
 
   @override
   State<SystemErrorPage> createState() => _SystemErrorPageState();
 }
 
 class _SystemErrorPageState extends State<SystemErrorPage> {
+  final SystemErrorController controller = SystemErrorController();
+  late final Future<void> _initFuture;
+
   @override
   void initState() {
     super.initState();
-    widget.controller.init();
+    _initFuture = controller.init().then((_) {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Center(child: SizedBox(width: 320, child: _buildErrorUI())),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+    return WidgetsAsyncLoader(
+      future: _initFuture,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Center(child: SizedBox(width: 320, child: _buildErrorUI())),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

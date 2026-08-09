@@ -4,13 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../app/layout.dart';
 import '../core/mode.dart';
 import '../features/archives/page.dart';
-import '../system/error/controller.dart';
 import '../system/error/page.dart';
 import '../system/settings/page.dart';
 import '../features/watchboard/page.dart';
 import '../features/tools/page.dart';
 import '../features/transactions/page.dart';
-import '../system/unlock/controller.dart';
 import '../system/unlock/page.dart';
 import '../features/watchers/page.dart';
 import 'page.dart';
@@ -18,7 +16,26 @@ import 'page.dart';
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class AppRouter {
-  static final router = GoRouter(
+  static Page<dynamic> buildPage(BuildContext context, GoRouterState state, Widget child) {
+    final location = state.uri.toString();
+    String title = "Transactions";
+    if (location.startsWith("/settings")) title = "Settings";
+    if (location.startsWith("/watchers")) title = "Rate Watchers";
+    if (location.startsWith("/watchboard")) title = "Watchboard";
+    if (location.startsWith("/archives")) title = "Data Archives";
+    if (location.startsWith("/tools")) title = "Tools";
+
+    Widget page = AppPage(key: const ValueKey("main-page"), child: child);
+
+    if (!location.startsWith("/error") && !location.startsWith("/unlock")) {
+      page = AppLayout(key: const ValueKey("main-layout"), title: title, child: page);
+    }
+
+    return NoTransitionPage(key: const ValueKey("main-page"), child: page);
+  }
+
+  static GoRouter router = GoRouter(
+    routerNeglect: true,
     initialLocation: "/unlock",
     navigatorKey: rootNavigatorKey,
     redirect: (context, state) {
@@ -38,117 +55,42 @@ class AppRouter {
       return null;
     },
     routes: [
-      GoRoute(
-        path: "/unlock",
-        pageBuilder: (context, state) {
-          final c = SystemUnlockController();
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppPage(
-              child: FutureBuilder(
-                future: c.init(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                  }
-                  return SystemUnlockPage(controller: c);
-                },
-              ),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: "/error",
-        pageBuilder: (context, state) {
-          final c = SystemErrorController();
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppPage(
-              child: FutureBuilder(
-                future: c.init(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                  }
-                  return SystemErrorPage(controller: c);
-                },
-              ),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: "/transactions",
-        pageBuilder: (context, state) {
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppLayout(
-              title: "Transactions",
-              child: AppPage(child: TransactionsPage()),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: "/watchboard",
-        pageBuilder: (context, state) {
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppLayout(
-              title: "Watchboard",
-              child: AppPage(child: WatchboardPage()),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: "/watchers",
-        pageBuilder: (context, state) {
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppLayout(
-              title: "Rate Watchers",
-              child: AppPage(child: WatchersPage()),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: "/archives",
-        pageBuilder: (context, state) {
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppLayout(
-              title: "Data Archives",
-              child: AppPage(child: ArchivesPage()),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: "/tools",
-        pageBuilder: (context, state) {
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppLayout(
-              title: "Tools",
-              child: AppPage(child: ToolsPage()),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: "/settings",
-        pageBuilder: (context, state) {
-          return NoTransitionPage(
-            key: state.pageKey,
-            child: AppLayout(
-              title: "Settings",
-              child: AppPage(child: SettingsPage()),
-            ),
-          );
-        },
+      ShellRoute(
+        pageBuilder: (context, state, child) => NoTransitionPage(key: const ValueKey("main-page"), child: child),
+        routes: [
+          GoRoute(
+            path: "/unlock",
+            pageBuilder: (context, state) => buildPage(context, state, SystemUnlockPage(key: const ValueKey("main-content"))),
+          ),
+          GoRoute(
+            path: "/error",
+            pageBuilder: (context, state) => buildPage(context, state, SystemErrorPage(key: const ValueKey("main-content"))),
+          ),
+          GoRoute(
+            path: "/transactions",
+            pageBuilder: (context, state) => buildPage(context, state, TransactionsPage(key: const ValueKey("main-content"))),
+          ),
+          GoRoute(
+            path: "/watchboard",
+            pageBuilder: (context, state) => buildPage(context, state, WatchboardPage(key: const ValueKey("main-content"))),
+          ),
+          GoRoute(
+            path: "/watchers",
+            pageBuilder: (context, state) => buildPage(context, state, WatchersPage(key: const ValueKey("main-content"))),
+          ),
+          GoRoute(
+            path: "/archives",
+            pageBuilder: (context, state) => buildPage(context, state, ArchivesPage(key: const ValueKey("main-content"))),
+          ),
+          GoRoute(
+            path: "/tools",
+            pageBuilder: (context, state) => buildPage(context, state, ToolsPage(key: const ValueKey("main-content"))),
+          ),
+          GoRoute(
+            path: "/settings",
+            pageBuilder: (context, state) => buildPage(context, state, SettingsPage(key: const ValueKey("main-content"))),
+          ),
+        ],
       ),
     ],
   );
