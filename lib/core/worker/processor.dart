@@ -7,6 +7,9 @@ import '../log.dart';
 import 'job.dart';
 
 class CoreWorkerProcessor {
+  final Duration watchdogTimeout;
+  final int maxWorkers;
+
   bool isFetching = false;
   Timer? _watchdog;
   Timer? _paused;
@@ -16,6 +19,8 @@ class CoreWorkerProcessor {
 
   bool get isPaused => _paused != null;
   http.Client get client => _client ??= http.Client();
+
+  CoreWorkerProcessor({this.maxWorkers = 5, this.watchdogTimeout = const Duration(seconds: 65)});
 
   void dispose() {
     _client?.close();
@@ -29,7 +34,7 @@ class CoreWorkerProcessor {
 
   void _startWatchdog() {
     _watchdog?.cancel();
-    _watchdog = Timer(Duration(seconds: 65), () {
+    _watchdog = Timer(watchdogTimeout, () {
       logln('[WORKER] Watchdog triggered — forcing unlock.');
       isFetching = false;
 
@@ -68,7 +73,7 @@ class CoreWorkerProcessor {
     final hasFreePlanJob = jobs.any((j) => j.isFreePlan);
 
     int hasFailed = 0;
-    int maxWorkers = 5;
+    int totalWorkers = 5;
 
     Future<void> worker(int maxWorkers, int workerIndex) async {
       if (workerIndex > 0) {
@@ -100,7 +105,11 @@ class CoreWorkerProcessor {
     }
 
     if (hasFreePlanJob) {
-      maxWorkers = jobs.length < maxWorkers ? jobs.length : 1;
+      totalWorkers = jobs.length < totalWorkers ? jobs.length : 1;
+    }
+
+    if (totalWorkers > maxWorkers) {
+      totalWorkers = maxWorkers;
     }
 
     final workersToStart = jobs.length == 1 ? 1 : maxWorkers.clamp(1, jobs.length);

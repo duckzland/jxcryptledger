@@ -63,6 +63,8 @@ class TransactionsPageState extends State<TransactionsPage>
 
     _detectFilterAndSortOptions();
     _setFilterAndSortDefault();
+
+    actionbarRegister("Transactions");
   }
 
   @override
@@ -440,11 +442,15 @@ class TransactionsPageState extends State<TransactionsPage>
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
+      actionbarRegister("Transactions");
+
       return WidgetsScreensFetchCryptos(description: 'You need to fetch the latest crypto list before adding transactions.');
     }
 
     if (txs.isEmpty) {
       actionbarRemove();
+      actionbarRegister("Transactions");
+
       return WidgetsScreensEmpty(
         title: "Add Transaction",
         addTitle: "Add New",

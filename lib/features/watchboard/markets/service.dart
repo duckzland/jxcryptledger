@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/abstracts/service.dart';
+import '../../../core/worker/job.dart';
+import '../../../core/worker/processor.dart';
 import '../../../ipc/action.dart';
 import '../../../system/settings/keys.dart';
 import '../../../system/settings/repository.dart';
@@ -16,7 +18,7 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
 
   MarketsService(super.repo, this.settingsRepo);
 
-  bool _isFetching = false;
+  final CoreWorkerProcessor worker = CoreWorkerProcessor(maxWorkers: 1);
 
   @override
   Future<void> init() async {
@@ -28,54 +30,71 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
   }
 
   Future<bool> refreshRates() async {
-    if (_isFetching) return true;
-
-    _isFetching = true;
+    if (worker.isFetching) return true;
 
     broadcasterEmit(IpcAction.refreshMarket, 'start', '', Uint8List(0));
 
     try {
-      final endpoint = settingsRepo.getByKey<String>(SettingKey.marketEndpoint) ?? SettingKey.marketEndpoint.defaultValue;
-      final uri = Uri.parse(endpoint).replace(queryParameters: {"start": "1", "limit": "200", "convert": "USD"});
-      final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
+      final marketJob = CoreWorkerJob(
+        id: SettingKey.marketEndpoint.index,
+        payload: const <int>[],
+        isFreePlan: true,
+        callback: _fetchInternal,
+      );
 
-      final isCustom = !endpoint.contains("coinmarketcap.com");
-      final needAuth = isCustom || endpoint.contains("https://pro-api.coinmarketcap.com/v");
-
-      final headers = <String, String>{};
-      if (authKey != null && authKey.isNotEmpty && needAuth) {
-        if (!isCustom) {
-          headers['X-CMC_PRO_API_KEY'] = authKey;
-        } else {
-          headers['Authorization'] = authKey;
-        }
-      }
-
-      final resp = await http.get(uri, headers: headers);
-      if (resp.statusCode != 200) {
-        throw NetworkingException(
-          AppErrorCode.netHttpFailure,
-          "Markets fetch failed: HTTP [${resp.statusCode}][$uri]",
-          "Unable to retrieve data from the server.",
-          details: resp.statusCode,
-        );
-      }
-
-      logln('[MARKETS] Fetching from : $uri [${resp.statusCode}]');
-
-      final markets = await compute(parseMarketsV3, resp.body);
-
-      await repo.replace(markets);
-
+      await worker.run([marketJob]);
       return true;
-    } on NetworkingException {
-      rethrow;
     } catch (e) {
-      logln('[MARKETS] Failed to retrieve new market data: $e');
+      logln('[MARKETS] Unexpected Error: $e');
       return false;
     } finally {
-      _isFetching = false;
+      logln('[MARKETS] Refresh rates completed');
       broadcasterEmit(IpcAction.refreshMarket, 'complete', '', Uint8List(0));
     }
+  }
+
+  Future<void> _fetchInternal(int id, List<int> payload, {http.Client? fetcher}) async {
+    final endpoint = settingsRepo.getByKey<String>(SettingKey.marketEndpoint) ?? SettingKey.marketEndpoint.defaultValue;
+    final uri = Uri.parse(endpoint).replace(queryParameters: {"start": "1", "limit": "200", "convert": "USD"});
+    final authKey = settingsRepo.getByKey<String>(SettingKey.authorizationKey);
+
+    final isCustom = !endpoint.contains("coinmarketcap.com");
+    final needAuth = isCustom || endpoint.contains("https://coinmarketcap.com");
+
+    final headers = <String, String>{};
+    if (authKey != null && authKey.isNotEmpty && needAuth) {
+      if (!isCustom) {
+        headers['X-CMC_PRO_API_KEY'] = authKey;
+      } else {
+        headers['Authorization'] = authKey;
+      }
+    }
+
+    final client = fetcher ?? http.Client();
+    final http.Response resp;
+
+    try {
+      resp = await client.get(uri, headers: headers);
+    } finally {
+      if (fetcher == null) {
+        client.close();
+      }
+    }
+
+    logln('[MARKETS] Fetching from : $uri [${resp.statusCode}]');
+
+    if (resp.statusCode != 200) {
+      throw NetworkingException(
+        AppErrorCode.netHttpFailure,
+        "Markets fetch failed: HTTP [${resp.statusCode}][$uri]",
+        "Unable to retrieve data from the server.",
+        details: resp.statusCode,
+      );
+    }
+
+    logln('[MARKETS] Fetching from : $uri [${resp.statusCode}]');
+
+    final markets = await compute(parseMarketsV3, resp.body);
+    await repo.replace(markets);
   }
 }

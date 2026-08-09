@@ -18,7 +18,8 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 class AppRouter {
   static Page<dynamic> buildPage(BuildContext context, GoRouterState state, Widget child) {
     final location = state.uri.toString();
-    String title = "Transactions";
+    String title = "";
+    if (location.startsWith("/transactions")) title = "Transactions";
     if (location.startsWith("/settings")) title = "Settings";
     if (location.startsWith("/watchers")) title = "Rate Watchers";
     if (location.startsWith("/watchboard")) title = "Watchboard";
