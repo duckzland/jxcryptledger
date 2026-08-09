@@ -1,7 +1,7 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';
@@ -44,7 +44,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         MixinsSortableTable<TransactionsJournalView>,
         MixinsScrollToTable<TransactionsJournalView, TransactionsModel>,
         TransactionsMixinsFlags {
-  CryptosController get _cryptosController => locator<CryptosController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   int _filterMode = 0;
 
@@ -65,7 +65,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
 
     _filterMode = widget.filterMode;
 
-    txController = locator<TransactionsController>();
+    txController = CoreLocator.getit<TransactionsController>();
 
     txs = widget.transactions;
     fxs = widget.txsFlags;

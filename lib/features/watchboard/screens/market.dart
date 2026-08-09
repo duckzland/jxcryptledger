@@ -2,7 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/content.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/scrollto_table.dart';
@@ -36,7 +36,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
         MixinsActionBar<WatchboardScreensMarket>,
         WatchboardMarketsMixinsFilterable<WatchboardScreensMarket> {
   late List<MarketsModel> txs;
-  MarketsController get _controller => locator<MarketsController>();
+  MarketsController get _controller => CoreLocator.getit<MarketsController>();
 
   @override
   String get sortableKey => "px-group-market";

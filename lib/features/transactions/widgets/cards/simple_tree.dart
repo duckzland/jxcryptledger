@@ -3,7 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
-import '../../../../core/runtime/locators/client.dart';
+import '../../../../core/locator.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/layouts/wrapped_two_columns.dart';
 import '../../../../widgets/with_tooltip.dart';
@@ -23,8 +23,8 @@ class TransactionsWidgetsCardsSimpleTree extends StatefulWidget {
 }
 
 class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgetsCardsSimpleTree> {
-  CryptosController get _cryptosController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
   late TransactionsModel _tx;
 

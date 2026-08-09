@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/content.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../widgets/buttons/action.dart';
@@ -25,7 +25,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
   late Map<SettingKey, dynamic> _buffer = {};
-  SettingsController get _controller => locator<SettingsController>();
+  SettingsController get _controller => CoreLocator.getit<SettingsController>();
 
   final scrollToUtil = ScrollTo('sx-offset');
 

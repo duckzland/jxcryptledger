@@ -1,5 +1,3 @@
-import 'package:get_it/get_it.dart';
-
 import '../../../features/archives/controller.dart';
 import '../../../features/archives/repository.dart';
 import '../../../features/rates/repository.dart';
@@ -21,60 +19,65 @@ import '../../../features/transactions/repository.dart';
 import '../../../features/watchers/controller.dart';
 import '../../../features/watchers/repository.dart';
 import '../../../system/unlock/controller.dart';
+import '../../locator.dart';
 import '../client.dart';
 import './ipc.dart' as ipc;
-
-final GetIt locator = GetIt.instance;
 
 Future<void> init() async {
   // IPC
   ipc.init();
 
   // Systems
-  locator.registerLazySingleton<SystemUnlockController>(() => SystemUnlockController());
-  locator.registerLazySingleton<SystemErrorController>(() => SystemErrorController());
+  CoreLocator.getit.registerLazySingleton<SystemUnlockController>(() => SystemUnlockController());
+  CoreLocator.getit.registerLazySingleton<SystemErrorController>(() => SystemErrorController());
 
   // Settings
-  locator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
-  locator.registerLazySingleton<SettingsController>(() => SettingsController(locator<SettingsRepository>()));
+  CoreLocator.getit.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
+  CoreLocator.getit.registerLazySingleton<SettingsController>(() => SettingsController(CoreLocator.getit<SettingsRepository>()));
 
   // States
-  locator.registerLazySingleton<StateController>(() => StateController(locator<SettingsController>()));
+  CoreLocator.getit.registerLazySingleton<StateController>(() => StateController(CoreLocator.getit<SettingsController>()));
 
   // Transactions
-  locator.registerLazySingleton<TransactionsRepository>(() => TransactionsRepository());
-  locator.registerLazySingleton<TransactionsController>(() => TransactionsController(locator<TransactionsRepository>()));
+  CoreLocator.getit.registerLazySingleton<TransactionsRepository>(() => TransactionsRepository());
+  CoreLocator.getit.registerLazySingleton<TransactionsController>(
+    () => TransactionsController(CoreLocator.getit<TransactionsRepository>()),
+  );
 
   // Cryptos
-  locator.registerLazySingleton<CryptosRepository>(() => CryptosRepository());
-  locator.registerLazySingleton<CryptosController>(() => CryptosController(locator<CryptosRepository>()));
+  CoreLocator.getit.registerLazySingleton<CryptosRepository>(() => CryptosRepository());
+  CoreLocator.getit.registerLazySingleton<CryptosController>(() => CryptosController(CoreLocator.getit<CryptosRepository>()));
 
   // Rates
-  locator.registerLazySingleton<RatesRepository>(() => RatesRepository());
-  locator.registerLazySingleton<RatesController>(() => RatesController(locator<RatesRepository>()));
+  CoreLocator.getit.registerLazySingleton<RatesRepository>(() => RatesRepository());
+  CoreLocator.getit.registerLazySingleton<RatesController>(() => RatesController(CoreLocator.getit<RatesRepository>()));
 
   // Watchers
-  locator.registerLazySingleton<WatchersRepository>(() => WatchersRepository());
-  locator.registerLazySingleton<WatchersController>(() => WatchersController(locator<WatchersRepository>(), locator<CryptosController>()));
+  CoreLocator.getit.registerLazySingleton<WatchersRepository>(() => WatchersRepository());
+  CoreLocator.getit.registerLazySingleton<WatchersController>(
+    () => WatchersController(CoreLocator.getit<WatchersRepository>(), CoreLocator.getit<CryptosController>()),
+  );
 
   // Panels
-  locator.registerLazySingleton<PanelsRepository>(() => PanelsRepository());
-  locator.registerLazySingleton<PanelsController>(() => PanelsController(locator<PanelsRepository>(), locator<TransactionsRepository>()));
+  CoreLocator.getit.registerLazySingleton<PanelsRepository>(() => PanelsRepository());
+  CoreLocator.getit.registerLazySingleton<PanelsController>(
+    () => PanelsController(CoreLocator.getit<PanelsRepository>(), CoreLocator.getit<TransactionsRepository>()),
+  );
 
   // Tickers
-  locator.registerLazySingleton<TickersRepository>(() => TickersRepository());
-  locator.registerLazySingleton<TickersController>(() => TickersController(locator<TickersRepository>()));
+  CoreLocator.getit.registerLazySingleton<TickersRepository>(() => TickersRepository());
+  CoreLocator.getit.registerLazySingleton<TickersController>(() => TickersController(CoreLocator.getit<TickersRepository>()));
 
   // Markets
-  locator.registerLazySingleton<MarketsRepository>(() => MarketsRepository());
-  locator.registerLazySingleton<MarketsController>(() => MarketsController(locator<MarketsRepository>()));
+  CoreLocator.getit.registerLazySingleton<MarketsRepository>(() => MarketsRepository());
+  CoreLocator.getit.registerLazySingleton<MarketsController>(() => MarketsController(CoreLocator.getit<MarketsRepository>()));
 
   // Archives
-  locator.registerLazySingleton<ArchivesRepository>(() => ArchivesRepository());
-  locator.registerLazySingleton<ArchivesController>(() => ArchivesController(locator<ArchivesRepository>()));
+  CoreLocator.getit.registerLazySingleton<ArchivesRepository>(() => ArchivesRepository());
+  CoreLocator.getit.registerLazySingleton<ArchivesController>(() => ArchivesController(CoreLocator.getit<ArchivesRepository>()));
 
   // Higher level boots, this will most likely depends on the lower level to boot first.
-  locator.registerLazySingleton<CoreRuntimeClient>(() => CoreRuntimeClient());
+  CoreLocator.getit.registerLazySingleton<CoreRuntimeClient>(() => CoreRuntimeClient());
 
-  await locator<CoreRuntimeClient>().init();
+  await CoreLocator.getit<CoreRuntimeClient>().init();
 }

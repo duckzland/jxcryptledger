@@ -1,8 +1,8 @@
 import '../../app/exceptions.dart';
 import '../../core/abstracts/controller.dart';
+import '../../core/locator.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
-import '../../core/runtime/locators/client.dart';
 import '../../system/settings/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
@@ -16,10 +16,10 @@ class ArchivesController extends CoreBaseController<ArchivesModel, ArchivesRepos
         CoreMixinsControllersExportable<ArchivesModel, ArchivesRepository> {
   ArchivesController(super.repo);
 
-  final TransactionsController _txController = locator<TransactionsController>();
-  final PanelsController _pxController = locator<PanelsController>();
-  final WatchersController _wxController = locator<WatchersController>();
-  final SettingsController _sxController = locator<SettingsController>();
+  final TransactionsController _txController = CoreLocator.getit<TransactionsController>();
+  final PanelsController _pxController = CoreLocator.getit<PanelsController>();
+  final WatchersController _wxController = CoreLocator.getit<WatchersController>();
+  final SettingsController _sxController = CoreLocator.getit<SettingsController>();
 
   Future<void> restoreData(ArchivesModel ax) async {
     switch (ax.typeEnum) {

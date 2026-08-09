@@ -16,22 +16,22 @@ import '../../ipc/action.dart';
 import '../../ipc/client.dart';
 import '../../system/settings/keys.dart';
 import '../abstracts/runtime.dart';
+import '../locator.dart';
 import '../log.dart';
 import '../mode.dart';
-import 'locators/client.dart';
 
 class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
   CoreRuntimeClient();
 
-  final SettingsController _settingsController = locator<SettingsController>();
-  final RatesController _ratesController = locator<RatesController>();
-  final WatchersController _watchersController = locator<WatchersController>();
-  final PanelsController _panelsController = locator<PanelsController>();
-  final TickersController _tickersController = locator<TickersController>();
-  final MarketsController _marketsController = locator<MarketsController>();
-  final TransactionsController _transactionsController = locator<TransactionsController>();
-  final CryptosController _cryptosController = locator<CryptosController>();
-  final ArchivesController _archivesController = locator<ArchivesController>();
+  final SettingsController _settingsController = CoreLocator.getit<SettingsController>();
+  final RatesController _ratesController = CoreLocator.getit<RatesController>();
+  final WatchersController _watchersController = CoreLocator.getit<WatchersController>();
+  final PanelsController _panelsController = CoreLocator.getit<PanelsController>();
+  final TickersController _tickersController = CoreLocator.getit<TickersController>();
+  final MarketsController _marketsController = CoreLocator.getit<MarketsController>();
+  final TransactionsController _transactionsController = CoreLocator.getit<TransactionsController>();
+  final CryptosController _cryptosController = CoreLocator.getit<CryptosController>();
+  final ArchivesController _archivesController = CoreLocator.getit<ArchivesController>();
 
   @override
   Future<void> init() async {

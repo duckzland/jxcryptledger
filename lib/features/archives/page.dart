@@ -3,7 +3,7 @@ import 'package:data_table_2/data_table_2.dart';
 
 import '../../app/content.dart';
 import '../../app/exceptions.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/scrollto_table.dart';
@@ -21,8 +21,8 @@ import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
 import '../../widgets/table/column.dart';
-import '../cryptos/controller.dart';
 import '../../system/settings/controller.dart';
+import '../cryptos/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
 import '../watchers/controller.dart';
@@ -47,11 +47,11 @@ class _ArchivesPageState extends State<ArchivesPage>
         MixinsScrollToTable<ArchivesPage, ArchivesModel> {
   late final ArchivesController _controller;
 
-  final CryptosController _cryptosController = locator<CryptosController>();
-  final TransactionsController _txController = locator<TransactionsController>();
-  final PanelsController _pxController = locator<PanelsController>();
-  final WatchersController _wxController = locator<WatchersController>();
-  final SettingsController _sxController = locator<SettingsController>();
+  final CryptosController _cryptosController = CoreLocator.getit<CryptosController>();
+  final TransactionsController _txController = CoreLocator.getit<TransactionsController>();
+  final PanelsController _pxController = CoreLocator.getit<PanelsController>();
+  final WatchersController _wxController = CoreLocator.getit<WatchersController>();
+  final SettingsController _sxController = CoreLocator.getit<SettingsController>();
 
   late List<ArchivesModel> txs;
 
@@ -64,7 +64,7 @@ class _ArchivesPageState extends State<ArchivesPage>
   @override
   void initState() {
     super.initState();
-    _controller = locator<ArchivesController>();
+    _controller = CoreLocator.getit<ArchivesController>();
     _controller.addListener(_onControllerChanged);
 
     _cryptosController.addListener(_onControllerChanged);

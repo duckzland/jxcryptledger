@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/content.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../../mixins/action_bar.dart';
 import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';
@@ -25,7 +25,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
     with MixinsState, MixinsActionBar<WatchboardScreensDominance>, WatchboardMarketsMixinsFilterable<WatchboardScreensDominance> {
   late List<MarketsModel> txs;
 
-  MarketsController get _controller => locator<MarketsController>();
+  MarketsController get _controller => CoreLocator.getit<MarketsController>();
 
   final scrollUtil = ScrollTo('px-group-offset-dominance');
 

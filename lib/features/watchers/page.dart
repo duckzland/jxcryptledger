@@ -4,7 +4,7 @@ import 'package:data_table_2/data_table_2.dart';
 import '../../app/content.dart';
 import '../../app/exceptions.dart';
 import '../../app/theme.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../core/utils.dart';
 import '../../mixins/action_bar.dart';
@@ -44,7 +44,7 @@ class _WatchersPageState extends State<WatchersPage>
         MixinsSortableTable<WatchersPage>,
         MixinsActionBar<WatchersPage>,
         MixinsScrollToTable<WatchersPage, WatchersModel> {
-  final CryptosController _cryptosController = locator<CryptosController>();
+  final CryptosController _cryptosController = CoreLocator.getit<CryptosController>();
 
   late final WatchersController _wxController;
 
@@ -59,7 +59,7 @@ class _WatchersPageState extends State<WatchersPage>
   @override
   void initState() {
     super.initState();
-    _wxController = locator<WatchersController>();
+    _wxController = CoreLocator.getit<WatchersController>();
     _wxController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onControllerChanged);
 

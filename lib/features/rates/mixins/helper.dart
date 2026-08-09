@@ -1,9 +1,9 @@
 import '../../../app/exceptions.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../cryptos/repository.dart';
 
 mixin RatesMixinsHelper {
-  CryptosRepository get cryptosRepo => locator<CryptosRepository>();
+  CryptosRepository get cryptosRepo => CoreLocator.getit<CryptosRepository>();
 
   bool isValidPair(int sourceId, int targetId) {
     if (sourceId == 0 || targetId == 0) return false;

@@ -2,7 +2,7 @@ import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/panel.dart';
 import '../../cryptos/controller.dart';
@@ -32,7 +32,7 @@ class TransactionHistory extends StatefulWidget {
 }
 
 class _TransactionHistoryState extends State<TransactionHistory> with MixinsState, TransactionsMixinsFlags {
-  CryptosController get _cryptosController => locator<CryptosController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   late IndexedTreeNode<TransactionsModel> _root;
   late Map<String, IndexedTreeNode<TransactionsModel>> _nodes;
@@ -43,7 +43,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
   @override
   void initState() {
     super.initState();
-    txController = locator<TransactionsController>();
+    txController = CoreLocator.getit<TransactionsController>();
 
     _sortMode = widget.sortMode;
 

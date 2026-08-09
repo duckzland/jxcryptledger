@@ -5,7 +5,7 @@ import '../../ipc/client.dart';
 import '../../ipc/event.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
-import '../runtime/locators/ipc.dart';
+import '../locator.dart';
 import '../mode.dart';
 import '../mixins/box.dart';
 import 'models/with_id.dart';
@@ -19,10 +19,10 @@ abstract class CoreBaseController<T extends CoreModelWithId, R extends CoreBaseR
   List<T> get items => listItems;
 
   @override
-  IpcClient get ipcClient => locator<IpcClient>();
+  IpcClient get ipcClient => CoreLocator.getit<IpcClient>();
 
   @override
-  IpcServer get ipcServer => locator<IpcServer>();
+  IpcServer get ipcServer => CoreLocator.getit<IpcServer>();
 
   @override
   final R repo;

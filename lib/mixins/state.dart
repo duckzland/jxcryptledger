@@ -1,6 +1,6 @@
-import '../core/runtime/locators/client.dart';
+import '../core/locator.dart';
 import '../system/settings/states.dart';
 
 mixin MixinsState {
-  StateController get states => locator<StateController>();
+  StateController get states => CoreLocator.getit<StateController>();
 }

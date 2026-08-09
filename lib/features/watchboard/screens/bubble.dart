@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../app/content.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/separator.dart';
@@ -33,7 +33,7 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
   Size _lastSize = Size.zero;
   Size _currentSize = Size.zero;
 
-  MarketsController get _controller => locator<MarketsController>();
+  MarketsController get _controller => CoreLocator.getit<MarketsController>();
 
   @override
   String get marketFilterableKey => "px-group-bubbles";

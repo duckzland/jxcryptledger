@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/rates/controller.dart';
-import '../core/runtime/locators/client.dart';
 import '../features/cryptos/controller.dart';
 import '../widgets/buttons/action.dart';
 import '../widgets/notify.dart';
 import '../widgets/separator.dart';
+import '../core/locator.dart';
 import 'exceptions.dart';
 import 'theme.dart';
 
@@ -25,8 +25,8 @@ class AppLayout extends StatefulWidget {
 }
 
 class _AppLayoutState extends State<AppLayout> {
-  CryptosController get _cryptosController => locator<CryptosController>();
-  RatesController get _ratesController => locator<RatesController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
+  RatesController get _ratesController => CoreLocator.getit<RatesController>();
 
   void _setTitle(String newTitle) {
     _title.value = newTitle;

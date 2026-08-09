@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jxledger/app/content.dart';
 
 import '../../app/layout.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/actionable.dart';
 import '../../mixins/state.dart';
@@ -37,7 +37,7 @@ class TransactionsPage extends StatefulWidget {
 
 class TransactionsPageState extends State<TransactionsPage>
     with MixinsActionable, MixinsState, MixinsActionBar<TransactionsPage>, TransactionsMixinsFlags {
-  final CryptosController _cryptosController = locator<CryptosController>();
+  final CryptosController _cryptosController = CoreLocator.getit<CryptosController>();
 
   late Map<int, String> _sortableOptions;
   late Map<int, String> _filterableOptions;
@@ -51,7 +51,7 @@ class TransactionsPageState extends State<TransactionsPage>
   void initState() {
     super.initState();
 
-    txController = locator<TransactionsController>();
+    txController = CoreLocator.getit<TransactionsController>();
     txController.addListener(_onControllerChanged);
     _cryptosController.addListener(_onCryptoControllerChanged);
 

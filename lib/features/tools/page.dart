@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/content.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../mixins/action_bar.dart';
 import '../../mixins/state.dart';
 import '../../widgets/buttons/action.dart';
@@ -23,7 +23,7 @@ class ToolsPage extends StatefulWidget {
 
 class _ToolsPageState extends State<ToolsPage> with MixinsActionBar<ToolsPage>, MixinsState {
   ToolsViewMode _viewMode = ToolsViewMode.calculator;
-  final CryptosController _cryptosController = locator<CryptosController>();
+  final CryptosController _cryptosController = CoreLocator.getit<CryptosController>();
 
   @override
   void initState() {

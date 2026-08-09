@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/constants.dart';
 import '../../app/theme.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import 'controller.dart';
 
 class SystemErrorPage extends StatefulWidget {
@@ -13,7 +13,7 @@ class SystemErrorPage extends StatefulWidget {
 }
 
 class _SystemErrorPageState extends State<SystemErrorPage> {
-  SystemErrorController get controller => locator<SystemErrorController>();
+  SystemErrorController get controller => CoreLocator.getit<SystemErrorController>();
 
   @override
   void initState() {

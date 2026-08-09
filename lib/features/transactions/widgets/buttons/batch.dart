@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/runtime/locators/client.dart';
+import '../../../../core/locator.dart';
 import '../../../../mixins/actionable.dart';
 import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/buttons/dropdown.dart';
@@ -68,8 +68,8 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   WatchersModel? get linkedWatcher => wxController.getLinked("$linkableKey-$srid-$rrid");
   PanelsModel? get linkedPanel => pxController.getLinked("$linkableKey-$srid-$rrid");
 
-  WatchersController get wxController => locator<WatchersController>();
-  PanelsController get pxController => locator<PanelsController>();
+  WatchersController get wxController => CoreLocator.getit<WatchersController>();
+  PanelsController get pxController => CoreLocator.getit<PanelsController>();
 
   @override
   Widget build(BuildContext context) {

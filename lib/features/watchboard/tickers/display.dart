@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
 import 'controller.dart';
@@ -18,7 +18,7 @@ class TickersDisplay extends StatefulWidget {
 }
 
 class _TickersDisplayState extends State<TickersDisplay> {
-  TickersController get _controller => locator<TickersController>();
+  TickersController get _controller => CoreLocator.getit<TickersController>();
 
   Color _currentColor = AppTheme.darkGrey;
   String? _currentValue;

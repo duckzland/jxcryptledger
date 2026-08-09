@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../app/exceptions.dart';
 import '../core/math.dart';
 import '../core/utils.dart';
-import '../core/runtime/locators/client.dart';
+import '../core/locator.dart';
 import '../features/rates/controller.dart';
 import '../widgets/notify.dart';
 
@@ -25,7 +25,7 @@ mixin MixinsRateable<T extends StatefulWidget> on State<T> {
   String? rateableAmount;
 
   bool get rateableAllow => (rateableSource ?? 0) > 0 && (rateableTarget ?? 0) > 0;
-  RatesController get rateableController => locator<RatesController>();
+  RatesController get rateableController => CoreLocator.getit<RatesController>();
 
   void rateableGetCallback(bool hasNewRate) {}
 

@@ -6,7 +6,7 @@ import '../../../widgets/fields/amount.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../app/exceptions.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../mixins/rateable.dart';
 import '../../widgets/buttons/action.dart';
 import '../../widgets/header.dart';
@@ -36,7 +36,7 @@ class WatchersForm extends StatefulWidget {
 }
 
 class _WatchersFormState extends State<WatchersForm> with MixinsRateable<WatchersForm> {
-  WatchersController get _controller => locator<WatchersController>();
+  WatchersController get _controller => CoreLocator.getit<WatchersController>();
 
   String? _wid;
   int? _sent;

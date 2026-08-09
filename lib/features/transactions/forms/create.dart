@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
@@ -27,7 +27,7 @@ class TransactionFormCreate extends StatefulWidget {
 }
 
 class _TransactionFormCreateState extends State<TransactionFormCreate> {
-  TransactionsController get _txController => locator<TransactionsController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
   bool _isCapital = false;
   int? _selectedSrId;

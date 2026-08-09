@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 import '../../app/exceptions.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../features/cryptos/controller.dart';
 import '../buttons/action.dart';
 import '../notify.dart';
@@ -17,7 +17,7 @@ class WidgetsScreensFetchCryptos extends StatefulWidget {
 }
 
 class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos> {
-  final CryptosController _cryptosController = locator<CryptosController>();
+  final CryptosController _cryptosController = CoreLocator.getit<CryptosController>();
 
   void _fetchCryptos(WidgetsButtonsActionState s) async {
     s.progress();

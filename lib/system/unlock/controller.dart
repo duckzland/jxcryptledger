@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:jxledger/core/runtime/client.dart';
 
 import '../../core/mode.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../core/log.dart';
 
 class SystemUnlockController extends ChangeNotifier {
@@ -18,7 +18,7 @@ class SystemUnlockController extends ChangeNotifier {
       return;
     }
 
-    client = locator<CoreRuntimeClient>();
+    client = CoreLocator.getit<CoreRuntimeClient>();
     notifyListeners();
   }
 

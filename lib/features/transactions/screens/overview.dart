@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';
@@ -37,8 +37,8 @@ class TransactionsOverviewView extends StatefulWidget {
 
 class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     with MixinsState, MixinsRateable<TransactionsOverviewView>, MixinsScrollToGroup<TransactionsOverviewView, TransactionsModel> {
-  TransactionsController get txController => locator<TransactionsController>();
-  CryptosController get _cryptosController => locator<CryptosController>();
+  TransactionsController get txController => CoreLocator.getit<TransactionsController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   late List<TransactionsModel> txs;
 

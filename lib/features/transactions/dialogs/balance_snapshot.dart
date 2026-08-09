@@ -3,7 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/state.dart';
@@ -26,9 +26,9 @@ class TransactionsDialogsBalanceSnapshots extends StatefulWidget {
 }
 
 class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialogsBalanceSnapshots> with MixinsState, MixinsTable {
-  CryptosController get _cryptoController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
-  RatesController get _rateController => locator<RatesController>();
+  CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
+  RatesController get _rateController => CoreLocator.getit<RatesController>();
 
   final Map<int, Decimal> _cachedRates = {};
 

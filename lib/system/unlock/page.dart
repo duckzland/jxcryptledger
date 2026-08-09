@@ -5,7 +5,7 @@ import 'package:jxledger/ipc/event.dart';
 import '../../app/constants.dart';
 import '../../app/theme.dart';
 import '../../core/mode.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
@@ -21,7 +21,7 @@ class SystemUnlockPage extends StatefulWidget {
 }
 
 class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroadcaster {
-  SystemUnlockController get controller => locator<SystemUnlockController>();
+  SystemUnlockController get controller => CoreLocator.getit<SystemUnlockController>();
 
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
@@ -33,10 +33,10 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
   String? error;
 
   @override
-  IpcClient get ipcClient => locator<IpcClient>();
+  IpcClient get ipcClient => CoreLocator.getit<IpcClient>();
 
   @override
-  IpcServer get ipcServer => locator<IpcServer>();
+  IpcServer get ipcServer => CoreLocator.getit<IpcServer>();
 
   @override
   void initState() {

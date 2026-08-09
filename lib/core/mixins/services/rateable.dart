@@ -5,10 +5,10 @@ import '../../abstracts/models/rateable.dart';
 import '../../abstracts/models/with_id.dart';
 import '../../abstracts/repository.dart';
 import '../../abstracts/service.dart';
-import '../../runtime/locators/server.dart';
+import '../../locator.dart';
 
 mixin CoreMixinsServicesRateable<T extends CoreModelWithId, R extends CoreBaseRepository<T>> on CoreBaseService<T, R> {
-  final RatesService rateableService = locator<RatesService>();
+  final RatesService rateableService = CoreLocator.getit<RatesService>();
 
   @override
   Future<void> add(T tx) async {

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../../app/theme.dart';
-import '../../../../core/runtime/locators/client.dart';
+import '../../../../core/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../widgets/header.dart';
@@ -52,8 +52,8 @@ class TransactionsWidgetsCardsTree extends StatefulWidget {
 }
 
 class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsTree> {
-  CryptosController get _cryptosController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
   late TransactionsModel _tx;
 

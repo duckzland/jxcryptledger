@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
@@ -28,8 +28,8 @@ class TransactionFormEdit extends StatefulWidget {
 }
 
 class _TransactionFormEditState extends State<TransactionFormEdit> {
-  CryptosController get _cryptoController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
+  CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
   int? _selectedSrId;
   int? _selectedRrId;

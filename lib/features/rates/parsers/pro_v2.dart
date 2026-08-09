@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 
 import '../../../core/extensions/decimals.dart';
-import '../../../core/runtime/locators/server.dart';
+import '../../../core/locator.dart';
 import '../../cryptos/service.dart';
 import '../model.dart';
 import 'result.dart';
@@ -11,7 +11,7 @@ RatesParserResult parseRatesJsonV2(String body) {
   final data = jsonDecode(body);
 
   // NOT SAFE FOR COMPUTE!
-  final cryptoService = locator<CryptosService>();
+  final cryptoService = CoreLocator.getit<CryptosService>();
 
   final dataNode = data['data'];
   if (dataNode == null) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/fields/textarea.dart';
 import '../../app/exceptions.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../widgets/buttons/action.dart';
 import '../../mixins/rateable.dart';
 import '../../system/settings/controller.dart';
@@ -23,12 +23,12 @@ class ArchivesForm extends StatefulWidget {
 }
 
 class _ArchivesFormState extends State<ArchivesForm> with MixinsRateable<ArchivesForm> {
-  ArchivesController get _controller => locator<ArchivesController>();
+  ArchivesController get _controller => CoreLocator.getit<ArchivesController>();
 
-  final TransactionsController _txController = locator<TransactionsController>();
-  final PanelsController _pxController = locator<PanelsController>();
-  final WatchersController _wxController = locator<WatchersController>();
-  final SettingsController _sxController = locator<SettingsController>();
+  final TransactionsController _txController = CoreLocator.getit<TransactionsController>();
+  final PanelsController _pxController = CoreLocator.getit<PanelsController>();
+  final WatchersController _wxController = CoreLocator.getit<WatchersController>();
+  final SettingsController _sxController = CoreLocator.getit<SettingsController>();
 
   String? _type;
   String? _notes;

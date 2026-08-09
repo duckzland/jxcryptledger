@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import '../core/abstracts/models/with_id.dart';
 import '../core/log.dart';
-import '../core/runtime/locators/server.dart';
+import '../core/locator.dart';
 import '../features/cryptos/service.dart';
 import '../features/notification/service.dart';
 import '../features/rates/service.dart';
@@ -163,22 +163,22 @@ class IpcServer {
             break;
 
           case IpcAction.refreshRates:
-            final service = locator<RatesService>();
+            final service = CoreLocator.getit<RatesService>();
             await service.refreshRates();
             break;
 
           case IpcAction.refreshCryptos:
-            final service = locator<CryptosService>();
+            final service = CoreLocator.getit<CryptosService>();
             await service.fetch();
             break;
 
           case IpcAction.refreshMarket:
-            final service = locator<MarketsService>();
+            final service = CoreLocator.getit<MarketsService>();
             await service.refreshRates();
             break;
 
           case IpcAction.notification:
-            final service = locator<NotificationService>();
+            final service = CoreLocator.getit<NotificationService>();
             final message = utf8.decode(payload);
             await service.show(message);
             break;
@@ -217,12 +217,12 @@ class IpcServer {
             final sourceId = int.parse(parts[0]);
             final targetId = int.parse(parts[1]);
             final force = rawKeyStr == "true";
-            final service = locator<RatesService>();
+            final service = CoreLocator.getit<RatesService>();
             service.addQueue(sourceId, targetId, force: force);
             break;
 
           case IpcAction.refreshTickers:
-            final service = locator<TickersService>();
+            final service = CoreLocator.getit<TickersService>();
             await service.refreshRates();
             break;
 

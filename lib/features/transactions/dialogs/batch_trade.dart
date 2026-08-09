@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
@@ -39,8 +39,8 @@ class TransactionsDialogsBatchTrade extends StatefulWidget {
 
 class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatchTrade>
     with MixinsState, MixinsTable, MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchTrade> {
-  CryptosController get _cryptoController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
+  CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
   final _calc = TransactionCalculation();
 

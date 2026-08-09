@@ -4,7 +4,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
@@ -29,8 +29,8 @@ class TransactionsDialogsBatchEdit extends StatefulWidget {
 }
 
 class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchEdit> with MixinsState, MixinsTable, MixinsSelectableTable {
-  CryptosController get _cryptoController => locator<CryptosController>();
-  TransactionsController get _txController => locator<TransactionsController>();
+  CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
   final _formKey = GlobalKey<FormState>();
 

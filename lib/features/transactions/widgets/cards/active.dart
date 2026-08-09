@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
-import '../../../../core/runtime/locators/client.dart';
+import '../../../../core/locator.dart';
 import '../../../../mixins/actionable.dart';
 import '../../../../mixins/rateable.dart';
 import '../../../../mixins/selectable_table.dart';
@@ -148,9 +148,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     txs = widget.transactions;
     fxs = widget.txsFlags;
 
-    txController = locator<TransactionsController>();
+    txController = CoreLocator.getit<TransactionsController>();
 
-    _cryptosController = locator<CryptosController>();
+    _cryptosController = CoreLocator.getit<CryptosController>();
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
     _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
 

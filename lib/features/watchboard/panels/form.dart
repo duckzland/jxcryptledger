@@ -5,7 +5,7 @@ import '../../../../core/utils.dart';
 import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/fields/crypto_search.dart';
 import '../../../app/exceptions.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
@@ -36,9 +36,9 @@ class PanelsForm extends StatefulWidget {
 }
 
 class _PanelsFormState extends State<PanelsForm> {
-  PanelsController get _tixController => locator<PanelsController>();
-  RatesController get _rateController => locator<RatesController>();
-  CryptosController get _cryptosController => locator<CryptosController>();
+  PanelsController get _tixController => CoreLocator.getit<PanelsController>();
+  RatesController get _rateController => CoreLocator.getit<RatesController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   int? _selectedSrId;
   int? _selectedRrId;

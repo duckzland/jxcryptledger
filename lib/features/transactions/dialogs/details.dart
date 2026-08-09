@@ -2,7 +2,7 @@ import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/header.dart';
@@ -16,8 +16,8 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
 
   const TransactionsDialogsDetails({super.key, required this.tx});
 
-  TransactionsController get _txController => locator<TransactionsController>();
-  CryptosController get _cryptosController => locator<CryptosController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   @override
   Widget build(BuildContext context) {

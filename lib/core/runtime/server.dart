@@ -20,28 +20,28 @@ import '../../system/settings/keys.dart';
 import '../../system/settings/service.dart';
 import '../../system/unlock/status.dart';
 import '../abstracts/runtime.dart';
+import '../locator.dart';
 import '../log.dart';
 import '../mode.dart';
 import '../pooler.dart';
 import 'boxes.dart';
 import 'migration.dart';
-import 'locators/server.dart';
 
 class CoreRuntimeServer extends CoreBaseRuntime {
   CoreRuntimeServer();
 
-  final SettingsService _settingsService = locator<SettingsService>();
-  final RatesService _ratesService = locator<RatesService>();
-  final WatchersService _watchersService = locator<WatchersService>();
-  final PanelsService _panelsService = locator<PanelsService>();
-  final TickersService _tickersService = locator<TickersService>();
-  final MarketsService _marketsService = locator<MarketsService>();
-  final TransactionsService _transactionsService = locator<TransactionsService>();
-  final CryptosService _cryptosService = locator<CryptosService>();
-  final ArchivesService _archivesService = locator<ArchivesService>();
-  final NotificationService _notificationService = locator<NotificationService>();
+  final SettingsService _settingsService = CoreLocator.getit<SettingsService>();
+  final RatesService _ratesService = CoreLocator.getit<RatesService>();
+  final WatchersService _watchersService = CoreLocator.getit<WatchersService>();
+  final PanelsService _panelsService = CoreLocator.getit<PanelsService>();
+  final TickersService _tickersService = CoreLocator.getit<TickersService>();
+  final MarketsService _marketsService = CoreLocator.getit<MarketsService>();
+  final TransactionsService _transactionsService = CoreLocator.getit<TransactionsService>();
+  final CryptosService _cryptosService = CoreLocator.getit<CryptosService>();
+  final ArchivesService _archivesService = CoreLocator.getit<ArchivesService>();
+  final NotificationService _notificationService = CoreLocator.getit<NotificationService>();
 
-  final CorePooler appPooler = locator<CorePooler>();
+  final CorePooler appPooler = CoreLocator.getit<CorePooler>();
 
   Timer? _serverWatchdog;
 
@@ -58,7 +58,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     cleanSocketFile();
 
     ipcServer.pipeName = CoreMode.ipcPipeName;
-    ipcServer.database = IpcDatabase(CoreRuntimeBoxes(), locator<IpcAdapters>(), CoreRuntimeMigration());
+    ipcServer.database = IpcDatabase(CoreRuntimeBoxes(), CoreLocator.getit<IpcAdapters>(), CoreRuntimeMigration());
     ipcServer.unlocker = unlock;
     ipcServer.shutdown = shutdown;
     ipcServer.disconnected = shutdownWhenNoClient;

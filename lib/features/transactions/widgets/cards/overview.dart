@@ -3,7 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
-import '../../../../core/runtime/locators/client.dart';
+import '../../../../core/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../mixins/actionable.dart';
@@ -75,7 +75,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
 
-  CryptosController get _cryptosController => locator<CryptosController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   late String _resultSymbol;
 
@@ -98,7 +98,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   void initState() {
     super.initState();
 
-    txController = locator<TransactionsController>();
+    txController = CoreLocator.getit<TransactionsController>();
 
     _isOpen = widget.isOpen;
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/exceptions.dart';
-import '../../../../core/runtime/locators/client.dart';
+import '../../../../core/locator.dart';
 import '../../../../widgets/notify.dart';
 import '../../../../widgets/screens/notice.dart';
 import '../controller.dart';
@@ -10,7 +10,7 @@ class WatchboardsMarketsWidgetsNotice extends StatelessWidget {
   final void Function() callback;
   const WatchboardsMarketsWidgetsNotice({super.key, required this.callback});
 
-  MarketsController get _controller => locator<MarketsController>();
+  MarketsController get _controller => CoreLocator.getit<MarketsController>();
 
   @override
   Widget build(BuildContext context) {

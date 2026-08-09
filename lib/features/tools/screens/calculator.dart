@@ -5,15 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:jxledger/core/math.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
 import '../../../widgets/balance_text.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/numbers/flow.dart';
-import '../../cryptos/controller.dart';
 import '../../../widgets/fields/crypto_search.dart';
+import '../../cryptos/controller.dart';
 
 class ToolsCalculatorView extends StatefulWidget {
   const ToolsCalculatorView({super.key});
@@ -38,7 +38,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   @override
   void initState() {
     super.initState();
-    _cryptosController = locator<CryptosController>();
+    _cryptosController = CoreLocator.getit<CryptosController>();
     _sourceAmount = null;
     _ratesRevertAmount = null;
 

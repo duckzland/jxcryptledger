@@ -8,7 +8,7 @@ import '../features/watchboard/markets/service.dart';
 import '../features/watchers/service.dart';
 import '../app/router.dart';
 
-import 'runtime/locators/server.dart';
+import 'locator.dart';
 import 'mode.dart';
 import 'log.dart';
 
@@ -21,12 +21,12 @@ class CorePooler {
     if (_started) return;
     _started = true;
 
-    final rates = locator<RatesService>();
-    final panels = locator<PanelsService>();
-    final watchers = locator<WatchersService>();
-    final tickers = locator<TickersService>();
-    final transactions = locator<TransactionsService>();
-    final market = locator<MarketsService>();
+    final rates = CoreLocator.getit<RatesService>();
+    final panels = CoreLocator.getit<PanelsService>();
+    final watchers = CoreLocator.getit<WatchersService>();
+    final tickers = CoreLocator.getit<TickersService>();
+    final transactions = CoreLocator.getit<TransactionsService>();
+    final market = CoreLocator.getit<MarketsService>();
 
     logln("[POOLER] Registering used rates.");
     panels.scheduleRates();

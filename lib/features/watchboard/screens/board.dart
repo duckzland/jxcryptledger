@@ -6,7 +6,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../../../app/content.dart';
 import '../../../app/exceptions.dart';
 import '../../../app/layout.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/state.dart';
@@ -59,13 +59,13 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
   @override
   void initState() {
     super.initState();
-    _pxController = locator<PanelsController>();
+    _pxController = CoreLocator.getit<PanelsController>();
     _pxController.addListener(_onPanelsControllerChanged);
 
-    _tixController = locator<TickersController>();
+    _tixController = CoreLocator.getit<TickersController>();
     _tixController.addListener(_onTickersControllerChanged);
 
-    _cryptosController = locator<CryptosController>();
+    _cryptosController = CoreLocator.getit<CryptosController>();
     _cryptosController.addListener(_onCryptosControllerChanged);
 
     _hasLinked = _pxController.hasLinked();

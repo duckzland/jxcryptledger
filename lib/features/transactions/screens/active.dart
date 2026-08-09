@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../../app/theme.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';
@@ -53,8 +53,8 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   @override
   void initState() {
     super.initState();
-    txController = locator<TransactionsController>();
-    _cryptosController = locator<CryptosController>();
+    txController = CoreLocator.getit<TransactionsController>();
+    _cryptosController = CoreLocator.getit<CryptosController>();
 
     txs = widget.transactions;
 

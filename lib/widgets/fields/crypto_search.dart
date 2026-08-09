@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 import '../../app/theme.dart';
-import '../../core/runtime/locators/client.dart';
+import '../../core/locator.dart';
 import '../../features/cryptos/model.dart';
 import '../../features/cryptos/controller.dart';
 import '../../mixins/suffix.dart';
@@ -43,7 +43,7 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _cryptosController = locator<CryptosController>();
+    _cryptosController = CoreLocator.getit<CryptosController>();
     _cryptosController.addListener(onControllerChange);
 
     if (widget.initialValue != null) {

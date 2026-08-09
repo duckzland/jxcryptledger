@@ -10,7 +10,7 @@ import '../../app/router.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
-import '../runtime/locators/ipc.dart';
+import '../locator.dart';
 import '../runtime/process.dart';
 import '../log.dart';
 import '../mode.dart';
@@ -19,10 +19,10 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
   CoreBaseRuntime();
 
   @override
-  IpcClient get ipcClient => locator<IpcClient>();
+  IpcClient get ipcClient => CoreLocator.getit<IpcClient>();
 
   @override
-  IpcServer get ipcServer => locator<IpcServer>();
+  IpcServer get ipcServer => CoreLocator.getit<IpcServer>();
 
   AppLifecycleListener? lifecycleListener;
 

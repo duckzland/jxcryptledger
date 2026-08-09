@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/math.dart';
-import '../../../core/runtime/locators/client.dart';
+import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
@@ -24,9 +24,9 @@ class PanelsDisplay extends StatefulWidget {
 }
 
 class _PanelsDisplayState extends State<PanelsDisplay> {
-  PanelsController get _controller => locator<PanelsController>();
-  CryptosController get _cryptosController => locator<CryptosController>();
-  WatchersController get _wxController => locator<WatchersController>();
+  PanelsController get _controller => CoreLocator.getit<PanelsController>();
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
+  WatchersController get _wxController => CoreLocator.getit<WatchersController>();
 
   static final List<StateSetter> _subscribers = [];
 
