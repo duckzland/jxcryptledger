@@ -31,7 +31,7 @@ class AppRouter {
       page = AppLayout(key: const ValueKey("main-layout"), title: title, child: page);
     }
 
-    return NoTransitionPage(key: const ValueKey("main-page"), child: page);
+    return NoTransitionPage(key: const ValueKey("main-page-transition"), child: page);
   }
 
   static GoRouter router = GoRouter(
@@ -56,7 +56,7 @@ class AppRouter {
     },
     routes: [
       ShellRoute(
-        pageBuilder: (context, state, child) => NoTransitionPage(key: const ValueKey("main-page"), child: child),
+        pageBuilder: (context, state, child) => NoTransitionPage(key: const ValueKey("main-page-transition"), child: child),
         routes: [
           GoRoute(
             path: "/unlock",

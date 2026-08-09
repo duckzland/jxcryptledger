@@ -9,6 +9,7 @@ import '../../../features/cryptos/repository.dart';
 import '../../../features/cryptos/controller.dart';
 import '../../../features/watchboard/markets/controller.dart';
 import '../../../features/watchboard/markets/repository.dart';
+import '../../../system/error/controller.dart';
 import '../../../system/settings/controller.dart';
 import '../../../system/settings/repository.dart';
 import '../../../system/settings/states.dart';
@@ -21,6 +22,7 @@ import '../../../features/transactions/repository.dart';
 import '../../../features/watchers/controller.dart';
 import '../../../features/watchers/repository.dart';
 import '../../../ipc/client.dart';
+import '../../../system/unlock/controller.dart';
 import '../adapters.dart';
 import '../client.dart';
 
@@ -30,6 +32,10 @@ Future<void> init() async {
   // IpcClient
   locator.registerLazySingleton<IpcAdapters>(() => CoreRuntimeAdapters());
   locator.registerLazySingleton<IpcClient>(() => IpcClient(locator<IpcAdapters>()));
+
+  // Systems
+  locator.registerLazySingleton<SystemUnlockController>(() => SystemUnlockController());
+  locator.registerLazySingleton<SystemErrorController>(() => SystemErrorController());
 
   // Settings
   locator.registerLazySingleton<SettingsRepository>(() => SettingsRepository());

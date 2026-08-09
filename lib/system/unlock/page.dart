@@ -4,11 +4,11 @@ import 'package:jxledger/ipc/event.dart';
 
 import '../../app/constants.dart';
 import '../../app/theme.dart';
+import '../../core/mode.dart';
 import '../../core/runtime/locators/client.dart';
 import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
-import '../../widgets/async_loader.dart';
 import '../../widgets/buttons/action.dart';
 import '../../widgets/header.dart';
 import 'controller.dart';
@@ -21,10 +21,16 @@ class SystemUnlockPage extends StatefulWidget {
 }
 
 class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroadcaster {
-  final SystemUnlockController controller = SystemUnlockController();
+  SystemUnlockController get controller => locator<SystemUnlockController>();
 
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
+
+  bool showPassword = false;
+  bool isFirstRun = CoreMode.isFirstRun;
+  bool _isProcessing = false;
+
+  String? error;
 
   @override
   IpcClient get ipcClient => locator<IpcClient>();
@@ -32,20 +38,12 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
   @override
   IpcServer get ipcServer => locator<IpcServer>();
 
-  late bool isFirstRun = false;
-
-  bool _isProcessing = false;
-
-  late final Future<void> _initFuture;
-
   @override
   void initState() {
     super.initState();
     _password.addListener(_updateState);
     _confirm.addListener(_updateState);
-    _initFuture = controller.init().then((_) {
-      isFirstRun = controller.isFirstRun;
-    });
+    controller.init();
     broadcasterListen();
   }
 
@@ -55,17 +53,9 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
     _confirm.removeListener(_updateState);
     _password.dispose();
     _confirm.dispose();
-    controller.dispose();
     broadcasterDispose();
     super.dispose();
   }
-
-  void _updateState() {
-    setState(() {});
-  }
-
-  bool showPassword = false;
-  String? error;
 
   @override
   void broadcasterAction(IpcBroadcastEvent event) {
@@ -82,21 +72,18 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
 
   @override
   Widget build(BuildContext context) {
-    return WidgetsAsyncLoader(
-      future: _initFuture,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
-              ),
+    return Scaffold(
+      body: Stack(
+        children: [
+          Center(child: SizedBox(width: 300, child: isFirstRun ? _buildFirstRunUI() : _buildUnlockUI())),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('v$appVersion', style: TextStyle(fontSize: 12, color: AppTheme.textInactive)),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -299,5 +286,9 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
         error = "Invalid password";
       });
     }
+  }
+
+  void _updateState() {
+    setState(() {});
   }
 }
