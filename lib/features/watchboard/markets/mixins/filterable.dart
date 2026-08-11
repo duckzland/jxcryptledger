@@ -15,8 +15,8 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
   @override
   void initState() {
     super.initState();
-    marketFilterableRank = states.get("[np]-$marketFilterableKey-marketFilterable-rank", defaultValue: 0);
-    marketFilterablePercent = states.get("[np]-$marketFilterableKey-marketFilterable-percent", defaultValue: 0);
+    marketFilterableRank = states.get("$marketFilterableKey-marketFilterable-rank", defaultValue: 0);
+    marketFilterablePercent = states.get("$marketFilterableKey-marketFilterable-percent", defaultValue: 0);
   }
 
   Widget marketFilterableRankFilters() {
@@ -36,7 +36,7 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
       onSelected: (value) {
         marketFilterableRank = value ?? 0;
         marketFilterableOnPriceFiltering(value ?? 0);
-        states.set('[np]-$marketFilterableKey-marketFilterable-rank', value ?? 0);
+        states.set('$marketFilterableKey-marketFilterable-rank', value ?? 0);
       },
     );
   }
@@ -62,7 +62,7 @@ mixin WatchboardMarketsMixinsFilterable<T extends StatefulWidget> on State<T>, M
       onSelected: (value) {
         marketFilterablePercent = value ?? 0;
         marketFilterableOnPercentFiltering(value ?? 0);
-        states.set('[np]-$marketFilterableKey-marketFilterable-percent', value ?? 0);
+        states.set('$marketFilterableKey-marketFilterable-percent', value ?? 0);
       },
     );
   }
