@@ -192,11 +192,12 @@ class TransactionCalculation {
     TransactionsModel? current = leaf;
 
     final Map<String, TransactionsModel> txMap = {for (final tx in txs) tx.tid: tx};
-    Decimal trackedAmount = current.srAmount;
+
+    Decimal ttlPct = Decimal.one;
 
     while (current != null) {
-      if (current.pid == "0" && current.rid == "0") {
-        return trackedAmount;
+      if (current.isRoot) {
+        return Math.multiply(current.srAmount, ttlPct);
       }
 
       final parent = txMap[current.pid];
@@ -204,19 +205,23 @@ class TransactionCalculation {
         return Decimal.zero;
       }
 
+      final childPct = Math.divide(current.srAmount, parent.rrAmount);
+
+      Decimal profitPct = Decimal.zero;
       if (parent.balance > parent.rrAmount) {
-        final profitSurplus = Math.subtract(parent.balance, parent.rrAmount);
-
-        if (trackedAmount <= profitSurplus) {
-          return Decimal.zero;
-        }
-
-        trackedAmount = Math.subtract(trackedAmount, profitSurplus);
+        profitPct = Math.divide(Math.subtract(parent.balance, parent.rrAmount), parent.rrAmount);
       }
 
-      final conversionFactor = (parent.rrAmount == Decimal.zero) ? Decimal.one : Math.divide(parent.srAmount, parent.rrAmount);
+      Decimal leafPct = childPct;
+      if (profitPct > Decimal.zero) {
+        if (childPct <= profitPct) {
+          return Decimal.zero;
+        } else {
+          leafPct = Math.subtract(leafPct, profitPct);
+        }
+      }
 
-      trackedAmount = Math.multiply(trackedAmount, conversionFactor);
+      ttlPct = Math.multiply(ttlPct, leafPct);
 
       current = parent;
     }

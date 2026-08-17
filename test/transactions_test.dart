@@ -1699,7 +1699,7 @@ void main() async {
   test('PROFIT TEST 1: Child takes EXACTLY the profit amount -> 0 capital used', () {
     final calc = TransactionCalculation();
 
-    final txA_Root = TransactionsModel(
+    final txaRoot = TransactionsModel(
       tid: 'A',
       pid: '0',
       rid: '0',
@@ -1714,7 +1714,7 @@ void main() async {
       meta: {},
     );
 
-    final txB_Profitable = TransactionsModel(
+    final txbProfitable = TransactionsModel(
       tid: 'B',
       pid: 'A',
       rid: 'A',
@@ -1729,7 +1729,7 @@ void main() async {
       meta: {},
     );
 
-    final txC_SkimmingLeaf = TransactionsModel(
+    final txcSkimmingleaf = TransactionsModel(
       tid: 'C',
       pid: 'B',
       rid: 'A',
@@ -1744,8 +1744,8 @@ void main() async {
       meta: {},
     );
 
-    final txs = [txA_Root, txB_Profitable, txC_SkimmingLeaf];
-    final result = calc.totalCapitalUsed(txC_SkimmingLeaf, txs);
+    final txs = [txaRoot, txbProfitable, txcSkimmingleaf];
+    final result = calc.totalCapitalUsed(txcSkimmingleaf, txs);
 
     // Expected: 0 original capital spent
     expect(result.toString(), Decimal.parse('0').toString());
@@ -1754,7 +1754,7 @@ void main() async {
   test('PROFIT TEST 2: Child takes LESS than the profit amount -> 0 capital used', () {
     final calc = TransactionCalculation();
 
-    final txA_Root = TransactionsModel(
+    final txaRoot = TransactionsModel(
       tid: 'A',
       pid: '0',
       rid: '0',
@@ -1769,7 +1769,7 @@ void main() async {
       meta: {},
     );
 
-    final txB_Profitable = TransactionsModel(
+    final txbProfitable = TransactionsModel(
       tid: 'B',
       pid: 'A',
       rid: 'A',
@@ -1784,7 +1784,7 @@ void main() async {
       meta: {},
     );
 
-    final txC_SmallSkimmingLeaf = TransactionsModel(
+    final txcSmallskimmingleaf = TransactionsModel(
       tid: 'C',
       pid: 'B',
       rid: 'A',
@@ -1799,8 +1799,8 @@ void main() async {
       meta: {},
     );
 
-    final txs = [txA_Root, txB_Profitable, txC_SmallSkimmingLeaf];
-    final result = calc.totalCapitalUsed(txC_SmallSkimmingLeaf, txs);
+    final txs = [txaRoot, txbProfitable, txcSmallskimmingleaf];
+    final result = calc.totalCapitalUsed(txcSmallskimmingleaf, txs);
 
     // Expected: 0 original capital spent (entirely absorbed by yield cushion)
     expect(result.toString(), Decimal.parse('0').toString());
@@ -1809,7 +1809,7 @@ void main() async {
   test('PROFIT TEST 3: Child takes MORE than the profit amount -> Only traces the spillover principal', () {
     final calc = TransactionCalculation();
 
-    final txA_Root = TransactionsModel(
+    final txaRoot = TransactionsModel(
       tid: 'A',
       pid: '0',
       rid: '0',
@@ -1824,7 +1824,7 @@ void main() async {
       meta: {},
     );
 
-    final txB_Profitable = TransactionsModel(
+    final txbProfitable = TransactionsModel(
       tid: 'B',
       pid: 'A',
       rid: 'A',
@@ -1839,7 +1839,7 @@ void main() async {
       meta: {},
     );
 
-    final txC_HeavyLeaf = TransactionsModel(
+    final txcHeavyleaf = TransactionsModel(
       tid: 'C',
       pid: 'B',
       rid: 'A',
@@ -1854,8 +1854,8 @@ void main() async {
       meta: {},
     );
 
-    final txs = [txA_Root, txB_Profitable, txC_HeavyLeaf];
-    final result = calc.totalCapitalUsed(txC_HeavyLeaf, txs);
+    final txs = [txaRoot, txbProfitable, txcHeavyleaf];
+    final result = calc.totalCapitalUsed(txcHeavyleaf, txs);
 
     // =========================================================================
     // MATHEMATICAL LOGIC BREAKDOWN
@@ -1866,5 +1866,96 @@ void main() async {
     // 4. Root Calculation = 120 (Root Principal) * 0.25 = 30
     // =========================================================================
     expect(result.toString(), Decimal.parse('30').toString());
+  });
+
+  test('PROFIT TEST 4: Extreme scaling edge case (Big Number 30,000 -> Small Number 0.00033333)', () {
+    final calc = TransactionCalculation();
+
+    // LEVEL 1: Root Node (Providing massive stablecoin principal)
+    final txaRoot = TransactionsModel(
+      tid: 'A',
+      pid: '0',
+      rid: '0',
+      srAmount: Decimal.parse('30000.00'), // $30,000 USD Initial Capital Pool
+      srId: 1, // USD Asset ID
+      rrAmount: Decimal.parse('30000.00'), // Mints $30,000 USD pool
+      rrId: 2,
+      balance: Decimal.parse('30000.00'),
+      status: TransactionStatus.active.index,
+      closable: true,
+      timestamp: 1,
+      meta: {},
+    );
+
+    // LEVEL 2: Swapper Node ($30k USD swapped into an expensive asset like BTC)
+    // The base pool generated is exactly 0.50000000 BTC.
+    // Trading profit occurs! The pool balance grows from 0.5 BTC to 0.60000000 BTC (0.1 BTC profit surplus)
+    final txbProfitable = TransactionsModel(
+      tid: 'B',
+      pid: 'A',
+      rid: 'A',
+      srAmount: Decimal.parse('30000.00'), // Pulls the full $30,000 USD
+      srId: 2,
+      rrAmount: Decimal.parse('0.50000000'), // Base pool size: 0.5 BTC
+      rrId: 3, // BTC Asset ID
+      balance: Decimal.parse('0.60000000'), // Profitable trade: Grows to 0.6 BTC (0.1 BTC Profit Surplus)
+      status: TransactionStatus.active.index,
+      closable: false,
+      timestamp: 2,
+      meta: {},
+    );
+
+    // =========================================================================
+    // CASE A: Child takes LESS than the micro-profit cushion (Fully inside profit)
+    // =========================================================================
+    final txcInsideprofitleaf = TransactionsModel(
+      tid: 'C_Inside',
+      pid: 'B',
+      rid: 'A',
+      srAmount: Decimal.parse('0.00033333'), // Micro-pull of 0.00033333 BTC
+      srId: 3,
+      rrAmount: Decimal.parse('100.00'),
+      rrId: 4,
+      balance: Decimal.parse('0'),
+      status: TransactionStatus.finalized.index,
+      closable: false,
+      timestamp: 3,
+      meta: {},
+    );
+
+    // Execution A Math:
+    // Profit Surplus = 0.6 - 0.5 = 0.1 BTC profit cushion.
+    // Child requests 0.00033333 BTC.
+    // Since 0.00033333 <= 0.1, it's 100% covered by profit! Core capital used MUST be 0.
+    final resultInside = calc.totalCapitalUsed(txcInsideprofitleaf, [txaRoot, txbProfitable, txcInsideprofitleaf]);
+    expect(resultInside.toString(), Decimal.parse('0').toString());
+
+    // =========================================================================
+    // CASE B: Child exceeds the micro-profit pool (Spills into original principal)
+    // =========================================================================
+    final txcSpilloverleaf = TransactionsModel(
+      tid: 'C_Spillover',
+      pid: 'B',
+      rid: 'A',
+      srAmount: Decimal.parse('0.15000000'), // Pulls 0.15 BTC (Exceeds the 0.1 BTC profit by 0.05 BTC)
+      srId: 3,
+      rrAmount: Decimal.parse('500.00'),
+      rrId: 5,
+      balance: Decimal.parse('0'),
+      status: TransactionStatus.finalized.index,
+      closable: false,
+      timestamp: 4,
+      meta: {},
+    );
+
+    // Execution B Math:
+    // 1. Child fraction demanded (childPct)   = 0.15 / 0.5 = 0.30  (30% of base slot)
+    // 2. Parent profit buffer (profitPct)      = 0.10 / 0.5 = 0.20  (20% yield slot cushion)
+    // 3. Net Core Slot Impact (leafPct)        = 0.30 - 0.20 = 0.10 (10% core principal hit)
+    // 4. Hop up to Root Pct multiplier        = 30,000 / 30,000 = 1.0
+    // 5. Total Compounded Pipeline Pct        = 1.0 * 0.10 = 0.10
+    // 6. Absolute Root USD Capital Utilized   = $30,000 USD * 0.10 = $3,000 USD
+    final resultSpillover = calc.totalCapitalUsed(txcSpilloverleaf, [txaRoot, txbProfitable, txcSpilloverleaf]);
+    expect(resultSpillover.toString(), Decimal.parse('3000').toString());
   });
 }
