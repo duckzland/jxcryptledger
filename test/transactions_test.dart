@@ -1528,7 +1528,7 @@ void main() async {
 
     final txs = [txA, txB, txC, txD];
     final calc = TransactionCalculation();
-    final result = calc.totalCapitalUsed(txD, txs);
+    final result = calc.totalCapitalUsed(txD, txs: txs);
 
     expect(result.toString().startsWith('1.6133333333'), true);
   });
@@ -1627,7 +1627,7 @@ void main() async {
     );
 
     final validTxs = [txA, txB, txcValid, txD, txE, txfValidleaf];
-    final resultValid = calc.totalCapitalUsed(txfValidleaf, validTxs);
+    final resultValid = calc.totalCapitalUsed(txfValidleaf, txs: validTxs);
     expect(resultValid.toString(), Decimal.parse('120').toString());
 
     // SCENARIO 2: Broken Lineage Pool Mismatch
@@ -1692,7 +1692,7 @@ void main() async {
     );
 
     final brokenTxs = [txA, txB, txcImposter, txdBroken, txeBrokenpath, txfBrokenleaf];
-    final resultBroken = calc.totalCapitalUsed(txfBrokenleaf, brokenTxs);
+    final resultBroken = calc.totalCapitalUsed(txfBrokenleaf, txs: brokenTxs);
     expect(resultBroken.toString(), Decimal.parse('0').toString());
   });
 
@@ -1745,7 +1745,7 @@ void main() async {
     );
 
     final txs = [txaRoot, txbProfitable, txcSkimmingleaf];
-    final result = calc.totalCapitalUsed(txcSkimmingleaf, txs);
+    final result = calc.totalCapitalUsed(txcSkimmingleaf, txs: txs);
 
     // Expected: 0 original capital spent
     expect(result.toString(), Decimal.parse('0').toString());
@@ -1800,7 +1800,7 @@ void main() async {
     );
 
     final txs = [txaRoot, txbProfitable, txcSmallskimmingleaf];
-    final result = calc.totalCapitalUsed(txcSmallskimmingleaf, txs);
+    final result = calc.totalCapitalUsed(txcSmallskimmingleaf, txs: txs);
 
     // Expected: 0 original capital spent (entirely absorbed by yield cushion)
     expect(result.toString(), Decimal.parse('0').toString());
@@ -1855,7 +1855,7 @@ void main() async {
     );
 
     final txs = [txaRoot, txbProfitable, txcHeavyleaf];
-    final result = calc.totalCapitalUsed(txcHeavyleaf, txs);
+    final result = calc.totalCapitalUsed(txcHeavyleaf, txs: txs);
 
     // =========================================================================
     // MATHEMATICAL LOGIC BREAKDOWN
@@ -1927,7 +1927,7 @@ void main() async {
     // Profit Surplus = 0.6 - 0.5 = 0.1 BTC profit cushion.
     // Child requests 0.00033333 BTC.
     // Since 0.00033333 <= 0.1, it's 100% covered by profit! Core capital used MUST be 0.
-    final resultInside = calc.totalCapitalUsed(txcInsideprofitleaf, [txaRoot, txbProfitable, txcInsideprofitleaf]);
+    final resultInside = calc.totalCapitalUsed(txcInsideprofitleaf, txs: [txaRoot, txbProfitable, txcInsideprofitleaf]);
     expect(resultInside.toString(), Decimal.parse('0').toString());
 
     // =========================================================================
@@ -1955,7 +1955,7 @@ void main() async {
     // 4. Hop up to Root Pct multiplier        = 30,000 / 30,000 = 1.0
     // 5. Total Compounded Pipeline Pct        = 1.0 * 0.10 = 0.10
     // 6. Absolute Root USD Capital Utilized   = $30,000 USD * 0.10 = $3,000 USD
-    final resultSpillover = calc.totalCapitalUsed(txcSpilloverleaf, [txaRoot, txbProfitable, txcSpilloverleaf]);
+    final resultSpillover = calc.totalCapitalUsed(txcSpilloverleaf, txs: [txaRoot, txbProfitable, txcSpilloverleaf]);
     expect(resultSpillover.toString(), Decimal.parse('3000').toString());
   });
 }

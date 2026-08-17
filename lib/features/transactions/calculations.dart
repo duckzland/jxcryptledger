@@ -188,10 +188,16 @@ class TransactionCalculation {
     return Math.multiply(Math.divide(totalPL, totalBalance), Decimal.fromInt(100));
   }
 
-  Decimal totalCapitalUsed(TransactionsModel leaf, List<TransactionsModel> txs) {
-    TransactionsModel? current = leaf;
+  Decimal totalCapitalUsed(TransactionsModel leaf, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
+    if (txs == null && txsMap == null) {
+      return Decimal.zero;
+    }
 
-    final Map<String, TransactionsModel> txMap = {for (final tx in txs) tx.tid: tx};
+    if (txs != null && txsMap == null) {
+      txsMap = {for (final tx in txs) tx.tid: tx};
+    }
+
+    TransactionsModel? current = leaf;
 
     Decimal ttlPct = Decimal.one;
 
@@ -200,7 +206,7 @@ class TransactionCalculation {
         return Math.multiply(current.srAmount, ttlPct);
       }
 
-      final parent = txMap[current.pid];
+      final parent = txsMap![current.pid];
       if (parent == null || parent.rrId != current.srId) {
         return Decimal.zero;
       }

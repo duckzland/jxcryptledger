@@ -311,11 +311,12 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
   List<Map<String, dynamic>> _buildRows() {
     final rx = <Map<String, dynamic>>[];
+    final txsMap = txController.getIndexedMap();
 
     for (final tx in txs) {
       final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
       final resultCoinSymbol = _cryptosController.getSymbol(tx.rrId);
-      final capitalUsed = _calc.totalCapitalUsed(tx, txController.items);
+      final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
 
       rx.add({
         'balance': '${tx.balanceText} $resultCoinSymbol',
@@ -342,6 +343,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     }
 
     final stxs = [...txs];
+    final txsMap = txController.getIndexedMap();
 
     if (selectableHasSelectedRows()) {
       final selectedTxIds = selectableGetSelectedRows();
@@ -365,7 +367,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
     Decimal used = Decimal.zero;
     for (final rtx in stxs) {
-      used = Math.add(used, _calc.totalCapitalUsed(rtx, txController.items));
+      used = Math.add(used, _calc.totalCapitalUsed(rtx, txsMap: txsMap));
     }
 
     final finalizedBalance = _calc.totalFinalizedGroup(stxs);

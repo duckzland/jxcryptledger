@@ -41,6 +41,10 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return repo.get(tx.rid);
   }
 
+  Map<String, TransactionsModel> getIndexedMap() {
+    return {for (final tx in items) tx.tid: tx};
+  }
+
   Future<void> removeRoot(TransactionsModel tx) async {
     await repo.remove(tx);
     load();
