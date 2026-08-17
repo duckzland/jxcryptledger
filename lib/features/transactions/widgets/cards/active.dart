@@ -160,11 +160,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       2: (col, asc) => sortableOnSort((d) => d['_targetValue'] as double, col, asc),
       3: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
       4: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      5: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
       6: (col, asc) => sortableOnSort((d) => d['_currentValue'] as double, col, asc),
       7: (col, asc) => sortableOnSort((d) => d['_profitLossValue'] as double, col, asc),
       8: (col, asc) => sortableOnSort((d) => d['_profitLossPercentage'] as double, col, asc),
-      9: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      9: (col, asc) => sortableOnSort((d) => (d['_capitalSymbol'] as String, d['_capitalUsed'] as double), col, asc),
+      10: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
     checkForClosable();
@@ -361,66 +361,88 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
   Widget _buildTable() {
     final canSelect = !isCapital && rows.length > 1;
+
+    final emptyColumn = DataColumn(label: SizedBox.shrink());
+    final emptyCell = DataCell(SizedBox.shrink());
+
     final tableColumns = [
-      WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
+      WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters[0]),
       WidgetsTableColumn(
         size: ColumnSize.S,
-        label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount', subtitle: _sourceSymbol),
+        label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount ', subtitle: _sourceSymbol),
         onSort: sortableSorters[1],
       ),
-      if (!isCapital)
-        WidgetsTableColumn(
-          size: ColumnSize.S,
-          label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-          onSort: sortableSorters[2],
-        ),
-      if (!isCapital)
-        WidgetsTableColumn(
-          size: ColumnSize.S,
-          label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
-          onSort: sortableSorters[3],
-        ),
-      if (!isCapital)
-        WidgetsTableColumn(
-          size: ColumnSize.S,
-          label: WidgetsHeader(
-            title: 'Ex. Rate ',
-            subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
-          ),
-          onSort: sortableSorters[4],
-        ),
+      isCapital
+          ? emptyColumn
+          : WidgetsTableColumn(
+              size: ColumnSize.S,
+              label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
+              onSort: sortableSorters[2],
+            ),
+      isCapital
+          ? emptyColumn
+          : WidgetsTableColumn(
+              size: ColumnSize.S,
+              label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
+              onSort: sortableSorters[3],
+            ),
 
-      if (_currentRate != Decimal.zero && !isCapital) ...[
-        DataColumn2(
-          size: ColumnSize.S,
-          label: WidgetsHeader(
-            title: 'Cu. Rate ',
-            subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
-          ),
-        ),
-        WidgetsTableColumn(
-          size: ColumnSize.S,
-          label: WidgetsHeader(title: 'Cu. Value ', subtitle: _sourceSymbol),
-          onSort: sortableSorters[6],
-        ),
-        WidgetsTableColumn(
-          size: ColumnSize.S,
-          label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
-          onSort: sortableSorters[7],
-        ),
-        WidgetsTableColumn(
-          fixedWidth: 100,
-          label: WidgetsHeader(title: 'P/L', subtitle: "%"),
-          onSort: sortableSorters[8],
-        ),
-      ],
+      isCapital
+          ? emptyColumn
+          : WidgetsTableColumn(
+              size: ColumnSize.S,
+              label: WidgetsHeader(
+                title: 'Ex. Rate ',
+                subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+              ),
+              onSort: sortableSorters[4],
+            ),
 
-      WidgetsTableColumn(
-        label: Text('Status '),
-        fixedWidth: 80,
-        onSort: (_currentRate == Decimal.zero) ? sortableSorters[5] : sortableSorters[9],
-      ),
-      DataColumn2(label: Text('Actions'), fixedWidth: 100),
+      isCapital
+          ? emptyColumn
+          : DataColumn2(
+              size: ColumnSize.S,
+              label: WidgetsHeader(
+                title: 'Cu. Rate ',
+                subtitle: _isReversed ? '$_sourceSymbol / $_resultSymbol' : '$_resultSymbol / $_sourceSymbol',
+              ),
+            ),
+
+      isCapital
+          ? emptyColumn
+          : WidgetsTableColumn(
+              size: ColumnSize.S,
+              label: WidgetsHeader(title: 'Cu. Value ', subtitle: _sourceSymbol),
+              onSort: sortableSorters[6],
+            ),
+
+      isCapital
+          ? emptyColumn
+          : WidgetsTableColumn(
+              size: ColumnSize.S,
+              label: WidgetsHeader(title: 'Profit/Loss ', subtitle: _sourceSymbol),
+              onSort: sortableSorters[7],
+            ),
+
+      isCapital
+          ? emptyColumn
+          : WidgetsTableColumn(
+              fixedWidth: 100,
+              label: WidgetsHeader(title: 'P/L ', subtitle: "%"),
+              onSort: sortableSorters[8],
+            ),
+
+      isCapital
+          ? emptyColumn
+          : WidgetsTableColumn(
+              size: ColumnSize.S,
+              label: WidgetsHeader(title: 'Capital Used '),
+              onSort: sortableSorters[9],
+            ),
+
+      WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters[10]),
+
+      DataColumn2(label: Text('Actions '), fixedWidth: 100),
     ];
 
     final tableRows = rows.map((r) {
@@ -443,16 +465,25 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
           DataCell(Text(r['from'])),
 
-          if (!isCapital) DataCell(Text(r['to'])),
-          if (!isCapital) DataCell(Text(r['balance'] ?? '0.0')),
-          if (!isCapital) DataCell(Text(r['exchangedRate'] ?? '0.0')),
+          isCapital ? emptyCell : DataCell(Text(r['to'])),
+          isCapital ? emptyCell : DataCell(Text(r['balance'] ?? '0.0')),
+          isCapital ? emptyCell : DataCell(Text(r['exchangedRate'] ?? '0.0')),
 
-          if (_currentRate != Decimal.zero && !isCapital) ...[
-            DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-            DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-            DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
-            DataCell(WidgetsBalanceText(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'], comparator: 0)),
-          ],
+          isCapital
+              ? emptyCell
+              : DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
+
+          isCapital
+              ? emptyCell
+              : DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
+
+          isCapital ? emptyCell : DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
+
+          isCapital
+              ? emptyCell
+              : DataCell(WidgetsBalanceText(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'], comparator: 0)),
+
+          isCapital ? emptyCell : DataCell(Text(r['capitalUsed'] ?? '-')),
 
           DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
           DataCell(
@@ -510,8 +541,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   List<Map<String, dynamic>> _buildRows() {
     final currentRate = _customRate ?? effectiveMarketRate ?? Decimal.zero;
     final rx = <Map<String, dynamic>>[];
+    final txsMap = txController.getIndexedMap();
 
     for (final tx in txs) {
+      final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
+
       Decimal rowRate = currentRate;
       Decimal currentValue = Decimal.zero;
       Decimal profitLoss = Decimal.zero;
@@ -541,11 +575,15 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         }
       }
 
+      final root = tx.isRoot ? tx : txController.getRoot(tx);
+      final rootSymbol = _cryptosController.getSymbol(root?.srId ?? 0);
+
       rx.add({
         'from': tx.srAmountText,
         'to': tx.rrAmountText,
         'balance': tx.balanceText,
         'exchangedRate': _isReversed ? tx.rateReversedText : tx.rateText,
+        'capitalUsed': "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
         'currentRate': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(rowRate),
         'currentValue': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(currentValue),
         'profitLoss': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(profitLoss),
@@ -559,13 +597,15 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
         '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,
-        '_targetValue': tx.rrAmount,
-        '_sourceValue': tx.srAmount,
-        '_balanceValue': tx.balance,
-        '_exchangedRateValue': tx.rate,
-        '_currentValue': currentValue,
-        '_profitLossValue': profitLoss,
-        '_profitLossPercentage': profitLossPercentage,
+        '_targetValue': tx.rrAmount.toDouble(),
+        '_sourceValue': tx.srAmount.toDouble(),
+        '_balanceValue': tx.balance.toDouble(),
+        '_exchangedRateValue': tx.rate.toDouble(),
+        '_currentValue': currentValue.toDouble(),
+        '_profitLossValue': profitLoss.toDouble(),
+        '_profitLossPercentage': profitLossPercentage.toDouble(),
+        '_capitalUsed': capitalUsed.toDouble(),
+        '_capitalSymbol': rootSymbol,
       });
     }
 

@@ -223,10 +223,10 @@ class _ArchivesPageState extends State<ArchivesPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: Text("Date"), fixedWidth: 100, onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: Text("Data Type"), fixedWidth: 120, onSort: sortableSorters[1]),
-          DataColumn2(label: Text("Notes")),
-          DataColumn2(label: Text("Action"), fixedWidth: 80),
+          WidgetsTableColumn(label: Text("Date "), fixedWidth: 100, onSort: sortableSorters[0]),
+          WidgetsTableColumn(label: Text("Data Type "), fixedWidth: 120, onSort: sortableSorters[1]),
+          DataColumn2(label: Text("Notes ")),
+          DataColumn2(label: Text("Action "), fixedWidth: 80),
         ],
         rows: rows.map((r) {
           return DataRow(

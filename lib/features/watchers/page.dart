@@ -69,9 +69,9 @@ class _WatchersPageState extends State<WatchersPage>
       1: (col, asc) => sortableOnSort((d) => d['_rrId'] as int, col, asc),
       2: (col, asc) => sortableOnSort((d) => d['_ops'] as int, col, asc),
       3: (col, asc) => sortableOnSort((d) => d['_rate'] as double, col, asc),
-      5: (col, asc) => sortableOnSort((d) => d['_sent'] as int, col, asc),
-      6: (col, asc) => sortableOnSort((d) => d['_limit'] as int, col, asc),
-      7: (col, asc) => sortableOnSort((d) => d['_duration'] as int, col, asc),
+      4: (col, asc) => sortableOnSort((d) => d['_sent'] as int, col, asc),
+      5: (col, asc) => sortableOnSort((d) => d['_limit'] as int, col, asc),
+      6: (col, asc) => sortableOnSort((d) => d['_duration'] as int, col, asc),
     };
 
     rows = _buildRows();
@@ -247,14 +247,14 @@ class _WatchersPageState extends State<WatchersPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: Text("From"), onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: Text("To"), onSort: sortableSorters[1]),
-          WidgetsTableColumn(label: Text("Ops"), onSort: sortableSorters[2]),
-          WidgetsTableColumn(label: Text("Rate"), onSort: sortableSorters[3]),
-          WidgetsTableColumn(label: Text("Sent"), onSort: sortableSorters[5]),
-          WidgetsTableColumn(label: Text("Limit"), onSort: sortableSorters[6]),
-          WidgetsTableColumn(label: Text("Duration"), onSort: sortableSorters[7]),
-          DataColumn2(label: Text("Action"), fixedWidth: 110),
+          WidgetsTableColumn(label: Text("From "), onSort: sortableSorters[0]),
+          WidgetsTableColumn(label: Text("To "), onSort: sortableSorters[1]),
+          WidgetsTableColumn(label: Text("Ops "), onSort: sortableSorters[2]),
+          WidgetsTableColumn(label: Text("Rate "), onSort: sortableSorters[3]),
+          WidgetsTableColumn(label: Text("Sent "), onSort: sortableSorters[4]),
+          WidgetsTableColumn(label: Text("Limit "), onSort: sortableSorters[5]),
+          WidgetsTableColumn(label: Text("Duration "), onSort: sortableSorters[6]),
+          DataColumn2(label: Text("Action "), fixedWidth: 110),
         ],
         rows: table.map((r) {
           return DataRow(
@@ -304,7 +304,7 @@ class _WatchersPageState extends State<WatchersPage>
         '_srId': tx.srId,
         '_rrId': tx.rrId,
         '_ops': tx.operator,
-        '_rate': tx.rates,
+        '_rate': tx.rates.toDouble(),
         '_sent': tx.sent,
         '_limit': tx.limit,
         '_duration': tx.duration,

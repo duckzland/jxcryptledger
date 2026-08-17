@@ -111,9 +111,10 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
       1: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
       2: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
-      3: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['_currentUsdValue'] as double, col, asc),
-      5: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      3: (col, asc) => sortableOnSort((d) => d['_currentUsdValue'] as double, col, asc),
+      4: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
+      5: (col, asc) => sortableOnSort((d) => (d['_capitalSymbol'] as String, d['_capitalUsed'] as double), col, asc),
+      6: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
     rateableIsTemporary = false;
@@ -330,21 +331,25 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   Widget _buildTable() {
     final canSelect = isActive && rows.length > 1;
     final tableColumns = [
-      WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsTableColumn(label: Text('From'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters[0]),
+      WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters[1]),
       WidgetsTableColumn(
-        label: WidgetsHeader(title: 'Balance', subtitle: _resultSymbol),
+        label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
         size: ColumnSize.S,
         onSort: sortableSorters[2],
       ),
       WidgetsTableColumn(
-        label: WidgetsHeader(title: 'Balance', subtitle: 'USDT'),
+        label: WidgetsHeader(title: 'Balance ', subtitle: 'USDT'),
         size: ColumnSize.S,
-        onSort: sortableSorters[4],
+        onSort: sortableSorters[3],
       ),
-      WidgetsTableColumn(label: Text('Exchanged Rate'), size: ColumnSize.M, onSort: sortableSorters[3]),
-
-      WidgetsTableColumn(label: Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
+      WidgetsTableColumn(label: Text('Exchanged Rate '), size: ColumnSize.M, onSort: sortableSorters[4]),
+      WidgetsTableColumn(
+        size: ColumnSize.S,
+        label: WidgetsHeader(title: 'Capital Used '),
+        onSort: sortableSorters[5],
+      ),
+      WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters[6]),
       DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {
@@ -370,6 +375,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
           DataCell(Text(r['balance'])),
           DataCell(Text(r['currentUsdValue'])),
           DataCell(Text(r['exchangedRate'])),
+          DataCell(Text(r['capitalUsed'])),
           DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
           DataCell(
             TransactionsWidgetsButtonsAction(
@@ -425,10 +431,14 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   List<Map<String, dynamic>> _buildRows() {
     final rx = <Map<String, dynamic>>[];
+    final txsMap = txController.getIndexedMap();
 
     for (final tx in txs) {
       final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
       final usdValue = Math.multiply(tx.balance, rateableValue ?? Decimal.zero);
+      final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
+      final root = tx.isRoot ? tx : txController.getRoot(tx);
+      final rootSymbol = _cryptosController.getSymbol(root?.srId ?? 0);
 
       rx.add({
         'balance': '${tx.balanceText} $_resultSymbol',
@@ -440,13 +450,16 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         'uuid': tx.uuid,
         'note': tx.noteText,
         'currentUsdValue': usdValue != Decimal.zero ? Utils.formatSmartDecimal(usdValue, limitDecimals: 2) : '-',
+        'capitalUsed': "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
 
         '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.balance,
-        '_sourceValue': tx.srAmount,
-        '_exchangedRateValue': tx.rate,
+        '_balanceValue': tx.balance.toDouble(),
+        '_sourceValue': tx.srAmount.toDouble(),
+        '_exchangedRateValue': tx.rate.toDouble(),
         '_currentUsdValue': usdValue.toDouble(),
+        '_capitalUsed': capitalUsed.toDouble(),
+        '_capitalSymbol': rootSymbol,
       });
     }
 

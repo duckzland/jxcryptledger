@@ -89,7 +89,10 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, col, asc),
+      1: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
+      2: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_exchangedRateValue'] as double), col, asc),
+      3: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_balanceValue'] as double), col, asc),
+      4: (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, col, asc),
     };
 
     _calculatePanelData();
@@ -247,13 +250,10 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   Widget _buildTable() {
     final tableColumns = [
       WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsTableColumn(label: Text('Transaction'), size: ColumnSize.M),
-      WidgetsTableColumn(label: Text('Exchanged Rate'), size: ColumnSize.M),
-      WidgetsTableColumn(
-        label: WidgetsHeader(title: 'Finalized Amount'),
-        size: ColumnSize.S,
-      ),
-      WidgetsTableColumn(label: Text('Capital Used'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(label: Text('Transaction'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(label: Text('Exchanged Rate'), size: ColumnSize.M, onSort: sortableSorters[2]),
+      WidgetsTableColumn(label: Text('Finalized Amount'), size: ColumnSize.S, onSort: sortableSorters[3]),
+      WidgetsTableColumn(label: Text('Capital Used'), size: ColumnSize.S, onSort: sortableSorters[4]),
     ];
     final tableRows = rows.map((r) {
       final tx = r['tx'] as TransactionsModel;
@@ -331,6 +331,11 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,
         '_capitalUsed': capitalUsed.toDouble(),
+        '_balanceValue': tx.balance.toDouble(),
+        '_sourceValue': tx.srAmount.toDouble(),
+        '_exchangedRateValue': tx.rate.toDouble(),
+        '_sourceSymbol': sourceCoinSymbol,
+        '_resultSymbol': resultCoinSymbol,
       });
     }
 

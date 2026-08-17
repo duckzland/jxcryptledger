@@ -73,9 +73,10 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
 
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
-      2: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
+      1: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
+      2: (col, asc) => sortableOnSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
       3: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc),
+      4: (col, asc) => sortableOnSort((d) => (d['_rateSymbol'] as String, d['_rateValue'] as double), col, asc),
       5: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
     };
 
@@ -152,13 +153,13 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
           child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         ),
         columns: [
-          WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: Text('From'), size: ColumnSize.M, onSort: sortableSorters[2]),
-          WidgetsTableColumn(label: Text('To'), size: ColumnSize.M, onSort: sortableSorters[3]),
-          WidgetsTableColumn(label: Text('Balance'), size: ColumnSize.M, onSort: sortableSorters[1]),
-          WidgetsTableColumn(label: Text('Rate'), size: ColumnSize.S),
-          WidgetsTableColumn(label: Text('Status'), fixedWidth: 80, onSort: sortableSorters[5]),
-          WidgetsTableColumn(label: Text('Actions'), fixedWidth: 100),
+          WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters[0]),
+          WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters[1]),
+          WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters[2]),
+          WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters[3]),
+          WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.S, onSort: sortableSorters[4]),
+          WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters[5]),
+          WidgetsTableColumn(label: Text('Actions '), fixedWidth: 100),
         ],
         rows: rows.map((r) {
           final tx = r['tx'] as TransactionsModel;
@@ -217,12 +218,14 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         'uuid': tx.uuid,
 
         '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.rrAmount,
+        '_balanceValue': tx.rrAmount.toDouble(),
         '_balanceSymbol': resultSymbol,
-        '_sourceValue': tx.srAmount,
+        '_sourceValue': tx.srAmount.toDouble(),
         '_sourceSymbol': sourceSymbol,
-        '_resultValue': tx.rrAmount,
+        '_resultValue': tx.rrAmount.toDouble(),
         '_resultSymbol': resultSymbol,
+        '_rateValue': tx.rate.toDouble(),
+        '_rateSymbol': "$resultSymbol/$sourceSymbol",
       });
     }
     return rx;

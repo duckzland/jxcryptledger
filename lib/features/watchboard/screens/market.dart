@@ -120,14 +120,14 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
               child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ),
             columns: [
-              WidgetsTableColumn(label: Text('#'), fixedWidth: 50, onSort: sortableSorters[0]),
-              WidgetsTableColumn(label: Text('Name'), size: ColumnSize.L, onSort: sortableSorters[1]),
-              WidgetsTableColumn(label: Text('Price'), size: ColumnSize.S, onSort: sortableSorters[2]),
-              WidgetsTableColumn(label: Text('1h %'), size: ColumnSize.S, onSort: sortableSorters[3]),
-              WidgetsTableColumn(label: Text('24h %'), size: ColumnSize.S, onSort: sortableSorters[4]),
-              WidgetsTableColumn(label: Text('7d %'), size: ColumnSize.S, onSort: sortableSorters[5]),
-              WidgetsTableColumn(label: Text('30d %'), size: ColumnSize.S, onSort: sortableSorters[6]),
-              WidgetsTableColumn(label: Text('M.Cap'), fixedWidth: 100, onSort: sortableSorters[7]),
+              WidgetsTableColumn(label: Text('# '), fixedWidth: 50, onSort: sortableSorters[0]),
+              WidgetsTableColumn(label: Text('Name '), size: ColumnSize.L, onSort: sortableSorters[1]),
+              WidgetsTableColumn(label: Text('Price '), size: ColumnSize.S, onSort: sortableSorters[2]),
+              WidgetsTableColumn(label: Text('1h % '), size: ColumnSize.S, onSort: sortableSorters[3]),
+              WidgetsTableColumn(label: Text('24h % '), size: ColumnSize.S, onSort: sortableSorters[4]),
+              WidgetsTableColumn(label: Text('7d % '), size: ColumnSize.S, onSort: sortableSorters[5]),
+              WidgetsTableColumn(label: Text('30d % '), size: ColumnSize.S, onSort: sortableSorters[6]),
+              WidgetsTableColumn(label: Text('M.Cap '), fixedWidth: 100, onSort: sortableSorters[7]),
             ],
             rows: rows.map((r) {
               final MarketsModel tx = r['tx'];
