@@ -63,6 +63,21 @@ class TransactionCalculation {
     return txs.fold<Decimal>(Decimal.zero, (sum, tx) => Math.add(sum, (tx.isFinalized) ? tx.balance : Decimal.zero));
   }
 
+  Map<int, Decimal> totalFinalizedGroup(List<TransactionsModel> txs) {
+    final map = <int, Decimal>{};
+
+    for (final tx in txs) {
+      if (!tx.isFinalized) continue;
+
+      final key = tx.rrId;
+      final current = map[key] ?? Decimal.zero;
+
+      map[key] = Math.add(current, tx.balance);
+    }
+
+    return map;
+  }
+
   Decimal averageProfitLoss(List<TransactionsModel> txs, Decimal currentRate, {bool reverse = false, bool shrinkPartial = false}) {
     if (txs.isEmpty) return Decimal.zero;
     Decimal totalPL = totalProfitLoss(txs, currentRate, reverse: reverse, shrinkPartial: shrinkPartial);
@@ -171,5 +186,41 @@ class TransactionCalculation {
     final totalPL = Math.multiply(avgPL, txs.length.toDecimal());
 
     return Math.multiply(Math.divide(totalPL, totalBalance), Decimal.fromInt(100));
+  }
+
+  Decimal totalCapitalUsed(TransactionsModel leaf, List<TransactionsModel> txs) {
+    TransactionsModel? current = leaf;
+
+    final Map<String, TransactionsModel> txMap = {for (final tx in txs) tx.tid: tx};
+    Decimal trackedAmount = current.srAmount;
+
+    while (current != null) {
+      if (current.pid == "0" && current.rid == "0") {
+        return trackedAmount;
+      }
+
+      final parent = txMap[current.pid];
+      if (parent == null || parent.rrId != current.srId) {
+        return Decimal.zero;
+      }
+
+      if (parent.balance > parent.rrAmount) {
+        final profitSurplus = Math.subtract(parent.balance, parent.rrAmount);
+
+        if (trackedAmount <= profitSurplus) {
+          return Decimal.zero;
+        }
+
+        trackedAmount = Math.subtract(trackedAmount, profitSurplus);
+      }
+
+      final conversionFactor = (parent.rrAmount == Decimal.zero) ? Decimal.one : Math.divide(parent.srAmount, parent.rrAmount);
+
+      trackedAmount = Math.multiply(trackedAmount, conversionFactor);
+
+      current = parent;
+    }
+
+    return Decimal.zero;
   }
 }

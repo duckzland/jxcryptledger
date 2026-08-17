@@ -37,6 +37,10 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return repo.get(tx.pid);
   }
 
+  TransactionsModel? getRoot(TransactionsModel tx) {
+    return repo.get(tx.rid);
+  }
+
   Future<void> removeRoot(TransactionsModel tx) async {
     await repo.remove(tx);
     load();

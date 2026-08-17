@@ -22,11 +22,12 @@ import 'mixins/flags.dart';
 import 'model.dart';
 import 'forms/create.dart';
 import 'screens/active.dart';
+import 'screens/finalized.dart';
 import 'screens/history.dart';
 import 'screens/journal.dart';
 import 'screens/overview.dart';
 
-enum TransactionsViewMode { overview, active, journal, history }
+enum TransactionsViewMode { overview, active, journal, history, finalized }
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
@@ -109,6 +110,8 @@ class TransactionsPageState extends State<TransactionsPage>
         _sortMode = states.get('tx-sort-history', defaultValue: 2);
         _filterMode = states.get('tx-filter-history', defaultValue: 0);
         break;
+      case TransactionsViewMode.finalized:
+        break;
     }
   }
 
@@ -138,6 +141,10 @@ class TransactionsPageState extends State<TransactionsPage>
         break;
       case TransactionsViewMode.history:
         _sortableOptions = {0: "Alphabetically", 1: "Oldest Trades", 2: "Latest Trades"};
+        _filterableOptions = {};
+        break;
+      case TransactionsViewMode.finalized:
+        _sortableOptions = {};
         _filterableOptions = {};
         break;
     }
@@ -221,6 +228,30 @@ class TransactionsPageState extends State<TransactionsPage>
                   _detectFilterAndSortOptions();
 
                   states.set('tx-view-mode', TransactionsViewMode.journal.name);
+                });
+              },
+            ),
+            WidgetsButtonsAction(
+              key: const Key("view-finalized"),
+              icon: Icons.wallet_giftcard,
+              padding: EdgeInsets.all(8),
+              iconSize: 20,
+              minimumSize: const Size(40, 40),
+              tooltip: "Finalized view",
+              evaluator: (s) {
+                if (_viewMode == TransactionsViewMode.finalized) {
+                  s.active();
+                } else {
+                  s.normal();
+                }
+              },
+              onPressed: (_) {
+                setState(() {
+                  _viewMode = TransactionsViewMode.finalized;
+                  _setFilterAndSortDefault();
+                  _detectFilterAndSortOptions();
+
+                  states.set('tx-view-mode', TransactionsViewMode.finalized.name);
                 });
               },
             ),
@@ -505,6 +536,8 @@ class TransactionsPageState extends State<TransactionsPage>
           case TransactionsViewMode.history:
             states.set('tx-sort-history', value);
             break;
+          case TransactionsViewMode.finalized:
+            break;
         }
       },
     );
@@ -536,6 +569,8 @@ class TransactionsPageState extends State<TransactionsPage>
             break;
           case TransactionsViewMode.history:
             states.set('tx-filter-history', value);
+            break;
+          case TransactionsViewMode.finalized:
             break;
         }
       },
@@ -607,6 +642,17 @@ class TransactionsPageState extends State<TransactionsPage>
             panelsAction: toggleAction,
             onStatusChanged: _handleStatusChange,
           ),
+        );
+
+      case TransactionsViewMode.finalized:
+        actionbarRegister("Finalized Transactions");
+        final toggleAction = states.get("tx-toggle-panels", defaultValue: "");
+        states.remove("tx-toggle-panels");
+
+        return Padding(
+          key: const ValueKey('tx-screen-finalized'),
+          padding: EdgeInsets.only(left: 16, right: 16),
+          child: TransactionsFinalizedView(transactions: txs, panelsAction: toggleAction, onStatusChanged: _handleStatusChange),
         );
     }
   }
