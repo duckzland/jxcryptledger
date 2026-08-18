@@ -372,7 +372,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount ', subtitle: _sourceSymbol),
         onSort: sortableSorters[1],
       ),
-      
+
       isCapital
           ? emptyColumn
           : WidgetsTableColumn(
@@ -465,11 +465,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         },
         cells: [
           DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
-          DataCell(Text(r['from'])),
+          DataCell(Text(r['from'] ?? '-')),
 
-          isCapital ? emptyCell : DataCell(Text(r['to'])),
-          isCapital ? emptyCell : DataCell(Text(r['balance'] ?? '0.0')),
-          isCapital ? emptyCell : DataCell(Text(r['exchangedRate'] ?? '0.0')),
+          isCapital ? emptyCell : DataCell(Text(r['to'] ?? '-')),
+          isCapital ? emptyCell : DataCell(Text(r['balance'] ?? '-')),
+          isCapital ? emptyCell : DataCell(Text(r['exchangedRate'] ?? '-')),
 
           isCapital
               ? emptyCell
