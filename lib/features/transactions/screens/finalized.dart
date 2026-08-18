@@ -7,16 +7,24 @@ import '../../../core/scrollto.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';
+import '../mixins/flags.dart';
 import '../widgets/cards/finalized.dart';
 import '../controller.dart';
 import '../model.dart';
 
 class TransactionsFinalizedView extends StatefulWidget {
   final List<TransactionsModel> transactions;
+  final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
   final VoidCallback onStatusChanged;
   final String panelsAction;
 
-  const TransactionsFinalizedView({super.key, required this.transactions, required this.onStatusChanged, required this.panelsAction});
+  const TransactionsFinalizedView({
+    super.key,
+    required this.transactions,
+    required this.onStatusChanged,
+    required this.panelsAction,
+    required this.txsFlags,
+  });
 
   @override
   State<TransactionsFinalizedView> createState() => _TransactionsFinalizedViewState();
@@ -146,6 +154,7 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
               key: ValueKey(rrId),
               id: int.parse(rrId),
               transactions: stxs,
+              txsFlags: widget.txsFlags,
               onStatusChanged: widget.onStatusChanged,
               onToggleChanged: _toggleAction,
               parentContext: context,

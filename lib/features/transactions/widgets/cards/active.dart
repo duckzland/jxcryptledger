@@ -372,6 +372,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         label: WidgetsHeader(title: (!isCapital) ? 'From ' : 'Amount ', subtitle: _sourceSymbol),
         onSort: sortableSorters[1],
       ),
+      
       isCapital
           ? emptyColumn
           : WidgetsTableColumn(
@@ -379,6 +380,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
               label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
               onSort: sortableSorters[2],
             ),
+
       isCapital
           ? emptyColumn
           : WidgetsTableColumn(

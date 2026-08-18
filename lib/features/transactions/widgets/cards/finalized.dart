@@ -17,16 +17,20 @@ import '../../../../widgets/table/column.dart';
 import '../../../../widgets/table/proxy.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
+import '../../controller.dart';
 import '../../dialogs/details.dart';
 import '../../calculations.dart';
-import '../../controller.dart';
+import '../../mixins/actions.dart';
+import '../../mixins/flags.dart';
 import '../../model.dart';
+import '../buttons/action.dart';
 import '../buttons/batch.dart';
 import '../panel_item.dart';
 
 class TransactionsWidgetsCardsFinalized extends StatefulWidget {
   final int id;
   final List<TransactionsModel> transactions;
+  final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
 
   final VoidCallback onStatusChanged;
   final VoidCallback onToggleChanged;
@@ -45,6 +49,7 @@ class TransactionsWidgetsCardsFinalized extends StatefulWidget {
     required this.theme,
     required this.id,
     required this.transactions,
+    required this.txsFlags,
     required this.onStatusChanged,
     required this.onToggleChanged,
     required this.isOpen,
@@ -56,10 +61,15 @@ class TransactionsWidgetsCardsFinalized extends StatefulWidget {
 }
 
 class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsCardsFinalized>
-    with MixinsState, MixinsTable, MixinsSelectableTable, MixinsSortableTable<TransactionsWidgetsCardsFinalized> {
+    with
+        MixinsState,
+        MixinsTable,
+        MixinsSelectableTable,
+        MixinsSortableTable<TransactionsWidgetsCardsFinalized>,
+        TransactionsMixinsActions,
+        TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
 
-  TransactionsController get txController => CoreLocator.getit<TransactionsController>();
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   late String _resultSymbol;
@@ -82,7 +92,10 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   void initState() {
     super.initState();
 
+    txController = CoreLocator.getit<TransactionsController>();
+
     txs = widget.transactions;
+    fxs = widget.txsFlags;
 
     _isOpen = widget.isOpen;
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
@@ -90,10 +103,16 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     sortableSorters = {
       0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
       1: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
-      2: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_exchangedRateValue'] as double), col, asc),
-      3: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_balanceValue'] as double), col, asc),
+      2: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_balanceValue'] as double), col, asc),
+      3: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_exchangedRateValue'] as double), col, asc),
       4: (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, col, asc),
     };
+
+    checkForClosable();
+    checkForDeletable();
+    checkForFinalizable();
+    checkForRefundable();
+    checkForUpdatable();
 
     _calculatePanelData();
     rows = _buildRows();
@@ -119,6 +138,14 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     }
 
     txs = widget.transactions;
+    fxs = widget.txsFlags;
+
+    checkForClosable();
+    checkForDeletable();
+    checkForFinalizable();
+    checkForRefundable();
+    checkForUpdatable();
+
     _calculatePanelData();
     rows = _buildRows();
     sortableApplySorting();
@@ -147,14 +174,14 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
       parentContext: widget.parentContext,
       srid: 0,
       rrid: 0,
-      txs: [],
-      selectedRows: [],
+      txs: txs,
+      selectedRows: selectableSelectedRows,
       isOpen: _isOpen,
-      isDeletable: false,
-      isClosable: false,
-      isFinalizable: false,
-      isRefundable: false,
-      isUpdatable: false,
+      isDeletable: isDeletable,
+      isClosable: isClosable,
+      isFinalizable: isFinalizable,
+      isRefundable: isRefundable,
+      isUpdatable: isUpdatable,
       onToggleShow: _toggleShowAction,
     );
 
@@ -250,10 +277,11 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   Widget _buildTable() {
     final tableColumns = [
       WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsTableColumn(label: Text('Transaction'), size: ColumnSize.M, onSort: sortableSorters[1]),
-      WidgetsTableColumn(label: Text('Exchanged Rate'), size: ColumnSize.M, onSort: sortableSorters[2]),
-      WidgetsTableColumn(label: Text('Finalized Amount'), size: ColumnSize.S, onSort: sortableSorters[3]),
-      WidgetsTableColumn(label: Text('Capital Used'), size: ColumnSize.S, onSort: sortableSorters[4]),
+      WidgetsTableColumn(label: Text('From'), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(label: Text('To'), size: ColumnSize.M, onSort: sortableSorters[2]),
+      WidgetsTableColumn(label: Text('Rate'), size: ColumnSize.M, onSort: sortableSorters[3]),
+      WidgetsTableColumn(label: Text('Capital Used'), size: ColumnSize.M, onSort: sortableSorters[4]),
+      DataColumn2(label: Text('Actions'), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {
       final tx = r['tx'] as TransactionsModel;
@@ -271,10 +299,28 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         },
         cells: [
           DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
-          DataCell(Text(r['source'])),
-          DataCell(Text(r['exchangedRate'])),
-          DataCell(Text(r['balance'])),
+          DataCell(Text(r['from'])),
+          DataCell(Text(r['to'])),
+          DataCell(Text(r['rate'])),
           DataCell(Text(r['capitalUsed'])),
+          DataCell(
+            TransactionsWidgetsButtonsAction(
+              parentContext: context,
+              key: Key("action-${tx.uuid}"),
+              tx: r['tx'],
+              cryptosController: _cryptosController,
+              txController: txController,
+              isTradable: fxsIsTradable(tx),
+              isClosable: fxsIsClosable(tx),
+              isDeletable: fxsIsDeletable(tx),
+              isUpdatable: fxsIsUpdatable(tx),
+              isRefundable: fxsIsRefundable(tx),
+              isFinalizable: fxsIsFinalizable(tx),
+              hasLeaf: fxsHasLeaf(tx),
+              hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+              onAction: widget.onStatusChanged,
+            ),
+          ),
         ],
       );
     }).toList();
@@ -319,14 +365,14 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
       final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
 
       rx.add({
-        'balance': '${tx.balanceText} $resultCoinSymbol',
-        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $resultCoinSymbol',
-        'exchangedRate': tx.isCapital ? ' - ' : '1 $sourceCoinSymbol = ${tx.rateText} $resultCoinSymbol',
         'date': tx.timestampAsFormattedDate,
+        'from': '${tx.srAmountText} $sourceCoinSymbol',
+        'to': '${tx.rrAmountText} $resultCoinSymbol',
+        'rate': '${tx.rateText} $sourceCoinSymbol/$resultCoinSymbol',
+        'capitalUsed': "${Utils.formatSmartDecimal(capitalUsed)} $_resultSymbol",
         'tx': tx,
         'uuid': tx.uuid,
         'note': tx.noteText,
-        'capitalUsed': "${Utils.formatSmartDecimal(capitalUsed)} $_resultSymbol",
 
         '_note': tx.noteText,
         '_timestamp': tx.sanitizedTimestamp,

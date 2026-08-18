@@ -652,7 +652,12 @@ class TransactionsPageState extends State<TransactionsPage>
         return Padding(
           key: const ValueKey('tx-screen-finalized'),
           padding: EdgeInsets.only(left: 16, right: 16),
-          child: TransactionsFinalizedView(transactions: txs, panelsAction: toggleAction, onStatusChanged: _handleStatusChange),
+          child: TransactionsFinalizedView(
+            transactions: txs,
+            txsFlags: fxs,
+            panelsAction: toggleAction,
+            onStatusChanged: _handleStatusChange,
+          ),
         );
     }
   }
