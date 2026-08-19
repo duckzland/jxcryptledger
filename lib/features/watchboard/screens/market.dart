@@ -54,14 +54,14 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     _controller.addListener(onMarketChange);
 
     sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).rank, col, asc),
-      1: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).symbol, col, asc),
-      2: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).price ?? 0, col, asc),
-      3: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent1h ?? 0, col, asc),
-      4: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent24h ?? 0, col, asc),
-      5: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent7d ?? 0, col, asc),
-      6: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent30d ?? 0, col, asc),
-      7: (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).marketCap ?? 0, col, asc),
+      "rank": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).rank, "rank", col, asc),
+      "symbol": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).symbol, "symbol", col, asc),
+      "price": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).price ?? 0, "price", col, asc),
+      "percent1h": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent1h ?? 0, "percent1h", col, asc),
+      "percent24h": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent24h ?? 0, "percent24h", col, asc),
+      "percent7d": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent7d ?? 0, "percent7d", col, asc),
+      "percent30d": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).percent30d ?? 0, "percent30d", col, asc),
+      "marketCap": (col, asc) => sortableOnSort((d) => (d['tx'] as MarketsModel).marketCap ?? 0, "marketCap", col, asc),
     };
 
     sortableAscending = states.get("[np]-$sortableKey-sortable-ascending", defaultValue: true);
@@ -120,14 +120,14 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
               child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ),
             columns: [
-              WidgetsTableColumn(label: Text('# '), fixedWidth: 50, onSort: sortableSorters[0]),
-              WidgetsTableColumn(label: Text('Name '), size: ColumnSize.L, onSort: sortableSorters[1]),
-              WidgetsTableColumn(label: Text('Price '), size: ColumnSize.S, onSort: sortableSorters[2]),
-              WidgetsTableColumn(label: Text('1h % '), size: ColumnSize.S, onSort: sortableSorters[3]),
-              WidgetsTableColumn(label: Text('24h % '), size: ColumnSize.S, onSort: sortableSorters[4]),
-              WidgetsTableColumn(label: Text('7d % '), size: ColumnSize.S, onSort: sortableSorters[5]),
-              WidgetsTableColumn(label: Text('30d % '), size: ColumnSize.S, onSort: sortableSorters[6]),
-              WidgetsTableColumn(label: Text('M.Cap '), fixedWidth: 100, onSort: sortableSorters[7]),
+              WidgetsTableColumn(label: Text('# '), fixedWidth: 50, onSort: sortableSorters["rank"]),
+              WidgetsTableColumn(label: Text('Name '), size: ColumnSize.L, onSort: sortableSorters["name"]),
+              WidgetsTableColumn(label: Text('Price '), size: ColumnSize.S, onSort: sortableSorters["price"]),
+              WidgetsTableColumn(label: Text('1h % '), size: ColumnSize.S, onSort: sortableSorters["percent1h"]),
+              WidgetsTableColumn(label: Text('24h % '), size: ColumnSize.S, onSort: sortableSorters["percent24h"]),
+              WidgetsTableColumn(label: Text('7d % '), size: ColumnSize.S, onSort: sortableSorters["percent7d"]),
+              WidgetsTableColumn(label: Text('30d % '), size: ColumnSize.S, onSort: sortableSorters["percent30d"]),
+              WidgetsTableColumn(label: Text('M.Cap '), fixedWidth: 100, onSort: sortableSorters["marketCap"]),
             ],
             rows: rows.map((r) {
               final MarketsModel tx = r['tx'];

@@ -71,8 +71,8 @@ class _ArchivesPageState extends State<ArchivesPage>
 
     txs = _controller.items;
     sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => d['_type'] as int, col, asc),
+      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].timestamp, "timestamp", col, asc),
+      "type": (col, asc) => sortableOnSort((d) => d['tx'].type, "type", col, asc),
     };
 
     rows = _buildRows();
@@ -223,20 +223,21 @@ class _ArchivesPageState extends State<ArchivesPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: Text("Date "), fixedWidth: 100, onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: Text("Data Type "), fixedWidth: 120, onSort: sortableSorters[1]),
+          WidgetsTableColumn(label: Text("Date "), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+          WidgetsTableColumn(label: Text("Data Type "), fixedWidth: 120, onSort: sortableSorters["type"]),
           DataColumn2(label: Text("Notes ")),
           DataColumn2(label: Text("Action "), fixedWidth: 80),
         ],
         rows: rows.map((r) {
+          final tx = r['tx'] as ArchivesModel;
           return DataRow(
             cells: [
-              DataCell(Text(r['date'])),
-              DataCell(Text(r['type'])),
-              DataCell(Text(r['notes'])),
+              DataCell(Text(tx.timestampAsFormattedDate)),
+              DataCell(Text(tx.typeText)),
+              DataCell(Text(tx.meta['notes'] ?? "")),
               DataCell(
                 ArchivesButtons(
-                  tx: r['tx'],
+                  tx: tx,
                   wxController: _controller,
                   onAction: () {
                     setState(() {});
@@ -254,15 +255,7 @@ class _ArchivesPageState extends State<ArchivesPage>
     final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      rx.add({
-        'date': tx.timestampAsFormattedDate,
-        'type': tx.typeText,
-        'tx': tx,
-        'uuid': tx.uuid,
-        'notes': tx.meta['notes'] ?? "",
-        "_timestamp": tx.timestamp,
-        "_type": tx.type,
-      });
+      rx.add({'tx': tx});
     }
 
     return rx;

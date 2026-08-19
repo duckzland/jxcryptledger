@@ -113,13 +113,23 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
     sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => d['_sourceValue'] as double, col, asc),
-      2: (col, asc) => sortableOnSort((d) => d['_balanceValue'] as double, col, asc),
-      3: (col, asc) => sortableOnSort((d) => d['_currentUsdValue'] as double, col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['_exchangedRateValue'] as double, col, asc),
-      5: (col, asc) => sortableOnSort((d) => (d['_capitalSymbol'] as String, d['_capitalUsed'] as double), col, asc),
-      6: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].sanitizedTimestamp, "timestamp", col, asc),
+      "srAmount": (col, asc) => sortableOnSort(
+        (d) => (d['tx'].isCapital ? '#' : d['_sourceSymbol'] as String, d['tx'].srAmount.toDouble()),
+        "srAmount",
+        col,
+        asc,
+      ),
+      "rrAmount": (col, asc) => sortableOnSort((d) => d['tx'].rrAmount.toDouble(), "rrAmount", col, asc),
+      "balance": (col, asc) => sortableOnSort((d) => d['tx'].balance.toDouble(), "balance", col, asc),
+      "rate": (col, asc) => sortableOnSort(
+        (d) => (d['tx'].isCapital ? '#' : "##", d['tx'].isCapital ? d['tx'].srAmount.toDouble() : d['tx'].rate.toDouble()),
+        "rate",
+        col,
+        asc,
+      ),
+      "capital": (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, "capital", col, asc),
+      "status": (col, asc) => sortableOnSort((d) => d['tx'].statusText, "status", col, asc),
     };
 
     rateableIsTemporary = false;
@@ -334,59 +344,64 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   }
 
   Widget _buildTable() {
-    final canSelect = isActive && rows.length > 1;
     final tableColumns = [
-      WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters[1]),
+      WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+      WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
+      WidgetsTableColumn(
+        label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
+        size: ColumnSize.M,
+        onSort: sortableSorters["rrAmount"],
+      ),
       WidgetsTableColumn(
         label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
         size: ColumnSize.S,
-        onSort: sortableSorters[2],
+        onSort: sortableSorters["balance"],
       ),
       WidgetsTableColumn(
         label: WidgetsHeader(title: 'Balance ', subtitle: 'USDT'),
         size: ColumnSize.S,
-        onSort: sortableSorters[3],
+        onSort: sortableSorters["balance"],
       ),
-      WidgetsTableColumn(label: Text('Exchanged Rate '), size: ColumnSize.M, onSort: sortableSorters[4]),
+      WidgetsTableColumn(label: Text('Exchanged Rate '), size: ColumnSize.M, onSort: sortableSorters["rate"]),
       WidgetsTableColumn(
         size: ColumnSize.S,
         label: WidgetsHeader(title: 'Capital Used '),
-        onSort: sortableSorters[5],
+        onSort: sortableSorters["capital"],
       ),
-      WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters[6]),
-      DataColumn2(label: Text('Actions'), fixedWidth: 100),
+      WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters["status"]),
+      DataColumn2(label: Text('Actions '), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {
       final tx = r['tx'] as TransactionsModel;
       final canSelect = tx.isActive || tx.isPartial;
 
       return DataRow2(
-        key: ValueKey(r['uuid']),
-        selected: canSelect ? selectableIsSelected(r['uuid']) : false,
+        key: ValueKey(tx.uuid),
+        selected: canSelect ? selectableIsSelected(tx.uuid) : false,
         onSelectChanged: canSelect
             ? (v) {
-                selectableSetSelected(r['uuid'], v!);
+                selectableSetSelected(tx.uuid, v!);
                 _calculateProfitLoss();
                 sortableApplySorting();
               }
             : null,
         onTap: () {
-          TransactionsDialogsDetails.show(context, r['tx']);
+          TransactionsDialogsDetails.show(context, tx);
         },
         cells: [
-          DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
+          DataCell(WidgetsWithTooltip(Text(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
           DataCell(Text(r['source'])),
-          DataCell(Text(r['balance'])),
-          DataCell(Text(r['currentUsdValue'])),
-          DataCell(Text(r['exchangedRate'])),
-          DataCell(Text(r['capitalUsed'])),
+          DataCell(Text(tx.rrAmountText)),
+          DataCell(Text(tx.balanceText)),
+          DataCell(Text(r['usd'])),
+          DataCell(Text(r['rate'])),
+          DataCell(Text(r['capital'])),
           DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
           DataCell(
             TransactionsWidgetsButtonsAction(
               parentContext: context,
               key: Key("action-${tx.uuid}"),
-              tx: r['tx'],
+              tx: tx,
               cryptosController: _cryptosController,
               txController: txController,
               isTradable: fxsIsTradable(tx),
@@ -417,8 +432,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
           key: Key("table-overview-${widget.id}"),
           headingCheckboxTheme: widget.theme.checkboxTheme,
           datarowCheckboxTheme: widget.theme.checkboxTheme,
-          showHeadingCheckBox: canSelect,
-          showCheckboxColumn: canSelect,
+          showHeadingCheckBox: isActive,
+          showCheckboxColumn: isActive,
           minWidth: 1200,
           columnSpacing: 12,
           horizontalMargin: 12,
@@ -446,25 +461,16 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       final rootSymbol = _cryptosController.getSymbol(root?.srId ?? 0);
 
       rx.add({
-        'balance': '${tx.balanceText} $_resultSymbol',
-        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol to ${tx.rrAmountText} $_resultSymbol',
-        'exchangedRate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
-        'status': tx.statusText,
-        'date': tx.timestampAsFormattedDate,
+        'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol',
+        'rate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
+        'usd': usdValue != Decimal.zero ? Utils.formatSmartDecimal(usdValue, limitDecimals: 2) : '-',
+        'capital': "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
         'tx': tx,
-        'uuid': tx.uuid,
-        'note': tx.noteText,
-        'currentUsdValue': usdValue != Decimal.zero ? Utils.formatSmartDecimal(usdValue, limitDecimals: 2) : '-',
-        'capitalUsed': "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
 
-        '_note': tx.noteText,
-        '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.balance.toDouble(),
-        '_sourceValue': tx.srAmount.toDouble(),
-        '_exchangedRateValue': tx.rate.toDouble(),
-        '_currentUsdValue': usdValue.toDouble(),
+        '_usd': usdValue.toDouble(),
         '_capitalUsed': capitalUsed.toDouble(),
         '_capitalSymbol': rootSymbol,
+        '_sourceSymbol': sourceCoinSymbol,
       });
     }
 

@@ -15,6 +15,7 @@ mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
       final raw = states.get("[np]-$selectableKey-selected-rows", defaultValue: []) as List<dynamic>;
       selectableSelectedRows = raw.map((e) => e.toString()).toList();
       selectableGroupRows!.addListener(_selectableOnGroupChange);
+
       if (selectableGroupRows != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && selectableGroupRows != null) {
@@ -59,18 +60,20 @@ mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
   void selectableSetSelected(String key, bool selected) {
     if (selected) {
       selectableSelectedRows.add(key);
-      if (selectableGroupRows != null) {
+      if (selectableGroupRows != null && !selectableGroupRows!.value.contains(key)) {
         selectableGroupRows!.value = [...selectableGroupRows!.value, key];
       }
     } else {
       selectableSelectedRows.remove(key);
-      if (selectableGroupRows != null) {
+      if (selectableGroupRows != null && selectableGroupRows!.value.contains(key)) {
         selectableGroupRows!.value = selectableGroupRows!.value.where((e) => e != key).toList();
       }
     }
     if (selectableKey.isNotEmpty) {
       states.set("[np]-$selectableKey-selected-rows", selectableSelectedRows);
     }
+
+    setState(() {});
   }
 
   bool selectableIsSelected(String key) {

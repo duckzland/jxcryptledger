@@ -3,25 +3,29 @@ import 'package:flutter/material.dart';
 import 'table.dart';
 
 mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
+  String sortableColumnKey = "";
   int sortableColumnIndex = 0;
   bool sortableAscending = false;
   bool sortableShouldRefresh = true;
   String get sortableKey => "";
 
-  late Map<int, Function(int col, bool asc)> sortableSorters = {};
+  late Map<String, Function(int col, bool asc)> sortableSorters = {};
 
   @override
   void initState() {
     super.initState();
+    sortableColumnKey = sortableSorters.isEmpty ? "" : sortableSorters.keys.first;
+
     if (sortableKey.isNotEmpty) {
       sortableColumnIndex = states.get("[np]-$sortableKey-sortable-column-index", defaultValue: 0);
+      sortableColumnKey = states.get("[np]-$sortableKey-sortable-column-key", defaultValue: sortableColumnKey);
       sortableAscending = states.get("[np]-$sortableKey-sortable-ascending", defaultValue: false);
     }
   }
 
   void sortableAfterSorting() {}
 
-  void sortableOnSort<U>(U Function(Map<String, dynamic> d) getField, int columnIndex, bool ascending) {
+  void sortableOnSort<U>(U Function(Map<String, dynamic> d) getField, String sortKey, int columnIndex, bool ascending) {
     rows.sort((a, b) {
       final aField = getField(a);
       final bField = getField(b);
@@ -39,10 +43,12 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
           : Comparable.compare(bField as Comparable, aField as Comparable);
     });
 
+    sortableColumnKey = sortKey;
     sortableColumnIndex = columnIndex;
     sortableAscending = ascending;
 
     if (sortableKey.isNotEmpty) {
+      states.set("[np]-$sortableKey-sortable-column-key", sortableColumnKey);
       states.set("[np]-$sortableKey-sortable-column-index", sortableColumnIndex);
       states.set("[np]-$sortableKey-sortable-ascending", sortableAscending);
     }
@@ -58,7 +64,7 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
     if (pauseRefresh) {
       sortableShouldRefresh = false;
     }
-    final sorter = sortableSorters[sortableColumnIndex];
+    final sorter = sortableSorters[sortableColumnKey];
     if (sorter != null) {
       sorter(sortableColumnIndex, sortableAscending);
     }

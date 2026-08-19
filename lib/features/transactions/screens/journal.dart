@@ -72,12 +72,12 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     txs = _processTx();
 
     sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
-      2: (col, asc) => sortableOnSort((d) => (d['_balanceSymbol'] as String, d['_balanceValue'] as double), col, asc),
-      3: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_resultValue'] as double), col, asc),
-      4: (col, asc) => sortableOnSort((d) => (d['_rateSymbol'] as String, d['_rateValue'] as double), col, asc),
-      5: (col, asc) => sortableOnSort((d) => d['status'] as String, col, asc),
+      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].sanitizedTimestamp, "timestamp", col, asc),
+      "srAmount": (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['tx'].srAmount.toDouble()), "srAmount", col, asc),
+      "rrAmount": (col, asc) => sortableOnSort((d) => (d['_balanceSymbol'] as String, d['tx'].rrAmount.toDouble()), "rrAmount", col, asc),
+      "balance": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].balance.toDouble()), "balance", col, asc),
+      "rate": (col, asc) => sortableOnSort((d) => (d['_rateSymbol'] as String, d['tx'].rate.toDouble()), "rate", col, asc),
+      "status": (col, asc) => sortableOnSort((d) => d['tx'].statusText, "status", col, asc),
     };
 
     rows = _buildRows();
@@ -153,23 +153,24 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
           child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         ),
         columns: [
-          WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters[1]),
-          WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters[2]),
-          WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters[3]),
-          WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.S, onSort: sortableSorters[4]),
-          WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters[5]),
+          WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+          WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
+          WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters["rrAmount"]),
+          WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters["balance"]),
+          WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.S, onSort: sortableSorters["rate"]),
+          WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters["status"]),
           WidgetsTableColumn(label: Text('Actions '), fixedWidth: 100),
         ],
         rows: rows.map((r) {
           final tx = r['tx'] as TransactionsModel;
+
           return DataRow2(
-            key: ValueKey(r['uuid']),
+            key: ValueKey(tx.uuid),
             onTap: () {
               TransactionsDialogsDetails.show(context, tx);
             },
             cells: [
-              DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
+              DataCell(WidgetsWithTooltip(Text(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
               DataCell(Text(r['source'] ?? '')),
               DataCell(Text(r['result'] ?? '')),
               DataCell(Text(r['balance'] ?? '')),
@@ -207,24 +208,15 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
       rx.add({
-        'date': tx.timestampAsFormattedDate,
         'balance': '${tx.balanceText} $resultSymbol',
         'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceSymbol',
         'result': tx.isCapital ? ' - ' : '${tx.rrAmountText} $resultSymbol',
         'rate': tx.isCapital ? ' - ' : '${tx.rateText} $resultSymbol/$sourceSymbol',
-        'status': tx.statusText,
         'tx': tx,
-        'note': tx.noteText,
-        'uuid': tx.uuid,
 
-        '_timestamp': tx.sanitizedTimestamp,
-        '_balanceValue': tx.rrAmount.toDouble(),
         '_balanceSymbol': resultSymbol,
-        '_sourceValue': tx.srAmount.toDouble(),
         '_sourceSymbol': sourceSymbol,
-        '_resultValue': tx.rrAmount.toDouble(),
         '_resultSymbol': resultSymbol,
-        '_rateValue': tx.rate.toDouble(),
         '_rateSymbol': "$resultSymbol/$sourceSymbol",
       });
     }

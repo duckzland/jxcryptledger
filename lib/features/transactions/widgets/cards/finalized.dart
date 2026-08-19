@@ -106,11 +106,12 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
     sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => d['_timestamp'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['_sourceValue'] as double), col, asc),
-      2: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_balanceValue'] as double), col, asc),
-      3: (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['_exchangedRateValue'] as double), col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, col, asc),
+      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].sanitizedTimestamp, "timestamp", col, asc),
+      "srAmount": (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['tx'].srAmount.toDouble()), "srAmount", col, asc),
+      "rrAmount": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].rrAmount.toDouble()), "rrAmount", col, asc),
+      "balance": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].balance.toDouble()), "balance", col, asc),
+      "rate": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].rate.toDouble()), "rate", col, asc),
+      "capital": (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, "capital", col, asc),
     };
 
     checkForClosable();
@@ -281,38 +282,40 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
   Widget _buildTable() {
     final tableColumns = [
-      WidgetsTableColumn(label: Text('Date'), fixedWidth: 100, onSort: sortableSorters[0]),
-      WidgetsTableColumn(label: Text('From'), size: ColumnSize.M, onSort: sortableSorters[1]),
-      WidgetsTableColumn(label: Text('To'), size: ColumnSize.M, onSort: sortableSorters[2]),
-      WidgetsTableColumn(label: Text('Rate'), size: ColumnSize.M, onSort: sortableSorters[3]),
-      WidgetsTableColumn(label: Text('Capital Used'), size: ColumnSize.M, onSort: sortableSorters[4]),
-      DataColumn2(label: Text('Actions'), fixedWidth: 100),
+      WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+      WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
+      WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters["rrAmount"]),
+      WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters["balance"]),
+      WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.M, onSort: sortableSorters["rate"]),
+      WidgetsTableColumn(label: Text('Capital Used '), size: ColumnSize.M, onSort: sortableSorters["capital"]),
+      DataColumn2(label: Text('Actions '), fixedWidth: 100),
     ];
     final tableRows = rows.map((r) {
       final tx = r['tx'] as TransactionsModel;
 
       return DataRow2(
-        key: ValueKey(r['uuid']),
-        selected: selectableIsSelected(r['uuid']),
+        key: ValueKey(tx.uuid),
+        selected: selectableIsSelected(tx.uuid),
         onSelectChanged: (v) {
-          selectableSetSelected(r['uuid'], v!);
+          selectableSetSelected(tx.uuid, v!);
           _calculatePanelData();
           sortableApplySorting();
         },
         onTap: () {
-          TransactionsDialogsDetails.show(context, r['tx']);
+          TransactionsDialogsDetails.show(context, tx);
         },
         cells: [
-          DataCell(WidgetsWithTooltip(Text(r['date']), r['note'], tx.meta['accent_color'])),
+          DataCell(WidgetsWithTooltip(Text(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
           DataCell(Text(r['from'])),
           DataCell(Text(r['to'])),
+          DataCell(Text(r['balance'])),
           DataCell(Text(r['rate'])),
-          DataCell(Text(r['capitalUsed'])),
+          DataCell(Text(r['capital'])),
           DataCell(
             TransactionsWidgetsButtonsAction(
               parentContext: context,
               key: Key("action-${tx.uuid}"),
-              tx: r['tx'],
+              tx: tx,
               cryptosController: _cryptosController,
               txController: txController,
               isTradable: fxsIsTradable(tx),
@@ -373,17 +376,12 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         'date': tx.timestampAsFormattedDate,
         'from': '${tx.srAmountText} $sourceCoinSymbol',
         'to': '${tx.rrAmountText} $resultCoinSymbol',
+        'balance': '${tx.balanceText} $resultCoinSymbol',
         'rate': '${tx.rateText} $sourceCoinSymbol/$resultCoinSymbol',
-        'capitalUsed': "${Utils.formatSmartDecimal(capitalUsed)} $_resultSymbol",
+        'capital': "${Utils.formatSmartDecimal(capitalUsed)} $_resultSymbol",
         'tx': tx,
-        'uuid': tx.uuid,
-        'note': tx.noteText,
 
-        '_note': tx.noteText,
-        '_timestamp': tx.sanitizedTimestamp,
         '_capitalUsed': capitalUsed.toDouble(),
-        '_balanceValue': tx.balance.toDouble(),
-        '_sourceValue': tx.srAmount.toDouble(),
         '_exchangedRateValue': tx.rate.toDouble(),
         '_sourceSymbol': sourceCoinSymbol,
         '_resultSymbol': resultCoinSymbol,

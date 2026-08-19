@@ -65,13 +65,13 @@ class _WatchersPageState extends State<WatchersPage>
 
     txs = _wxController.items;
     sortableSorters = {
-      0: (col, asc) => sortableOnSort((d) => d['_srId'] as int, col, asc),
-      1: (col, asc) => sortableOnSort((d) => d['_rrId'] as int, col, asc),
-      2: (col, asc) => sortableOnSort((d) => d['_ops'] as int, col, asc),
-      3: (col, asc) => sortableOnSort((d) => d['_rate'] as double, col, asc),
-      4: (col, asc) => sortableOnSort((d) => d['_sent'] as int, col, asc),
-      5: (col, asc) => sortableOnSort((d) => d['_limit'] as int, col, asc),
-      6: (col, asc) => sortableOnSort((d) => d['_duration'] as int, col, asc),
+      "srId": (col, asc) => sortableOnSort((d) => d['tx'].srId, "srId", col, asc),
+      "rrId": (col, asc) => sortableOnSort((d) => d['tx'].rrId, "rrId", col, asc),
+      "ops": (col, asc) => sortableOnSort((d) => d['tx'].operatorText, "ops", col, asc),
+      "rate": (col, asc) => sortableOnSort((d) => d['tx'].rates, "rate", col, asc),
+      "sent": (col, asc) => sortableOnSort((d) => d['tx'].sent, "sent", col, asc),
+      "limit": (col, asc) => sortableOnSort((d) => d['tx'].limit, "limit", col, asc),
+      "duration": (col, asc) => sortableOnSort((d) => d['tx'].duration, "duration", col, asc),
     };
 
     rows = _buildRows();
@@ -247,28 +247,29 @@ class _WatchersPageState extends State<WatchersPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: Text("From "), onSort: sortableSorters[0]),
-          WidgetsTableColumn(label: Text("To "), onSort: sortableSorters[1]),
-          WidgetsTableColumn(label: Text("Ops "), onSort: sortableSorters[2]),
-          WidgetsTableColumn(label: Text("Rate "), onSort: sortableSorters[3]),
-          WidgetsTableColumn(label: Text("Sent "), onSort: sortableSorters[4]),
-          WidgetsTableColumn(label: Text("Limit "), onSort: sortableSorters[5]),
-          WidgetsTableColumn(label: Text("Duration "), onSort: sortableSorters[6]),
+          WidgetsTableColumn(label: Text("From "), onSort: sortableSorters["srId"]),
+          WidgetsTableColumn(label: Text("To "), onSort: sortableSorters["rrId"]),
+          WidgetsTableColumn(label: Text("Ops "), onSort: sortableSorters["ops"]),
+          WidgetsTableColumn(label: Text("Rate "), onSort: sortableSorters["rate"]),
+          WidgetsTableColumn(label: Text("Sent "), onSort: sortableSorters["sent"]),
+          WidgetsTableColumn(label: Text("Limit "), onSort: sortableSorters["limit"]),
+          WidgetsTableColumn(label: Text("Duration "), onSort: sortableSorters["duration"]),
           DataColumn2(label: Text("Action "), fixedWidth: 110),
         ],
         rows: table.map((r) {
+          final WatchersModel tx = r['tx'];
           return DataRow(
             cells: [
-              DataCell(Text(r['from'])),
-              DataCell(Text(r['to'])),
-              DataCell(Text(r['ops'])),
-              DataCell(Text(r['rate'])),
-              DataCell(Text(r['sent'])),
-              DataCell(Text(r['limit'])),
-              DataCell(Text(r['duration'])),
+              DataCell(Text(_cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin')),
+              DataCell(Text(_cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin')),
+              DataCell(Text(tx.operatorText)),
+              DataCell(Text(Utils.formatSmartDecimal(tx.rates))),
+              DataCell(Text(tx.sent.toString())),
+              DataCell(Text(tx.limit.toString())),
+              DataCell(Text("${tx.duration}m")),
               DataCell(
                 WatchersButtons(
-                  tx: r['tx'],
+                  tx: tx,
                   wxController: _wxController,
                   onAction: () {
                     setState(() {});
@@ -286,29 +287,7 @@ class _WatchersPageState extends State<WatchersPage>
     final rx = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
-      final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-
-      rx.add({
-        'from': sourceSymbol,
-        'to': resultSymbol,
-        'ops': tx.operatorText,
-        'rate': Utils.formatSmartDecimal(tx.rates),
-        'sent': tx.sent.toString(),
-        'limit': tx.limit.toString(),
-        'duration': "${tx.duration}m",
-        'tx': tx,
-
-        'uuid': tx.uuid,
-
-        '_srId': tx.srId,
-        '_rrId': tx.rrId,
-        '_ops': tx.operator,
-        '_rate': tx.rates.toDouble(),
-        '_sent': tx.sent,
-        '_limit': tx.limit,
-        '_duration': tx.duration,
-      });
+      rx.add({'tx': tx});
     }
 
     return rx;
