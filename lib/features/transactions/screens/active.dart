@@ -12,6 +12,7 @@ import '../controller.dart';
 import '../mixins/flags.dart';
 import '../widgets/cards/active.dart';
 import '../model.dart';
+import '../widgets/balance_bar.dart';
 
 class TransactionsActiveView extends StatefulWidget {
   final List<TransactionsModel> transactions;
@@ -41,6 +42,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   late final CryptosController _cryptosController;
   late List<TransactionsModel> txs;
 
+  ValueNotifier<List<String>> selectableGroup = ValueNotifier([]);
   Map<String, List<TransactionsModel>> groups = {};
   List<String> groupKeys = [];
 
@@ -168,51 +170,57 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     final separator = EdgeInsets.only(bottom: scrollToGroupGetSeparatorHeight());
     final theme = Theme.of(context);
 
-    return ListView.custom(
-      controller: scrollToUtil.controller,
-      scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
-      itemExtentBuilder: (index, dimensions) {
-        final key = groupKeys[index];
-        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent) + scrollToGroupGetSeparatorHeight();
-      },
-      childrenDelegate: SliverChildBuilderDelegate(
-        (BuildContext itemContext, int idx) {
-          final key = groupKeys[idx];
-          final parts = key.split('-');
+    return Stack(
+      children: [
+        ListView.custom(
+          controller: scrollToUtil.controller,
+          scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
+          itemExtentBuilder: (index, dimensions) {
+            final key = groupKeys[index];
+            return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent) + scrollToGroupGetSeparatorHeight();
+          },
+          childrenDelegate: SliverChildBuilderDelegate(
+            (BuildContext itemContext, int idx) {
+              final key = groupKeys[idx];
+              final parts = key.split('-');
 
-          final srId = int.parse(parts[0]);
-          final rrId = int.parse(parts[1]);
-          final stxs = groups[key]!;
+              final srId = int.parse(parts[0]);
+              final rrId = int.parse(parts[1]);
+              final stxs = groups[key]!;
 
-          return Padding(
-            padding: separator,
-            child: TransactionsWidgetsCardsActive(
-              key: ValueKey(key),
-              srid: srId,
-              rrid: rrId,
-              transactions: stxs,
-              txsFlags: widget.txsFlags,
-              onStatusChanged: widget.onStatusChanged,
-              onToggleChanged: _toggleAction,
-              parentContext: context,
-              theme: theme,
-              isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
-              scrollController: scrollToUtil.controller,
-            ),
-          );
-        },
-        childCount: groupKeys.length,
-        addAutomaticKeepAlives: true,
-        findChildIndexCallback: (Key key) {
-          if (key is ValueKey<String>) {
-            final targetIdx = groupKeys.indexWhere((k) => k == key.value);
-            if (targetIdx != -1) {
-              return targetIdx;
-            }
-          }
-          return null;
-        },
-      ),
+              return Padding(
+                padding: separator,
+                child: TransactionsWidgetsCardsActive(
+                  key: ValueKey(key),
+                  srid: srId,
+                  rrid: rrId,
+                  transactions: stxs,
+                  txsFlags: widget.txsFlags,
+                  onStatusChanged: widget.onStatusChanged,
+                  onToggleChanged: _toggleAction,
+                  parentContext: context,
+                  theme: theme,
+                  isOpen: states.get("tx-group-active-open-$key", defaultValue: true),
+                  scrollController: scrollToUtil.controller,
+                  selectableGroup: selectableGroup,
+                ),
+              );
+            },
+            childCount: groupKeys.length,
+            addAutomaticKeepAlives: true,
+            findChildIndexCallback: (Key key) {
+              if (key is ValueKey<String>) {
+                final targetIdx = groupKeys.indexWhere((k) => k == key.value);
+                if (targetIdx != -1) {
+                  return targetIdx;
+                }
+              }
+              return null;
+            },
+          ),
+        ),
+        TransactionsWidgetsBalanceBar(data: selectableGroup),
+      ],
     );
   }
 

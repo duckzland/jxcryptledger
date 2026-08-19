@@ -34,6 +34,7 @@ class TransactionsWidgetsCardsOverview extends StatefulWidget {
   final int id;
   final List<TransactionsModel> transactions;
   final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
+  final ValueNotifier<List<String>> selectableGroup;
 
   final VoidCallback onStatusChanged;
   final VoidCallback onToggleChanged;
@@ -57,6 +58,7 @@ class TransactionsWidgetsCardsOverview extends StatefulWidget {
     required this.onToggleChanged,
     required this.isOpen,
     required this.scrollController,
+    required this.selectableGroup,
   });
 
   @override
@@ -93,6 +95,9 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
   @override
   String get selectableKey => "tx-group-overview-${widget.id}";
+
+  @override
+  ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override
   void initState() {

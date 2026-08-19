@@ -34,7 +34,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
     return IconButton(
       icon: Icon(Icons.keyboard_double_arrow_up),
       iconSize: 16,
-      constraints: BoxConstraints(),
+      constraints: const BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -47,7 +47,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
     return IconButton(
       icon: Icon(Icons.copy),
       iconSize: 16,
-      constraints: BoxConstraints(),
+      constraints: const BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -60,7 +60,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
     return IconButton(
       icon: Icon(Icons.close),
       iconSize: 16,
-      constraints: BoxConstraints(),
+      constraints: const BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -73,7 +73,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
     return IconButton(
       icon: Icon(Icons.swap_horiz),
       iconSize: 16,
-      constraints: BoxConstraints(),
+      constraints: const BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,
@@ -86,7 +86,7 @@ mixin MixinsSuffix<T extends StatefulWidget> on State<T> {
     return IconButton(
       icon: Icon(Icons.download),
       iconSize: 16,
-      constraints: BoxConstraints(),
+      constraints: const BoxConstraints(),
       visualDensity: VisualDensity.compact,
       mouseCursor: SystemMouseCursors.click,
       tooltip: tooltip,

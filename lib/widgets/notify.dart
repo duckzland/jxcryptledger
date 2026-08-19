@@ -21,7 +21,7 @@ void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
       content: Text(
         msg,
         textAlign: TextAlign.center,
-        style: TextStyle(color: AppTheme.notifyFgSuccess, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'Inter'),
+        style: TextStyle(color: AppTheme.notifyFgSuccess, fontWeight: AppTheme.notifyFontWeight, fontSize: AppTheme.notifyFontSize),
       ),
     ),
   );

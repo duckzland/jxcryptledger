@@ -40,6 +40,7 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
 
   final List<TransactionsModel> transactions;
   final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
+  final ValueNotifier<List<String>> selectableGroup;
 
   final VoidCallback onStatusChanged;
   final VoidCallback onToggleChanged;
@@ -64,6 +65,7 @@ class TransactionsWidgetsCardsActive extends StatefulWidget {
     required this.isOpen,
     required this.txsFlags,
     required this.scrollController,
+    required this.selectableGroup,
   });
 
   @override
@@ -131,6 +133,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
   @override
   String get selectableKey => cardKey;
+
+  @override
+  ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override
   void initState() {
@@ -362,8 +367,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   Widget _buildTable() {
     final canSelect = !isCapital && rows.length > 1;
 
-    final emptyColumn = DataColumn(label: SizedBox.shrink());
-    final emptyCell = DataCell(SizedBox.shrink());
+    final emptyColumn = DataColumn(label: const SizedBox.shrink());
+    final emptyCell = DataCell(const SizedBox.shrink());
 
     final tableColumns = [
       WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters[0]),

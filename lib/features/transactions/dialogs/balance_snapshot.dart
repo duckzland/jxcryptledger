@@ -239,11 +239,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
         columns: [
-          DataColumn2(label: SizedBox.shrink(), fixedWidth: 100),
-          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.M),
-          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
-          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
-          DataColumn2(label: SizedBox.shrink(), size: ColumnSize.S),
+          DataColumn2(label: const SizedBox.shrink(), fixedWidth: 100),
+          DataColumn2(label: const SizedBox.shrink(), size: ColumnSize.M),
+          DataColumn2(label: const SizedBox.shrink(), size: ColumnSize.S),
+          DataColumn2(label: const SizedBox.shrink(), size: ColumnSize.S),
+          DataColumn2(label: const SizedBox.shrink(), size: ColumnSize.S),
         ],
         rows: [
           DataRow(

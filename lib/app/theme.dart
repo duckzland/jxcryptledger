@@ -134,6 +134,9 @@ class AppTheme {
   static const notifyBgWarning = Color(0xFFEF6C00);
   static const notifyFgWarning = text;
 
+  static const notifyFontWeight = FontWeight.w600;
+  static const notifyFontSize = 14.0;
+
   static const double tableHeadingRowHeight = 50;
   static const double tableDataRowMinHeight = 42;
 
@@ -332,6 +335,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: borderRadius),
         behavior: SnackBarBehavior.floating,
         elevation: 6,
+        insetPadding: EdgeInsets.fromLTRB(15.0, 12.0, 15.0, 12.0),
         contentTextStyle: text500,
       ),
 

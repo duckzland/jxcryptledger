@@ -11,6 +11,7 @@ import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../mixins/flags.dart';
 import '../model.dart';
+import '../widgets/balance_bar.dart';
 import '../widgets/cards/overview.dart';
 
 class TransactionsOverviewView extends StatefulWidget {
@@ -42,6 +43,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
 
   late List<TransactionsModel> txs;
 
+  ValueNotifier<List<String>> selectableGroup = ValueNotifier([]);
   Map<String, List<TransactionsModel>> groups = {};
   List<String> groupKeys = [];
 
@@ -163,46 +165,52 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     final separator = EdgeInsets.only(bottom: scrollToGroupGetSeparatorHeight());
     final theme = Theme.of(context);
 
-    return ListView.custom(
-      controller: scrollToUtil.controller,
-      scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
-      itemExtentBuilder: (index, dimensions) {
-        final key = groupKeys[index];
-        return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent) + scrollToGroupGetSeparatorHeight();
-      },
-      childrenDelegate: SliverChildBuilderDelegate(
-        (BuildContext itemContext, int idx) {
-          final rrId = groupKeys[idx];
-          final stxs = groups[rrId]!;
+    return Stack(
+      children: [
+        ListView.custom(
+          controller: scrollToUtil.controller,
+          scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
+          itemExtentBuilder: (index, dimensions) {
+            final key = groupKeys[index];
+            return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent) + scrollToGroupGetSeparatorHeight();
+          },
+          childrenDelegate: SliverChildBuilderDelegate(
+            (BuildContext itemContext, int idx) {
+              final rrId = groupKeys[idx];
+              final stxs = groups[rrId]!;
 
-          return Padding(
-            padding: separator,
-            child: TransactionsWidgetsCardsOverview(
-              key: ValueKey(rrId),
-              id: int.parse(rrId),
-              transactions: stxs,
-              txsFlags: widget.txsFlags,
-              onStatusChanged: widget.onStatusChanged,
-              onToggleChanged: _toggleAction,
-              parentContext: context,
-              theme: theme,
-              isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
-              scrollController: scrollToUtil.controller,
-            ),
-          );
-        },
-        childCount: groupKeys.length,
-        addAutomaticKeepAlives: true,
-        findChildIndexCallback: (Key key) {
-          if (key is ValueKey<String>) {
-            final targetIdx = groupKeys.indexWhere((k) => k == key.value);
-            if (targetIdx != -1) {
-              return targetIdx;
-            }
-          }
-          return null;
-        },
-      ),
+              return Padding(
+                padding: separator,
+                child: TransactionsWidgetsCardsOverview(
+                  key: ValueKey(rrId),
+                  id: int.parse(rrId),
+                  transactions: stxs,
+                  txsFlags: widget.txsFlags,
+                  onStatusChanged: widget.onStatusChanged,
+                  onToggleChanged: _toggleAction,
+                  parentContext: context,
+                  theme: theme,
+                  isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
+                  scrollController: scrollToUtil.controller,
+                  selectableGroup: selectableGroup,
+                ),
+              );
+            },
+            childCount: groupKeys.length,
+            addAutomaticKeepAlives: true,
+            findChildIndexCallback: (Key key) {
+              if (key is ValueKey<String>) {
+                final targetIdx = groupKeys.indexWhere((k) => k == key.value);
+                if (targetIdx != -1) {
+                  return targetIdx;
+                }
+              }
+              return null;
+            },
+          ),
+        ),
+        TransactionsWidgetsBalanceBar(data: selectableGroup),
+      ],
     );
   }
 
