@@ -5,6 +5,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
+import '../../../widgets/numbers/flow.dart';
 import '../../rates/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -21,9 +22,10 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
     final snackTheme = Theme.of(context).snackBarTheme;
     final textStyle = snackTheme.contentTextStyle?.copyWith(fontWeight: AppTheme.notifyFontWeight, fontSize: AppTheme.notifyFontSize);
 
-    return ValueListenableBuilder<List<String>>(
-      valueListenable: data,
-      builder: (context, txIds, _) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([rateController, data]),
+      builder: (context, _) {
+        final txIds = data.value;
         final amount = _calculateAmount(txIds);
 
         if (txIds.isEmpty || amount.isEmpty) {
@@ -45,9 +47,7 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(child: Text("${txIds.length} transactions selected", style: textStyle)),
-
-                  Text("$amount USDT", style: textStyle),
-
+                  WidgetsNumbersFlow(begin: amount.toString(), end: amount.toString(), suffix: " USDT", style: textStyle!),
                   IconButton(
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
@@ -82,6 +82,7 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
     for (final tx in txs) {
       final rate = rateController.getStoredRate(tx.rrId, 825);
       if (rate <= Decimal.zero) {
+        rateController.addQueue(tx.rrId, 825, force: true);
         continue;
       }
 

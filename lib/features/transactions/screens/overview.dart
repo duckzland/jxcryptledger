@@ -209,7 +209,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
             },
           ),
         ),
-        TransactionsWidgetsBalanceBar(data: selectableGroup),
+        TransactionsWidgetsBalanceBar(key: ValueKey("tx-overview-balance-bar"), data: selectableGroup),
       ],
     );
   }

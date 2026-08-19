@@ -182,7 +182,7 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
             },
           ),
         ),
-        TransactionsWidgetsBalanceBar(data: selectableGroup),
+        TransactionsWidgetsBalanceBar(key: ValueKey("tx-finalized-balance-bar"), data: selectableGroup),
       ],
     );
   }

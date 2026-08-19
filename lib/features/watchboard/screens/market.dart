@@ -48,6 +48,9 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   String get marketFilterableKey => "px-group-market";
 
   @override
+  String get sortableDefaultKey => "rank";
+
+  @override
   void initState() {
     super.initState();
 

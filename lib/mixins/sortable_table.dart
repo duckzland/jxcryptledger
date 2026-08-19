@@ -3,18 +3,21 @@ import 'package:flutter/material.dart';
 import 'table.dart';
 
 mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
-  String sortableColumnKey = "";
   int sortableColumnIndex = 0;
   bool sortableAscending = false;
   bool sortableShouldRefresh = true;
+
+  String sortableColumnKey = "";
+
   String get sortableKey => "";
+  String get sortableDefaultKey => "";
 
   late Map<String, Function(int col, bool asc)> sortableSorters = {};
 
   @override
   void initState() {
     super.initState();
-    sortableColumnKey = sortableSorters.isEmpty ? "" : sortableSorters.keys.first;
+    sortableColumnKey = sortableDefaultKey;
 
     if (sortableKey.isNotEmpty) {
       sortableColumnIndex = states.get("[np]-$sortableKey-sortable-column-index", defaultValue: 0);

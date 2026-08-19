@@ -54,6 +54,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   String get sortableKey => "tx-group-journal";
 
   @override
+  String get sortableDefaultKey => "timestamp";
+
+  @override
   final scrollToUtil = ScrollTo('tx-group-offset-journal');
 
   @override

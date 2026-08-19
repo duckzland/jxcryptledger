@@ -135,6 +135,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   String get selectableKey => cardKey;
 
   @override
+  String get sortableDefaultKey => "timestamp";
+
+  @override
   ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override
@@ -167,7 +170,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       "rate": (col, asc) => sortableOnSort((d) => d['tx'].rate.toDouble(), "rate", col, asc),
       "current": (col, asc) => sortableOnSort((d) => d['_current'] as double, "current", col, asc),
       "profit": (col, asc) => sortableOnSort((d) => d['_profit'] as double, "profit", col, asc),
-      // "plPercentage": (col, asc) => sortableOnSort((d) => d['_profitLossPercentage'] as double, col, asc),
       "capital": (col, asc) => sortableOnSort((d) => (d['_capitalSymbol'] as String, d['_capitalUsed'] as double), "capital", col, asc),
       "status": (col, asc) => sortableOnSort((d) => d['tx'].statusText, "status", col, asc),
     };

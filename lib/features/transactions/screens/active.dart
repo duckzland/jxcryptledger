@@ -219,7 +219,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
             },
           ),
         ),
-        TransactionsWidgetsBalanceBar(data: selectableGroup),
+        TransactionsWidgetsBalanceBar(key: ValueKey("tx-active-balance-bar"), data: selectableGroup),
       ],
     );
   }

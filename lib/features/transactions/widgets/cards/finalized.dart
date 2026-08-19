@@ -91,6 +91,9 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   String get selectableKey => "tx-group-finalized-${widget.id}";
 
   @override
+  String get sortableDefaultKey => "timestamp";
+
+  @override
   ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override

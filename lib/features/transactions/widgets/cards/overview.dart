@@ -97,6 +97,9 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   String get selectableKey => "tx-group-overview-${widget.id}";
 
   @override
+  String get sortableDefaultKey => "timestamp";
+
+  @override
   ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override

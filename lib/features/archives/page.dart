@@ -62,6 +62,9 @@ class _ArchivesPageState extends State<ArchivesPage>
   final scrollToUtil = ScrollTo('ax-group-offset');
 
   @override
+  String get sortableDefaultKey => "timestamp";
+
+  @override
   void initState() {
     super.initState();
     _controller = CoreLocator.getit<ArchivesController>();

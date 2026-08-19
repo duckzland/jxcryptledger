@@ -54,6 +54,9 @@ class _WatchersPageState extends State<WatchersPage>
   String get sortableKey => "wx-group";
 
   @override
+  String get sortableDefaultKey => "srId";
+
+  @override
   final scrollToUtil = ScrollTo('wx-group-offset');
 
   @override
