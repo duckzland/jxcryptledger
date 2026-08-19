@@ -76,7 +76,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   late String _resultSymbol;
-  late List<TransactionsModel> txs;
 
   Decimal _capitalTotal = Decimal.zero;
   Decimal _capitalUsed = Decimal.zero;
