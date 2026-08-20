@@ -420,7 +420,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           WidgetsTableColumn(
             fixedWidth: 100,
             label: WidgetsHeader(title: 'P/L ', subtitle: "%"),
-            onSort: sortableSorters["profit"],
+            onSort: sortableSorters["profitPercentage"],
           ),
 
           WidgetsTableColumn(
@@ -587,6 +587,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
         '_current': currentValue.toDouble(),
         '_profit': profitLoss.toDouble(),
+        '_profitPercentage': profitLossPercentage.toDouble(),
         '_capitalUsed': capitalUsed.toDouble(),
         '_capitalSymbol': rootSymbol,
       });

@@ -116,7 +116,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
               WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true, selectable: true),
               WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true, selectable: true),
               WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true, selectable: true),
-              WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true, selectable: true),
+              WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true),
             ],
           );
         }
