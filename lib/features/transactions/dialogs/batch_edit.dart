@@ -14,6 +14,7 @@ import '../../../widgets/fields/accent_colors.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -184,9 +185,9 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
                 });
               },
               cells: [
-                DataCell(Text(r['date'] ?? '')),
-                DataCell(Text(r['transaction'] ?? '')),
-                DataCell(Text(r['balance'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
                 DataCell(Text(r['status'] ?? '')),
               ],
             );

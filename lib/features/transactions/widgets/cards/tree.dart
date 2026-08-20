@@ -285,6 +285,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
       title: _tx.isCapital ? "${_tx.srAmountText} $srSymbol" : "${_tx.srAmountText} → ${_tx.rrAmountText}",
       subtitle: _tx.isCapital ? "${_tx.timestampAsFormattedDate} | Capital" : "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
       reversed: true,
+      selectable: true,
     );
 
     return Listener(
@@ -309,13 +310,26 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 
-            if (showAvailable) WidgetsHeader(titleColor: _fgColor, title: _tx.balanceText, subtitle: "Avail. $rrSymbol", reversed: true),
+            if (showAvailable)
+              WidgetsHeader(titleColor: _fgColor, title: _tx.balanceText, subtitle: "Avail. $rrSymbol", reversed: true, selectable: true),
 
             if (showBalance)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_rBalance), subtitle: "Bal. $rrSymbol", reversed: true),
+              WidgetsHeader(
+                titleColor: _fgColor,
+                title: Utils.formatSmartDecimal(_rBalance),
+                subtitle: "Bal. $rrSymbol",
+                reversed: true,
+                selectable: true,
+              ),
 
             if (showFinalized)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_rFinalized), subtitle: "Fin. $rrSymbol", reversed: true),
+              WidgetsHeader(
+                titleColor: _fgColor,
+                title: Utils.formatSmartDecimal(_rFinalized),
+                subtitle: "Fin. $rrSymbol",
+                reversed: true,
+                selectable: true,
+              ),
 
             if (showBalance || _leavesClosed)
               WidgetsHeader(
@@ -325,6 +339,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
                     "(${_rProfit >= Decimal.zero ? '+' : ''}${Utils.formatSmartDecimal(_rProfitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
                 subtitle: "P/L $rrSymbol (%)",
                 reversed: true,
+                selectable: true,
               ),
           ],
         ),
@@ -366,11 +381,29 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
           mainAxisSize: MainAxisSize.min,
           spacing: 15,
           children: [
-            WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_capital), subtitle: "Cap. $srSymbol", reversed: true),
+            WidgetsHeader(
+              titleColor: _fgColor,
+              title: Utils.formatSmartDecimal(_capital),
+              subtitle: "Cap. $srSymbol",
+              reversed: true,
+              selectable: true,
+            ),
             if (_balance > Decimal.zero)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_balance), subtitle: "Bal. $srSymbol", reversed: true),
+              WidgetsHeader(
+                titleColor: _fgColor,
+                title: Utils.formatSmartDecimal(_balance),
+                subtitle: "Bal. $srSymbol",
+                reversed: true,
+                selectable: true,
+              ),
             if (_finalized > Decimal.zero)
-              WidgetsHeader(titleColor: _fgColor, title: Utils.formatSmartDecimal(_finalized), subtitle: "Fin. $srSymbol", reversed: true),
+              WidgetsHeader(
+                titleColor: _fgColor,
+                title: Utils.formatSmartDecimal(_finalized),
+                subtitle: "Fin. $srSymbol",
+                reversed: true,
+                selectable: true,
+              ),
             WidgetsHeader(
               titleColor: plColor,
               title:
@@ -378,6 +411,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
                   "(${_profit >= Decimal.zero ? '+' : ''}${Utils.formatSmartDecimal(_profitPercentage, maxDecimals: 2, smartDecimal: false)}%)",
               subtitle: "P/L $srSymbol (%)",
               reversed: true,
+              selectable: true,
             ),
           ],
         ),
@@ -410,7 +444,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
             final symbol = _cryptosController.getSymbol(entry.key) ?? '';
             final amount = Utils.formatSmartDecimal(entry.value);
 
-            return WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: "Bal. $symbol", reversed: true);
+            return WidgetsHeader(titleColor: _fgColor, title: amount, subtitle: "Bal. $symbol", reversed: true, selectable: true);
           }).toList(),
         ),
       ),

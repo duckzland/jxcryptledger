@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../text/selectable.dart';
+
 class WidgetsNumbersFlow extends StatelessWidget {
   final String? begin;
   final String end;
@@ -10,6 +12,8 @@ class WidgetsNumbersFlow extends StatelessWidget {
   final TextStyle style;
   final String prefix;
   final String suffix;
+
+  final bool selectable;
 
   const WidgetsNumbersFlow({
     super.key,
@@ -20,6 +24,7 @@ class WidgetsNumbersFlow extends StatelessWidget {
     this.duration = const Duration(milliseconds: 800),
     this.curve = Curves.easeInOut,
     this.style = const TextStyle(),
+    this.selectable = true,
   });
 
   @override
@@ -29,10 +34,10 @@ class WidgetsNumbersFlow extends StatelessWidget {
       duration: duration,
       curve: curve,
       builder: (context, value, child) {
-        Widget output = Text(
-          '$prefix$value$suffix',
-          style: style.copyWith(fontFeatures: [...(style.fontFeatures ?? []), const FontFeature.tabularFigures()]),
-        );
+        final textStyle = style.copyWith(fontFeatures: [...(style.fontFeatures ?? []), const FontFeature.tabularFigures()]);
+        final text = '$prefix$value$suffix';
+
+        Widget output = (selectable) ? WidgetsTextSelectable(text, style: textStyle) : Text(text, style: textStyle);
 
         if (value != end) {
           output = RepaintBoundary(child: output);

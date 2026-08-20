@@ -4,6 +4,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/text/selectable.dart';
 import 'controller.dart';
 import 'model.dart';
 
@@ -69,7 +70,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: tix.getContent() != ""
                 ? [
-                    Text(
+                    WidgetsTextSelectable(
                       tix.getTitle(),
                       softWrap: false,
                       overflow: TextOverflow.visible,

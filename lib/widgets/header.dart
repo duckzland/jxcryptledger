@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import 'text/selectable.dart';
 
 class WidgetsHeader extends StatelessWidget {
   final String? title;
@@ -12,6 +13,8 @@ class WidgetsHeader extends StatelessWidget {
   final bool reversed;
   final bool centered;
   final bool byside;
+
+  final bool selectable;
 
   final double titleFontSize;
   final double subtitleFontSize;
@@ -38,6 +41,8 @@ class WidgetsHeader extends StatelessWidget {
     this.byside = false,
     this.reversed = false,
     this.centered = false,
+    this.selectable = false,
+
     this.spacing = 1,
     this.children,
     this.child,
@@ -47,10 +52,16 @@ class WidgetsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> items = [
       if (title != null && title != "")
-        Text(
-          title!,
-          style: TextStyle(fontSize: titleFontSize, fontWeight: titleFontWeight, color: titleColor),
-        ),
+        (selectable)
+            ? WidgetsTextSelectable(
+                title!,
+                style: TextStyle(fontSize: titleFontSize, fontWeight: titleFontWeight, color: titleColor),
+              )
+            : Text(
+                title!,
+                style: TextStyle(fontSize: titleFontSize, fontWeight: titleFontWeight, color: titleColor),
+              ),
+
       if (subtitle != null && subtitle != "")
         Text(
           subtitle!,

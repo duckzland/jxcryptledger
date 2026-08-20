@@ -15,6 +15,7 @@ import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
 import '../../../../widgets/table/proxy.dart';
+import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../controller.dart';
@@ -235,15 +236,11 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     final capitalTotal = TransactionsWidgetsPanelItem(
       title: "Capital",
       subtitle: "${Utils.formatSmartDecimal(_capitalTotal)} $_resultSymbol",
-      value: 0,
-      comparator: 0,
     );
 
     final capitalFinalized = TransactionsWidgetsPanelItem(
       title: "Finalized",
       subtitle: "${Utils.formatSmartDecimal(_capitalUsed)} $_resultSymbol",
-      value: 0,
-      comparator: 0,
     );
 
     final finalizedPanels = _finalizedBalance.entries.map((e) {
@@ -251,7 +248,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
       final total = e.value;
       final symbol = _cryptosController.getSymbol(rrId) ?? "UNK";
 
-      return TransactionsWidgetsPanelItem(title: symbol, subtitle: Utils.formatSmartDecimal(total), value: 0, comparator: 0);
+      return TransactionsWidgetsPanelItem(title: symbol, subtitle: Utils.formatSmartDecimal(total));
     }).toList();
 
     return SizedBox(
@@ -298,12 +295,17 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
           TransactionsDialogsDetails.show(context, tx);
         },
         cells: [
-          DataCell(WidgetsWithTooltip(Text(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
-          DataCell(Text(r['from'])),
-          DataCell(Text(r['to'])),
-          DataCell(Text(r['balance'])),
-          DataCell(Text(r['rate'])),
-          DataCell(Text(r['capital'])),
+          DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
+          DataCell(WidgetsTextSelectable(r['from'])),
+
+          DataCell(WidgetsTextSelectable(r['to'])),
+
+          DataCell(WidgetsTextSelectable(r['balance'])),
+
+          DataCell(WidgetsTextSelectable(r['rate'])),
+
+          DataCell(WidgetsTextSelectable(r['capital'])),
+
           DataCell(
             TransactionsWidgetsButtonsAction(
               parentContext: context,

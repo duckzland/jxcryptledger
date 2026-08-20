@@ -14,13 +14,14 @@ import '../../../../mixins/selectable_table.dart';
 import '../../../../mixins/sortable_table.dart';
 import '../../../../mixins/state.dart';
 import '../../../../mixins/table.dart';
-import '../../../../widgets/balance_text.dart';
+import '../../../../widgets/text/balance.dart';
 import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
 import '../../../../widgets/table/proxy.dart';
+import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
@@ -445,23 +446,23 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       final canSelect = tx.isActive || tx.isPartial;
 
       List<DataCell> cells = [
-        DataCell(WidgetsWithTooltip(Text(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
-        DataCell(Text(tx.srAmountText)),
+        DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
+        DataCell(WidgetsTextSelectable(tx.srAmountText)),
       ];
 
       if (isCapital) {
-        cells = [...cells, DataCell(Text(tx.balanceText))];
+        cells = [...cells, DataCell(WidgetsTextSelectable(tx.balanceText))];
       } else {
         cells = [
           ...cells,
-          DataCell(Text(tx.rrAmountText)),
-          DataCell(Text(tx.balanceText)),
-          DataCell(Text(_isReversed ? tx.rateReversedText : tx.rateText)),
-          DataCell(WidgetsBalanceText(text: r['currentRate'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-          DataCell(WidgetsBalanceText(text: r['currentValue'] ?? "-", value: r['profitLevel'], comparator: 0, hidePrefix: true)),
-          DataCell(WidgetsBalanceText(text: r['profitLoss'] ?? "-", value: r['profitLevel'], comparator: 0)),
-          DataCell(WidgetsBalanceText(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'], comparator: 0)),
-          DataCell(Text(r['capitalUsed'] ?? '-')),
+          DataCell(WidgetsTextSelectable(tx.rrAmountText)),
+          DataCell(WidgetsTextSelectable(tx.balanceText)),
+          DataCell(WidgetsTextSelectable(_isReversed ? tx.rateReversedText : tx.rateText)),
+          DataCell(WidgetsTextBalance(text: r['currentRate'] ?? "-", value: r['profitLevel'], hidePrefix: true)),
+          DataCell(WidgetsTextBalance(text: r['currentValue'] ?? "-", value: r['profitLevel'], hidePrefix: true)),
+          DataCell(WidgetsTextBalance(text: r['profitLoss'] ?? "-", value: r['profitLevel'])),
+          DataCell(WidgetsTextBalance(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'])),
+          DataCell(WidgetsTextSelectable(r['capitalUsed'] ?? '-')),
         ];
       }
 
@@ -612,17 +613,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                   subtitle: isCapital
                       ? '${Utils.formatSmartDecimal(_totalBalance)} $_sourceSymbol'
                       : '${Utils.formatSmartDecimal(_totalSourceBalance)} $_sourceSymbol - ${Utils.formatSmartDecimal(_totalBalance)} $_resultSymbol',
-                  value: 0,
-                  comparator: 0,
                 ),
 
-                if (!isCapital)
-                  TransactionsWidgetsPanelItem(
-                    title: 'Avg Rate',
-                    subtitle: Utils.formatSmartDecimal(_averageRate),
-                    value: 0,
-                    comparator: 0,
-                  ),
+                if (!isCapital) TransactionsWidgetsPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDecimal(_averageRate)),
 
                 if (_plPercentage != Decimal.zero && !isCapital) ...[
                   if (_totalProfit != Decimal.zero && _totalLoss != Decimal.zero)
@@ -630,7 +623,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                       title: 'Profit',
                       subtitle: Utils.formatSmartDecimal(_totalProfit),
                       value: _totalProfit.toDouble(),
-                      comparator: 0,
                     ),
 
                   if (_totalProfit != Decimal.zero && _totalLoss != Decimal.zero)
@@ -638,21 +630,18 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
                       title: 'Loss',
                       subtitle: Utils.formatSmartDecimal(_totalLoss),
                       value: _totalLoss.toDouble(),
-                      comparator: 0,
                     ),
 
                   TransactionsWidgetsPanelItem(
                     title: 'Total P/L',
                     subtitle: "${Utils.formatSmartDecimal(_totalPL)} $_sourceSymbol",
                     value: _plPercentage.toDouble(),
-                    comparator: 0,
                   ),
 
                   TransactionsWidgetsPanelItem(
                     title: 'P/L %',
                     subtitle: '${Utils.formatSmartDecimal(_plPercentage, maxDecimals: 2)}%',
                     value: _plPercentage.toDouble(),
-                    comparator: 0,
                   ),
                 ],
               ],

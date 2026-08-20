@@ -13,6 +13,7 @@ import '../../../core/utils.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/fields/crypto_search.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 
 class ToolsConverterView extends StatefulWidget {
@@ -228,7 +229,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
+        WidgetsTextSelectable(
           "${Utils.formatSmartDecimal(source)} $sourceSymbol to $targetSymbol",
           style: TextStyle(fontSize: mini ? 13 : 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
@@ -240,11 +241,11 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
           style: TextStyle(fontSize: mini ? 28 : 42, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
 
-        Text(
+        WidgetsTextSelectable(
           "1 $targetSymbol = ${Utils.formatSmartDecimal(rate)} $sourceSymbol",
           style: TextStyle(fontSize: mini ? 12 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
-        Text(
+        WidgetsTextSelectable(
           "1 $sourceSymbol = ${Utils.formatSmartDecimal(reversedRate)} $targetSymbol",
           style: TextStyle(fontSize: mini ? 11 : 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),

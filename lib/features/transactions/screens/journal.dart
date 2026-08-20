@@ -9,6 +9,7 @@ import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/panel.dart';
 import '../../../widgets/table/column.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../mixins/sortable_table.dart';
@@ -163,11 +164,11 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
               TransactionsDialogsDetails.show(context, tx);
             },
             cells: [
-              DataCell(WidgetsWithTooltip(Text(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
-              DataCell(Text(r['source'] ?? '')),
-              DataCell(Text(r['result'] ?? '')),
-              DataCell(Text(r['balance'] ?? '')),
-              DataCell(Text(r['rate'] ?? '')),
+              DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
+              DataCell(WidgetsTextSelectable(r['source'] ?? '')),
+              DataCell(WidgetsTextSelectable(r['result'] ?? '')),
+              DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
+              DataCell(WidgetsTextSelectable(r['rate'] ?? '')),
               DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
               DataCell(
                 TransactionsWidgetsButtonsAction(

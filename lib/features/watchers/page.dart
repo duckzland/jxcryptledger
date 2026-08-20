@@ -23,7 +23,7 @@ import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
-import '../../widgets/table/column.dart';
+import '../../widgets/text/selectable.dart';
 import '../cryptos/controller.dart';
 import 'buttons.dart';
 import 'controller.dart';
@@ -250,26 +250,26 @@ class _WatchersPageState extends State<WatchersPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: Text("From "), onSort: sortableSorters["srId"]),
-          WidgetsTableColumn(label: Text("To "), onSort: sortableSorters["rrId"]),
-          WidgetsTableColumn(label: Text("Ops "), onSort: sortableSorters["ops"]),
-          WidgetsTableColumn(label: Text("Rate "), onSort: sortableSorters["rate"]),
-          WidgetsTableColumn(label: Text("Sent "), onSort: sortableSorters["sent"]),
-          WidgetsTableColumn(label: Text("Limit "), onSort: sortableSorters["limit"]),
-          WidgetsTableColumn(label: Text("Duration "), onSort: sortableSorters["duration"]),
+          DataColumn2(label: Text("From "), onSort: sortableSorters["srId"]),
+          DataColumn2(label: Text("To "), onSort: sortableSorters["rrId"]),
+          DataColumn2(label: Text("Ops "), onSort: sortableSorters["ops"]),
+          DataColumn2(label: Text("Rate "), onSort: sortableSorters["rate"]),
+          DataColumn2(label: Text("Sent "), onSort: sortableSorters["sent"]),
+          DataColumn2(label: Text("Limit "), onSort: sortableSorters["limit"]),
+          DataColumn2(label: Text("Duration "), onSort: sortableSorters["duration"]),
           DataColumn2(label: Text("Action "), fixedWidth: 110),
         ],
         rows: table.map((r) {
           final WatchersModel tx = r['tx'];
           return DataRow(
             cells: [
-              DataCell(Text(_cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin')),
-              DataCell(Text(_cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin')),
-              DataCell(Text(tx.operatorText)),
-              DataCell(Text(Utils.formatSmartDecimal(tx.rates))),
-              DataCell(Text(tx.sent.toString())),
-              DataCell(Text(tx.limit.toString())),
-              DataCell(Text("${tx.duration}m")),
+              DataCell(WidgetsTextSelectable(_cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin')),
+              DataCell(WidgetsTextSelectable(_cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin')),
+              DataCell(WidgetsTextSelectable(tx.operatorText)),
+              DataCell(WidgetsTextSelectable(Utils.formatSmartDecimal(tx.rates))),
+              DataCell(WidgetsTextSelectable(tx.sent.toString())),
+              DataCell(WidgetsTextSelectable(tx.limit.toString())),
+              DataCell(WidgetsTextSelectable("${tx.duration}m")),
               DataCell(
                 WatchersButtons(
                   tx: tx,

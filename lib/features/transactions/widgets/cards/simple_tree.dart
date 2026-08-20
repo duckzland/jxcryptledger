@@ -119,6 +119,7 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
       title: _tx.isCapital ? "${_tx.srAmountText} $srSymbol" : "${_tx.srAmountText} → ${_tx.rrAmountText}",
       subtitle: _tx.isCapital ? "${_tx.timestampAsFormattedDate} | Capital" : "${_tx.timestampAsFormattedDate} | $srSymbol - $rrSymbol",
       reversed: true,
+      selectable: true,
     );
 
     return Listener(
@@ -143,7 +144,8 @@ class _TransactionsWidgetsCardsSimpleTreeState extends State<TransactionsWidgets
 
             WidgetsHeader(titleColor: _fgColor, title: _tx.statusText, subtitle: "Status", reversed: true),
 
-            if (showAvailable) WidgetsHeader(titleColor: _fgColor, title: _tx.balanceText, subtitle: "Avail. $rrSymbol", reversed: true),
+            if (showAvailable)
+              WidgetsHeader(titleColor: _fgColor, title: _tx.balanceText, subtitle: "Avail. $rrSymbol", reversed: true, selectable: true),
           ],
         ),
       ),

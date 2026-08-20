@@ -21,6 +21,7 @@ import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -192,7 +193,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       });
     }
 
-    final rateText = Text(rateableAmount ?? "");
+    final rateText = WidgetsTextSelectable(rateableAmount ?? "");
     final checkboxTheme = Theme.of(context).checkboxTheme;
 
     return SizedBox(
@@ -231,11 +232,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     }
                   : null,
               cells: [
-                DataCell(Text(r['date'] ?? '')),
-                DataCell(Text(r['transaction'] ?? '')),
-                DataCell(Text(r['balance'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
                 if (showRate) DataCell(rateText),
-                if (showRate) DataCell(Text('${Utils.formatSmartDecimal(r['amount'] ?? Decimal.zero, smartDecimal: false)} $targetSymbol')),
+                if (showRate)
+                  DataCell(
+                    WidgetsTextSelectable('${Utils.formatSmartDecimal(r['amount'] ?? Decimal.zero, smartDecimal: false)} $targetSymbol'),
+                  ),
               ],
             );
           }),
@@ -265,10 +269,16 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         columns: [
           DataColumn2(label: Text('        Total'), fixedWidth: 130),
           DataColumn2(label: Text(' '), size: ColumnSize.M),
-          DataColumn2(label: Text('${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol'), size: ColumnSize.M),
+          DataColumn2(
+            label: WidgetsTextSelectable('${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol'),
+            size: ColumnSize.M,
+          ),
           if (showRate) DataColumn2(label: Text(''), size: ColumnSize.M),
           if (showRate)
-            DataColumn2(label: Text('${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol'), size: ColumnSize.M),
+            DataColumn2(
+              label: WidgetsTextSelectable('${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol'),
+              size: ColumnSize.M,
+            ),
         ],
         rows: [],
       ),

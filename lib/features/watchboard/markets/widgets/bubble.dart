@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
+import '../../../../widgets/text/selectable.dart';
 import '../model.dart';
 
 class WatchboardsMarketsWidgetsBubble extends StatefulWidget {
@@ -119,7 +120,7 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
                   ? AnimatedSwitcher(
                       duration: Duration(milliseconds: 200),
                       transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                      child: Text(
+                      child: WidgetsTextSelectable(
                         widget.tx.symbol.toUpperCase(),
                         key: ValueKey(widget.tx.symbol),
                         maxLines: 1,
@@ -127,10 +128,10 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
                         style: symbolStyle,
                       ),
                     )
-                  : Text(widget.tx.symbol.toUpperCase(), maxLines: 1, textAlign: TextAlign.center, style: symbolStyle),
+                  : WidgetsTextSelectable(widget.tx.symbol.toUpperCase(), maxLines: 1, textAlign: TextAlign.center, style: symbolStyle),
 
               if (showPercentage)
-                Text("${widget.value >= Decimal.zero ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
+                WidgetsTextSelectable("${widget.value >= Decimal.zero ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
             ],
           ),
         ),

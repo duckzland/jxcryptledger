@@ -8,8 +8,9 @@ import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
-import '../../../widgets/balance_text.dart';
+import '../../../widgets/text/balance.dart';
 import '../../../widgets/buttons/action.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
 import '../controller.dart';
@@ -205,11 +206,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             return DataRow(
               key: ValueKey(r['uuid']),
               cells: [
-                DataCell(Text(r['date'] ?? '')),
-                DataCell(Text(r['transaction'] ?? '')),
-                DataCell(Text(r['balance'] ?? '')),
-                DataCell(Text(r['rate'] ?? '')),
-                DataCell(Text(r['amount'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['rate'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['amount'] ?? '')),
               ],
             );
           }),
@@ -252,9 +253,9 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             cells: [
               DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataCell(Text("${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol", style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(WidgetsTextSelectable("${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol", style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataCell(Text(total, style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(WidgetsTextSelectable(total, style: TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
           DataRow(
@@ -263,7 +264,9 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             cells: [
               DataCell(Text('Profit/Loss', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataCell(WidgetsBalanceText(text: "${Utils.formatSmartDecimal(pl)} $tradeSourceSymbol", value: pl.toDouble(), comparator: 0)),
+              DataCell(
+                WidgetsTextBalance(text: "${Utils.formatSmartDecimal(pl)} $tradeSourceSymbol", value: pl.toDouble(), selectable: true),
+              ),
               DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
             ],

@@ -7,6 +7,7 @@ import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../../watchers/controller.dart';
 import 'controller.dart';
@@ -191,15 +192,21 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
     final text = tix.rate > Decimal.zero
         ? [
-            Text(fromText, style: fromStyle.copyWith(fontSize: fromFontSize)),
+            WidgetsTextSelectable(fromText, style: fromStyle.copyWith(fontSize: fromFontSize)),
             WidgetsNumbersFlow(
               begin: rate != null ? pv : null,
               end: tv,
               suffix: " $targetSymbol",
               style: toStyle.copyWith(fontSize: toFontSize),
             ),
-            Text("1 $sourceSymbol = $tr $targetSymbol", style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
-            Text("1 $targetSymbol = $rtr $sourceSymbol", style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400)),
+            WidgetsTextSelectable(
+              "1 $sourceSymbol = $tr $targetSymbol",
+              style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400),
+            ),
+            WidgetsTextSelectable(
+              "1 $targetSymbol = $rtr $sourceSymbol",
+              style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400),
+            ),
           ]
         : [
             Text(

@@ -10,6 +10,7 @@ import '../../../mixins/table.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/notify.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -227,7 +228,11 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                   selectableSetSelected(r['uuid'], v!);
                 });
               },
-              cells: [DataCell(Text(r['date'] ?? '')), DataCell(Text(r['transaction'] ?? '')), DataCell(Text(r['balance'] ?? ''))],
+              cells: [
+                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
+              ],
             );
           }),
         ],

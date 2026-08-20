@@ -8,7 +8,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
-import '../../../widgets/balance_text.dart';
+import '../../../widgets/text/balance.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/numbers/flow.dart';
@@ -298,7 +298,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
                   style: TextStyle(fontSize: mini ? 12 : 14, color: AppTheme.textMuted),
                 ),
                 SizedBox(width: 8),
-                WidgetsBalanceText(
+                WidgetsTextBalance(
                   text: "${Utils.formatSmartDecimal(profit)} $sourceSymbol",
                   value: resultValue.toDouble(),
                   comparator: source.toDouble(),

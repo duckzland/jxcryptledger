@@ -9,11 +9,12 @@ import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
-import '../../../widgets/balance_text.dart';
+import '../../../widgets/text/balance.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
 import '../../../widgets/separator.dart';
 import '../../../widgets/table/column.dart';
+import '../../../widgets/text/selectable.dart';
 import '../markets/controller.dart';
 import '../markets/mixins/filterable.dart';
 import '../markets/model.dart';
@@ -137,7 +138,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
               return DataRow2(
                 key: ValueKey(tx.uuid),
                 cells: [
-                  DataCell(Text(tx.rankText)),
+                  DataCell(WidgetsTextSelectable(tx.rankText)),
                   DataCell(
                     WidgetsHeader(
                       title: tx.name,
@@ -149,12 +150,12 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
                       subtitleFontSize: 10,
                     ),
                   ),
-                  DataCell(Text(tx.priceText)),
-                  DataCell(WidgetsBalanceText(text: tx.percent1hText, value: tx.percent1h?.toDouble() ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: tx.percent24hText, value: tx.percent24h?.toDouble() ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: tx.percent7dText, value: tx.percent7d?.toDouble() ?? 0, comparator: 0)),
-                  DataCell(WidgetsBalanceText(text: tx.percent30dText, value: tx.percent30d?.toDouble() ?? 0, comparator: 0)),
-                  DataCell(Text(tx.marketCapText)),
+                  DataCell(WidgetsTextSelectable(tx.priceText)),
+                  DataCell(WidgetsTextBalance(text: tx.percent1hText, value: tx.percent1h?.toDouble() ?? 0)),
+                  DataCell(WidgetsTextBalance(text: tx.percent24hText, value: tx.percent24h?.toDouble() ?? 0)),
+                  DataCell(WidgetsTextBalance(text: tx.percent7dText, value: tx.percent7d?.toDouble() ?? 0)),
+                  DataCell(WidgetsTextBalance(text: tx.percent30dText, value: tx.percent30d?.toDouble() ?? 0)),
+                  DataCell(WidgetsTextSelectable(tx.marketCapText)),
                 ],
               );
             }).toList(),

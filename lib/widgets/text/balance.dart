@@ -1,25 +1,28 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
-import '../app/theme.dart';
-import 'numbers/flow.dart';
+import '../../app/theme.dart';
+import '../numbers/flow.dart';
+import 'selectable.dart';
 
-class WidgetsBalanceText extends StatelessWidget {
+class WidgetsTextBalance extends StatelessWidget {
   final String text;
   final double value;
   final double comparator;
   final double? fontSize;
   final bool? hidePrefix;
   final bool? animated;
+  final bool? selectable;
   final FontWeight? fontWeight;
 
-  const WidgetsBalanceText({
+  const WidgetsTextBalance({
     super.key,
     required this.text,
-    required this.value,
-    required this.comparator,
+    this.value = 0.0,
+    this.comparator = 0.0,
     this.fontSize,
     this.hidePrefix,
     this.animated = false,
+    this.selectable = true,
     this.fontWeight,
   });
 
@@ -61,16 +64,22 @@ class WidgetsBalanceText extends StatelessWidget {
     final prefix = _prefixForMode(mode);
 
     if (animated == null || !animated!) {
-      return Text(
-        "$prefix$text",
-        style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
-      );
+      return selectable == true
+          ? WidgetsTextSelectable(
+              "$prefix$text",
+              style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
+            )
+          : Text(
+              "$prefix$text",
+              style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
+            );
     }
 
     return WidgetsNumbersFlow(
       begin: "",
       end: text,
       prefix: prefix,
+      selectable: selectable!,
       style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
     );
   }

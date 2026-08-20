@@ -17,6 +17,7 @@ import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
 import '../../../../widgets/table/proxy.dart';
+import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
@@ -279,43 +280,33 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                   TransactionsWidgetsPanelItem(
                     title: "Total Capital",
                     subtitle: "${Utils.formatSmartDecimal(_totalCapital)} $_resultSymbol",
-                    value: 0,
-                    comparator: 0,
                   ),
                 if (_currentUsd > Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Balance",
                     subtitle: "${Utils.formatSmartDecimal(_currentUsd, limitDecimals: 2)} USDT",
-                    value: 0,
-                    comparator: 0,
                   ),
                 if (_currentHolding > Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Current Balance",
                     subtitle: "${Utils.formatSmartDecimal(_currentHolding)} $_resultSymbol",
-                    value: 0,
-                    comparator: 0,
                   ),
                 if (_finalizedBalance > Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Finalized Balance",
                     subtitle: "${Utils.formatSmartDecimal(_finalizedBalance)} $_resultSymbol",
-                    value: 0,
-                    comparator: 0,
                   ),
                 if (_totalCapital > Decimal.zero && _profitLossPercentage != Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Profit/Loss",
                     subtitle: "${Utils.formatSmartDecimal(_profitLoss)} $_resultSymbol",
                     value: _profitLossPercentage.toDouble(),
-                    comparator: 0,
                   ),
                 if (_totalCapital > Decimal.zero && _profitLossPercentage != Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Profit/Loss %",
                     subtitle: "${Utils.formatSmartDecimal(_profitLossPercentage, maxDecimals: 2)}%",
                     value: _profitLossPercentage.toDouble(),
-                    comparator: 0,
                   ),
               ],
             ),
@@ -371,13 +362,19 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
           TransactionsDialogsDetails.show(context, tx);
         },
         cells: [
-          DataCell(WidgetsWithTooltip(Text(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
-          DataCell(Text(r['source'])),
-          DataCell(Text(tx.rrAmountText)),
-          DataCell(Text(tx.balanceText)),
-          DataCell(Text(r['usd'])),
-          DataCell(Text(r['rate'])),
-          DataCell(Text(r['capital'])),
+          DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
+          DataCell(WidgetsTextSelectable(r['source'])),
+
+          DataCell(WidgetsTextSelectable(tx.rrAmountText)),
+
+          DataCell(WidgetsTextSelectable(tx.balanceText)),
+
+          DataCell(WidgetsTextSelectable(r['usd'])),
+
+          DataCell(WidgetsTextSelectable(r['rate'])),
+
+          DataCell(WidgetsTextSelectable(r['capital'])),
+
           DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
           DataCell(
             TransactionsWidgetsButtonsAction(

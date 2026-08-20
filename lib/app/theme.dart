@@ -53,6 +53,7 @@ class AppTheme {
   static const headerBg = Color(0xFF161C27);
   static const separator = Color(0xFF2C3544);
   static const panelBg = Color(0xFF0D1421);
+  static const highlight = Color(0xFF1E3F73);
 
   static const scrollbarBg = Color(0xFF2A354A);
   static const mutedBg = Color(0xFF292F3B);
@@ -249,6 +250,8 @@ class AppTheme {
         headlineMedium: text500.copyWith(fontSize: 18),
         headlineLarge: text500.copyWith(fontSize: 20),
       ),
+
+      textSelectionTheme: TextSelectionThemeData(cursorColor: highlight, selectionColor: highlight, selectionHandleColor: highlight),
 
       colorScheme: const ColorScheme.dark(
         surface: background,

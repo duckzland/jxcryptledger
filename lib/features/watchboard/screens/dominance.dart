@@ -8,6 +8,7 @@ import '../../../app/theme.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/separator.dart';
+import '../../../widgets/text/selectable.dart';
 import '../markets/controller.dart';
 import '../markets/mixins/filterable.dart';
 import '../markets/model.dart';
@@ -98,7 +99,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
                     children: [
                       SizedBox(
                         width: 80.0,
-                        child: Text(
+                        child: WidgetsTextSelectable(
                           tx.symbol.toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.clip,
@@ -119,7 +120,7 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
 
                       SizedBox(
                         width: 40.0,
-                        child: Text(
+                        child: WidgetsTextSelectable(
                           tx.dominanceText,
                           maxLines: 1,
                           textAlign: TextAlign.left,

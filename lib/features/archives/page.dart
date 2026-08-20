@@ -20,8 +20,8 @@ import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
-import '../../widgets/table/column.dart';
 import '../../system/settings/controller.dart';
+import '../../widgets/text/selectable.dart';
 import '../cryptos/controller.dart';
 import '../transactions/controller.dart';
 import '../watchboard/panels/controller.dart';
@@ -226,8 +226,8 @@ class _ArchivesPageState extends State<ArchivesPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: [
-          WidgetsTableColumn(label: Text("Date "), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
-          WidgetsTableColumn(label: Text("Data Type "), fixedWidth: 120, onSort: sortableSorters["type"]),
+          DataColumn2(label: Text("Date "), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+          DataColumn2(label: Text("Data Type "), fixedWidth: 120, onSort: sortableSorters["type"]),
           DataColumn2(label: Text("Notes ")),
           DataColumn2(label: Text("Action "), fixedWidth: 80),
         ],
@@ -235,9 +235,9 @@ class _ArchivesPageState extends State<ArchivesPage>
           final tx = r['tx'] as ArchivesModel;
           return DataRow(
             cells: [
-              DataCell(Text(tx.timestampAsFormattedDate)),
-              DataCell(Text(tx.typeText)),
-              DataCell(Text(tx.meta['notes'] ?? "")),
+              DataCell(WidgetsTextSelectable(tx.timestampAsFormattedDate)),
+              DataCell(WidgetsTextSelectable(tx.typeText)),
+              DataCell(WidgetsTextSelectable(tx.meta['notes'] ?? "")),
               DataCell(
                 ArchivesButtons(
                   tx: tx,

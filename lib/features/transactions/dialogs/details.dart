@@ -43,6 +43,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
                 title: ((notes == null || notes.isEmpty) && (groupNotes == null || groupNotes.isEmpty)) ? "No notes available" : null,
                 subtitle: "Notes",
                 reversed: true,
+                selectable: true,
                 child: Column(
                   spacing: 10,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,19 +87,19 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: WidgetsHeader(title: tx.timestampAsFormattedDate, subtitle: "Date", reversed: true),
+                child: WidgetsHeader(title: tx.timestampAsFormattedDate, subtitle: "Date", reversed: true, selectable: true),
               ),
               Expanded(
-                child: WidgetsHeader(title: "${tx.srAmountText} $srSymbol", subtitle: "From", reversed: true),
+                child: WidgetsHeader(title: "${tx.srAmountText} $srSymbol", subtitle: "From", reversed: true, selectable: true  ),
               ),
               Expanded(
-                child: WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true),
+                child: WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true, selectable: true),
               ),
               Expanded(
-                child: WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true),
+                child: WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true, selectable: true),
               ),
               Expanded(
-                child: WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true),
+                child: WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true, selectable: true),
               ),
               Expanded(
                 child: WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true),
@@ -110,12 +111,12 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
             spacing: 20,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WidgetsHeader(title: tx.timestampAsFormattedDate, subtitle: "Date", reversed: true),
-              WidgetsHeader(title: "${tx.srAmountText} $srSymbol", subtitle: "From", reversed: true),
-              WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true),
-              WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true),
-              WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true),
-              WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true),
+              WidgetsHeader(title: tx.timestampAsFormattedDate, subtitle: "Date", reversed: true, selectable: true),
+              WidgetsHeader(title: "${tx.srAmountText} $srSymbol", subtitle: "From", reversed: true, selectable: true),
+              WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true, selectable: true),
+              WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true, selectable: true),
+              WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true, selectable: true),
+              WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true, selectable: true),
             ],
           );
         }
