@@ -10,6 +10,7 @@ import '../../ipc/client.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
 import '../../widgets/buttons/action.dart';
+import '../../widgets/context_menu.dart';
 import '../../widgets/header.dart';
 import 'controller.dart';
 
@@ -98,6 +99,12 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
       centered: true,
       children: [
         TextField(
+          contextMenuBuilder: (context, editableTextState) {
+            return WidgetsContextMenu(
+              anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+              buttonItems: editableTextState.contextMenuButtonItems,
+            );
+          },
           controller: _password,
           obscureText: !showPassword,
           readOnly: _isProcessing,
@@ -115,6 +122,12 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
         ),
 
         TextField(
+          contextMenuBuilder: (context, editableTextState) {
+            return WidgetsContextMenu(
+              anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+              buttonItems: editableTextState.contextMenuButtonItems,
+            );
+          },
           controller: _confirm,
           obscureText: !showPassword,
           readOnly: _isProcessing,
@@ -164,6 +177,12 @@ class _SystemUnlockPageState extends State<SystemUnlockPage> with IpcMixinsBroad
       centered: true,
       children: [
         TextField(
+          contextMenuBuilder: (context, editableTextState) {
+            return WidgetsContextMenu(
+              anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+              buttonItems: editableTextState.contextMenuButtonItems,
+            );
+          },
           controller: _password,
           obscureText: true,
           textInputAction: TextInputAction.done,

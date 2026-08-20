@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../context_menu.dart';
+
 class WidgetsFieldsDatepicker extends StatefulWidget {
   final String labelText;
   final DateTime initialDate;
@@ -40,6 +42,12 @@ class _WidgetsFieldsDatepickerState extends State<WidgetsFieldsDatepicker> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      contextMenuBuilder: (context, editableTextState) {
+        return WidgetsContextMenu(
+          anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+          buttonItems: editableTextState.contextMenuButtonItems,
+        );
+      },
       readOnly: true,
       enabled: widget.enabled,
       decoration: InputDecoration(labelText: widget.labelText),
@@ -60,7 +68,9 @@ class _WidgetsFieldsDatepickerState extends State<WidgetsFieldsDatepicker> {
           initialDate: _selectedDate ?? widget.initialDate,
           firstDate: widget.firstDate,
           lastDate: widget.lastDate,
+          initialEntryMode: DatePickerEntryMode.calendarOnly,
         );
+
         if (picked != null) {
           setState(() => _selectedDate = picked);
           widget.onSelected(picked);

@@ -7,6 +7,7 @@ import '../../../../widgets/fields/crypto_search.dart';
 import '../../../app/exceptions.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/buttons/action.dart';
+import '../../../widgets/context_menu.dart';
 import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
@@ -211,6 +212,12 @@ class _PanelsFormState extends State<PanelsForm> {
       subtitleFontSize: 13,
       spacing: 10,
       child: TextFormField(
+        contextMenuBuilder: (context, editableTextState) {
+          return WidgetsContextMenu(
+            anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+            buttonItems: editableTextState.contextMenuButtonItems,
+          );
+        },
         initialValue: _digit?.toString(),
         decoration: InputDecoration(labelText: "Digit"),
         keyboardType: TextInputType.number,

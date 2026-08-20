@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../context_menu.dart';
+
 class WidgetsTextSelectable extends StatelessWidget {
   final String text;
   final TextStyle? style;
@@ -8,29 +10,20 @@ class WidgetsTextSelectable extends StatelessWidget {
   final bool? softWrap;
   final TextOverflow? overflow;
 
-  const WidgetsTextSelectable(
-    this.text, {
-    super.key,
-    this.style,
-    this.textAlign,
-    this.maxLines,
-    this.softWrap,
-    this.overflow,
-  });
+  const WidgetsTextSelectable(this.text, {super.key, this.style, this.textAlign, this.maxLines, this.softWrap, this.overflow});
 
   @override
   Widget build(BuildContext context) {
     return SelectionArea(
+      contextMenuBuilder: (context, selectableRegionState) {
+        return WidgetsContextMenu(
+          anchor: selectableRegionState.contextMenuAnchors.primaryAnchor,
+          buttonItems: selectableRegionState.contextMenuButtonItems,
+        );
+      },
       child: DefaultSelectionStyle(
         mouseCursor: SystemMouseCursors.text,
-        child: Text(
-          text,
-          style: style,
-          textAlign: textAlign,
-          maxLines: maxLines,
-          softWrap: softWrap,
-          overflow: overflow,
-        ),
+        child: Text(text, style: style, textAlign: textAlign, maxLines: maxLines, softWrap: softWrap, overflow: overflow),
       ),
     );
   }

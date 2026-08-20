@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../context_menu.dart';
+
 class WidgetsFieldsTextarea extends StatefulWidget {
   final String title;
   final String helperText;
@@ -45,6 +47,12 @@ class _WidgetsFieldsTextareaState extends State<WidgetsFieldsTextarea> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      contextMenuBuilder: (context, editableTextState) {
+        return WidgetsContextMenu(
+          anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+          buttonItems: editableTextState.contextMenuButtonItems,
+        );
+      },
       controller: _textareaController,
       textAlignVertical: TextAlignVertical.top,
       decoration: InputDecoration(labelText: widget.title, hintText: widget.helperText, alignLabelWithHint: true),

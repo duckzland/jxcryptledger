@@ -7,6 +7,7 @@ import '../../core/locator.dart';
 import '../../features/cryptos/model.dart';
 import '../../features/cryptos/controller.dart';
 import '../../mixins/suffix.dart';
+import '../context_menu.dart';
 import '../notify.dart';
 
 class WidgetsFieldsCryptoSearch extends StatefulWidget {
@@ -97,6 +98,12 @@ class _WidgetsFieldsCryptoSearchState extends State<WidgetsFieldsCryptoSearch> w
           },
           builder: (context, controller, focusNode) {
             return TextFormField(
+              contextMenuBuilder: (context, editableTextState) {
+                return WidgetsContextMenu(
+                  anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+                  buttonItems: editableTextState.contextMenuButtonItems,
+                );
+              },
               enabled: widget.enabled,
               controller: controller,
               focusNode: focusNode,

@@ -5,6 +5,7 @@ import '../../core/locator.dart';
 import '../../core/scrollto.dart';
 import '../../mixins/action_bar.dart';
 import '../../widgets/buttons/action.dart';
+import '../../widgets/context_menu.dart';
 import '../../widgets/dialogs/alert.dart';
 import '../../widgets/dialogs/export.dart';
 import '../../widgets/dialogs/import.dart';
@@ -191,6 +192,12 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
 
       case SettingType.list:
         field = TextFormField(
+          contextMenuBuilder: (context, editableTextState) {
+            return WidgetsContextMenu(
+              anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+              buttonItems: editableTextState.contextMenuButtonItems,
+            );
+          },
           key: ValueKey("${key.name}-$_buildCount"),
           initialValue: (current is List) ? current.join(',') : (current?.toString() ?? ''),
           decoration: InputDecoration(hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label} (comma separated)..."),
@@ -206,6 +213,12 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
 
       case SettingType.integer:
         field = TextFormField(
+          contextMenuBuilder: (context, editableTextState) {
+            return WidgetsContextMenu(
+              anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+              buttonItems: editableTextState.contextMenuButtonItems,
+            );
+          },
           key: ValueKey("${key.name}-$_buildCount"),
           initialValue: current?.toString() ?? '',
           decoration: InputDecoration(hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}..."),
@@ -226,6 +239,12 @@ class _SettingsPageState extends State<SettingsPage> with MixinsActionBar<Settin
 
       default:
         field = TextFormField(
+          contextMenuBuilder: (context, editableTextState) {
+            return WidgetsContextMenu(
+              anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+              buttonItems: editableTextState.contextMenuButtonItems,
+            );
+          },
           key: ValueKey("${key.name}-$_buildCount"),
           initialValue: current?.toString() ?? _controller.getByKey(key),
           decoration: InputDecoration(hintText: key.hintText.isNotEmpty ? key.hintText : "Enter ${key.label}..."),

@@ -14,6 +14,7 @@ import '../../../mixins/selectable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/buttons/action.dart';
+import '../../../widgets/context_menu.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/fields/accent_colors.dart';
 import '../../../widgets/fields/amount.dart';
@@ -382,6 +383,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildFromAmountField() {
     return TextField(
+      contextMenuBuilder: (context, editableTextState) {
+        return WidgetsContextMenu(
+          anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+          buttonItems: editableTextState.contextMenuButtonItems,
+        );
+      },
       controller: TextEditingController(
         text: selectableHasSelectedRows()
             ? "${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol"
@@ -476,6 +483,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       subtitleFontSize: 13,
       spacing: 10,
       child: TextField(
+        contextMenuBuilder: (context, editableTextState) {
+          return WidgetsContextMenu(
+            anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+            buttonItems: editableTextState.contextMenuButtonItems,
+          );
+        },
         controller: TextEditingController(
           text: (_sourceAmount <= Decimal.zero || entryRate <= Decimal.zero)
               ? ""

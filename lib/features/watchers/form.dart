@@ -9,6 +9,7 @@ import '../../app/exceptions.dart';
 import '../../core/locator.dart';
 import '../../mixins/rateable.dart';
 import '../../widgets/buttons/action.dart';
+import '../../widgets/context_menu.dart';
 import '../../widgets/header.dart';
 import 'controller.dart';
 import 'model.dart';
@@ -220,6 +221,12 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       subtitleFontSize: 13,
       spacing: 10,
       child: TextFormField(
+        contextMenuBuilder: (context, editableTextState) {
+          return WidgetsContextMenu(
+            anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+            buttonItems: editableTextState.contextMenuButtonItems,
+          );
+        },
         initialValue: _limitCount,
         decoration: InputDecoration(labelText: "Times to send"),
         keyboardType: TextInputType.number,
@@ -234,6 +241,12 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       subtitleFontSize: 13,
       spacing: 10,
       child: TextFormField(
+        contextMenuBuilder: (context, editableTextState) {
+          return WidgetsContextMenu(
+            anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+            buttonItems: editableTextState.contextMenuButtonItems,
+          );
+        },
         initialValue: _durationMinutes,
         decoration: InputDecoration(labelText: "Minutes", suffixText: "Minutes"),
         keyboardType: TextInputType.number,

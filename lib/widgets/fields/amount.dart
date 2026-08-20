@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/math.dart';
 import '../../mixins/suffix.dart';
+import '../context_menu.dart';
 import '../notify.dart';
 import '../../core/utils.dart';
 
@@ -138,6 +139,12 @@ class _WidgetsFieldsAmountState extends State<WidgetsFieldsAmount> with MixinsSu
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      contextMenuBuilder: (context, editableTextState) {
+        return WidgetsContextMenu(
+          anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+          buttonItems: editableTextState.contextMenuButtonItems,
+        );
+      },
       controller: _controller,
       decoration: InputDecoration(
         labelText: widget.title,

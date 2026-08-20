@@ -171,6 +171,28 @@ class AppTheme {
     textStyle: text500.copyWith(fontSize: 14),
   ).copyWith(mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click));
 
+  static final contextMenuDecoration = BoxDecoration(
+    color: menuBackground,
+    borderRadius: borderRadius,
+    border: Border.all(color: menuBorder, width: 1),
+  );
+
+  static final contextMenuButton =
+      TextButton.styleFrom(
+        foregroundColor: buttonFg,
+        textStyle: text400.copyWith(fontSize: 14),
+        padding: inputPadding,
+        shape: const RoundedRectangleBorder(borderRadius: borderRadius),
+      ).copyWith(
+        overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.hovered)) {
+            return AppTheme.buttonBg;
+          }
+          return Colors.transparent;
+        }),
+        mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+      );
+
   static ThemeData get dark {
     final menuDecoration = MenuThemeData(
       style: MenuStyle(
