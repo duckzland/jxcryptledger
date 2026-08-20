@@ -209,7 +209,7 @@ class _TransactionsWidgetsCardsTreeState extends State<TransactionsWidgetsCardsT
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.only(top: 4, bottom: 4, left: 0, right: 0),
+      margin: EdgeInsets.only(top: _tx.isRoot ? 30 : 18, bottom: 2, left: 0, right: 0),
       color: _bgColor,
       child: Padding(
         padding: EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 4),

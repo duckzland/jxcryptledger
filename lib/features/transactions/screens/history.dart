@@ -134,7 +134,7 @@ class _TransactionHistoryState extends State<TransactionHistory> with MixinsStat
         expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
           tree: node,
           color: AppTheme.text,
-          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 24),
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: node.data.isRoot ? 50 : 38),
           alignment: Alignment.topRight,
         ),
         onTreeReady: (controller) {
