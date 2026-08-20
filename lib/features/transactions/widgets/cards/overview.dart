@@ -24,6 +24,7 @@ import '../../mixins/actions.dart';
 import '../../calculations.dart';
 import '../../controller.dart';
 import '../../mixins/flags.dart';
+import '../../mixins/sortable_table.dart';
 import '../../model.dart';
 import '../buttons/batch.dart';
 import '../buttons/action.dart';
@@ -73,6 +74,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsWidgetsCardsOverview>,
         MixinsRateable<TransactionsWidgetsCardsOverview>,
+        TransactionsMixinsSortableTable<TransactionsWidgetsCardsOverview>,
         TransactionsMixinsActions,
         TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
@@ -97,9 +99,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   String get selectableKey => "tx-group-overview-${widget.id}";
 
   @override
-  String get sortableDefaultKey => "timestamp";
-
-  @override
   ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override
@@ -114,26 +113,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     fxs = widget.txsFlags;
 
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
-
-    sortableSorters = {
-      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].sanitizedTimestamp, "timestamp", col, asc),
-      "srAmount": (col, asc) => sortableOnSort(
-        (d) => (d['tx'].isCapital ? '#' : d['_sourceSymbol'] as String, d['tx'].srAmount.toDouble()),
-        "srAmount",
-        col,
-        asc,
-      ),
-      "rrAmount": (col, asc) => sortableOnSort((d) => d['tx'].rrAmount.toDouble(), "rrAmount", col, asc),
-      "balance": (col, asc) => sortableOnSort((d) => d['tx'].balance.toDouble(), "balance", col, asc),
-      "rate": (col, asc) => sortableOnSort(
-        (d) => (d['tx'].isCapital ? '#' : "##", d['tx'].isCapital ? d['tx'].srAmount.toDouble() : d['tx'].rate.toDouble()),
-        "rate",
-        col,
-        asc,
-      ),
-      "capital": (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, "capital", col, asc),
-      "status": (col, asc) => sortableOnSort((d) => d['tx'].statusText, "status", col, asc),
-    };
 
     rateableIsTemporary = false;
     rateableWithField = false;

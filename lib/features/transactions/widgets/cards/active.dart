@@ -26,6 +26,7 @@ import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
 import '../../mixins/actions.dart';
 import '../../mixins/flags.dart';
+import '../../mixins/sortable_table.dart';
 import '../buttons/action.dart';
 import '../../calculations.dart';
 import '../../controller.dart';
@@ -80,6 +81,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsWidgetsCardsActive>,
         MixinsRateable<TransactionsWidgetsCardsActive>,
+        TransactionsMixinsSortableTable<TransactionsWidgetsCardsActive>,
         TransactionsMixinsActions,
         TransactionsMixinsFlags {
   final _calc = TransactionCalculation();
@@ -135,9 +137,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   String get selectableKey => cardKey;
 
   @override
-  String get sortableDefaultKey => "timestamp";
-
-  @override
   ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override
@@ -161,18 +160,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _cryptosController = CoreLocator.getit<CryptosController>();
     _sourceSymbol = _cryptosController.getSymbol(widget.srid) ?? 'Unknown Coin';
     _resultSymbol = _cryptosController.getSymbol(widget.rrid) ?? 'Unknown Coin';
-
-    sortableSorters = {
-      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].sanitizedTimestamp, "date", col, asc),
-      "srAmount": (col, asc) => sortableOnSort((d) => d['tx'].srAmount.toDouble(), "srAmount", col, asc),
-      "rrAmount": (col, asc) => sortableOnSort((d) => d['tx'].rrAmount.toDouble(), "rrAmount", col, asc),
-      "balance": (col, asc) => sortableOnSort((d) => d['tx'].balance.toDouble(), "balance", col, asc),
-      "rate": (col, asc) => sortableOnSort((d) => d['tx'].rate.toDouble(), "rate", col, asc),
-      "current": (col, asc) => sortableOnSort((d) => d['_current'] as double, "current", col, asc),
-      "profit": (col, asc) => sortableOnSort((d) => d['_profit'] as double, "profit", col, asc),
-      "capital": (col, asc) => sortableOnSort((d) => (d['_capitalSymbol'] as String, d['_capitalUsed'] as double), "capital", col, asc),
-      "status": (col, asc) => sortableOnSort((d) => d['tx'].statusText, "status", col, asc),
-    };
 
     checkForClosable();
     checkForDeletable();

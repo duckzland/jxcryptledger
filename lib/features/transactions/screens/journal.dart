@@ -11,6 +11,7 @@ import '../../../widgets/panel.dart';
 import '../../../widgets/table/column.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
+import '../mixins/sortable_table.dart';
 import '../widgets/buttons/action.dart';
 import '../widgets/status_text.dart';
 import '../dialogs/details.dart';
@@ -43,6 +44,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         AutomaticKeepAliveClientMixin,
         MixinsSortableTable<TransactionsJournalView>,
         MixinsScrollToTable<TransactionsJournalView, TransactionsModel>,
+        TransactionsMixinsSortableTable<TransactionsJournalView>,
         TransactionsMixinsFlags {
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
@@ -52,9 +54,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
 
   @override
   String get sortableKey => "tx-group-journal";
-
-  @override
-  String get sortableDefaultKey => "timestamp";
 
   @override
   final scrollToUtil = ScrollTo('tx-group-offset-journal');
@@ -73,15 +72,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     txs = widget.transactions;
     fxs = widget.txsFlags;
     txs = _processTx();
-
-    sortableSorters = {
-      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].sanitizedTimestamp, "timestamp", col, asc),
-      "srAmount": (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['tx'].srAmount.toDouble()), "srAmount", col, asc),
-      "rrAmount": (col, asc) => sortableOnSort((d) => (d['_balanceSymbol'] as String, d['tx'].rrAmount.toDouble()), "rrAmount", col, asc),
-      "balance": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].balance.toDouble()), "balance", col, asc),
-      "rate": (col, asc) => sortableOnSort((d) => (d['_rateSymbol'] as String, d['tx'].rate.toDouble()), "rate", col, asc),
-      "status": (col, asc) => sortableOnSort((d) => d['tx'].statusText, "status", col, asc),
-    };
 
     rows = _buildRows();
     sortableApplySorting(pauseRefresh: true);

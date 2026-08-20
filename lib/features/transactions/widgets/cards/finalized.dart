@@ -22,6 +22,7 @@ import '../../dialogs/details.dart';
 import '../../calculations.dart';
 import '../../mixins/actions.dart';
 import '../../mixins/flags.dart';
+import '../../mixins/sortable_table.dart';
 import '../../model.dart';
 import '../buttons/action.dart';
 import '../buttons/batch.dart';
@@ -69,6 +70,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         MixinsTable,
         MixinsSelectableTable,
         MixinsSortableTable<TransactionsWidgetsCardsFinalized>,
+        TransactionsMixinsSortableTable<TransactionsWidgetsCardsFinalized>,
         TransactionsMixinsActions,
         TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
@@ -91,9 +93,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   String get selectableKey => "tx-group-finalized-${widget.id}";
 
   @override
-  String get sortableDefaultKey => "timestamp";
-
-  @override
   ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override
@@ -107,15 +106,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
     _isOpen = widget.isOpen;
     _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
-
-    sortableSorters = {
-      "timestamp": (col, asc) => sortableOnSort((d) => d['tx'].sanitizedTimestamp, "timestamp", col, asc),
-      "srAmount": (col, asc) => sortableOnSort((d) => (d['_sourceSymbol'] as String, d['tx'].srAmount.toDouble()), "srAmount", col, asc),
-      "rrAmount": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].rrAmount.toDouble()), "rrAmount", col, asc),
-      "balance": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].balance.toDouble()), "balance", col, asc),
-      "rate": (col, asc) => sortableOnSort((d) => (d['_resultSymbol'] as String, d['tx'].rate.toDouble()), "rate", col, asc),
-      "capital": (col, asc) => sortableOnSort((d) => d['_capitalUsed'] as double, "capital", col, asc),
-    };
 
     checkForClosable();
     checkForDeletable();
