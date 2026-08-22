@@ -8,6 +8,8 @@ mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
 
   ValueNotifier<List<String>>? get selectableGroupRows => null;
 
+  bool selectableIsValidKey(String key) => true;
+
   @override
   void initState() {
     super.initState();
@@ -38,7 +40,7 @@ mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
     final groupItems = selectableGroupRows!.value;
     bool stateChanged = false;
 
-    final updatedLocal = selectableSelectedRows.where((key) => groupItems.contains(key)).toList();
+    final updatedLocal = selectableSelectedRows.where((key) => selectableIsValidKey(key) && groupItems.contains(key)).toList();
 
     if (updatedLocal.length != selectableSelectedRows.length) {
       selectableSelectedRows = updatedLocal;

@@ -68,6 +68,8 @@ class _WidgetsFieldsDatepickerState extends State<WidgetsFieldsDatepicker> {
           initialDate: _selectedDate ?? widget.initialDate,
           firstDate: widget.firstDate,
           lastDate: widget.lastDate,
+
+          // Until Flutter give sane way to style the contextMenu, just use the calendar only mode.
           initialEntryMode: DatePickerEntryMode.calendarOnly,
         );
 

@@ -103,6 +103,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   ValueNotifier<List<String>>? get selectableGroupRows => widget.selectableGroup;
 
   @override
+  bool selectableIsValidKey(String key) {
+    return txs.isEmpty ? false : txs.any((tx) => tx.uuid == key);
+  }
+
+  @override
   void initState() {
     super.initState();
 
