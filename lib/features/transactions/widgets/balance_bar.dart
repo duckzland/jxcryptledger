@@ -53,7 +53,7 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
                 children: [
                   Text("${txIds.length} transactions selected", style: textStyle),
                   Expanded(
-                    child: (cptUsed.isNotEmpty) ? Text(cptUsed.join("  •  "), textAlign: TextAlign.center) : const SizedBox.shrink(),
+                    child: (cptUsed.isNotEmpty) ? WidgetsText(cptUsed.join("  •  "), textAlign: TextAlign.center) : const SizedBox.shrink(),
                   ),
                   WidgetsNumbersFlow(begin: amount.toString(), end: amount.toString(), suffix: " USDT", style: textStyle!),
                   IconButton(
