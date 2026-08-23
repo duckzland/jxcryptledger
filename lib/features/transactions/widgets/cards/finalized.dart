@@ -122,6 +122,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     _calculatePanelData();
     rows = _buildRows();
     sortableApplySorting(pauseRefresh: true);
+    selectableSyncWithGroup();
   }
 
   @override

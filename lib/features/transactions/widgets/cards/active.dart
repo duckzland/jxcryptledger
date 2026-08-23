@@ -176,6 +176,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _calculateProfitLoss();
     rows = _buildRows();
     sortableApplySorting(pauseRefresh: true);
+    selectableSyncWithGroup();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       rateableGetRate(refresh: false, silent: true);

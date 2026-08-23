@@ -14,16 +14,14 @@ mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
   void initState() {
     super.initState();
     if (selectableKey.isNotEmpty) {
-      final raw = states.get("[np]-$selectableKey-selected-rows", defaultValue: []) as List<dynamic>;
-      selectableSelectedRows = raw.map((e) => e.toString()).toList();
-      selectableGroupRows!.addListener(_selectableOnGroupChange);
+      final raw = states.get("[np]-$selectableKey-selected-rows", defaultValue: <String>[]) as List<dynamic>;
+      selectableSelectedRows = (selectableGroupRows == null) ? raw.map((e) => e.toString()).toList() : <String>[];
 
       if (selectableGroupRows != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && selectableGroupRows != null) {
-            selectableGroupRows!.value = [...selectableGroupRows!.value, ...selectableSelectedRows];
-          }
-        });
+        selectableGroupRows!.addListener(_selectableOnGroupChange);
+        try {
+          selectableSyncWithGroup();
+        } catch (_) {}
       }
     }
   }
@@ -37,22 +35,24 @@ mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
   void _selectableOnGroupChange() {
     if (!mounted || selectableGroupRows == null) return;
 
-    final groupItems = selectableGroupRows!.value;
-    bool stateChanged = false;
-
-    final updatedLocal = selectableSelectedRows.where((key) => selectableIsValidKey(key) && groupItems.contains(key)).toList();
-
-    if (updatedLocal.length != selectableSelectedRows.length) {
-      selectableSelectedRows = updatedLocal;
-      stateChanged = true;
-    }
-
-    if (stateChanged) {
-      if (selectableKey.isNotEmpty) {
-        states.set("[np]-$selectableKey-selected-rows", selectableSelectedRows);
-      }
+    if (selectableSyncWithGroup()) {
       setState(() {});
     }
+  }
+
+  bool selectableSyncWithGroup() {
+    final updatedLocal = selectableGroupRows!.value.where((key) => selectableIsValidKey(key)).toList();
+
+    final sa = updatedLocal.toSet();
+    final sb = selectableSelectedRows.toSet();
+    if (sa.length != sb.length || !sa.containsAll(sb)) {
+      selectableSelectedRows = updatedLocal;
+      states.set("[np]-$selectableKey-selected-rows", selectableSelectedRows);
+
+      return true;
+    }
+
+    return false;
   }
 
   void selectableToggleSelected(String key) {

@@ -36,8 +36,8 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
   TransactionsController get txController => CoreLocator.getit<TransactionsController>();
 
   late List<TransactionsModel> txs;
+  late ValueNotifier<List<String>> selectableGroup;
 
-  ValueNotifier<List<String>> selectableGroup = ValueNotifier([]);
   Map<String, List<TransactionsModel>> groups = {};
   List<String> groupKeys = [];
 
@@ -49,6 +49,9 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
     super.initState();
 
     txs = widget.transactions;
+    selectableGroup = ValueNotifier(states.get("tx-finalized-selectable-group", defaultValue: <String>[]));
+    selectableGroup.addListener(_selectableGroupOnChange);
+
     groups = _processTx();
     groupKeys = groups.keys.toList();
 
@@ -62,6 +65,8 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
 
   @override
   void dispose() {
+    selectableGroup.removeListener(_selectableGroupOnChange);
+    selectableGroup.dispose();
     scrollToUtil.dispose();
     super.dispose();
   }
@@ -208,5 +213,9 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
 
   void _toggleAction() {
     setState(() {});
+  }
+
+  void _selectableGroupOnChange() {
+    states.set("tx-finalized-selectable-group", selectableGroup.value);
   }
 }

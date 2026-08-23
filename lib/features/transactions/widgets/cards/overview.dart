@@ -91,6 +91,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   Decimal _profitLoss = Decimal.zero;
   Decimal _profitLossPercentage = Decimal.zero;
 
+  Map<int, Decimal> _capitalUsed = {};
+
   bool _isOpen = true;
 
   @override
@@ -173,6 +175,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _calculateProfitLoss();
     rows = _buildRows();
     sortableApplySorting();
+    selectableSyncWithGroup();
   }
 
   @override
@@ -269,6 +272,15 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   }
 
   Widget _buildPanels() {
+    List<String> cptUsed = [];
+
+    if (_capitalUsed.isNotEmpty) {
+      for (final entry in _capitalUsed.entries) {
+        final symbol = _cryptosController.getSymbol(entry.key) ?? 'Unknown Coin';
+        cptUsed.add("${Utils.formatSmartDecimal(entry.value)} $symbol");
+      }
+    }
+
     return SizedBox(
       height: 38,
       child: CustomScrollView(
@@ -313,6 +325,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                     subtitle: "${Utils.formatSmartDecimal(_profitLossPercentage, maxDecimals: 2)}%",
                     value: _profitLossPercentage.toDouble(),
                   ),
+
+                if (cptUsed.isNotEmpty) TransactionsWidgetsPanelItem(title: "Capital Used", subtitle: cptUsed.join("  •  ")),
               ],
             ),
           ),
@@ -349,6 +363,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters["status"]),
       DataColumn2(label: Text('Actions '), fixedWidth: 100),
     ];
+
     final tableRows = rows.map((r) {
       final tx = r['tx'] as TransactionsModel;
       final canSelect = tx.isActive || tx.isPartial;
@@ -482,6 +497,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       }
     }
 
+    final txsMap = txController.getIndexedMap();
     final finalizedBalance = _calc.totalFinalizedBalance(stxs);
     final balance = _calc.totalActiveBalance(stxs);
     final totalBalance = Math.add(balance, finalizedBalance);
@@ -494,12 +510,16 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     _finalizedBalance = finalizedBalance;
     _profitLoss = Math.subtract(totalBalance, capital);
     _profitLossPercentage = profitPercentage;
-
     _currentUsd = Decimal.zero;
+    _capitalUsed = {};
+
     if (rateableValue != null) {
       for (final tx in stxs) {
         final txUsd = Math.multiply(tx.balance, rateableValue ?? Decimal.zero);
         _currentUsd = Math.add(_currentUsd, txUsd);
+
+        final txUsed = _capitalUsed[tx.srId] ?? Decimal.zero;
+        _capitalUsed[tx.srId] = Math.add(txUsed, _calc.totalCapitalUsed(tx, txsMap: txsMap));
       }
     }
   }

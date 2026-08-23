@@ -42,8 +42,8 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   late List<TransactionsModel> txs;
+  late ValueNotifier<List<String>> selectableGroup;
 
-  ValueNotifier<List<String>> selectableGroup = ValueNotifier([]);
   Map<String, List<TransactionsModel>> groups = {};
   List<String> groupKeys = [];
 
@@ -64,6 +64,9 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     groupKeys = groups.keys.toList();
     _registerRates();
 
+    selectableGroup = ValueNotifier(states.get("tx-overview-selectable-group", defaultValue: <String>[]));
+    selectableGroup.addListener(_selectableGroupOnChange);
+
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
       for (final key in groups.keys) {
@@ -74,6 +77,8 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
 
   @override
   void dispose() {
+    selectableGroup.removeListener(_selectableGroupOnChange);
+    selectableGroup.dispose();
     scrollToUtil.dispose();
     super.dispose();
   }
@@ -271,5 +276,9 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
 
   void _toggleAction() {
     setState(() {});
+  }
+
+  void _selectableGroupOnChange() {
+    states.set("tx-overview-selectable-group", selectableGroup.value);
   }
 }

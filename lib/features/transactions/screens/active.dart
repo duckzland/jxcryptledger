@@ -41,8 +41,8 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
   late final TransactionsController txController;
   late final CryptosController _cryptosController;
   late List<TransactionsModel> txs;
+  late ValueNotifier<List<String>> selectableGroup;
 
-  ValueNotifier<List<String>> selectableGroup = ValueNotifier([]);
   Map<String, List<TransactionsModel>> groups = {};
   List<String> groupKeys = [];
 
@@ -59,6 +59,9 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
     _cryptosController = CoreLocator.getit<CryptosController>();
 
     txs = widget.transactions;
+
+    selectableGroup = ValueNotifier(states.get("tx-active-selectable-group", defaultValue: <String>[]));
+    selectableGroup.addListener(_selectableGroupOnChange);
 
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
@@ -77,6 +80,8 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
   @override
   void dispose() {
+    selectableGroup.removeListener(_selectableGroupOnChange);
+    selectableGroup.dispose();
     scrollToUtil.dispose();
     super.dispose();
   }
@@ -285,5 +290,9 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
       final parts = key.split('-');
       rateableAddToQueue(825, int.parse(parts[1]), true);
     }
+  }
+
+  void _selectableGroupOnChange() {
+    states.set("tx-active-selectable-group", selectableGroup.value);
   }
 }
