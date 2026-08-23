@@ -518,8 +518,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         final txUsd = Math.multiply(tx.balance, rateableValue ?? Decimal.zero);
         _currentUsd = Math.add(_currentUsd, txUsd);
 
-        final txUsed = _capitalUsed[tx.srId] ?? Decimal.zero;
-        _capitalUsed[tx.srId] = Math.add(txUsed, _calc.totalCapitalUsed(tx, txsMap: txsMap));
+        final ctx = tx.isRoot ? tx : txsMap[tx.rid];
+        if (ctx != null) {
+          final txUsed = _capitalUsed[ctx.srId] ?? Decimal.zero;
+          _capitalUsed[ctx.srId] = Math.add(txUsed, _calc.totalCapitalUsed(tx, txsMap: txsMap));
+        }
       }
     }
   }

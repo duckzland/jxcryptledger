@@ -88,8 +88,10 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
     }
 
     for (final tx in txs) {
-      final txUsed = capitalUsed[tx.srId] ?? Decimal.zero;
-      capitalUsed[tx.srId] = Math.add(txUsed, calc.totalCapitalUsed(tx, txsMap: txsMap));
+      final ctx = tx.isRoot ? tx : txsMap[tx.rid];
+      if (ctx == null) continue;
+      final txUsed = capitalUsed[ctx.srId] ?? Decimal.zero;
+      capitalUsed[ctx.srId] = Math.add(txUsed, calc.totalCapitalUsed(tx, txsMap: txsMap));
     }
 
     List<String> cptUsed = [];
