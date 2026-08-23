@@ -64,7 +64,9 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     groupKeys = groups.keys.toList();
     _registerRates();
 
-    selectableGroup = ValueNotifier(states.get("tx-overview-selectable-group", defaultValue: <String>[]));
+    selectableGroup = ValueNotifier(
+      (states.get("tx-overview-selectable-group", defaultValue: <String>[]) as List<dynamic>).map((e) => e.toString()).toList(),
+    );
     selectableGroup.addListener(_selectableGroupOnChange);
 
     if (widget.panelsAction.isNotEmpty) {

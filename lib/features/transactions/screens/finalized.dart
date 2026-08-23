@@ -49,7 +49,9 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
     super.initState();
 
     txs = widget.transactions;
-    selectableGroup = ValueNotifier(states.get("tx-finalized-selectable-group", defaultValue: <String>[]));
+    selectableGroup = ValueNotifier(
+      (states.get("tx-finalized-selectable-group", defaultValue: <String>[]) as List<dynamic>).map((e) => e.toString()).toList(),
+    );
     selectableGroup.addListener(_selectableGroupOnChange);
 
     groups = _processTx();

@@ -60,7 +60,9 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
 
     txs = widget.transactions;
 
-    selectableGroup = ValueNotifier(states.get("tx-active-selectable-group", defaultValue: <String>[]));
+    selectableGroup = ValueNotifier(
+      (states.get("tx-active-selectable-group", defaultValue: <String>[]) as List<dynamic>).map((e) => e.toString()).toList(),
+    );
     selectableGroup.addListener(_selectableGroupOnChange);
 
     _filterMode = widget.filterMode;
