@@ -184,7 +184,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     final fromStyle = TextStyle(height: 1.2, fontWeight: FontWeight.w600);
     final toStyle = TextStyle(height: 1.3, fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]);
 
-    final fromFontSize = fromText.length > 18 ? 12.0 : 13.0;
+    final fromFontSize = fromText.length > 30 ? 12.0 : 13.0;
     final toFontSize = toText.length > 18 ? 22.0 : 25.0;
 
     final rate = _rate;
