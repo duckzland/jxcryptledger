@@ -1,12 +1,15 @@
 import 'package:animated_tree_view/animated_tree_view.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/utils.dart';
 import '../../../mixins/state.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
+import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
 import '../widgets/cards/simple_tree.dart';
@@ -16,6 +19,7 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
 
   const TransactionsDialogsDetails({super.key, required this.tx});
 
+  TransactionCalculation get _calc => TransactionCalculation();
   TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
@@ -79,6 +83,11 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
     final srSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
     final rrSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
+    final root = tx.isRoot ? tx : _txController.getRoot(tx);
+    final rootSymbol = _cryptosController.getSymbol(root?.srId ?? 0);
+    final txsMap = _txController.getIndexedMap();
+    final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 800) {
@@ -90,17 +99,33 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
                 child: WidgetsHeader(title: tx.timestampAsFormattedDate, subtitle: "Date", reversed: true, selectable: true),
               ),
               Expanded(
-                child: WidgetsHeader(title: "${tx.srAmountText} $srSymbol", subtitle: "From", reversed: true, selectable: true  ),
+                child: WidgetsHeader(
+                  title: "${tx.srAmountText} $srSymbol",
+                  subtitle: (tx.isCapital) ? "Capital" : "From",
+                  reversed: true,
+                  selectable: true,
+                ),
               ),
-              Expanded(
-                child: WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true, selectable: true),
-              ),
-              Expanded(
-                child: WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true, selectable: true),
-              ),
+              if (!tx.isCapital)
+                Expanded(
+                  child: WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true, selectable: true),
+                ),
+              if (!tx.isCapital)
+                Expanded(
+                  child: WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true, selectable: true),
+                ),
               Expanded(
                 child: WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true, selectable: true),
               ),
+              if (!tx.isCapital && capitalUsed > Decimal.zero)
+                Expanded(
+                  child: WidgetsHeader(
+                    title: "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
+                    subtitle: "Capital Used",
+                    reversed: true,
+                    selectable: true,
+                  ),
+                ),
               Expanded(
                 child: WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true),
               ),
