@@ -281,6 +281,15 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       }
     }
 
+    List<String> totalBalance = [];
+    if (_currentHolding > Decimal.zero) {
+      totalBalance.add("${Utils.formatSmartDecimal(_currentHolding)} $_resultSymbol");
+    }
+
+    if (_currentUsd > Decimal.zero && _resultSymbol != "USDT") {
+      totalBalance.add("${Utils.formatSmartDecimal(_currentUsd, limitDecimals: 2)} USDT");
+    }
+
     return SizedBox(
       height: 38,
       child: CustomScrollView(
@@ -294,39 +303,21 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
               spacing: 16,
               children: [
                 if (_totalCapital > Decimal.zero)
-                  TransactionsWidgetsPanelItem(
-                    title: "Total Capital",
-                    subtitle: "${Utils.formatSmartDecimal(_totalCapital)} $_resultSymbol",
-                  ),
-                if (_currentUsd > Decimal.zero)
-                  TransactionsWidgetsPanelItem(
-                    title: "Balance",
-                    subtitle: "${Utils.formatSmartDecimal(_currentUsd, limitDecimals: 2)} USDT",
-                  ),
-                if (_currentHolding > Decimal.zero)
-                  TransactionsWidgetsPanelItem(
-                    title: "Current Balance",
-                    subtitle: "${Utils.formatSmartDecimal(_currentHolding)} $_resultSymbol",
-                  ),
+                  TransactionsWidgetsPanelItem(title: "Capital", subtitle: "${Utils.formatSmartDecimal(_totalCapital)} $_resultSymbol"),
+                if (cptUsed.isNotEmpty) TransactionsWidgetsPanelItem(title: "Source", subtitle: cptUsed.join(" • ")),
+                if (totalBalance.isNotEmpty) TransactionsWidgetsPanelItem(title: "Balance", subtitle: totalBalance.join(" • ")),
                 if (_finalizedBalance > Decimal.zero)
                   TransactionsWidgetsPanelItem(
-                    title: "Finalized Balance",
+                    title: "Finalized",
                     subtitle: "${Utils.formatSmartDecimal(_finalizedBalance)} $_resultSymbol",
                   ),
                 if (_totalCapital > Decimal.zero && _profitLossPercentage != Decimal.zero)
                   TransactionsWidgetsPanelItem(
                     title: "Profit/Loss",
-                    subtitle: "${Utils.formatSmartDecimal(_profitLoss)} $_resultSymbol",
+                    subtitle:
+                        "${Utils.formatSmartDecimal(_profitLoss)} $_resultSymbol • ${Utils.formatSmartDecimal(_profitLossPercentage, maxDecimals: 2)}%",
                     value: _profitLossPercentage.toDouble(),
                   ),
-                if (_totalCapital > Decimal.zero && _profitLossPercentage != Decimal.zero)
-                  TransactionsWidgetsPanelItem(
-                    title: "Profit/Loss %",
-                    subtitle: "${Utils.formatSmartDecimal(_profitLossPercentage, maxDecimals: 2)}%",
-                    value: _profitLossPercentage.toDouble(),
-                  ),
-
-                if (cptUsed.isNotEmpty) TransactionsWidgetsPanelItem(title: "Capital Used", subtitle: cptUsed.join("  •  ")),
               ],
             ),
           ),
@@ -463,11 +454,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol',
         'rate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
         'usd': usdValue != Decimal.zero ? Utils.formatSmartDecimal(usdValue, limitDecimals: 2) : '-',
-        'capital': "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
+        'capital': tx.isCapital ? ' - ' : "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
         'tx': tx,
 
         '_usd': usdValue.toDouble(),
-        '_capitalUsed': capitalUsed.toDouble(),
+        '_capitalUsed': tx.isCapital ? 0.0 : capitalUsed.toDouble(),
         '_capitalSymbol': rootSymbol,
         '_sourceSymbol': sourceCoinSymbol,
       });

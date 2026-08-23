@@ -464,11 +464,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           DataCell(WidgetsTextSelectable(tx.rrAmountText)),
           DataCell(WidgetsTextSelectable(tx.balanceText)),
           DataCell(WidgetsTextSelectable(_isReversed ? tx.rateReversedText : tx.rateText)),
-          DataCell(WidgetsTextBalance(text: r['currentRate'] ?? "-", value: r['profitLevel'], hidePrefix: true)),
-          DataCell(WidgetsTextBalance(text: r['currentValue'] ?? "-", value: r['profitLevel'], hidePrefix: true)),
+          DataCell(WidgetsTextBalance(text: r['rate'] ?? "-", value: r['profitLevel'], hidePrefix: true)),
+          DataCell(WidgetsTextBalance(text: r['value'] ?? "-", value: r['profitLevel'], hidePrefix: true)),
           DataCell(WidgetsTextBalance(text: r['profitLoss'] ?? "-", value: r['profitLevel'])),
           DataCell(WidgetsTextBalance(text: r['profitLossPercentage'] ?? "-", value: r['profitLevel'])),
-          DataCell(WidgetsTextSelectable(r['capitalUsed'] ?? '-')),
+          DataCell(WidgetsTextSelectable(r['capital'] ?? '-')),
         ];
       }
 
@@ -583,9 +583,9 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
       final rootSymbol = _cryptosController.getSymbol(root?.srId ?? 0);
 
       rx.add({
-        'capitalUsed': "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
-        'currentRate': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(rowRate),
-        'currentValue': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(currentValue),
+        'capital': tx.isCapital ? "-" : "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
+        'rate': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(rowRate),
+        'value': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(currentValue),
         'profitLoss': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(profitLoss),
         'profitLossPercentage': currentRate == Decimal.zero ? null : Utils.formatSmartDecimal(profitLossPercentage, maxDecimals: 2),
         'profitLevel': profitLevel,
@@ -594,7 +594,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         '_current': currentValue.toDouble(),
         '_profit': profitLoss.toDouble(),
         '_profitPercentage': profitLossPercentage.toDouble(),
-        '_capitalUsed': capitalUsed.toDouble(),
+        '_capitalUsed': tx.isCapital ? 0.0 : capitalUsed.toDouble(),
         '_capitalSymbol': rootSymbol,
       });
     }
