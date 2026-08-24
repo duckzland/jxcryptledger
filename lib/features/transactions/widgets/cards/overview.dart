@@ -512,7 +512,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         final ctx = tx.isRoot ? tx : txsMap[tx.rid];
         if (ctx != null) {
           final txUsed = _capitalUsed[ctx.srId] ?? Decimal.zero;
-          _capitalUsed[ctx.srId] = Math.add(txUsed, _calc.totalCapitalUsed(tx, txsMap: txsMap));
+          _capitalUsed[ctx.srId] = Math.add(txUsed, tx.isRoot ? tx.balance : _calc.totalCapitalUsed(tx, txsMap: txsMap));
         }
       }
     }

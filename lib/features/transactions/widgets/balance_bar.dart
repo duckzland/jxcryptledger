@@ -6,6 +6,7 @@ import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/numbers/flow.dart';
+import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../../rates/controller.dart';
 import '../calculations.dart';
@@ -53,7 +54,14 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
                 children: [
                   Text("${txIds.length} transactions selected", style: textStyle),
                   Expanded(
-                    child: (cptUsed.isNotEmpty) ? WidgetsText(cptUsed.join("  •  "), textAlign: TextAlign.center) : const SizedBox.shrink(),
+                    child: (cptUsed.isNotEmpty)
+                        ? Center(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: WidgetsTextSelectable(cptUsed.join("     "), textAlign: TextAlign.center),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                   WidgetsNumbersFlow(begin: amount.toString(), end: amount.toString(), suffix: " USDT", style: textStyle!),
                   IconButton(
@@ -91,7 +99,7 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
       final ctx = tx.isRoot ? tx : txsMap[tx.rid];
       if (ctx == null) continue;
       final txUsed = capitalUsed[ctx.srId] ?? Decimal.zero;
-      capitalUsed[ctx.srId] = Math.add(txUsed, calc.totalCapitalUsed(tx, txsMap: txsMap));
+      capitalUsed[ctx.srId] = Math.add(txUsed, tx.isRoot ? tx.balance : calc.totalCapitalUsed(tx, txsMap: txsMap));
     }
 
     List<String> cptUsed = [];
