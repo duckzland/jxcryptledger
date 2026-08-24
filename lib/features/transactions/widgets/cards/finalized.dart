@@ -379,10 +379,10 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         'to': '${tx.rrAmountText} $resultCoinSymbol',
         'balance': '${tx.balanceText} $resultCoinSymbol',
         'rate': '${tx.rateText} $sourceCoinSymbol/$resultCoinSymbol',
-        'capital': tx.isCapital ? ' - ' : "${Utils.formatSmartDecimal(capitalUsed)} $_resultSymbol",
+        'capital': capitalUsed == Decimal.zero ? ' - ' : "${Utils.formatSmartDecimal(capitalUsed)} $_resultSymbol",
         'tx': tx,
 
-        '_capitalUsed': tx.isCapital ? 0.0 : capitalUsed.toDouble(),
+        '_capitalUsed': capitalUsed.toDouble(),
         '_exchangedRateValue': tx.rate.toDouble(),
         '_sourceSymbol': sourceCoinSymbol,
         '_resultSymbol': resultCoinSymbol,

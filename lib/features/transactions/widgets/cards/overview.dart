@@ -454,11 +454,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol',
         'rate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
         'usd': usdValue != Decimal.zero ? Utils.formatSmartDecimal(usdValue, limitDecimals: 2) : '-',
-        'capital': tx.isCapital ? ' - ' : "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
+        'capital': capitalUsed == Decimal.zero ? ' - ' : "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
         'tx': tx,
 
         '_usd': usdValue.toDouble(),
-        '_capitalUsed': tx.isCapital ? 0.0 : capitalUsed.toDouble(),
+        '_capitalUsed': capitalUsed.toDouble(),
         '_capitalSymbol': rootSymbol,
         '_sourceSymbol': sourceCoinSymbol,
       });
@@ -511,9 +511,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
         final ctx = tx.isRoot ? tx : txsMap[tx.rid];
         if (ctx != null) {
-          // final txUsed = _capitalUsed[ctx.srId] ?? Decimal.zero;
-          // _capitalUsed[ctx.srId] = Math.add(txUsed, tx.isRoot ? tx.balance : _calc.totalCapitalUsed(tx, txsMap: txsMap));
-
           _capitalUsed[ctx.srId] = Math.add(
             _capitalUsed[ctx.srId] ?? Decimal.zero,
             tx.isRoot
