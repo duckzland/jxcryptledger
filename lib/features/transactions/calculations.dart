@@ -197,6 +197,18 @@ class TransactionCalculation {
       txsMap = {for (final tx in txs) tx.tid: tx};
     }
 
+    if (leaf.isRoot) {
+      Decimal used = Decimal.zero;
+      for (final tx in txsMap!.values) {
+        if (tx.pid == leaf.tid) {
+          final leafUsed = totalCapitalUsed(tx, txsMap: txsMap);
+          used = Math.add(used, leafUsed);
+        }
+      }
+
+      return used;
+    }
+
     TransactionsModel? current = leaf;
 
     Decimal ttlPct = Decimal.one;

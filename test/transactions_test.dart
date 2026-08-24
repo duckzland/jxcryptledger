@@ -1474,7 +1474,7 @@ void main() async {
       srId: 1,
       rrAmount: Decimal.parse('100'),
       rrId: 2,
-      balance: Decimal.parse('50'), // 50 used by B
+      balance: Decimal.parse('25'), // 50 used by B, 25 used by BA
       status: TransactionStatus.active.index,
       closable: true,
       timestamp: 1,
@@ -1490,6 +1490,21 @@ void main() async {
       rrAmount: Decimal.parse('25'),
       rrId: 3,
       balance: Decimal.parse('3'), // 22 used by C
+      status: TransactionStatus.active.index,
+      closable: false,
+      timestamp: 2,
+      meta: {},
+    );
+
+    final txBA = TransactionsModel(
+      tid: 'BA',
+      pid: 'A',
+      rid: 'A',
+      srAmount: Decimal.parse('25'),
+      srId: 2,
+      rrAmount: Decimal.parse('125'),
+      rrId: 7,
+      balance: Decimal.parse('125'),
       status: TransactionStatus.active.index,
       closable: false,
       timestamp: 2,
@@ -1526,11 +1541,100 @@ void main() async {
       meta: {},
     );
 
-    final txs = [txA, txB, txC, txD];
+    final txs = [txA, txB, txC, txD, txBA];
     final calc = TransactionCalculation();
     final result = calc.totalCapitalUsed(txD, txs: txs);
 
     expect(result.toString().startsWith('1.6133333333'), true);
+
+    final rootResult = calc.totalCapitalUsed(txA, txs: txs);
+    expect(rootResult.toString().startsWith('75'), true);
+  });
+
+  test('traceCapitalUsed() -> root is capital and multi-hop lineage calculation', () {
+    final txA = TransactionsModel(
+      tid: 'A',
+      pid: '0',
+      rid: '0',
+      srAmount: Decimal.parse('100'),
+      srId: 1,
+      rrAmount: Decimal.parse('100'),
+      rrId: 1,
+      balance: Decimal.parse('25'), // 50 used by B, 25 used by BA
+      status: TransactionStatus.active.index,
+      closable: true,
+      timestamp: 1,
+      meta: {},
+    );
+
+    final txB = TransactionsModel(
+      tid: 'B',
+      pid: 'A',
+      rid: 'A',
+      srAmount: Decimal.parse('50'),
+      srId: 1,
+      rrAmount: Decimal.parse('25'),
+      rrId: 3,
+      balance: Decimal.parse('3'), // 22 used by C
+      status: TransactionStatus.active.index,
+      closable: false,
+      timestamp: 2,
+      meta: {},
+    );
+
+    final txBA = TransactionsModel(
+      tid: 'BA',
+      pid: 'A',
+      rid: 'A',
+      srAmount: Decimal.parse('25'),
+      srId: 1,
+      rrAmount: Decimal.parse('125'),
+      rrId: 7,
+      balance: Decimal.parse('125'),
+      status: TransactionStatus.active.index,
+      closable: false,
+      timestamp: 2,
+      meta: {},
+    );
+
+    final txC = TransactionsModel(
+      tid: 'C',
+      pid: 'B',
+      rid: 'A',
+      srAmount: Decimal.parse('22'),
+      srId: 3,
+      rrAmount: Decimal.parse('300'),
+      rrId: 4,
+      balance: Decimal.parse('289'), // 11 used by D
+      status: TransactionStatus.active.index,
+      closable: false,
+      timestamp: 3,
+      meta: {},
+    );
+
+    final txD = TransactionsModel(
+      tid: 'D',
+      pid: 'C',
+      rid: 'A',
+      srAmount: Decimal.parse('11'),
+      srId: 4,
+      rrAmount: Decimal.parse('400'),
+      rrId: 5,
+      balance: Decimal.parse('400'),
+      status: TransactionStatus.finalized.index,
+      closable: false,
+      timestamp: 4,
+      meta: {},
+    );
+
+    final txs = [txA, txB, txC, txD, txBA];
+    final calc = TransactionCalculation();
+    final result = calc.totalCapitalUsed(txD, txs: txs);
+
+    expect(result.toString().startsWith('1.6133333333'), true);
+
+    final rootResult = calc.totalCapitalUsed(txA, txs: txs);
+    expect(rootResult.toString().startsWith('75'), true);
   });
 
   test('CRAZY PROOF: 6-Level Lineage with strict parent.rrId == child.srId enforcement', () {

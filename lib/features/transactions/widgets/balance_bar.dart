@@ -98,8 +98,12 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
     for (final tx in txs) {
       final ctx = tx.isRoot ? tx : txsMap[tx.rid];
       if (ctx == null) continue;
-      final txUsed = capitalUsed[ctx.srId] ?? Decimal.zero;
-      capitalUsed[ctx.srId] = Math.add(txUsed, tx.isRoot ? tx.balance : calc.totalCapitalUsed(tx, txsMap: txsMap));
+      capitalUsed[ctx.srId] = Math.add(
+        capitalUsed[ctx.srId] ?? Decimal.zero,
+        tx.isRoot
+            ? (Math.multiply(tx.srAmount, (tx.balance >= tx.rrAmount) ? Decimal.one : Math.divide(tx.balance, tx.rrAmount)))
+            : calc.totalCapitalUsed(tx, txsMap: txsMap),
+      );
     }
 
     List<String> cptUsed = [];
