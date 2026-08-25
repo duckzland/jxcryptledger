@@ -7,20 +7,20 @@ final DateFormat _fmt = DateFormat('HH:mm:ss.SSSSSS');
 
 const bool isProd = bool.fromEnvironment('dart.vm.product');
 
-void logln(String message) {
+void logln(String message, [String group = "CORE"]) {
   if (isProd) return;
 
-  String prefix = CoreMode.isServer ? "[SRV]" : "[CLT]";
+  String prefix = CoreMode.isServer ? "SRV" : "CLT";
   final ts = _fmt.format(DateTime.now());
 
   if (CoreMode.isServer) {
     try {
       final file = File('server_log.txt');
-      file.writeAsStringSync('[JX]$prefix $ts - $message\n', mode: FileMode.append, flush: true);
+      file.writeAsStringSync('[JX][$prefix][$group] $ts - $message\n', mode: FileMode.append, flush: true);
     } catch (e) {
-      stdout.writeln('[JX]$prefix $ts - Failed to write log: $e');
+      stdout.writeln('[JX][$prefix][$group] $ts - Failed to write log: $e');
     }
   } else {
-    stdout.writeln('[JX]$prefix $ts - $message');
+    stdout.writeln('[JX][$prefix][$group] $ts - $message');
   }
 }
