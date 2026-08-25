@@ -116,7 +116,7 @@ class SettingsRepository extends CoreBaseRepository<SettingsModel> with CoreMixi
       } catch (_) {}
 
       try {
-        logln("[SettingsRepository] Failed to decrypt marker. Stored type: ${encrypted.runtimeType}");
+        logln("[SettingsRepository] Failed to decrypt marker. Stored type: ${encrypted.runtimeType}", "SYSTEM");
       } catch (_) {}
 
       return null;

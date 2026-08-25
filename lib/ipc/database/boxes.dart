@@ -14,7 +14,7 @@ class IpcBoxes {
       throw ("[IPC] Cannot initialize boxes without proper hive path");
     }
 
-    logln("Initializing Hive at $hivePath");
+    logln("Initializing Hive at $hivePath", "IPC");
     CoreLocker.lockAndCleanHive(hivePath!);
     Hive.init(hivePath!);
   }
@@ -52,7 +52,7 @@ class IpcBoxes {
       box = await openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
       return box;
     } catch (e) {
-      logln("Failed to open $name: ${e.toString()}");
+      logln("Failed to open $name: ${e.toString()}", "IPC");
 
       try {
         if (box != null && box.isOpen) {
@@ -65,10 +65,10 @@ class IpcBoxes {
 
         await Hive.deleteBoxFromDisk(name);
         box = await openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
-        logln("Rebuild box $name completed");
+        logln("Rebuild box $name completed", "IPC");
         return box;
       } catch (rebuildError) {
-        logln("Rebuild failed for $name: ${rebuildError.toString()}");
+        logln("Rebuild failed for $name: ${rebuildError.toString()}", "IPC");
         rethrow;
       }
     }

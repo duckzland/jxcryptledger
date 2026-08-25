@@ -10,18 +10,18 @@ void main() async {
   final outputFile = File('windows/runner/resources/app_icon.ico');
 
   if (!await inputFile.exists()) {
-    logln("Error: Input file missing at ${inputFile.path}");
+    logln("Error: Input file missing at ${inputFile.path}", "TOOLS");
     return;
   }
 
   final bytes = await inputFile.readAsBytes();
   final decodedImage = img.decodeImage(bytes);
   if (decodedImage == null) {
-    logln("Error: Could not decode the icon image structure.");
+    logln("Error: Could not decode the icon image structure.", "TOOLS");
     return;
   }
 
-  logln("Generating compliant multi-size PNG-compressed icon...");
+  logln("Generating compliant multi-size PNG-compressed icon...", "TOOLS");
 
   final int s16 = 16;
   final int s32 = 32;
@@ -74,5 +74,5 @@ void main() async {
   }
 
   await outputFile.writeAsBytes(newFileBuffer.toBytes());
-  logln("Success! All-PNG multi-size 'app_icon.ico' written safely.");
+  logln("Success! All-PNG multi-size 'app_icon.ico' written safely.", "TOOLS");
 }

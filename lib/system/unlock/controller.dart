@@ -32,7 +32,7 @@ class SystemUnlockController extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      logln("$e");
+      logln("$e", "SYSTEM");
       return false;
     }
   }

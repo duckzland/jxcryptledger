@@ -70,12 +70,12 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     final serverReady = await waitForServer();
     if (!serverReady) {
-      logln("Exiting due to failed to detect IPC server: ${CoreMode.ipcPipeName}");
+      logln("Exiting due to failed to detect IPC server: ${CoreMode.ipcPipeName}", "RUNTIME");
       shutdown();
       return;
     }
 
-    logln("IPC server running via Named Pipe: ${CoreMode.ipcPipeName}");
+    logln("IPC server running via Named Pipe: ${CoreMode.ipcPipeName}", "RUNTIME");
 
     // Client strapping up
     ipcClient.pipeName = CoreMode.ipcPipeName;
@@ -84,7 +84,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     await ipcClient.start();
 
-    logln("Connected to IPC server at Named Pipe: ${CoreMode.ipcPipeName}");
+    logln("Connected to IPC server at Named Pipe: ${CoreMode.ipcPipeName}", "RUNTIME");
 
     _serverWatchdog = Timer.periodic(Duration(seconds: 5), (_) async {
       shutdownWhenNoClient();
@@ -156,70 +156,70 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     try {
       await _settingsService.init();
     } catch (e) {
-      logln("SettingsService failed to initialize: $e");
+      logln("SettingsService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _notificationService.init();
     } catch (e) {
-      logln("NotificationService failed to initialize: $e");
+      logln("NotificationService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _ratesService.init();
     } catch (e) {
-      logln("RatesService failed to initialize: $e");
+      logln("RatesService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _watchersService.init();
     } catch (e) {
-      logln("WatchersService failed to initialize: $e");
+      logln("WatchersService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _panelsService.init();
     } catch (e) {
-      logln("PanelsService failed to initialize: $e");
+      logln("PanelsService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _tickersService.init();
     } catch (e) {
-      logln("TickersService failed to initialize: $e");
+      logln("TickersService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _marketsService.init();
     } catch (e) {
-      logln("MarketsService failed to initialize: $e");
+      logln("MarketsService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _cryptosService.init();
     } catch (e) {
-      logln("CryptosService failed to initialize: $e");
+      logln("CryptosService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _archivesService.init();
     } catch (e) {
-      logln("ArchivesService failed to initialize: $e");
+      logln("ArchivesService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       await _transactionsService.init();
     } catch (e) {
-      logln("TransactionsService failed to initialize: $e");
+      logln("TransactionsService failed to initialize: $e", "RUNTIME");
     }
 
     try {
       appPooler.start();
     } catch (e) {
-      logln("WorkerService failed to initialize: $e");
+      logln("WorkerService failed to initialize: $e", "RUNTIME");
     }
 
-    logln("Server services started.");
+    logln("Server services started.", "RUNTIME");
   }
 
   Future<void> stopServices() async {
@@ -236,12 +236,12 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     appPooler.stop();
 
-    logln("Server services stopped.");
+    logln("Server services stopped.", "RUNTIME");
   }
 
   void shutdownWhenNoClient() {
     if (!hasClient()) {
-      logln("Exiting due to server has no more connected client");
+      logln("Exiting due to server has no more connected client", "RUNTIME");
       shutdown();
     }
   }
@@ -263,13 +263,13 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     if (state.isFirstRun()) {
       CoreMode.isFirstRun = true;
       try {
-        logln("First run detected, initializing vault");
+        logln("First run detected, initializing vault", "RUNTIME");
         ipcClient.localKey = keyBytes;
         ipcClient.sessionKey ??= ipcServer.sessionKey;
         await bootServices();
         await _settingsService.save(SettingKey.vaultInitialized, "initialized");
       } catch (e) {
-        logln("Failed to initialize vault: $e");
+        logln("Failed to initialize vault: $e", "RUNTIME");
         return SystemUnlockStatus.error;
       }
     }

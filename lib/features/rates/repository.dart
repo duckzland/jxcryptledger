@@ -12,7 +12,7 @@ class RatesRepository extends CoreBaseRepository<RatesModel> {
       return;
     }
 
-    logln('[RATES] Cleaning old rates.');
+    logln("Cleaning old rates.", "RATES");
 
     final nowEpoch = DateTime.now().microsecondsSinceEpoch;
     final keysToDelete = <dynamic>[];

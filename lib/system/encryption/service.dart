@@ -66,7 +66,7 @@ class SystemEncryptionService {
 
   Future<Uint8List> loadPasswordKey(String password) async {
     final String saltValue = dotenv.get('APP_SALT', fallback: appSalt);
-    logln("saltvalue: $saltValue");
+    logln("saltvalue: $saltValue", "SYSTEM");
 
     final pbkdf2 = Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: 100000, bits: 256);
 

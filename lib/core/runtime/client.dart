@@ -49,7 +49,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
     final serverReady = await waitForServer();
     if (!serverReady) {
-      logln("Failed to spawn IPC server (Named Pipe: ${CoreMode.ipcPipeName} timeout)");
+      logln("Failed to spawn IPC server (Named Pipe: ${CoreMode.ipcPipeName} timeout)", "RUNTIME");
       fatalErrorNotice();
     }
 
@@ -60,7 +60,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
     await ipcClient.start();
 
-    logln("Connected to IPC server at Named Pipe: ${CoreMode.ipcPipeName}");
+    logln("Connected to IPC server at Named Pipe: ${CoreMode.ipcPipeName}", "RUNTIME");
 
     CoreMode.isInitialized = true;
   }
@@ -77,7 +77,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
     try {
       if (!hasClient(exclude: pid) && isServerAvailable()) {
-        logln("Shutting down server");
+        logln("Shutting down server", "RUNTIME");
         await ipcClient.send(op: IpcAction.shutdown, action: "shutdown", key: pid);
       }
     } catch (_) {}
@@ -161,7 +161,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
       throw Exception("Failed to unlock vault due to marker mismatch (Expected 'initialized', got '$decrypted')");
     }
 
-    logln("Password correct, vault unlocked");
+    logln("Password correct, vault unlocked", "RUNTIME");
 
     CoreMode.dbVersion = _settingsController.getByKey(SettingKey.migrateVersion, defaultValue: "v1.1.0");
 

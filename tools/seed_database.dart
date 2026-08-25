@@ -66,7 +66,7 @@ Future<bool> fetchCryptos({required String endpoint, required Box<CryptosModel> 
     final response = await request.close();
 
     if (response.statusCode != 200) {
-      logln("Failed to fetch cryptos: HTTP ${response.statusCode}");
+      logln("Failed to fetch cryptos: HTTP ${response.statusCode}", "TOOLS");
       return false;
     }
 
@@ -74,7 +74,7 @@ Future<bool> fetchCryptos({required String endpoint, required Box<CryptosModel> 
     final parsed = cryptosParsersLegacy({"body": body});
 
     if (parsed.isEmpty) {
-      logln("Failed to fetch cryptos: empty parsed list");
+      logln("Failed to fetch cryptos: empty parsed list", "TOOLS");
       return false;
     }
 
@@ -85,10 +85,10 @@ Future<bool> fetchCryptos({required String endpoint, required Box<CryptosModel> 
     }
 
     await cryptosBox.flush();
-    logln("Fetching cryptos completed");
+    logln("Fetching cryptos completed", "TOOLS");
     return true;
   } catch (e) {
-    logln("Failed to fetch cryptos: $e");
+    logln("Failed to fetch cryptos: $e", "TOOLS");
     return false;
   }
 }
@@ -141,7 +141,7 @@ Future<TransactionsModel> createChild(String label, Box repo, TransactionsModel 
     timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
     meta: {},
   );
-  logln("Generating Leaf $label: ${tx.tid}");
+  logln("Generating Leaf $label: ${tx.tid}", "TOOLS");
   await repo.add(tx);
 
   return tx;
@@ -187,7 +187,7 @@ Future<void> main(List<String> args) async {
   final dir = requireEnv('APP_DATA_DIR');
   final password = requireEnv('APP_DB_PASSWORD');
 
-  logln("Initializing Hives...");
+  logln("Initializing Hives...", "TOOLS");
   Hive.init(dir);
 
   Hive.registerAdapter(TransactionsAdapter());
@@ -198,7 +198,7 @@ Future<void> main(List<String> args) async {
   Hive.registerAdapter(TickersAdapter());
   Hive.registerAdapter(ArchivesAdapter());
 
-  logln("Wiping old boxes...");
+  logln("Wiping old boxes...", "TOOLS");
   final boxes = ['settings_box'];
 
   if (seedTx) {
@@ -228,9 +228,9 @@ Future<void> main(List<String> args) async {
   for (final box in boxes) {
     try {
       await Hive.deleteBoxFromDisk(box);
-      logln("Deleted: $box");
+      logln("Deleted: $box", "TOOLS");
     } catch (e) {
-      logln("Failed to delete $box: $e");
+      logln("Failed to delete $box: $e", "TOOLS");
     }
   }
 
@@ -242,12 +242,12 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  logln("Preparing for encryption using salt: $salt");
+  logln("Preparing for encryption using salt: $salt", "TOOLS");
 
   final key = await derivePasswordKey(password, salt);
   final cipher = HiveAesCipher(key);
 
-  logln("Seeding settings...");
+  logln("Seeding settings...", "TOOLS");
   Hive.registerAdapter<SettingsModel>(SettingsAdapter());
   final settingsBox = await Hive.openBox<SettingsModel>('settings_box', encryptionCipher: cipher, crashRecovery: false);
   final encryptedMarker = await encryptValue("initialized", key);
@@ -256,7 +256,7 @@ Future<void> main(List<String> args) async {
     SettingsModel(keyId: SettingKey.vaultInitialized.id, type: SettingKey.vaultInitialized.type, value: encryptedMarker),
   );
 
-  logln("Marking dbversion to ${env['DB_VERSION'] ?? latestDB}");
+  logln("Marking dbversion to ${env['DB_VERSION'] ?? latestDB}", "TOOLS");
 
   await settingsBox.put(
     SettingKey.migrateVersion.id,
@@ -276,12 +276,12 @@ Future<void> main(List<String> args) async {
   final rtRepo = await Hive.openBox<RatesModel>('rates_box', encryptionCipher: null, crashRecovery: false);
 
   if (seedCryptos) {
-    logln("Seeding cryptos...");
+    logln("Seeding cryptos...", "TOOLS");
     await fetchCryptos(endpoint: requireEnv('CMC_ENDPOINT'), cryptosBox: cryptosBox);
   }
 
   if (seedTx) {
-    logln("Seeding transactions...");
+    logln("Seeding transactions...", "TOOLS");
     final List<TransactionsModel> roots = [];
 
     for (int r = 0; r < 5; r++) {
@@ -300,7 +300,7 @@ Future<void> main(List<String> args) async {
         timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
         meta: {"rootIndex": r},
       );
-      logln("Generating Root: ${root.tid}");
+      logln("Generating Root: ${root.tid}", "TOOLS");
       await txRepo.add(root);
 
       if (r < 3) {
@@ -336,21 +336,21 @@ Future<void> main(List<String> args) async {
       // final c2 = await createChild("C2", Math.divide(c.balance, Decimal.fromInt(2)), root.rrId);
 
       // Test Close
-      // logln("Closing: c1");
+      // logln("Closing: c1", "TOOLS");
       // await txRepo.close(c1);
 
-      // logln("Closing: c2");
+      // logln("Closing: c2", "TOOLS");
       // await txRepo.close(c2);
 
       // Test decreasing amount
-      // logln("Decreasing: b2 balance");
+      // logln("Decreasing: b2 balance", "TOOLS");
       // final b2Decrease = b2.copyWith(srAmount: Math.divide(b2.balance, Decimal.fromInt(4)));
       // await txRepo.update(b2Decrease);
     }
   }
 
   if (seedWatchers) {
-    logln("Seeding watchers...");
+    logln("Seeding watchers...", "TOOLS");
 
     final txs = txRepo.values.toList();
     for (final tx in txs) {
@@ -373,7 +373,7 @@ Future<void> main(List<String> args) async {
   }
 
   if (seedPanels) {
-    logln("Seeding panels...");
+    logln("Seeding panels...", "TOOLS");
     final txs = txRepo.values.toList();
     int i = 0;
     for (final tx in txs) {
@@ -394,7 +394,7 @@ Future<void> main(List<String> args) async {
   }
 
   if (seedRates) {
-    logln("Seeding rates from transactions");
+    logln("Seeding rates from transactions", "TOOLS");
     final txs = txRepo.values.toList();
     for (final tx in txs) {
       await rtRepo.add(
@@ -410,7 +410,7 @@ Future<void> main(List<String> args) async {
       );
     }
 
-    logln("Seeding rates from panels");
+    logln("Seeding rates from panels", "TOOLS");
     final pxs = pxRepo.values.toList();
     for (final tx in pxs) {
       await rtRepo.add(
@@ -426,7 +426,7 @@ Future<void> main(List<String> args) async {
       );
     }
 
-    logln("Seeding rates from watchers");
+    logln("Seeding rates from watchers", "TOOLS");
     final wxs = wxRepo.values.toList();
     for (final tx in wxs) {
       await rtRepo.add(
@@ -444,7 +444,7 @@ Future<void> main(List<String> args) async {
   }
 
   if (seedArchives) {
-    logln("Seeding archives");
+    logln("Seeding archives", "TOOLS");
 
     if (seedTx) {
       final data = await export<TransactionsModel>(txRepo);
@@ -486,7 +486,7 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  logln("Vault seeded successfully.");
+  logln("Vault seeded successfully.", "TOOLS");
   await Hive.close();
   exit(0);
 }

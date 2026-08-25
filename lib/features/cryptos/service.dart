@@ -56,10 +56,10 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
       await worker.run([cryptoJob]);
       return true;
     } catch (e) {
-      logln('[CRYPTOS] Unexpected Error: $e');
+      logln("Unexpected Error: $e", "CRYPTOS");
       return false;
     } finally {
-      logln('[CRYPTOS] Fetch cryptos completed');
+      logln("Fetch cryptos completed", "CRYPTOS");
       broadcasterEmit(IpcAction.refreshCryptos, 'complete', '', Uint8List(0));
     }
   }
@@ -96,7 +96,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
       }
     }
 
-    logln('[CRYPTOS] Fetching from : $uri [${resp.statusCode}]');
+    logln("Fetching from : $uri [${resp.statusCode}]", "CRYPTOS");
 
     if (resp.statusCode != 200) {
       throw NetworkingException(

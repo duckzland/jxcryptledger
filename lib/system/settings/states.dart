@@ -16,7 +16,7 @@ class StateController {
       populate(jsonData);
     }
 
-    logln('Loaded app state from database.');
+    logln("Loaded app state from database.", "SYSTEM");
   }
 
   Future<void> save() async {
@@ -25,10 +25,10 @@ class StateController {
     try {
       await controller.updateByKey(SettingKey.states, jsonData);
     } catch (e) {
-      logln("Failed to save app state to database: $e");
+      logln("Failed to save app state to database: $e", "SYSTEM");
     }
 
-    logln('Saved app state to database.');
+    logln("Saved app state to database.", "SYSTEM");
   }
 
   dynamic get(String key, {dynamic defaultValue}) {

@@ -65,9 +65,9 @@ class IpcServer {
     ServerSocket socket;
     try {
       socket = await ServerSocket.bind(InternetAddress(pipeName, type: InternetAddressType.unix), 0);
-      logln("[IPC] Server running: $pipeName");
+      logln("Server running: $pipeName", "IPC");
     } catch (e) {
-      logln("[IPC] Server failed to open: $pipeName with $e");
+      logln("Server failed to open: $pipeName with $e", "IPC");
       return;
     }
 
@@ -80,7 +80,7 @@ class IpcServer {
 
       Future<void> disconnect([dynamic error]) async {
         if (error != null) {
-          logln("[IPC] Connection disconnected with error: $error");
+          logln("Connection disconnected with error: $error", "IPC");
         }
 
         _slaves.remove(client);
@@ -123,7 +123,7 @@ class IpcServer {
 
         if (actionCode != IpcAction.unlock && actionCode != IpcAction.shutdown) {
           if (payload.length < 28) {
-            logln("[IPC] SECURITY VIOLATION: Received unauthenticated packet for op: $actionCode from reqId: $activeReqId. Rejecting.");
+            logln("SECURITY VIOLATION: Received unauthenticated packet for op: $actionCode from reqId: $activeReqId. Rejecting.", "IPC");
             error(client, activeReqId);
             continue;
           }
@@ -131,7 +131,7 @@ class IpcServer {
           try {
             payload = await _crypto.decrypt(payload);
           } catch (e) {
-            logln("[IPC] AUTHENTICATION FAILURE: Tampered or invalid signature block for op: $actionCode. Dropping.");
+            logln("AUTHENTICATION FAILURE: Tampered or invalid signature block for op: $actionCode. Dropping.", "IPC");
             error(client, activeReqId);
             continue;
           }
@@ -235,7 +235,7 @@ class IpcServer {
           case IpcAction.shutdown:
             if (hasClient != null && hasClient!.call(exclude: nativeHiveKey) == false) {
               await shutdown?.call();
-              logln("Shutdown request from $nativeHiveKey... shutting down.");
+              logln("Shutdown request from $nativeHiveKey... shutting down.", "IPC");
             }
             break;
 
@@ -245,7 +245,7 @@ class IpcServer {
 
         response(client, activeReqId, serializedResult, sendOp);
       } catch (e) {
-        logln("Failed to process action: $e");
+        logln("Failed to process action: $e", "IPC");
         error(client, activeReqId);
       }
     }
@@ -257,7 +257,7 @@ class IpcServer {
     try {
       client.add(responsePacket.toBytes());
     } catch (e) {
-      logln("[IPC] Failed to send response to $client");
+      logln("Failed to send response to $client", "IPC");
       _slaves.remove(client);
       client.destroy();
       disconnected?.call();
@@ -271,7 +271,7 @@ class IpcServer {
     try {
       client.add(errorPacket.toBytes());
     } catch (e) {
-      logln("[IPC] Failed to send error to $client");
+      logln("Failed to send error to $client", "IPC");
       _slaves.remove(client);
       client.destroy();
       disconnected?.call();
@@ -293,7 +293,7 @@ class IpcServer {
           break;
       }
     } catch (e) {
-      logln("[IPC] Failed to process payload: $e");
+      logln("Failed to process payload: $e", "IPC");
       return;
     }
 
@@ -305,7 +305,7 @@ class IpcServer {
         try {
           slave.add(frame);
         } catch (e) {
-          logln("[IPC] Failed to broadcast to $slave");
+          logln("Failed to broadcast to $slave", "IPC");
           _slaves.remove(slave);
           slave.destroy();
           disconnected?.call();

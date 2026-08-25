@@ -59,22 +59,22 @@ class IpcClient {
       _socketSubscription = _socket!.listen(
         (List<int> chunk) => _receive(Uint8List.fromList(chunk)),
         onError: (err) async {
-          logln("[IPC] socket error: $err");
+          logln("socket error: $err", "IPC");
           if (!_isDisposing) {
             await reconnect();
           }
         },
         onDone: () async {
-          logln("[IPC] socket disconnected cleanly.");
+          logln("socket disconnected cleanly.", "IPC");
           if (!_isDisposing) {
             await reconnect();
           }
         },
         cancelOnError: true,
       );
-      logln("[IPC] Socket connected to: $pipeName");
+      logln("Socket connected to: $pipeName", "IPC");
     } catch (e) {
-      logln("[IPC] connection failed: $e");
+      logln("connection failed: $e", "IPC");
       if (!_isDisposing) {
         await reconnect();
       }
@@ -93,7 +93,7 @@ class IpcClient {
         throw StateError('[IPC] Failed to perform clean reconnection');
       }
     } catch (e) {
-      logln("[IPC] Failed to reconnect: $e");
+      logln("Failed to reconnect: $e", "IPC");
       exited?.call();
     } finally {
       _isReconnecting = false;
@@ -134,7 +134,7 @@ class IpcClient {
     try {
       resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
     } catch (e) {
-      logln("$e");
+      logln("$e", "IPC");
     }
 
     return converter.fromBytes(op, action, resultBytes);
@@ -205,7 +205,7 @@ class IpcClient {
       final op = IpcAction.fromCode(currentPacket.op);
       switch (op) {
         case IpcAction.unknown:
-          logln("[IPC] Refusing to process unknown request op");
+          logln("Refusing to process unknown request op", "IPC");
           break;
 
         // @todo: create proper callback for error
@@ -219,14 +219,14 @@ class IpcClient {
 
         default:
           if (sessionKey == null) {
-            logln("[IPC] Refusing to process op without sessionKey: ${op.code}");
+            logln("Refusing to process op without sessionKey: ${op.code}", "IPC");
             break;
           }
 
           try {
             responseBytes = await _crypto.decrypt(responseBytes);
           } catch (e) {
-            logln("[IPC] Failed to decrypt packet: ${op.code} - $e");
+            logln("Failed to decrypt packet: ${op.code} - $e", "IPC");
             break;
           }
 
@@ -260,7 +260,7 @@ class IpcClient {
         ),
       );
     } catch (e) {
-      logln("[IPC] Failed to broadcast event: ${packet.op} - $e");
+      logln("Failed to broadcast event: ${packet.op} - $e", "IPC");
     }
   }
 }

@@ -62,7 +62,7 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
           await Future.delayed(Duration(milliseconds: 350));
           return AppExitResponse.exit;
         } catch (e) {
-          logln("Failed to clean exit: $e");
+          logln("Failed to clean exit: $e", "RUNTIME");
           return AppExitResponse.exit;
         }
       },
@@ -107,9 +107,9 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
 
       CoreMode.isMain = true;
 
-      logln("Spawned detached IPC server process (pid=${proc.pid}) with flags: ${serverArgs.join(' ')}");
+      logln("Spawned detached IPC server process (pid=${proc.pid}) with flags: ${serverArgs.join(' ')}", "RUNTIME");
     } catch (e) {
-      logln("Failed to spawn server: $e");
+      logln("Failed to spawn server: $e", "RUNTIME");
     }
   }
 
@@ -160,10 +160,10 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
       final socketFile = FileSystemEntity.typeSync(CoreMode.ipcPipeName);
       if (socketFile != FileSystemEntityType.notFound) {
         File(CoreMode.ipcPipeName).deleteSync();
-        logln("Cleaned up stale socket file prior to server spawn.");
+        logln("Cleaned up stale socket file prior to server spawn.", "RUNTIME");
       }
     } catch (e) {
-      logln("Warning: Failed to clear stale socket file: $e");
+      logln("Warning: Failed to clear stale socket file: $e", "RUNTIME");
     }
   }
 

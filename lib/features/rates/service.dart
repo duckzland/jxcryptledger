@@ -65,7 +65,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
   }
 
   Future<void> deleteById(int sourceId, int targetId) async {
-    // logln('[RATES] Deleting $sourceId-$targetId.');
+    // logln("Deleting $sourceId-$targetId.", "RATES");
     await repo.delete("$sourceId-$targetId");
   }
 
@@ -91,8 +91,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     if (_queue.contains((sourceId, targetId)) || _inProcessQueue.contains((sourceId, targetId))) return;
     if (_queue.contains((targetId, sourceId)) || _inProcessQueue.contains((targetId, sourceId))) return;
 
-    // logln("[RATES] Adding to queue $sourceId - $targetId");
-
+    // logln("Adding to queue $sourceId - $targetId", "RATES");
     _queue.add((sourceId, targetId));
 
     _debounce?.cancel();
@@ -149,7 +148,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       _inProcessQueue.clear();
       worker.isFetching = false;
 
-      logln('[RATES] Process queue completed');
+      logln("Process queue completed", "RATES");
 
       broadcasterEmit(IpcAction.refreshRates, 'complete', '', Uint8List(0));
     }
@@ -157,7 +156,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
   Future<void> refreshRates() async {
     if (cryptosRepo.isEmpty()) {
-      logln('[RATES] No cryptos available, skipping refresh.');
+      logln("No cryptos available, skipping refresh.", "RATES");
       return;
     }
 
@@ -287,8 +286,8 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       }
     }
 
-    // logln('[RATES] Fetching rates : ${sourceId.toString()} ${validTargets.join(',')}');
-    logln('[RATES] Fetching from : $uri [${resp.statusCode}]');
+    // logln("Fetching rates : ${sourceId.toString()} ${validTargets.join(',')}", "RATES");
+    logln("Fetching from : $uri [${resp.statusCode}]", "RATES");
 
     if (resp.statusCode != 200) {
       throw NetworkingException(
@@ -315,7 +314,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     for (final rate in parsed.rates) {
       if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
         await repo.add(rate);
-        // logln('[RATES] Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}');
+        // logln("Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}", "RATES");
       }
     }
   }

@@ -136,7 +136,7 @@ class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
 
       widgetsNotifySuccess("Export completed successfully.");
     } catch (e) {
-      logln("[EXPORT] Failed to save export file: $e");
+      logln("Failed to save export file: $e", "EXPORT");
       widgetsNotifyError("Failed to export data.");
     }
   }

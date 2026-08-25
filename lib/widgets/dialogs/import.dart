@@ -127,7 +127,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
     } on ValidationException catch (e) {
       widgetsNotifyError(e.userMessage);
     } catch (e) {
-      logln("[IMPORT] Import failed: $e");
+      logln("Import failed: $e", "IMPORT");
       widgetsNotifyError("Import failed.");
     }
   }

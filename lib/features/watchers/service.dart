@@ -18,8 +18,7 @@ class WatchersService extends CoreBaseService<WatchersModel, WatchersRepository>
 
   @override
   Future<void> processNewRate(WatchersModel tx, Decimal newRate) async {
-    logln("[WATCHERS] Evaluating ${tx.srId}-${tx.rrId}");
-
+    logln("Evaluating ${tx.srId}-${tx.rrId}", "WATCHERS");
     if (tx.isSpent) return;
 
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;

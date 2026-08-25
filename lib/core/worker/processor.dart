@@ -35,7 +35,7 @@ class CoreWorkerProcessor {
   void _startWatchdog() {
     _watchdog?.cancel();
     _watchdog = Timer(watchdogTimeout, () {
-      logln('[WORKER] Watchdog triggered — forcing unlock.');
+      logln("[WORKER] Watchdog triggered — forcing unlock.", "WORKER");
       isFetching = false;
 
       _client?.close();
@@ -48,10 +48,10 @@ class CoreWorkerProcessor {
   }
 
   void _pauseOperation() {
-    logln('[WORKER] Pausing operation.');
+    logln("[WORKER] Pausing operation.", "WORKER");
     _paused?.cancel();
     _paused = Timer(Duration(seconds: 61), () {
-      logln('[WORKER] Resuming operation.');
+      logln("[WORKER] Resuming operation.", "WORKER");
       _paused?.cancel();
       _paused = null;
     });
@@ -87,13 +87,13 @@ class CoreWorkerProcessor {
           await job.callback(job.id, job.payload, fetcher: client);
         } catch (e) {
           if (e is NetworkingException && e.details as int == 429) {
-            logln('[WORKER] Rate limited, stopping worker: $e');
+            logln("[WORKER] Rate limited, stopping worker: $e", "WORKER");
             hasFailed = 2;
             while (iterator.moveNext()) {}
             break;
           } else {
             hasFailed = 1;
-            logln('[WORKER] Unexpected error for job ${job.id}: $e');
+            logln("[WORKER] Unexpected error for job ${job.id}: $e", "WORKER");
           }
         }
 
@@ -120,7 +120,7 @@ class CoreWorkerProcessor {
         _masterAborter!.future,
       ]);
     } catch (e) {
-      logln('[WORKER] Master thread forcefully detached: $e');
+      logln("[WORKER] Master thread forcefully detached: $e", "WORKER");
     } finally {
       if (hasFailed == 2) _pauseOperation();
       _watchdog?.cancel();

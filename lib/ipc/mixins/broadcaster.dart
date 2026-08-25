@@ -28,7 +28,7 @@ mixin IpcMixinsBroadcaster {
     try {
       await ipcClient.send(op: op, action: action, key: key, payload: payload);
     } catch (e) {
-      logln("[IPC] Broadcaster failed to send: $e");
+      logln("Broadcaster failed to send: $e", "IPC");
     }
   }
 
@@ -37,7 +37,7 @@ mixin IpcMixinsBroadcaster {
     try {
       ipcServer.broadcast(op, action ?? "", key ?? "", payload ?? Uint8List(0), exclude: exclude);
     } catch (e) {
-      logln("[IPC] Broadcaster failed to emit: $e");
+      logln("Broadcaster failed to emit: $e", "IPC");
     }
     return true;
   }

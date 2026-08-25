@@ -18,7 +18,7 @@ abstract class CoreBaseException implements Exception {
 
   CoreBaseException(this.code, this.devMessage, String userMessage, {this.details, this.silent = false}) : _rawUserMessage = userMessage {
     if (!silent) {
-      logln('[$code] $devMessage');
+      logln(devMessage, code.toString());
     }
   }
 

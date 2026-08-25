@@ -45,10 +45,10 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
       await worker.run([marketJob]);
       return true;
     } catch (e) {
-      logln('[MARKETS] Unexpected Error: $e');
+      logln("Unexpected Error: $e", "MARKETS");
       return false;
     } finally {
-      logln('[MARKETS] Refresh rates completed');
+      logln("Refresh rates completed", "MARKETS");
       broadcasterEmit(IpcAction.refreshMarket, 'complete', '', Uint8List(0));
     }
   }
@@ -81,7 +81,7 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
       }
     }
 
-    logln('[MARKETS] Fetching from : $uri [${resp.statusCode}]');
+    logln("Fetching from : $uri [${resp.statusCode}]", "MARKETS");
 
     if (resp.statusCode != 200) {
       throw NetworkingException(
@@ -92,7 +92,7 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
       );
     }
 
-    logln('[MARKETS] Fetching from : $uri [${resp.statusCode}]');
+    logln("Fetching from : $uri [${resp.statusCode}]", "MARKETS");
 
     final markets = await compute(parseMarketsV3, resp.body);
     await repo.replace(markets);

@@ -28,7 +28,7 @@ class CorePooler {
     final transactions = CoreLocator.getit<TransactionsService>();
     final market = CoreLocator.getit<MarketsService>();
 
-    logln("[POOLER] Registering used rates.");
+    logln("Registering used rates.", "POOLER");
     panels.scheduleRates();
     watchers.scheduleRates();
     transactions.scheduleRates();
@@ -49,7 +49,7 @@ class CorePooler {
       final uxs = [...pxs, ...wxs, ...txs];
 
       if (uxs.isNotEmpty) {
-        logln("[POOLER] Trying to clean old rates");
+        logln("Trying to clean old rates", "POOLER");
         final rxs = rates.extract();
         for (final rx in rxs) {
           final key = '${rx.sourceId}-${rx.targetId}';
@@ -60,28 +60,28 @@ class CorePooler {
       }
 
       if (!panels.isEmpty() || !watchers.isEmpty() || !transactions.isEmpty() || mustAlwaysFetchRate) {
-        logln("[POOLER] Refreshing transactions rates");
+        logln("Refreshing transactions rates", "POOLER");
         await rates.refreshRates();
       }
 
       if (!watchers.isEmpty()) {
-        logln("[POOLER] Processing watchers");
+        logln("Processing watchers", "POOLER");
         await watchers.onRatesUpdated();
       }
 
       if (!panels.isEmpty()) {
-        logln("[POOLER] Processing panels");
+        logln("Processing panels", "POOLER");
         await panels.onRatesUpdated();
       }
 
       if (!panels.isEmpty()) {
-        logln("[POOLER] Refreshing tickers rates");
+        logln("Refreshing tickers rates", "POOLER");
         await tickers.refreshRates();
       }
     });
 
     _everyFiveMinutesWorker = Timer.periodic(Duration(minutes: 5), (_) async {
-      logln("[POOLER] Refreshing market rates");
+      logln("Refreshing market rates", "POOLER");
       await market.refreshRates();
     });
   }

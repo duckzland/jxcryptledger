@@ -15,7 +15,7 @@ String getAppDocumentsDir() {
 }
 
 Future<void> main() async {
-  logln("Wiping Hive boxes...");
+  logln("Wiping Hive boxes...", "TOOLS");
 
   final dir = getAppDocumentsDir();
   Hive.init(dir);
@@ -35,12 +35,12 @@ Future<void> main() async {
   for (final boxName in boxes) {
     try {
       await Hive.deleteBoxFromDisk(boxName);
-      logln("Deleted box: $boxName");
+      logln("Deleted box: $boxName", "TOOLS");
     } catch (e) {
-      logln("Failed to delete $boxName: $e");
+      logln("Failed to delete $boxName: $e", "TOOLS");
     }
   }
 
-  logln("Done.");
+  logln("Done.", "TOOLS");
   exit(0);
 }

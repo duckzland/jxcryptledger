@@ -31,7 +31,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   Future<void> add(TransactionsModel tx) async {
     if (debugLogs) {
       logln(
-        '[ADD] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "ADD",
       );
     }
 
@@ -70,8 +71,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
         status: balance <= Decimal.zero ? TransactionStatus.inactive.index : TransactionStatus.partial.index,
       );
 
-      logln("[ADD] Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}");
-
+      logln("Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}", "ADD");
       await box.put(ntx.tid, ntx);
 
       // Force to revalidate!
@@ -83,7 +83,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   Future<void> update(TransactionsModel tx) async {
     if (debugLogs) {
       logln(
-        '[UPDATE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "UPDATE",
       );
     }
 
@@ -125,8 +126,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
           }
         }
 
-        logln("[UPDATE] Rebalancing amount ${otx.srAmount}|${tx.srAmount}|${ptx.rrId}|${otx.srId}|${tx.balance}|${otx.balance}|$balance");
-
+        logln("Rebalancing amount ${otx.srAmount}|${tx.srAmount}|${ptx.rrId}|${otx.srId}|${tx.balance}|${otx.balance}|$balance", "UPDATE");
         final nptx = ptx.copyWith(
           balance: balance,
           status: balance > Decimal.zero ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
@@ -144,7 +144,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (debugLogs) {
       logln(
-        '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "DELETE",
       );
     }
 
@@ -154,7 +155,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       if (tx.tid == ttx.rid || tx.tid == ttx.pid) {
         if (debugLogs) {
           logln(
-            '[DELETE] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+            "DELETE",
           );
         }
 
@@ -211,7 +213,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (debugLogs) {
       logln(
-        '[CLOSING] ${tx.tid}|${tx.pid}|${tx.rid}|{tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+        "${tx.tid}|${tx.pid}|${tx.rid}|{tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "CLOSING",
       );
     }
 
@@ -242,10 +245,12 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (debugLogs) {
       logln(
-        '[REFUNDING] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "REFUNDING",
       );
       logln(
-        '[REBALANCING] ${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}',
+        "${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}",
+        "REBALANCING",
       );
     }
 
@@ -262,7 +267,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (debugLogs) {
       logln(
-        '[FINALIZING] ${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}',
+        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "FINALIZING",
       );
     }
 

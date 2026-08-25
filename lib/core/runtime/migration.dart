@@ -18,8 +18,7 @@ class CoreRuntimeMigration extends IpcMigration {
 
   @override
   Future<void> migrateAfterUnlock() async {
-    logln("[MIGRATION] Migrating database to ${CoreMode.dbVersion}");
-
+    logln("Migrating database to ${CoreMode.dbVersion}", "MIGRATION");
     try {
       switch (CoreMode.dbVersion) {
         case "v1.1.0":
@@ -56,13 +55,13 @@ class CoreRuntimeMigration extends IpcMigration {
 
           CoreMode.dbVersion = "v1.2.0";
 
-          logln("[MIGRATION] Upgrading database to ${CoreMode.dbVersion}");
+          logln("Upgrading database to ${CoreMode.dbVersion}", "MIGRATION");
           break;
         default:
           break;
       }
     } catch (e) {
-      logln("[MIGRATION] Failed upgrading database to ${CoreMode.dbVersion}: $e");
+      logln("Failed upgrading database to ${CoreMode.dbVersion}: $e", "MIGRATION");
     }
   }
 }

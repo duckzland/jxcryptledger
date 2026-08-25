@@ -38,7 +38,7 @@ class HiveBoxFaker<T extends CoreModelWithId> implements IpcBox<T> {
   Future<void> init() async {
     if (_hiveBox == null && hiveBoxOverride == null) {
       if (!Hive.isBoxOpen(boxName)) {
-        logln('[HIVE] Opening native box: $boxName');
+        logln("Opening native box: $boxName", "HIVE");
         _hiveBox = await Hive.openBox<T>(boxName);
       } else {
         _hiveBox = Hive.box<T>(boxName);

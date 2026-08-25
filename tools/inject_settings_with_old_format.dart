@@ -41,34 +41,34 @@ Future<void> main() async {
   final dir = requireEnv('APP_DATA_DIR');
   final password = requireEnv('APP_DB_PASSWORD');
 
-  logln("Initializing Hives...");
+  logln("Initializing Hives...", "TOOLS");
   Hive.init(dir);
 
-  logln("Wiping old boxes...");
+  logln("Wiping old boxes...", "TOOLS");
   final boxes = ['settings_box'];
 
   for (final box in boxes) {
     try {
       await Hive.deleteBoxFromDisk(box);
-      logln("Deleted: $box");
+      logln("Deleted: $box", "TOOLS");
     } catch (e) {
-      logln("Failed to delete $box: $e");
+      logln("Failed to delete $box: $e", "TOOLS");
     }
   }
 
   String salt = '7f8a2c1e9d3b4f5a6b8b9c0d1e2f3a4b5c6d7e8f9a7c8d9e0f1a2b3c4d5e6f7a';
 
-  logln("Preparing for encryption using salt: $salt");
+  logln("Preparing for encryption using salt: $salt", "TOOLS");
 
   final key = await derivePasswordKey(password, salt);
   final cipher = HiveAesCipher(key);
 
-  logln("Seeding settings...");
+  logln("Seeding settings...", "TOOLS");
   final settingsBox = await Hive.openBox<dynamic>('settings_box', encryptionCipher: cipher, crashRecovery: false);
   final encryptedMarker = await encryptValue("initialized", key);
   await settingsBox.put(SettingKey.vaultInitialized.id, encryptedMarker);
 
-  logln("Vault seeded successfully.");
+  logln("Vault seeded successfully.", "TOOLS");
   await Hive.close();
   exit(0);
 }

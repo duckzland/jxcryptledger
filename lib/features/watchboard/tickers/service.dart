@@ -79,12 +79,12 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       );
     }
 
-    logln('[TICKERS] Fetching from : $uri [${resp.statusCode}]');
+    logln("Fetching from : $uri [${resp.statusCode}]", "TICKERS");
 
     try {
       return parseJson(resp.body);
     } catch (e) {
-      logln('[TICKERS] FAILURE : ${resp.body}');
+      logln("FAILURE : ${resp.body}", "TICKERS");
       throw NetworkingException(
         AppErrorCode.netParseFailure,
         "Ticker fetch failed: parse error",
@@ -241,7 +241,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
     // New marketcap will populate the dominance!
     if (!isLegacy) {
-      logln("Skipping dominance");
+      logln("Skipping dominance", "TICKERS");
       return true;
     }
 
@@ -401,7 +401,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     try {
       await worker.run(jobs);
     } finally {
-      logln("[TICKERS] Fetching new ticker data completed");
+      logln("Fetching new ticker data completed", "TICKERS");
     }
   }
 

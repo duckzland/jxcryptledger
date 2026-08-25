@@ -47,7 +47,7 @@ class CoreLocker {
         }
       }
     } catch (e) {
-      logln("[LOCK] Error during server session lock and cleanup: $e");
+      logln("Error during server session lock and cleanup: $e", "LOCK");
     }
   }
 
@@ -55,7 +55,7 @@ class CoreLocker {
     if (_activeServerHandle != null && _activeServerHandle != nullptr) {
       nativeReleaseLock(_activeServerHandle!);
       _activeServerHandle = null;
-      logln("[LOCK] Server runtime lock released cleanly.");
+      logln("Server runtime lock released cleanly.", "LOCK");
     }
   }
 }

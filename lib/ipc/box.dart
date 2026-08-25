@@ -23,7 +23,7 @@ class IpcBox<T extends CoreModelWithId> {
       items[data.uuid] = data;
     }
 
-    logln("[IPC] Initialized standard box: $boxName|${items.length}");
+    logln("Initialized standard box: $boxName|${items.length}", "IPC");
   }
 
   T? get(dynamic id) {

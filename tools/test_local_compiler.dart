@@ -10,17 +10,17 @@ void main() async {
   const String sdkIncludeUm = r'C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\um';
 
   if (!await rcFile.exists()) {
-    logln("Error: Runner.rc file not found at expected location.");
+    logln("Error: Runner.rc file not found at expected location.", "TOOLS");
     exit(1);
   }
 
   if (!File(rcPath).existsSync()) {
-    logln("Error: Hardcoded compiler path is invalid or missing: $rcPath");
+    logln("Error: Hardcoded compiler path is invalid or missing: $rcPath", "TOOLS");
     exit(1);
   }
 
-  logln("Testing icon compliance via local compiler with SDK headers...");
-  logln("Compiler: $rcPath\n");
+  logln("Testing icon compliance via local compiler with SDK headers...", "TOOLS");
+  logln("Compiler: $rcPath\n", "TOOLS");
 
   // We turn off runInShell so the operating system handles the spaces perfectly
   final result = Process.runSync(
@@ -39,13 +39,13 @@ void main() async {
   final outputLog = result.stdout.toString() + result.stderr.toString();
 
   if (result.exitCode == 0 && !outputLog.contains('RC2176')) {
-    logln("VERIFICATION PASSED!");
+    logln("VERIFICATION PASSED!", "TOOLS");
     exit(0);
   } else {
-    logln("COMPILER TEST FAILED!");
-    logln("===================== ERROR LOGS =====================");
-    logln(outputLog.trim());
-    logln("======================================================");
+    logln("COMPILER TEST FAILED!", "TOOLS");
+    logln("===================== ERROR LOGS =====================", "TOOLS");
+    logln(outputLog.trim(), "TOOLS");
+    logln("======================================================", "TOOLS");
     exit(1);
   }
 }
