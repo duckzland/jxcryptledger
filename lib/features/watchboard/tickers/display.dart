@@ -48,7 +48,6 @@ class _TickersDisplayState extends State<TickersDisplay> {
 
     final hsl = HSLColor.fromColor(targetColor);
     final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
-    final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
     _currentColor = targetColor;
 
     final currentValue = _currentValue;
@@ -64,7 +63,7 @@ class _TickersDisplayState extends State<TickersDisplay> {
         Widget content = WidgetsPanel(
           padding: EdgeInsets.all(0),
           background: animatedBgColor,
-          borderColor: mutedColor,
+          borderColor: AppTheme.background,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -75,11 +74,13 @@ class _TickersDisplayState extends State<TickersDisplay> {
                       softWrap: false,
                       overflow: TextOverflow.visible,
                       style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
+                      selectable: !widget.isDragging,
                     ),
                     WidgetsNumbersFlow(
                       begin: currentValue != null ? oldContent : null,
                       end: tix.formatValue(_currentValue ?? ""),
                       style: TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                      selectable: !widget.isDragging,
                     ),
                   ]
                 : [

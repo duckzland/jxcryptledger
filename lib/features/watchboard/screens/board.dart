@@ -262,10 +262,10 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
       padding: EdgeInsets.only(bottom: 12),
       gridDelegate: SliverGridDelegateWithMinWidth(
         minCrossAxisExtent: 320,
-        itemHeight: 105,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        horizontalPadding: 12,
+        itemHeight: 107,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        horizontalPadding: 10,
       ),
       dragEnabled: _enableDrag,
       dragStartDelay: Duration(microseconds: 10),
@@ -280,9 +280,9 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     return LayoutBuilder(
       builder: (context, constraints) {
         final baseWidth = 140.0;
-        final spacing = 8.0;
+        final spacing = 6.0;
         final total = 16;
-        final itemHeight = 47.0;
+        final itemHeight = 49.0;
 
         final effectiveWidth = baseWidth + spacing;
         final maxPerRow = (constraints.maxWidth / effectiveWidth).floor().clamp(1, total);
@@ -307,10 +307,10 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
           child: ReorderableGridView.builder(
             gridDelegate: SliverGridDelegateWithMinWidth(
               minCrossAxisExtent: newWidth > 140 ? newWidth : 140,
-              itemHeight: 47.0,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              horizontalPadding: 8,
+              itemHeight: 49.0,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+              horizontalPadding: 6,
             ),
             dragEnabled: _enableDrag,
             dragStartDelay: Duration(microseconds: 10),

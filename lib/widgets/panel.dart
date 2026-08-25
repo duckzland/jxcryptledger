@@ -8,6 +8,7 @@ class WidgetsPanel extends StatelessWidget {
   final Color? background;
   final Color? borderColor;
   final double borderRadius;
+  final double borderSize;
 
   const WidgetsPanel({
     super.key,
@@ -16,6 +17,7 @@ class WidgetsPanel extends StatelessWidget {
     this.background,
     this.borderColor,
     this.borderRadius = 16,
+    this.borderSize = 1,
   });
 
   @override
@@ -26,7 +28,7 @@ class WidgetsPanel extends StatelessWidget {
       decoration: ShapeDecoration(
         color: background ?? AppTheme.panelBg,
         shape: ContinuousRectangleBorder(
-          side: BorderSide(color: borderColor ?? AppTheme.separator, width: 1.0),
+          side: BorderSide(color: borderColor ?? AppTheme.separator, width: borderSize),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),

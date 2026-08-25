@@ -75,7 +75,6 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
     final hsl = HSLColor.fromColor(targetColor);
     final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
-    final mutedColor = Color.lerp(AppTheme.separator, targetColor, 0.70)!;
 
     _currentColor = targetColor;
 
@@ -87,7 +86,7 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
         Widget content = WidgetsPanel(
           padding: EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
           background: animatedBgColor,
-          borderColor: mutedColor,
+          borderColor: AppTheme.background,
           child: SizedBox(
             width: double.infinity,
             child: Column(
@@ -192,20 +191,27 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
     final text = tix.rate > Decimal.zero
         ? [
-            WidgetsTextSelectable(fromText, style: fromStyle.copyWith(fontSize: fromFontSize)),
+            WidgetsTextSelectable(
+              fromText,
+              style: fromStyle.copyWith(fontSize: fromFontSize),
+              selectable: !widget.isDragging,
+            ),
             WidgetsNumbersFlow(
               begin: rate != null ? pv : null,
               end: tv,
               suffix: " $targetSymbol",
               style: toStyle.copyWith(fontSize: toFontSize),
+              selectable: !widget.isDragging,
             ),
             WidgetsTextSelectable(
               "1 $sourceSymbol = $tr $targetSymbol",
               style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400),
+              selectable: !widget.isDragging,
             ),
             WidgetsTextSelectable(
               "1 $targetSymbol = $rtr $sourceSymbol",
               style: TextStyle(height: 1.3, fontSize: 12, fontWeight: FontWeight.w400),
+              selectable: !widget.isDragging,
             ),
           ]
         : [

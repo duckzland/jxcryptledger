@@ -10,10 +10,27 @@ class WidgetsTextSelectable extends StatelessWidget {
   final bool? softWrap;
   final TextOverflow? overflow;
 
-  const WidgetsTextSelectable(this.text, {super.key, this.style, this.textAlign, this.maxLines, this.softWrap, this.overflow});
+  final bool selectable;
+
+  const WidgetsTextSelectable(
+    this.text, {
+    super.key,
+    this.style,
+    this.textAlign,
+    this.maxLines,
+    this.softWrap,
+    this.overflow,
+    this.selectable = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final content = Text(text, style: style, textAlign: textAlign, maxLines: maxLines, softWrap: softWrap, overflow: overflow);
+
+    if (!selectable) {
+      return content;
+    }
+
     return SelectionArea(
       contextMenuBuilder: (context, selectableRegionState) {
         return WidgetsContextMenu(
@@ -21,10 +38,7 @@ class WidgetsTextSelectable extends StatelessWidget {
           buttonItems: selectableRegionState.contextMenuButtonItems,
         );
       },
-      child: DefaultSelectionStyle(
-        mouseCursor: SystemMouseCursors.text,
-        child: Text(text, style: style, textAlign: textAlign, maxLines: maxLines, softWrap: softWrap, overflow: overflow),
-      ),
+      child: DefaultSelectionStyle(mouseCursor: SystemMouseCursors.text, child: content),
     );
   }
 }
