@@ -229,17 +229,19 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
   @override
   void rateableGetCallback(bool hasNewRate) {
+    bool newRate = hasNewRate;
     if (rateableStateUpdater != null) {
       _setCustomRate(rateableValue);
     } else {
       if (_customRate != null) {
+        newRate = true;
         rateableValue = _customRate;
       }
     }
 
     rateableDefaultHelper = _averageRate.toStringAsFixed(8);
 
-    if (hasNewRate) {
+    if (newRate) {
       _calculateProfitLoss();
       rows = _buildRows();
       sortableApplySorting();
