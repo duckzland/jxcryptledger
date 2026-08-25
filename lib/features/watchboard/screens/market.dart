@@ -104,7 +104,6 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     }
 
     return AppContent(
-      boxConstraints: BoxConstraints(maxWidth: 1600),
       padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
       children: [
         WidgetsPanel(

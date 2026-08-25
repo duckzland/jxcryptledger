@@ -184,11 +184,7 @@ class _ArchivesPageState extends State<ArchivesPage>
 
     actionbarRegister("Data Archives");
 
-    return AppContent(
-      boxConstraints: BoxConstraints(maxWidth: 1600),
-      padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      children: [_buildTable()],
-    );
+    return AppContent(padding: EdgeInsets.only(left: 16, right: 16, bottom: 12), children: [_buildTable()]);
   }
 
   Widget _buildForm(BuildContext dialogContext) {

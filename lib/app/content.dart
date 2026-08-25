@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 
+import 'theme.dart';
+
 class AppContent extends StatelessWidget {
-  final BoxConstraints? boxConstraints;
   final EdgeInsetsGeometry? padding;
+  final BoxConstraints boxConstraints;
   final List<Widget> children;
   final bool centering;
+  final bool fullwidth;
   final double spacing;
-  
-  const AppContent({super.key, this.boxConstraints, this.padding, this.centering = true, this.spacing = 12, required this.children});
+
+  const AppContent({
+    super.key,
+    this.padding,
+    this.boxConstraints = const BoxConstraints(maxWidth: AppTheme.pageMaxWidth),
+    this.centering = true,
+    this.fullwidth = false,
+    this.spacing = 12,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +39,8 @@ class AppContent extends StatelessWidget {
       content = Padding(padding: padding!, child: content);
     }
 
-    if (boxConstraints != null) {
-      content = ConstrainedBox(constraints: boxConstraints!, child: content);
+    if (!fullwidth) {
+      content = ConstrainedBox(constraints: boxConstraints, child: content);
     }
 
     if (centering) {

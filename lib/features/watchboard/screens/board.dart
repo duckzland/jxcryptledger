@@ -249,7 +249,6 @@ class _WatchboardScreensBoardState extends State<WatchboardScreensBoard> with Mi
     final panelsView = ListenableBuilder(listenable: _pxController, builder: (_, _) => _buildPanels());
 
     return AppContent(
-      boxConstraints: BoxConstraints(maxWidth: 1600),
       padding: EdgeInsets.only(left: 16, right: 16),
       spacing: 10,
       children: _enableTickers ? [tickersView, Flexible(flex: 10, fit: FlexFit.loose, child: panelsView)] : [panelsView],

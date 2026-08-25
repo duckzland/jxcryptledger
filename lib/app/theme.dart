@@ -151,6 +151,8 @@ class AppTheme {
 
   static const borderRadius = BorderRadius.all(Radius.circular(6));
 
+  static const double pageMaxWidth = 1900;
+
   static final textButton = TextButton.styleFrom(
     textStyle: text400,
     shadowColor: Colors.transparent,

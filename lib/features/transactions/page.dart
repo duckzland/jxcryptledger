@@ -497,7 +497,7 @@ class TransactionsPageState extends State<TransactionsPage>
 
     actionbarRegister("Trading View");
 
-    return AppContent(boxConstraints: BoxConstraints(maxWidth: 1600), children: [_buildScreen()]);
+    return AppContent(children: [_buildScreen()]);
   }
 
   Widget _buildForm(BuildContext dialogContext) {

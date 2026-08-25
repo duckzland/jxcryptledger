@@ -71,7 +71,6 @@ class _WatchboardScreensDominanceState extends State<WatchboardScreensDominance>
     }
 
     return AppContent(
-      boxConstraints: BoxConstraints(maxWidth: 1600),
       padding: EdgeInsets.only(left: 16, right: 16, bottom: 12, top: 12),
       spacing: 10,
       children: [

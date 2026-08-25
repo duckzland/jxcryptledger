@@ -75,7 +75,6 @@ class _WatchboardScreensBubbleState extends State<WatchboardScreensBubble>
     }
 
     return AppContent(
-      boxConstraints: BoxConstraints(maxWidth: 1600),
       padding: EdgeInsets.all(16),
       spacing: 10,
       children: [
