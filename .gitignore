@@ -54,3 +54,5 @@ test/widgets
 
 com.jxledger*
 server_log.txt
+
+.continue

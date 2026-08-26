@@ -11,13 +11,15 @@ import '../features/rates/service.dart';
 import '../features/watchboard/markets/service.dart';
 import '../features/watchboard/tickers/service.dart';
 import '../system/unlock/status.dart';
-import 'action.dart';
+
 import 'database/database.dart';
 import 'protocol/buffer.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 import 'protocol/reader.dart';
 import 'protocol/writer.dart';
+
+import 'action.dart';
 
 class IpcServer {
   final List<Socket> _slaves = [];

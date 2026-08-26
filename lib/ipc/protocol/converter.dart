@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import '../../system/unlock/status.dart';
 import '../database/adapters.dart';
-import 'writer.dart';
 import '../action.dart';
 
+import 'writer.dart';
 import 'reader.dart';
 
 class IpcConverter {
