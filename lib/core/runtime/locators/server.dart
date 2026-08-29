@@ -20,7 +20,7 @@ import '../../../features/watchers/service.dart';
 import '../../locator.dart';
 import '../../pooler.dart';
 import '../server.dart';
-import './ipc.dart' as ipc;
+import 'ipc.dart' as ipc;
 
 Future<void> init() async {
   // IPC

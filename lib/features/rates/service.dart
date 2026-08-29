@@ -9,7 +9,7 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
 import '../../core/worker/job.dart';
 import '../../core/worker/processor.dart';
-import '../../ipc/action.dart';
+import '../../ipc/status/op.dart';
 import '../../core/log.dart';
 import '../../system/settings/keys.dart';
 import '../../system/settings/repository.dart';
@@ -106,7 +106,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
     worker.isFetching = force ? false : true;
     _detectSettings();
 
-    broadcasterEmit(IpcAction.refreshRates, 'start', '', Uint8List(0));
+    broadcasterEmit(IpcStatusOp.getCode("refreshRates"), 'start', '', Uint8List(0));
 
     final maxPayload = isFreePlan ? 1 : (isCustom ? 40 : 1);
 
@@ -150,7 +150,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
 
       logln("Process queue completed", "RATES");
 
-      broadcasterEmit(IpcAction.refreshRates, 'complete', '', Uint8List(0));
+      broadcasterEmit(IpcStatusOp.getCode("refreshRates"), 'complete', '', Uint8List(0));
     }
   }
 

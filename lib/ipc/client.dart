@@ -3,16 +3,15 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import '../core/log.dart';
+import 'abstracts/adapters.dart';
+import 'status/op.dart';
 
-import 'database/adapters.dart';
 import 'protocol/buffer.dart';
 import 'protocol/converter.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 
 import 'event.dart';
-import 'action.dart';
 
 class IpcClient {
   final IpcAdapters adapters;
@@ -33,6 +32,8 @@ class IpcClient {
   StreamSubscription<Uint8List>? _socketSubscription;
   VoidCallback? exited;
   Future<bool> Function(IpcClient client)? reconnecting;
+
+  void Function(String message, [String group])? logger;
 
   Socket? _socket;
   int _nextReqId = 0;
@@ -60,22 +61,22 @@ class IpcClient {
       _socketSubscription = _socket!.listen(
         (List<int> chunk) => _receive(Uint8List.fromList(chunk)),
         onError: (err) async {
-          logln("socket error: $err", "IPC");
+          logger?.call("socket error: $err", "IPC");
           if (!_isDisposing) {
             await reconnect();
           }
         },
         onDone: () async {
-          logln("socket disconnected cleanly.", "IPC");
+          logger?.call("socket disconnected cleanly.", "IPC");
           if (!_isDisposing) {
             await reconnect();
           }
         },
         cancelOnError: true,
       );
-      logln("Socket connected to: $pipeName", "IPC");
+      logger?.call("Socket connected to: $pipeName", "IPC");
     } catch (e) {
-      logln("connection failed: $e", "IPC");
+      logger?.call("connection failed: $e", "IPC");
       if (!_isDisposing) {
         await reconnect();
       }
@@ -94,7 +95,7 @@ class IpcClient {
         throw StateError('[IPC] Failed to perform clean reconnection');
       }
     } catch (e) {
-      logln("Failed to reconnect: $e", "IPC");
+      logger?.call("Failed to reconnect: $e", "IPC");
       exited?.call();
     } finally {
       _isReconnecting = false;
@@ -129,19 +130,19 @@ class IpcClient {
     _pending.clear();
   }
 
-  Future<dynamic> send({required IpcAction op, required String action, dynamic key, dynamic payload}) async {
+  Future<dynamic> send({required int op, required String action, dynamic key, dynamic payload}) async {
     Uint8List? bytes = converter.toBytes(op, action, payload);
     dynamic resultBytes;
     try {
       resultBytes = await _send(op: op, action: action, key: key, payload: bytes);
     } catch (e) {
-      logln("$e", "IPC");
+      logger?.call("$e", "IPC");
     }
 
     return converter.fromBytes(op, action, resultBytes);
   }
 
-  Future<dynamic> _send({required IpcAction op, required String action, dynamic key, Uint8List? payload}) async {
+  Future<dynamic> _send({required int op, required String action, dynamic key, Uint8List? payload}) async {
     final completer = Completer<dynamic>();
     final reqId = _nextReqId++;
     _pending[reqId] = completer;
@@ -152,15 +153,15 @@ class IpcClient {
       }
 
       Uint8List rawPayload = payload ?? Uint8List(0);
-
-      switch (op) {
-        case IpcAction.unknown:
+      final opName = IpcStatusOp.getName(op);
+      switch (opName) {
+        case "unknown":
           throw StateError('[IPC] Cannot transmit database for unknown action.');
 
         // @todo: create proper callback for error
-        case IpcAction.error:
-        case IpcAction.unlock:
-        case IpcAction.shutdown:
+        case "error":
+        case "unlock":
+        case "shutdown":
           break;
 
         default:
@@ -176,7 +177,7 @@ class IpcClient {
           break;
       }
 
-      final packet = IpcPacket(reqId: reqId, op: op.code, action: action, key: key?.toString() ?? "", payload: rawPayload);
+      final packet = IpcPacket(reqId: reqId, op: op, action: action, key: key?.toString() ?? "", payload: rawPayload);
 
       _socket!.add(packet.toBytes());
     } catch (e) {
@@ -203,16 +204,16 @@ class IpcClient {
       final currentPacket = packet!;
       Uint8List responseBytes = currentPacket.payload;
 
-      final op = IpcAction.fromCode(currentPacket.op);
+      final op = IpcStatusOp.getName(currentPacket.op);
       switch (op) {
-        case IpcAction.unknown:
-          logln("Refusing to process unknown request op", "IPC");
+        case "unknown":
+          logger?.call("Refusing to process unknown request op", "IPC");
           break;
 
         // @todo: create proper callback for error
-        case IpcAction.error:
-        case IpcAction.shutdown:
-        case IpcAction.unlock:
+        case "error":
+        case "shutdown":
+        case "unlock":
           if (currentPacket.reqId == -1) {
             _broadcastPacket(currentPacket, responseBytes);
           }
@@ -220,14 +221,14 @@ class IpcClient {
 
         default:
           if (sessionKey == null) {
-            logln("Refusing to process op without sessionKey: ${op.code}", "IPC");
+            logger?.call("Refusing to process op without sessionKey: $op", "IPC");
             break;
           }
 
           try {
             responseBytes = await _crypto.decrypt(responseBytes);
           } catch (e) {
-            logln("Failed to decrypt packet: ${op.code} - $e", "IPC");
+            logger?.call("Failed to decrypt packet: $op - $e", "IPC");
             break;
           }
 
@@ -257,11 +258,11 @@ class IpcClient {
           op: packet.op,
           action: packet.action,
           key: packet.key,
-          payload: converter.fromBytes(IpcAction.fromCode(packet.op), packet.action, bytes),
+          payload: converter.fromBytes(packet.op, packet.action, bytes),
         ),
       );
     } catch (e) {
-      logln("Failed to broadcast event: ${packet.op} - $e", "IPC");
+      logger?.call("Failed to broadcast event: ${packet.op} - $e", "IPC");
     }
   }
 }

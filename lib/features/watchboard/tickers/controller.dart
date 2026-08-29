@@ -1,5 +1,5 @@
 import '../../../core/abstracts/controller.dart';
-import '../../../ipc/action.dart';
+import '../../../ipc/status/op.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
 import 'mixins/helper.dart';
 import 'model.dart';
@@ -29,7 +29,7 @@ class TickersController extends CoreBaseController<TickersModel, TickersReposito
   }
 
   Future<void> refreshRates() async {
-    await ipcClient.send(op: IpcAction.refreshTickers, action: "action");
+    await ipcClient.send(op: IpcStatusOp.getCode("refreshTickers"), action: "action");
     load();
   }
 

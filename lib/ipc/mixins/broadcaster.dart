@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../../core/log.dart';
-import '../action.dart';
 import '../client.dart';
 import '../event.dart';
 import '../server.dart';
@@ -24,20 +22,20 @@ mixin IpcMixinsBroadcaster {
     });
   }
 
-  Future<void> broadcasterSend({required IpcAction op, required String action, dynamic key, dynamic payload}) async {
+  Future<void> broadcasterSend({required int op, required String action, dynamic key, dynamic payload}) async {
     try {
       await ipcClient.send(op: op, action: action, key: key, payload: payload);
     } catch (e) {
-      logln("Broadcaster failed to send: $e", "IPC");
+      // No op
     }
   }
 
-  bool broadcasterEmit(IpcAction op, String? action, String? key, Uint8List? payload, {Socket? exclude}) {
+  bool broadcasterEmit(int op, String? action, String? key, Uint8List? payload, {Socket? exclude}) {
     if (!isBroadcastable) return false;
     try {
       ipcServer.broadcast(op, action ?? "", key ?? "", payload ?? Uint8List(0), exclude: exclude);
     } catch (e) {
-      logln("Broadcaster failed to emit: $e", "IPC");
+      // No op
     }
     return true;
   }

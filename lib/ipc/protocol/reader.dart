@@ -2,9 +2,8 @@
 
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:decimal/decimal.dart';
 import 'package:hive_ce/hive_ce.dart';
-
-import '../../core/extensions/decimals.dart';
 
 class IpcReader implements BinaryReader {
   final ByteData _data;
@@ -192,7 +191,8 @@ class IpcReader implements BinaryReader {
         final dynamic v = read();
         return MapEntry(k, v);
       case 10:
-        return readDecimal();
+        final String rawStr = readString();
+        return Decimal.tryParse(rawStr) ?? Decimal.zero;
       default:
         if (adapter != null) {
           return adapter.read(this);

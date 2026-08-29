@@ -1,24 +1,23 @@
-import 'package:jxledger/ipc/action.dart';
 import 'package:jxledger/ipc/client.dart';
 
 import 'adapters.dart';
 
-class ClientFaker extends IpcClient {
-  IpcAction? lastOp;
+class IpcClientFaker extends IpcClient {
+  int? lastOp;
   String? lastAction;
   dynamic lastKey;
   dynamic lastPayload;
 
-  final Map<IpcAction, dynamic> _stubbedResponses = {};
+  final Map<int, dynamic> _stubbedResponses = {};
 
-  ClientFaker() : super(AdaptersFaker());
+  IpcClientFaker() : super(IpcAdaptersFaker());
 
-  void stubResponse(IpcAction op, dynamic response) {
+  void stubResponse(int op, dynamic response) {
     _stubbedResponses[op] = response;
   }
 
   @override
-  Future<dynamic> send({required IpcAction op, required String action, dynamic key, dynamic payload}) async {
+  Future<dynamic> send({required int op, required String action, dynamic key, dynamic payload}) async {
     lastOp = op;
     lastAction = action;
     lastKey = key;

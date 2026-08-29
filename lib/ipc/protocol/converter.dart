@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import '../../system/unlock/status.dart';
-import '../database/adapters.dart';
-import '../action.dart';
+import '../abstracts/adapters.dart';
+import '../status/op.dart';
+import '../status/unlock.dart';
 
 import 'writer.dart';
 import 'reader.dart';
@@ -13,16 +13,17 @@ class IpcConverter {
 
   IpcConverter(this.adapters);
 
-  Uint8List? toBytes(IpcAction op, String action, dynamic payload) {
-    switch (op) {
-      case IpcAction.put:
+  Uint8List? toBytes(int op, String action, dynamic payload) {
+    final opName = IpcStatusOp.getName(op);
+    switch (opName) {
+      case "put":
         final writer = IpcWriter();
         final adapter = adapters.get(action);
         adapter.write(writer, payload);
         return writer.toBytes();
 
-      case IpcAction.replace:
-      case IpcAction.multiPut:
+      case "replace":
+      case "multiPut":
         final writer = IpcWriter();
         final adapter = adapters.get(action);
         writer.writeInt(payload.length);
@@ -32,40 +33,39 @@ class IpcConverter {
 
         return writer.toBytes();
 
-      case IpcAction.unlock:
+      case "unlock":
         return payload;
 
-      case IpcAction.notification:
-        return utf8.encode(payload);
-
       default:
+        if (payload is String) return utf8.encode(payload);
         return null;
     }
   }
 
-  dynamic fromBytes(IpcAction op, String action, dynamic bytes) {
-    switch (op) {
-      case IpcAction.put:
+  dynamic fromBytes(int op, String action, dynamic bytes) {
+    final opName = IpcStatusOp.getName(op);
+    switch (opName) {
+      case "put":
         if (bytes.isNotEmpty) {
           return _bytesToModel(action, bytes);
         }
 
-      case IpcAction.multiPut:
-      case IpcAction.replace:
-      case IpcAction.extract:
+      case "multiPut":
+      case "replace":
+      case "extract":
         if (bytes.isNotEmpty) {
           return _bytesToBatchModels(action, bytes);
         }
 
-      case IpcAction.clear:
+      case "clear":
         if (bytes.isEmpty || bytes.length < 4) {
           return 0;
         }
         return ByteData.sublistView(bytes).getInt32(0, Endian.big);
 
-      case IpcAction.unlock:
+      case "unlock":
         if (bytes.isNotEmpty) {
-          final status = SystemUnlockStatus.fromValue(bytes.first);
+          final status = IpcStatusUnlock.fromValue(bytes.first);
           if (status.isUnlocked()) {
             return bytes.sublist(1);
           }

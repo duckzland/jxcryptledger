@@ -11,21 +11,23 @@ import '../../features/watchboard/markets/service.dart';
 import '../../features/watchboard/panels/service.dart';
 import '../../features/watchboard/tickers/service.dart';
 import '../../features/watchers/service.dart';
-import '../../ipc/action.dart';
+import '../../ipc/status/op.dart';
 import '../../ipc/client.dart';
-import '../../ipc/database/adapters.dart';
-import '../../ipc/database/database.dart';
 import '../../system/encryption/service.dart';
 import '../../system/settings/keys.dart';
 import '../../system/settings/service.dart';
-import '../../system/unlock/status.dart';
+import '../../ipc/status/unlock.dart';
 import '../abstracts/runtime.dart';
 import '../locator.dart';
 import '../log.dart';
 import '../mode.dart';
 import '../pooler.dart';
-import 'boxes.dart';
-import 'migration.dart';
+
+import 'ipc/boxes.dart';
+import 'ipc/adapters.dart';
+import 'ipc/database.dart';
+import 'ipc/action.dart';
+import 'ipc/migration.dart';
 
 class CoreRuntimeServer extends CoreBaseRuntime {
   CoreRuntimeServer();
@@ -57,15 +59,22 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
     cleanSocketFile();
 
+    ipcServer.logger = logln;
     ipcServer.pipeName = CoreMode.ipcPipeName;
-    ipcServer.database = IpcDatabase(CoreRuntimeBoxes(), CoreLocator.getit<IpcAdapters>(), CoreRuntimeMigration());
+    ipcServer.handler = CoreRuntimeIpcAction(
+      database: CoreRuntimeIpcDatabase(
+        CoreRuntimeIpcBoxes(),
+        CoreLocator.getit<CoreRuntimeIpcAdapters>(),
+        CoreRuntimeIpcMigration(),
+        CoreMode.path,
+      ),
+    );
+
     ipcServer.unlocker = unlock;
     ipcServer.shutdown = shutdown;
     ipcServer.disconnected = shutdownWhenNoClient;
     ipcServer.hasClient = hasClient;
-    ipcServer.database.path = CoreMode.path;
 
-    await ipcServer.database.init();
     await ipcServer.start();
 
     final serverReady = await waitForServer();
@@ -78,6 +87,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     logln("IPC server running via Named Pipe: ${CoreMode.ipcPipeName}", "RUNTIME");
 
     // Client strapping up
+    ipcClient.logger = logln;
     ipcClient.pipeName = CoreMode.ipcPipeName;
     ipcClient.reconnecting = reconnect;
     ipcClient.sessionKey = ipcServer.sessionKey;
@@ -144,7 +154,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
 
       if (SystemEncryptionService.instance.isUnlocked()) {
         client.localKey = await SystemEncryptionService.instance.getRawKeyBytes();
-        await client.send(op: IpcAction.unlock, action: "auth", key: "unlock", payload: client.localKey);
+        await client.send(op: IpcStatusOp.getCode("unlock"), action: "auth", key: "unlock", payload: client.localKey);
       }
       return true;
     }
@@ -246,8 +256,8 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     }
   }
 
-  Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
-    final SystemUnlockStatus state = await ipcServer.database.unlock(keyBytes);
+  Future<IpcStatusUnlock> unlock(Uint8List keyBytes) async {
+    final IpcStatusUnlock state = await ipcServer.handler.database.unlock(keyBytes);
 
     if (!state.isUnlocked()) {
       return state;
@@ -270,7 +280,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
         await _settingsService.save(SettingKey.vaultInitialized, "initialized");
       } catch (e) {
         logln("Failed to initialize vault: $e", "RUNTIME");
-        return SystemUnlockStatus.error;
+        return IpcStatusUnlock.error;
       }
     }
 

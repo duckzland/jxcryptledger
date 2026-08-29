@@ -1,5 +1,5 @@
 import '../../core/abstracts/controller.dart';
-import '../../ipc/action.dart';
+import '../../ipc/status/op.dart';
 import '../../ipc/event.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -29,7 +29,7 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
       }
     }
 
-    if (event.actionCode == IpcAction.refreshCryptos) {
+    if (event.actionCode == IpcStatusOp.getCode("refreshCryptos")) {
       if (event.action == "start") {
         if (!isFetching) {
           isFetching = true;
@@ -66,7 +66,7 @@ class CryptosController extends CoreBaseController<CryptosModel, CryptosReposito
   Future<void> fetch() async {
     isFetching = true;
     debounceNotify();
-    await ipcClient.send(op: IpcAction.refreshCryptos, action: "action");
+    await ipcClient.send(op: IpcStatusOp.getCode("refreshCryptos"), action: "action");
     isFetching = false;
     debounceNotify();
   }

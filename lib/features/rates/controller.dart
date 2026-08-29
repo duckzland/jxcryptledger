@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 
 import '../../core/abstracts/controller.dart';
-import '../../ipc/action.dart';
+import '../../ipc/status/op.dart';
 import '../../ipc/event.dart';
 
 import 'mixins/helper.dart';
@@ -34,7 +34,7 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
       }
     }
 
-    if (event.actionCode == IpcAction.refreshRates) {
+    if (event.actionCode == IpcStatusOp.getCode("refreshRates")) {
       if (event.action == "start") {
         if (!isFetching) {
           isFetching = true;
@@ -70,11 +70,11 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
 
   void addQueue(int sourceId, int targetId, {bool force = true}) {
     if (!isValidPair(sourceId, targetId)) return;
-    ipcClient.send(op: IpcAction.addRateQueue, action: "$sourceId-$targetId", key: force);
+    ipcClient.send(op: IpcStatusOp.getCode("addRateQueue"), action: "$sourceId-$targetId", key: force);
   }
 
   Future<void> refreshRates() async {
-    await ipcClient.send(op: IpcAction.refreshRates, action: "action", key: "refresh_rates");
+    await ipcClient.send(op: IpcStatusOp.getCode("refreshRates"), action: "action", key: "refresh_rates");
   }
 
   Future<void> deleteById(int sourceId, int targetId) async {

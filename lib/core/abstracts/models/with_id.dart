@@ -1,3 +1,3 @@
-abstract class CoreModelWithId {
-  dynamic get uuid;
-}
+import '../../../ipc/abstracts/model.dart';
+
+abstract class CoreModelWithId extends IpcModel {}

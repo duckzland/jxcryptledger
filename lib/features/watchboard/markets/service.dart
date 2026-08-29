@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../../core/abstracts/service.dart';
 import '../../../core/worker/job.dart';
 import '../../../core/worker/processor.dart';
-import '../../../ipc/action.dart';
+import '../../../ipc/status/op.dart';
 import '../../../system/settings/keys.dart';
 import '../../../system/settings/repository.dart';
 import '../../../app/exceptions.dart';
@@ -32,7 +32,7 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
   Future<bool> refreshRates() async {
     if (worker.isFetching) return true;
 
-    broadcasterEmit(IpcAction.refreshMarket, 'start', '', Uint8List(0));
+    broadcasterEmit(IpcStatusOp.getCode("refreshMarket"), 'start', '', Uint8List(0));
 
     try {
       final marketJob = CoreWorkerJob(
@@ -49,7 +49,7 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
       return false;
     } finally {
       logln("Refresh rates completed", "MARKETS");
-      broadcasterEmit(IpcAction.refreshMarket, 'complete', '', Uint8List(0));
+      broadcasterEmit(IpcStatusOp.getCode("refreshMarket"), 'complete', '', Uint8List(0));
     }
   }
 

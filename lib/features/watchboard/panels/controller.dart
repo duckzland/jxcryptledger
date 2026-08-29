@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import '../../../core/abstracts/controller.dart';
-import '../../../ipc/action.dart';
+import '../../../ipc/status/op.dart';
 import '../../../ipc/event.dart';
 import '../../../core/math.dart';
 import '../../../core/mixins/controllers/exportable.dart';
@@ -23,7 +23,7 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   @override
   void broadcasterAction(IpcBroadcastEvent event) {
     super.broadcasterAction(event);
-    if (event.actionCode == IpcAction.refreshRates) {
+    if (event.actionCode == IpcStatusOp.getCode("refreshRates")) {
       if (event.action == "complete") {
         onRatesUpdated();
         load();

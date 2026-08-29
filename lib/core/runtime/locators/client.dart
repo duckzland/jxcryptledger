@@ -21,7 +21,7 @@ import '../../../features/watchers/repository.dart';
 import '../../../system/unlock/controller.dart';
 import '../../locator.dart';
 import '../client.dart';
-import './ipc.dart' as ipc;
+import 'ipc.dart' as ipc;
 
 Future<void> init() async {
   // IPC

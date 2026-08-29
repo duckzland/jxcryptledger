@@ -1,6 +1,6 @@
 import '../../../core/abstracts/controller.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
-import '../../../ipc/action.dart';
+import '../../../ipc/status/op.dart';
 import '../../../ipc/event.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -31,7 +31,7 @@ class MarketsController extends CoreBaseController<MarketsModel, MarketsReposito
       }
     }
 
-    if (event.actionCode == IpcAction.refreshMarket) {
+    if (event.actionCode == IpcStatusOp.getCode("refreshMarket")) {
       if (event.action == "start") {
         if (!isFetching) {
           isFetching = true;
@@ -51,7 +51,7 @@ class MarketsController extends CoreBaseController<MarketsModel, MarketsReposito
   Future<void> refreshRates() async {
     isFetching = true;
     debounceNotify();
-    await ipcClient.send(op: IpcAction.refreshMarket, action: "action");
+    await ipcClient.send(op: IpcStatusOp.getCode("refreshMarket"), action: "action");
     isFetching = false;
     debounceNotify();
   }

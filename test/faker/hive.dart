@@ -3,19 +3,21 @@ import 'dart:collection';
 import 'package:hive_ce/hive_ce.dart';
 
 import 'package:jxledger/core/abstracts/models/with_id.dart';
-import 'package:jxledger/ipc/action.dart';
-import 'package:jxledger/ipc/box.dart';
+import 'package:jxledger/ipc/status/op.dart';
+import 'package:jxledger/ipc/abstracts/box.dart';
 import 'package:jxledger/ipc/client.dart';
-import 'package:jxledger/ipc/database/adapters.dart';
+import 'package:jxledger/ipc/abstracts/adapters.dart';
 import 'package:jxledger/ipc/event.dart';
 import 'package:jxledger/core/log.dart';
+
+import 'ipc/adapters.dart';
 
 class HiveBoxFaker<T extends CoreModelWithId> implements IpcBox<T> {
   @override
   final String boxName;
 
   @override
-  final IpcAdapters adapters = IpcAdapters();
+  final IpcAdapters adapters = IpcAdaptersFaker();
 
   @override
   final LinkedHashMap<dynamic, T> items = LinkedHashMap();
@@ -163,22 +165,24 @@ class HiveBoxFaker<T extends CoreModelWithId> implements IpcBox<T> {
       return;
     }
 
-    switch (event.actionCode) {
-      case IpcAction.put:
+    final opName = IpcStatusOp.getName(event.actionCode);
+
+    switch (opName) {
+      case "put":
         final data = event.payload as T;
         items[data.uuid] = data;
         break;
 
-      case IpcAction.delete:
+      case "delete":
         items.remove(event.key);
         break;
 
-      case IpcAction.clear:
+      case "clear":
         items.clear();
         break;
 
-      case IpcAction.multiPut:
-      case IpcAction.replace:
+      case "multiPut":
+      case "replace":
         items.clear();
         for (final value in event.payload) {
           final data = value as T;

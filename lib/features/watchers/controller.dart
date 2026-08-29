@@ -1,10 +1,11 @@
 import '../../core/abstracts/controller.dart';
-import '../../ipc/action.dart';
+import '../../ipc/status/op.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/mixins/controllers/rateable.dart';
 import '../../core/utils.dart';
 import '../cryptos/controller.dart';
+
 import 'model.dart';
 import 'repository.dart';
 
@@ -42,7 +43,7 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
       message = "$sourceSymbol to $targetSymbol is ${tx.operatorMessage} ${Utils.formatSmartDecimal(tx.rates)}.";
     }
 
-    await ipcClient.send(op: IpcAction.notification, action: 'action', key: "notification", payload: message);
+    await ipcClient.send(op: IpcStatusOp.getCode("notification"), action: 'action', key: "notification", payload: message);
   }
 
   Future<void> restart() async {

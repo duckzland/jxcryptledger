@@ -1,23 +1,23 @@
 import 'dart:async';
 
-import '../../ipc/box.dart';
 import '../../ipc/client.dart';
-import '../../ipc/database/adapters.dart';
 import '../../ipc/event.dart';
 import '../locator.dart';
+import '../runtime/ipc/adapters.dart';
+import '../runtime/ipc/box.dart';
 import 'models/with_id.dart';
 
 abstract class CoreBaseRepository<T extends CoreModelWithId> {
   String get boxName;
   bool initialized = false;
 
-  IpcBox<T>? repoBox;
+  CoreRuntimeIpcBox<T>? repoBox;
 
-  IpcBox<T> get box {
-    return repoBox ??= IpcBox<T>(boxName, CoreLocator.getit<IpcAdapters>(), CoreLocator.getit<IpcClient>());
+  CoreRuntimeIpcBox<T> get box {
+    return repoBox ??= CoreRuntimeIpcBox<T>(boxName, CoreLocator.getit<CoreRuntimeIpcAdapters>(), CoreLocator.getit<IpcClient>());
   }
 
-  set box(IpcBox<T> box) {
+  set box(CoreRuntimeIpcBox<T> box) {
     repoBox = box;
   }
 

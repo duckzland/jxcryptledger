@@ -12,7 +12,7 @@ import '../../features/watchboard/tickers/controller.dart';
 import '../../features/watchboard/markets/controller.dart';
 import '../../features/watchers/controller.dart';
 import '../../mixins/state.dart';
-import '../../ipc/action.dart';
+import '../../ipc/status/op.dart';
 import '../../ipc/client.dart';
 import '../../system/settings/keys.dart';
 import '../abstracts/runtime.dart';
@@ -54,6 +54,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
     }
 
     // Client strapping up
+    ipcClient.logger = logln;
     ipcClient.pipeName = CoreMode.ipcPipeName;
     ipcClient.reconnecting = reconnect;
     ipcClient.exited = fatalErrorNotice;
@@ -78,7 +79,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
     try {
       if (!hasClient(exclude: pid) && isServerAvailable()) {
         logln("Shutting down server", "RUNTIME");
-        await ipcClient.send(op: IpcAction.shutdown, action: "shutdown", key: pid);
+        await ipcClient.send(op: IpcStatusOp.getCode('shutdown'), action: "shutdown", key: pid);
       }
     } catch (_) {}
 
@@ -110,7 +111,7 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
       if (SystemEncryptionService.instance.isUnlocked()) {
         client.localKey = await SystemEncryptionService.instance.getRawKeyBytes();
-        await client.send(op: IpcAction.unlock, action: "auth", key: "unlock", payload: client.localKey);
+        await client.send(op: IpcStatusOp.getCode("unlock"), action: "auth", key: "unlock", payload: client.localKey);
       }
       return true;
     }
@@ -144,7 +145,12 @@ class CoreRuntimeClient extends CoreBaseRuntime with MixinsState {
 
   Future<bool> unlock(String password) async {
     final Uint8List keyBytes = await SystemEncryptionService.instance.loadPasswordKey(password);
-    final Uint8List? sessionKey = await ipcClient.send(op: IpcAction.unlock, action: "auth", key: "unlocking", payload: keyBytes);
+    final Uint8List? sessionKey = await ipcClient.send(
+      op: IpcStatusOp.getCode("unlock"),
+      action: "auth",
+      key: "unlocking",
+      payload: keyBytes,
+    );
 
     if (sessionKey == null) {
       throw Exception("Failed to unlock vault due to marker mismatch");

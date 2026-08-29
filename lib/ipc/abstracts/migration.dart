@@ -1,4 +1,4 @@
-class IpcMigration {
+abstract class IpcMigration {
   Future<void> migrateBeforeUnlock() async {}
 
   Future<void> migrateAfterUnlock() async {}

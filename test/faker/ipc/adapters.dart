@@ -6,11 +6,11 @@ import 'package:jxledger/features/transactions/adapter.dart';
 import 'package:jxledger/features/watchboard/panels/adapter.dart';
 import 'package:jxledger/features/watchboard/tickers/adapter.dart';
 import 'package:jxledger/features/watchers/adapter.dart';
-import 'package:jxledger/ipc/database/adapters.dart';
+import 'package:jxledger/ipc/abstracts/adapters.dart';
 import 'package:jxledger/system/settings/adapter.dart';
 
-class AdaptersFaker extends IpcAdapters {
-  AdaptersFaker();
+class IpcAdaptersFaker extends IpcAdapters {
+  IpcAdaptersFaker();
 
   @override
   Map<String, TypeAdapter> get adapters => {

@@ -7,7 +7,7 @@ import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
 import '../../core/worker/job.dart';
 import '../../core/worker/processor.dart';
-import '../../ipc/action.dart';
+import '../../ipc/status/op.dart';
 import '../../system/settings/repository.dart';
 import '../../system/settings/keys.dart';
 import '../../core/log.dart';
@@ -43,7 +43,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
   Future<bool> fetch() async {
     if (worker.isFetching) return false;
 
-    broadcasterEmit(IpcAction.refreshCryptos, 'start', '', Uint8List(0));
+    broadcasterEmit(IpcStatusOp.getCode("refreshCryptos"), 'start', '', Uint8List(0));
 
     try {
       final cryptoJob = CoreWorkerJob(
@@ -60,7 +60,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
       return false;
     } finally {
       logln("Fetch cryptos completed", "CRYPTOS");
-      broadcasterEmit(IpcAction.refreshCryptos, 'complete', '', Uint8List(0));
+      broadcasterEmit(IpcStatusOp.getCode("refreshCryptos"), 'complete', '', Uint8List(0));
     }
   }
 

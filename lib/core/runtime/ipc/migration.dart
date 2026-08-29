@@ -1,16 +1,16 @@
 import 'package:hive_ce/hive.dart';
 
-import '../../features/watchboard/markets/model.dart';
-import '../../features/watchboard/panels/model.dart';
-import '../../features/watchers/model.dart';
-import '../../features/transactions/model.dart';
-import '../../system/settings/keys.dart';
-import '../../system/settings/model.dart';
-import '../../ipc/database/migration.dart';
-import '../log.dart';
-import '../mode.dart';
+import '../../../features/watchboard/markets/model.dart';
+import '../../../features/watchboard/panels/model.dart';
+import '../../../features/watchers/model.dart';
+import '../../../features/transactions/model.dart';
+import '../../../system/settings/keys.dart';
+import '../../../system/settings/model.dart';
+import '../../../ipc/abstracts/migration.dart';
+import '../../log.dart';
+import '../../mode.dart';
 
-class CoreRuntimeMigration extends IpcMigration {
+class CoreRuntimeIpcMigration extends IpcMigration {
   @override
   Future<void> migrateBeforeUnlock() async {
     // Nothing to migrate after v1.1.0

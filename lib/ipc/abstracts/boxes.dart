@@ -1,21 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive_ce.dart';
 
-import '../../system/unlock/status.dart';
-import '../../core/log.dart';
-import '../../core/runtime/locker.dart';
+import '../status/unlock.dart';
 
-class IpcBoxes {
+abstract class IpcBoxes {
   final Map<String, Box> boxes = {};
   String? hivePath;
+  void Function(String message, [String group])? logger;
 
   Future<void> init() async {
     if (hivePath == null || hivePath!.isEmpty) {
-      throw ("[IPC] Cannot initialize boxes without proper hive path");
+      throw ("Cannot initialize boxes without proper hive path");
     }
 
-    logln("Initializing Hive at $hivePath", "IPC");
-    CoreLocker.lockAndCleanHive(hivePath!);
     Hive.init(hivePath!);
   }
 
@@ -52,7 +49,7 @@ class IpcBoxes {
       box = await openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
       return box;
     } catch (e) {
-      logln("Failed to open $name: ${e.toString()}", "IPC");
+      logger?.call("Failed to open $name: ${e.toString()}", "IPC");
 
       try {
         if (box != null && box.isOpen) {
@@ -65,10 +62,10 @@ class IpcBoxes {
 
         await Hive.deleteBoxFromDisk(name);
         box = await openBox<T>(name, encryptionCipher: encryptionCipher, crashRecovery: crashRecovery);
-        logln("Rebuild box $name completed", "IPC");
+        logger?.call("Rebuild box $name completed", "IPC");
         return box;
       } catch (rebuildError) {
-        logln("Rebuild failed for $name: ${rebuildError.toString()}", "IPC");
+        logger?.call("Rebuild failed for $name: ${rebuildError.toString()}", "IPC");
         rethrow;
       }
     }
@@ -82,7 +79,7 @@ class IpcBoxes {
     await Hive.close();
   }
 
-  Future<SystemUnlockStatus> unlock(Uint8List keyBytes) async {
-    return SystemUnlockStatus.success;
+  Future<IpcStatusUnlock> unlock(Uint8List keyBytes) async {
+    return IpcStatusUnlock.success;
   }
 }

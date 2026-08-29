@@ -1,6 +1,6 @@
 import 'package:hive_ce/hive.dart';
 
-class IpcAdapters {
+abstract class IpcAdapters {
   Map<String, TypeAdapter> get adapters => {};
 
   IpcAdapters();

@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import '../action.dart';
-
 class IpcPacket {
   final int reqId;
   final int op;
@@ -58,7 +56,7 @@ class IpcPacket {
     return IpcPacket(reqId: reqId, op: op, action: action, key: key, payload: payload);
   }
 
-  IpcAction get actionCode => IpcAction.fromCode(op);
+  int get actionCode => op;
 
   static Uint8List _int32(int v) => (ByteData(4)..setInt32(0, v, Endian.big)).buffer.asUint8List();
   static Uint8List _int16(int v) => (ByteData(2)..setInt16(0, v, Endian.big)).buffer.asUint8List();

@@ -5,12 +5,10 @@ import 'dart:typed_data';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
-import 'package:jxledger/ipc/action.dart';
-import 'package:jxledger/ipc/box.dart';
+import 'package:jxledger/ipc/status/op.dart';
+import 'package:jxledger/ipc/abstracts/box.dart';
 import 'package:jxledger/ipc/client.dart';
-import 'package:jxledger/ipc/database/adapters.dart';
-import 'package:jxledger/ipc/database/boxes.dart';
-import 'package:jxledger/ipc/database/migration.dart';
+import 'package:jxledger/ipc/abstracts/adapters.dart';
 import 'package:jxledger/ipc/event.dart';
 import 'package:jxledger/ipc/protocol/buffer.dart';
 import 'package:jxledger/ipc/protocol/converter.dart';
@@ -21,12 +19,16 @@ import 'package:jxledger/ipc/protocol/writer.dart';
 import 'package:jxledger/ipc/server.dart';
 import 'package:jxledger/core/mode.dart';
 import 'package:jxledger/features/transactions/model.dart';
-import 'package:jxledger/system/unlock/status.dart';
+import 'package:jxledger/ipc/status/unlock.dart';
 import 'package:test/test.dart';
 
-import 'faker/adapters.dart';
-import 'faker/client.dart';
-import 'faker/database.dart';
+import 'faker/ipc/action.dart';
+import 'faker/ipc/adapters.dart';
+import 'faker/ipc/box.dart';
+import 'faker/ipc/boxes.dart';
+import 'faker/ipc/client.dart';
+import 'faker/ipc/database.dart';
+import 'faker/ipc/migration.dart';
 
 Future<String> _testPipeName() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,15 +63,33 @@ TransactionsModel makeTx(String tid, {Decimal? balance}) {
 }
 
 void main() {
+  IpcStatusOp.register(0x00, "response");
+  IpcStatusOp.register(0x02, "put");
+  IpcStatusOp.register(0x03, "delete");
+  IpcStatusOp.register(0x04, "clear");
+  IpcStatusOp.register(0x05, "flush");
+  IpcStatusOp.register(0x06, "extract");
+  IpcStatusOp.register(0x07, "multiPut");
+  IpcStatusOp.register(0x08, "replace");
+  IpcStatusOp.register(0x09, "notification");
+  IpcStatusOp.register(0x10, "unlock");
+  IpcStatusOp.register(0x11, "addRateQueue");
+  IpcStatusOp.register(0x12, "refreshTickers");
+  IpcStatusOp.register(0x13, "refreshRates");
+  IpcStatusOp.register(0x14, "refreshCryptos");
+  IpcStatusOp.register(0x15, "refreshMarket");
+  IpcStatusOp.register(0x99, "shutdown");
+  IpcStatusOp.register(0xFF, "error");
+
   group('CoreIpcAction', () {
     test('returns known action for valid code', () {
-      expect(IpcAction.fromCode(0x02), IpcAction.put);
-      expect(IpcAction.fromCode(0x03), IpcAction.delete);
-      expect(IpcAction.fromCode(0xFF), IpcAction.error);
+      expect(IpcStatusOp.getName(0x02), "put");
+      expect(IpcStatusOp.getName(0x03), "delete");
+      expect(IpcStatusOp.getName(0xFF), "error");
     });
 
     test('returns unknown for invalid code', () {
-      expect(IpcAction.fromCode(0xAB), IpcAction.unknown);
+      expect(IpcStatusOp.getName(0xAB), "unknown");
     });
   });
 
@@ -78,7 +98,7 @@ void main() {
       final payload = utf8.encode('hello world');
       final packet = IpcPacket(
         reqId: 123,
-        op: IpcAction.put.code,
+        op: IpcStatusOp.getCode("put"),
         action: 'transactions_box',
         key: '42',
         payload: Uint8List.fromList(payload),
@@ -88,20 +108,20 @@ void main() {
       final parsed = IpcPacket.fromBytes(bytes);
 
       expect(parsed.reqId, equals(123));
-      expect(parsed.op, equals(IpcAction.put.code));
+      expect(parsed.op, equals(IpcStatusOp.getCode("put")));
       expect(parsed.action, equals('transactions_box'));
       expect(parsed.key, equals('42'));
       expect(utf8.decode(parsed.payload), equals('hello world'));
     });
 
     test('handles empty payload', () {
-      final packet = IpcPacket(reqId: 1, op: IpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
+      final packet = IpcPacket(reqId: 1, op: IpcStatusOp.getCode("clear"), action: 'settings_box', key: '', payload: Uint8List(0));
 
       final bytes = packet.toBytes();
       final parsed = IpcPacket.fromBytes(bytes);
 
       expect(parsed.reqId, equals(1));
-      expect(parsed.op, equals(IpcAction.clear.code));
+      expect(parsed.op, equals(IpcStatusOp.getCode("clear")));
       expect(parsed.action, equals('settings_box'));
       expect(parsed.key, equals(''));
       expect(parsed.payload.length, equals(0));
@@ -110,7 +130,7 @@ void main() {
     test('handles non-ASCII characters in action and key', () {
       final packet = IpcPacket(
         reqId: 2,
-        op: IpcAction.put.code,
+        op: IpcStatusOp.getCode("put"),
         action: '测试箱', // Chinese characters
         key: 'ключ', // Cyrillic characters
         payload: Uint8List.fromList(utf8.encode('payload')),
@@ -126,16 +146,22 @@ void main() {
     });
 
     test('actionCode returns correct CoreIpcAction', () {
-      final packet = IpcPacket(reqId: 3, op: IpcAction.delete.code, action: 'box', key: 'k', payload: Uint8List(0));
+      final packet = IpcPacket(reqId: 3, op: IpcStatusOp.getCode("delete"), action: 'box', key: 'k', payload: Uint8List(0));
 
-      expect(packet.actionCode, equals(IpcAction.delete));
+      expect(packet.actionCode, equals(IpcStatusOp.getCode("delete")));
     });
   });
 
   group('CoreIpcBuffer', () {
     test('parses a complete packet correctly', () {
       final payload = utf8.encode('hello');
-      final packet = IpcPacket(reqId: 1, op: IpcAction.put.code, action: 'test_box', key: 'abc', payload: Uint8List.fromList(payload));
+      final packet = IpcPacket(
+        reqId: 1,
+        op: IpcStatusOp.getCode("put"),
+        action: 'test_box',
+        key: 'abc',
+        payload: Uint8List.fromList(payload),
+      );
 
       final buffer = IpcBuffer();
       buffer.add(packet.toBytes());
@@ -143,7 +169,7 @@ void main() {
       final parsed = buffer.parseNextAction();
       expect(parsed, isNotNull);
       expect(parsed?.reqId, equals(1));
-      expect(parsed?.op, equals(IpcAction.put.code));
+      expect(parsed?.op, equals(IpcStatusOp.getCode("put")));
       expect(parsed?.action, equals('test_box'));
       expect(parsed?.key, equals('abc'));
       expect(utf8.decode(parsed!.payload), equals('hello'));
@@ -151,7 +177,13 @@ void main() {
 
     test('returns null until full packet arrives', () {
       final payload = utf8.encode('data');
-      final packet = IpcPacket(reqId: 2, op: IpcAction.delete.code, action: 'box', key: 'key', payload: Uint8List.fromList(payload));
+      final packet = IpcPacket(
+        reqId: 2,
+        op: IpcStatusOp.getCode("delete"),
+        action: 'box',
+        key: 'key',
+        payload: Uint8List.fromList(payload),
+      );
 
       final bytes = packet.toBytes();
       final buffer = IpcBuffer();
@@ -169,8 +201,8 @@ void main() {
     });
 
     test('parses multiple packets sequentially', () {
-      final packetA = IpcPacket(reqId: 10, op: IpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
-      final packetB = IpcPacket(reqId: 11, op: IpcAction.extract.code, action: 'transactions_box', key: '', payload: Uint8List(0));
+      final packetA = IpcPacket(reqId: 10, op: IpcStatusOp.getCode("clear"), action: 'settings_box', key: '', payload: Uint8List(0));
+      final packetB = IpcPacket(reqId: 11, op: IpcStatusOp.getCode("extract"), action: 'transactions_box', key: '', payload: Uint8List(0));
 
       final buffer = IpcBuffer();
       buffer.add(packetA.toBytes());
@@ -190,7 +222,7 @@ void main() {
     test('clears buffer correctly', () {
       final packet = IpcPacket(
         reqId: 99,
-        op: IpcAction.put.code,
+        op: IpcStatusOp.getCode("put"),
         action: 'clear_test',
         key: 'k',
         payload: Uint8List.fromList(utf8.encode('x')),
@@ -207,7 +239,7 @@ void main() {
   });
 
   group('CoreIpcConverter', () {
-    final converter = IpcConverter(AdaptersFaker());
+    final converter = IpcConverter(IpcAdaptersFaker());
 
     late TransactionsModel txA;
     late TransactionsModel txB;
@@ -222,10 +254,10 @@ void main() {
     });
 
     test('toBytes with put serializes TransactionsModel using adapter', () {
-      final bytes = converter.toBytes(IpcAction.put, 'transactions_box', txA);
+      final bytes = converter.toBytes(IpcStatusOp.getCode("put"), 'transactions_box', txA);
       expect(bytes, isNotNull);
 
-      final decoded = converter.fromBytes(IpcAction.put, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(IpcStatusOp.getCode("put"), 'transactions_box', bytes);
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
       expect(decoded.balance, equals(Decimal.fromInt(3)));
@@ -233,10 +265,10 @@ void main() {
 
     test('toBytes with multiPut serializes multiple TransactionsModel payloads', () {
       final payloads = [txB, txC];
-      final bytes = converter.toBytes(IpcAction.multiPut, 'transactions_box', payloads);
+      final bytes = converter.toBytes(IpcStatusOp.getCode("multiPut"), 'transactions_box', payloads);
       expect(bytes, isNotNull);
 
-      final decoded = converter.fromBytes(IpcAction.multiPut, 'transactions_box', bytes);
+      final decoded = converter.fromBytes(IpcStatusOp.getCode("multiPut"), 'transactions_box', bytes);
       expect(decoded, isA<List>());
       expect(decoded.length, equals(2));
 
@@ -251,20 +283,20 @@ void main() {
 
     test('toBytes with unlock returns raw payload', () {
       final raw = Uint8List.fromList([1, 2, 3]);
-      final bytes = converter.toBytes(IpcAction.unlock, 'auth', raw);
+      final bytes = converter.toBytes(IpcStatusOp.getCode("unlock"), 'auth', raw);
       expect(bytes, equals(raw));
     });
 
     test('toBytes with notification encodes string to UTF8', () {
       final msg = 'notify';
-      final bytes = converter.toBytes(IpcAction.notification, 'note', msg);
+      final bytes = converter.toBytes(IpcStatusOp.getCode("notification"), 'note', msg);
       expect(utf8.decode(bytes!), equals(msg));
     });
 
     test('fromSenderBytes with extract decodes list of items', () {
       final payloads = [txA];
-      final bytes = converter.toBytes(IpcAction.multiPut, 'transactions_box', payloads);
-      final decoded = converter.fromBytes(IpcAction.extract, 'transactions_box', bytes);
+      final bytes = converter.toBytes(IpcStatusOp.getCode("multiPut"), 'transactions_box', payloads);
+      final decoded = converter.fromBytes(IpcStatusOp.getCode("extract"), 'transactions_box', bytes);
 
       expect(decoded, isA<List>());
       expect(decoded.length, equals(1));
@@ -275,33 +307,33 @@ void main() {
 
     test('fromSenderBytes with clear returns int32 or 0 for empty', () {
       final empty = Uint8List(0);
-      expect(converter.fromBytes(IpcAction.clear, 'box', empty), equals(0));
+      expect(converter.fromBytes(IpcStatusOp.getCode("clear"), 'box', empty), equals(0));
 
       final bd = ByteData(4)..setInt32(0, 42, Endian.big);
       final bytes = bd.buffer.asUint8List();
-      expect(converter.fromBytes(IpcAction.clear, 'box', bytes), equals(42));
+      expect(converter.fromBytes(IpcStatusOp.getCode("clear"), 'box', bytes), equals(42));
     });
 
     test('fromSenderBytes with unlock returns decoded tx or null', () {
-      final txBytes = converter.toBytes(IpcAction.put, 'transactions_box', txD)!;
+      final txBytes = converter.toBytes(IpcStatusOp.getCode("put"), 'transactions_box', txD)!;
       final good = Uint8List.fromList([1, ...txBytes]);
       final bad = Uint8List.fromList([0, ...txBytes]);
 
-      final decodedGood = converter.fromBytes(IpcAction.unlock, 'transactions_box', good);
+      final decodedGood = converter.fromBytes(IpcStatusOp.getCode("unlock"), 'transactions_box', good);
       expect(decodedGood, isNotNull);
 
-      final txDecoded = converter.fromBytes(IpcAction.put, 'transactions_box', decodedGood);
+      final txDecoded = converter.fromBytes(IpcStatusOp.getCode("put"), 'transactions_box', decodedGood);
       expect(txDecoded, isA<TransactionsModel>());
       expect((txDecoded as TransactionsModel).tid, equals('99'));
       expect(txDecoded.balance, equals(Decimal.fromInt(5)));
 
-      final decodedBad = converter.fromBytes(IpcAction.unlock, 'transactions_box', bad);
+      final decodedBad = converter.fromBytes(IpcStatusOp.getCode("unlock"), 'transactions_box', bad);
       expect(decodedBad, isNull);
     });
 
     test('fromBytes with put decodes single TransactionsModel', () {
-      final bytes = converter.toBytes(IpcAction.put, 'transactions_box', txA);
-      final decoded = converter.fromBytes(IpcAction.put, 'transactions_box', bytes);
+      final bytes = converter.toBytes(IpcStatusOp.getCode("put"), 'transactions_box', txA);
+      final decoded = converter.fromBytes(IpcStatusOp.getCode("put"), 'transactions_box', bytes);
 
       expect(decoded, isA<TransactionsModel>());
       expect((decoded as TransactionsModel).tid, equals('123'));
@@ -310,8 +342,8 @@ void main() {
 
     test('fromBytes with multiPut decodes multiple TransactionsModel items', () {
       final payloads = [txB, txC];
-      final bytes = converter.toBytes(IpcAction.multiPut, 'transactions_box', payloads);
-      final decoded = converter.fromBytes(IpcAction.multiPut, 'transactions_box', bytes);
+      final bytes = converter.toBytes(IpcStatusOp.getCode("multiPut"), 'transactions_box', payloads);
+      final decoded = converter.fromBytes(IpcStatusOp.getCode("multiPut"), 'transactions_box', bytes);
 
       expect(decoded, isA<List>());
       expect(decoded.length, equals(2));
@@ -607,17 +639,20 @@ void main() {
 
   group('CoreIpcBox', () {
     late IpcBox<TransactionsModel> box;
-    late ClientFaker client;
+    late IpcClientFaker client;
     late IpcAdapters adapters;
 
     setUp(() {
-      client = ClientFaker();
-      adapters = IpcAdapters(); // stub or real adapters
-      box = IpcBox<TransactionsModel>('transactions_box', adapters, client);
+      client = IpcClientFaker();
+      adapters = IpcAdaptersFaker(); // stub or real adapters
+      box = IpcBoxFaker<TransactionsModel>('transactions_box', adapters, client);
     });
 
     test('init populates items from client', () async {
-      client.stubResponse(IpcAction.extract, [makeTx('id1', balance: Decimal.fromInt(10)), makeTx('id2', balance: Decimal.fromInt(20))]);
+      client.stubResponse(IpcStatusOp.getCode("extract"), [
+        makeTx('id1', balance: Decimal.fromInt(10)),
+        makeTx('id2', balance: Decimal.fromInt(20)),
+      ]);
 
       await box.init();
       expect(box.length, equals(2));
@@ -629,12 +664,12 @@ void main() {
       final tx = makeTx('idX', balance: Decimal.fromInt(99));
       await box.put(tx.tid, tx);
 
-      expect(client.lastOp, equals(IpcAction.put));
+      expect(client.lastOp, equals(IpcStatusOp.getCode("put")));
       expect(box.get('idX')?.balance, equals(Decimal.fromInt(99)));
     });
 
     test('clear empties items and returns count', () async {
-      client.stubResponse(IpcAction.clear, 5);
+      client.stubResponse(IpcStatusOp.getCode("clear"), 5);
       box.items['id'] = makeTx('id', balance: Decimal.fromInt(5));
 
       final count = await box.clear();
@@ -647,7 +682,7 @@ void main() {
       box.items[tx.tid] = tx;
 
       await box.delete(tx.tid);
-      expect(client.lastOp, equals(IpcAction.delete));
+      expect(client.lastOp, equals(IpcStatusOp.getCode("delete")));
       expect(box.get('idY'), isNull);
     });
 
@@ -655,7 +690,7 @@ void main() {
       final txs = [makeTx('a', balance: Decimal.fromInt(1)), makeTx('b', balance: Decimal.fromInt(2))];
       await box.addAll(txs);
 
-      expect(client.lastOp, equals(IpcAction.multiPut));
+      expect(client.lastOp, equals(IpcStatusOp.getCode("multiPut")));
       expect(box.length, equals(2));
     });
 
@@ -664,31 +699,31 @@ void main() {
       final txs = [makeTx('new1', balance: Decimal.fromInt(4)), makeTx('new2', balance: Decimal.fromInt(5))];
       await box.replace(txs);
 
-      expect(client.lastOp, equals(IpcAction.replace));
+      expect(client.lastOp, equals(IpcStatusOp.getCode("replace")));
       expect(box.length, equals(2));
       expect(box.get('new1')?.tid, equals('new1'));
     });
 
     test('receive handles put/delete/clear/multiPut/replace', () {
       // put
-      final putEvent = IpcBroadcastEvent(op: IpcAction.put.code, action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
+      final putEvent = IpcBroadcastEvent(op: IpcStatusOp.getCode("put"), action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
       box.receive(putEvent);
       expect(box.get('id1')?.tid, equals('id1'));
 
       // delete
-      final delEvent = IpcBroadcastEvent(op: IpcAction.delete.code, action: 'transactions_box', key: 'id1', payload: null);
+      final delEvent = IpcBroadcastEvent(op: IpcStatusOp.getCode("delete"), action: 'transactions_box', key: 'id1', payload: null);
       box.receive(delEvent);
       expect(box.get('id1'), isNull);
 
       // clear
       box.items['x'] = makeTx('x');
-      final clearEvent = IpcBroadcastEvent(op: IpcAction.clear.code, action: 'transactions_box', key: '', payload: null);
+      final clearEvent = IpcBroadcastEvent(op: IpcStatusOp.getCode("clear"), action: 'transactions_box', key: '', payload: null);
       box.receive(clearEvent);
       expect(box.isEmpty, isTrue);
 
       // multiPut
       final multiEvent = IpcBroadcastEvent(
-        op: IpcAction.multiPut.code,
+        op: IpcStatusOp.getCode("multiPut"),
         action: 'transactions_box',
         key: '',
         payload: [makeTx('a'), makeTx('b')],
@@ -697,7 +732,12 @@ void main() {
       expect(box.length, equals(2));
 
       // replace
-      final replaceEvent = IpcBroadcastEvent(op: IpcAction.replace.code, action: 'transactions_box', key: '', payload: [makeTx('c')]);
+      final replaceEvent = IpcBroadcastEvent(
+        op: IpcStatusOp.getCode("replace"),
+        action: 'transactions_box',
+        key: '',
+        payload: [makeTx('c')],
+      );
       box.receive(replaceEvent);
       expect(box.length, equals(1));
       expect(box.get('c')?.tid, equals('c'));
@@ -719,32 +759,37 @@ void main() {
 
   group('CoreIpcBroadcastEvent', () {
     test('actionCode resolves correctly from op code', () {
-      final eventPut = IpcBroadcastEvent(op: IpcAction.put.code, action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
-      expect(eventPut.actionCode, equals(IpcAction.put));
+      final eventPut = IpcBroadcastEvent(op: IpcStatusOp.getCode("put"), action: 'transactions_box', key: 'id1', payload: makeTx('id1'));
+      expect(eventPut.actionCode, equals(IpcStatusOp.getCode("put")));
 
-      final eventDelete = IpcBroadcastEvent(op: IpcAction.delete.code, action: 'transactions_box', key: 'id2', payload: null);
-      expect(eventDelete.actionCode, equals(IpcAction.delete));
+      final eventDelete = IpcBroadcastEvent(op: IpcStatusOp.getCode("delete"), action: 'transactions_box', key: 'id2', payload: null);
+      expect(eventDelete.actionCode, equals(IpcStatusOp.getCode("delete")));
 
-      final eventClear = IpcBroadcastEvent(op: IpcAction.clear.code, action: 'transactions_box', key: '', payload: null);
-      expect(eventClear.actionCode, equals(IpcAction.clear));
+      final eventClear = IpcBroadcastEvent(op: IpcStatusOp.getCode("clear"), action: 'transactions_box', key: '', payload: null);
+      expect(eventClear.actionCode, equals(IpcStatusOp.getCode("clear")));
 
       final eventMultiPut = IpcBroadcastEvent(
-        op: IpcAction.multiPut.code,
+        op: IpcStatusOp.getCode("multiPut"),
         action: 'transactions_box',
         key: '',
         payload: [makeTx('a'), makeTx('b')],
       );
-      expect(eventMultiPut.actionCode, equals(IpcAction.multiPut));
+      expect(eventMultiPut.actionCode, equals(IpcStatusOp.getCode("multiPut")));
 
-      final eventReplace = IpcBroadcastEvent(op: IpcAction.replace.code, action: 'transactions_box', key: '', payload: [makeTx('c')]);
-      expect(eventReplace.actionCode, equals(IpcAction.replace));
+      final eventReplace = IpcBroadcastEvent(
+        op: IpcStatusOp.getCode("replace"),
+        action: 'transactions_box',
+        key: '',
+        payload: [makeTx('c')],
+      );
+      expect(eventReplace.actionCode, equals(IpcStatusOp.getCode("replace")));
     });
 
     test('fields are stored and accessible', () {
       final tx = makeTx('idX');
-      final event = IpcBroadcastEvent(op: IpcAction.put.code, action: 'transactions_box', key: tx.tid, payload: tx);
+      final event = IpcBroadcastEvent(op: IpcStatusOp.getCode("put"), action: 'transactions_box', key: tx.tid, payload: tx);
 
-      expect(event.op, equals(IpcAction.put.code));
+      expect(event.op, equals(IpcStatusOp.getCode("put")));
       expect(event.action, equals('transactions_box'));
       expect(event.key, equals('idX'));
       expect(event.payload, equals(tx));
@@ -756,7 +801,7 @@ void main() {
       final payload = utf8.encode('hello world');
       final packet = IpcPacket(
         reqId: 100,
-        op: IpcAction.put.code,
+        op: IpcStatusOp.getCode("put"),
         action: 'transactions_box',
         key: '42',
         payload: Uint8List.fromList(payload),
@@ -768,7 +813,7 @@ void main() {
       final parsed = buffer.parseNextAction();
       expect(parsed, isNotNull);
       expect(parsed?.reqId, equals(100));
-      expect(parsed?.op, equals(IpcAction.put.code));
+      expect(parsed?.op, equals(IpcStatusOp.getCode("put")));
       expect(parsed?.action, equals('transactions_box'));
       expect(parsed?.key, equals('42'));
       expect(parsed?.payload, equals(Uint8List.fromList(payload)));
@@ -776,8 +821,8 @@ void main() {
     });
 
     test('parses multiple packets from a single buffer', () {
-      final packetA = IpcPacket(reqId: 1, op: IpcAction.clear.code, action: 'settings_box', key: '', payload: Uint8List(0));
-      final packetB = IpcPacket(reqId: 2, op: IpcAction.extract.code, action: 'transactions_box', key: '', payload: Uint8List(0));
+      final packetA = IpcPacket(reqId: 1, op: IpcStatusOp.getCode("clear"), action: 'settings_box', key: '', payload: Uint8List(0));
+      final packetB = IpcPacket(reqId: 2, op: IpcStatusOp.getCode("extract"), action: 'transactions_box', key: '', payload: Uint8List(0));
 
       final buffer = IpcBuffer();
       buffer.add(packetA.toBytes());
@@ -797,7 +842,7 @@ void main() {
     test('does not parse incomplete packet until full data arrives', () {
       final packet = IpcPacket(
         reqId: 7,
-        op: IpcAction.delete.code,
+        op: IpcStatusOp.getCode("delete"),
         action: 'watchers_box',
         key: 'abc',
         payload: Uint8List.fromList(utf8.encode('payload')),
@@ -824,16 +869,17 @@ void main() {
       CoreMode.ipcPipeName = pipeName;
 
       final server = IpcServer();
-      final client = IpcClient(IpcAdapters());
+      final client = IpcClient(IpcAdaptersFaker());
       final keyBytes = Uint8List.fromList([1, 2, 3]);
 
       client.pipeName = pipeName;
       server.pipeName = pipeName;
-      server.database = DatabaseFaker(IpcBoxes(), IpcAdapters(), IpcMigration());
+      server.handler = IpcActionFaker(database: IpcDatabaseFaker(IpcBoxesFaker(), IpcAdaptersFaker(), IpcMigrationFaker(), ""));
+      // server.database = DatabaseFaker(IpcBoxes(), IpcAdapters(), IpcMigration());
 
       server.unlocker = (Uint8List bytes) async {
         expect(bytes, equals(keyBytes));
-        return SystemUnlockStatus.success;
+        return IpcStatusUnlock.success;
       };
 
       await server.start();
@@ -846,7 +892,7 @@ void main() {
         await server.dispose();
       });
 
-      final response = await client.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
+      final response = await client.send(op: IpcStatusOp.getCode("unlock"), action: 'auth', key: 'unlock', payload: keyBytes);
 
       expect(response, isA<Uint8List>());
       expect(response.length, equals(32));
@@ -861,14 +907,15 @@ void main() {
       CoreMode.isServer = true;
       final server = IpcServer();
       server.pipeName = pipeName;
-      server.unlocker = (bytes) async => SystemUnlockStatus.success;
-      server.database = DatabaseFaker(IpcBoxes(), AdaptersFaker(), IpcMigration());
+      server.unlocker = (bytes) async => IpcStatusUnlock.success;
+      server.handler = IpcActionFaker(database: IpcDatabaseFaker(IpcBoxesFaker(), IpcAdaptersFaker(), IpcMigrationFaker(), ""));
+      // server.database = DatabaseFaker(IpcBoxes(), AdaptersFaker(), IpcMigration());
       await server.start();
       final sessionKey = server.sessionKey;
 
       // Booting the client 1
       await Future.delayed(Duration(milliseconds: 150));
-      final client1 = IpcClient(AdaptersFaker());
+      final client1 = IpcClient(IpcAdaptersFaker());
       client1.pipeName = pipeName;
       await client1.start();
 
@@ -884,7 +931,7 @@ void main() {
 
       // Handshaking for client 1
       await Future.delayed(Duration(milliseconds: 150));
-      final handshakeBytes = await client1.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
+      final handshakeBytes = await client1.send(op: IpcStatusOp.getCode("unlock"), action: 'auth', key: 'unlock', payload: keyBytes);
       expect(handshakeBytes, equals(sessionKey));
       client1.localKey = keyBytes;
       client1.sessionKey = handshakeBytes;
@@ -892,7 +939,7 @@ void main() {
       // Booting the client 2
       await Future.delayed(Duration(milliseconds: 150));
       CoreMode.isServer = false;
-      final client2 = IpcClient(AdaptersFaker());
+      final client2 = IpcClient(IpcAdaptersFaker());
       client2.pipeName = pipeName;
       await client2.start();
 
@@ -908,7 +955,7 @@ void main() {
 
       // Client 2 handshaking
       await Future.delayed(Duration(milliseconds: 150));
-      final handshakeBytes2 = await client2.send(op: IpcAction.unlock, action: 'auth', key: 'unlock', payload: keyBytes);
+      final handshakeBytes2 = await client2.send(op: IpcStatusOp.getCode("unlock"), action: 'auth', key: 'unlock', payload: keyBytes);
       expect(handshakeBytes2, equals(sessionKey));
       client2.localKey = keyBytes;
       client2.sessionKey = handshakeBytes2;
@@ -925,12 +972,12 @@ void main() {
       // Testing sending via client 1
       await Future.delayed(Duration(milliseconds: 150));
       final tx1 = makeTx("42", balance: Decimal.fromInt(6));
-      client1.send(op: IpcAction.put, action: 'transactions_box', key: '42', payload: tx1);
+      client1.send(op: IpcStatusOp.getCode("put"), action: 'transactions_box', key: '42', payload: tx1);
 
       // Testing sending via client 2
       await Future.delayed(Duration(milliseconds: 150));
       final tx2 = makeTx("52", balance: Decimal.fromInt(3));
-      client2.send(op: IpcAction.put, action: 'transactions_box', key: '52', payload: tx2);
+      client2.send(op: IpcStatusOp.getCode("put"), action: 'transactions_box', key: '52', payload: tx2);
     });
   });
 }
