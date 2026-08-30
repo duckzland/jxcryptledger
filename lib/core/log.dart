@@ -16,11 +16,11 @@ void logln(String message, [String group = "CORE"]) {
   if (CoreMode.isServer) {
     try {
       final file = File('server_log.txt');
-      file.writeAsStringSync('[JX][$prefix][$group] $ts - $message\n', mode: FileMode.append, flush: true);
+      file.writeAsStringSync('[JX][$ts][$prefix][$group] $message\n', mode: FileMode.append, flush: true);
     } catch (e) {
-      stdout.writeln('[JX][$prefix][$group] $ts - Failed to write log: $e');
+      stdout.writeln('[JX][$ts][$prefix][$group] Failed to write log: $e');
     }
   } else {
-    stdout.writeln('[JX][$prefix][$group] $ts - $message');
+    stdout.writeln('[JX][$ts][$prefix][$group] $message');
   }
 }

@@ -28,30 +28,30 @@ class CoreWorkerProcessor {
     _paused?.cancel();
 
     if (_masterAborter != null && !_masterAborter!.isCompleted) {
-      _masterAborter!.completeError(Exception('[WORKER] Processor was disposed.'));
+      _masterAborter!.completeError(Exception('Processor was disposed.'));
     }
   }
 
   void _startWatchdog() {
     _watchdog?.cancel();
     _watchdog = Timer(watchdogTimeout, () {
-      logln("[WORKER] Watchdog triggered — forcing unlock.", "WORKER");
+      logln("Watchdog triggered — forcing unlock.", "WORKER");
       isFetching = false;
 
       _client?.close();
       _client = null;
 
       if (_masterAborter != null && !_masterAborter!.isCompleted) {
-        _masterAborter!.completeError(TimeoutException('[WORKER] Watchdog forcefully terminated hanging execution.'));
+        _masterAborter!.completeError(TimeoutException('Watchdog forcefully terminated hanging execution.'));
       }
     });
   }
 
   void _pauseOperation() {
-    logln("[WORKER] Pausing operation.", "WORKER");
+    logln("Pausing operation.", "WORKER");
     _paused?.cancel();
     _paused = Timer(Duration(seconds: 61), () {
-      logln("[WORKER] Resuming operation.", "WORKER");
+      logln("Resuming operation.", "WORKER");
       _paused?.cancel();
       _paused = null;
     });
@@ -63,7 +63,7 @@ class CoreWorkerProcessor {
     isFetching = true;
 
     if (_masterAborter != null && !_masterAborter!.isCompleted) {
-      _masterAborter!.completeError(TimeoutException('[WORKER] Terminated by subsequent batch invocation.'));
+      _masterAborter!.completeError(TimeoutException('Terminated by subsequent batch invocation.'));
     }
 
     _masterAborter = Completer<void>();
@@ -87,13 +87,13 @@ class CoreWorkerProcessor {
           await job.callback(job.id, job.payload, fetcher: client);
         } catch (e) {
           if (e is NetworkingException && e.details as int == 429) {
-            logln("[WORKER] Rate limited, stopping worker: $e", "WORKER");
+            logln("Rate limited, stopping worker: $e", "WORKER");
             hasFailed = 2;
             while (iterator.moveNext()) {}
             break;
           } else {
             hasFailed = 1;
-            logln("[WORKER] Unexpected error for job ${job.id}: $e", "WORKER");
+            logln("Unexpected error for job ${job.id}: $e", "WORKER");
           }
         }
 
@@ -120,7 +120,7 @@ class CoreWorkerProcessor {
         _masterAborter!.future,
       ]);
     } catch (e) {
-      logln("[WORKER] Master thread forcefully detached: $e", "WORKER");
+      logln("Master thread forcefully detached: $e", "WORKER");
     } finally {
       if (hasFailed == 2) _pauseOperation();
       _watchdog?.cancel();
