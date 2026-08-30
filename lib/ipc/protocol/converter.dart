@@ -36,6 +36,9 @@ class IpcConverter {
       case "unlock":
         return payload;
 
+      case "broadcast":
+        return utf8.encode(payload);
+
       default:
         if (payload is String) return utf8.encode(payload);
         return null;
@@ -72,6 +75,9 @@ class IpcConverter {
         }
 
         return null;
+
+      case "broadcast":
+        return utf8.decode(bytes);
 
       default:
         return null;

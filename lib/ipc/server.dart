@@ -138,6 +138,7 @@ class IpcServer {
         Uint8List serializedResult = await _crypto.encrypt(await handler?.process(actionCode, action, rawKeyStr, payload) ?? Uint8List(0));
 
         switch (opName) {
+          case "broadcast":
           case "clear":
           case "delete":
           case "replace":

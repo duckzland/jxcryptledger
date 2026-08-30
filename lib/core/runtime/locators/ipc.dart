@@ -20,6 +20,7 @@ Future<void> init() async {
   IpcStatusOp.register(0x13, "refreshRates");
   IpcStatusOp.register(0x14, "refreshCryptos");
   IpcStatusOp.register(0x15, "refreshMarket");
+  IpcStatusOp.register(0x16, "broadcast");
   IpcStatusOp.register(0x99, "shutdown");
   IpcStatusOp.register(0xFF, "error");
 

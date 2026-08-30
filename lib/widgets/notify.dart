@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../app/router.dart';
 import '../app/theme.dart';
+import '../core/locator.dart';
+import '../ipc/client.dart';
+import '../ipc/status/op.dart';
 
 BuildContext _resolveContext(BuildContext? ctx) {
   return ctx ?? rootNavigatorKey.currentContext!;
@@ -12,8 +15,13 @@ void widgetsNotifyClear({BuildContext? ctx}) {
   ScaffoldMessenger.of(context).removeCurrentSnackBar();
 }
 
-void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
+void widgetsNotifySuccess(String msg, {BuildContext? ctx, bool? broadcast}) {
   final context = _resolveContext(ctx);
+
+  if (broadcast == true) {
+    final ipcClient = CoreLocator.getit<IpcClient>();
+    ipcClient.send(op: IpcStatusOp.getCode("broadcast"), action: "notify", key: "success", payload: msg);
+  }
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -27,8 +35,13 @@ void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
   );
 }
 
-void widgetsNotifyError(String msg, {BuildContext? ctx}) {
+void widgetsNotifyError(String msg, {BuildContext? ctx, bool? broadcast}) {
   final context = _resolveContext(ctx);
+
+  if (broadcast == true) {
+    final ipcClient = CoreLocator.getit<IpcClient>();
+    ipcClient.send(op: IpcStatusOp.getCode("broadcast"), action: "notify", key: "error", payload: msg);
+  }
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -42,8 +55,13 @@ void widgetsNotifyError(String msg, {BuildContext? ctx}) {
   );
 }
 
-void widgetsNotifyWarning(String msg, {BuildContext? ctx}) {
+void widgetsNotifyWarning(String msg, {BuildContext? ctx, bool? broadcast}) {
   final context = _resolveContext(ctx);
+
+  if (broadcast == true) {
+    final ipcClient = CoreLocator.getit<IpcClient>();
+    ipcClient.send(op: IpcStatusOp.getCode("broadcast"), action: "notify", key: "warning", payload: msg);
+  }
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(

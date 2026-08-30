@@ -3,6 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/rates/controller.dart';
 import '../features/cryptos/controller.dart';
+import '../ipc/client.dart';
+import '../ipc/event.dart';
+import '../ipc/mixins/broadcaster.dart';
+import '../ipc/server.dart';
+import '../ipc/status/op.dart';
 import '../widgets/buttons/action.dart';
 import '../widgets/notify.dart';
 import '../widgets/separator.dart';
@@ -24,9 +29,15 @@ class AppLayout extends StatefulWidget {
   State<AppLayout> createState() => _AppLayoutState();
 }
 
-class _AppLayoutState extends State<AppLayout> {
+class _AppLayoutState extends State<AppLayout> with IpcMixinsBroadcaster {
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
   RatesController get _ratesController => CoreLocator.getit<RatesController>();
+
+  @override
+  IpcClient get ipcClient => CoreLocator.getit<IpcClient>();
+
+  @override
+  IpcServer get ipcServer => CoreLocator.getit<IpcServer>();
 
   void _setTitle(String newTitle) {
     _title.value = newTitle;
@@ -97,6 +108,30 @@ class _AppLayoutState extends State<AppLayout> {
     AppLayout.setTitle = _setTitle;
     AppLayout.setActions = _setActions;
     AppLayout.refreshBar = _refreshBar;
+
+    broadcasterListen();
+  }
+
+  @override
+  void broadcasterAction(IpcBroadcastEvent event) {
+    if (event.op == IpcStatusOp.getCode("broadcast") && event.action == "notify") {
+      switch (event.key) {
+        case "success":
+          widgetsNotifySuccess(event.payload);
+        case "error":
+          widgetsNotifyError(event.payload);
+        case "warning":
+          widgetsNotifyWarning(event.payload);
+        default:
+          break;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    broadcasterDispose();
+    super.dispose();
   }
 
   @override
