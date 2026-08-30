@@ -257,7 +257,11 @@ class CoreRuntimeServer extends CoreBaseRuntime {
   }
 
   Future<IpcStatusUnlock> unlock(Uint8List keyBytes) async {
-    final IpcStatusUnlock state = await ipcServer.handler.database.unlock(keyBytes);
+    if (ipcServer.handler == null) {
+      return IpcStatusUnlock.error;
+    }
+
+    final IpcStatusUnlock state = await ipcServer.handler!.database.unlock(keyBytes);
 
     if (!state.isUnlocked()) {
       return state;

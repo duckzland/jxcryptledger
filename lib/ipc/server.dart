@@ -15,23 +15,21 @@ class IpcServer {
   final IpcCrypto _crypto = IpcCrypto();
 
   ServerSocket? socket;
-
-  IpcServer();
-
-  late final IpcAction handler;
+  IpcAction? handler;
 
   Future<IpcStatusUnlock> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
 
   void Function()? disconnected;
+  void Function(String message, [String group])? logger;
 
   bool Function({int exclude})? hasClient;
-
-  void Function(String message, [String group])? logger;
 
   bool _isDisposing = false;
 
   String pipeName = "";
+
+  IpcServer();
 
   Future<void> dispose() async {
     if (_isDisposing) return;
@@ -51,11 +49,11 @@ class IpcServer {
       } catch (_) {}
     }
 
-    handler.dispose();
+    handler?.dispose();
   }
 
   Future<void> start() async {
-    await handler.init();
+    await handler?.init();
 
     _crypto.setSessionKey(sessionKey);
 
@@ -137,7 +135,7 @@ class IpcServer {
           }
         }
 
-        Uint8List serializedResult = await _crypto.encrypt(await handler.process(actionCode, action, rawKeyStr, payload));
+        Uint8List serializedResult = await _crypto.encrypt(await handler?.process(actionCode, action, rawKeyStr, payload) ?? Uint8List(0));
 
         switch (opName) {
           case "clear":
