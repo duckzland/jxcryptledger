@@ -25,8 +25,10 @@ class _WidgetsScreensFetchCryptosState extends State<WidgetsScreensFetchCryptos>
     try {
       await _cryptosController.fetch();
       if (_cryptosController.isNotEmpty()) {
-        widgetsNotifySuccess("Successfully retrieved Cryptocurrency list.");
+        widgetsNotifySuccess("Cryptocurrency list updated.");
         _cryptosController.generateSymbolMap();
+
+        widgetsNotifyBroadcast("success", "Updated Cryptocurrency list.");
       } else {
         widgetsNotifyError("Failed to retrieve Cryptocurrency list. Please check your internet connection.");
       }

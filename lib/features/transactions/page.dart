@@ -503,8 +503,14 @@ class TransactionsPageState extends State<TransactionsPage>
   Widget _buildForm(BuildContext dialogContext) {
     return Center(
       child: TransactionFormCreate(
-        onSave: (e, stx) =>
-            actionableFormSave<TransactionsModel>(context, dialogContext: dialogContext, successMessage: "Transaction saved", error: e),
+        onSave: (e, stx) => actionableFormSave<TransactionsModel>(
+          context,
+          dialogContext: dialogContext,
+          successMessage: "Transaction saved",
+          broadcastMessage: "New Transaction created",
+          broadcast: true,
+          error: e,
+        ),
       ),
     );
   }

@@ -15,13 +15,8 @@ void widgetsNotifyClear({BuildContext? ctx}) {
   ScaffoldMessenger.of(context).removeCurrentSnackBar();
 }
 
-void widgetsNotifySuccess(String msg, {BuildContext? ctx, bool? broadcast}) {
+void widgetsNotifySuccess(String msg, {BuildContext? ctx}) {
   final context = _resolveContext(ctx);
-
-  if (broadcast == true) {
-    final ipcClient = CoreLocator.getit<IpcClient>();
-    ipcClient.send(op: IpcStatusOp.getCode("broadcast"), action: "notify", key: "success", payload: msg);
-  }
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -35,13 +30,8 @@ void widgetsNotifySuccess(String msg, {BuildContext? ctx, bool? broadcast}) {
   );
 }
 
-void widgetsNotifyError(String msg, {BuildContext? ctx, bool? broadcast}) {
+void widgetsNotifyError(String msg, {BuildContext? ctx}) {
   final context = _resolveContext(ctx);
-
-  if (broadcast == true) {
-    final ipcClient = CoreLocator.getit<IpcClient>();
-    ipcClient.send(op: IpcStatusOp.getCode("broadcast"), action: "notify", key: "error", payload: msg);
-  }
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -55,13 +45,8 @@ void widgetsNotifyError(String msg, {BuildContext? ctx, bool? broadcast}) {
   );
 }
 
-void widgetsNotifyWarning(String msg, {BuildContext? ctx, bool? broadcast}) {
+void widgetsNotifyWarning(String msg, {BuildContext? ctx}) {
   final context = _resolveContext(ctx);
-
-  if (broadcast == true) {
-    final ipcClient = CoreLocator.getit<IpcClient>();
-    ipcClient.send(op: IpcStatusOp.getCode("broadcast"), action: "notify", key: "warning", payload: msg);
-  }
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -73,4 +58,9 @@ void widgetsNotifyWarning(String msg, {BuildContext? ctx, bool? broadcast}) {
       ),
     ),
   );
+}
+
+void widgetsNotifyBroadcast(String key, String payload) async {
+  final ipcClient = CoreLocator.getit<IpcClient>();
+  await ipcClient.send(op: IpcStatusOp.getCode("broadcast"), action: "notify", key: key, payload: payload);
 }

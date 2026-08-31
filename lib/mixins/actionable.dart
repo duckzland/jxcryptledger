@@ -10,9 +10,11 @@ mixin MixinsActionable {
     T? data,
     Future<void> Function(T)? action,
     String successMessage = "Operation successful",
+    String broadcastMessage = "Operation successful",
     VoidCallback? onComplete,
     Object? error,
     bool showMessage = true,
+    bool broadcast = false,
   }) async {
     if (error == null) {
       if (action != null && data != null) {
@@ -27,6 +29,10 @@ mixin MixinsActionable {
 
       if (showMessage && context != null && context.mounted) {
         widgetsNotifySuccess(successMessage, ctx: context);
+      }
+
+      if (broadcast && context != null && context.mounted) {
+        widgetsNotifyBroadcast("success", broadcastMessage);
       }
       return;
     }

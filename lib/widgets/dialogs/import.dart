@@ -124,6 +124,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
       await widget.onImport(json);
 
       widgetsNotifySuccess("Import completed successfully.");
+      widgetsNotifyBroadcast("success", "Data imported successfully.");
     } on ValidationException catch (e) {
       widgetsNotifyError(e.userMessage);
     } catch (e) {
