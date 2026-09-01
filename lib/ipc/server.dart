@@ -11,8 +11,11 @@ import 'protocol/packet.dart';
 
 class IpcServer {
   final List<Socket> _slaves = [];
-  final Uint8List sessionKey = IpcCrypto.createSessionKey(32);
   final IpcCrypto _crypto = IpcCrypto();
+  bool _isDisposing = false;
+
+  String pipeName = "";
+  final Uint8List sessionKey = IpcCrypto.createSessionKey(32);
 
   ServerSocket? socket;
   IpcAction? handler;
@@ -24,10 +27,6 @@ class IpcServer {
   void Function(String message, [String group])? logger;
 
   bool Function({int exclude})? hasClient;
-
-  bool _isDisposing = false;
-
-  String pipeName = "";
 
   IpcServer();
 
@@ -118,10 +117,7 @@ class IpcServer {
 
         if (opName != "unlock" && opName != "shutdown") {
           if (payload.length < 28) {
-            logger?.call(
-              "SECURITY VIOLATION: Received unauthenticated packet for op: $actionCode from reqId: $activeReqId. Rejecting.",
-              "IPC",
-            );
+            logger?.call("Rejecting unauthenticated packet for op: $actionCode from reqId: $activeReqId. Rejecting.", "IPC");
             error(client, activeReqId);
             continue;
           }
@@ -129,7 +125,7 @@ class IpcServer {
           try {
             payload = await _crypto.decrypt(payload);
           } catch (e) {
-            logger?.call("AUTHENTICATION FAILURE: Tampered or invalid signature block for op: $actionCode. Dropping.", "IPC");
+            logger?.call("Dropping tampered or invalid signature block for op: $actionCode.", "IPC");
             error(client, activeReqId);
             continue;
           }
