@@ -3,20 +3,22 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:jxledger/features/rates/parsers/pro_v2.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/abstracts/service.dart';
 import '../../core/worker/job.dart';
 import '../../core/worker/processor.dart';
-import '../../ipc/status/op.dart';
 import '../../core/log.dart';
+import '../../ipc/status/op.dart';
 import '../../system/settings/keys.dart';
 import '../../system/settings/repository.dart';
+
 import 'mixins/helper.dart';
-import 'model.dart';
 import 'parsers/result.dart';
 import 'parsers/v3.dart';
+import 'parsers/pro_v2.dart';
+
+import 'model.dart';
 import 'repository.dart';
 
 class RatesService extends CoreBaseService<RatesModel, RatesRepository> with RatesMixinsHelper {
@@ -141,6 +143,7 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       if (force) {
         final tempWorker = CoreWorkerProcessor();
         await tempWorker.run(workerJobs);
+        tempWorker.dispose();
       } else {
         await worker.run(workerJobs);
       }

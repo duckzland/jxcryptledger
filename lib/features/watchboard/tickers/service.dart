@@ -30,6 +30,12 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     broadcasterListen();
   }
 
+  @override
+  Future<void> dispose() async {
+    super.dispose();
+    worker.dispose();
+  }
+
   Future<void> populate({bool fetchRate = true}) async {
     for (final tx in defaultTickers) {
       if (repo.get(tx.uuid) == null) {

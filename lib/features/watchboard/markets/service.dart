@@ -29,6 +29,12 @@ class MarketsService extends CoreBaseService<MarketsModel, MarketsRepository> {
     }
   }
 
+  @override
+  Future<void> dispose() async {
+    super.dispose();
+    worker.dispose();
+  }
+
   Future<bool> refreshRates() async {
     if (worker.isFetching) return true;
 

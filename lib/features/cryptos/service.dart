@@ -4,17 +4,21 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/exceptions.dart';
+
 import '../../core/abstracts/service.dart';
 import '../../core/worker/job.dart';
 import '../../core/worker/processor.dart';
+import '../../core/log.dart';
+
 import '../../ipc/status/op.dart';
 import '../../system/settings/repository.dart';
 import '../../system/settings/keys.dart';
-import '../../core/log.dart';
-import 'model.dart';
+
 import 'parsers/legacy.dart';
 import 'parsers/pro_v1.dart';
+
 import 'repository.dart';
+import 'model.dart';
 
 class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
   final SettingsRepository settingsRepo;
@@ -23,6 +27,12 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
   bool get isFetching => worker.isFetching;
 
   CryptosService(super.repo, this.settingsRepo);
+
+  @override
+  Future<void> dispose() async {
+    super.dispose();
+    worker.dispose();
+  }
 
   String? getSymbol(int id) {
     return repo.getSymbol(id);
@@ -54,6 +64,7 @@ class CryptosService extends CoreBaseService<CryptosModel, CryptosRepository> {
       );
 
       await worker.run([cryptoJob]);
+
       return true;
     } catch (e) {
       logln("Unexpected Error: $e", "CRYPTOS");
