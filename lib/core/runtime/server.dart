@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 
 import '../../features/archives/service.dart';
 import '../../features/cryptos/service.dart';
@@ -81,7 +82,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     ipcServer.disconnected = shutdownWhenNoClient;
     ipcServer.hasClient = hasClient;
 
-    if (CoreMode.isDevelopment) {
+    if (kDebugMode || kProfileMode) {
       await ipc_reloader.loadLibrary();
       ipcServer.reload = ipc_reloader.CoreRuntimeIpcReload().run;
     }
