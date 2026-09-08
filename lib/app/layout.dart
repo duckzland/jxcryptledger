@@ -6,11 +6,12 @@ import '../core/locator.dart';
 import '../features/rates/controller.dart';
 import '../features/cryptos/controller.dart';
 
-import '../ipc/client.dart';
-import '../ipc/event.dart';
 import '../ipc/mixins/broadcaster.dart';
-import '../ipc/server.dart';
 import '../ipc/status/op.dart';
+import '../ipc/client.dart';
+import '../ipc/protocol/event.dart';
+import '../ipc/server.dart';
+
 import '../widgets/buttons/action.dart';
 import '../widgets/notify.dart';
 import '../widgets/separator.dart';

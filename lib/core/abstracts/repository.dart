@@ -2,7 +2,7 @@ import 'dart:async';
 
 import '../../ipc/abstracts/box.dart';
 import '../../ipc/client.dart';
-import '../../ipc/event.dart';
+import '../../ipc/protocol/event.dart';
 import '../locator.dart';
 import '../runtime/ipc/adapters.dart';
 import '../runtime/ipc/box.dart';

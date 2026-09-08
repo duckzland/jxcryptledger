@@ -1,11 +1,10 @@
 import 'dart:collection';
 
-import 'adapters.dart';
-
-import '../status/op.dart';
 import '../client.dart';
-import '../event.dart';
+import '../status/op.dart';
+import '../protocol/event.dart';
 
+import 'adapters.dart';
 import 'model.dart';
 
 abstract class IpcBox<T extends IpcModel> {

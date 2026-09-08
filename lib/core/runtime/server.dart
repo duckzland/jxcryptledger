@@ -33,6 +33,8 @@ import 'ipc/database.dart';
 import 'ipc/action.dart';
 import 'ipc/migration.dart';
 
+import 'ipc/reload.dart' deferred as ipc_reloader;
+
 class CoreRuntimeServer extends CoreBaseRuntime {
   CoreRuntimeServer();
 
@@ -78,7 +80,11 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     ipcServer.shutdown = shutdown;
     ipcServer.disconnected = shutdownWhenNoClient;
     ipcServer.hasClient = hasClient;
-    ipcServer.allowReload = CoreMode.isDevelopment;
+
+    if (CoreMode.isDevelopment) {
+      ipc_reloader.loadLibrary();
+      ipcServer.reload = ipc_reloader.CoreRuntimeIpcReload().run;
+    }
 
     await ipcServer.start();
 

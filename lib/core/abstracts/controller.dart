@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../ipc/client.dart';
-import '../../ipc/event.dart';
+import '../../ipc/protocol/event.dart';
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/server.dart';
 import '../locator.dart';

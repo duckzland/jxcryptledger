@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 
 import '../../../core/abstracts/controller.dart';
 import '../../../ipc/status/op.dart';
-import '../../../ipc/event.dart';
+import '../../../ipc/protocol/event.dart';
 import '../../../core/math.dart';
 import '../../../core/mixins/controllers/exportable.dart';
 import '../../../core/mixins/controllers/id_generator.dart';

@@ -1,7 +1,7 @@
 import '../../../core/abstracts/controller.dart';
 import '../../../core/mixins/controllers/id_generator.dart';
 import '../../../ipc/status/op.dart';
-import '../../../ipc/event.dart';
+import '../../../ipc/protocol/event.dart';
 import 'model.dart';
 import 'repository.dart';
 

@@ -10,14 +10,11 @@ import 'protocol/buffer.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 
-import 'reload.dart' deferred as reload;
-
 class IpcServer {
   final List<Socket> _slaves = [];
   final IpcCrypto _crypto = IpcCrypto();
 
   bool _isDisposing = false;
-  bool allowReload = false;
 
   String pipeName = "";
   final Uint8List sessionKey = IpcCrypto.createSessionKey(32);
@@ -27,6 +24,7 @@ class IpcServer {
 
   Future<IpcStatusUnlock> Function(Uint8List keyBytes)? unlocker;
   Future<void> Function()? shutdown;
+  Future<void> Function()? reload;
 
   void Function()? disconnected;
   void Function(String message, [String group])? logger;
@@ -180,10 +178,9 @@ class IpcServer {
             break;
 
           case "reload":
-            if (allowReload) {
+            if (reload != null) {
               try {
-                await reload.loadLibrary();
-                await reload.IpcReload.run();
+                await reload?.call();
                 logger?.call("Reloaded codebase", "IPC");
               } catch (e) {
                 logger?.call("Reload failed: $e", "IPC");

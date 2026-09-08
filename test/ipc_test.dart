@@ -9,7 +9,7 @@ import 'package:jxledger/ipc/status/op.dart';
 import 'package:jxledger/ipc/abstracts/box.dart';
 import 'package:jxledger/ipc/client.dart';
 import 'package:jxledger/ipc/abstracts/adapters.dart';
-import 'package:jxledger/ipc/event.dart';
+import 'package:jxledger/ipc/protocol/event.dart';
 import 'package:jxledger/ipc/protocol/buffer.dart';
 import 'package:jxledger/ipc/protocol/converter.dart';
 import 'package:jxledger/ipc/protocol/crypto.dart';

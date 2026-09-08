@@ -4,7 +4,7 @@ import 'package:decimal/decimal.dart';
 
 import '../../core/abstracts/controller.dart';
 import '../../ipc/status/op.dart';
-import '../../ipc/event.dart';
+import '../../ipc/protocol/event.dart';
 
 import 'mixins/helper.dart';
 import 'model.dart';

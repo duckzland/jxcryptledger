@@ -1,6 +1,6 @@
 import '../../ipc/mixins/broadcaster.dart';
 import '../../ipc/client.dart';
-import '../../ipc/event.dart';
+import '../../ipc/protocol/event.dart';
 import '../../ipc/server.dart';
 import '../locator.dart';
 import '../mode.dart';

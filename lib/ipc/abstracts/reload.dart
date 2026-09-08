@@ -2,23 +2,24 @@ import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:vm_service/vm_service_io.dart';
 
-class IpcReload {
-  static Future<void> run() async {
-    final buildDirectory = Directory('.dart_tool/flutter_build');
+abstract class IpcReload {
+  String get directory => '.dart_tool/flutter_build';
+  String get incrementalFileName => 'main.dart.incremental.dill';
+  String get fullkernelFileName => 'app.dill';
+
+  Future<void> run() async {
+    final buildDirectory = Directory(directory);
     final projectName = Directory.current.path.split(Platform.pathSeparator).last.toLowerCase();
 
     final incrementalFiles = await Directory.systemTemp
         .list(recursive: true)
-        .where(
-          (entity) =>
-              entity is File && entity.path.toLowerCase().contains(projectName) && entity.path.endsWith('main.dart.incremental.dill'),
-        )
+        .where((entity) => entity is File && entity.path.toLowerCase().contains(projectName) && entity.path.endsWith(incrementalFileName))
         .cast<File>()
         .toList();
 
     final fullKernelFiles = await buildDirectory
         .list(recursive: true)
-        .where((entity) => entity is File && entity.path.endsWith('app.dill'))
+        .where((entity) => entity is File && entity.path.endsWith(fullkernelFileName))
         .cast<File>()
         .toList();
 

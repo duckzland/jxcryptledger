@@ -1,24 +1,33 @@
 import '../../../features/archives/repository.dart';
 import '../../../features/archives/service.dart';
+
 import '../../../features/notification/service.dart';
+
 import '../../../features/rates/repository.dart';
 import '../../../features/rates/service.dart';
+
 import '../../../features/cryptos/repository.dart';
 import '../../../features/cryptos/service.dart';
-import '../../../features/watchboard/markets/repository.dart';
-import '../../../features/watchboard/markets/service.dart';
-import '../../../system/settings/repository.dart';
-import '../../../system/settings/service.dart';
-import '../../../features/transactions/service.dart';
+
 import '../../../features/watchboard/panels/repository.dart';
 import '../../../features/watchboard/panels/service.dart';
 import '../../../features/watchboard/tickers/repository.dart';
 import '../../../features/watchboard/tickers/service.dart';
+import '../../../features/watchboard/markets/repository.dart';
+import '../../../features/watchboard/markets/service.dart';
+
+import '../../../features/transactions/service.dart';
 import '../../../features/transactions/repository.dart';
+
 import '../../../features/watchers/repository.dart';
 import '../../../features/watchers/service.dart';
+
+import '../../../system/settings/repository.dart';
+import '../../../system/settings/service.dart';
+
 import '../../locator.dart';
 import '../../pooler.dart';
+
 import '../server.dart';
 import 'ipc.dart' as ipc;
 

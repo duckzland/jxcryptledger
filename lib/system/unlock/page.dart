@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jxledger/ipc/event.dart';
+import 'package:jxledger/ipc/protocol/event.dart';
 
 import '../../app/constants.dart';
 import '../../app/theme.dart';

@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../protocol/event.dart';
+
 import '../client.dart';
-import '../event.dart';
 import '../server.dart';
 
 mixin IpcMixinsBroadcaster {
