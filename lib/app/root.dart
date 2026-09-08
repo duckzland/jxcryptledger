@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/locator.dart';
 import '../core/log.dart';
-import '../core/mode.dart';
 
 import '../ipc/client.dart';
 import '../ipc/status/op.dart';
@@ -25,7 +25,7 @@ class _AppRootState extends State<AppRoot> with MixinsState {
   void reassemble() async {
     super.reassemble();
 
-    if (CoreMode.isDevelopment) {
+    if (kDebugMode || kProfileMode) {
       try {
         final ipcClient = CoreLocator.getit<IpcClient>();
         await ipcClient.send(op: IpcStatusOp.getCode("reload"), action: "reload");

@@ -37,7 +37,6 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
 
     CoreMode.path = (kDebugMode || kProfileMode) ? p.normalize('${dir.path}/jxledger/dev') : p.normalize('${dir.path}/jxledger/live');
     CoreMode.ipcPipeName = p.normalize('${CoreMode.path}/jxledger.sock');
-    CoreMode.isDevelopment = (kDebugMode || kProfileMode);
 
     final newDir = Directory(CoreMode.path);
     if (!await newDir.exists()) {
