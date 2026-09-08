@@ -157,6 +157,26 @@ class _PanelsFormState extends State<PanelsForm> {
   }
 
   Widget _buildFromPanel() {
+    final data = widget.initialData;
+    final srId = widget.initialSrId;
+    final linkKey = widget.linkedToTx ?? "";
+
+    bool enabled = data == null ? srId == null : true;
+
+    if (data?.isLinked == true) {
+      final match = RegExp(r'.*?(\d+)-(\d+)$').firstMatch(linkKey);
+
+      if (match != null) {
+        if (linkKey.contains("active-screen")) {
+          enabled = int.tryParse(match.group(1) ?? '0')! <= 0;
+        }
+
+        if (linkKey.contains("overview-screen")) {
+          enabled = int.tryParse(match.group(2) ?? '0')! <= 0;
+        }
+      }
+    }
+
     return WidgetsHeader(
       subtitle: "From:",
       subtitleFontSize: 13,
@@ -169,7 +189,7 @@ class _PanelsFormState extends State<PanelsForm> {
             child: WidgetsFieldsAmount(
               title: 'Amount',
               suffixText: _sourceSymbol,
-              enabled: widget.initialData == null ? widget.initialSrAmount == null : !widget.initialData!.isLinked,
+              enabled: enabled,
               helperText: 'e.g., 65000',
               initialValue: _srAmountText,
               allowClean: _sourceSymbol == null,
@@ -182,7 +202,7 @@ class _PanelsFormState extends State<PanelsForm> {
               flex: 2,
               child: WidgetsFieldsCryptoSearch(
                 labelText: 'Coin',
-                enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+                enabled: enabled,
                 initialValue: _selectedSrId,
                 onSelected: (id) => setState(() => _selectedSrId = id),
               ),
@@ -193,13 +213,24 @@ class _PanelsFormState extends State<PanelsForm> {
   }
 
   Widget _buildToPanel() {
+    final data = widget.initialData;
+    final rrId = widget.initialRrId;
+    final linkKey = widget.linkedToTx ?? "";
+
+    bool enabled = data == null ? rrId == null : true;
+
+    if (data?.isLinked == true && linkKey.contains("active-screen")) {
+      final match = RegExp(r'.*?(\d+)-(\d+)$').firstMatch(linkKey);
+      enabled = int.tryParse(match?.group(2) ?? '0')! <= 0;
+    }
+
     return WidgetsHeader(
       subtitle: "To:",
       subtitleFontSize: 13,
       spacing: 10,
       child: WidgetsFieldsCryptoSearch(
         labelText: 'Target Coin',
-        enabled: widget.initialData == null ? widget.initialRrId == null : !widget.initialData!.isLinked,
+        enabled: enabled,
         initialValue: _selectedRrId,
         onSelected: (id) => setState(() => _selectedRrId = id),
       ),

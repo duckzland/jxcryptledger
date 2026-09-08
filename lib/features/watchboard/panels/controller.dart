@@ -79,15 +79,16 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
 
   Future<bool> updateLinked() async {
     final txs = _txRepo.extract();
-    final Map<String, Decimal> grouped = {};
+    final grouped = <String, Decimal>{};
+    final groupedByBalance = <int, Decimal>{};
     int updateCount = 0;
 
     for (final tx in txs) {
-      if (!tx.isActive && !tx.isPartial) {
-        continue;
-      }
+      if (!tx.isActive && !tx.isPartial) continue;
+
       final pairKey = "${tx.srId}-${tx.rrId}";
       grouped[pairKey] = Math.add(grouped[pairKey] ?? Decimal.zero, tx.srAmount);
+      groupedByBalance[tx.rrId] = Math.add(groupedByBalance[tx.rrId] ?? Decimal.zero, tx.balance);
     }
 
     for (final wx in items) {
@@ -96,28 +97,31 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
         continue;
       }
 
+      final match = RegExp(r'.*?(\d+)-(\d+)$').firstMatch(txlink);
+      if (match == null) {
+        continue;
+      }
+
+      final srid = int.tryParse(match.group(1) ?? "-1") ?? -1;
+      final rrid = int.tryParse(match.group(2) ?? "-1") ?? -1;
+
+      Decimal totalAmount;
+
       if (txlink.contains("active-screen-")) {
-        final regex = RegExp(r'active-screen-(\d+)-(\d+)');
-        final match = regex.firstMatch(txlink);
+        totalAmount = grouped["$srid-$rrid"] ?? Decimal.zero;
+      } else if (txlink.contains("overview-screen-")) {
+        totalAmount = groupedByBalance[rrid] ?? Decimal.zero;
+      } else {
+        continue;
+      }
 
-        if (match != null) {
-          final srid = match.group(1);
-          final rrid = match.group(2);
-          final pairKey = "$srid-$rrid";
-          final totalAmount = grouped[pairKey] ?? Decimal.zero;
-
-          if (totalAmount == Decimal.zero) {
-            final meta = {...wx.meta};
-            meta.remove('txLink');
-            final nwx = wx.copyWith(meta: meta);
-            await update(nwx);
-            updateCount += 1;
-          } else if (wx.srAmount != totalAmount) {
-            final nwx = wx.copyWith(srAmount: totalAmount);
-            await update(nwx);
-            updateCount += 1;
-          }
-        }
+      if (totalAmount == Decimal.zero) {
+        final meta = {...wx.meta}..remove('txLink');
+        await update(wx.copyWith(meta: meta));
+        updateCount++;
+      } else if (wx.srAmount != totalAmount) {
+        await update(wx.copyWith(srAmount: totalAmount));
+        updateCount++;
       }
     }
 

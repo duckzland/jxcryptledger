@@ -137,6 +137,26 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
   }
 
   Widget _buildFromPanel() {
+    final data = widget.initialData;
+    final srId = widget.initialSrId;
+    final linkKey = widget.linkedToTx ?? "";
+
+    bool enabled = data == null ? srId == null : true;
+
+    if (data?.isLinked == true) {
+      final match = RegExp(r'.*?(\d+)-(\d+)$').firstMatch(linkKey);
+
+      if (match != null) {
+        if (linkKey.contains("active-screen")) {
+          enabled = int.tryParse(match.group(1) ?? '0')! <= 0;
+        }
+
+        if (linkKey.contains("overview-screen")) {
+          enabled = int.tryParse(match.group(2) ?? '0')! <= 0;
+        }
+      }
+    }
+
     return WidgetsHeader(
       subtitle: "From:",
       subtitleFontSize: 13,
@@ -144,13 +164,24 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       child: WidgetsFieldsCryptoSearch(
         labelText: 'Coin',
         initialValue: rateableSource,
-        enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+        enabled: enabled,
         onSelected: (id) => setState(() => rateableSource = id),
       ),
     );
   }
 
   Widget _buildToPanel() {
+    final data = widget.initialData;
+    final rrId = widget.initialRrId;
+    final linkKey = widget.linkedToTx ?? "";
+
+    bool enabled = data == null ? rrId == null : true;
+
+    if (data?.isLinked == true && linkKey.contains("active-screen")) {
+      final match = RegExp(r'.*?(\d+)-(\d+)$').firstMatch(linkKey);
+      enabled = int.tryParse(match?.group(2) ?? '0')! <= 0;
+    }
+
     return WidgetsHeader(
       subtitle: "To:",
       subtitleFontSize: 13,
@@ -158,7 +189,7 @@ class _WatchersFormState extends State<WatchersForm> with MixinsRateable<Watcher
       child: WidgetsFieldsCryptoSearch(
         labelText: 'Coin',
         initialValue: rateableTarget,
-        enabled: widget.initialData == null ? widget.initialSrId == null : !widget.initialData!.isLinked,
+        enabled: enabled,
         onSelected: (id) => setState(() => rateableTarget = id),
       ),
     );

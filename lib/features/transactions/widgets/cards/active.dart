@@ -5,34 +5,42 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
+
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
 import '../../../../core/locator.dart';
+
 import '../../../../mixins/actionable.dart';
 import '../../../../mixins/rateable.dart';
 import '../../../../mixins/selectable_table.dart';
 import '../../../../mixins/sortable_table.dart';
 import '../../../../mixins/state.dart';
 import '../../../../mixins/table.dart';
-import '../../../../widgets/text/balance.dart';
+
 import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/fields/amount.dart';
-import '../../../../widgets/header.dart';
-import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
 import '../../../../widgets/table/proxy.dart';
 import '../../../../widgets/text/selectable.dart';
+import '../../../../widgets/text/balance.dart';
 import '../../../../widgets/with_tooltip.dart';
+import '../../../../widgets/header.dart';
+import '../../../../widgets/panel.dart';
+
 import '../../../cryptos/controller.dart';
 import '../../dialogs/details.dart';
+
 import '../../mixins/actions.dart';
 import '../../mixins/flags.dart';
 import '../../mixins/sortable_table.dart';
-import '../buttons/action.dart';
+
 import '../../calculations.dart';
 import '../../controller.dart';
 import '../../model.dart';
+
 import '../buttons/batch.dart';
+import '../buttons/action.dart';
+
 import '../panel_item.dart';
 import '../status_text.dart';
 

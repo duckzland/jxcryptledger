@@ -371,10 +371,21 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   }
 
   Widget _formWatchboard(BuildContext dialogContext) {
+    int sourceId = srid;
+    int? targetId = rrid;
+
+    if (srid <= 0 && rrid > 0) {
+      sourceId = rrid;
+    }
+
+    if (sourceId == rrid || targetId <= 0) {
+      targetId = null;
+    }
+
     return PanelsForm(
       initialData: linkedPanel,
-      initialSrId: linkedPanel == null ? srid : null,
-      initialRrId: linkedPanel == null ? rrid : null,
+      initialSrId: linkedPanel == null ? sourceId : null,
+      initialRrId: linkedPanel == null ? targetId : null,
       initialSrAmount: linkedPanel == null ? balance : null,
       linkedToTx: "$linkableKey-$srid-$rrid",
       onSave: (e) => actionableFormSave<PanelsModel>(
@@ -387,10 +398,21 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   }
 
   Widget _formWatcher(BuildContext dialogContext) {
+    int sourceId = srid;
+    int? targetId = rrid;
+
+    if (srid <= 0 && rrid > 0) {
+      sourceId = rrid;
+    }
+
+    if (sourceId == rrid || targetId <= 0) {
+      targetId = null;
+    }
+
     return WatchersForm(
       initialData: linkedWatcher,
-      initialSrId: linkedWatcher == null ? srid : null,
-      initialRrId: linkedWatcher == null ? rrid : null,
+      initialSrId: linkedWatcher == null ? sourceId : null,
+      initialRrId: linkedWatcher == null ? targetId : null,
       initialRate: linkedWatcher == null ? rate : null,
       linkedToTx: "$linkableKey-$srid-$rrid",
       onSave: (e) => actionableFormSave<WatchersModel>(

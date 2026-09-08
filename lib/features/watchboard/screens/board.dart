@@ -6,10 +6,13 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../../../app/content.dart';
 import '../../../app/exceptions.dart';
 import '../../../app/layout.dart';
+
 import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
+
 import '../../../mixins/action_bar.dart';
 import '../../../mixins/state.dart';
+
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/buttons/dropdown.dart';
 import '../../../widgets/dialogs/alert.dart';
@@ -18,16 +21,19 @@ import '../../../widgets/dialogs/export.dart';
 import '../../../widgets/dialogs/import.dart';
 import '../../../widgets/dialogs/reset.dart';
 import '../../../widgets/layouts/sliver_grid.dart';
-import '../../../widgets/notify.dart';
 import '../../../widgets/screens/empty.dart';
 import '../../../widgets/screens/fetch_cryptos.dart';
+import '../../../widgets/notify.dart';
 import '../../../widgets/separator.dart';
+
 import '../../cryptos/controller.dart';
+
 import '../panels/model.dart';
-import '../tickers/controller.dart';
 import '../panels/controller.dart';
 import '../panels/form.dart';
 import '../panels/display.dart';
+
+import '../tickers/controller.dart';
 import '../tickers/display.dart';
 import '../tickers/model.dart';
 
