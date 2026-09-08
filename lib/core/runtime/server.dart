@@ -82,7 +82,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     ipcServer.hasClient = hasClient;
 
     if (CoreMode.isDevelopment) {
-      ipc_reloader.loadLibrary();
+      await ipc_reloader.loadLibrary();
       ipcServer.reload = ipc_reloader.CoreRuntimeIpcReload().run;
     }
 
