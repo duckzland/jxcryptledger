@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
+
+import '../core/locator.dart';
+import '../core/log.dart';
+import '../core/mode.dart';
+
+import '../ipc/client.dart';
+import '../ipc/status/op.dart';
+
 import '../mixins/state.dart';
+
 import 'router.dart';
 import 'scroll_behavior.dart';
 import 'theme.dart';
@@ -12,6 +21,20 @@ class AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<AppRoot> with MixinsState {
+  @override
+  void reassemble() async {
+    super.reassemble();
+
+    if (CoreMode.isDevelopment) {
+      try {
+        final ipcClient = CoreLocator.getit<IpcClient>();
+        await ipcClient.send(op: IpcStatusOp.getCode("reload"), action: "reload");
+      } catch (e) {
+        logln("Failed to reload server: $e", "APP");
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(

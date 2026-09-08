@@ -212,6 +212,7 @@ class IpcClient {
           break;
 
         // @todo: create proper callback for error
+        case "reload":
         case "error":
         case "shutdown":
         case "unlock":

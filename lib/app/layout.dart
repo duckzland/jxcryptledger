@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/log.dart';
-import '../core/mode.dart';
 import '../core/locator.dart';
 
 import '../features/rates/controller.dart';
@@ -115,15 +113,6 @@ class _AppLayoutState extends State<AppLayout> with IpcMixinsBroadcaster {
     AppLayout.refreshBar = _refreshBar;
 
     broadcasterListen();
-  }
-
-  @override
-  void reassemble() async {
-    super.reassemble();
-    if (CoreMode.isDevelopment) {
-      await ipcClient.send(op: IpcStatusOp.getCode("reload"), action: "reload");
-      logln("Application is hot reloading", "APP");
-    }
   }
 
   @override

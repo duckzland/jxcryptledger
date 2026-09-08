@@ -7,17 +7,21 @@ import '../../features/cryptos/service.dart';
 import '../../features/notification/service.dart';
 import '../../features/rates/service.dart';
 import '../../features/transactions/service.dart';
+import '../../features/watchers/service.dart';
 import '../../features/watchboard/markets/service.dart';
 import '../../features/watchboard/panels/service.dart';
 import '../../features/watchboard/tickers/service.dart';
-import '../../features/watchers/service.dart';
-import '../../ipc/status/op.dart';
-import '../../ipc/client.dart';
+
 import '../../system/encryption/service.dart';
 import '../../system/settings/keys.dart';
 import '../../system/settings/service.dart';
+
 import '../../ipc/status/unlock.dart';
+import '../../ipc/status/op.dart';
+import '../../ipc/client.dart';
+
 import '../abstracts/runtime.dart';
+
 import '../locator.dart';
 import '../log.dart';
 import '../mode.dart';
