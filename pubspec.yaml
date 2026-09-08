@@ -11,6 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  vm_service: ^14.3.0
+
   # Using git dependency to apply a crude fix for failed insert at root index 0. Should be removed once the fix is released.
   animated_tree_view:
     git:

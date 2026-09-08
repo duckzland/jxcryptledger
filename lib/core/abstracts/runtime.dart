@@ -37,6 +37,7 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
 
     CoreMode.path = (kDebugMode || kProfileMode) ? p.normalize('${dir.path}/jxledger/dev') : p.normalize('${dir.path}/jxledger/live');
     CoreMode.ipcPipeName = p.normalize('${CoreMode.path}/jxledger.sock');
+    CoreMode.isDevelopment = (kDebugMode || kProfileMode);
 
     final newDir = Directory(CoreMode.path);
     if (!await newDir.exists()) {
@@ -97,13 +98,18 @@ abstract class CoreBaseRuntime with IpcMixinsBroadcaster {
   Future<void> spawnServer() async {
     try {
       ProcessStartMode detachmode = ProcessStartMode.detachedWithStdio;
-      final List<String> serverArgs = ['--server'];
+      String executable = Platform.resolvedExecutable;
+      final List<String> serverArgs = [];
+
       if (kDebugMode || kProfileMode) {
+        serverArgs.add('--enable-vm-service');
         serverArgs.add('--development');
         detachmode = ProcessStartMode.detachedWithStdio;
       }
 
-      final proc = await Process.start(Platform.resolvedExecutable, serverArgs, mode: detachmode);
+      serverArgs.add('--server');
+
+      final proc = await Process.start(executable, serverArgs, mode: detachmode);
 
       CoreMode.isMain = true;
 

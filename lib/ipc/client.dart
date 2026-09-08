@@ -162,6 +162,7 @@ class IpcClient {
         case "error":
         case "unlock":
         case "shutdown":
+        case "reload":
           break;
 
         default:

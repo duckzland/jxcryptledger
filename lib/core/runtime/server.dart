@@ -74,6 +74,7 @@ class CoreRuntimeServer extends CoreBaseRuntime {
     ipcServer.shutdown = shutdown;
     ipcServer.disconnected = shutdownWhenNoClient;
     ipcServer.hasClient = hasClient;
+    ipcServer.allowReload = CoreMode.isDevelopment;
 
     await ipcServer.start();
 

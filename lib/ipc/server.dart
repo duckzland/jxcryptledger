@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
+
 import 'abstracts/action.dart';
+
 import 'status/op.dart';
 import 'status/unlock.dart';
 
@@ -9,10 +12,14 @@ import 'protocol/buffer.dart';
 import 'protocol/crypto.dart';
 import 'protocol/packet.dart';
 
+import 'reload.dart' deferred as reload;
+
 class IpcServer {
   final List<Socket> _slaves = [];
   final IpcCrypto _crypto = IpcCrypto();
+
   bool _isDisposing = false;
+  bool allowReload = false;
 
   String pipeName = "";
   final Uint8List sessionKey = IpcCrypto.createSessionKey(32);
@@ -115,7 +122,7 @@ class IpcServer {
         int sendOp = actionCode;
         final opName = IpcStatusOp.getName(actionCode);
 
-        if (opName != "unlock" && opName != "shutdown") {
+        if (opName != "unlock" && opName != "shutdown" && opName != "reload") {
           if (payload.length < 28) {
             logger?.call("Rejecting unauthenticated packet for op: $actionCode from reqId: $activeReqId. Rejecting.", "IPC");
             error(client, activeReqId);
@@ -171,6 +178,19 @@ class IpcServer {
             if (hasClient != null && hasClient!.call(exclude: nativeHiveKey) == false) {
               await shutdown?.call();
               logger?.call("Shutdown request from $nativeHiveKey... shutting down.", "IPC");
+            }
+            break;
+
+          case "reload":
+            if (allowReload) {
+              try {
+                await reload.loadLibrary();
+                await reload.IpcReload.run();
+                logger?.call("Reloaded codebase", "IPC");
+              } catch (e) {
+                logger?.call("Reload failed: $e", "IPC");
+                continue;
+              }
             }
             break;
 
