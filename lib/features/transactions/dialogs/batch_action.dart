@@ -45,6 +45,8 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
   late WidgetsButtonActionState buttonActionState;
 
+  bool _isProcessing = false;
+
   @override
   double get tableHeightOffset => 130;
 
@@ -139,7 +141,13 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                   alignment: WrapAlignment.center,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    WidgetsButtonsAction(label: 'Cancel', onPressed: (_) => Navigator.pop(context)),
+                    WidgetsButtonsAction(
+                      label: 'Cancel',
+                      onPressed: (_) => Navigator.pop(context),
+                      evaluator: (s) {
+                        _isProcessing ? s.disable() : s.normal();
+                      },
+                    ),
                     if (txs.isNotEmpty)
                       WidgetsDialogsAlert(
                         label: buttonLabel,
@@ -153,6 +161,10 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                         initialState: buttonActionState,
                         tooltip: tooltip,
                         evaluator: (s) {
+                          if (_isProcessing) {
+                            s.progress();
+                            return;
+                          }
                           if (selectableHasSelectedRows()) {
                             switch (widget.mode) {
                               case TransactionsBatchActionMode.close:
@@ -248,6 +260,12 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
     if (stxs.isEmpty) return;
 
+    setState(() {
+      _isProcessing = true;
+    });
+
+    bool completed = true;
+
     for (final tx in stxs) {
       try {
         switch (widget.mode) {
@@ -267,19 +285,28 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         txs.remove(tx);
         selectableSetSelected(tx.uuid, false);
       } on ValidationException catch (e) {
+        completed = false;
         widget.onSave?.call(e);
-        return;
+        break;
       } catch (e) {
+        completed = false;
         widget.onSave?.call(e);
-        return;
+        break;
       }
     }
 
-    if (txs.isEmpty && widget.onSave != null) {
-      widget.onSave?.call(null);
-    } else {
-      widgetsNotifySuccess(successMessage);
-      setState(() {});
+    if (completed) {
+      if (txs.isEmpty && widget.onSave != null) {
+        widget.onSave?.call(null);
+      } else {
+        widgetsNotifySuccess(successMessage);
+      }
+    }
+
+    if (txs.isNotEmpty) {
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 }

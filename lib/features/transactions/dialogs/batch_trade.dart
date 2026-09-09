@@ -57,6 +57,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   bool _isReversed = false;
   bool _showNotes = false;
+  bool _isProcessing = false;
 
   Timer? _debounce;
 
@@ -138,7 +139,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                   alignment: WrapAlignment.center,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    WidgetsButtonsAction(label: (txs.isNotEmpty) ? 'Cancel' : 'Close', onPressed: (_) => Navigator.pop(context)),
+                    WidgetsButtonsAction(
+                      label: (txs.isNotEmpty) ? 'Cancel' : 'Close',
+                      onPressed: (_) => Navigator.pop(context),
+                      evaluator: (s) {
+                        _isProcessing ? s.disable() : s.normal();
+                      },
+                    ),
                     if (txs.isNotEmpty)
                       WidgetsDialogsAlert(
                         label: "Trade",
@@ -152,6 +159,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                         initialState: WidgetsButtonActionState.action,
                         tooltip: "Trade all selected transactions",
                         evaluator: (s) {
+                          if (_isProcessing) {
+                            s.progress();
+                            return;
+                          }
                           if (selectableHasSelectedRows()) {
                             s.action();
                           } else {
@@ -511,6 +522,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     if (stxs.isEmpty || rate <= Decimal.zero) return;
 
+    setState(() {
+      _isProcessing = true;
+    });
+
+    bool completed = true;
+
     for (final tx in stxs) {
       final Decimal amount = Math.multiply(tx.balance, rate);
       final meta = Map<String, dynamic>.from(tx.meta);
@@ -542,19 +559,28 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         txs.remove(tx);
         selectableSetSelected(tx.uuid, false);
       } on ValidationException catch (e) {
+        completed = false;
         widget.onSave?.call(e);
-        return;
+        break;
       } catch (e) {
+        completed = false;
         widget.onSave?.call(e);
-        return;
+        break;
       }
     }
 
-    if (txs.isEmpty) {
-      widget.onSave?.call(null);
-    } else {
-      widgetsNotifySuccess("Trade completed successfully.");
-      setState(() {});
+    if (completed) {
+      if (txs.isEmpty) {
+        widget.onSave?.call(null);
+      } else {
+        widgetsNotifySuccess("Trade completed successfully.");
+      }
+    }
+
+    if (txs.isNotEmpty) {
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 }
