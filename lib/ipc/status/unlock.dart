@@ -7,10 +7,7 @@ enum IpcStatusUnlock {
   const IpcStatusUnlock(this.value);
 
   static IpcStatusUnlock fromValue(int value) {
-    return IpcStatusUnlock.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => throw ArgumentError('Invalid CoreIpcStatus value: $value'),
-    );
+    return IpcStatusUnlock.values.firstWhere((e) => e.value == value, orElse: () => throw ArgumentError('Invalid IpcStatus value: $value'));
   }
 
   bool isUnlocked() => this == IpcStatusUnlock.success || this == IpcStatusUnlock.firstTime;
