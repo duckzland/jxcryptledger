@@ -138,6 +138,7 @@ class AppErrorCode {
   static const int panelBasicInvalidOrder = 7005;
   static const int panelBasicInvalidTid = 7006;
   static const int panelBasicInvalidRate = 7007;
+  static const int panelBasicInvalidCoin = 7008;
 
   static const int marketInvalidTid = 8001;
   static const int marketInvalidName = 8002;

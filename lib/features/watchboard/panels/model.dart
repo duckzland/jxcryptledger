@@ -56,6 +56,10 @@ class PanelsModel implements CoreModelWithId, CoreModelExportable, CoreModelRate
       throw ValidationException(AppErrorCode.panelBasicInvalidDigit, "digit must be > 2.", "Invalid watchboard data.");
     }
 
+    if (srId == rrId) {
+      throw ValidationException(AppErrorCode.panelBasicInvalidCoin, "srId must not equal rrId.", "Source coin must not equal target coin.");
+    }
+
     if (order != null && order! < 0) {
       throw ValidationException(AppErrorCode.panelBasicInvalidOrder, "order must be > 0.", "Invalid ordering.");
     }
