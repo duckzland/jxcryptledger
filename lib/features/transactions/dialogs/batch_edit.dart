@@ -245,6 +245,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
       helperText: 'Add notes..',
       maxLines: 3,
       initialValue: _noteEntry,
+      enabled: !_isProcessing,
       onChanged: (value) {
         setState(() => _noteEntry = value);
       },
@@ -254,6 +255,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   Widget _buildColorsField() {
     return WidgetsFieldsAccentColors(
       initialValue: _accentColor,
+      enabled: !_isProcessing,
       onChange: (value) {
         setState(() => _accentColor = value);
       },

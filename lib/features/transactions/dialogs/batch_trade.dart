@@ -414,6 +414,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return WidgetsFieldsAmount(
       title: 'Rate',
       helperText: 'e.g., 10.5',
+      enabled: !_isProcessing,
       allowReverse: true,
       allowRate: rateableAllow,
       onRetrievingRate: (void Function(String value, String helperText) updateState) {
@@ -450,6 +451,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: null,
+      enabled: !_isProcessing,
       onSelected: (id) => setState(() {
         rateableTarget = id;
       }),
@@ -460,6 +462,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return WidgetsFieldsTextarea(
       title: 'Trading Notes',
       helperText: 'Add notes..',
+      enabled: !_isProcessing,
       maxLines: 3,
       onChanged: (value) {
         setState(() => _noteEntry = value);
@@ -469,6 +472,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildColorsField() {
     return WidgetsFieldsAccentColors(
+      enabled: !_isProcessing,
       onChange: (value) {
         setState(() => _accentColor = value);
       },
