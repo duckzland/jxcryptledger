@@ -232,11 +232,11 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   Future<bool> fetchEtf(http.Client? fetcher) async {
     final body = await _fetchJson(SettingKey.etfEndpoint, query: {"category": "all", "range": "30d"}, fetcher: fetcher);
 
-    // final total = body["data"]["total"].toString();
-    // final btcValue = body["data"]["totalBtcValue"].toString();
-    final ethValue = body["data"]["totalEthValue"].toString();
+    final total = body["data"]["total"];
+    final btcValue = body["data"]["totalBtcValue"];
+    final ethValue = body["data"]["totalEthValue"];
 
-    repo.updateByType(TickerType.etf.index, ethValue);
+    repo.updateByType(TickerType.etf.index, (ethValue ?? btcValue ?? total ?? 0).toString());
 
     return true;
   }
