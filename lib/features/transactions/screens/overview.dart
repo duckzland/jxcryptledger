@@ -60,14 +60,15 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     txs = widget.transactions;
     _filterMode = widget.filterMode;
     _sortMode = widget.sortMode;
-    groups = _processTx();
-    groupKeys = groups.keys.toList();
-    _registerRates();
 
     selectableGroup = ValueNotifier(
       (states.get("tx-overview-selectable-group", defaultValue: <String>[]) as List<dynamic>).map((e) => e.toString()).toList(),
     );
     selectableGroup.addListener(_selectableGroupOnChange);
+
+    groups = _processTx();
+    groupKeys = groups.keys.toList();
+    _registerRates();
 
     if (widget.panelsAction.isNotEmpty) {
       final open = widget.panelsAction == 'show' ? true : false;
@@ -271,6 +272,13 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
           return bDate.compareTo(aDate);
         });
         break;
+    }
+
+    final selected = selectableGroup.value;
+    final filteredUuids = filtered.map((tx) => tx.uuid).toSet();
+    final validSelected = selected.where(filteredUuids.contains).toList();
+    if (validSelected.length != selected.length) {
+      selectableGroup.value = validSelected;
     }
 
     return Map<String, List<TransactionsModel>>.fromEntries(entries);

@@ -196,6 +196,12 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
 
   Map<String, List<TransactionsModel>> _processTx() {
     List<TransactionsModel> filtered = txs.where((t) => t.isFinalized).toList();
+    final selected = selectableGroup.value;
+    final filteredUuids = filtered.map((tx) => tx.uuid).toSet();
+    final validSelected = selected.where(filteredUuids.contains).toList();
+    if (validSelected.length != selected.length) {
+      selectableGroup.value = validSelected;
+    }
 
     final grouped = <String, List<TransactionsModel>>{};
     for (final tx in filtered) {
