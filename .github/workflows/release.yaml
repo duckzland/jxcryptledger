@@ -9,7 +9,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
           flutter-version-file: pubspec.yaml
@@ -34,7 +34,7 @@ jobs:
           call build-msi.bat --with-icon
 
       - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-msi
           path: build/*.msi
@@ -50,7 +50,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
           flutter-version-file: pubspec.yaml
@@ -74,14 +74,15 @@ jobs:
           ./build-debian.sh --no-commit
 
       - name: Upload Linux Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: linux-deb
           path: "build/*.deb"
 
       - name: Cleanup
         if: always()
-        run: rm -f .env
+        run: |
+          rm -f .env
           rm -rf build/
           rm -rf libs/
 
@@ -92,7 +93,7 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
