@@ -52,6 +52,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   late Decimal _sourceAmount;
   late List<TransactionsModel> txs;
 
+  late TextEditingController rateController;
+  late TextEditingController resultController;
+
   Color? _accentColor;
   String? _noteEntry;
 
@@ -75,6 +78,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     txs = List.from(widget.transactions ?? []);
     txs.retainWhere((tx) => tx.isActive || tx.isPartial);
 
+    rateController = TextEditingController();
+    resultController = TextEditingController();
+
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
     _sourceAmount = _calc.totalActiveBalance(txs);
 
@@ -86,7 +92,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   @override
   void dispose() {
     _debounce?.cancel();
+    rateController.dispose();
+    resultController.dispose();
     super.dispose();
+  }
+
+  @override
+  void rateableGetCallback(bool hasNewRate) {
+    _updateResult(rateableAmount);
   }
 
   @override
@@ -126,7 +139,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     ),
                   ],
                 ),
-              if (txs.isNotEmpty) _buildCalculator(),
+              if (txs.isNotEmpty) _buildForm(),
               if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
               if (txs.isEmpty) Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
               Padding(
@@ -226,7 +239,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           DataColumn2(label: Text('Date '), fixedWidth: 100),
           DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
           DataColumn2(label: Text('Balance '), size: ColumnSize.M),
-          if (showRate) DataColumn2(label: Text('Rate '), size: ColumnSize.M),
+          if (showRate)
+            DataColumn2(
+              label: WidgetsHeader(
+                title: "Rate ",
+                subtitle: _isReversed ? "$targetSymbol - $_selectedSymbol" : "$_selectedSymbol - $targetSymbol",
+              ),
+              size: ColumnSize.M,
+            ),
           if (showRate) DataColumn2(label: Text('Amount '), size: ColumnSize.M),
         ],
         rows: [
@@ -239,7 +259,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                   ? (v) {
                       setState(() {
                         selectableSetSelected(r['uuid'], v!);
-                        _buildCalculatedResult();
+                        _updateResult(rateableAmount);
+                        _buildResultAmountField();
                       });
                     }
                   : null,
@@ -297,7 +318,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     );
   }
 
-  Widget _buildCalculator() {
+  Widget _buildForm() {
     bool hasError = false;
     if (_formKey.currentState != null) {
       hasError = !_formKey.currentState!.validate();
@@ -329,12 +350,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                       Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
 
                       Expanded(
-                        child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
+                        child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildCoinSelectField()),
                       ),
 
                       Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
 
-                      Expanded(child: _buildCalculatedResult()),
+                      Expanded(child: _buildResultAmountField()),
                     ],
                   ),
                 ),
@@ -372,8 +393,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     ),
                   ],
                 ),
-                Row(children: [Expanded(child: _buildResultCryptoField())]),
-                Row(children: [Expanded(child: _buildCalculatedResult())]),
+                Row(children: [Expanded(child: _buildCoinSelectField())]),
+                Row(children: [Expanded(child: _buildResultAmountField())]),
                 if (_showNotes) Row(children: [Expanded(child: _buildAccentColorsPanel())]),
                 if (_showNotes) Row(children: [Expanded(child: _buildNotesPanel())]),
               ],
@@ -417,6 +438,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       enabled: !_isProcessing,
       allowReverse: true,
       allowRate: rateableAllow,
+      controller: rateController,
+      disposeController: false,
       onRetrievingRate: (void Function(String value, String helperText) updateState) {
         // Store the callback to act as promise contract!
         rateableStateUpdater = updateState;
@@ -433,6 +456,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           _debounce = Timer(Duration(milliseconds: 100), () {
             setState(() {
               rateableAmount = value;
+              _updateResult(rateableAmount);
             });
           });
         }
@@ -440,14 +464,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       onReversing: () {
         setState(() {
           _isReversed = !_isReversed;
-
           rateableAmount = rateableParseToString(rateableAmount!, reverse: true);
+          _updateResult(rateableAmount);
         });
       },
     );
   }
 
-  Widget _buildResultCryptoField() {
+  Widget _buildCoinSelectField() {
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
       initialValue: null,
@@ -479,7 +503,26 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     );
   }
 
-  Widget _buildCalculatedResult() {
+  Widget _buildResultAmountField() {
+    return WidgetsHeader(
+      subtitle: "Result:",
+      subtitleFontSize: 13,
+      spacing: 10,
+      child: WidgetsFieldsAmount(
+        title: 'Amount',
+        suffixText: rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "",
+        helperText: "",
+        controller: resultController,
+        disposeController: false,
+        onChanged: (value) {
+          _updateRate(value);
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  void _updateSource() {
     final stxs = [...txs];
 
     final selectedTxIds = selectableGetSelectedRows();
@@ -487,32 +530,36 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
     _sourceAmount = _calc.totalActiveBalance(atxs);
+  }
+
+  void _updateRate(String totalAmount) {
+    _updateSource();
 
     final Decimal entryRate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+
+    final checkValue = Math.multiply(_sourceAmount, entryRate);
+    final amount = rateableParseToDecimal(totalAmount);
+
+    if (checkValue != amount) {
+      final newRate = Math.divide(amount, _sourceAmount);
+      rateableAmount = (newRate <= Decimal.zero)
+          ? null
+          : rateableParseToString(
+              Utils.formatSmartDecimal(newRate, smartDecimal: false, maxDecimals: 18).replaceAll(",", ""),
+              reverse: _isReversed,
+            );
+
+      rateController.text = rateableAmount ?? "";
+    }
+  }
+
+  void _updateResult(String? rateText) {
+    _updateSource();
+
+    final Decimal entryRate = rateableParseToDecimal(rateText ?? "", reverse: _isReversed);
     final Decimal resultValue = Math.multiply(_sourceAmount, entryRate);
 
-    final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
-
-    return WidgetsHeader(
-      subtitle: "Result:",
-      subtitleFontSize: 13,
-      spacing: 10,
-      child: TextField(
-        contextMenuBuilder: (context, editableTextState) {
-          return WidgetsContextMenu(
-            anchor: editableTextState.contextMenuAnchors.primaryAnchor,
-            buttonItems: editableTextState.contextMenuButtonItems,
-          );
-        },
-        controller: TextEditingController(
-          text: (_sourceAmount <= Decimal.zero || entryRate <= Decimal.zero)
-              ? ""
-              : "${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol",
-        ),
-        readOnly: true,
-        style: TextStyle(fontSize: 16),
-      ),
-    );
+    resultController.text = resultValue <= Decimal.zero ? "" : Utils.formatSmartDecimal(resultValue, smartDecimal: false);
   }
 
   void _handleSave() async {
