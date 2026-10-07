@@ -7,6 +7,7 @@ import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/backgrounds/pixelated.dart';
 import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../../watchers/controller.dart';
@@ -33,14 +34,12 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
 
   static dynamic _activePanelId;
 
-  Color _currentColor = AppTheme.panelBg;
   Decimal? _rate;
 
   @override
   void initState() {
     super.initState();
     _subscribers.add(setState);
-    _currentColor = _resolveBackground();
   }
 
   @override
@@ -71,22 +70,15 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
     final bool isThisOneActive = _activePanelId == widget.tix.tid;
 
     final targetColor = _resolveBackground();
-    bool colorChanged = targetColor != _currentColor;
 
-    final hsl = HSLColor.fromColor(targetColor);
-    final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
-
-    _currentColor = targetColor;
-
-    return TweenAnimationBuilder<Color?>(
-      duration: Duration(milliseconds: 400),
-      tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
-      curve: Curves.easeOut,
-      builder: (buildContext, Color? animatedBgColor, child) {
-        Widget content = WidgetsPanel(
+    final content = WidgetsPanel(
+      padding: EdgeInsets.zero,
+      background: Colors.transparent,
+      borderColor: AppTheme.background,
+      child: WidgetsBackgroundsPixelated(
+        color: targetColor,
+        child: Padding(
           padding: EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 8),
-          background: animatedBgColor,
-          borderColor: AppTheme.background,
           child: SizedBox(
             width: double.infinity,
             child: Column(
@@ -95,63 +87,59 @@ class _PanelsDisplayState extends State<PanelsDisplay> {
               children: _buildText(),
             ),
           ),
-        );
+        ),
+      ),
+    );
 
-        if (animatedBgColor != targetColor) {
-          content = RepaintBoundary(child: content);
-        }
+    return MouseRegion(
+      cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: _handleToggle,
+        child: SizedBox(
+          width: double.infinity,
+          child: Stack(
+            children: [
+              content,
 
-        return MouseRegion(
-          cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: _handleToggle,
-            child: SizedBox(
-              width: double.infinity,
-              child: Stack(
-                children: [
-                  content,
+              ListenableBuilder(
+                listenable: _wxController,
+                builder: (context, _) {
+                  final linked = _wxController.getLinked("panels-${widget.tix.tid}");
 
-                  ListenableBuilder(
-                    listenable: _wxController,
-                    builder: (context, _) {
-                      final linked = _wxController.getLinked("panels-${widget.tix.tid}");
+                  return Stack(
+                    children: [
+                      if (linked != null)
+                        Positioned(
+                          top: 8,
+                          left: 6,
+                          child: Icon(
+                            Icons.add_alarm,
+                            size: 16,
+                            color: linked.isSpent ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
+                          ),
+                        ),
 
-                      return Stack(
-                        children: [
-                          if (linked != null)
-                            Positioned(
-                              top: 8,
-                              left: 6,
-                              child: Icon(
-                                Icons.add_alarm,
-                                size: 16,
-                                color: linked.isSpent ? AppTheme.textMuted.withAlpha(105) : AppTheme.text.withAlpha(205),
-                              ),
-                            ),
+                      if (widget.tix.isLinked)
+                        Positioned(
+                          top: 8,
+                          left: linked != null ? 24 : 6,
+                          child: Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.text.withAlpha(205)),
+                        ),
 
-                          if (widget.tix.isLinked)
-                            Positioned(
-                              top: 8,
-                              left: linked != null ? 24 : 6,
-                              child: Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.text.withAlpha(205)),
-                            ),
-
-                          if (isThisOneActive && !widget.isDragging)
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: PanelsButtons(tix: widget.tix, tixController: _controller, linkedWatcher: linked, onAction: () {}),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                      if (isThisOneActive && !widget.isDragging)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: PanelsButtons(tix: widget.tix, tixController: _controller, linkedWatcher: linked, onAction: () {}),
+                        ),
+                    ],
+                  );
+                },
               ),
-            ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

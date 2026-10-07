@@ -3,6 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
+import '../../../../widgets/backgrounds/pixelated.dart';
 import '../../../../widgets/text/selectable.dart';
 import '../model.dart';
 
@@ -29,14 +30,6 @@ class WatchboardsMarketsWidgetsBubble extends StatefulWidget {
 }
 
 class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidgetsBubble> {
-  late Color _bgColor;
-
-  @override
-  void initState() {
-    super.initState();
-    _bgColor = widget.value >= Decimal.zero ? AppTheme.green : AppTheme.red;
-  }
-
   @override
   void didUpdateWidget(covariant WatchboardsMarketsWidgetsBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -79,9 +72,6 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
     top = double.parse(top.toStringAsFixed(2));
     left = double.parse(left.toStringAsFixed(2));
 
-    Color prevColor = _bgColor;
-    _bgColor = currentColor;
-
     return AnimatedPositioned(
       duration: Duration(milliseconds: 200),
       curve: Curves.linear,
@@ -89,50 +79,45 @@ class _WatchboardsMarketsWidgetsBubbleState extends State<WatchboardsMarketsWidg
       top: top,
       width: diameter,
       height: diameter,
-      child: TweenAnimationBuilder<Color?>(
-        tween: ColorTween(begin: showPercentage ? prevColor : currentColor, end: currentColor),
-        curve: Curves.linear,
-        duration: Duration(milliseconds: 200),
-        builder: (context, color, child) {
-          Widget content = Container(
+      child: ClipOval(
+        child: WidgetsBackgroundsPixelated(
+          color: currentColor,
+          child: Container(
             width: diameter,
             height: diameter,
             decoration: BoxDecoration(
-              color: color,
+              color: Colors.transparent,
               shape: BoxShape.circle,
               border: Border.all(color: AppTheme.background, width: 3.0),
             ),
-            child: child,
-          );
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  (showPercentage)
+                      ? AnimatedSwitcher(
+                          duration: Duration(milliseconds: 200),
+                          transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                          child: WidgetsTextSelectable(
+                            widget.tx.symbol.toUpperCase(),
+                            key: ValueKey(widget.tx.symbol),
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: symbolStyle,
+                          ),
+                        )
+                      : WidgetsTextSelectable(widget.tx.symbol.toUpperCase(), maxLines: 1, textAlign: TextAlign.center, style: symbolStyle),
 
-          if (currentColor != color) {
-            content = RepaintBoundary(child: content);
-          }
-
-          return content;
-        },
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              (showPercentage)
-                  ? AnimatedSwitcher(
-                      duration: Duration(milliseconds: 200),
-                      transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                      child: WidgetsTextSelectable(
-                        widget.tx.symbol.toUpperCase(),
-                        key: ValueKey(widget.tx.symbol),
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: symbolStyle,
-                      ),
-                    )
-                  : WidgetsTextSelectable(widget.tx.symbol.toUpperCase(), maxLines: 1, textAlign: TextAlign.center, style: symbolStyle),
-
-              if (showPercentage)
-                WidgetsTextSelectable("${widget.value >= Decimal.zero ? '+' : ''}${widget.text}%", textAlign: TextAlign.center, style: percentStyle),
-            ],
+                  if (showPercentage)
+                    WidgetsTextSelectable(
+                      "${widget.value >= Decimal.zero ? '+' : ''}${widget.text}%",
+                      textAlign: TextAlign.center,
+                      style: percentStyle,
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

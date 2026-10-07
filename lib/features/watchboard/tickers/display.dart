@@ -4,6 +4,7 @@ import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/panel.dart';
+import '../../../widgets/backgrounds/pixelated.dart';
 import '../../../widgets/text/selectable.dart';
 import 'controller.dart';
 import 'model.dart';
@@ -44,10 +45,6 @@ class _TickersDisplayState extends State<TickersDisplay> {
     final tix = widget.tix;
 
     final targetColor = _resolveBackground();
-    bool colorChanged = targetColor != _currentColor;
-
-    final hsl = HSLColor.fromColor(targetColor);
-    final startColor = hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
     _currentColor = targetColor;
 
     final currentValue = _currentValue;
@@ -55,52 +52,44 @@ class _TickersDisplayState extends State<TickersDisplay> {
 
     _currentValue = tix.value;
 
-    return TweenAnimationBuilder<Color?>(
-      duration: Duration(milliseconds: 400),
-      tween: ColorTween(begin: colorChanged ? startColor : targetColor, end: targetColor),
-      curve: Curves.fastEaseInToSlowEaseOut,
-      builder: (context, Color? animatedBgColor, child) {
-        Widget content = WidgetsPanel(
-          padding: EdgeInsets.all(0),
-          background: animatedBgColor,
-          borderColor: AppTheme.background,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: tix.getContent() != ""
-                ? [
-                    WidgetsTextSelectable(
-                      tix.getTitle(),
-                      softWrap: false,
-                      overflow: TextOverflow.visible,
-                      style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
-                      selectable: !widget.isDragging,
-                    ),
-                    WidgetsNumbersFlow(
-                      begin: currentValue != null ? oldContent : null,
-                      end: tix.formatValue(_currentValue ?? ""),
-                      style: TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
-                      selectable: !widget.isDragging,
-                    ),
-                  ]
-                : [
-                    Text(
-                      "Loading...",
-                      softWrap: false,
-                      overflow: TextOverflow.visible,
-                      style: TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-          ),
-        );
-
-        if (animatedBgColor != targetColor) {
-          content = RepaintBoundary(child: content);
-        }
-
-        return MouseRegion(cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic, child: content);
-      },
+    final content = WidgetsPanel(
+      padding: EdgeInsets.all(0),
+      background: Colors.transparent,
+      borderColor: AppTheme.background,
+      child: WidgetsBackgroundsPixelated(
+        color: targetColor,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: tix.getContent() != ""
+              ? [
+                  WidgetsTextSelectable(
+                    tix.getTitle(),
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                    style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w400),
+                    selectable: !widget.isDragging,
+                  ),
+                  WidgetsNumbersFlow(
+                    begin: currentValue != null ? oldContent : null,
+                    end: tix.formatValue(_currentValue ?? ""),
+                    style: TextStyle(fontSize: 18, height: 1.2, fontWeight: FontWeight.w600),
+                    selectable: !widget.isDragging,
+                  ),
+                ]
+              : [
+                  Text(
+                    "Loading...",
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                    style: TextStyle(fontSize: 10, height: 1.4, fontWeight: FontWeight.w600),
+                  ),
+                ],
+        ),
+      ),
     );
+
+    return MouseRegion(cursor: widget.isDragging ? SystemMouseCursors.move : SystemMouseCursors.basic, child: content);
   }
 
   Color _resolveBackground() {
