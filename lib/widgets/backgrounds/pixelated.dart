@@ -63,7 +63,7 @@ class _PixelatedColorPainter extends CustomPainter {
 
     const pixelSize = 16.0;
     const maxDelay = 0.55;
-    const transitionDuration = 0.95;
+    const colorVariation = 0.18;
     final columns = (size.width / pixelSize).ceil();
     final rows = (size.height / pixelSize).ceil();
     final random = Random(0);
@@ -72,9 +72,11 @@ class _PixelatedColorPainter extends CustomPainter {
     for (var row = 0; row < rows; row++) {
       for (var column = 0; column < columns; column++) {
         final startTime = random.nextDouble() * maxDelay;
-        final tileProgress = ((progress - startTime) / transitionDuration).clamp(0.0, 1.0);
+        final tileProgress = ((progress - startTime) / (1 - startTime)).clamp(0.0, 1.0);
         final easedProgress = Curves.fastEaseInToSlowEaseOut.transform(tileProgress);
-        paint.color = Color.lerp(oldColor, backgroundColor, easedProgress)!;
+        final variation = (random.nextDouble() * 2 - 1) * colorVariation * sin(pi * easedProgress);
+        final colorProgress = (easedProgress + variation).clamp(0.0, 1.0);
+        paint.color = Color.lerp(oldColor, backgroundColor, colorProgress)!;
 
         final left = column * pixelSize;
         final top = row * pixelSize;
