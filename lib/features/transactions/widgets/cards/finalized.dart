@@ -119,10 +119,10 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     checkForRefundable();
     checkForUpdatable();
 
+    selectableSyncWithGroup();
     _calculatePanelData();
     rows = _buildRows();
     sortableApplySorting(pauseRefresh: true);
-    selectableSyncWithGroup();
   }
 
   @override
