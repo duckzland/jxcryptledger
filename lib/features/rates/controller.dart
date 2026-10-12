@@ -16,6 +16,9 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
   late bool isFetching;
   late bool hasRates;
 
+  bool needRates = true;
+  bool Function() checkIfNeedRates = () => true;
+
   @override
   Future<void> init() async {
     super.init();
@@ -79,5 +82,13 @@ class RatesController extends CoreBaseController<RatesModel, RatesRepository> wi
 
   Future<void> deleteById(int sourceId, int targetId) async {
     await repo.delete("$sourceId-$targetId");
+  }
+
+  void updateNeedRates() {
+    final nr = checkIfNeedRates();
+    if (nr != needRates) {
+      needRates = nr;
+      debounceNotify();
+    }
   }
 }

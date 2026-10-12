@@ -5,6 +5,9 @@ import '../core/locator.dart';
 
 import '../features/rates/controller.dart';
 import '../features/cryptos/controller.dart';
+import '../features/transactions/controller.dart';
+import '../features/watchers/controller.dart';
+import '../features/watchboard/panels/controller.dart';
 
 import '../ipc/mixins/broadcaster.dart';
 import '../ipc/status/op.dart';
@@ -36,6 +39,9 @@ class AppLayout extends StatefulWidget {
 class _AppLayoutState extends State<AppLayout> with IpcMixinsBroadcaster {
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
   RatesController get _ratesController => CoreLocator.getit<RatesController>();
+  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
+  PanelsController get _pxController => CoreLocator.getit<PanelsController>();
+  WatchersController get _wxController => CoreLocator.getit<WatchersController>();
 
   @override
   IpcClient get ipcClient => CoreLocator.getit<IpcClient>();
@@ -112,6 +118,8 @@ class _AppLayoutState extends State<AppLayout> with IpcMixinsBroadcaster {
     AppLayout.setTitle = _setTitle;
     AppLayout.setActions = _setActions;
     AppLayout.refreshBar = _refreshBar;
+
+    _ratesController.checkIfNeedRates = checkIfNeedRates;
 
     broadcasterListen();
   }
@@ -353,7 +361,7 @@ class _AppLayoutState extends State<AppLayout> with IpcMixinsBroadcaster {
               ListenableBuilder(
                 listenable: _ratesController,
                 builder: (context, _) {
-                  return _ratesController.hasRates
+                  return checkIfNeedRates()
                       ? WidgetsButtonsAction(
                           key: const Key("refresh-rates"),
                           icon: Icons.autorenew,
@@ -436,5 +444,9 @@ class _AppLayoutState extends State<AppLayout> with IpcMixinsBroadcaster {
     }
 
     return Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: navigation);
+  }
+
+  bool checkIfNeedRates() {
+    return _cryptosController.isNotEmpty() || _txController.isNotEmpty() || _pxController.isNotEmpty() || _wxController.isNotEmpty();
   }
 }

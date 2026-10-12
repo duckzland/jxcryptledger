@@ -11,6 +11,12 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
   final RatesController rateableController = CoreLocator.getit<RatesController>();
 
   @override
+  void load() {
+    rateableController.updateNeedRates();
+    super.load();
+  }
+
+  @override
   Future<void> add(T tx) async {
     final rx = tx as CoreModelRateable;
     rateableController.addQueue(rx.srId, rx.rrId);
