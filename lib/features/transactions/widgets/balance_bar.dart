@@ -13,13 +13,31 @@ import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
 
-class TransactionsWidgetsBalanceBar extends StatelessWidget {
+class TransactionsWidgetsBalanceBar extends StatefulWidget {
   final ValueNotifier<List<String>> data;
-  const TransactionsWidgetsBalanceBar({super.key, required this.data});
+  final bool initialShowAmountUsed;
+  final ValueChanged<bool>? onToggle;
+
+  const TransactionsWidgetsBalanceBar({super.key, required this.data, this.initialShowAmountUsed = false, this.onToggle});
+
+  @override
+  State<TransactionsWidgetsBalanceBar> createState() => _TransactionsWidgetsBalanceBarState();
+}
+
+class _TransactionsWidgetsBalanceBarState extends State<TransactionsWidgetsBalanceBar> {
+  late bool _showAmountUsed = widget.initialShowAmountUsed;
 
   TransactionsController get txController => CoreLocator.getit<TransactionsController>();
   RatesController get rateController => CoreLocator.getit<RatesController>();
   CryptosController get cryptosController => CoreLocator.getit<CryptosController>();
+
+  @override
+  void didUpdateWidget(covariant TransactionsWidgetsBalanceBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialShowAmountUsed != widget.initialShowAmountUsed) {
+      _showAmountUsed = widget.initialShowAmountUsed;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,16 +45,16 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
     final textStyle = snackTheme.contentTextStyle?.copyWith(fontWeight: AppTheme.notifyFontWeight, fontSize: AppTheme.notifyFontSize);
 
     return ListenableBuilder(
-      listenable: Listenable.merge([rateController, data]),
+      listenable: Listenable.merge([rateController, widget.data]),
       builder: (context, _) {
-        final txIds = data.value;
+        final txIds = widget.data.value;
         final amount = _calculateAmount(txIds);
 
         if (txIds.isEmpty || amount.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        final cptUsed = _populateCapital(txIds);
+        final used = _showAmountUsed ? _populateAmount(txIds) : _populateCapital(txIds);
 
         return Positioned(
           left: 6,
@@ -49,17 +67,26 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
             child: Padding(
               padding: snackTheme.insetPadding!,
               child: Row(
-                spacing: 8,
+                spacing: 12,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("${txIds.length} transactions selected", style: textStyle),
+                  IconButton(
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    tooltip: _showAmountUsed ? "Show capital used" : "Show amount used",
+                    icon: Icon(
+                      _showAmountUsed ? Icons.account_balance_wallet : Icons.payments,
+                      color: snackTheme.contentTextStyle?.color,
+                      size: AppTheme.notifyFontSize,
+                    ),
+                    onPressed: _toggleInfoDisplay,
+                  ),
                   Expanded(
-                    child: (cptUsed.isNotEmpty)
-                        ? Center(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: WidgetsTextSelectable(cptUsed.join("     "), textAlign: TextAlign.center),
-                            ),
+                    child: (used.isNotEmpty)
+                        ? SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: WidgetsTextSelectable(used.join("   "), textAlign: TextAlign.center),
                           )
                         : const SizedBox.shrink(),
                   ),
@@ -69,7 +96,7 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     icon: Icon(Icons.close, color: snackTheme.contentTextStyle?.color, size: AppTheme.notifyFontSize),
                     onPressed: () {
-                      data.value = [];
+                      widget.data.value = [];
                     },
                   ),
                 ],
@@ -79,6 +106,12 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _toggleInfoDisplay() {
+    final showAmountUsed = !_showAmountUsed;
+    setState(() => _showAmountUsed = showAmountUsed);
+    widget.onToggle?.call(showAmountUsed);
   }
 
   List<String> _populateCapital(List<String> txsIds) {
@@ -113,6 +146,31 @@ class TransactionsWidgetsBalanceBar extends StatelessWidget {
     }
 
     return cptUsed;
+  }
+
+  List<String> _populateAmount(List<String> txsIds) {
+    final ids = txsIds.toSet().toList();
+    final amountUsed = {};
+    final List<TransactionsModel> txs = [];
+
+    for (final uuid in ids) {
+      final tx = txController.get(uuid);
+      if (tx != null) {
+        txs.add(tx);
+      }
+    }
+
+    for (final tx in txs) {
+      amountUsed[tx.rrId] = Math.add(amountUsed[tx.rrId] ?? Decimal.zero, tx.balance);
+    }
+
+    final List<String> result = [];
+    for (final entry in amountUsed.entries) {
+      final symbol = cryptosController.getSymbol(entry.key) ?? 'Unknown Coin';
+      result.add("${Utils.formatSmartDecimal(entry.value)} $symbol");
+    }
+
+    return result;
   }
 
   String _calculateAmount(List<String> txsIds) {

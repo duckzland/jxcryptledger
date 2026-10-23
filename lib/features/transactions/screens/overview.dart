@@ -217,7 +217,12 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
             },
           ),
         ),
-        TransactionsWidgetsBalanceBar(key: ValueKey("tx-overview-balance-bar"), data: selectableGroup),
+        TransactionsWidgetsBalanceBar(
+          key: ValueKey("tx-overview-balance-bar"),
+          data: selectableGroup,
+          initialShowAmountUsed: states.get("tx-group-overview-balancebar", defaultValue: true),
+          onToggle: (showAmountUsed) => states.set("tx-group-overview-balancebar", showAmountUsed),
+        ),
       ],
     );
   }

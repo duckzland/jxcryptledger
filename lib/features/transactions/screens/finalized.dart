@@ -189,7 +189,12 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
             },
           ),
         ),
-        TransactionsWidgetsBalanceBar(key: ValueKey("tx-finalized-balance-bar"), data: selectableGroup),
+        TransactionsWidgetsBalanceBar(
+          key: ValueKey("tx-finalized-balance-bar"),
+          data: selectableGroup,
+          initialShowAmountUsed: states.get("tx-group-finalized-balancebar", defaultValue: true),
+          onToggle: (showAmountUsed) => states.set("tx-group-finalized-balancebar", showAmountUsed),
+        ),
       ],
     );
   }

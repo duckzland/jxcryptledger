@@ -226,7 +226,12 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
             },
           ),
         ),
-        TransactionsWidgetsBalanceBar(key: ValueKey("tx-active-balance-bar"), data: selectableGroup),
+        TransactionsWidgetsBalanceBar(
+          key: ValueKey("tx-active-balance-bar"),
+          data: selectableGroup,
+          initialShowAmountUsed: states.get("tx-group-active-balancebar", defaultValue: true),
+          onToggle: (showAmountUsed) => states.set("tx-group-active-balancebar", showAmountUsed),
+        ),
       ],
     );
   }
