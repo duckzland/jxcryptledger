@@ -6,6 +6,35 @@ import 'model.dart';
 class TransactionCalculation {
   const TransactionCalculation();
 
+  Map<String, Decimal> spreadAmount(Decimal amount, List<TransactionsModel> transactions) {
+    final totalWeight = transactions.fold<Decimal>(
+      Decimal.zero,
+      (total, tx) => tx.balance > Decimal.zero ? Math.add(total, tx.balance) : total,
+    );
+    if (totalWeight <= Decimal.zero) {
+      return {for (final tx in transactions) tx.uuid: Decimal.zero};
+    }
+
+    final lastPositiveIndex = transactions.lastIndexWhere((tx) => tx.balance > Decimal.zero);
+    final allocations = <String, Decimal>{};
+    final unitAmount = Math.divide(amount, totalWeight);
+    Decimal allocated = Decimal.zero;
+
+    for (var index = 0; index < transactions.length; index++) {
+      final tx = transactions[index];
+      if (tx.balance <= Decimal.zero) {
+        allocations[tx.uuid] = Decimal.zero;
+        continue;
+      }
+
+      final allocation = index == lastPositiveIndex ? Math.subtract(amount, allocated) : Math.multiply(unitAmount, tx.balance);
+      allocations[tx.uuid] = allocation;
+      allocated = Math.add(allocated, allocation);
+    }
+
+    return allocations;
+  }
+
   Decimal cumulativeSourceValue(List<TransactionsModel> txs) {
     Decimal total = Decimal.zero;
     for (final tx in txs) {

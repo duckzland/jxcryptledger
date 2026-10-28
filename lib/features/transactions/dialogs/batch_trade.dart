@@ -54,12 +54,18 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   late TextEditingController rateController;
   late TextEditingController resultController;
+  late TextEditingController fromController;
+  late TextEditingController toController;
+
+  Decimal _fromAmount = Decimal.zero;
+  Decimal _toAmount = Decimal.zero;
 
   Color? _accentColor;
   String? _noteEntry;
 
   bool _isReversed = false;
   bool _showNotes = false;
+  bool _useBalanceMode = false;
   bool _isProcessing = false;
 
   Timer? _debounce;
@@ -80,6 +86,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     rateController = TextEditingController();
     resultController = TextEditingController();
+    fromController = TextEditingController();
+    toController = TextEditingController();
 
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
     _sourceAmount = _calc.totalActiveBalance(txs);
@@ -94,6 +102,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     _debounce?.cancel();
     rateController.dispose();
     resultController.dispose();
+    fromController.dispose();
+    toController.dispose();
     super.dispose();
   }
 
@@ -116,9 +126,37 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             children: [
               if (txs.isNotEmpty)
                 Row(
+                  spacing: 6,
                   children: [
                     Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
                     Spacer(),
+                    WidgetsButtonsAction(
+                      icon: Icons.account_balance_wallet_outlined,
+                      iconSize: 14,
+                      padding: EdgeInsets.all(10),
+                      minimumSize: Size(40, 40),
+                      tooltip: _useBalanceMode ? "Show rate mode" : "Show custom balance",
+                      onPressed: (s) {
+                        setState(() {
+                          _useBalanceMode = !_useBalanceMode;
+                          if (_useBalanceMode && fromController.text.isEmpty) {
+                            fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
+                            _fromAmount = _sourceAmount;
+                          }
+                        });
+
+                        if (_useBalanceMode) {
+                          s.action();
+                        } else {
+                          s.normal();
+                        }
+                      },
+                      evaluator: (s) => _isProcessing
+                          ? s.disable()
+                          : _useBalanceMode
+                          ? s.action()
+                          : s.normal(),
+                    ),
                     WidgetsButtonsAction(
                       icon: Icons.note_add,
                       iconSize: 14,
@@ -136,6 +174,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                           s.normal();
                         }
                       },
+                      evaluator: (s) => _isProcessing
+                          ? s.disable()
+                          : _showNotes
+                          ? s.action()
+                          : s.normal(),
                     ),
                   ],
                 ),
@@ -200,19 +243,30 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
-    final bool showRate = rate > Decimal.zero && targetSymbol.isNotEmpty;
+    final bool showRate = !_useBalanceMode && rate > Decimal.zero && targetSymbol.isNotEmpty;
+    final bool showAmount = _useBalanceMode && targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
+    final Decimal customFrom = _fromAmount;
+    final Decimal customTo = _toAmount;
+    final selectedTxs = txs.where((tx) => selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
+    final fromAllocations = _calc.spreadAmount(customFrom, selectedTxs);
+    final toAllocations = _calc.spreadAmount(customTo, selectedTxs);
 
     for (final tx in txs) {
       final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-      final Decimal amount = Math.multiply(tx.rrAmount, rate);
+      final bool selected = selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial);
+      final Decimal fromAmount = _useBalanceMode ? fromAllocations[tx.uuid] ?? Decimal.zero : Decimal.zero;
+      final Decimal amount = _useBalanceMode ? toAllocations[tx.uuid] ?? Decimal.zero : Math.multiply(tx.rrAmount, rate);
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
         'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
-        'balance': '${tx.balanceTextRaw} $resultSymbol',
+        'balance': showAmount
+            ? '${Utils.formatSmartDecimal(fromAmount, smartDecimal: false, maxDecimals: 18)} $resultSymbol'
+            : '${tx.balanceTextRaw} $resultSymbol',
         'rate': rateableAmount,
         'amount': amount,
+        'selected': selected,
         'tx': tx,
         'uuid': tx.uuid,
       });
@@ -238,7 +292,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         columns: [
           DataColumn2(label: Text('Date '), fixedWidth: 100),
           DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-          DataColumn2(label: Text('Balance '), size: ColumnSize.M),
+          DataColumn2(label: Text(showAmount || showRate ? 'From ' : 'Balance '), size: ColumnSize.M),
           if (showRate)
             DataColumn2(
               label: WidgetsHeader(
@@ -247,7 +301,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               ),
               size: ColumnSize.M,
             ),
-          if (showRate) DataColumn2(label: Text('Amount '), size: ColumnSize.M),
+          if (showRate || showAmount) DataColumn2(label: Text('To '), size: ColumnSize.M),
         ],
         rows: [
           ...rows.map((r) {
@@ -269,9 +323,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
                 DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
                 if (showRate) DataCell(rateText),
-                if (showRate)
+                if (showRate || showAmount)
                   DataCell(
-                    WidgetsTextSelectable('${Utils.formatSmartDecimal(r['amount'] ?? Decimal.zero, smartDecimal: false)} $targetSymbol'),
+                    WidgetsTextSelectable(
+                      r['selected'] == true && targetSymbol.isNotEmpty
+                          ? '${Utils.formatSmartDecimal(r['amount'] ?? Decimal.zero, smartDecimal: false)} $targetSymbol'
+                          : '',
+                    ),
                   ),
               ],
             );
@@ -283,11 +341,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildTotal() {
     final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-    final Decimal source = _sourceAmount;
-    final Decimal resultValue = Math.multiply(source, rate);
+    final Decimal source = _useBalanceMode ? _fromAmount : _sourceAmount;
+    final Decimal resultValue = _useBalanceMode ? _toAmount : Math.multiply(source, rate);
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
-    final bool showRate = rate > Decimal.zero && targetSymbol.isNotEmpty;
+    final bool showRate = !_useBalanceMode && rate > Decimal.zero && targetSymbol.isNotEmpty;
+    final bool showAmount = _useBalanceMode && targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
 
     return SizedBox(
       width: double.infinity,
@@ -303,11 +362,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           DataColumn2(label: Text('        Total'), fixedWidth: 130),
           DataColumn2(label: Text(' '), size: ColumnSize.M),
           DataColumn2(
-            label: WidgetsTextSelectable('${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol'),
+            label: WidgetsTextSelectable('${Utils.formatSmartDecimal(source, smartDecimal: false)} $_selectedSymbol'),
             size: ColumnSize.M,
           ),
           if (showRate) DataColumn2(label: Text(''), size: ColumnSize.M),
-          if (showRate)
+          if (showRate || showAmount)
             DataColumn2(
               label: WidgetsTextSelectable('${Utils.formatSmartDecimal(resultValue, smartDecimal: false)} $targetSymbol'),
               size: ColumnSize.M,
@@ -338,24 +397,33 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildFromAmountField()),
+                        child: WidgetsHeader(
+                          subtitle: "From:",
+                          subtitleFontSize: 13,
+                          spacing: 10,
+                          child: _useBalanceMode ? _buildCustomFromAmountField() : _buildFromAmountField(),
+                        ),
                       ),
-
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.clear, size: 24)),
-
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40),
+                        child: Icon(_useBalanceMode ? Icons.arrow_forward : Icons.clear, size: 24),
+                      ),
                       Expanded(
-                        child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
+                        child: WidgetsHeader(
+                          subtitle: "To:",
+                          subtitleFontSize: 13,
+                          spacing: 10,
+                          child: _useBalanceMode ? _buildCustomToAmountField() : _buildRatesAmountField(),
+                        ),
                       ),
-
                       Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
-
                       Expanded(
                         child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildCoinSelectField()),
                       ),
-
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
-
-                      Expanded(child: _buildResultAmountField()),
+                      if (!_useBalanceMode) ...[
+                        Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
+                        Expanded(child: _buildResultAmountField()),
+                      ],
                     ],
                   ),
                 ),
@@ -382,19 +450,29 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 Row(
                   children: [
                     Expanded(
-                      child: WidgetsHeader(subtitle: "From:", subtitleFontSize: 13, spacing: 10, child: _buildFromAmountField()),
+                      child: WidgetsHeader(
+                        subtitle: "From:",
+                        subtitleFontSize: 13,
+                        spacing: 10,
+                        child: _useBalanceMode ? _buildCustomFromAmountField() : _buildFromAmountField(),
+                      ),
                     ),
                   ],
                 ),
                 Row(
                   children: [
                     Expanded(
-                      child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildRatesAmountField()),
+                      child: WidgetsHeader(
+                        subtitle: "To:",
+                        subtitleFontSize: 13,
+                        spacing: 10,
+                        child: _useBalanceMode ? _buildCustomToAmountField() : _buildRatesAmountField(),
+                      ),
                     ),
                   ],
                 ),
                 Row(children: [Expanded(child: _buildCoinSelectField())]),
-                Row(children: [Expanded(child: _buildResultAmountField())]),
+                if (!_useBalanceMode) Row(children: [Expanded(child: _buildResultAmountField())]),
                 if (_showNotes) Row(children: [Expanded(child: _buildAccentColorsPanel())]),
                 if (_showNotes) Row(children: [Expanded(child: _buildNotesPanel())]),
               ],
@@ -428,6 +506,34 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       ),
       readOnly: true,
       style: TextStyle(fontSize: 16),
+    );
+  }
+
+  Widget _buildCustomFromAmountField() {
+    return WidgetsFieldsAmount(
+      title: 'Amount',
+      helperText: 'e.g., 10.5',
+      enabled: !_isProcessing,
+      suffixText: _selectedSymbol,
+      useMax: _sourceAmount,
+      controller: fromController,
+      disposeController: false,
+      onChanged: (value) {
+        setState(() => _fromAmount = Utils.parseDecimal(value));
+      },
+    );
+  }
+
+  Widget _buildCustomToAmountField() {
+    return WidgetsFieldsAmount(
+      title: 'Amount',
+      helperText: 'e.g., 10.5',
+      enabled: !_isProcessing,
+      controller: toController,
+      disposeController: false,
+      onChanged: (value) {
+        setState(() => _toAmount = Utils.parseDecimal(value));
+      },
     );
   }
 
@@ -523,13 +629,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   void _updateSource() {
-    final stxs = [...txs];
+    _sourceAmount = _selectedBalance();
+  }
 
+  Decimal _selectedBalance() {
     final selectedTxIds = selectableGetSelectedRows();
-    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
-
-    final atxs = stxs.where((tx) => tx.isActive || tx.isPartial).toList();
-    _sourceAmount = _calc.totalActiveBalance(atxs);
+    final selectedTxs = txs.where((tx) => selectedTxIds.contains(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
+    return _calc.totalActiveBalance(selectedTxs);
   }
 
   void _updateRate(String totalAmount) {
@@ -566,12 +672,19 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     if (!_formKey.currentState!.validate()) return;
 
     final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+    final Decimal customFrom = _fromAmount;
+    final Decimal customTo = _toAmount;
     final stxs = [...txs];
 
     final selectedTxIds = selectableGetSelectedRows();
     stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid) && (tx.isActive || tx.isPartial));
 
-    if (stxs.isEmpty || rate <= Decimal.zero) return;
+    if (stxs.isEmpty || (_useBalanceMode ? customFrom <= Decimal.zero || customTo <= Decimal.zero : rate <= Decimal.zero)) return;
+
+    final Decimal selectedBalance = _calc.totalActiveBalance(stxs);
+    if (_useBalanceMode && (selectedBalance <= Decimal.zero || customFrom > selectedBalance)) return;
+    final fromAllocations = _calc.spreadAmount(customFrom, stxs);
+    final toAllocations = _calc.spreadAmount(customTo, stxs);
 
     setState(() {
       _isProcessing = true;
@@ -580,7 +693,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     bool completed = true;
 
     for (final tx in stxs) {
-      final Decimal amount = Math.multiply(tx.balance, rate);
+      final Decimal sourceAmount = _useBalanceMode ? fromAllocations[tx.uuid] ?? Decimal.zero : tx.balance;
+      final Decimal amount = _useBalanceMode ? toAllocations[tx.uuid] ?? Decimal.zero : Math.multiply(tx.balance, rate);
       final meta = Map<String, dynamic>.from(tx.meta);
 
       if (_noteEntry != null) {
@@ -597,7 +711,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           rid: tx.isRoot ? tx.tid : tx.rid,
           pid: tx.tid,
           srId: tx.rrId,
-          srAmount: tx.balance,
+          srAmount: sourceAmount,
           rrId: rateableTarget ?? 0,
           rrAmount: amount,
           balance: amount,
