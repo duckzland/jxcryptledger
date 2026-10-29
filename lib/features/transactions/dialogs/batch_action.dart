@@ -11,6 +11,7 @@ import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/text/selectable.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -204,7 +205,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
       rows.add({
-        'date': tx.timestampAsFormattedDate,
         'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.rrAmount} $resultSymbol',
         'balance': '${tx.balanceText} $resultSymbol',
         'tx': tx,
@@ -233,6 +233,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         ],
         rows: [
           ...rows.map((r) {
+            final tx = r['tx'] as TransactionsModel;
             return DataRow(
               selected: selectableIsSelected(r['uuid']),
               onSelectChanged: (v) {
@@ -241,7 +242,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                 });
               },
               cells: [
-                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
+                DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
                 DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
                 DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
               ],

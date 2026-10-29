@@ -319,8 +319,15 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   }
 
   Widget _formDeleteTx(BuildContext dialogContext) {
+    final stxs = [...txs];
+
+    if (hasSelectedRows) {
+      final selectedTxIds = selectedRows;
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
     return TransactionsDialogsBatchAction(
-      transactions: txs,
+      transactions: stxs,
       mode: TransactionsBatchActionMode.delete,
       onSave: (e) => actionableFormSave<TransactionsModel>(
         parentContext,
@@ -332,8 +339,15 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   }
 
   Widget _formRefundTx(BuildContext dialogContext) {
+    final stxs = [...txs];
+
+    if (hasSelectedRows) {
+      final selectedTxIds = selectedRows;
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
     return TransactionsDialogsBatchAction(
-      transactions: txs,
+      transactions: stxs,
       mode: TransactionsBatchActionMode.refund,
       onSave: (e) => actionableFormSave<TransactionsModel>(
         parentContext,
@@ -345,8 +359,15 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   }
 
   Widget _formCloseTx(BuildContext dialogContext) {
+    final stxs = [...txs];
+
+    if (hasSelectedRows) {
+      final selectedTxIds = selectedRows;
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
     return TransactionsDialogsBatchAction(
-      transactions: txs,
+      transactions: stxs,
       mode: TransactionsBatchActionMode.close,
       onSave: (e) => actionableFormSave<TransactionsModel>(
         parentContext,
@@ -358,8 +379,15 @@ class TransactionsWidgetsButtonsBatch extends StatelessWidget with MixinsActiona
   }
 
   Widget _formFinalizeTx(BuildContext dialogContext) {
+    final stxs = [...txs];
+
+    if (hasSelectedRows) {
+      final selectedTxIds = selectedRows;
+      stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    }
+
     return TransactionsDialogsBatchAction(
-      transactions: txs,
+      transactions: stxs,
       mode: TransactionsBatchActionMode.finalize,
       onSave: (e) => actionableFormSave<TransactionsModel>(
         parentContext,
