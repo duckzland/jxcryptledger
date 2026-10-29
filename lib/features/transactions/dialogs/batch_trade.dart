@@ -871,9 +871,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       // Post process after transactions success
       if (_takeProfit) {
-        if (tempPoolValue > Decimal.zero) {
-          profitPool = tempPoolValue;
-        }
+        profitPool = tempPoolValue;
       }
     }
 
