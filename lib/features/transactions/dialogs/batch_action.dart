@@ -212,12 +212,14 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       });
     }
 
+    final theme = Theme.of(context);
+
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
       child: DataTable2(
-        headingCheckboxTheme: Theme.of(context).checkboxTheme,
-        datarowCheckboxTheme: Theme.of(context).checkboxTheme,
+        headingCheckboxTheme: theme.checkboxTheme,
+        datarowCheckboxTheme: theme.checkboxTheme,
         showHeadingCheckBox: true,
         showCheckboxColumn: true,
         minWidth: 800,

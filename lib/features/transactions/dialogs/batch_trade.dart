@@ -545,7 +545,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             helperText: 'e.g., 10.5',
             enabled: !_isProcessing,
             suffixText: _selectedSymbol,
-            useMax: _takeProfit && !_isProcessing ? _selectedProfit() : _sourceAmount,
+            useMax: _takeProfit && !_isProcessing
+                ? Utils.parseDecimal(
+                    Utils.formatSmartDecimal(_selectedProfit(), smartDecimal: false, maxDecimals: 18).replaceAll(',', ''),
+                  )
+                : _sourceAmount,
             controller: fromController,
             disposeController: false,
             onChanged: (value) {
@@ -686,8 +690,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     _takeProfit = shouldTakeProfit && profit != null;
     if (profit == null) return;
 
-    fromController.text = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18);
-    _fromAmount = profit;
+    final formattedProfit = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18).replaceAll(',', '');
+    fromController.text = formattedProfit;
+    _fromAmount = Utils.parseDecimal(formattedProfit);
   }
 
   Decimal _selectedProfit() {
