@@ -230,6 +230,41 @@ void main() {
     expect(transactions.children[1].rrAmount, _d('600'));
   });
 
+  testWidgets('Profit mode accepts a custom source amount and consumes profits in row order', (tester) async {
+    await pumpTrade(tester, [_tx(id: 'a', rrAmount: '100', balance: '120'), _tx(id: 'b', rrAmount: '100', balance: '130')]);
+    await chooseTargetCoin(tester);
+    await tester.tap(find.byTooltip('Show custom balance'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.pumpAndSettle();
+
+    expect(amountFieldValue(tester), '50');
+    await enterField(tester, 'Amount', '35');
+    await enterField(tester, 'Amount', '700', index: 1);
+    await confirmTrade(tester);
+
+    expect(transactions.children, hasLength(2));
+    expect(transactions.children[0].srAmount, _d('20'));
+    expect(transactions.children[0].rrAmount, _d('400'));
+    expect(transactions.children[1].srAmount, _d('15'));
+    expect(transactions.children[1].rrAmount, _d('300'));
+  });
+
+  testWidgets('Profit mode rejects a custom source amount above selected profit', (tester) async {
+    await pumpTrade(tester, [_tx(id: 'a', rrAmount: '100', balance: '120'), _tx(id: 'b', rrAmount: '100', balance: '130')]);
+    await chooseTargetCoin(tester);
+    await tester.tap(find.byTooltip('Show custom balance'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.pumpAndSettle();
+
+    await enterField(tester, 'Amount', '51');
+    await enterField(tester, 'Amount', '700', index: 1);
+    await confirmTrade(tester);
+
+    expect(transactions.children, isEmpty);
+  });
+
   testWidgets('Profit mode skips transactions without positive profit', (tester) async {
     await pumpTrade(tester, [_tx(id: 'profit', rrAmount: '100', balance: '120'), _tx(id: 'flat', rrAmount: '100', balance: '100')]);
     await chooseTargetCoin(tester);
@@ -272,6 +307,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Take profit'), findsNothing);
+  });
+
+  testWidgets('From max returns to available balance when selected profit disappears', (tester) async {
+    await pumpTrade(tester, [_tx(id: 'flat', rrAmount: '100', balance: '100'), _tx(id: 'profit', rrAmount: '100', balance: '120')]);
+    await tester.tap(find.byTooltip('Show custom balance'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.pumpAndSettle();
+    expect(amountFieldValue(tester), '20');
+
+    await tester.tap(find.byType(Checkbox).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Use maximum amount'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Take profit'), findsNothing);
+    expect(amountFieldValue(tester), '100');
   });
 
   testWidgets('zero rate does not save children', (tester) async {

@@ -185,7 +185,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 ),
               if (txs.isNotEmpty) _buildForm(),
               if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
-              if (txs.isEmpty) Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              if (txs.isEmpty)
+                Center(
+                  child: Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                ),
               Padding(
                 padding: EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Wrap(
@@ -249,10 +252,20 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final selectedTxs = txs.where((tx) => selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
     var fromAllocations = <String, Decimal>{};
     var toAllocations = <String, Decimal>{};
-    var totalProfit = Decimal.zero;
 
     if (_takeProfit) {
-      totalProfit = _calc.calculateBalanceProfit(selectedTxs) ?? Decimal.zero;
+      Decimal? profitRemaining = _fromAmount;
+      for (final tx in selectedTxs) {
+        if (profitRemaining == null) break;
+
+        final txProfit = Math.subtract(tx.balance, tx.rrAmount);
+        if (txProfit <= Decimal.zero) continue;
+
+        final sourceAmount = txProfit < profitRemaining ? txProfit : profitRemaining;
+        fromAllocations[tx.uuid] = sourceAmount;
+        profitRemaining = sourceAmount == profitRemaining ? null : Math.subtract(profitRemaining, sourceAmount);
+      }
+      toAllocations = _spreadByWeights(_toAmount, selectedTxs, fromAllocations);
     } else if (_useBalanceMode) {
       fromAllocations = _calc.spreadAmount(_fromAmount, selectedTxs);
       toAllocations = _calc.spreadAmount(_toAmount, selectedTxs);
@@ -266,10 +279,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       late final Decimal amount;
 
       if (_takeProfit) {
-        if (selected && tx.balance > tx.rrAmount) {
-          fromAmount = Math.subtract(tx.balance, tx.rrAmount);
-        }
-        amount = totalProfit > Decimal.zero ? Math.divide(Math.multiply(_toAmount, fromAmount), totalProfit) : Decimal.zero;
+        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
+        amount = toAllocations[tx.uuid] ?? Decimal.zero;
       } else if (_useBalanceMode) {
         fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
         amount = toAllocations[tx.uuid] ?? Decimal.zero;
@@ -295,7 +306,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       });
     }
 
-    final rateText = WidgetsTextSelectable(rateableAmount ?? "");
     final checkboxTheme = Theme.of(context).checkboxTheme;
 
     return SizedBox(
@@ -346,7 +356,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                 DataCell(WidgetsTextSelectable(r['date'] ?? '')),
                 DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
                 DataCell(WidgetsTextSelectable(r['selected'] == true ? r['balance'] ?? '' : '')),
-                if (showRate) DataCell(rateText),
+                if (showRate) DataCell(WidgetsTextSelectable(r['selected'] == true ? rateableAmount ?? "" : '')),
                 if (showRate || showAmount)
                   DataCell(
                     WidgetsTextSelectable(
@@ -533,9 +543,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         ? WidgetsFieldsAmount(
             title: 'Amount',
             helperText: 'e.g., 10.5',
-            enabled: !_isProcessing && !_takeProfit,
+            enabled: !_isProcessing,
             suffixText: _selectedSymbol,
-            useMax: _sourceAmount,
+            useMax: _takeProfit && !_isProcessing ? _selectedProfit() : _sourceAmount,
             controller: fromController,
             disposeController: false,
             onChanged: (value) {
@@ -680,6 +690,37 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     _fromAmount = profit;
   }
 
+  Decimal _selectedProfit() {
+    return _calc.calculateBalanceProfit(_getSelectedTransactions()) ?? Decimal.zero;
+  }
+
+  Map<String, Decimal> _spreadByWeights(Decimal amount, List<TransactionsModel> transactions, Map<String, Decimal> weights) {
+    final totalWeight = weights.values.fold<Decimal>(Decimal.zero, Math.add);
+    if (totalWeight <= Decimal.zero) {
+      return {for (final tx in transactions) tx.uuid: Decimal.zero};
+    }
+
+    final lastPositive = transactions.lastIndexWhere((tx) => (weights[tx.uuid] ?? Decimal.zero) > Decimal.zero);
+    final allocations = <String, Decimal>{};
+    var allocated = Decimal.zero;
+    final unitAmount = Math.divide(amount, totalWeight);
+
+    for (var index = 0; index < transactions.length; index++) {
+      final tx = transactions[index];
+      final weight = weights[tx.uuid] ?? Decimal.zero;
+      if (weight <= Decimal.zero) {
+        allocations[tx.uuid] = Decimal.zero;
+        continue;
+      }
+
+      final allocation = index == lastPositive ? Math.subtract(amount, allocated) : Math.multiply(unitAmount, weight);
+      allocations[tx.uuid] = allocation;
+      allocated = Math.add(allocated, allocation);
+    }
+
+    return allocations;
+  }
+
   List<TransactionsModel> _getSelectedTransactions() {
     final stxs = [...txs];
 
@@ -732,20 +773,20 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     final stxs = _getSelectedTransactions();
     Decimal rate = Decimal.zero;
-    final totalProfit = _toAmount;
-    Decimal totalSourceProfit = Decimal.zero;
+    Decimal profitPool = Decimal.zero;
     Map<String, Decimal> fromAllocations = {};
     Map<String, Decimal> toAllocations = {};
 
     if (stxs.isEmpty) return;
 
     if (_takeProfit) {
-      final profit = _calc.calculateBalanceProfit(stxs);
-      if (totalProfit <= Decimal.zero || profit == null) return;
-      totalSourceProfit = profit;
+      final maxAllowedProfit = _calc.calculateBalanceProfit(stxs) ?? Decimal.zero;
+      if (_toAmount <= Decimal.zero || _fromAmount <= Decimal.zero || _fromAmount > maxAllowedProfit) return;
+
+      profitPool = _fromAmount;
     } else if (_useBalanceMode) {
-      if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero) return;
-      if (_fromAmount > _calc.totalActiveBalance(stxs)) return;
+      if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero || _fromAmount > _calc.totalActiveBalance(stxs)) return;
+
       fromAllocations = _calc.spreadAmount(_fromAmount, stxs);
       toAllocations = _calc.spreadAmount(_toAmount, stxs);
     } else {
@@ -760,14 +801,19 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     bool completed = true;
 
     for (final tx in stxs) {
-      if (_takeProfit && tx.balance <= tx.rrAmount) continue;
-
       Decimal sourceAmount;
       Decimal amount;
 
       if (_takeProfit) {
-        sourceAmount = Math.subtract(tx.balance, tx.rrAmount);
-        amount = Math.divide(Math.multiply(totalProfit, sourceAmount), totalSourceProfit);
+        if (profitPool <= Decimal.zero) break;
+
+        final txProfit = Math.subtract(tx.balance, tx.rrAmount);
+
+        if (txProfit <= Decimal.zero) continue;
+
+        sourceAmount = txProfit < profitPool ? txProfit : profitPool;
+        amount = Math.divide(Math.multiply(_toAmount, sourceAmount), _fromAmount);
+        profitPool = Math.subtract(profitPool, sourceAmount);
       } else if (_useBalanceMode) {
         sourceAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
         amount = toAllocations[tx.uuid] ?? Decimal.zero;
@@ -824,8 +870,15 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     }
 
     if (txs.isNotEmpty) {
+      _formKey.currentState?.reset();
+
       setState(() {
         _isProcessing = false;
+        _sourceAmount = _selectedBalance();
+
+        if (_selectedProfit() <= Decimal.zero) {
+          _takeProfit = false;
+        }
       });
     }
   }
