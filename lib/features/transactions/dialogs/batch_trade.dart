@@ -246,27 +246,49 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     final bool showRate = !_useBalanceMode && rate > Decimal.zero && targetSymbol.isNotEmpty;
     final bool showAmount = _useBalanceMode && targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
-    final Decimal customFrom = _fromAmount;
-    final Decimal customTo = _toAmount;
     final selectedTxs = txs.where((tx) => selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
-    final fromAllocations = _calc.spreadAmount(customFrom, selectedTxs);
-    final toAllocations = _calc.spreadAmount(customTo, selectedTxs);
+    var fromAllocations = <String, Decimal>{};
+    var toAllocations = <String, Decimal>{};
+    var totalProfit = Decimal.zero;
+
+    if (_takeProfit) {
+      totalProfit = _calc.calculateBalanceProfit(selectedTxs) ?? Decimal.zero;
+    } else if (_useBalanceMode) {
+      fromAllocations = _calc.spreadAmount(_fromAmount, selectedTxs);
+      toAllocations = _calc.spreadAmount(_toAmount, selectedTxs);
+    }
 
     for (final tx in txs) {
       final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
       final bool selected = selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial);
-      final Decimal fromAmount = _useBalanceMode ? fromAllocations[tx.uuid] ?? Decimal.zero : Decimal.zero;
-      final Decimal amount = _useBalanceMode ? toAllocations[tx.uuid] ?? Decimal.zero : Math.multiply(tx.rrAmount, rate);
+      Decimal fromAmount = Decimal.zero;
+      late final Decimal amount;
+
+      if (_takeProfit) {
+        if (selected && tx.balance > tx.rrAmount) {
+          fromAmount = Math.subtract(tx.balance, tx.rrAmount);
+        }
+        amount = totalProfit > Decimal.zero ? Math.divide(Math.multiply(_toAmount, fromAmount), totalProfit) : Decimal.zero;
+      } else if (_useBalanceMode) {
+        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
+        amount = toAllocations[tx.uuid] ?? Decimal.zero;
+      } else {
+        amount = Math.multiply(tx.rrAmount, rate);
+      }
 
       rows.add({
         'date': tx.timestampAsFormattedDate,
         'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
         'balance': showAmount
-            ? '${Utils.formatSmartDecimal(fromAmount, smartDecimal: false, maxDecimals: 18)} $resultSymbol'
-            : '${tx.balanceTextRaw} $resultSymbol',
+            ? fromAmount > Decimal.zero
+                  ? '${Utils.formatSmartDecimal(fromAmount, smartDecimal: false, maxDecimals: 18)} $resultSymbol'
+                  : ''
+            : tx.balance > Decimal.zero
+            ? '${tx.balanceTextRaw} $resultSymbol'
+            : '',
         'rate': rateableAmount,
-        'amount': amount,
+        'amount': amount > Decimal.zero ? amount : null,
         'selected': selected,
         'tx': tx,
         'uuid': tx.uuid,
@@ -314,6 +336,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                   ? (v) {
                       setState(() {
                         selectableSetSelected(r['uuid'], v!);
+                        _updateProfit();
                         _updateResult(rateableAmount);
                         _buildResultAmountField();
                       });
@@ -322,12 +345,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               cells: [
                 DataCell(WidgetsTextSelectable(r['date'] ?? '')),
                 DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
+                DataCell(WidgetsTextSelectable(r['selected'] == true ? r['balance'] ?? '' : '')),
                 if (showRate) DataCell(rateText),
                 if (showRate || showAmount)
                   DataCell(
                     WidgetsTextSelectable(
-                      r['selected'] == true && targetSymbol.isNotEmpty
+                      r['selected'] == true && targetSymbol.isNotEmpty && r['amount'] != null
                           ? '${Utils.formatSmartDecimal(r['amount'] ?? Decimal.zero, smartDecimal: false)} $targetSymbol'
                           : '',
                     ),
@@ -643,16 +666,18 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   void _useProfit(bool? enabled) {
     if (enabled == null) return;
 
-    final profit = enabled ? _calc.calculateBalanceProfit(_getSelectedTransactions()) : null;
-    if (enabled && profit == null) return;
+    setState(() => _updateProfit(enabled: enabled));
+  }
 
-    setState(() {
-      _takeProfit = enabled;
-      if (profit != null) {
-        fromController.text = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18);
-        _fromAmount = profit;
-      }
-    });
+  void _updateProfit({bool? enabled}) {
+    final shouldTakeProfit = enabled ?? _takeProfit;
+    final profit = shouldTakeProfit ? _calc.calculateBalanceProfit(_getSelectedTransactions()) : null;
+
+    _takeProfit = shouldTakeProfit && profit != null;
+    if (profit == null) return;
+
+    fromController.text = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18);
+    _fromAmount = profit;
   }
 
   List<TransactionsModel> _getSelectedTransactions() {
