@@ -41,6 +41,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   String? _noteEntry;
 
   bool _isProcessing = false;
+  bool _isExiting = false;
 
   Timer? _debounce;
 
@@ -87,62 +88,64 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
       child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 16,
-            children: [
-              if (txs.isNotEmpty) Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-
-              if (txs.isNotEmpty) _buildForm(),
-              if (txs.isNotEmpty) _buildTable(),
-              if (txs.isEmpty) Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-              Padding(
-                padding: EdgeInsets.only(top: 15.0, bottom: 5),
-                child: Wrap(
-                  direction: Axis.horizontal,
-                  runSpacing: 20,
-                  spacing: 10,
-                  runAlignment: WrapAlignment.center,
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+          child: _isExiting
+              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 16, children: [Text("Action editing completed")])
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 16,
                   children: [
-                    WidgetsButtonsAction(
-                      label: (txs.isNotEmpty) ? 'Cancel' : 'Close',
-                      onPressed: (_) => Navigator.pop(context),
-                      evaluator: (s) {
-                        _isProcessing ? s.disable() : s.normal();
-                      },
-                    ),
-                    if (txs.isNotEmpty)
-                      WidgetsDialogsAlert(
-                        label: "Update",
-                        padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                        filledMode: true,
-                        dialogTitle: "Update Confirmation",
-                        dialogMessage: "This action is irreversible and  will override any existing note and accents",
-                        dialogCancelLabel: "Cancel",
-                        dialogConfirmLabel: "Update",
-                        showMessage: false,
-                        initialState: WidgetsButtonActionState.action,
-                        tooltip: "Update all selected transactions",
-                        evaluator: (s) {
-                          if (_isProcessing) {
-                            s.progress();
-                            return;
-                          }
-                          if (selectableHasSelectedRows()) {
-                            s.action();
-                          } else {
-                            s.disable();
-                          }
-                        },
-                        actionCompleteCallback: _handleSave,
+                    if (txs.isNotEmpty) Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+
+                    if (txs.isNotEmpty) _buildForm(),
+                    if (txs.isNotEmpty) _buildTable(),
+                    if (txs.isEmpty) Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                    Padding(
+                      padding: EdgeInsets.only(top: 15.0, bottom: 5),
+                      child: Wrap(
+                        direction: Axis.horizontal,
+                        runSpacing: 20,
+                        spacing: 10,
+                        runAlignment: WrapAlignment.center,
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          WidgetsButtonsAction(
+                            label: (txs.isNotEmpty) ? 'Cancel' : 'Close',
+                            onPressed: (_) => Navigator.pop(context),
+                            evaluator: (s) {
+                              _isProcessing ? s.disable() : s.normal();
+                            },
+                          ),
+                          if (txs.isNotEmpty)
+                            WidgetsDialogsAlert(
+                              label: "Update",
+                              padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                              filledMode: true,
+                              dialogTitle: "Update Confirmation",
+                              dialogMessage: "This action is irreversible and  will override any existing note and accents",
+                              dialogCancelLabel: "Cancel",
+                              dialogConfirmLabel: "Update",
+                              showMessage: false,
+                              initialState: WidgetsButtonActionState.action,
+                              tooltip: "Update all selected transactions",
+                              evaluator: (s) {
+                                if (_isProcessing) {
+                                  s.progress();
+                                  return;
+                                }
+                                if (selectableHasSelectedRows()) {
+                                  s.action();
+                                } else {
+                                  s.disable();
+                                }
+                              },
+                              actionCompleteCallback: _handleSave,
+                            ),
+                        ],
                       ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -308,6 +311,9 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     if (completed) {
       if (txs.isEmpty) {
         widget.onSave?.call(null);
+        setState(() {
+          _isExiting = true;
+        });
       } else {
         widgetsNotifySuccess("Updating transactions completed successfully.");
       }
