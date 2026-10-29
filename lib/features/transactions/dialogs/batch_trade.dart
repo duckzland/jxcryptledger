@@ -59,6 +59,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Decimal _fromAmount = Decimal.zero;
   Decimal _toAmount = Decimal.zero;
+  bool _takeProfit = false;
 
   Color? _accentColor;
   String? _noteEntry;
@@ -341,12 +342,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildTotal() {
     final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-    final Decimal source = _useBalanceMode ? _fromAmount : _sourceAmount;
-    final Decimal resultValue = _useBalanceMode ? _toAmount : Math.multiply(source, rate);
+
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
     final bool showRate = !_useBalanceMode && rate > Decimal.zero && targetSymbol.isNotEmpty;
     final bool showAmount = _useBalanceMode && targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
+
+    final Decimal source = showAmount && _fromAmount > Decimal.zero ? _fromAmount : _sourceAmount;
+    final Decimal resultValue = _useBalanceMode ? _toAmount : Math.multiply(source, rate);
 
     return SizedBox(
       width: double.infinity,
@@ -382,6 +385,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     if (_formKey.currentState != null) {
       hasError = !_formKey.currentState!.validate();
     }
+
     return Form(
       key: _formKey,
       child: LayoutBuilder(
@@ -392,18 +396,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               children: [
                 SizedBox(
                   width: double.infinity,
-                  height: hasError ? 108 : 90,
+                  height: hasError ? 110 : 92,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: WidgetsHeader(
-                          subtitle: "From:",
-                          subtitleFontSize: 13,
-                          spacing: 10,
-                          child: _useBalanceMode ? _buildCustomFromAmountField() : _buildFromAmountField(),
-                        ),
-                      ),
+                      Expanded(child: WidgetsHeader(spacing: 10, children: [_buildFromTitleField(), _buildFromAmountField()])),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40),
                         child: Icon(_useBalanceMode ? Icons.arrow_forward : Icons.clear, size: 24),
@@ -413,7 +410,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                           subtitle: "To:",
                           subtitleFontSize: 13,
                           spacing: 10,
-                          child: _useBalanceMode ? _buildCustomToAmountField() : _buildRatesAmountField(),
+                          child: _useBalanceMode ? _buildToAmountField() : _buildRatesAmountField(),
                         ),
                       ),
                       Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
@@ -449,14 +446,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               children: [
                 Row(
                   children: [
-                    Expanded(
-                      child: WidgetsHeader(
-                        subtitle: "From:",
-                        subtitleFontSize: 13,
-                        spacing: 10,
-                        child: _useBalanceMode ? _buildCustomFromAmountField() : _buildFromAmountField(),
-                      ),
-                    ),
+                    Expanded(child: WidgetsHeader(spacing: 10, children: [_buildFromTitleField(), _buildFromAmountField()])),
                   ],
                 ),
                 Row(
@@ -466,7 +456,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                         subtitle: "To:",
                         subtitleFontSize: 13,
                         spacing: 10,
-                        child: _useBalanceMode ? _buildCustomToAmountField() : _buildRatesAmountField(),
+                        child: _useBalanceMode ? _buildToAmountField() : _buildRatesAmountField(),
                       ),
                     ),
                   ],
@@ -491,40 +481,62 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return WidgetsHeader(subtitle: "Notes:", subtitleFontSize: 13, spacing: 10, child: _buildNotesField());
   }
 
+  Widget _buildFromTitleField() {
+    final bool canTakeProfit = _useBalanceMode && _calc.calculateBalanceProfit(_getSelectedTransactions()) != null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        Spacer(),
+        if (canTakeProfit) ...[
+          SizedBox(
+            height: 20,
+            child: Checkbox(
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              value: _takeProfit,
+              onChanged: _isProcessing ? null : _useProfit,
+            ),
+          ),
+          Text("Take profit"),
+        ],
+      ],
+    );
+  }
+
   Widget _buildFromAmountField() {
-    return TextField(
-      contextMenuBuilder: (context, editableTextState) {
-        return WidgetsContextMenu(
-          anchor: editableTextState.contextMenuAnchors.primaryAnchor,
-          buttonItems: editableTextState.contextMenuButtonItems,
-        );
-      },
-      controller: TextEditingController(
-        text: selectableHasSelectedRows()
-            ? "${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol"
-            : "No transaction selected",
-      ),
-      readOnly: true,
-      style: TextStyle(fontSize: 16),
-    );
+    return _useBalanceMode
+        ? WidgetsFieldsAmount(
+            title: 'Amount',
+            helperText: 'e.g., 10.5',
+            enabled: !_isProcessing && !_takeProfit,
+            suffixText: _selectedSymbol,
+            useMax: _sourceAmount,
+            controller: fromController,
+            disposeController: false,
+            onChanged: (value) {
+              setState(() => _fromAmount = Utils.parseDecimal(value));
+            },
+          )
+        : TextField(
+            contextMenuBuilder: (context, editableTextState) {
+              return WidgetsContextMenu(
+                anchor: editableTextState.contextMenuAnchors.primaryAnchor,
+                buttonItems: editableTextState.contextMenuButtonItems,
+              );
+            },
+            controller: TextEditingController(
+              text: selectableHasSelectedRows()
+                  ? "${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol"
+                  : "No transaction selected",
+            ),
+            readOnly: true,
+            style: TextStyle(fontSize: 16),
+          );
   }
 
-  Widget _buildCustomFromAmountField() {
-    return WidgetsFieldsAmount(
-      title: 'Amount',
-      helperText: 'e.g., 10.5',
-      enabled: !_isProcessing,
-      suffixText: _selectedSymbol,
-      useMax: _sourceAmount,
-      controller: fromController,
-      disposeController: false,
-      onChanged: (value) {
-        setState(() => _fromAmount = Utils.parseDecimal(value));
-      },
-    );
-  }
-
-  Widget _buildCustomToAmountField() {
+  Widget _buildToAmountField() {
     return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 10.5',
@@ -628,14 +640,36 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     );
   }
 
+  void _useProfit(bool? enabled) {
+    if (enabled == null) return;
+
+    final profit = enabled ? _calc.calculateBalanceProfit(_getSelectedTransactions()) : null;
+    if (enabled && profit == null) return;
+
+    setState(() {
+      _takeProfit = enabled;
+      if (profit != null) {
+        fromController.text = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18);
+        _fromAmount = profit;
+      }
+    });
+  }
+
+  List<TransactionsModel> _getSelectedTransactions() {
+    final stxs = [...txs];
+
+    final selectedTxIds = selectableGetSelectedRows();
+    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid) && (tx.isActive || tx.isPartial));
+
+    return stxs;
+  }
+
   void _updateSource() {
     _sourceAmount = _selectedBalance();
   }
 
   Decimal _selectedBalance() {
-    final selectedTxIds = selectableGetSelectedRows();
-    final selectedTxs = txs.where((tx) => selectedTxIds.contains(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
-    return _calc.totalActiveBalance(selectedTxs);
+    return _calc.totalActiveBalance(_getSelectedTransactions());
   }
 
   void _updateRate(String totalAmount) {
@@ -671,20 +705,28 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-    final Decimal customFrom = _fromAmount;
-    final Decimal customTo = _toAmount;
-    final stxs = [...txs];
+    final stxs = _getSelectedTransactions();
+    Decimal rate = Decimal.zero;
+    final totalProfit = _toAmount;
+    Decimal totalSourceProfit = Decimal.zero;
+    Map<String, Decimal> fromAllocations = {};
+    Map<String, Decimal> toAllocations = {};
 
-    final selectedTxIds = selectableGetSelectedRows();
-    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid) && (tx.isActive || tx.isPartial));
+    if (stxs.isEmpty) return;
 
-    if (stxs.isEmpty || (_useBalanceMode ? customFrom <= Decimal.zero || customTo <= Decimal.zero : rate <= Decimal.zero)) return;
-
-    final Decimal selectedBalance = _calc.totalActiveBalance(stxs);
-    if (_useBalanceMode && (selectedBalance <= Decimal.zero || customFrom > selectedBalance)) return;
-    final fromAllocations = _calc.spreadAmount(customFrom, stxs);
-    final toAllocations = _calc.spreadAmount(customTo, stxs);
+    if (_takeProfit) {
+      final profit = _calc.calculateBalanceProfit(stxs);
+      if (totalProfit <= Decimal.zero || profit == null) return;
+      totalSourceProfit = profit;
+    } else if (_useBalanceMode) {
+      if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero) return;
+      if (_fromAmount > _calc.totalActiveBalance(stxs)) return;
+      fromAllocations = _calc.spreadAmount(_fromAmount, stxs);
+      toAllocations = _calc.spreadAmount(_toAmount, stxs);
+    } else {
+      rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+      if (rate <= Decimal.zero) return;
+    }
 
     setState(() {
       _isProcessing = true;
@@ -693,8 +735,22 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     bool completed = true;
 
     for (final tx in stxs) {
-      final Decimal sourceAmount = _useBalanceMode ? fromAllocations[tx.uuid] ?? Decimal.zero : tx.balance;
-      final Decimal amount = _useBalanceMode ? toAllocations[tx.uuid] ?? Decimal.zero : Math.multiply(tx.balance, rate);
+      if (_takeProfit && tx.balance <= tx.rrAmount) continue;
+
+      Decimal sourceAmount;
+      Decimal amount;
+
+      if (_takeProfit) {
+        sourceAmount = Math.subtract(tx.balance, tx.rrAmount);
+        amount = Math.divide(Math.multiply(totalProfit, sourceAmount), totalSourceProfit);
+      } else if (_useBalanceMode) {
+        sourceAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
+        amount = toAllocations[tx.uuid] ?? Decimal.zero;
+      } else {
+        sourceAmount = tx.balance;
+        amount = Math.multiply(tx.balance, rate);
+      }
+
       final meta = Map<String, dynamic>.from(tx.meta);
 
       if (_noteEntry != null) {

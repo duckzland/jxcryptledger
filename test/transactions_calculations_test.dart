@@ -62,6 +62,19 @@ void main() {
   });
 
   group('balance and rate calculations', () {
+    test('calculateBalanceProfit sums profits from eligible transactions', () {
+      final txs = [_tx(id: 'a', rrAmount: '20', balance: '25'), _tx(id: 'b', rrAmount: '10', balance: '13')];
+
+      expect(calc.calculateBalanceProfit(txs), _d('8'));
+      expect(calc.calculateBalanceProfit([]), isNull);
+      expect(calc.calculateBalanceProfit([_tx(id: 'equal', rrAmount: '20', balance: '20')]), isNull);
+      expect(calc.calculateBalanceProfit([_tx(id: 'loss', rrAmount: '20', balance: '19')]), isNull);
+      expect(
+        calc.calculateBalanceProfit([_tx(id: 'profit', rrAmount: '20', balance: '22'), _tx(id: 'equal', rrAmount: '20', balance: '20')]),
+        _d('2'),
+      );
+    });
+
     test('cumulativeSourceValue prorates remaining balance and ignores zero result amounts', () {
       final txs = [
         _tx(id: 'partial', srAmount: '20', rrAmount: '40', balance: '10'),

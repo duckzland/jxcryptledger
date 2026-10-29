@@ -88,6 +88,13 @@ class TransactionCalculation {
     return txs.fold<Decimal>(Decimal.zero, (sum, tx) => Math.add(sum, (tx.isActive || tx.isPartial) ? tx.balance : Decimal.zero));
   }
 
+  Decimal? calculateBalanceProfit(List<TransactionsModel> txs) {
+    final profitableTxs = txs.where((tx) => tx.balance > tx.rrAmount);
+    if (profitableTxs.isEmpty) return null;
+
+    return profitableTxs.fold<Decimal>(Decimal.zero, (total, tx) => Math.add(total, Math.subtract(tx.balance, tx.rrAmount)));
+  }
+
   Decimal totalFinalizedBalance(List<TransactionsModel> txs) {
     return txs.fold<Decimal>(Decimal.zero, (sum, tx) => Math.add(sum, (tx.isFinalized) ? tx.balance : Decimal.zero));
   }
