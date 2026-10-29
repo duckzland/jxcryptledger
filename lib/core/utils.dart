@@ -138,6 +138,10 @@ class Utils {
     return fallback ?? Decimal.zero;
   }
 
+  static Decimal sanitizeFractalDecimal(Decimal value, {int maxDecimals = 18}) {
+    return parseDecimal(formatSmartDecimal(value, smartDecimal: false, maxDecimals: maxDecimals));
+  }
+
   static int dateToTimestamp(DateTime? date) {
     final now = DateTime.now();
     final base = date ?? now;

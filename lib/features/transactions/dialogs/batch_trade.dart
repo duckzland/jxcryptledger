@@ -546,9 +546,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             enabled: !_isProcessing,
             suffixText: _selectedSymbol,
             useMax: _takeProfit && !_isProcessing
-                ? Utils.parseDecimal(
-                    Utils.formatSmartDecimal(_selectedProfit(), smartDecimal: false, maxDecimals: 18).replaceAll(',', ''),
-                  )
+                ? Utils.parseDecimal(Utils.formatSmartDecimal(_selectedProfit(), smartDecimal: false, maxDecimals: 18).replaceAll(',', ''))
                 : _sourceAmount,
             controller: fromController,
             disposeController: false,
@@ -770,23 +768,27 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final Decimal entryRate = rateableParseToDecimal(rateText ?? "", reverse: _isReversed);
     final Decimal resultValue = Math.multiply(_sourceAmount, entryRate);
 
-    resultController.text = resultValue <= Decimal.zero ? "" : Utils.formatSmartDecimal(resultValue, smartDecimal: false);
+    resultController.text = resultValue <= Decimal.zero ? "" : Utils.formatSmartDecimal(resultValue, smartDecimal: false, maxDecimals: 18);
   }
 
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
     final stxs = _getSelectedTransactions();
+
+    if (stxs.isEmpty) return;
+
     Decimal rate = Decimal.zero;
     Decimal profitPool = Decimal.zero;
     Map<String, Decimal> fromAllocations = {};
     Map<String, Decimal> toAllocations = {};
 
-    if (stxs.isEmpty) return;
-
     if (_takeProfit) {
-      final maxAllowedProfit = _calc.calculateBalanceProfit(stxs) ?? Decimal.zero;
-      if (_toAmount <= Decimal.zero || _fromAmount <= Decimal.zero || _fromAmount > maxAllowedProfit) return;
+      if (_toAmount <= Decimal.zero ||
+          _fromAmount <= Decimal.zero ||
+          _fromAmount > Utils.sanitizeFractalDecimal(_calc.calculateBalanceProfit(stxs) ?? Decimal.zero)) {
+        return;
+      }
 
       profitPool = _fromAmount;
     } else if (_useBalanceMode) {
@@ -808,6 +810,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     for (final tx in stxs) {
       Decimal sourceAmount;
       Decimal amount;
+      Decimal tempPoolValue = Decimal.zero;
 
       if (_takeProfit) {
         if (profitPool <= Decimal.zero) break;
@@ -818,7 +821,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
         sourceAmount = txProfit < profitPool ? txProfit : profitPool;
         amount = Math.divide(Math.multiply(_toAmount, sourceAmount), _fromAmount);
-        profitPool = Math.subtract(profitPool, sourceAmount);
+
+        tempPoolValue = Utils.sanitizeFractalDecimal(Math.subtract(profitPool, sourceAmount));
       } else if (_useBalanceMode) {
         sourceAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
         amount = toAllocations[tx.uuid] ?? Decimal.zero;
@@ -863,6 +867,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         completed = false;
         widget.onSave?.call(e);
         break;
+      }
+
+      // Post process after transactions success
+      if (_takeProfit) {
+        if (tempPoolValue > Decimal.zero) {
+          profitPool = tempPoolValue;
+        }
       }
     }
 
