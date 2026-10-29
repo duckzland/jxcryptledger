@@ -43,10 +43,12 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   late String confirmTitle;
   late String confirmMessage;
   late String successMessage;
+  late String completedMessage;
 
   late WidgetsButtonActionState buttonActionState;
 
   bool _isProcessing = false;
+  bool _isExiting = false;
 
   @override
   double get tableHeightOffset => 130;
@@ -69,6 +71,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         confirmTitle = "Close Transactions";
         confirmMessage = "Are you sure you want to close the selected transactions?\nThis action cannot be undone.";
         successMessage = "Transactions closed successfully.";
+        completedMessage = "Action closing transactions completed";
         tooltip = "Close all selected transactions";
         buttonActionState = WidgetsButtonActionState.warning;
         break;
@@ -81,6 +84,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         confirmTitle = "Finalize Transactions";
         confirmMessage = "Are you sure you want to finalize the selected transactions?\nThis action cannot be undone.";
         successMessage = "Transactions finalized successfully.";
+        completedMessage = "Action finalizing transactions completed";
         tooltip = "Finalize all selected transactions";
         buttonActionState = WidgetsButtonActionState.warning;
         break;
@@ -93,6 +97,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         confirmTitle = "Delete Transactions";
         confirmMessage = "Are you sure you want to delete the selected transactions?\nThis action cannot be undone.";
         successMessage = "Transactions deleted successfully.";
+        completedMessage = "Action deleting transactions completed";
         tooltip = "Delete all selected transactions";
         buttonActionState = WidgetsButtonActionState.error;
         break;
@@ -105,6 +110,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         confirmTitle = "Refund Transactions";
         confirmMessage = "Are you sure you want to refund the selected transactions?\nThis action cannot be undone.";
         successMessage = "Transactions refunded successfully.";
+        completedMessage = "Action refunding transactions completed";
         tooltip = "Refund all selected transactions";
         buttonActionState = WidgetsButtonActionState.error;
         break;
@@ -123,75 +129,77 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 20,
-            children: [
-              if (txs.isNotEmpty) Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-              if (txs.isNotEmpty) _buildTable(),
-
-              if (txs.isEmpty) Text(emptyMessage, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-
-              Padding(
-                padding: EdgeInsets.only(top: 15.0, bottom: 5),
-                child: Wrap(
-                  direction: Axis.horizontal,
-                  runSpacing: 20,
-                  spacing: 10,
-                  runAlignment: WrapAlignment.center,
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+          child: _isExiting
+              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 16, children: [Text(completedMessage)])
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 20,
                   children: [
-                    WidgetsButtonsAction(
-                      label: 'Cancel',
-                      onPressed: (_) => Navigator.pop(context),
-                      evaluator: (s) {
-                        _isProcessing ? s.disable() : s.normal();
-                      },
-                    ),
-                    if (txs.isNotEmpty)
-                      WidgetsDialogsAlert(
-                        label: buttonLabel,
-                        padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                        filledMode: true,
-                        dialogTitle: confirmTitle,
-                        dialogMessage: confirmMessage,
-                        dialogCancelLabel: "Cancel",
-                        dialogConfirmLabel: buttonLabel,
-                        showMessage: false,
-                        initialState: buttonActionState,
-                        tooltip: tooltip,
-                        evaluator: (s) {
-                          if (_isProcessing) {
-                            s.progress();
-                            return;
-                          }
-                          if (selectableHasSelectedRows()) {
-                            switch (widget.mode) {
-                              case TransactionsBatchActionMode.close:
-                                s.warning();
-                                break;
-                              case TransactionsBatchActionMode.finalize:
-                                s.warning();
-                                break;
-                              case TransactionsBatchActionMode.delete:
-                                s.error();
-                                break;
-                              case TransactionsBatchActionMode.refund:
-                                s.error();
-                                break;
-                            }
-                          } else {
-                            s.disable();
-                          }
-                        },
-                        actionCompleteCallback: _handleSave,
+                    if (txs.isNotEmpty) Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                    if (txs.isNotEmpty) _buildTable(),
+
+                    if (txs.isEmpty) Text(emptyMessage, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+
+                    Padding(
+                      padding: EdgeInsets.only(top: 15.0, bottom: 5),
+                      child: Wrap(
+                        direction: Axis.horizontal,
+                        runSpacing: 20,
+                        spacing: 10,
+                        runAlignment: WrapAlignment.center,
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          WidgetsButtonsAction(
+                            label: 'Cancel',
+                            onPressed: (_) => Navigator.pop(context),
+                            evaluator: (s) {
+                              _isProcessing ? s.disable() : s.normal();
+                            },
+                          ),
+                          if (txs.isNotEmpty)
+                            WidgetsDialogsAlert(
+                              label: buttonLabel,
+                              padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                              filledMode: true,
+                              dialogTitle: confirmTitle,
+                              dialogMessage: confirmMessage,
+                              dialogCancelLabel: "Cancel",
+                              dialogConfirmLabel: buttonLabel,
+                              showMessage: false,
+                              initialState: buttonActionState,
+                              tooltip: tooltip,
+                              evaluator: (s) {
+                                if (_isProcessing) {
+                                  s.progress();
+                                  return;
+                                }
+                                if (selectableHasSelectedRows()) {
+                                  switch (widget.mode) {
+                                    case TransactionsBatchActionMode.close:
+                                      s.warning();
+                                      break;
+                                    case TransactionsBatchActionMode.finalize:
+                                      s.warning();
+                                      break;
+                                    case TransactionsBatchActionMode.delete:
+                                      s.error();
+                                      break;
+                                    case TransactionsBatchActionMode.refund:
+                                      s.error();
+                                      break;
+                                  }
+                                } else {
+                                  s.disable();
+                                }
+                              },
+                              actionCompleteCallback: _handleSave,
+                            ),
+                        ],
                       ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -299,8 +307,13 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
     }
 
     if (completed) {
-      if (txs.isEmpty && widget.onSave != null) {
-        widget.onSave?.call(null);
+      if (txs.isEmpty) {
+        if (widget.onSave != null) {
+          widget.onSave?.call(null);
+        }
+        setState(() {
+          _isExiting = true;
+        });
       } else {
         widgetsNotifySuccess(successMessage);
       }

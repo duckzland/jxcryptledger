@@ -68,6 +68,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   bool _showNotes = false;
   bool _useBalanceMode = false;
   bool _isProcessing = false;
+  bool _isExiting = false;
 
   Timer? _debounce;
 
@@ -121,121 +122,123 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 16,
-            children: [
-              if (txs.isNotEmpty)
-                Row(
-                  spacing: 6,
+          child: _isExiting
+              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 16, children: [Text("Trade completed")])
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 16,
                   children: [
-                    Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                    Spacer(),
-                    WidgetsButtonsAction(
-                      icon: Icons.account_balance_wallet_outlined,
-                      iconSize: 14,
-                      padding: EdgeInsets.all(10),
-                      minimumSize: Size(40, 40),
-                      tooltip: _useBalanceMode ? "Show rate mode" : "Show custom balance",
-                      onPressed: (s) {
-                        setState(() {
-                          _useBalanceMode = !_useBalanceMode;
-                          if (_useBalanceMode && fromController.text.isEmpty) {
-                            fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
-                            _fromAmount = _sourceAmount;
-                          }
-                        });
-
-                        if (_useBalanceMode) {
-                          s.action();
-                        } else {
-                          s.normal();
-                        }
-                      },
-                      evaluator: (s) => _isProcessing
-                          ? s.disable()
-                          : _useBalanceMode
-                          ? s.action()
-                          : s.normal(),
-                    ),
-                    WidgetsButtonsAction(
-                      icon: Icons.note_add,
-                      iconSize: 14,
-                      padding: EdgeInsets.all(10),
-                      minimumSize: Size(40, 40),
-                      tooltip: _showNotes ? "Hide notes" : "Show Notes",
-                      onPressed: (s) {
-                        setState(() {
-                          _showNotes = !_showNotes;
-                        });
-
-                        if (_showNotes) {
-                          s.action();
-                        } else {
-                          s.normal();
-                        }
-                      },
-                      evaluator: (s) => _isProcessing
-                          ? s.disable()
-                          : _showNotes
-                          ? s.action()
-                          : s.normal(),
-                    ),
-                  ],
-                ),
-              if (txs.isNotEmpty) _buildForm(),
-              if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
-              if (txs.isEmpty)
-                Center(
-                  child: Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                ),
-              Padding(
-                padding: EdgeInsets.only(top: 15.0, bottom: 5),
-                child: Wrap(
-                  direction: Axis.horizontal,
-                  runSpacing: 20,
-                  spacing: 10,
-                  runAlignment: WrapAlignment.center,
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    WidgetsButtonsAction(
-                      label: (txs.isNotEmpty) ? 'Cancel' : 'Close',
-                      onPressed: (_) => Navigator.pop(context),
-                      evaluator: (s) {
-                        _isProcessing ? s.disable() : s.normal();
-                      },
-                    ),
                     if (txs.isNotEmpty)
-                      WidgetsDialogsAlert(
-                        label: "Trade",
-                        padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                        filledMode: true,
-                        dialogTitle: "Trade Confirmation",
-                        dialogMessage: "This action cannot be undone.",
-                        dialogCancelLabel: "Cancel",
-                        dialogConfirmLabel: "Trade",
-                        showMessage: false,
-                        initialState: WidgetsButtonActionState.action,
-                        tooltip: "Trade all selected transactions",
-                        evaluator: (s) {
-                          if (_isProcessing) {
-                            s.progress();
-                            return;
-                          }
-                          if (selectableHasSelectedRows()) {
-                            s.action();
-                          } else {
-                            s.disable();
-                          }
-                        },
-                        actionCompleteCallback: _handleSave,
+                      Row(
+                        spacing: 6,
+                        children: [
+                          Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                          Spacer(),
+                          WidgetsButtonsAction(
+                            icon: Icons.account_balance_wallet_outlined,
+                            iconSize: 14,
+                            padding: EdgeInsets.all(10),
+                            minimumSize: Size(40, 40),
+                            tooltip: _useBalanceMode ? "Show rate mode" : "Show custom balance",
+                            onPressed: (s) {
+                              setState(() {
+                                _useBalanceMode = !_useBalanceMode;
+                                if (_useBalanceMode && fromController.text.isEmpty) {
+                                  fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
+                                  _fromAmount = Utils.sanitizeFractalDecimal(_sourceAmount);
+                                }
+                              });
+
+                              if (_useBalanceMode) {
+                                s.action();
+                              } else {
+                                s.normal();
+                              }
+                            },
+                            evaluator: (s) => _isProcessing
+                                ? s.disable()
+                                : _useBalanceMode
+                                ? s.action()
+                                : s.normal(),
+                          ),
+                          WidgetsButtonsAction(
+                            icon: Icons.note_add,
+                            iconSize: 14,
+                            padding: EdgeInsets.all(10),
+                            minimumSize: Size(40, 40),
+                            tooltip: _showNotes ? "Hide notes" : "Show Notes",
+                            onPressed: (s) {
+                              setState(() {
+                                _showNotes = !_showNotes;
+                              });
+
+                              if (_showNotes) {
+                                s.action();
+                              } else {
+                                s.normal();
+                              }
+                            },
+                            evaluator: (s) => _isProcessing
+                                ? s.disable()
+                                : _showNotes
+                                ? s.action()
+                                : s.normal(),
+                          ),
+                        ],
                       ),
+                    if (txs.isNotEmpty) _buildForm(),
+                    if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
+                    if (txs.isEmpty)
+                      Center(
+                        child: Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                      ),
+                    Padding(
+                      padding: EdgeInsets.only(top: 15.0, bottom: 5),
+                      child: Wrap(
+                        direction: Axis.horizontal,
+                        runSpacing: 20,
+                        spacing: 10,
+                        runAlignment: WrapAlignment.center,
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          WidgetsButtonsAction(
+                            label: (txs.isNotEmpty) ? 'Cancel' : 'Close',
+                            onPressed: (_) => Navigator.pop(context),
+                            evaluator: (s) {
+                              _isProcessing ? s.disable() : s.normal();
+                            },
+                          ),
+                          if (txs.isNotEmpty)
+                            WidgetsDialogsAlert(
+                              label: "Trade",
+                              padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                              filledMode: true,
+                              dialogTitle: "Trade Confirmation",
+                              dialogMessage: "This action cannot be undone.",
+                              dialogCancelLabel: "Cancel",
+                              dialogConfirmLabel: "Trade",
+                              showMessage: false,
+                              initialState: WidgetsButtonActionState.action,
+                              tooltip: "Trade all selected transactions",
+                              evaluator: (s) {
+                                if (_isProcessing) {
+                                  s.progress();
+                                  return;
+                                }
+                                if (selectableHasSelectedRows()) {
+                                  s.action();
+                                } else {
+                                  s.disable();
+                                }
+                              },
+                              actionCompleteCallback: _handleSave,
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -545,9 +548,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             helperText: 'e.g., 10.5',
             enabled: !_isProcessing,
             suffixText: _selectedSymbol,
-            useMax: _takeProfit && !_isProcessing
-                ? Utils.parseDecimal(Utils.formatSmartDecimal(_selectedProfit(), smartDecimal: false, maxDecimals: 18).replaceAll(',', ''))
-                : _sourceAmount,
+            useMax: Utils.sanitizeFractalDecimal(
+              _takeProfit && !_isProcessing
+                  ? Utils.parseDecimal(
+                      Utils.formatSmartDecimal(_selectedProfit(), smartDecimal: false, maxDecimals: 18).replaceAll(',', ''),
+                    )
+                  : _sourceAmount,
+            ),
             controller: fromController,
             disposeController: false,
             onChanged: (value) {
@@ -878,6 +885,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     if (completed) {
       if (txs.isEmpty) {
         widget.onSave?.call(null);
+        setState(() {
+          _isExiting = true;
+        });
       } else {
         widgetsNotifySuccess("Trade completed successfully.");
       }
@@ -888,10 +898,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       setState(() {
         _isProcessing = false;
-        _sourceAmount = _selectedBalance();
+        _sourceAmount = Utils.sanitizeFractalDecimal(_selectedBalance());
 
         if (_selectedProfit() <= Decimal.zero) {
           _takeProfit = false;
+        }
+
+        if (_useBalanceMode && !_takeProfit) {
+          fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
         }
       });
     }
