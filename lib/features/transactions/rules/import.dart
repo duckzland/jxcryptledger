@@ -43,20 +43,6 @@ class TransactionsRulesImport {
       if (!tx.isRoot && !tx.isLeaf) {
         throw ValidationException(AppErrorCode.txImportInvalidRootStructure, "Invalid root structure for ${tx.tid}", "Import failed");
       }
-
-      if (tx.isLeaf) {
-        final parent = map[tx.pid]!;
-        if (tx.srId != parent.rrId) {
-          throw ValidationException(AppErrorCode.txImportSrIdMismatch, "srId mismatch for ${tx.tid}", "Import failed");
-        }
-        if (tx.srAmount > parent.rrAmount) {
-          throw ValidationException(
-            AppErrorCode.txImportSrAmountExceedsParent,
-            "srAmount exceeds parent rrAmount for ${tx.tid}",
-            "Import failed",
-          );
-        }
-      }
     }
 
     final children = <String, List<TransactionsModel>>{};
@@ -66,11 +52,32 @@ class TransactionsRulesImport {
       }
     }
 
+    final returnedBalances = _calculateReturnedBalances(txs, children, map);
+
+    for (final tx in txs) {
+      if (!tx.isLeaf) continue;
+
+      final parent = map[tx.pid]!;
+      if (tx.srId != parent.rrId) {
+        throw ValidationException(AppErrorCode.txImportSrIdMismatch, "srId mismatch for ${tx.tid}", "Import failed");
+      }
+
+      final available = Math.add(parent.rrAmount, returnedBalances[parent.tid] ?? Decimal.zero);
+      if (tx.srAmount > available) {
+        throw ValidationException(
+          AppErrorCode.txImportSrAmountExceedsParent,
+          "srAmount exceeds parent available amount for ${tx.tid}",
+          "Import failed",
+        );
+      }
+    }
+
     for (final tx in txs) {
       final list = children[tx.tid] ?? [];
       if (list.isNotEmpty) {
         final sum = list.fold<Decimal>(Decimal.zero, (a, b) => Math.add(a, b.srAmount));
-        if (sum > tx.rrAmount) {
+        final available = Math.add(tx.rrAmount, returnedBalances[tx.tid] ?? Decimal.zero);
+        if (sum > available) {
           throw ValidationException(
             AppErrorCode.txImportChildAmountSumExceeded,
             "Child srAmount sum exceeds parent rrAmount for ${tx.tid}",
@@ -142,5 +149,54 @@ class TransactionsRulesImport {
     }
 
     return txs;
+  }
+
+  Map<String, Decimal> _calculateReturnedBalances(
+    List<TransactionsModel> txs,
+    Map<String, List<TransactionsModel>> children,
+    Map<String, TransactionsModel> map,
+  ) {
+    int depthOf(TransactionsModel tx) {
+      var depth = 0;
+      var parent = map[tx.pid];
+      final visited = <String>{tx.tid};
+
+      while (parent != null && visited.add(parent.tid)) {
+        depth++;
+        if (parent.pid == '0') break;
+        parent = map[parent.pid];
+      }
+
+      return depth;
+    }
+
+    TransactionsModel? closeTarget(TransactionsModel tx) {
+      var parent = map[tx.pid];
+      while (parent != null) {
+        if (parent.rrId == tx.rrId) return parent;
+        if (parent.pid == '0') break;
+        parent = map[parent.pid];
+      }
+      return null;
+    }
+
+    final ordered = [...txs]..sort((a, b) => depthOf(b).compareTo(depthOf(a)));
+    final returnedBalances = <String, Decimal>{};
+
+    for (final tx in ordered) {
+      if (!tx.isClosed || (children[tx.tid]?.isNotEmpty ?? false)) continue;
+
+      final target = closeTarget(tx);
+      if (target == null) continue;
+
+      final spent = (children[tx.tid] ?? []).fold<Decimal>(Decimal.zero, (sum, child) => Math.add(sum, child.srAmount));
+      final available = Math.add(tx.rrAmount, returnedBalances[tx.tid] ?? Decimal.zero);
+      final returned = Math.subtract(available, spent);
+      if (returned > Decimal.zero) {
+        returnedBalances[target.tid] = Math.add(returnedBalances[target.tid] ?? Decimal.zero, returned);
+      }
+    }
+
+    return returnedBalances;
   }
 }
