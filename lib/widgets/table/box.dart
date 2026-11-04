@@ -19,14 +19,25 @@ class WidgetsTableBox extends RenderProxyBox {
     required this.topOffset,
     required this.minHeight,
     required this.background,
-  }) {
-    controller.addListener(_onScrollUpdate);
-  }
+  });
 
   double _offsetY = 0.0;
   RenderTable? _table;
   RenderBox? _header;
   Paint? bgPaint;
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    controller.addListener(_onScrollUpdate);
+    markNeedsLayout();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (attached) {
+        markNeedsLayout();
+        markNeedsPaint();
+      }
+    });
+  }
 
   @override
   void detach() {
@@ -128,9 +139,8 @@ class WidgetsTableBox extends RenderProxyBox {
 
     try {
       final double tableHeight = size.height;
-      final double currentScroll = controller.offset;
-      final double startY = (_header?.localToGlobal(Offset.zero).dy ?? 0.0) + currentScroll;
-      final double distancePastTop = currentScroll - startY + topOffset;
+      final double headerTop = _header!.localToGlobal(Offset.zero).dy;
+      final double distancePastTop = topOffset - headerTop;
       final double maxDistance = math.max(0.0, tableHeight - headerHeight - (rowHeight * 2));
       final double newOffsetY = distancePastTop.clamp(0.0, maxDistance);
 
