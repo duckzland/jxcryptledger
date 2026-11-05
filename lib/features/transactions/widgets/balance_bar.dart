@@ -26,6 +26,7 @@ class TransactionsWidgetsBalanceBar extends StatefulWidget {
 
 class _TransactionsWidgetsBalanceBarState extends State<TransactionsWidgetsBalanceBar> {
   late bool _showAmountUsed = widget.initialShowAmountUsed;
+  final Map<String, Decimal> _lastKnownRates = {};
 
   TransactionsController get txController => CoreLocator.getit<TransactionsController>();
   RatesController get rateController => CoreLocator.getit<RatesController>();
@@ -45,12 +46,11 @@ class _TransactionsWidgetsBalanceBarState extends State<TransactionsWidgetsBalan
     final textStyle = snackTheme.contentTextStyle?.copyWith(fontWeight: AppTheme.notifyFontWeight, fontSize: AppTheme.notifyFontSize);
 
     return ListenableBuilder(
-      listenable: Listenable.merge([rateController, widget.data]),
+      listenable: widget.data,
       builder: (context, _) {
         final txIds = widget.data.value;
-        final amount = _calculateAmount(txIds);
 
-        if (txIds.isEmpty || amount.isEmpty) {
+        if (txIds.isEmpty) {
           return const SizedBox.shrink();
         }
 
@@ -90,7 +90,15 @@ class _TransactionsWidgetsBalanceBarState extends State<TransactionsWidgetsBalan
                           )
                         : const SizedBox.shrink(),
                   ),
-                  WidgetsNumbersFlow(begin: amount.toString(), end: amount.toString(), suffix: " USDT", style: textStyle!),
+                  ListenableBuilder(
+                    listenable: rateController,
+                    builder: (context, _) {
+                      final amount = _calculateAmount(txIds);
+                      return amount.isNotEmpty
+                          ? WidgetsNumbersFlow(key: ValueKey(amount), begin: amount, end: amount, suffix: " USDT", style: textStyle!)
+                          : const SizedBox.shrink();
+                    },
+                  ),
                   IconButton(
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
@@ -187,11 +195,16 @@ class _TransactionsWidgetsBalanceBarState extends State<TransactionsWidgetsBalan
     Decimal balance = Decimal.zero;
 
     for (final tx in txs) {
-      final rate = rateController.getStoredRate(tx.rrId, 825);
-      if (rate <= Decimal.zero) {
+      final pair = "${tx.rrId}-825";
+      final storedRate = rateController.getStoredRate(tx.rrId, 825);
+      if (storedRate > Decimal.zero) {
+        _lastKnownRates[pair] = storedRate;
+      } else {
         rateController.addQueue(tx.rrId, 825, force: true);
-        continue;
       }
+
+      final rate = storedRate > Decimal.zero ? storedRate : _lastKnownRates[pair];
+      if (rate == null) continue;
 
       balance = Math.add(balance, Math.multiply(tx.balance, rate));
     }
