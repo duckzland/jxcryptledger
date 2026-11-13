@@ -2,17 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../../app/theme.dart';
+
 import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
+
 import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';
+
 import '../../cryptos/controller.dart';
+
+import '../widgets/cards/active.dart';
+import '../widgets/balance_bar.dart';
+
 import '../controller.dart';
 import '../mixins/flags.dart';
-import '../widgets/cards/active.dart';
+
 import '../model.dart';
-import '../widgets/balance_bar.dart';
 
 class TransactionsActiveView extends StatefulWidget {
   final List<TransactionsModel> transactions;

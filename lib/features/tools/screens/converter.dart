@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/locator.dart';
 import '../../../core/math.dart';
 import '../../../mixins/rateable.dart';
+import '../../../mixins/state.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/fields/amount.dart';
 import '../../../app/theme.dart';
@@ -14,6 +16,7 @@ import '../../../widgets/header.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/text/selectable.dart';
+import '../../../widgets/notify.dart';
 import '../../cryptos/controller.dart';
 
 class ToolsConverterView extends StatefulWidget {
@@ -23,7 +26,9 @@ class ToolsConverterView extends StatefulWidget {
   State<ToolsConverterView> createState() => _ToolsConverterViewState();
 }
 
-class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRateable<ToolsConverterView> {
+class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRateable<ToolsConverterView>, MixinsState {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   late final CryptosController _cryptosController;
 
   String? _sourceAmount;
@@ -35,10 +40,15 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   void initState() {
     super.initState();
     _cryptosController = CoreLocator.getit<CryptosController>();
-    _sourceAmount = null;
+    _sourceAmount = states.get('tool-converter-source-amount') as String?;
     _reversedRate = null;
 
     rateableWithField = false;
+    rateableSource = states.get('tool-converter-source-crypto') as int?;
+    rateableTarget = states.get('tool-converter-target-crypto') as int?;
+    if (rateableSource != null && rateableTarget != null) {
+      rateableGetRate(refresh: false, silent: true);
+    }
   }
 
   @override
@@ -50,6 +60,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   @override
   Widget build(BuildContext context) {
     return Form(
+      key: _formKey,
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 800) {
@@ -74,7 +85,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                       child: WidgetsHeader(subtitle: "To:", subtitleFontSize: 13, spacing: 10, child: _buildResultCryptoField()),
                     ),
 
-                    SizedBox(width: 10),
+                    SizedBox(width: 4),
 
                     WidgetsHeader(
                       subtitle: " ",
@@ -106,6 +117,10 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                     ),
                   ],
                 ),
+
+                _buildResetButton(),
+
+                SizedBox(height: 50),
 
                 _buildCalculatedResult(),
 
@@ -146,6 +161,8 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
                   },
                 ),
 
+                _buildResetButton(),
+
                 SizedBox(height: 50),
                 _buildCalculatedResult(mini: true),
                 SizedBox(height: 28),
@@ -161,9 +178,13 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
     return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 1.5',
+      initialValue: states.get('tool-converter-source-amount') as String?,
       onChanged: (value) {
         _sourceAmount = value;
-        rateableGetRate();
+        states.set('tool-converter-source-amount', value);
+        if (rateableSource != null && rateableTarget != null) {
+          rateableGetRate();
+        }
       },
     );
   }
@@ -171,18 +192,21 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   Widget _buildSourceCryptoField() {
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
-      initialValue: null,
+      initialValue: rateableSource,
       onSelected: (id) => setState(() {
-        int source = rateableSource ?? -1;
+        final int? source = id > 0 ? id : null;
 
-        if (id != source) {
+        if (source != rateableSource) {
           rateableValue = null;
           _reversedRate = null;
         }
 
-        rateableSource = id;
+        rateableSource = source;
+        states.set('tool-converter-source-crypto', rateableSource);
 
-        rateableGetRate(refresh: false, silent: true);
+        if (rateableSource != null && rateableTarget != null) {
+          rateableGetRate(refresh: false, silent: true);
+        }
       }),
     );
   }
@@ -190,20 +214,55 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   Widget _buildResultCryptoField() {
     return WidgetsFieldsCryptoSearch(
       labelText: 'Coin',
-      initialValue: null,
+      initialValue: rateableTarget,
       onSelected: (id) => setState(() {
-        int target = rateableTarget ?? -1;
+        final int? target = id > 0 ? id : null;
 
-        if (id != target) {
+        if (target != rateableTarget) {
           rateableValue = null;
           _reversedRate = null;
         }
 
-        rateableTarget = id;
+        rateableTarget = target;
+        states.set('tool-converter-target-crypto', rateableTarget);
 
-        rateableGetRate(refresh: false, silent: true);
+        if (rateableSource != null && rateableTarget != null) {
+          rateableGetRate(refresh: false, silent: true);
+        }
       }),
     );
+  }
+
+  Widget _buildResetButton() {
+    if ((states.get('tool-converter-source-amount') as String?)?.isNotEmpty != true &&
+        (states.get('tool-converter-source-crypto') as int?) == null &&
+        (states.get('tool-converter-target-crypto') as int?) == null) {
+      return const SizedBox.shrink();
+    }
+
+    return WidgetsButtonsAction(
+      label: 'Reset',
+      icon: Icons.restart_alt,
+      iconSize: 22,
+      minimumSize: const Size(88, 44),
+      onPressed: _resetConverter,
+    );
+  }
+
+  void _resetConverter(WidgetsButtonsActionState state) {
+    _debounce?.cancel();
+    _sourceAmount = null;
+    _reversedRate = null;
+    rateableSource = null;
+    rateableTarget = null;
+    rateableValue = null;
+    rateableAmount = null;
+    states.remove('tool-converter-source-amount');
+    states.remove('tool-converter-source-crypto');
+    states.remove('tool-converter-target-crypto');
+    _formKey.currentState?.reset();
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {});
   }
 
   Widget _buildCalculatedResult({bool mini = false}) {
@@ -224,14 +283,45 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
     }
 
     final Decimal resultValue = source * rate;
+    final Decimal reverseRate = _reversedRate!;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        WidgetsTextSelectable(
-          "${Utils.formatSmartDecimal(source)} $sourceSymbol to $targetSymbol",
-          style: TextStyle(fontSize: mini ? 13 : 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            WidgetsTextSelectable(
+              "${Utils.formatSmartDecimal(source)} $sourceSymbol to $targetSymbol",
+              style: TextStyle(fontSize: mini ? 13 : 16, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+            ),
+            IconButton(
+              icon: Icon(Icons.copy),
+              iconSize: 16,
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+              mouseCursor: SystemMouseCursors.click,
+              tooltip: 'Copy conversion summary',
+              style: ButtonStyle(
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                foregroundColor: WidgetStateProperty.resolveWith((states) {
+                  return states.contains(WidgetState.hovered) ? AppTheme.action : AppTheme.textMuted;
+                }),
+                padding: WidgetStateProperty.all(EdgeInsets.only(left: 3, right: 3, top: 5, bottom: 5)),
+                minimumSize: WidgetStateProperty.all(const Size(16, 16)),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => _copyConversionSummary(
+                source: source,
+                sourceSymbol: sourceSymbol,
+                targetSymbol: targetSymbol,
+                rate: rate,
+                reverseRate: reverseRate,
+                result: resultValue,
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 4),
         WidgetsNumbersFlow(
@@ -246,11 +336,29 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
           style: TextStyle(fontSize: mini ? 12 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
         WidgetsTextSelectable(
-          "1 $sourceSymbol = ${Utils.formatSmartDecimal(reversedRate)} $targetSymbol",
+          "1 $sourceSymbol = ${Utils.formatSmartDecimal(reverseRate)} $targetSymbol",
           style: TextStyle(fontSize: mini ? 11 : 13, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
         ),
       ],
     );
+  }
+
+  Future<void> _copyConversionSummary({
+    required Decimal source,
+    required String sourceSymbol,
+    required String targetSymbol,
+    required Decimal rate,
+    required Decimal reverseRate,
+    required Decimal result,
+  }) async {
+    final summary =
+        'Converted ${Utils.formatSmartDecimal(source)} $sourceSymbol to '
+        '${Utils.formatSmartDecimal(result)} $targetSymbol at a rate of '
+        '${Utils.formatSmartDecimal(rate)} $targetSymbol per $sourceSymbol '
+        '(reverse rate: ${Utils.formatSmartDecimal(reverseRate)} $sourceSymbol per $targetSymbol).';
+
+    await Clipboard.setData(ClipboardData(text: summary));
+    widgetsNotifySuccess('Conversion summary copied to clipboard.');
   }
 
   @override

@@ -2,17 +2,25 @@ import 'dart:async';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
-import 'package:jxledger/core/math.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/theme.dart';
+
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
+import '../../../core/math.dart';
+
 import '../../../mixins/rateable.dart';
+import '../../../mixins/state.dart';
+
 import '../../../widgets/text/balance.dart';
 import '../../../widgets/fields/amount.dart';
+import '../../../widgets/buttons/action.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/numbers/flow.dart';
 import '../../../widgets/fields/crypto_search.dart';
+import '../../../widgets/notify.dart';
+
 import '../../cryptos/controller.dart';
 
 class ToolsCalculatorView extends StatefulWidget {
@@ -22,7 +30,9 @@ class ToolsCalculatorView extends StatefulWidget {
   State<ToolsCalculatorView> createState() => _ToolsCalculatorViewState();
 }
 
-class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRateable<ToolsCalculatorView> {
+class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRateable<ToolsCalculatorView>, MixinsState {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   late final CryptosController _cryptosController;
 
   String? _sourceAmount;
@@ -39,11 +49,18 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   void initState() {
     super.initState();
     _cryptosController = CoreLocator.getit<CryptosController>();
-    _sourceAmount = null;
-    _ratesRevertAmount = null;
+    _sourceAmount = states.get('tool-calculator-source-amount') as String?;
+    _ratesRevertAmount = states.get('tool-calculator-buyback-rate') as String?;
 
     _rateController = TextEditingController();
     _rateRevertController = TextEditingController();
+
+    _rateController.text = states.get('tool-calculator-sell-rate', defaultValue: '') as String;
+    _rateRevertController.text = states.get('tool-calculator-buyback-rate', defaultValue: '') as String;
+    rateableAmount = _rateController.text.isEmpty ? null : _rateController.text;
+    rateableSource = states.get('tool-calculator-source-crypto') as int?;
+    rateableTarget = states.get('tool-calculator-target-crypto') as int?;
+    _isReversed = states.get('tool-calculator-is-reversed', defaultValue: false) == true;
   }
 
   @override
@@ -57,6 +74,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   @override
   Widget build(BuildContext context) {
     return Form(
+      key: _formKey,
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 800) {
@@ -100,6 +118,10 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
                   ],
                 ),
 
+                _buildResetButton(),
+
+                SizedBox(height: 50),
+
                 _buildCalculatedResult(),
 
                 SizedBox(height: 28),
@@ -122,8 +144,12 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
 
                 WidgetsHeader(title: "Buyback Rate:", spacing: 10, child: _buildRatesRevertAmountField()),
 
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [_buildResetButton()]),
+
                 SizedBox(height: 50),
+
                 _buildCalculatedResult(mini: true),
+
                 SizedBox(height: 28),
               ],
             );
@@ -141,6 +167,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       allowReverse: true,
       disposeController: false,
       onChanged: (value) {
+        states.set('tool-calculator-buyback-rate', value);
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         if (_ratesRevertAmount != value) {
@@ -161,6 +188,10 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
             rateableAmount = rateableParseToString(rateableAmount!, reverse: true);
             _rateController.text = rateableAmount!;
           }
+
+          states.set('tool-calculator-is-reversed', _isReversed);
+          states.set('tool-calculator-buyback-rate', _ratesRevertAmount);
+          states.set('tool-calculator-sell-rate', _rateController.text);
         });
       },
     );
@@ -183,6 +214,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       onChanged: (value) {
         // Nullify the promise contract!
         rateableStateUpdater = null;
+        states.set('tool-calculator-sell-rate', value);
 
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
@@ -204,6 +236,10 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
             _ratesRevertAmount = rateableParseToString(_ratesRevertAmount!, reverse: true);
             _rateRevertController.text = _ratesRevertAmount!;
           }
+
+          states.set('tool-calculator-is-reversed', _isReversed);
+          states.set('tool-calculator-sell-rate', rateableAmount);
+          states.set('tool-calculator-buyback-rate', _rateRevertController.text);
         });
       },
     );
@@ -213,7 +249,9 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'e.g., 1.5',
+      initialValue: states.get('tool-calculator-source-amount') as String?,
       onChanged: (value) {
+        states.set('tool-calculator-source-amount', value);
         if (_debounce?.isActive ?? false) _debounce!.cancel();
 
         _debounce = Timer(Duration(milliseconds: 100), () {
@@ -226,11 +264,65 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   }
 
   Widget _buildSourceCryptoField() {
-    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => rateableSource = id));
+    return WidgetsFieldsCryptoSearch(
+      labelText: 'Coin',
+      initialValue: rateableSource,
+      onSelected: (id) => setState(() {
+        rateableSource = id > 0 ? id : null;
+        states.set('tool-calculator-source-crypto', rateableSource);
+      }),
+    );
   }
 
   Widget _buildResultCryptoField() {
-    return WidgetsFieldsCryptoSearch(labelText: 'Coin', initialValue: null, onSelected: (id) => setState(() => rateableTarget = id));
+    return WidgetsFieldsCryptoSearch(
+      labelText: 'Coin',
+      initialValue: rateableTarget,
+      onSelected: (id) => setState(() {
+        rateableTarget = id > 0 ? id : null;
+        states.set('tool-calculator-target-crypto', rateableTarget);
+      }),
+    );
+  }
+
+  Widget _buildResetButton() {
+    if ((states.get('tool-calculator-source-amount') as String?)?.isNotEmpty != true &&
+        (states.get('tool-calculator-source-crypto') as int?) == null &&
+        (states.get('tool-calculator-target-crypto') as int?) == null &&
+        (states.get('tool-calculator-sell-rate') as String?)?.isNotEmpty != true &&
+        (states.get('tool-calculator-buyback-rate') as String?)?.isNotEmpty != true &&
+        states.get('tool-calculator-is-reversed', defaultValue: false) != true) {
+      return const SizedBox.shrink();
+    }
+
+    return WidgetsButtonsAction(
+      label: 'Reset',
+      icon: Icons.restart_alt,
+      iconSize: 22,
+      minimumSize: const Size(88, 44),
+      onPressed: _resetCalculator,
+    );
+  }
+
+  void _resetCalculator(WidgetsButtonsActionState s) {
+    _debounce?.cancel();
+    _sourceAmount = null;
+    _ratesRevertAmount = null;
+    rateableSource = null;
+    rateableTarget = null;
+    rateableAmount = null;
+    rateableValue = null;
+    rateableStateUpdater = null;
+    _isReversed = false;
+    states.remove('tool-calculator-source-amount');
+    states.remove('tool-calculator-source-crypto');
+    states.remove('tool-calculator-target-crypto');
+    states.remove('tool-calculator-sell-rate');
+    states.remove('tool-calculator-buyback-rate');
+    states.remove('tool-calculator-is-reversed');
+    _formKey.currentState?.reset();
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {});
   }
 
   Widget _buildCalculatedResult({bool mini = false}) {
@@ -267,9 +359,43 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          returnRate > Decimal.zero ? "Returned amout" : "Calculated Amount",
-          style: TextStyle(fontSize: mini ? 13 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              returnRate > Decimal.zero ? "Returned Amount" : "Calculated Amount",
+              style: TextStyle(fontSize: mini ? 13 : 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted, letterSpacing: 0.5),
+            ),
+            SizedBox(width: 4),
+            IconButton(
+              icon: Icon(Icons.copy),
+              iconSize: 16,
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+              mouseCursor: SystemMouseCursors.click,
+              tooltip: 'Copy calculation summary',
+              style: ButtonStyle(
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                foregroundColor: WidgetStateProperty.resolveWith((states) {
+                  return states.contains(WidgetState.hovered) ? AppTheme.action : AppTheme.textMuted;
+                }),
+                padding: WidgetStateProperty.all(EdgeInsets.only(left: 3, right: 3, top: 5, bottom: 5)),
+                minimumSize: WidgetStateProperty.all(const Size(16, 16)),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => _copyCalculatedResult(
+                source: source,
+                sourceSymbol: sourceSymbol,
+                targetSymbol: targetSymbol,
+                sellRate: entryRate,
+                soldAmount: stage1Balance,
+                buybackRate: returnRate,
+                returnedAmount: resultValue,
+                profit: profit,
+                hasBuyback: returnRate > Decimal.zero,
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 4),
         WidgetsNumbersFlow(
@@ -313,5 +439,38 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
         ],
       ],
     );
+  }
+
+  Future<void> _copyCalculatedResult({
+    required Decimal source,
+    required String sourceSymbol,
+    required String targetSymbol,
+    required Decimal sellRate,
+    required Decimal soldAmount,
+    required Decimal buybackRate,
+    required Decimal returnedAmount,
+    required Decimal profit,
+    required bool hasBuyback,
+  }) async {
+    final sourceText = Utils.formatSmartDecimal(source);
+    final sellRateText = Utils.formatSmartDecimal(sellRate);
+    final soldAmountText = Utils.formatSmartDecimal(soldAmount);
+    final buybackRateText = Utils.formatSmartDecimal(buybackRate);
+    final returnedAmountText = Utils.formatSmartDecimal(returnedAmount);
+    final profitText = Utils.formatSmartDecimal(profit.abs());
+
+    final String summary = hasBuyback
+        ? 'Converted $sourceText $sourceSymbol to $soldAmountText $targetSymbol at a sell rate of $sellRateText $targetSymbol per $sourceSymbol. '
+              'At a buyback rate of $buybackRateText $targetSymbol per $sourceSymbol, $returnedAmountText $sourceSymbol was returned, '
+              'resulting in a net ${profit > Decimal.zero
+                  ? 'profit'
+                  : profit < Decimal.zero
+                  ? 'loss'
+                  : 'break-even'}'
+              '${profit == Decimal.zero ? '' : ' of $profitText $sourceSymbol'}.'
+        : 'Converted $sourceText $sourceSymbol to $soldAmountText $targetSymbol at a sell rate of $sellRateText $targetSymbol per $sourceSymbol.';
+
+    await Clipboard.setData(ClipboardData(text: summary));
+    widgetsNotifySuccess('Calculation summary copied to clipboard.');
   }
 }
