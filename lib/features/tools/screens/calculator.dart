@@ -322,6 +322,8 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     states.remove('tool-calculator-buyback-rate');
     states.remove('tool-calculator-is-reversed');
     _formKey.currentState?.reset();
+    _rateController.clear();
+    _rateRevertController.clear();
     _formKey = GlobalKey<FormState>();
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {});
