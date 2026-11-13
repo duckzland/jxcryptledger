@@ -31,7 +31,7 @@ class ToolsCalculatorView extends StatefulWidget {
 }
 
 class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRateable<ToolsCalculatorView>, MixinsState {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late GlobalKey<FormState> _formKey;
 
   late final CryptosController _cryptosController;
 
@@ -48,6 +48,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
   @override
   void initState() {
     super.initState();
+    _formKey = GlobalKey<FormState>();
     _cryptosController = CoreLocator.getit<CryptosController>();
     _sourceAmount = states.get('tool-calculator-source-amount') as String?;
     _ratesRevertAmount = states.get('tool-calculator-buyback-rate') as String?;
@@ -321,6 +322,7 @@ class _ToolsCalculatorViewState extends State<ToolsCalculatorView> with MixinsRa
     states.remove('tool-calculator-buyback-rate');
     states.remove('tool-calculator-is-reversed');
     _formKey.currentState?.reset();
+    _formKey = GlobalKey<FormState>();
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {});
   }

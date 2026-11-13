@@ -27,7 +27,7 @@ class ToolsConverterView extends StatefulWidget {
 }
 
 class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRateable<ToolsConverterView>, MixinsState {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late GlobalKey<FormState> _formKey;
 
   late final CryptosController _cryptosController;
 
@@ -39,6 +39,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
   @override
   void initState() {
     super.initState();
+    _formKey = GlobalKey<FormState>();
     _cryptosController = CoreLocator.getit<CryptosController>();
     _sourceAmount = states.get('tool-converter-source-amount') as String?;
     _reversedRate = null;
@@ -261,6 +262,7 @@ class _ToolsConverterViewState extends State<ToolsConverterView> with MixinsRate
     states.remove('tool-converter-source-crypto');
     states.remove('tool-converter-target-crypto');
     _formKey.currentState?.reset();
+    _formKey = GlobalKey<FormState>();
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {});
   }
