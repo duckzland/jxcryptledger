@@ -111,6 +111,7 @@ class TransactionsPageState extends State<TransactionsPage>
         _filterMode = states.get('tx-filter-history', defaultValue: 0);
         break;
       case TransactionsViewMode.finalized:
+        _filterMode = states.get('tx-filter-finalized', defaultValue: 0);
         break;
     }
   }
@@ -145,7 +146,7 @@ class TransactionsPageState extends State<TransactionsPage>
         break;
       case TransactionsViewMode.finalized:
         _sortableOptions = {};
-        _filterableOptions = {};
+        _filterableOptions = {0: "By Result", 1: "By Capital"};
         break;
     }
   }
@@ -289,12 +290,14 @@ class TransactionsPageState extends State<TransactionsPage>
 
         if (_viewMode == TransactionsViewMode.active ||
             _viewMode == TransactionsViewMode.overview ||
-            _viewMode == TransactionsViewMode.history)
+            _viewMode == TransactionsViewMode.history ||
+            _viewMode == TransactionsViewMode.finalized)
           const WidgetsSeparator(),
 
         if (_viewMode == TransactionsViewMode.active ||
             _viewMode == TransactionsViewMode.overview ||
-            _viewMode == TransactionsViewMode.history)
+            _viewMode == TransactionsViewMode.history ||
+            _viewMode == TransactionsViewMode.finalized)
           Wrap(
             spacing: 4,
             children: [
@@ -577,6 +580,7 @@ class TransactionsPageState extends State<TransactionsPage>
             states.set('tx-filter-history', value);
             break;
           case TransactionsViewMode.finalized:
+            states.set('tx-filter-finalized', value);
             break;
         }
       },
@@ -660,6 +664,7 @@ class TransactionsPageState extends State<TransactionsPage>
           padding: EdgeInsets.only(left: 16, right: 16),
           child: TransactionsFinalizedView(
             transactions: txs,
+            filterMode: _filterMode,
             txsFlags: fxs,
             panelsAction: toggleAction,
             onStatusChanged: _handleStatusChange,

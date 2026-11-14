@@ -17,16 +17,21 @@ import '../../../../widgets/table/column.dart';
 import '../../../../widgets/table/proxy.dart';
 import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/with_tooltip.dart';
+
 import '../../../cryptos/controller.dart';
-import '../../controller.dart';
+
 import '../../dialogs/details.dart';
-import '../../calculations.dart';
 import '../../mixins/actions.dart';
 import '../../mixins/flags.dart';
 import '../../mixins/sortable_table.dart';
+
+import '../../controller.dart';
+import '../../calculations.dart';
 import '../../model.dart';
+
 import '../buttons/action.dart';
 import '../buttons/batch.dart';
+
 import '../panel_item.dart';
 
 class TransactionsWidgetsCardsFinalized extends StatefulWidget {
@@ -78,12 +83,8 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
-  late String _resultSymbol;
-
-  Decimal _capitalTotal = Decimal.zero;
-  Decimal _capitalUsed = Decimal.zero;
-
-  Map<int, Decimal> _finalizedBalance = {};
+  List<String> _finalizedBalance = [];
+  List<String> _finalizedCapital = [];
 
   bool _isOpen = true;
 
@@ -111,7 +112,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     fxs = widget.txsFlags;
 
     _isOpen = widget.isOpen;
-    _resultSymbol = _cryptosController.getSymbol(widget.id) ?? 'Unknown Coin';
 
     checkForClosable();
     checkForDeletable();
@@ -239,24 +239,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   }
 
   Widget _buildPanels() {
-    final capitalTotal = TransactionsWidgetsPanelItem(
-      title: "Capital",
-      subtitle: "${Utils.formatSmartDecimal(_capitalTotal)} $_resultSymbol",
-    );
-
-    final capitalFinalized = TransactionsWidgetsPanelItem(
-      title: "Finalized",
-      subtitle: "${Utils.formatSmartDecimal(_capitalUsed)} $_resultSymbol",
-    );
-
-    final finalizedPanels = _finalizedBalance.entries.map((e) {
-      final rrId = e.key;
-      final total = e.value;
-      final symbol = _cryptosController.getSymbol(rrId) ?? "UNK";
-
-      return TransactionsWidgetsPanelItem(title: symbol, subtitle: Utils.formatSmartDecimal(total));
-    }).toList();
-
     return SizedBox(
       height: 38,
       child: CustomScrollView(
@@ -268,7 +250,10 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
               key: Key("panels-${widget.id}"),
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               spacing: 16,
-              children: [capitalTotal, capitalFinalized, ...finalizedPanels],
+              children: [
+                TransactionsWidgetsPanelItem(title: "Total Finalized", subtitle: _finalizedBalance.join(" • ")),
+                TransactionsWidgetsPanelItem(title: "Capital Used", subtitle: _finalizedCapital.join(" • ")),
+              ],
             ),
           ),
         ],
@@ -366,12 +351,12 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
   List<Map<String, dynamic>> _buildRows() {
     final rx = <Map<String, dynamic>>[];
-    final txsMap = txController.getIndexedMap();
 
     for (final tx in txs) {
       final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
       final resultCoinSymbol = _cryptosController.getSymbol(tx.rrId);
-      final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
+
+      final capitalText = _populateCapital([tx.uuid]);
 
       rx.add({
         'date': tx.timestampAsFormattedDate,
@@ -379,10 +364,9 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         'to': '${tx.rrAmountText} $resultCoinSymbol',
         'balance': '${tx.balanceText} $resultCoinSymbol',
         'rate': '${tx.rateText} $sourceCoinSymbol/$resultCoinSymbol',
-        'capital': capitalUsed == Decimal.zero ? ' - ' : "${Utils.formatSmartDecimal(capitalUsed)} $_resultSymbol",
+        'capital': capitalText.first,
         'tx': tx,
 
-        '_capitalUsed': capitalUsed.toDouble(),
         '_exchangedRateValue': tx.rate.toDouble(),
         '_sourceSymbol': sourceCoinSymbol,
         '_resultSymbol': resultCoinSymbol,
@@ -392,44 +376,78 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     return rx;
   }
 
+  List<String> _populateCapital(List<String> txsIds) {
+    final txsMap = txController.getIndexedMap();
+    final data = {};
+    final List<TransactionsModel> stxs = [];
+
+    for (final uuid in txsIds) {
+      final tx = txController.get(uuid);
+      if (tx != null) {
+        stxs.add(tx);
+      }
+    }
+
+    for (final tx in stxs) {
+      final ctx = tx.isRoot ? tx : txsMap[tx.rid];
+      if (ctx == null) continue;
+      data[ctx.srId] = Math.add(
+        data[ctx.srId] ?? Decimal.zero,
+        tx.isRoot
+            ? (Math.multiply(tx.srAmount, (tx.balance >= tx.rrAmount) ? Decimal.one : Math.divide(tx.balance, tx.rrAmount)))
+            : _calc.totalCapitalUsed(tx, txsMap: txsMap),
+      );
+    }
+
+    List<String> result = [];
+    for (final entry in data.entries) {
+      final symbol = _cryptosController.getSymbol(entry.key) ?? 'Unknown Coin';
+      result.add("${Utils.formatSmartDecimal(entry.value)} $symbol");
+    }
+
+    return result;
+  }
+
+  List<String> _populateBalance(List<String> txsIds) {
+    final data = {};
+    final List<TransactionsModel> stxs = [];
+
+    for (final uuid in txsIds) {
+      final tx = txController.get(uuid);
+      if (tx != null) {
+        stxs.add(tx);
+      }
+    }
+
+    for (final tx in stxs) {
+      data[tx.rrId] = Math.add(data[tx.rrId] ?? Decimal.zero, tx.balance);
+    }
+
+    List<String> result = [];
+    for (final entry in data.entries) {
+      final symbol = _cryptosController.getSymbol(entry.key) ?? 'Unknown Coin';
+      result.add("${Utils.formatSmartDecimal(entry.value)} $symbol");
+    }
+
+    return result;
+  }
+
   void _calculatePanelData() {
     if (txs.isEmpty) {
       return;
     }
 
     final stxs = [...txs];
-    final txsMap = txController.getIndexedMap();
 
     if (selectableHasSelectedRows()) {
       final selectedTxIds = selectableGetSelectedRows();
       stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
     }
 
-    Decimal capital = Decimal.zero;
-    final Map<String, TransactionsModel> roots = {};
-    for (final rtx in stxs) {
-      final root = txController.getRoot(rtx);
-      if (root != null) {
-        roots[root.tid] = root;
-      }
-    }
-    for (final txx in roots.entries) {
-      final rtx = txx.value;
-      if (rtx.srId == widget.id) {
-        capital = Math.add(capital, rtx.srAmount);
-      }
-    }
+    final List<String> uuids = stxs.map((tx) => tx.uuid).toList();
 
-    Decimal used = Decimal.zero;
-    for (final rtx in stxs) {
-      used = Math.add(used, _calc.totalCapitalUsed(rtx, txsMap: txsMap));
-    }
-
-    final finalizedBalance = _calc.totalFinalizedGroup(stxs);
-
-    _capitalTotal = capital;
-    _capitalUsed = used;
-    _finalizedBalance = finalizedBalance;
+    _finalizedBalance = _populateBalance(uuids);
+    _finalizedCapital = _populateCapital(uuids);
   }
 
   void _toggleShowAction(WidgetsButtonsActionState b) {

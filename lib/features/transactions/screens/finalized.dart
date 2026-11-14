@@ -16,12 +16,14 @@ import '../model.dart';
 class TransactionsFinalizedView extends StatefulWidget {
   final List<TransactionsModel> transactions;
   final Map<String, Map<TransactionsFlagsType, bool>> txsFlags;
+  final int filterMode;
   final VoidCallback onStatusChanged;
   final String panelsAction;
 
   const TransactionsFinalizedView({
     super.key,
     required this.transactions,
+    required this.filterMode,
     required this.onStatusChanged,
     required this.panelsAction,
     required this.txsFlags,
@@ -41,6 +43,8 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
   Map<String, List<TransactionsModel>> groups = {};
   List<String> groupKeys = [];
 
+  int _filterMode = 0;
+
   @override
   final scrollToUtil = ScrollTo('tx-group-offset-finalized');
 
@@ -53,6 +57,8 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
       (states.get("tx-finalized-selectable-group", defaultValue: <String>[]) as List<dynamic>).map((e) => e.toString()).toList(),
     );
     selectableGroup.addListener(_selectableGroupOnChange);
+
+    _filterMode = widget.filterMode;
 
     groups = _processTx();
     groupKeys = groups.keys.toList();
@@ -87,6 +93,15 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
         states.set("tx-group-finalized-open-$key", open);
       }
       setState(() {});
+      return;
+    }
+
+    if (widget.filterMode != oldWidget.filterMode) {
+      setState(() {
+        _filterMode = widget.filterMode;
+        groups = _processTx();
+        groupKeys = groups.keys.toList();
+      });
       return;
     }
 
@@ -210,14 +225,15 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
 
     final grouped = <String, List<TransactionsModel>>{};
     for (final tx in filtered) {
-      final TransactionsModel? px = tx.isRoot ? tx : txController.getRoot(tx);
+      TransactionsModel? px = (_filterMode == 0) ? tx : (tx.isRoot ? tx : txController.getRoot(tx));
 
       if (px == null) {
         continue;
       }
 
-      grouped.putIfAbsent(px.srId.toString(), () => <TransactionsModel>[]);
-      grouped[px.srId.toString()]!.add(tx);
+      final groupKey = _filterMode == 0 ? px.rrId.toString() : px.srId.toString();
+      grouped.putIfAbsent(groupKey, () => <TransactionsModel>[]);
+      grouped[groupKey]!.add(tx);
     }
 
     final entries = grouped.entries.toList();
