@@ -31,8 +31,10 @@ import 'package:jxledger/features/watchers/model.dart';
 final env = DotEnv()..load();
 final AesGcm aes = AesGcm.with256bits();
 final String latestDB = "v1.2.0";
+const int defaultTransactionCount = 40;
+const int defaultTransactionDepth = 8;
 
-final List<int> staticCmcIds = [1, 2, 52, 1831, 2010, 6636, 5426, 5805, 3890, 1975, 512, 1958, 1321, 328, 3794];
+final List<int> staticCmcIds = [1, 2, 52, 1831, 2010, 6636, 5426, 5805, 20947, 1975, 512, 1958, 1321, 328, 3794];
 final Map<int, String> staticCmcSymbol = {
   1: "BTC",
   2: "LTC",
@@ -42,7 +44,7 @@ final Map<int, String> staticCmcSymbol = {
   6636: "DOT",
   5426: "SOL",
   5805: "AVAX",
-  3890: "DASH",
+  20947: "SUI",
   1975: "LINK",
   512: "XLM",
   1958: "TRX",
@@ -119,34 +121,6 @@ Future<Uint8List> derivePasswordKey(String password, String salt) async {
   return Uint8List.fromList(await secretKey.extractBytes());
 }
 
-Future<TransactionsModel> createChild(String label, Box repo, TransactionsModel parent, Decimal srAmount, int rrId) async {
-  final tid = generateId();
-  final rrAmount = srAmount * Decimal.fromInt(2);
-
-  if (parent.rrId == rrId) {
-    rrId += 1;
-  }
-
-  final tx = TransactionsModel(
-    tid: tid,
-    pid: parent.tid,
-    rid: parent.isRoot ? parent.tid : parent.rid,
-    srAmount: srAmount,
-    srId: parent.rrId,
-    rrAmount: rrAmount,
-    rrId: rrId,
-    balance: rrAmount,
-    status: TransactionStatus.active.index,
-    closable: false,
-    timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
-    meta: {},
-  );
-  logln("Generating Leaf $label: ${tx.tid}", "TOOLS");
-  await repo.add(tx);
-
-  return tx;
-}
-
 String generateId() {
   final chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   final random = Random();
@@ -167,14 +141,98 @@ Future<String> export<T>(Box box) async {
   return jsonEncode(jsonList);
 }
 
+int? parseOption(List<String> args, String name) {
+  final prefix = '$name=';
+  final argIndex = args.indexWhere((arg) => arg == name || arg.startsWith(prefix));
+  if (argIndex == -1) return null;
+
+  final value = args[argIndex] == name ? (argIndex + 1 < args.length ? args[argIndex + 1] : null) : args[argIndex].substring(prefix.length);
+  final parsed = value == null ? null : int.tryParse(value);
+  if (parsed == null || parsed < 0) {
+    throw ArgumentError('Use $name=<non-negative integer>.');
+  }
+  return parsed;
+}
+
+Future<void> generateTransactions(Box<TransactionsModel> txRepo, int count, int depth) async {
+  const batchSize = 1000;
+  final timestamp = DateTime.now().toUtc().microsecondsSinceEpoch;
+  var batch = <String, TransactionsModel>{};
+  var index = 0;
+
+  Future<void> flushBatch() async {
+    if (batch.isEmpty) return;
+    await txRepo.putAll(batch);
+    batch = <String, TransactionsModel>{};
+  }
+
+  while (index < count) {
+    final rootIndex = index;
+    final rootId = 'edge${rootIndex.toString().padLeft(8, '0')}';
+    final rootRrId = pickCmcId(rootIndex + 1);
+    var parent = TransactionsModel(
+      tid: rootId,
+      pid: '0',
+      rid: '0',
+      srAmount: Decimal.fromInt(1000),
+      srId: pickCmcId(rootIndex),
+      rrAmount: Decimal.fromInt(100000),
+      rrId: rootRrId,
+      balance: Decimal.fromInt(100000),
+      status: TransactionStatus.active.index,
+      closable: true,
+      timestamp: timestamp - rootIndex * Duration(minutes: 1).inMicroseconds,
+      meta: {'stressIndex': rootIndex, 'stressDepth': 0},
+    );
+    batch[parent.tid] = parent;
+    index++;
+
+    for (var level = 1; level <= depth && index < count; level++) {
+      final tid = 'edge${index.toString().padLeft(8, '0')}';
+      final rrId = pickCmcId(parent.rrId == staticCmcIds.last ? 0 : staticCmcIds.indexOf(parent.rrId) + 1);
+      final child = TransactionsModel(
+        tid: tid,
+        pid: parent.tid,
+        rid: rootId,
+        srAmount: Decimal.one,
+        srId: parent.rrId,
+        rrAmount: Decimal.fromInt(2),
+        rrId: rrId,
+        balance: Decimal.fromInt(2),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: timestamp - index * Duration(minutes: 1).inMicroseconds,
+        meta: {'stressIndex': index, 'stressDepth': level},
+      );
+      parent = parent.copyWith(balance: parent.balance - Decimal.one, status: TransactionStatus.partial.index);
+      batch[parent.tid] = parent;
+      batch[child.tid] = child;
+      index++;
+
+      if (batch.length >= batchSize) {
+        await flushBatch();
+      }
+    }
+
+    if (batch.length >= batchSize) {
+      await flushBatch();
+    }
+  }
+
+  await flushBatch();
+}
+
 Future<void> main(List<String> args) async {
   final bool noArgs = args.isEmpty;
+  final transactionCount = parseOption(args, '--transaction-count') ?? defaultTransactionCount;
+  final transactionDepth = parseOption(args, '--transaction-depth') ?? defaultTransactionDepth;
+  final panelCount = parseOption(args, '--panel-count');
 
-  final bool seedTx = noArgs ? true : args.contains('--seed-transactions');
+  final bool seedTx = noArgs ? true : args.contains('--seed-transactions') || args.any((arg) => arg.startsWith('--transaction-count'));
 
   final bool seedCryptos = noArgs ? true : args.contains('--seed-cryptos');
 
-  final bool seedPanels = noArgs ? true : args.contains('--seed-panels');
+  final bool seedPanels = noArgs ? true : args.contains('--seed-panels') || args.any((arg) => arg.startsWith('--panel-count'));
 
   final bool seedRates = noArgs ? true : args.contains('--seed-rates');
 
@@ -281,72 +339,8 @@ Future<void> main(List<String> args) async {
   }
 
   if (seedTx) {
-    logln("Seeding transactions...", "TOOLS");
-    final List<TransactionsModel> roots = [];
-
-    for (int r = 0; r < 5; r++) {
-      final rootTid = generateId();
-      final root = TransactionsModel(
-        tid: rootTid,
-        pid: '0',
-        rid: '0',
-        srAmount: Decimal.fromInt(1000),
-        srId: pickCmcId(r),
-        rrAmount: Decimal.fromInt(100000),
-        rrId: pickCmcId(r + 1),
-        balance: Decimal.fromInt(100000),
-        status: TransactionStatus.active.index,
-        closable: true,
-        timestamp: DateTime.now().toUtc().microsecondsSinceEpoch,
-        meta: {"rootIndex": r},
-      );
-      logln("Generating Root: ${root.tid}", "TOOLS");
-      await txRepo.add(root);
-
-      if (r < 3) {
-        roots.add(root);
-      }
-    }
-
-    for (final root in roots) {
-      // Branch A
-      final a = await createChild("A", txRepo, root, Math.divide(root.balance, Decimal.fromInt(2)), pickCmcId(10));
-      final a1 = await createChild("A1", txRepo, a, Math.divide(a.balance, Decimal.fromInt(2)), pickCmcId(11));
-      await createChild("A11", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(12));
-      await createChild("A12", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(13));
-      // final a11 = await createChild("A11", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(12));
-      // final a12 = await createChild("A12", txRepo, a1, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(13));
-
-      final a2 = await createChild("A2", txRepo, a, Math.divide(a1.balance, Decimal.fromInt(2)), pickCmcId(14));
-      await createChild("A21", txRepo, a2, Math.divide(a2.balance, Decimal.fromInt(3)), pickCmcId(15));
-      // final a21 = await createChild("A21", txRepo, a2, Math.divide(a2.balance, Decimal.fromInt(3)), pickCmcId(15));
-
-      // Branch B
-      final b = await createChild("B", txRepo, root, Math.divide(root.balance, Decimal.fromInt(4)), pickCmcId(16));
-      await createChild("B1", txRepo, b, Math.divide(b.balance, Decimal.fromInt(2)), pickCmcId(17));
-      await createChild("B2", txRepo, b, Math.divide(b.balance, Decimal.fromInt(2)), b.srId);
-      // final b1 = await createChild("B1", txRepo, Math.divide(b.balance, Decimal.fromInt(2)), pickCmcId(17));
-      // final b2 = await createChild("B2", txRepo, Math.divide(b.balance, Decimal.fromInt(2)), b.srId);
-
-      // Branch C
-      final c = await createChild("C", txRepo, root, Math.divide(root.balance, Decimal.fromInt(4)), pickCmcId(19));
-      await createChild("C1", txRepo, c, Math.divide(c.balance, Decimal.fromInt(2)), c.srId);
-      await createChild("C2", txRepo, c, Math.divide(c.balance, Decimal.fromInt(2)), root.rrId);
-      // final c1 = await createChild("C1", Math.divide(c.balance, Decimal.fromInt(2)), c.srId);
-      // final c2 = await createChild("C2", Math.divide(c.balance, Decimal.fromInt(2)), root.rrId);
-
-      // Test Close
-      // logln("Closing: c1", "TOOLS");
-      // await txRepo.close(c1);
-
-      // logln("Closing: c2", "TOOLS");
-      // await txRepo.close(c2);
-
-      // Test decreasing amount
-      // logln("Decreasing: b2 balance", "TOOLS");
-      // final b2Decrease = b2.copyWith(srAmount: Math.divide(b2.balance, Decimal.fromInt(4)));
-      // await txRepo.update(b2Decrease);
-    }
+    logln("Seeding $transactionCount transactions with depth $transactionDepth...", "TOOLS");
+    await generateTransactions(txRepo, transactionCount, transactionDepth);
   }
 
   if (seedWatchers) {
@@ -375,22 +369,40 @@ Future<void> main(List<String> args) async {
   if (seedPanels) {
     logln("Seeding panels...", "TOOLS");
     final txs = txRepo.values.toList();
-    int i = 0;
-    for (final tx in txs) {
-      await pxRepo.add(
-        PanelsModel(
-          tid: generateId(),
-          srId: tx.srId,
-          srAmount: tx.srAmount,
-          rrId: tx.rrId,
-          digit: 6,
-          rate: Math.divide(tx.rrAmount, tx.srAmount),
-          order: i,
-          meta: {},
-        ),
+    final count = panelCount ?? txs.length;
+    const batchSize = 1000;
+    var batch = <String, PanelsModel>{};
+
+    for (var i = 0; i < count; i++) {
+      final tx = txs.isEmpty ? null : txs[i % txs.length];
+      final srId = tx?.srId ?? pickCmcId(i);
+      var rrId = tx?.rrId ?? pickCmcId(i + 1);
+      if (srId == rrId) {
+        rrId = pickCmcId(staticCmcIds.indexOf(srId) + 1);
+      }
+
+      final panel = PanelsModel(
+        tid: 'edge-panel-${i.toString().padLeft(8, '0')}',
+        srId: srId,
+        srAmount: tx?.srAmount ?? Decimal.fromInt(1),
+        rrId: rrId,
+        digit: 6,
+        rate: tx != null ? Math.divide(tx.rrAmount, tx.srAmount) : Decimal.one,
+        order: i,
+        meta: {},
       );
-      i++;
+      batch[panel.tid] = panel;
+
+      if (batch.length >= batchSize) {
+        await pxRepo.putAll(batch);
+        batch = <String, PanelsModel>{};
+      }
     }
+
+    if (batch.isNotEmpty) {
+      await pxRepo.putAll(batch);
+    }
+    logln("Generated $count panels", "TOOLS");
   }
 
   if (seedRates) {
