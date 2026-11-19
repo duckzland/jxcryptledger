@@ -257,6 +257,9 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
   }
 
   Widget _formEditTx(BuildContext dialogContext) {
+    final sourceSymbol = cryptosController.getSymbol(tx.srId) ?? "";
+    final targetSymbol = cryptosController.getSymbol(tx.rrId) ?? "";
+
     return TransactionFormEdit(
       initialData: tx,
       parent: txController.getParent(tx),
@@ -264,7 +267,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
         parentContext,
         dialogContext: dialogContext,
         onComplete: onAction,
-        successMessage: "${tx.srAmountText} - ${tx.balanceText} transaction updated.",
+        successMessage: "${tx.srAmountText} $sourceSymbol to ${tx.balanceText} $targetSymbol transaction updated.",
         error: e,
       ),
     );
