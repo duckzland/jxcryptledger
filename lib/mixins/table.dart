@@ -20,27 +20,36 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
   double get tableRowHeight => AppTheme.tableDataRowMinHeight;
   double get tableHeadingHeight => AppTheme.tableHeadingRowHeight;
 
-  int get tableLoadChunkSize => 5;
   int get tableMinimumRowEntries => 5;
 
+  /// Multiplier of viewport rows to keep mounted (2.5 = 1x visible + 0.75x top + 0.75x bottom)
+  double get tableViewportMultiplier => 2.5;
+
   int _tableRowStart = 0;
-  int _tableRowEnd = 5;
+  int _tableRowEnd = 0;
   int _tableRowCount = -1;
 
   double _scrollPosition = 0.0;
 
-  int get _tableRowSection => _tableRowMax + tableLoadChunkSize;
-  int get _tableRowBuffer => _tableRowMax * 2;
-  int get _tableRowMax {
-    final cardHeight = tableCalculateAdjustedMaxHeight();
-    final bodyHeight = (cardHeight - tableHeadingHeight - tableHeadingHeightOffset).clamp(0.0, double.infinity);
-    return (bodyHeight / tableRowHeight).ceil().clamp(10, 50);
+  // 1. Base unit: exact rows that fit in the current viewport
+  int get _viewportRows {
+    final viewportHeight = tableScrollController.hasClients
+        ? tableScrollController.position.viewportDimension
+        : states.get('viewport-height', defaultValue: 800.0);
+    return (viewportHeight / tableRowHeight).ceil().clamp(1, 200);
   }
+
+  // 2. Total rows to build based on viewport height
+  int get _targetBuildRows => (_viewportRows * tableViewportMultiplier).ceil();
+
+  // 3. Split the extra offscreen cushion evenly: half top, half bottom
+  int get _halfBuffer => ((_targetBuildRows - _viewportRows) / 2).ceil().clamp(2, 100);
 
   @override
   void initState() {
     super.initState();
     tableScrollController.addListener(tableUpdateVisibleRows);
+    tableUpdateVisibleRows();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       tableUpdateVisibleRows();
     });
@@ -58,9 +67,13 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
 
   List<DataColumn> tableBuildColumns();
 
+  /// Optional override in your table widget to customize the loader widget
+  Widget tableBuildLoader() {
+    return const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)));
+  }
+
   List<DataRow> tableBuildRows() {
     final countChanged = _tableRowCount != tableData.length;
-
     _tableRowCount = tableData.length;
 
     if (tableData.isEmpty) {
@@ -69,15 +82,31 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       return const <DataRow>[];
     }
 
-    if (tableData.length <= _tableRowSection) {
+    // If total data fits within our target build budget, render everything directly
+    if (tableData.length <= _targetBuildRows) {
       _tableRowStart = 0;
       _tableRowEnd = tableData.length;
       return tableData.map(tableBuildRow).toList(growable: false);
     }
 
+    // Frame 1 before ScrollController attaches: render 1 full-height loader row
+    // so the header appears immediately without a blank gap or wasted row builds!
+    if (!tableScrollController.hasClients) {
+      return [
+        DataRow2(
+          key: const ValueKey('table_loader'),
+          specificRowHeight: tableData.length * tableRowHeight,
+          cells: [
+            DataCell(tableBuildLoader()),
+            ...List.generate((tableColumns.length - 1).clamp(0, 50), (_) => const DataCell(SizedBox.shrink()), growable: false),
+          ],
+        ),
+      ];
+    }
+
     if (countChanged || _tableRowEnd <= _tableRowStart) {
       _tableRowStart = _tableRowStart.clamp(0, tableData.length);
-      _tableRowEnd = (_tableRowStart + tableLoadChunkSize + (_tableRowBuffer * 2)).clamp(_tableRowStart, tableData.length);
+      _tableRowEnd = (_tableRowStart + _targetBuildRows).clamp(_tableRowStart, tableData.length);
     }
 
     final start = _tableRowStart.clamp(0, tableData.length);
@@ -97,7 +126,7 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       rows.add(tableBuildSpacerRow(remaining, 'bottom'));
     }
 
-    logln("Generating table rows: ${rows.length}", "TABLE");
+    logln("Generating table rows: ${rows.length} (slice: $start..$end / ${tableData.length})", "TABLE");
 
     return rows;
   }
@@ -116,64 +145,74 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
     if (tableData.isEmpty) return;
 
     final rowCount = tableData.length;
+    int nextStart = _tableRowStart;
+    int nextEnd = _tableRowEnd;
 
-    if (rowCount <= _tableRowSection) {
-      if (_tableRowStart != 0 || _tableRowEnd != rowCount) {
-        _tableRowStart = 0;
-        _tableRowEnd = rowCount;
-        if (mounted) setState(() {});
-      }
-      return;
-    }
-
-    if (!tableScrollController.hasClients) return;
-
-    final position = tableScrollController.position;
-    final viewportHeight = position.viewportDimension;
-    final totalHeadingHeight = tableHeadingHeight + tableHeadingHeightOffset;
-
-    final currentPixels = position.pixels;
-    final scrollDelta = currentPixels - _scrollPosition;
-    _scrollPosition = currentPixels;
-
-    final jumpRows = (scrollDelta.abs() / tableRowHeight).ceil();
-    final topExtraBuffer = scrollDelta < 0 ? jumpRows : 0;
-    final bottomExtraBuffer = scrollDelta > 0 ? jumpRows : 0;
-
-    final int cursorStart;
-    final int cursorEnd;
-
-    if (tableIsGroup) {
-      final tableObject = tableKey.currentContext?.findRenderObject();
-      final viewportObject = position.context.storageContext.findRenderObject();
-
-      if (tableObject is! RenderBox || viewportObject is! RenderBox || !tableObject.hasSize || !viewportObject.hasSize) {
-        return;
-      }
-
-      final tableTop = tableObject.localToGlobal(Offset.zero, ancestor: viewportObject).dy;
-
-      cursorStart = ((-tableTop - totalHeadingHeight) / tableRowHeight).floor();
-      cursorEnd = ((-tableTop - totalHeadingHeight + viewportHeight) / tableRowHeight).ceil();
+    if (rowCount <= _targetBuildRows) {
+      nextStart = 0;
+      nextEnd = rowCount;
     } else {
-      cursorStart = (currentPixels / tableRowHeight).floor();
-      cursorEnd = ((currentPixels + viewportHeight - totalHeadingHeight) / tableRowHeight).ceil();
+      if (!tableScrollController.hasClients) return;
+
+      final position = tableScrollController.position;
+      final viewportHeight = position.viewportDimension;
+      final totalHeadingHeight = tableHeadingHeight + tableHeadingHeightOffset;
+
+      final currentPixels = position.pixels;
+      final scrollDelta = currentPixels - _scrollPosition;
+      _scrollPosition = currentPixels;
+
+      final int cursorStart;
+      final int cursorEnd;
+
+      if (tableIsGroup) {
+        final tableObject = tableKey.currentContext?.findRenderObject();
+        final viewportObject = position.context.storageContext.findRenderObject();
+
+        if (tableObject is! RenderBox || viewportObject is! RenderBox || !tableObject.hasSize || !viewportObject.hasSize) {
+          return;
+        }
+
+        final tableTop = tableObject.localToGlobal(Offset.zero, ancestor: viewportObject).dy;
+
+        cursorStart = ((-tableTop - totalHeadingHeight) / tableRowHeight).floor();
+        cursorEnd = ((-tableTop - totalHeadingHeight + viewportHeight) / tableRowHeight).ceil();
+      } else {
+        cursorStart = (currentPixels / tableRowHeight).floor();
+        cursorEnd = ((currentPixels + viewportHeight - totalHeadingHeight) / tableRowHeight).ceil();
+      }
+
+      // Only recalculate slice if the table is at least partially in the viewport
+      if (cursorEnd > 0 && cursorStart < rowCount) {
+        final visibleStart = cursorStart.clamp(0, rowCount);
+        final visibleEnd = cursorEnd.clamp(visibleStart, rowCount);
+
+        final minOffscreenRows = (_halfBuffer * 0.75).ceil().clamp(2, _halfBuffer);
+        final hasEnoughTopOffscreen = (_tableRowStart == 0) || (visibleStart - _tableRowStart >= minOffscreenRows);
+        final hasEnoughBottomOffscreen = (_tableRowEnd == rowCount) || (_tableRowEnd - visibleEnd >= minOffscreenRows);
+
+        if (!hasEnoughTopOffscreen || !hasEnoughBottomOffscreen || _tableRowEnd <= _tableRowStart) {
+          final jumpRows = (scrollDelta.abs() / tableRowHeight).ceil().clamp(0, _viewportRows);
+          final topBuffer = scrollDelta < 0 ? (_halfBuffer * 1.5).ceil() + jumpRows : (_halfBuffer * 0.5).floor();
+          final bottomBuffer = scrollDelta > 0 ? (_halfBuffer * 1.5).ceil() + jumpRows : (_halfBuffer * 0.5).floor();
+
+          int candidateStart = (visibleStart - topBuffer).clamp(0, rowCount);
+          int candidateEnd = (visibleEnd + bottomBuffer).clamp(candidateStart, rowCount);
+
+          if (candidateStart <= _halfBuffer) {
+            candidateStart = 0;
+          }
+          if (rowCount - candidateEnd <= _halfBuffer) {
+            candidateEnd = rowCount;
+          }
+
+          nextStart = candidateStart;
+          nextEnd = candidateEnd;
+        }
+      }
     }
 
-    final visibleStart = cursorStart.clamp(0, rowCount);
-    final visibleEnd = cursorEnd.clamp(visibleStart, rowCount);
-
-    final minOffscreenRows = (_tableRowBuffer - tableLoadChunkSize).clamp(1, _tableRowBuffer);
-    final hasEnoughTopOffscreen = (_tableRowStart == 0) || (visibleStart - _tableRowStart >= minOffscreenRows);
-    final hasEnoughBottomOffscreen = (_tableRowEnd == rowCount) || (_tableRowEnd - visibleEnd >= minOffscreenRows);
-
-    if (hasEnoughTopOffscreen && hasEnoughBottomOffscreen && _tableRowEnd > _tableRowStart) {
-      return;
-    }
-
-    final nextStart = (visibleStart - _tableRowBuffer - topExtraBuffer).clamp(0, rowCount);
-    final nextEnd = (visibleEnd + _tableRowBuffer + bottomExtraBuffer).clamp(nextStart, rowCount);
-
+    // Single exit comparison against state variables: only update & setState if changed
     if (nextStart == _tableRowStart && nextEnd == _tableRowEnd) return;
 
     _tableRowStart = nextStart;

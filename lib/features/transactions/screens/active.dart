@@ -208,7 +208,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
               builder: (context, _) {
                 return ListView.custom(
                   controller: scrollToUtil.controller,
-                  scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
+                  scrollCacheExtent: const ScrollCacheExtent.viewport(2),
                   itemExtentBuilder: (index, dimensions) {
                     return groupHeights[index] + separatorHeight;
                   },

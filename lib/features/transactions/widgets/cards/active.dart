@@ -110,6 +110,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   Decimal _plPercentage = Decimal.zero;
   Decimal? _customRate;
 
+  final Map<String, Decimal> _capitalCache = {};
+
   bool _isReversed = false;
   bool _isOpen = true;
 
@@ -234,6 +236,8 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     _calculateProfitLoss();
     tablePopulateData();
     sortableApplySorting(); // Sortable will call setState!
+
+    _capitalCache.clear();
   }
 
   void _selectAllRowsChanged() {
@@ -275,7 +279,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     tableData = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
+      final capitalUsed = _capitalCache[tx.tid] ??= _calc.totalCapitalUsed(tx, txsMap: txsMap);
 
       Decimal rowRate = currentRate;
       Decimal currentValue = Decimal.zero;
