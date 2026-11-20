@@ -41,7 +41,7 @@ class ArchivesPage extends StatefulWidget {
 class _ArchivesPageState extends State<ArchivesPage>
     with
         MixinsState,
-        MixinsTable,
+        MixinsTable<ArchivesPage>,
         MixinsSortableTable<ArchivesPage>,
         MixinsActionBar<ArchivesPage>,
         MixinsScrollToTable<ArchivesPage, ArchivesModel> {
@@ -65,6 +65,9 @@ class _ArchivesPageState extends State<ArchivesPage>
   String get sortableDefaultKey => "timestamp";
 
   @override
+  ScrollController get tableScrollController => scrollToUtil.controller;
+
+  @override
   void initState() {
     super.initState();
     _controller = CoreLocator.getit<ArchivesController>();
@@ -78,7 +81,7 @@ class _ArchivesPageState extends State<ArchivesPage>
       "type": (col, asc) => sortableOnSort((d) => d['tx'].type, "type", col, asc),
     };
 
-    rows = _buildRows();
+    tableData = tablePopulateData();
     sortableApplySorting();
 
     actionbarRegister("Data Archives");
@@ -159,6 +162,72 @@ class _ArchivesPageState extends State<ArchivesPage>
   }
 
   @override
+  List<Map<String, dynamic>> tablePopulateData() {
+    final rx = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      rx.add({'tx': tx});
+    }
+
+    return rx;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    if (tableColumns.isEmpty) {
+      tableColumns = [
+        DataColumn2(label: Text("Date "), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+        DataColumn2(label: Text("Data Type "), fixedWidth: 120, onSort: sortableSorters["type"]),
+        DataColumn2(label: Text("Notes ")),
+        DataColumn2(label: Text("Action "), fixedWidth: 80),
+      ];
+    }
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    final tx = row['tx'] as ArchivesModel;
+    return DataRow(
+      cells: [
+        DataCell(WidgetsTextSelectable(tx.timestampAsFormattedDate)),
+        DataCell(WidgetsTextSelectable(tx.typeText)),
+        DataCell(WidgetsTextSelectable(tx.meta['notes'] ?? "")),
+        DataCell(
+          ArchivesButtons(
+            tx: tx,
+            wxController: _controller,
+            onAction: () {
+              setState(() {});
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    return WidgetsPanel(
+      child: DataTable2(
+        key: tableKey,
+        scrollController: scrollToUtil.controller,
+        minWidth: 460,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        showCheckboxColumn: false,
+        sortColumnIndex: sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        columns: tableBuildColumns(),
+        rows: tableBuildRows(),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
@@ -184,7 +253,7 @@ class _ArchivesPageState extends State<ArchivesPage>
 
     actionbarRegister("Data Archives");
 
-    return AppContent(padding: EdgeInsets.only(left: 16, right: 16, bottom: 12), children: [_buildTable()]);
+    return AppContent(padding: EdgeInsets.only(left: 16, right: 16, bottom: 12), children: [tableBuild()]);
   }
 
   Widget _buildForm(BuildContext dialogContext) {
@@ -208,63 +277,11 @@ class _ArchivesPageState extends State<ArchivesPage>
     );
   }
 
-  Widget _buildTable() {
-    return WidgetsPanel(
-      child: DataTable2(
-        scrollController: scrollToUtil.controller,
-        minWidth: 460,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        showCheckboxColumn: false,
-        sortColumnIndex: sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: [
-          DataColumn2(label: Text("Date "), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
-          DataColumn2(label: Text("Data Type "), fixedWidth: 120, onSort: sortableSorters["type"]),
-          DataColumn2(label: Text("Notes ")),
-          DataColumn2(label: Text("Action "), fixedWidth: 80),
-        ],
-        rows: rows.map((r) {
-          final tx = r['tx'] as ArchivesModel;
-          return DataRow(
-            cells: [
-              DataCell(WidgetsTextSelectable(tx.timestampAsFormattedDate)),
-              DataCell(WidgetsTextSelectable(tx.typeText)),
-              DataCell(WidgetsTextSelectable(tx.meta['notes'] ?? "")),
-              DataCell(
-                ArchivesButtons(
-                  tx: tx,
-                  wxController: _controller,
-                  onAction: () {
-                    setState(() {});
-                  },
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  List<Map<String, dynamic>> _buildRows() {
-    final rx = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      rx.add({'tx': tx});
-    }
-
-    return rx;
-  }
-
   void _onControllerChanged() {
     setState(() {
       final ntx = _controller.findNew(txs);
       txs = _controller.items;
-      rows = _buildRows();
+      tableData = tablePopulateData();
       sortableApplySorting();
       if (ntx != null) {
         scrollToTableNewRow(ntx);

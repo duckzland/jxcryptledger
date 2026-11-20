@@ -40,7 +40,11 @@ class TransactionsDialogsBatchTrade extends StatefulWidget {
 }
 
 class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatchTrade>
-    with MixinsState, MixinsTable, MixinsSelectableTable, MixinsRateable<TransactionsDialogsBatchTrade> {
+    with
+        MixinsState,
+        MixinsTable<TransactionsDialogsBatchTrade>,
+        MixinsSelectableTable<TransactionsDialogsBatchTrade>,
+        MixinsRateable<TransactionsDialogsBatchTrade> {
   CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
   TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
@@ -62,10 +66,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   bool _takeProfit = false;
 
   Color? _accentColor;
+  String _targetSymbol = "";
   String? _noteEntry;
 
   bool _isReversed = false;
   bool _showNotes = false;
+  bool _showRate = false;
+  bool _showAmount = false;
   bool _useBalanceMode = false;
   bool _isProcessing = false;
   bool _isExiting = false;
@@ -77,6 +84,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   @override
   double get tableHeadingHeightOffset => 0;
+
+  @override
+  final ScrollController tableScrollController = ScrollController();
 
   @override
   void initState() {
@@ -106,12 +116,176 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     resultController.dispose();
     fromController.dispose();
     toController.dispose();
+    tableScrollController.dispose();
     super.dispose();
   }
 
   @override
   void rateableGetCallback(bool hasNewRate) {
     _updateResult(rateableAmount);
+  }
+
+  @override
+  List<Map<String, dynamic>> tablePopulateData() {
+    tableData = <Map<String, dynamic>>[];
+
+    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+
+    final selectedTxs = txs.where((tx) => selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
+    var fromAllocations = <String, Decimal>{};
+    var toAllocations = <String, Decimal>{};
+
+    if (_takeProfit) {
+      Decimal? profitRemaining = _fromAmount;
+      for (final tx in selectedTxs) {
+        if (profitRemaining == null) break;
+
+        final txProfit = Math.subtract(tx.balance, tx.rrAmount);
+        if (txProfit <= Decimal.zero) continue;
+
+        final sourceAmount = txProfit < profitRemaining ? txProfit : profitRemaining;
+        fromAllocations[tx.uuid] = sourceAmount;
+        profitRemaining = sourceAmount == profitRemaining ? null : Math.subtract(profitRemaining, sourceAmount);
+      }
+      toAllocations = _spreadByWeights(_toAmount, selectedTxs, fromAllocations);
+    } else if (_useBalanceMode) {
+      fromAllocations = _calc.spreadAmount(_fromAmount, selectedTxs);
+      toAllocations = _calc.spreadAmount(_toAmount, selectedTxs);
+    }
+
+    for (final tx in txs) {
+      final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
+      final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
+      final bool selected = selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial);
+      Decimal fromAmount = Decimal.zero;
+      late final Decimal amount;
+
+      if (_takeProfit) {
+        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
+        amount = toAllocations[tx.uuid] ?? Decimal.zero;
+      } else if (_useBalanceMode) {
+        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
+        amount = toAllocations[tx.uuid] ?? Decimal.zero;
+      } else {
+        amount = Math.multiply(tx.rrAmount, rate);
+      }
+
+      tableData.add({
+        'date': tx.timestampAsFormattedDate,
+        'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
+        'balance': _showAmount
+            ? fromAmount > Decimal.zero
+                  ? '${Utils.formatSmartDecimal(fromAmount, smartDecimal: false, maxDecimals: 18)} $resultSymbol'
+                  : ''
+            : tx.balance > Decimal.zero
+            ? '${tx.balanceTextRaw} $resultSymbol'
+            : '',
+        'rate': rateableAmount,
+        'amount': amount > Decimal.zero ? amount : null,
+        'selected': selected,
+        'tx': tx,
+        'uuid': tx.uuid,
+      });
+    }
+
+    return tableData;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    tableColumns = [
+      DataColumn2(label: Text('Date '), fixedWidth: 100),
+      DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+      DataColumn2(label: Text(_showAmount || _showRate ? 'From ' : 'Balance '), size: ColumnSize.M),
+      if (_showRate)
+        DataColumn2(
+          label: WidgetsHeader(
+            title: "Rate ",
+            subtitle: _isReversed ? "$_targetSymbol - $_selectedSymbol" : "$_selectedSymbol - $_targetSymbol",
+          ),
+          size: ColumnSize.M,
+        ),
+      if (_showRate || _showAmount) DataColumn2(label: Text('To '), size: ColumnSize.M),
+    ];
+
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    final tx = row['tx'] as TransactionsModel;
+    final canSelect = tx.isActive || tx.isPartial;
+
+    return DataRow(
+      selected: canSelect ? selectableIsSelected(row['uuid']) : false,
+      onSelectChanged: canSelect
+          ? (v) {
+              setState(() {
+                selectableSetSelected(row['uuid'], v!);
+                _updateProfit();
+                _updateResult(rateableAmount);
+                _buildResultAmountField();
+              });
+            }
+          : null,
+      cells: [
+        DataCell(WidgetsTextSelectable(row['date'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['transaction'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['selected'] == true ? row['balance'] ?? '' : '')),
+        if (_showRate) DataCell(WidgetsTextSelectable(row['selected'] == true ? rateableAmount ?? "" : '')),
+        if (_showRate || _showAmount)
+          DataCell(
+            WidgetsTextSelectable(
+              row['selected'] == true && _targetSymbol.isNotEmpty && row['amount'] != null
+                  ? '${Utils.formatSmartDecimal(row['amount'] ?? Decimal.zero, smartDecimal: false)} $_targetSymbol'
+                  : '',
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+
+    _targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
+    _showRate = !_useBalanceMode && rate > Decimal.zero && _targetSymbol.isNotEmpty;
+    _showAmount = _useBalanceMode && _targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
+
+    tablePopulateData();
+
+    final checkboxTheme = Theme.of(context).checkboxTheme;
+
+    return SizedBox(
+      width: double.infinity,
+      height: tableCalculateAdjustedMaxHeight(),
+      child: DataTable2(
+        key: tableKey,
+        headingCheckboxTheme: checkboxTheme,
+        datarowCheckboxTheme: checkboxTheme,
+        onSelectAll: selectableOnSelectAll(
+          () => tableData
+              .where((r) => (r['tx'] as TransactionsModel).isActive || (r['tx'] as TransactionsModel).isPartial)
+              .map((r) => r['uuid'] as String),
+          onChanged: () {
+            _updateProfit();
+            _updateResult(rateableAmount);
+            _buildResultAmountField();
+          },
+        ),
+        showHeadingCheckBox: true,
+        showCheckboxColumn: true,
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        isHorizontalScrollBarVisible: false,
+        columns: tableBuildColumns(),
+        rows: tableBuildRows(),
+      ),
+    );
   }
 
   @override
@@ -187,7 +361,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                         ],
                       ),
                     if (txs.isNotEmpty) _buildForm(),
-                    if (txs.isNotEmpty) Column(spacing: 4, children: [_buildTable(), _buildTotal()]),
+                    if (txs.isNotEmpty) Column(spacing: 4, children: [tableBuild(), _buildTotal()]),
                     if (txs.isEmpty)
                       Center(
                         child: Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
@@ -240,138 +414,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                   ],
                 ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTable() {
-    rows = <Map<String, dynamic>>[];
-
-    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-    final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
-
-    final bool showRate = !_useBalanceMode && rate > Decimal.zero && targetSymbol.isNotEmpty;
-    final bool showAmount = _useBalanceMode && targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
-    final selectedTxs = txs.where((tx) => selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
-    var fromAllocations = <String, Decimal>{};
-    var toAllocations = <String, Decimal>{};
-
-    if (_takeProfit) {
-      Decimal? profitRemaining = _fromAmount;
-      for (final tx in selectedTxs) {
-        if (profitRemaining == null) break;
-
-        final txProfit = Math.subtract(tx.balance, tx.rrAmount);
-        if (txProfit <= Decimal.zero) continue;
-
-        final sourceAmount = txProfit < profitRemaining ? txProfit : profitRemaining;
-        fromAllocations[tx.uuid] = sourceAmount;
-        profitRemaining = sourceAmount == profitRemaining ? null : Math.subtract(profitRemaining, sourceAmount);
-      }
-      toAllocations = _spreadByWeights(_toAmount, selectedTxs, fromAllocations);
-    } else if (_useBalanceMode) {
-      fromAllocations = _calc.spreadAmount(_fromAmount, selectedTxs);
-      toAllocations = _calc.spreadAmount(_toAmount, selectedTxs);
-    }
-
-    for (final tx in txs) {
-      final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
-      final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-      final bool selected = selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial);
-      Decimal fromAmount = Decimal.zero;
-      late final Decimal amount;
-
-      if (_takeProfit) {
-        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
-        amount = toAllocations[tx.uuid] ?? Decimal.zero;
-      } else if (_useBalanceMode) {
-        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
-        amount = toAllocations[tx.uuid] ?? Decimal.zero;
-      } else {
-        amount = Math.multiply(tx.rrAmount, rate);
-      }
-
-      rows.add({
-        'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
-        'balance': showAmount
-            ? fromAmount > Decimal.zero
-                  ? '${Utils.formatSmartDecimal(fromAmount, smartDecimal: false, maxDecimals: 18)} $resultSymbol'
-                  : ''
-            : tx.balance > Decimal.zero
-            ? '${tx.balanceTextRaw} $resultSymbol'
-            : '',
-        'rate': rateableAmount,
-        'amount': amount > Decimal.zero ? amount : null,
-        'selected': selected,
-        'tx': tx,
-        'uuid': tx.uuid,
-      });
-    }
-
-    final checkboxTheme = Theme.of(context).checkboxTheme;
-
-    return SizedBox(
-      width: double.infinity,
-      height: tableCalculateAdjustedMaxHeight(),
-      child: DataTable2(
-        headingCheckboxTheme: checkboxTheme,
-        datarowCheckboxTheme: checkboxTheme,
-        showHeadingCheckBox: true,
-        showCheckboxColumn: true,
-        minWidth: 800,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        isHorizontalScrollBarVisible: false,
-        columns: [
-          DataColumn2(label: Text('Date '), fixedWidth: 100),
-          DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-          DataColumn2(label: Text(showAmount || showRate ? 'From ' : 'Balance '), size: ColumnSize.M),
-          if (showRate)
-            DataColumn2(
-              label: WidgetsHeader(
-                title: "Rate ",
-                subtitle: _isReversed ? "$targetSymbol - $_selectedSymbol" : "$_selectedSymbol - $targetSymbol",
-              ),
-              size: ColumnSize.M,
-            ),
-          if (showRate || showAmount) DataColumn2(label: Text('To '), size: ColumnSize.M),
-        ],
-        rows: [
-          ...rows.map((r) {
-            final tx = r['tx'] as TransactionsModel;
-            final canSelect = tx.isActive || tx.isPartial;
-            return DataRow(
-              selected: canSelect ? selectableIsSelected(r['uuid']) : false,
-              onSelectChanged: canSelect
-                  ? (v) {
-                      setState(() {
-                        selectableSetSelected(r['uuid'], v!);
-                        _updateProfit();
-                        _updateResult(rateableAmount);
-                        _buildResultAmountField();
-                      });
-                    }
-                  : null,
-              cells: [
-                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['selected'] == true ? r['balance'] ?? '' : '')),
-                if (showRate) DataCell(WidgetsTextSelectable(r['selected'] == true ? rateableAmount ?? "" : '')),
-                if (showRate || showAmount)
-                  DataCell(
-                    WidgetsTextSelectable(
-                      r['selected'] == true && targetSymbol.isNotEmpty && r['amount'] != null
-                          ? '${Utils.formatSmartDecimal(r['amount'] ?? Decimal.zero, smartDecimal: false)} $targetSymbol'
-                          : '',
-                    ),
-                  ),
-              ],
-            );
-          }),
-        ],
       ),
     );
   }

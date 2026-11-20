@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'table.dart';
 
-mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
+mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable<T> {
   int sortableColumnIndex = 0;
 
   bool sortableAscending = false;
@@ -30,7 +30,7 @@ mixin MixinsSortableTable<T extends StatefulWidget> on State<T>, MixinsTable {
   void sortableAfterSorting() {}
 
   void sortableOnSort<U>(U Function(Map<String, dynamic> d) getField, String sortKey, int columnIndex, bool ascending) {
-    rows.sort((a, b) {
+    tableData.sort((a, b) {
       final aField = getField(a);
       final bField = getField(b);
 

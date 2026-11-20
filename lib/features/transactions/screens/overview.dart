@@ -165,60 +165,103 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
       return Center(
         child: Text(
           _filterMode == 0 ? "No active transactions available" : "No transactions available",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       );
     }
 
-    final separator = EdgeInsets.only(bottom: scrollToGroupGetSeparatorHeight());
+    final separatorHeight = scrollToGroupGetSeparatorHeight();
+    final separator = EdgeInsets.only(bottom: separatorHeight);
     final theme = Theme.of(context);
 
     return Stack(
       children: [
-        ListView.custom(
-          controller: scrollToUtil.controller,
-          scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
-          itemExtentBuilder: (index, dimensions) {
-            final key = groupKeys[index];
-            return scrollToGroupGetGroupHeight(key, groups[key] ?? [], dimensions.crossAxisExtent) + scrollToGroupGetSeparatorHeight();
-          },
-          childrenDelegate: SliverChildBuilderDelegate(
-            (BuildContext itemContext, int idx) {
-              final rrId = groupKeys[idx];
-              final stxs = groups[rrId]!;
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisExtent = constraints.maxWidth;
+            final viewportHeight = constraints.maxHeight;
 
-              return Padding(
-                padding: separator,
-                child: TransactionsWidgetsCardsOverview(
-                  key: ValueKey(rrId),
-                  id: int.parse(rrId),
-                  transactions: stxs,
-                  txsFlags: widget.txsFlags,
-                  onStatusChanged: widget.onStatusChanged,
-                  onToggleChanged: _toggleAction,
-                  parentContext: context,
-                  theme: theme,
-                  isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
-                  scrollController: scrollToUtil.controller,
-                  selectableGroup: selectableGroup,
-                ),
-              );
-            },
-            childCount: groupKeys.length,
-            addAutomaticKeepAlives: true,
-            findChildIndexCallback: (Key key) {
-              if (key is ValueKey<String>) {
-                final targetIdx = groupKeys.indexWhere((k) => k == key.value);
-                if (targetIdx != -1) {
-                  return targetIdx;
-                }
-              }
-              return null;
-            },
-          ),
+            final groupTops = List<double>.filled(groupKeys.length, 0.0);
+            final groupHeights = List<double>.filled(groupKeys.length, 0.0);
+            double runningTop = 0.0;
+
+            for (int i = 0; i < groupKeys.length; i++) {
+              final key = groupKeys[i];
+              final h = scrollToGroupGetGroupHeight(key, groups[key] ?? [], crossAxisExtent);
+              groupTops[i] = runningTop;
+              groupHeights[i] = h;
+              runningTop += h + separatorHeight;
+            }
+
+            return ListenableBuilder(
+              listenable: scrollToUtil.controller,
+              builder: (context, _) {
+                return ListView.custom(
+                  controller: scrollToUtil.controller,
+                  scrollCacheExtent: const ScrollCacheExtent.viewport(2.0),
+                  itemExtentBuilder: (index, dimensions) {
+                    return groupHeights[index] + separatorHeight;
+                  },
+                  childrenDelegate: SliverChildBuilderDelegate(
+                    (BuildContext itemContext, int idx) {
+                      final rrId = groupKeys[idx];
+                      final stxs = groups[rrId]!;
+                      final cardTop = groupTops[idx];
+                      final cardHeight = groupHeights[idx];
+                      final cardBottom = cardTop + cardHeight;
+                      final position = scrollToUtil.controller.hasClients ? scrollToUtil.controller.position : null;
+
+                      final scrollOffset = position?.pixels ?? 0.0;
+                      final actualViewportHeight = position?.viewportDimension ?? viewportHeight;
+
+                      final isOutOfView = cardBottom <= scrollOffset || cardTop >= (scrollOffset + actualViewportHeight);
+
+                      if (isOutOfView && stxs.length > 20) {
+                        return Padding(
+                          padding: separator,
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: SizedBox(width: 1, height: cardHeight),
+                          ),
+                        );
+                      }
+
+                      return Padding(
+                        padding: separator,
+                        child: TransactionsWidgetsCardsOverview(
+                          key: ValueKey(rrId),
+                          id: int.parse(rrId),
+                          transactions: stxs,
+                          txsFlags: widget.txsFlags,
+                          onStatusChanged: widget.onStatusChanged,
+                          onToggleChanged: _toggleAction,
+                          parentContext: context,
+                          theme: theme,
+                          isOpen: states.get("tx-group-overview-open-$rrId", defaultValue: true),
+                          scrollController: scrollToUtil.controller,
+                          selectableGroup: selectableGroup,
+                        ),
+                      );
+                    },
+                    childCount: groupKeys.length,
+                    addAutomaticKeepAlives: true,
+                    findChildIndexCallback: (Key key) {
+                      if (key is ValueKey<String>) {
+                        final targetIdx = groupKeys.indexWhere((k) => k == key.value);
+                        if (targetIdx != -1) {
+                          return targetIdx;
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                );
+              },
+            );
+          },
         ),
         TransactionsWidgetsBalanceBar(
-          key: ValueKey("tx-overview-balance-bar"),
+          key: const ValueKey("tx-overview-balance-bar"),
           data: selectableGroup,
           initialShowAmountUsed: states.get("tx-group-overview-balancebar", defaultValue: true),
           onToggle: (showAmountUsed) => states.set("tx-group-overview-balancebar", showAmountUsed),

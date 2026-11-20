@@ -30,7 +30,10 @@ mixin MixinsScrollToGroup<T extends StatefulWidget, K extends CoreModelWithId> {
         offset += scrollToGroupGetGroupHeight(id, txs, currentWidth) + scrollToGroupGetSeparatorHeight();
       }
 
-      final targetBottom = offset + scrollToGroupGetGroupHeight(groupKey, grouped[groupKey]!, currentWidth);
+      final targetTxs = grouped[groupKey];
+      if (targetTxs == null) return;
+
+      final targetBottom = offset + scrollToGroupGetGroupHeight(groupKey, targetTxs, currentWidth);
       final isAlreadyVisible = targetBottom > currentScrollTop && offset < currentScrollBottom;
 
       if (isAlreadyVisible) {

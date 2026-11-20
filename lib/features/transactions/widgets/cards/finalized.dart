@@ -73,8 +73,8 @@ class TransactionsWidgetsCardsFinalized extends StatefulWidget {
 class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsCardsFinalized>
     with
         MixinsState,
-        MixinsTable,
-        MixinsSelectableTable,
+        MixinsTable<TransactionsWidgetsCardsFinalized>,
+        MixinsSelectableTable<TransactionsWidgetsCardsFinalized>,
         MixinsSortableTable<TransactionsWidgetsCardsFinalized>,
         TransactionsMixinsSortableTable<TransactionsWidgetsCardsFinalized>,
         TransactionsMixinsActions,
@@ -103,6 +103,12 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   }
 
   @override
+  ScrollController get tableScrollController => widget.scrollController;
+
+  @override
+  bool get tableIsGroup => true;
+
+  @override
   void initState() {
     super.initState();
 
@@ -121,7 +127,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
     selectableSyncWithGroup();
     _calculatePanelData();
-    rows = _buildRows();
+    tablePopulateData();
     sortableApplySorting(pauseRefresh: true);
   }
 
@@ -153,16 +159,150 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     checkForUpdatable();
 
     _calculatePanelData();
-    rows = _buildRows();
+    tablePopulateData();
     sortableApplySorting();
+  }
+
+  @override
+  List<Map<String, dynamic>> tablePopulateData() {
+    tableData = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
+      final resultCoinSymbol = _cryptosController.getSymbol(tx.rrId);
+
+      final capitalText = _populateCapital([tx.uuid]);
+
+      tableData.add({
+        'date': tx.timestampAsFormattedDate,
+        'from': '${tx.srAmountText} $sourceCoinSymbol',
+        'to': '${tx.rrAmountText} $resultCoinSymbol',
+        'balance': '${tx.balanceText} $resultCoinSymbol',
+        'rate': '${tx.rateText} $sourceCoinSymbol/$resultCoinSymbol',
+        'capital': capitalText.first,
+        'tx': tx,
+
+        '_exchangedRateValue': tx.rate.toDouble(),
+        '_sourceSymbol': sourceCoinSymbol,
+        '_resultSymbol': resultCoinSymbol,
+      });
+    }
+
+    return tableData;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    if (tableColumns.isEmpty) {
+      tableColumns = [
+        WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+        WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
+        WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters["rrAmount"]),
+        WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters["balance"]),
+        WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.M, onSort: sortableSorters["rate"]),
+        WidgetsTableColumn(label: Text('Capital Used '), size: ColumnSize.M, onSort: sortableSorters["capital"]),
+        DataColumn2(label: Text('Actions '), fixedWidth: 100),
+      ];
+    }
+
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    final tx = row['tx'] as TransactionsModel;
+
+    return DataRow2(
+      key: ValueKey(tx.uuid),
+      selected: selectableIsSelected(tx.uuid),
+      onSelectChanged: (v) {
+        selectableSetSelected(tx.uuid, v!);
+        _calculatePanelData();
+        sortableApplySorting();
+      },
+      onTap: () {
+        TransactionsDialogsDetails.show(context, tx);
+      },
+      cells: [
+        DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
+        DataCell(WidgetsTextSelectable(row['from'])),
+
+        DataCell(WidgetsTextSelectable(row['to'])),
+
+        DataCell(WidgetsTextSelectable(row['balance'])),
+
+        DataCell(WidgetsTextSelectable(row['rate'])),
+
+        DataCell(WidgetsTextSelectable(row['capital'])),
+
+        DataCell(
+          TransactionsWidgetsButtonsAction(
+            parentContext: context,
+            key: Key("action-${tx.uuid}"),
+            tx: tx,
+            cryptosController: _cryptosController,
+            txController: txController,
+            isTradable: fxsIsTradable(tx),
+            isClosable: fxsIsClosable(tx),
+            isDeletable: fxsIsDeletable(tx),
+            isUpdatable: fxsIsUpdatable(tx),
+            isRefundable: fxsIsRefundable(tx),
+            isFinalizable: fxsIsFinalizable(tx),
+            hasLeaf: fxsHasLeaf(tx),
+            hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+            onAction: widget.onStatusChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    return SizedBox(
+      key: tableKey,
+      width: double.infinity,
+      height: tableCalculateHeight(),
+      child: WidgetsTableProxy(
+        controller: widget.scrollController,
+        topOffset: 80,
+        headerHeight: AppTheme.tableHeadingRowHeight,
+        rowHeight: AppTheme.tableDataRowMinHeight,
+        background: AppTheme.panelBg,
+        child: DataTable2(
+          key: Key("table-finalized-${widget.id}"),
+          headingCheckboxTheme: widget.theme.checkboxTheme,
+          datarowCheckboxTheme: widget.theme.checkboxTheme,
+          onSelectAll: selectableOnSelectAll(
+            () => txs.where((tx) => tx.isActive || tx.isPartial).map((tx) => tx.uuid),
+            onChanged: () {
+              _calculatePanelData();
+              sortableApplySorting();
+            },
+          ),
+          showHeadingCheckBox: true,
+          showCheckboxColumn: true,
+          minWidth: 1200,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
+          sortColumnIndex: sortableColumnIndex,
+          sortAscending: sortableAscending,
+          isHorizontalScrollBarVisible: false,
+          columns: tableBuildColumns(),
+          rows: tableBuildRows(),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return WidgetsPanel(
-      child: rows.isEmpty
+      child: tableData.isEmpty
           ? Center(child: CircularProgressIndicator())
-          : Column(spacing: 20, children: [_buildHeader(), if (_isOpen) _buildTable()]),
+          : Column(spacing: 20, children: [_buildHeader(), if (_isOpen) tableBuild()]),
     );
   }
 
@@ -259,121 +399,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         ],
       ),
     );
-  }
-
-  Widget _buildTable() {
-    final tableColumns = [
-      WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
-      WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
-      WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters["rrAmount"]),
-      WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters["balance"]),
-      WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.M, onSort: sortableSorters["rate"]),
-      WidgetsTableColumn(label: Text('Capital Used '), size: ColumnSize.M, onSort: sortableSorters["capital"]),
-      DataColumn2(label: Text('Actions '), fixedWidth: 100),
-    ];
-    final tableRows = rows.map((r) {
-      final tx = r['tx'] as TransactionsModel;
-
-      return DataRow2(
-        key: ValueKey(tx.uuid),
-        selected: selectableIsSelected(tx.uuid),
-        onSelectChanged: (v) {
-          selectableSetSelected(tx.uuid, v!);
-          _calculatePanelData();
-          sortableApplySorting();
-        },
-        onTap: () {
-          TransactionsDialogsDetails.show(context, tx);
-        },
-        cells: [
-          DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
-          DataCell(WidgetsTextSelectable(r['from'])),
-
-          DataCell(WidgetsTextSelectable(r['to'])),
-
-          DataCell(WidgetsTextSelectable(r['balance'])),
-
-          DataCell(WidgetsTextSelectable(r['rate'])),
-
-          DataCell(WidgetsTextSelectable(r['capital'])),
-
-          DataCell(
-            TransactionsWidgetsButtonsAction(
-              parentContext: context,
-              key: Key("action-${tx.uuid}"),
-              tx: tx,
-              cryptosController: _cryptosController,
-              txController: txController,
-              isTradable: fxsIsTradable(tx),
-              isClosable: fxsIsClosable(tx),
-              isDeletable: fxsIsDeletable(tx),
-              isUpdatable: fxsIsUpdatable(tx),
-              isRefundable: fxsIsRefundable(tx),
-              isFinalizable: fxsIsFinalizable(tx),
-              hasLeaf: fxsHasLeaf(tx),
-              hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-              onAction: widget.onStatusChanged,
-            ),
-          ),
-        ],
-      );
-    }).toList();
-
-    return SizedBox(
-      width: double.infinity,
-      height: tableCalculateHeight(),
-      child: WidgetsTableProxy(
-        controller: widget.scrollController,
-        topOffset: 80,
-        headerHeight: AppTheme.tableHeadingRowHeight,
-        rowHeight: AppTheme.tableDataRowMinHeight,
-        background: AppTheme.panelBg,
-        child: DataTable2(
-          key: Key("table-finalized-${widget.id}"),
-          headingCheckboxTheme: widget.theme.checkboxTheme,
-          datarowCheckboxTheme: widget.theme.checkboxTheme,
-          showHeadingCheckBox: true,
-          showCheckboxColumn: true,
-          minWidth: 1200,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          headingRowHeight: tableHeadingHeight,
-          dataRowHeight: tableRowHeight,
-          sortColumnIndex: sortableColumnIndex,
-          sortAscending: sortableAscending,
-          isHorizontalScrollBarVisible: false,
-          columns: tableColumns,
-          rows: tableRows,
-        ),
-      ),
-    );
-  }
-
-  List<Map<String, dynamic>> _buildRows() {
-    final rx = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
-      final resultCoinSymbol = _cryptosController.getSymbol(tx.rrId);
-
-      final capitalText = _populateCapital([tx.uuid]);
-
-      rx.add({
-        'date': tx.timestampAsFormattedDate,
-        'from': '${tx.srAmountText} $sourceCoinSymbol',
-        'to': '${tx.rrAmountText} $resultCoinSymbol',
-        'balance': '${tx.balanceText} $resultCoinSymbol',
-        'rate': '${tx.rateText} $sourceCoinSymbol/$resultCoinSymbol',
-        'capital': capitalText.first,
-        'tx': tx,
-
-        '_exchangedRateValue': tx.rate.toDouble(),
-        '_sourceSymbol': sourceCoinSymbol,
-        '_resultSymbol': resultCoinSymbol,
-      });
-    }
-
-    return rx;
   }
 
   List<String> _populateCapital(List<String> txsIds) {

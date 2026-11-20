@@ -40,7 +40,7 @@ class WatchersPage extends StatefulWidget {
 class _WatchersPageState extends State<WatchersPage>
     with
         MixinsState,
-        MixinsTable,
+        MixinsTable<WatchersPage>,
         MixinsSortableTable<WatchersPage>,
         MixinsActionBar<WatchersPage>,
         MixinsScrollToTable<WatchersPage, WatchersModel> {
@@ -60,6 +60,9 @@ class _WatchersPageState extends State<WatchersPage>
   final scrollToUtil = ScrollTo('wx-group-offset');
 
   @override
+  ScrollController get tableScrollController => scrollToUtil.controller;
+
+  @override
   void initState() {
     super.initState();
     _wxController = CoreLocator.getit<WatchersController>();
@@ -77,7 +80,7 @@ class _WatchersPageState extends State<WatchersPage>
       "duration": (col, asc) => sortableOnSort((d) => d['tx'].duration, "duration", col, asc),
     };
 
-    rows = _buildRows();
+    tablePopulateData();
     sortableApplySorting();
 
     actionbarRegister("Rate Watchers");
@@ -172,6 +175,80 @@ class _WatchersPageState extends State<WatchersPage>
   }
 
   @override
+  List<Map<String, dynamic>> tablePopulateData() {
+    final rx = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      rx.add({'tx': tx});
+    }
+
+    return rx;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    if (tableColumns.isEmpty) {
+      tableColumns = [
+        DataColumn2(label: Text("From "), onSort: sortableSorters["srId"]),
+        DataColumn2(label: Text("To "), onSort: sortableSorters["rrId"]),
+        DataColumn2(label: Text("Ops "), onSort: sortableSorters["ops"]),
+        DataColumn2(label: Text("Rate "), onSort: sortableSorters["rate"]),
+        DataColumn2(label: Text("Sent "), onSort: sortableSorters["sent"]),
+        DataColumn2(label: Text("Limit "), onSort: sortableSorters["limit"]),
+        DataColumn2(label: Text("Duration "), onSort: sortableSorters["duration"]),
+        DataColumn2(label: Text("Action "), fixedWidth: 110),
+      ];
+    }
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    final WatchersModel tx = row['tx'];
+    return DataRow(
+      cells: [
+        DataCell(WidgetsTextSelectable(_cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin')),
+        DataCell(WidgetsTextSelectable(_cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin')),
+        DataCell(WidgetsTextSelectable(tx.operatorText)),
+        DataCell(WidgetsTextSelectable(Utils.formatSmartDecimal(tx.rates))),
+        DataCell(WidgetsTextSelectable(tx.sent.toString())),
+        DataCell(WidgetsTextSelectable(tx.limit.toString())),
+        DataCell(WidgetsTextSelectable("${tx.duration}m")),
+        DataCell(
+          WatchersButtons(
+            tx: tx,
+            wxController: _wxController,
+            onAction: () {
+              setState(() {});
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    return WidgetsPanel(
+      child: DataTable2(
+        key: tableKey,
+        scrollController: scrollToUtil.controller,
+        minWidth: 1200,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: AppTheme.tableHeadingRowHeight,
+        dataRowHeight: AppTheme.tableDataRowMinHeight,
+        showCheckboxColumn: false,
+        sortColumnIndex: sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        columns: tableBuildColumns(),
+        rows: tableBuildRows(),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_cryptosController.isEmpty()) {
       actionbarRemove();
@@ -195,19 +272,7 @@ class _WatchersPageState extends State<WatchersPage>
 
     actionbarRegister("Rate Watchers");
 
-    return AppContent(padding: EdgeInsets.only(left: 16, right: 16, bottom: 12), children: [_buildTable()]);
-  }
-
-  void _onControllerChanged() {
-    setState(() {
-      final ntx = _wxController.findNew(txs);
-      txs = _wxController.items;
-      rows = _buildRows();
-      sortableApplySorting();
-      if (ntx != null) {
-        scrollToTableNewRow(ntx);
-      }
-    });
+    return AppContent(padding: EdgeInsets.only(left: 16, right: 16, bottom: 12), children: [tableBuild()]);
   }
 
   Widget _buildForm(BuildContext dialogContext) {
@@ -230,65 +295,15 @@ class _WatchersPageState extends State<WatchersPage>
     );
   }
 
-  Widget _buildTable() {
-    final table = rows;
-
-    return WidgetsPanel(
-      child: DataTable2(
-        scrollController: scrollToUtil.controller,
-        minWidth: 1200,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: AppTheme.tableHeadingRowHeight,
-        dataRowHeight: AppTheme.tableDataRowMinHeight,
-        showCheckboxColumn: false,
-        sortColumnIndex: sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: [
-          DataColumn2(label: Text("From "), onSort: sortableSorters["srId"]),
-          DataColumn2(label: Text("To "), onSort: sortableSorters["rrId"]),
-          DataColumn2(label: Text("Ops "), onSort: sortableSorters["ops"]),
-          DataColumn2(label: Text("Rate "), onSort: sortableSorters["rate"]),
-          DataColumn2(label: Text("Sent "), onSort: sortableSorters["sent"]),
-          DataColumn2(label: Text("Limit "), onSort: sortableSorters["limit"]),
-          DataColumn2(label: Text("Duration "), onSort: sortableSorters["duration"]),
-          DataColumn2(label: Text("Action "), fixedWidth: 110),
-        ],
-        rows: table.map((r) {
-          final WatchersModel tx = r['tx'];
-          return DataRow(
-            cells: [
-              DataCell(WidgetsTextSelectable(_cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin')),
-              DataCell(WidgetsTextSelectable(_cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin')),
-              DataCell(WidgetsTextSelectable(tx.operatorText)),
-              DataCell(WidgetsTextSelectable(Utils.formatSmartDecimal(tx.rates))),
-              DataCell(WidgetsTextSelectable(tx.sent.toString())),
-              DataCell(WidgetsTextSelectable(tx.limit.toString())),
-              DataCell(WidgetsTextSelectable("${tx.duration}m")),
-              DataCell(
-                WatchersButtons(
-                  tx: tx,
-                  wxController: _wxController,
-                  onAction: () {
-                    setState(() {});
-                  },
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  List<Map<String, dynamic>> _buildRows() {
-    final rx = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      rx.add({'tx': tx});
-    }
-
-    return rx;
+  void _onControllerChanged() {
+    setState(() {
+      final ntx = _wxController.findNew(txs);
+      txs = _wxController.items;
+      tableData = tablePopulateData();
+      sortableApplySorting();
+      if (ntx != null) {
+        scrollToTableNewRow(ntx);
+      }
+    });
   }
 }

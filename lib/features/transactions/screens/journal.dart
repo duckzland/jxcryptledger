@@ -41,7 +41,7 @@ class TransactionsJournalView extends StatefulWidget {
 class _TransactionsJournalViewState extends State<TransactionsJournalView>
     with
         MixinsState,
-        MixinsTable,
+        MixinsTable<TransactionsJournalView>,
         AutomaticKeepAliveClientMixin,
         MixinsSortableTable<TransactionsJournalView>,
         MixinsScrollToTable<TransactionsJournalView, TransactionsModel>,
@@ -63,6 +63,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   bool get wantKeepAlive => _shouldKeepAlive;
 
   @override
+  ScrollController get tableScrollController => scrollToUtil.controller;
+
+  @override
   void initState() {
     super.initState();
 
@@ -74,7 +77,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     fxs = widget.txsFlags;
     txs = _processTx();
 
-    rows = _buildRows();
+    tablePopulateData();
     sortableApplySorting(pauseRefresh: true);
   }
 
@@ -105,7 +108,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         txs = widget.transactions;
         fxs = widget.txsFlags;
         txs = _processTx();
-        rows = _buildRows();
+        tablePopulateData();
       });
       return;
     }
@@ -118,7 +121,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     txs = widget.transactions;
     fxs = widget.txsFlags;
 
-    rows = _buildRows();
+    tablePopulateData();
     sortableApplySorting();
 
     if (ntx != null) {
@@ -127,81 +130,14 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   }
 
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
-
-    return WidgetsPanel(
-      child: DataTable2(
-        key: const Key("table-journal"),
-        scrollController: scrollToUtil.controller,
-        minWidth: 1200,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        showCheckboxColumn: false,
-        sortColumnIndex: sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        empty: Center(
-          child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-        ),
-        columns: [
-          WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
-          WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
-          WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters["rrAmount"]),
-          WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters["balance"]),
-          WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.S, onSort: sortableSorters["rate"]),
-          WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters["status"]),
-          WidgetsTableColumn(label: Text('Actions '), fixedWidth: 100),
-        ],
-        rows: rows.map((r) {
-          final tx = r['tx'] as TransactionsModel;
-
-          return DataRow2(
-            key: ValueKey(tx.uuid),
-            onTap: () {
-              TransactionsDialogsDetails.show(context, tx);
-            },
-            cells: [
-              DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
-              DataCell(WidgetsTextSelectable(r['source'] ?? '')),
-              DataCell(WidgetsTextSelectable(r['result'] ?? '')),
-              DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
-              DataCell(WidgetsTextSelectable(r['rate'] ?? '')),
-              DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
-              DataCell(
-                TransactionsWidgetsButtonsAction(
-                  parentContext: context,
-                  tx: tx,
-                  cryptosController: _cryptosController,
-                  txController: txController,
-                  isTradable: fxsIsTradable(tx),
-                  isClosable: fxsIsClosable(tx),
-                  isDeletable: fxsIsDeletable(tx),
-                  isUpdatable: fxsIsUpdatable(tx),
-                  isRefundable: fxsIsRefundable(tx),
-                  isFinalizable: fxsIsFinalizable(tx),
-                  hasLeaf: fxsHasLeaf(tx),
-                  hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-                  onAction: widget.onStatusChanged,
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  List<Map<String, dynamic>> _buildRows() {
-    final rx = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> tablePopulateData() {
+    tableData = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
       final sourceSymbol = _cryptosController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptosController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
-      rx.add({
+      tableData.add({
         'balance': '${tx.balanceText} $resultSymbol',
         'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceSymbol',
         'result': tx.isCapital ? ' - ' : '${tx.rrAmountText} $resultSymbol',
@@ -214,7 +150,89 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         '_rateSymbol': "$resultSymbol/$sourceSymbol",
       });
     }
-    return rx;
+    return tableData;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    if (tableColumns.isEmpty) {
+      tableColumns = [
+        WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+        WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
+        WidgetsTableColumn(label: Text('To '), size: ColumnSize.M, onSort: sortableSorters["rrAmount"]),
+        WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters["balance"]),
+        WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.S, onSort: sortableSorters["rate"]),
+        WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters["status"]),
+        WidgetsTableColumn(label: Text('Actions '), fixedWidth: 100),
+      ];
+    }
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    final tx = row['tx'] as TransactionsModel;
+
+    return DataRow2(
+      key: ValueKey(tx.uuid),
+      onTap: () {
+        TransactionsDialogsDetails.show(context, tx);
+      },
+      cells: [
+        DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
+        DataCell(WidgetsTextSelectable(row['source'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['result'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['balance'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['rate'] ?? '')),
+        DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
+        DataCell(
+          TransactionsWidgetsButtonsAction(
+            parentContext: context,
+            tx: tx,
+            cryptosController: _cryptosController,
+            txController: txController,
+            isTradable: fxsIsTradable(tx),
+            isClosable: fxsIsClosable(tx),
+            isDeletable: fxsIsDeletable(tx),
+            isUpdatable: fxsIsUpdatable(tx),
+            isRefundable: fxsIsRefundable(tx),
+            isFinalizable: fxsIsFinalizable(tx),
+            hasLeaf: fxsHasLeaf(tx),
+            hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+            onAction: widget.onStatusChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    return DataTable2(
+      key: tableKey,
+      scrollController: scrollToUtil.controller,
+      minWidth: 1200,
+      columnSpacing: 12,
+      horizontalMargin: 12,
+      headingRowHeight: tableHeadingHeight,
+      dataRowHeight: tableRowHeight,
+      showCheckboxColumn: false,
+      sortColumnIndex: sortableColumnIndex,
+      sortAscending: sortableAscending,
+      isHorizontalScrollBarVisible: false,
+      empty: Center(
+        child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+      ),
+      columns: tableBuildColumns(),
+      rows: tableBuildRows(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return WidgetsPanel(child: tableBuild());
   }
 
   List<TransactionsModel> _processTx() {

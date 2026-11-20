@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'table.dart';
 
-mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
+mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable<T> {
   List<String> selectableSelectedRows = [];
   String get selectableKey => "";
 
@@ -76,6 +76,38 @@ mixin MixinsSelectableTable<T extends StatefulWidget> on State<T>, MixinsTable {
     }
 
     setState(() {});
+  }
+
+  void selectableSetRowsSelected(Iterable<String> keys, bool selected, {VoidCallback? onChanged}) {
+    final keysToUpdate = keys.toSet();
+    final updatedSelection = selectableSelectedRows.toSet();
+    if (selected) {
+      updatedSelection.addAll(keysToUpdate);
+    } else {
+      updatedSelection.removeAll(keysToUpdate);
+    }
+    selectableSelectedRows = updatedSelection.toList();
+
+    if (selectableGroupRows != null) {
+      final groupSelection = selectableGroupRows!.value.toSet();
+      if (selected) {
+        groupSelection.addAll(keysToUpdate);
+      } else {
+        groupSelection.removeAll(keysToUpdate);
+      }
+      selectableGroupRows!.value = groupSelection.toList();
+    }
+
+    if (selectableKey.isNotEmpty) {
+      states.set("[np]-$selectableKey-selected-rows", selectableSelectedRows);
+    }
+
+    onChanged?.call();
+    if (mounted) setState(() {});
+  }
+
+  ValueChanged<bool?> selectableOnSelectAll(Iterable<String> Function() keys, {VoidCallback? onChanged}) {
+    return (selected) => selectableSetRowsSelected(keys(), selected ?? false, onChanged: onChanged);
   }
 
   bool selectableIsSelected(String key) {

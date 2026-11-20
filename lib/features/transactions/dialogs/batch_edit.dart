@@ -29,7 +29,8 @@ class TransactionsDialogsBatchEdit extends StatefulWidget {
   State<TransactionsDialogsBatchEdit> createState() => _TransactionsDialogsBatchEditState();
 }
 
-class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchEdit> with MixinsState, MixinsTable, MixinsSelectableTable {
+class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchEdit>
+    with MixinsState, MixinsTable<TransactionsDialogsBatchEdit>, MixinsSelectableTable<TransactionsDialogsBatchEdit> {
   CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
   TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
@@ -50,6 +51,9 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
 
   @override
   double get tableHeadingHeightOffset => 0;
+
+  @override
+  final ScrollController tableScrollController = ScrollController();
 
   @override
   void initState() {
@@ -77,7 +81,89 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   @override
   void dispose() {
     _debounce?.cancel();
+    tableScrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  List<Map<String, dynamic>> tablePopulateData() {
+    tableData = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
+      final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
+
+      tableData.add({
+        'date': tx.timestampAsFormattedDate,
+        'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
+        'balance': '${tx.balanceTextRaw} $resultSymbol',
+        'status': tx.statusText,
+        'tx': tx,
+        'uuid': tx.uuid,
+      });
+    }
+
+    return tableData;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    if (tableColumns.isEmpty) {
+      tableColumns = [
+        DataColumn2(label: Text('Date '), fixedWidth: 100),
+        DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+        DataColumn2(label: Text('Balance '), size: ColumnSize.M),
+        DataColumn2(label: Text('Status '), fixedWidth: 140),
+      ];
+    }
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    return DataRow(
+      selected: selectableIsSelected(row['uuid']),
+      onSelectChanged: (v) {
+        setState(() {
+          selectableSetSelected(row['uuid'], v!);
+        });
+      },
+      cells: [
+        DataCell(WidgetsTextSelectable(row['date'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['transaction'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['balance'] ?? '')),
+        DataCell(Text(row['status'] ?? '')),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    tablePopulateData();
+
+    final checkboxTheme = Theme.of(context).checkboxTheme;
+
+    return SizedBox(
+      width: double.infinity,
+      height: tableCalculateAdjustedMaxHeight(),
+      child: DataTable2(
+        key: tableKey,
+        scrollController: tableScrollController,
+        headingCheckboxTheme: checkboxTheme,
+        datarowCheckboxTheme: checkboxTheme,
+        onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
+        showHeadingCheckBox: true,
+        showCheckboxColumn: true,
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        isHorizontalScrollBarVisible: false,
+        columns: tableBuildColumns(),
+        rows: tableBuildRows(),
+      ),
+    );
   }
 
   @override
@@ -97,7 +183,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
                     if (txs.isNotEmpty) Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
                     if (txs.isNotEmpty) _buildForm(),
-                    if (txs.isNotEmpty) _buildTable(),
+                    if (txs.isNotEmpty) tableBuild(),
                     if (txs.isEmpty) Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
                     Padding(
                       padding: EdgeInsets.only(top: 15.0, bottom: 5),
@@ -147,67 +233,6 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
                   ],
                 ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTable() {
-    rows = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
-      final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-
-      rows.add({
-        'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
-        'balance': '${tx.balanceTextRaw} $resultSymbol',
-        'status': tx.statusText,
-        'tx': tx,
-        'uuid': tx.uuid,
-      });
-    }
-
-    final checkboxTheme = Theme.of(context).checkboxTheme;
-
-    return SizedBox(
-      width: double.infinity,
-      height: tableCalculateAdjustedMaxHeight(),
-      child: DataTable2(
-        headingCheckboxTheme: checkboxTheme,
-        datarowCheckboxTheme: checkboxTheme,
-        showHeadingCheckBox: true,
-        showCheckboxColumn: true,
-        minWidth: 800,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        isHorizontalScrollBarVisible: false,
-        columns: [
-          DataColumn2(label: Text('Date '), fixedWidth: 100),
-          DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-          DataColumn2(label: Text('Balance '), size: ColumnSize.M),
-          DataColumn2(label: Text('Status '), fixedWidth: 140),
-        ],
-        rows: [
-          ...rows.map((r) {
-            return DataRow(
-              selected: selectableIsSelected(r['uuid']),
-              onSelectChanged: (v) {
-                setState(() {
-                  selectableSetSelected(r['uuid'], v!);
-                });
-              },
-              cells: [
-                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
-                DataCell(Text(r['status'] ?? '')),
-              ],
-            );
-          }),
-        ],
       ),
     );
   }

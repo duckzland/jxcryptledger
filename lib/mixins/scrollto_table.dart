@@ -7,7 +7,7 @@ import '../core/abstracts/models/with_id.dart';
 mixin MixinsScrollToTable<T extends StatefulWidget, K extends CoreModelWithId> {
   ScrollTo get scrollToUtil;
 
-  List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> tableData = <Map<String, dynamic>>[];
 
   double scrollToRowHeight = AppTheme.tableDataRowMinHeight;
   String scrollToRowIndexKey = 'uuid';
@@ -18,11 +18,11 @@ mixin MixinsScrollToTable<T extends StatefulWidget, K extends CoreModelWithId> {
   }
 
   int scrollToFindTableRowIndex(K tx) {
-    return rows.indexWhere((ltx) => ltx[scrollToRowIndexKey] == tx.uuid);
+    return tableData.indexWhere((ltx) => ltx[scrollToRowIndexKey] == tx.uuid);
   }
 
   void scrollToTableRowIndex(int index) {
-    if (index < 0 || index > rows.length) {
+    if (index < 0 || index > tableData.length) {
       return;
     }
 

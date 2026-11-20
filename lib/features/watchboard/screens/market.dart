@@ -2,6 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/content.dart';
+import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/scrollto.dart';
 import '../../../mixins/action_bar.dart';
@@ -31,13 +32,16 @@ class WatchboardScreensMarket extends StatefulWidget {
 class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     with
         MixinsState,
-        MixinsTable,
+        MixinsTable<WatchboardScreensMarket>,
         MixinsSortableTable<WatchboardScreensMarket>,
         MixinsScrollToTable<WatchboardScreensMarket, MarketsModel>,
         MixinsActionBar<WatchboardScreensMarket>,
         WatchboardMarketsMixinsFilterable<WatchboardScreensMarket> {
   late List<MarketsModel> txs;
   MarketsController get _controller => CoreLocator.getit<MarketsController>();
+
+  @override
+  double get tableRowHeight => AppTheme.tableDataRowMinHeight * 1.2;
 
   @override
   String get sortableKey => "px-group-market";
@@ -50,6 +54,9 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
 
   @override
   String get sortableDefaultKey => "rank";
+
+  @override
+  ScrollController get tableScrollController => scrollToUtil.controller;
 
   @override
   void initState() {
@@ -96,6 +103,84 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   }
 
   @override
+  List<Map<String, dynamic>> tablePopulateData() {
+    final rx = <Map<String, dynamic>>[];
+
+    for (final m in txs) {
+      rx.add({'tx': m});
+    }
+    return rx;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    if (tableColumns.isEmpty) {
+      tableColumns = [
+        WidgetsTableColumn(label: Text('# '), fixedWidth: 50, onSort: sortableSorters["rank"]),
+        WidgetsTableColumn(label: Text('Name '), size: ColumnSize.L, onSort: sortableSorters["name"]),
+        WidgetsTableColumn(label: Text('Price '), size: ColumnSize.S, onSort: sortableSorters["price"]),
+        WidgetsTableColumn(label: Text('1h % '), size: ColumnSize.S, onSort: sortableSorters["percent1h"]),
+        WidgetsTableColumn(label: Text('24h % '), size: ColumnSize.S, onSort: sortableSorters["percent24h"]),
+        WidgetsTableColumn(label: Text('7d % '), size: ColumnSize.S, onSort: sortableSorters["percent7d"]),
+        WidgetsTableColumn(label: Text('30d % '), size: ColumnSize.S, onSort: sortableSorters["percent30d"]),
+        WidgetsTableColumn(label: Text('M.Cap '), fixedWidth: 100, onSort: sortableSorters["marketCap"]),
+      ];
+    }
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    final MarketsModel tx = row['tx'];
+    return DataRow2(
+      key: ValueKey(tx.uuid),
+      cells: [
+        DataCell(WidgetsTextSelectable(tx.rankText)),
+        DataCell(
+          WidgetsHeader(
+            title: tx.name,
+            subtitle: tx.symbol,
+            spacing: 1,
+            reversed: true,
+            titleFontSize: 13,
+            titleFontWeight: FontWeight.w500,
+            subtitleFontSize: 10,
+          ),
+        ),
+        DataCell(WidgetsTextSelectable(tx.priceText)),
+        DataCell(WidgetsTextBalance(text: tx.percent1hText, value: tx.percent1h?.toDouble() ?? 0)),
+        DataCell(WidgetsTextBalance(text: tx.percent24hText, value: tx.percent24h?.toDouble() ?? 0)),
+        DataCell(WidgetsTextBalance(text: tx.percent7dText, value: tx.percent7d?.toDouble() ?? 0)),
+        DataCell(WidgetsTextBalance(text: tx.percent30dText, value: tx.percent30d?.toDouble() ?? 0)),
+        DataCell(WidgetsTextSelectable(tx.marketCapText)),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    tablePopulateData();
+    return DataTable2(
+      key: tableKey,
+      scrollController: scrollToUtil.controller,
+      minWidth: 1200,
+      columnSpacing: 12,
+      horizontalMargin: 12,
+      headingRowHeight: tableHeadingHeight,
+      dataRowHeight: tableRowHeight,
+      showCheckboxColumn: false,
+      sortColumnIndex: sortableColumnIndex,
+      sortAscending: sortableAscending,
+      isHorizontalScrollBarVisible: false,
+      empty: Center(
+        child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+      ),
+      columns: tableBuildColumns(),
+      rows: tableBuildRows(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     actionbarRegister("Crypto Market");
 
@@ -105,72 +190,8 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
 
     return AppContent(
       padding: EdgeInsets.only(left: 16, right: 16, bottom: 12),
-      children: [
-        WidgetsPanel(
-          child: DataTable2(
-            key: Key("table-market"),
-            scrollController: scrollToUtil.controller,
-            minWidth: 1200,
-            columnSpacing: 12,
-            horizontalMargin: 12,
-            headingRowHeight: tableHeadingHeight,
-            dataRowHeight: tableRowHeight * 1.2,
-            showCheckboxColumn: false,
-            sortColumnIndex: sortableColumnIndex,
-            sortAscending: sortableAscending,
-            isHorizontalScrollBarVisible: false,
-            empty: Center(
-              child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-            ),
-            columns: [
-              WidgetsTableColumn(label: Text('# '), fixedWidth: 50, onSort: sortableSorters["rank"]),
-              WidgetsTableColumn(label: Text('Name '), size: ColumnSize.L, onSort: sortableSorters["name"]),
-              WidgetsTableColumn(label: Text('Price '), size: ColumnSize.S, onSort: sortableSorters["price"]),
-              WidgetsTableColumn(label: Text('1h % '), size: ColumnSize.S, onSort: sortableSorters["percent1h"]),
-              WidgetsTableColumn(label: Text('24h % '), size: ColumnSize.S, onSort: sortableSorters["percent24h"]),
-              WidgetsTableColumn(label: Text('7d % '), size: ColumnSize.S, onSort: sortableSorters["percent7d"]),
-              WidgetsTableColumn(label: Text('30d % '), size: ColumnSize.S, onSort: sortableSorters["percent30d"]),
-              WidgetsTableColumn(label: Text('M.Cap '), fixedWidth: 100, onSort: sortableSorters["marketCap"]),
-            ],
-            rows: rows.map((r) {
-              final MarketsModel tx = r['tx'];
-              return DataRow2(
-                key: ValueKey(tx.uuid),
-                cells: [
-                  DataCell(WidgetsTextSelectable(tx.rankText)),
-                  DataCell(
-                    WidgetsHeader(
-                      title: tx.name,
-                      subtitle: tx.symbol,
-                      spacing: 1,
-                      reversed: true,
-                      titleFontSize: 13,
-                      titleFontWeight: FontWeight.w500,
-                      subtitleFontSize: 10,
-                    ),
-                  ),
-                  DataCell(WidgetsTextSelectable(tx.priceText)),
-                  DataCell(WidgetsTextBalance(text: tx.percent1hText, value: tx.percent1h?.toDouble() ?? 0)),
-                  DataCell(WidgetsTextBalance(text: tx.percent24hText, value: tx.percent24h?.toDouble() ?? 0)),
-                  DataCell(WidgetsTextBalance(text: tx.percent7dText, value: tx.percent7d?.toDouble() ?? 0)),
-                  DataCell(WidgetsTextBalance(text: tx.percent30dText, value: tx.percent30d?.toDouble() ?? 0)),
-                  DataCell(WidgetsTextSelectable(tx.marketCapText)),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+      children: [WidgetsPanel(child: tableBuild())],
     );
-  }
-
-  List<Map<String, dynamic>> _buildRows() {
-    final rx = <Map<String, dynamic>>[];
-
-    for (final m in txs) {
-      rx.add({'tx': m});
-    }
-    return rx;
   }
 
   void onMarketChange() {
@@ -182,7 +203,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   void _processTxs() {
     txs = [..._controller.items];
     txs = marketFilterableFilter(txs);
-    rows = _buildRows();
+    tableData = tablePopulateData();
 
     sortableApplySorting(pauseRefresh: true);
   }

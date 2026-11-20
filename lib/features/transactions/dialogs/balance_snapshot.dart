@@ -26,7 +26,8 @@ class TransactionsDialogsBalanceSnapshots extends StatefulWidget {
   State<TransactionsDialogsBalanceSnapshots> createState() => _TransactionsDialogsBalanceSnapshotsState();
 }
 
-class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialogsBalanceSnapshots> with MixinsState, MixinsTable {
+class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialogsBalanceSnapshots>
+    with MixinsState, MixinsTable<TransactionsDialogsBalanceSnapshots> {
   CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
   TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
   RatesController get _rateController => CoreLocator.getit<RatesController>();
@@ -72,6 +73,9 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   double get tableHeadingHeightOffset => 0;
 
   @override
+  final ScrollController tableScrollController = ScrollController();
+
+  @override
   void initState() {
     super.initState();
 
@@ -82,6 +86,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   @override
   void dispose() {
     _rateController.removeListener(_onControllerChanged);
+    tableScrollController.dispose();
     super.dispose();
   }
 
@@ -103,6 +108,94 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   }
 
   @override
+  List<Map<String, dynamic>> tablePopulateData() {
+    tableData = <Map<String, dynamic>>[];
+
+    for (final tx in tradableLeaves) {
+      final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
+      final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
+      Decimal rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
+
+      if (rate == Decimal.fromInt(-9999)) {
+        if (_cachedRates[tx.rrId] != null) {
+          rate = _cachedRates[tx.rrId]!;
+        }
+      } else {
+        _cachedRates[tx.rrId] = rate;
+      }
+
+      final amount = rate == Decimal.fromInt(-9999) ? Decimal.zero : tx.balance * rate;
+
+      tableData.add({
+        'date': tx.timestampAsFormattedDate,
+        'transaction': tx.rrId == tradeSourceId
+            ? 'Balance ${tx.balanceText} $resultSymbol'
+            : '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
+        'balance': '${tx.balanceText} $resultSymbol',
+        'rate': rate == Decimal.fromInt(-9999) || tx.rrId == tradeSourceId
+            ? "-"
+            : "1 $resultSymbol = ${Utils.formatSmartDecimal(rate)} $tradeSourceSymbol",
+        'amount': rate == Decimal.fromInt(-9999) ? "" : "${Utils.formatSmartDecimal(amount)} $tradeSourceSymbol",
+        'uuid': tx.uuid,
+        'tx': tx,
+      });
+    }
+
+    return tableData;
+  }
+
+  @override
+  List<DataColumn> tableBuildColumns() {
+    if (tableColumns.isEmpty) {
+      tableColumns = [
+        DataColumn2(label: Text('Date '), fixedWidth: 100),
+        DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
+        DataColumn2(label: Text('Balance '), size: ColumnSize.S),
+        DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
+        DataColumn2(label: Text('Return '), size: ColumnSize.S),
+      ];
+    }
+    return tableColumns;
+  }
+
+  @override
+  DataRow tableBuildRow(Map<String, dynamic> row) {
+    return DataRow(
+      key: ValueKey(row['uuid']),
+      cells: [
+        DataCell(WidgetsTextSelectable(row['date'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['transaction'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['balance'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['rate'] ?? '')),
+        DataCell(WidgetsTextSelectable(row['amount'] ?? '')),
+      ],
+    );
+  }
+
+  @override
+  Widget tableBuild() {
+    tablePopulateData();
+
+    return SizedBox(
+      width: double.infinity,
+      height: tableCalculateAdjustedMaxHeight(),
+      child: DataTable2(
+        key: tableKey,
+        scrollController: tableScrollController,
+        minWidth: 800,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        showCheckboxColumn: false,
+        isHorizontalScrollBarVisible: false,
+        columns: tableBuildColumns(),
+        rows: tableBuildRows(),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: EdgeInsets.all(24),
@@ -118,42 +211,6 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         ),
       ),
     );
-  }
-
-  List<Map<String, dynamic>> _buildRows(List<TransactionsModel> txs) {
-    final rows = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
-      final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
-      Decimal rate = _rateController.getStoredRate(tx.rrId, tradeSourceId);
-
-      if (rate == Decimal.fromInt(-9999)) {
-        if (_cachedRates[tx.rrId] != null) {
-          rate = _cachedRates[tx.rrId]!;
-        }
-      } else {
-        _cachedRates[tx.rrId] = rate;
-      }
-
-      final amount = rate == Decimal.fromInt(-9999) ? Decimal.zero : tx.balance * rate;
-
-      rows.add({
-        'date': tx.timestampAsFormattedDate,
-        'transaction': tx.rrId == tradeSourceId
-            ? 'Balance ${tx.balanceText} $resultSymbol'
-            : '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
-        'balance': '${tx.balanceText} $resultSymbol',
-        'rate': rate == Decimal.fromInt(-9999) || tx.rrId == tradeSourceId
-            ? "-"
-            : "1 $resultSymbol = ${Utils.formatSmartDecimal(rate)} $tradeSourceSymbol",
-        'amount': rate == Decimal.fromInt(-9999) ? "" : "${Utils.formatSmartDecimal(amount)} $tradeSourceSymbol",
-        'uuid': tx.uuid,
-        'tx': tx,
-      });
-    }
-
-    return rows;
   }
 
   Decimal? _getTotalAmount(List<TransactionsModel> txs) {
@@ -177,46 +234,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   }
 
   Widget _buildTransactionsPanel() {
-    rows = _buildRows(tradableLeaves);
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 4, children: [_buildTable(), _buildTotal()]);
-  }
-
-  Widget _buildTable() {
-    return SizedBox(
-      width: double.infinity,
-      height: tableCalculateAdjustedMaxHeight(),
-      child: DataTable2(
-        minWidth: 800,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        showCheckboxColumn: false,
-        isHorizontalScrollBarVisible: false,
-        columns: [
-          DataColumn2(label: Text('Date '), fixedWidth: 100),
-          DataColumn2(label: Text('Transactions '), size: ColumnSize.M),
-          DataColumn2(label: Text('Balance '), size: ColumnSize.S),
-          DataColumn2(label: Text('Market Rate '), size: ColumnSize.S),
-          DataColumn2(label: Text('Return '), size: ColumnSize.S),
-        ],
-        rows: [
-          ...rows.map((r) {
-            return DataRow(
-              key: ValueKey(r['uuid']),
-              cells: [
-                DataCell(WidgetsTextSelectable(r['date'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['transaction'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['balance'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['rate'] ?? '')),
-                DataCell(WidgetsTextSelectable(r['amount'] ?? '')),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 4, children: [tableBuild(), _buildTotal()]);
   }
 
   Widget _buildTotal() {
@@ -253,7 +271,12 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
             cells: [
               DataCell(Text('Total Capital', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(Text('', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataCell(WidgetsTextSelectable("${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol", style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(
+                WidgetsTextSelectable(
+                  "${Utils.formatSmartDecimal(tradeCapital)} $tradeSourceSymbol",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
               DataCell(Text('Total Return', style: TextStyle(fontWeight: FontWeight.bold))),
               DataCell(WidgetsTextSelectable(total, style: TextStyle(fontWeight: FontWeight.bold))),
             ],
