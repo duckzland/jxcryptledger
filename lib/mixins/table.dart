@@ -2,7 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
-import '../core/log.dart';
+// import '../core/log.dart';
 import 'state.dart';
 
 mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
@@ -21,8 +21,6 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
   double get tableHeadingHeight => AppTheme.tableHeadingRowHeight;
 
   int get tableMinimumRowEntries => 5;
-
-  /// Multiplier of viewport rows to keep mounted (2.5 = 1x visible + 0.75x top + 0.75x bottom)
   double get tableViewportMultiplier => 2.5;
 
   int _tableRowStart = 0;
@@ -31,7 +29,6 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
 
   double _scrollPosition = 0.0;
 
-  // 1. Base unit: exact rows that fit in the current viewport
   int get _viewportRows {
     final viewportHeight = tableScrollController.hasClients
         ? tableScrollController.position.viewportDimension
@@ -39,10 +36,7 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
     return (viewportHeight / tableRowHeight).ceil().clamp(1, 200);
   }
 
-  // 2. Total rows to build based on viewport height
   int get _targetBuildRows => (_viewportRows * tableViewportMultiplier).ceil();
-
-  // 3. Split the extra offscreen cushion evenly: half top, half bottom
   int get _halfBuffer => ((_targetBuildRows - _viewportRows) / 2).ceil().clamp(2, 100);
 
   @override
@@ -67,7 +61,6 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
 
   List<DataColumn> tableBuildColumns();
 
-  /// Optional override in your table widget to customize the loader widget
   Widget tableBuildLoader() {
     return const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)));
   }
@@ -82,15 +75,12 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       return const <DataRow>[];
     }
 
-    // If total data fits within our target build budget, render everything directly
     if (tableData.length <= _targetBuildRows) {
       _tableRowStart = 0;
       _tableRowEnd = tableData.length;
       return tableData.map(tableBuildRow).toList(growable: false);
     }
 
-    // Frame 1 before ScrollController attaches: render 1 full-height loader row
-    // so the header appears immediately without a blank gap or wasted row builds!
     if (!tableScrollController.hasClients) {
       return [
         DataRow2(
@@ -126,7 +116,7 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       rows.add(tableBuildSpacerRow(remaining, 'bottom'));
     }
 
-    logln("Generating table rows: ${rows.length} (slice: $start..$end / ${tableData.length})", "TABLE");
+    // logln("Generating table rows: ${rows.length} (slice: $start..$end / ${tableData.length})", "TABLE");
 
     return rows;
   }
@@ -182,7 +172,6 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
         cursorEnd = ((currentPixels + viewportHeight - totalHeadingHeight) / tableRowHeight).ceil();
       }
 
-      // Only recalculate slice if the table is at least partially in the viewport
       if (cursorEnd > 0 && cursorStart < rowCount) {
         final visibleStart = cursorStart.clamp(0, rowCount);
         final visibleEnd = cursorEnd.clamp(visibleStart, rowCount);
@@ -212,7 +201,6 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       }
     }
 
-    // Single exit comparison against state variables: only update & setState if changed
     if (nextStart == _tableRowStart && nextEnd == _tableRowEnd) return;
 
     _tableRowStart = nextStart;
