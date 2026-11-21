@@ -302,6 +302,23 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     );
   }
 
+  late final String srAmountText = Utils.formatSmartDecimal(srAmount);
+  late final String rrAmountText = Utils.formatSmartDecimal(rrAmount);
+  late final String balanceText = Utils.formatSmartDecimal(balance);
+  late final String rateText = Utils.formatSmartDecimal(rate);
+  late final String rateReversedText = Utils.formatSmartDecimal(reverseRate);
+
+  late final String srAmountTextRaw = Utils.formatSmartDecimal(srAmount, smartDecimal: false, maxDecimals: 18);
+  late final String rrAmountTextRaw = Utils.formatSmartDecimal(rrAmount, smartDecimal: false, maxDecimals: 18);
+  late final String balanceTextRaw = Utils.formatSmartDecimal(balance, smartDecimal: false, maxDecimals: 18);
+  late final String rateTextRaw = Utils.formatSmartDecimal(rate, smartDecimal: false, maxDecimals: 18);
+  late final String rateReversedTextRaw = Utils.formatSmartDecimal(reverseRate, smartDecimal: false, maxDecimals: 18);
+  late final String timestampAsFormattedDate = Utils.timestampToFormattedDate(timestamp);
+
+  late final Decimal rate = (srAmount <= Decimal.zero || rrAmount <= Decimal.zero) ? Decimal.zero : Math.divide(rrAmount, srAmount);
+  late final Decimal reverseRate = (srAmount <= Decimal.zero || rrAmount <= Decimal.zero) ? Decimal.zero : Math.divide(srAmount, rrAmount);
+  late final Decimal profitAmount = balance > rrAmount ? Math.subtract(balance, rrAmount) : Decimal.zero;
+
   TransactionStatus get statusEnum {
     switch (status) {
       case 0:
@@ -336,10 +353,6 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     }
   }
 
-  String get timestampAsFormattedDate {
-    return Utils.timestampToFormattedDate(timestamp);
-  }
-
   int get sanitizedTimestamp {
     return Utils.sanitizeTimestamp(timestamp);
   }
@@ -355,23 +368,6 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
       return meta['purchase_notes'];
     }
     return null;
-  }
-
-  String get srAmountText => Utils.formatSmartDecimal(srAmount);
-  String get rrAmountText => Utils.formatSmartDecimal(rrAmount);
-  String get balanceText => Utils.formatSmartDecimal(balance);
-  String get rateText => Utils.formatSmartDecimal(rate);
-  String get rateReversedText => Utils.formatSmartDecimal(Math.divide(Decimal.one, rate));
-
-  String get srAmountTextRaw => Utils.formatSmartDecimal(srAmount, smartDecimal: false, maxDecimals: 18);
-  String get rrAmountTextRaw => Utils.formatSmartDecimal(rrAmount, smartDecimal: false, maxDecimals: 18);
-  String get balanceTextRaw => Utils.formatSmartDecimal(balance, smartDecimal: false, maxDecimals: 18);
-  String get rateTextRaw => Utils.formatSmartDecimal(rate, smartDecimal: false, maxDecimals: 18);
-  String get rateReversedTextRaw => Utils.formatSmartDecimal(Math.divide(Decimal.one, rate), smartDecimal: false, maxDecimals: 18);
-
-  Decimal get rate {
-    if (srAmount <= Decimal.zero || rrAmount <= Decimal.zero) return Decimal.zero;
-    return Math.divide(rrAmount, srAmount);
   }
 
   @override

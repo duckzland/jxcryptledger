@@ -7,6 +7,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:jxledger/ipc/status/op.dart';
 import 'package:jxledger/ipc/abstracts/box.dart';
+import 'package:jxledger/ipc/abstracts/database.dart';
 import 'package:jxledger/ipc/client.dart';
 import 'package:jxledger/ipc/abstracts/adapters.dart';
 import 'package:jxledger/ipc/protocol/event.dart';
@@ -60,6 +61,29 @@ TransactionsModel makeTx(String tid, {Decimal? balance}) {
     timestamp: DateTime.now().millisecondsSinceEpoch,
     meta: {},
   );
+}
+
+class _IpcPerformanceDatabase extends IpcDatabase {
+  final Map<String, TransactionsModel> transactions;
+
+  _IpcPerformanceDatabase(super.boxes, super.adapters, super.migration, super.path, this.transactions);
+
+  @override
+  Future<void> init() async {
+    initialized = true;
+  }
+
+  @override
+  Future<IpcStatusUnlock> unlock(Uint8List keyBytes) async {
+    unlocked = IpcStatusUnlock.success;
+    return IpcStatusUnlock.success;
+  }
+
+  @override
+  Iterable<dynamic> keys(String boxName) => transactions.keys;
+
+  @override
+  dynamic get(String boxName, dynamic id) => transactions[id];
 }
 
 void main() {
@@ -978,6 +1002,97 @@ void main() {
       await Future.delayed(Duration(milliseconds: 150));
       final tx2 = makeTx("52", balance: Decimal.fromInt(3));
       client2.send(op: IpcStatusOp.getCode("put"), action: 'transactions_box', key: '52', payload: tx2);
+    });
+
+    test('benchmarks 50K transaction extract stages', () async {
+      const itemCount = 50000;
+      final stopwatch = Stopwatch()..start();
+      final transactions = <String, TransactionsModel>{};
+      for (var i = 1; i <= itemCount; i++) {
+        transactions[i.toString()] = makeTx(i.toString(), balance: Decimal.fromInt(i % 1000));
+      }
+      stopwatch.stop();
+      // ignore: avoid_print
+      print('[IPC 50K] generate transactions: ${stopwatch.elapsedMilliseconds} ms');
+
+      final pipeName = await _testPipeName();
+      CoreMode.isServer = true;
+      CoreMode.dbVersion = "";
+      final adapters = IpcAdaptersFaker();
+      final database = _IpcPerformanceDatabase(IpcBoxesFaker(), adapters, IpcMigrationFaker(), "", transactions);
+      final server = IpcServer();
+      final client = IpcClient(adapters);
+      server.pipeName = pipeName;
+      server.handler = IpcActionFaker(database: database);
+      server.unlocker = (Uint8List bytes) async => IpcStatusUnlock.success;
+      client.pipeName = pipeName;
+
+      stopwatch
+        ..reset()
+        ..start();
+      await server.start();
+      await Future.delayed(const Duration(milliseconds: 150));
+      await client.start();
+      await Future.delayed(const Duration(milliseconds: 150));
+      stopwatch.stop();
+      print('[IPC 50K] start server and client: ${stopwatch.elapsedMilliseconds} ms');
+
+      final keyBytes = Uint8List.fromList([1, 2, 3]);
+      stopwatch
+        ..reset()
+        ..start();
+      final handshake = await client.send(op: IpcStatusOp.getCode("unlock"), action: 'auth', key: 'unlock', payload: keyBytes);
+      stopwatch.stop();
+      print('[IPC 50K] unlock handshake: ${stopwatch.elapsedMilliseconds} ms');
+
+      client.localKey = keyBytes;
+      client.sessionKey = handshake;
+
+      stopwatch
+        ..reset()
+        ..start();
+      final serverPayload = database.extractBytes('transactions_box');
+      stopwatch.stop();
+      print('[IPC 50K] server build bytes: ${stopwatch.elapsedMilliseconds} ms (${serverPayload.length} bytes)');
+
+      stopwatch
+        ..reset()
+        ..start();
+      final crypto = IpcCrypto(key: server.sessionKey);
+      final encryptedPayload = await crypto.encrypt(serverPayload);
+      stopwatch.stop();
+      print('[IPC 50K] server encrypt bytes: ${stopwatch.elapsedMilliseconds} ms');
+
+      stopwatch
+        ..reset()
+        ..start();
+      final decryptedPayload = await IpcCrypto(key: server.sessionKey).decrypt(encryptedPayload);
+      stopwatch.stop();
+      print('[IPC 50K] client decrypt bytes: ${stopwatch.elapsedMilliseconds} ms');
+
+      stopwatch
+        ..reset()
+        ..start();
+      final unpacked = IpcConverter(adapters).fromBytes(IpcStatusOp.getCode("extract"), 'transactions_box', decryptedPayload);
+      stopwatch.stop();
+      print('[IPC 50K] client unpack models: ${stopwatch.elapsedMilliseconds} ms (${(unpacked as List).length} items)');
+
+      stopwatch
+        ..reset()
+        ..start();
+      final box = IpcBoxFaker<TransactionsModel>('transactions_box', adapters, client);
+      for (final value in unpacked) {
+        final tx = value as TransactionsModel;
+        box.items[tx.uuid] = tx;
+      }
+      stopwatch.stop();
+      print('[IPC 50K] client load to memory: ${stopwatch.elapsedMilliseconds} ms (${box.length} items)');
+
+      expect(box.length, equals(itemCount));
+      addTearDown(() async {
+        await client.dispose();
+        await server.dispose();
+      });
     });
   });
 }

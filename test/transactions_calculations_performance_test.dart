@@ -53,7 +53,6 @@ List<TransactionsModel> _largeBranchedTree({int descendants = 10000, int branchi
 void main() {
   const calculation = TransactionCalculation();
   const descendants = 10000;
-  const repetitions = 3;
   final transactions = _largeBranchedTree(descendants: descendants);
   final transactionsById = {for (final tx in transactions) tx.tid: tx};
   final transactionsByParent = <String, List<TransactionsModel>>{};
@@ -72,6 +71,12 @@ void main() {
     expect(transactions[5].pid, transactions[1].tid);
 
     void measure(String name, Object? Function() operation) {
+      // Warmup JIT compiler before timing
+      for (var i = 0; i < 3; i++) {
+        operation();
+      }
+
+      const repetitions = 20;
       final stopwatch = Stopwatch()..start();
       // ignore: unused_local_variable
       Object? result;

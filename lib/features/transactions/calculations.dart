@@ -37,28 +37,35 @@ class TransactionCalculation {
 
   Decimal cumulativeSourceValue(List<TransactionsModel> txs) {
     Decimal total = Decimal.zero;
-    for (final tx in txs) {
-      if (tx.rrAmount > Decimal.zero) {
-        final percentageLeft = Math.divide(tx.balance, tx.rrAmount);
-        total = Math.add(total, Math.multiply(percentageLeft, tx.srAmount));
+
+    for (int i = 0; i < txs.length; i++) {
+      final tx = txs[i];
+      if (tx.rrAmount <= Decimal.zero || tx.balance == Decimal.zero) continue;
+
+      if (tx.balance == tx.rrAmount) {
+        total = Math.add(total, tx.srAmount);
+        continue;
       }
+
+      total = Math.add(total, Math.divide(Math.multiply(tx.balance, tx.srAmount), tx.rrAmount));
     }
+
     return total;
   }
 
   Decimal averageExchangedRate(List<TransactionsModel> txs, {bool reverse = false}) {
-    if (txs.isEmpty) return Decimal.zero;
-
     Decimal totalRate = Decimal.zero;
     int count = 0;
 
-    for (final tx in txs) {
-      if (tx.rrAmount > Decimal.zero) {
-        final Decimal rate = reverse && tx.rate != Decimal.zero ? Math.divide(Decimal.one, tx.rate) : tx.rate;
+    for (int i = 0; i < txs.length; i++) {
+      final tx = txs[i];
+      if (tx.rrAmount <= Decimal.zero) continue;
 
+      final rate = reverse ? tx.reverseRate : tx.rate;
+      if (rate != Decimal.zero) {
         totalRate = Math.add(totalRate, rate);
-        count++;
       }
+      count++;
     }
 
     return count > 0 ? Math.divide(totalRate, count.toDecimal()) : Decimal.zero;
@@ -122,58 +129,60 @@ class TransactionCalculation {
   }
 
   Decimal totalProfitLoss(List<TransactionsModel> txs, Decimal currentRate, {bool reverse = false, bool shrinkPartial = false}) {
-    if (txs.isEmpty) return Decimal.zero;
+    Decimal finalizedBalanceSum = Decimal.zero;
+    Decimal unfinalizedBalanceSum = Decimal.zero;
+    Decimal totalSrSum = Decimal.zero;
 
-    Decimal totalPL = Decimal.zero;
+    for (int i = 0; i < txs.length; i++) {
+      final tx = txs[i];
+      if (tx.isClosed || tx.balance == Decimal.zero) continue;
 
-    for (final tx in txs) {
-      if (tx.isClosed || tx.balance == Decimal.zero) {
-        continue;
-      }
+      final srAmount = (shrinkPartial && tx.isPartial) ? Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount) : tx.srAmount;
 
-      Decimal currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
+      totalSrSum = Math.add(totalSrSum, srAmount);
 
       if (tx.isFinalized) {
-        currentValue = tx.balance;
+        finalizedBalanceSum = Math.add(finalizedBalanceSum, tx.balance);
+      } else {
+        unfinalizedBalanceSum = Math.add(unfinalizedBalanceSum, tx.balance);
       }
-
-      Decimal srAmount = tx.srAmount;
-
-      if (shrinkPartial && tx.isPartial) {
-        srAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
-      }
-
-      totalPL = Math.add(totalPL, Math.subtract(currentValue, srAmount));
     }
 
-    return totalPL;
+    final unfinalizedValue = unfinalizedBalanceSum == Decimal.zero
+        ? Decimal.zero
+        : (reverse ? Math.multiply(unfinalizedBalanceSum, currentRate) : Math.divide(unfinalizedBalanceSum, currentRate));
+
+    final totalValue = Math.add(finalizedBalanceSum, unfinalizedValue);
+    return Math.subtract(totalValue, totalSrSum);
   }
 
   Decimal totalProfit(List<TransactionsModel> txs, Decimal currentRate, {bool reverse = false, bool shrinkPartial = false}) {
-    if (txs.isEmpty) return Decimal.zero;
-
     Decimal totalPL = Decimal.zero;
 
-    for (final tx in txs) {
-      if (tx.isClosed || tx.balance == Decimal.zero) {
+    for (int i = 0; i < txs.length; i++) {
+      final tx = txs[i];
+      if (tx.isClosed || tx.balance == Decimal.zero) continue;
+
+      final srAmount = (shrinkPartial && tx.isPartial) ? Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount) : tx.srAmount;
+
+      if (tx.isFinalized) {
+        if (tx.balance > srAmount) {
+          totalPL = Math.add(totalPL, Math.subtract(tx.balance, srAmount));
+        }
         continue;
       }
 
-      Decimal currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
-
-      if (tx.isFinalized) {
-        currentValue = tx.balance;
+      if (reverse) {
+        final currentValue = Math.multiply(tx.balance, currentRate);
+        if (currentValue > srAmount) {
+          totalPL = Math.add(totalPL, Math.subtract(currentValue, srAmount));
+        }
+        continue;
       }
 
-      Decimal srAmount = tx.srAmount;
-
-      if (shrinkPartial && tx.isPartial) {
-        srAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
-      }
-
-      final pol = Math.subtract(currentValue, srAmount);
-      if (pol > Decimal.zero) {
-        totalPL = Math.add(totalPL, pol);
+      if (tx.balance > Math.multiply(srAmount, currentRate)) {
+        final currentValue = Math.divide(tx.balance, currentRate);
+        totalPL = Math.add(totalPL, Math.subtract(currentValue, srAmount));
       }
     }
 
@@ -181,34 +190,44 @@ class TransactionCalculation {
   }
 
   Decimal totalLoss(List<TransactionsModel> txs, Decimal currentRate, {bool reverse = false, bool shrinkPartial = false}) {
-    if (txs.isEmpty) return Decimal.zero;
+    Decimal finalizedLoss = Decimal.zero;
+    Decimal unfinalizedBalanceSum = Decimal.zero;
+    Decimal unfinalizedSrSum = Decimal.zero;
 
-    Decimal totalPL = Decimal.zero;
+    for (int i = 0; i < txs.length; i++) {
+      final tx = txs[i];
+      if (tx.isClosed || tx.balance == Decimal.zero) continue;
 
-    for (final tx in txs) {
-      if (tx.isClosed || tx.balance == Decimal.zero) {
+      final srAmount = (shrinkPartial && tx.isPartial) ? Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount) : tx.srAmount;
+
+      if (tx.isFinalized) {
+        if (tx.balance < srAmount) {
+          finalizedLoss = Math.add(finalizedLoss, Math.subtract(tx.balance, srAmount));
+        }
         continue;
       }
 
-      Decimal currentValue = reverse ? Math.multiply(tx.balance, currentRate) : Math.divide(tx.balance, currentRate);
-
-      if (tx.isFinalized) {
-        currentValue = tx.balance;
+      if (reverse) {
+        if (Math.multiply(tx.balance, currentRate) < srAmount) {
+          unfinalizedBalanceSum = Math.add(unfinalizedBalanceSum, tx.balance);
+          unfinalizedSrSum = Math.add(unfinalizedSrSum, srAmount);
+        }
+        continue;
       }
 
-      Decimal srAmount = tx.srAmount;
-
-      if (shrinkPartial && tx.isPartial) {
-        srAmount = Math.multiply(Math.divide(tx.balance, tx.rrAmount), tx.srAmount);
-      }
-
-      final pol = Math.subtract(currentValue, srAmount);
-      if (pol < Decimal.zero) {
-        totalPL = Math.add(totalPL, pol);
+      if (tx.balance < Math.multiply(srAmount, currentRate)) {
+        unfinalizedBalanceSum = Math.add(unfinalizedBalanceSum, tx.balance);
+        unfinalizedSrSum = Math.add(unfinalizedSrSum, srAmount);
       }
     }
 
-    return totalPL;
+    if (unfinalizedBalanceSum == Decimal.zero && unfinalizedSrSum == Decimal.zero) {
+      return finalizedLoss;
+    }
+
+    final unfinalizedValue = reverse ? Math.multiply(unfinalizedBalanceSum, currentRate) : Math.divide(unfinalizedBalanceSum, currentRate);
+
+    return Math.add(finalizedLoss, Math.subtract(unfinalizedValue, unfinalizedSrSum));
   }
 
   Decimal profitLossPercentage(List<TransactionsModel> txs, Decimal currentRate, {bool reverse = false, bool shrinkPartial = false}) {
@@ -217,9 +236,7 @@ class TransactionCalculation {
     final totalBalance = totalSourceBalance(txs, shrinkPartial: shrinkPartial);
     if (totalBalance == Decimal.zero) return Decimal.zero;
 
-    final avgPL = averageProfitLoss(txs, currentRate, reverse: reverse, shrinkPartial: shrinkPartial);
-
-    final totalPL = Math.multiply(avgPL, txs.length.toDecimal());
+    final totalPL = totalProfitLoss(txs, currentRate, reverse: reverse, shrinkPartial: shrinkPartial);
 
     return Math.multiply(Math.divide(totalPL, totalBalance), Decimal.fromInt(100));
   }
@@ -259,10 +276,9 @@ class TransactionCalculation {
       }
 
       Decimal capitalAmount = current.srAmount;
-      if (parent.balance > parent.rrAmount) {
-        final profitAmount = Math.subtract(parent.balance, parent.rrAmount);
-        if (capitalAmount <= profitAmount) return Decimal.zero;
-        capitalAmount = Math.subtract(capitalAmount, profitAmount);
+      if (parent.profitAmount > Decimal.zero) {
+        if (capitalAmount <= parent.profitAmount) return Decimal.zero;
+        capitalAmount = Math.subtract(capitalAmount, parent.profitAmount);
       }
 
       if (num == null) {

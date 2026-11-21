@@ -42,6 +42,7 @@ dependencies:
   reorderable_grid_view: ^2.2.8
   ffi: ^2.2.0
   async: ^2.13.1
+  sodium: ^4.0.4
 
 dev_dependencies:
   dotenv: ^4.2.0
