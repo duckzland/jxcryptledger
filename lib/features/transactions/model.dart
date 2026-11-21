@@ -120,7 +120,7 @@ class TransactionsModel implements CoreModelWithId, CoreModelExportable, CoreMod
     }
 
     // --- Timestamp ---
-    final now = DateTime.now().toUtc().microsecondsSinceEpoch;
+    final now = DateTime.now().microsecondsSinceEpoch;
 
     if (timestamp <= 0) {
       throw ValidationException(AppErrorCode.txBasicInvalidTimestamp, "timestamp must be > 0 (timestamp=$timestamp).", "Invalid date.");

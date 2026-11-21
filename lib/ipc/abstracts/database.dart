@@ -92,12 +92,10 @@ abstract class IpcDatabase {
     final writer = IpcWriter();
     final adapter = adapters.get(boxName);
     final keys = this.keys(boxName);
-    final int realCount = keys.length;
-    writer.writeInt(realCount);
+    writer.writeInt(keys.length);
 
     for (var key in keys) {
       final dynamic value = get(boxName, key);
-
       if (value is Uint8List) {
         writer.writeByteList(value, writeLength: false);
       } else if (value != null) {

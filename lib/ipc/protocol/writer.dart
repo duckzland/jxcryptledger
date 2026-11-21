@@ -6,39 +6,69 @@ import 'package:decimal/decimal.dart';
 import 'package:hive_ce/hive_ce.dart';
 
 class IpcWriter implements BinaryWriter {
-  final BytesBuilder _builder = BytesBuilder();
+  Uint8List _buffer = Uint8List(1024);
+  late ByteData _view = ByteData.view(_buffer.buffer);
+  int _length = 0;
+
+  void _ensureCapacity(int additional) {
+    final required = _length + additional;
+    if (required <= _buffer.length) return;
+
+    var capacity = _buffer.length;
+    while (capacity < required) {
+      capacity *= 2;
+    }
+
+    final buffer = Uint8List(capacity)..setRange(0, _length, _buffer);
+    _buffer = buffer;
+    _view = ByteData.view(buffer.buffer);
+  }
+
+  void _append(List<int> bytes) {
+    _ensureCapacity(bytes.length);
+    _buffer.setRange(_length, _length + bytes.length, bytes);
+    _length += bytes.length;
+  }
 
   @override
-  void writeByte(int byte) => _builder.add([byte]);
+  void writeByte(int byte) {
+    _ensureCapacity(1);
+    _view.setUint8(_length++, byte);
+  }
 
   @override
   void writeWord(int value) {
-    final b = ByteData(2)..setUint16(0, value, Endian.big);
-    _builder.add(b.buffer.asUint8List());
+    _ensureCapacity(2);
+    _view.setUint16(_length, value, Endian.big);
+    _length += 2;
   }
 
   @override
   void writeInt32(int value) {
-    final b = ByteData(4)..setInt32(0, value, Endian.big);
-    _builder.add(b.buffer.asUint8List());
+    _ensureCapacity(4);
+    _view.setInt32(_length, value, Endian.big);
+    _length += 4;
   }
 
   @override
   void writeUint32(int value) {
-    final b = ByteData(4)..setUint32(0, value, Endian.big);
-    _builder.add(b.buffer.asUint8List());
+    _ensureCapacity(4);
+    _view.setUint32(_length, value, Endian.big);
+    _length += 4;
   }
 
   @override
   void writeInt(int value) {
-    final b = ByteData(8)..setInt64(0, value, Endian.big);
-    _builder.add(b.buffer.asUint8List());
+    _ensureCapacity(8);
+    _view.setInt64(_length, value, Endian.big);
+    _length += 8;
   }
 
   @override
   void writeDouble(double value) {
-    final b = ByteData(8)..setFloat64(0, value, Endian.big);
-    _builder.add(b.buffer.asUint8List());
+    _ensureCapacity(8);
+    _view.setFloat64(_length, value, Endian.big);
+    _length += 8;
   }
 
   @override
@@ -48,13 +78,13 @@ class IpcWriter implements BinaryWriter {
   void writeString(String value, {bool writeByteCount = true, Converter<String, List<int>> encoder = BinaryWriter.utf8Encoder}) {
     final bytes = encoder.convert(value);
     if (writeByteCount) writeInt(bytes.length);
-    _builder.add(bytes);
+    _append(bytes);
   }
 
   @override
   void writeByteList(List<int> bytes, {bool writeLength = true}) {
     if (writeLength) writeInt(bytes.length);
-    _builder.add(bytes);
+    _append(bytes);
   }
 
   @override
@@ -165,5 +195,9 @@ class IpcWriter implements BinaryWriter {
     }
   }
 
-  Uint8List toBytes() => _builder.toBytes();
+  Uint8List toBytes() {
+    final bytes = Uint8List.fromList(_buffer.sublist(0, _length));
+    _length = 0;
+    return bytes;
+  }
 }
