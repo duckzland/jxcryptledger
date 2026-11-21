@@ -224,69 +224,6 @@ class TransactionCalculation {
     return Math.multiply(Math.divide(totalPL, totalBalance), Decimal.fromInt(100));
   }
 
-  Decimal totalCapitalUsedOld(
-    TransactionsModel leaf, {
-    List<TransactionsModel>? txs,
-    Map<String, TransactionsModel>? txsMap,
-    Map<String, List<TransactionsModel>>? txsByParent,
-  }) {
-    if (txs == null && txsMap == null) {
-      return Decimal.zero;
-    }
-
-    if (txs != null && txsMap == null) {
-      txsMap = {for (final tx in txs) tx.tid: tx};
-    }
-
-    if (leaf.isRoot) {
-      Decimal used = Decimal.zero;
-      final children = txsByParent?[leaf.tid] ?? txsMap!.values.where((tx) => tx.pid == leaf.tid);
-      for (final tx in children) {
-        final leafUsed = totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent);
-        used = Math.add(used, leafUsed);
-      }
-
-      return used;
-    }
-
-    TransactionsModel? current = leaf;
-
-    Decimal ttlPct = Decimal.one;
-
-    while (current != null) {
-      if (current.isRoot) {
-        return Math.multiply(current.srAmount, ttlPct);
-      }
-
-      final parent = txsMap![current.pid];
-      if (parent == null || parent.rrId != current.srId) {
-        return Decimal.zero;
-      }
-
-      final childPct = Math.divide(current.srAmount, parent.rrAmount);
-
-      Decimal profitPct = Decimal.zero;
-      if (parent.balance > parent.rrAmount) {
-        profitPct = Math.divide(Math.subtract(parent.balance, parent.rrAmount), parent.rrAmount);
-      }
-
-      Decimal leafPct = childPct;
-      if (profitPct > Decimal.zero) {
-        if (childPct <= profitPct) {
-          return Decimal.zero;
-        } else {
-          leafPct = Math.subtract(leafPct, profitPct);
-        }
-      }
-
-      ttlPct = Math.multiply(ttlPct, leafPct);
-
-      current = parent;
-    }
-
-    return Decimal.zero;
-  }
-
   Decimal totalCapitalUsed(
     TransactionsModel leaf, {
     List<TransactionsModel>? txs,

@@ -51,6 +51,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     _indexByTid = indexed;
     _indexByPid = children;
     _indexByRid = roots;
+
+    logln("Generating tx indexes", "INDEXING");
   }
 
   @override
