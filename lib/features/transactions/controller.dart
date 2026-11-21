@@ -34,15 +34,23 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   TransactionsModel? getParent(TransactionsModel tx) {
-    return repo.get(tx.pid);
+    return repo.getIndexedMap()[tx.pid];
   }
 
   TransactionsModel? getRoot(TransactionsModel tx) {
-    return repo.get(tx.rid);
+    return repo.getIndexedMap()[tx.isRoot ? tx.tid : tx.rid];
   }
 
   Map<String, TransactionsModel> getIndexedMap() {
-    return {for (final tx in items) tx.tid: tx};
+    return repo.getIndexedMap();
+  }
+
+  Map<String, List<TransactionsModel>> getIndexedParentMap() {
+    return repo.getIndexedParentMap();
+  }
+
+  Map<String, Map<String, TransactionsModel>> getIndexedRootMap() {
+    return repo.getIndexedRootMap();
   }
 
   Future<void> removeRoot(TransactionsModel tx) async {
@@ -366,8 +374,8 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   List<TransactionsModel> collectBranchWithTarget(TransactionsModel target) {
-    final all = repo.extract();
-    final Map<String, TransactionsModel> lookup = {for (final tx in all) tx.tid: tx};
+    final lookup = repo.getIndexedMap();
+    final children = repo.getIndexedParentMap();
     final List<TransactionsModel> branch = [];
     TransactionsModel? current = target;
 
@@ -379,7 +387,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
 
     final List<TransactionsModel> descendants = [];
     void collectChildren(TransactionsModel node) {
-      for (final tx in all.where((t) => t.pid == node.tid)) {
+      for (final tx in children[node.tid] ?? const <TransactionsModel>[]) {
         descendants.add(tx);
         collectChildren(tx);
       }

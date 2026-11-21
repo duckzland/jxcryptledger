@@ -1,11 +1,10 @@
 import 'package:decimal/decimal.dart' show Decimal;
 
+import '../../core/mixins/repositories/exportable.dart';
+import '../../core/mixins/repositories/id_generator.dart';
 import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
 import '../../core/math.dart';
-import '../../core/mixins/repositories/exportable.dart';
-import '../../core/mixins/repositories/id_generator.dart';
-import 'model.dart';
 import 'rules/close.dart';
 import 'rules/create.dart';
 import 'rules/delete.dart';
@@ -14,6 +13,7 @@ import 'rules/import.dart';
 import 'rules/refund.dart';
 import 'rules/trade.dart';
 import 'rules/update.dart';
+import 'model.dart';
 
 class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     with CoreMixinsRepositoriesIdGenerator<TransactionsModel>, CoreMixinsRepositoriesExportable<TransactionsModel> {
@@ -26,6 +26,64 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   get fromJson => TransactionsModel.fromJson;
 
   final bool debugLogs = true;
+
+  Map<String, TransactionsModel>? _indexByTid;
+  Map<String, List<TransactionsModel>>? _indexByPid;
+  Map<String, Map<String, TransactionsModel>>? _indexByRid;
+
+  void resetIndexes() {
+    _indexByTid = null;
+    _indexByPid = null;
+    _indexByRid = null;
+  }
+
+  void createIndexes() {
+    final indexed = <String, TransactionsModel>{};
+    final roots = <String, Map<String, TransactionsModel>>{};
+    final children = <String, List<TransactionsModel>>{};
+
+    for (final tx in extract()) {
+      indexed[tx.tid] = tx;
+      (roots[tx.isRoot ? tx.tid : tx.rid] ??= <String, TransactionsModel>{})[tx.tid] = tx;
+      (children[tx.pid] ??= <TransactionsModel>[]).add(tx);
+    }
+
+    _indexByTid = indexed;
+    _indexByPid = children;
+    _indexByRid = roots;
+  }
+
+  @override
+  void onAction() {
+    resetIndexes();
+  }
+
+  @override
+  void receive(event) {
+    super.receive(event);
+    resetIndexes();
+  }
+
+  Map<String, TransactionsModel> getIndexedMap() {
+    if (_indexByTid == null) {
+      createIndexes();
+    }
+    return _indexByTid!;
+  }
+
+  Map<String, List<TransactionsModel>> getIndexedParentMap() {
+    if (_indexByPid == null) {
+      createIndexes();
+    }
+    return _indexByPid!;
+  }
+
+  Map<String, Map<String, TransactionsModel>> getIndexedRootMap() {
+    if (_indexByRid == null) {
+      createIndexes();
+    }
+    return _indexByRid!;
+  }
 
   @override
   Future<void> add(TransactionsModel tx) async {
@@ -53,6 +111,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (ntx.isRoot) {
       await box.put(ntx.tid, ntx);
+      resetIndexes();
       return;
     }
 
@@ -73,6 +132,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
       logln("Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}", "ADD");
       await box.put(ntx.tid, ntx);
+      resetIndexes();
 
       // Force to revalidate!
       await update(nptx);
@@ -104,6 +164,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (ntx.isRoot) {
       await box.put(ntx.tid, ntx);
+      resetIndexes();
       return;
     }
 
@@ -114,6 +175,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       TransactionsModel? otx = box.get(ntx.tid)!;
 
       await box.put(ntx.tid, ntx);
+      resetIndexes();
 
       if (otx.srAmount != tx.srAmount && ptx.rrId == otx.srId) {
         Decimal balance = ptx.balance;
@@ -160,11 +222,13 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
           );
         }
 
-        box.delete(ttx.tid);
+        await box.delete(ttx.tid);
+        resetIndexes();
       }
     }
 
     await box.delete(tx.tid);
+    resetIndexes();
   }
 
   Future<void> close(TransactionsModel tx) async {
@@ -220,6 +284,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     await box.put(closedTx.tid, closedTx);
     await box.put(updatedTarget.tid, updatedTarget);
+    resetIndexes();
   }
 
   Future<void> refund(TransactionsModel tx) async {
@@ -256,6 +321,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     await box.delete(tx.tid);
     await box.put(utx.tid, utx);
+    resetIndexes();
   }
 
   Future<void> finalize(TransactionsModel tx) async {
@@ -273,6 +339,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     await box.put(tx.tid, tx);
+    resetIndexes();
   }
 
   @override
@@ -283,15 +350,11 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     for (final tx in txs) {
       await box.put(tx.tid, tx);
     }
+    resetIndexes();
   }
 
   List<TransactionsModel> getLeaf(TransactionsModel tx) {
-    final list = <TransactionsModel>[];
-    for (final key in box.keys) {
-      final ltx = box.get(key);
-      if (ltx != null && ltx.pid == tx.tid) list.add(ltx);
-    }
-    return list;
+    return getIndexedParentMap()[tx.tid] ?? const <TransactionsModel>[];
   }
 
   TransactionsModel? getCloseTargetParent(TransactionsModel tx) {
@@ -299,9 +362,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return null;
     }
 
-    final all = extract();
-
-    final Map<String, TransactionsModel> byTid = {for (final t in all) t.tid: t};
+    final byTid = getIndexedMap();
 
     TransactionsModel? parent;
     String? pid = tx.pid;
@@ -319,10 +380,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     if (parent == null) {
-      final roots = all.where((t) => t.isRoot && t.tid == tx.rid);
-
-      if (roots.isNotEmpty) {
-        final root = roots.first;
+      final root = byTid[tx.rid];
+      if (root != null && root.isRoot) {
         if (root.rrId == tx.rrId) {
           parent = root;
         }
@@ -340,32 +399,24 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   List<TransactionsModel> collectAllRoots() {
-    final all = extract();
-    return all.where((tx) => tx.isRoot).toList();
+    final roots = <TransactionsModel>[];
+    for (final entry in getIndexedRootMap().entries) {
+      final root = entry.value[entry.key];
+      if (root != null && root.isRoot) roots.add(root);
+    }
+    return roots;
   }
 
   List<TransactionsModel> collectAllTerminalLeaves() {
-    final all = extract();
-    final Map<String, int> childCount = {};
-    for (final tx in all) {
-      childCount[tx.pid] = (childCount[tx.pid] ?? 0) + 1;
-    }
-
-    bool isTerminalLeaf(TransactionsModel tx) {
-      final hasChildren = (childCount[tx.tid] ?? 0) > 0;
-      return !hasChildren && !tx.isRoot;
-    }
-
-    return all.where(isTerminalLeaf).toList();
+    final children = getIndexedParentMap();
+    return [
+      for (final tx in getIndexedMap().values)
+        if (!tx.isRoot && (children[tx.tid]?.isEmpty ?? true)) tx,
+    ];
   }
 
   List<TransactionsModel> collectTerminalLeaves(TransactionsModel parent) {
-    final all = extract();
-
-    final Map<String, List<TransactionsModel>> childrenMap = {};
-    for (final tx in all) {
-      childrenMap.putIfAbsent(tx.pid, () => []).add(tx);
-    }
+    final childrenMap = getIndexedParentMap();
 
     List<TransactionsModel> dfs(TransactionsModel node) {
       final children = childrenMap[node.tid] ?? [];
@@ -387,25 +438,12 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   List<TransactionsModel> collectRootTreeLeaves(TransactionsModel parent) {
-    final all = extract();
-
-    final leaves = <TransactionsModel>[];
-    for (final tx in all) {
-      if (tx.rid == parent.tid) {
-        leaves.add(tx);
-      }
-    }
-
-    return leaves;
+    final rootTree = getIndexedRootMap()[parent.tid]?.values;
+    return rootTree?.where((tx) => !tx.isRoot).toList() ?? const <TransactionsModel>[];
   }
 
   List<TransactionsModel> collectDirectLeaves(TransactionsModel parent) {
-    final all = extract();
-
-    final Map<String, List<TransactionsModel>> childrenMap = {};
-    for (final tx in all) {
-      childrenMap.putIfAbsent(tx.pid, () => []).add(tx);
-    }
+    final childrenMap = getIndexedParentMap();
 
     List<TransactionsModel> dfs(TransactionsModel node) {
       final children = childrenMap[node.tid] ?? [];
@@ -426,12 +464,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   List<TransactionsModel> collectAllLeaves(TransactionsModel parent) {
-    final all = extract();
-
-    final Map<String, List<TransactionsModel>> childrenMap = {};
-    for (final tx in all) {
-      childrenMap.putIfAbsent(tx.pid, () => []).add(tx);
-    }
+    final childrenMap = getIndexedParentMap();
 
     List<TransactionsModel> dfs(TransactionsModel node) {
       final children = childrenMap[node.tid] ?? [];

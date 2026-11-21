@@ -94,11 +94,12 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
         TransactionsMixinsActions,
         TransactionsMixinsFlags {
   final _calc = TransactionCalculation();
-
-  late final CryptosController _cryptosController;
+  final Map<String, Decimal> _capitalCache = {};
 
   late String _sourceSymbol;
   late String _resultSymbol;
+
+  late final CryptosController _cryptosController;
 
   Decimal _currentRate = Decimal.zero;
   Decimal _averageRate = Decimal.zero;
@@ -109,8 +110,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   Decimal _totalLoss = Decimal.zero;
   Decimal _plPercentage = Decimal.zero;
   Decimal? _customRate;
-
-  final Map<String, Decimal> _capitalCache = {};
 
   bool _isReversed = false;
   bool _isOpen = true;
@@ -233,11 +232,11 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     checkForRefundable();
     checkForUpdatable();
 
+    _capitalCache.clear();
+
     _calculateProfitLoss();
     tablePopulateData();
     sortableApplySorting(); // Sortable will call setState!
-
-    _capitalCache.clear();
   }
 
   void _selectAllRowsChanged() {
@@ -275,11 +274,19 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   List<Map<String, dynamic>> tablePopulateData() {
     final currentRate = _customRate ?? effectiveMarketRate ?? Decimal.zero;
     final txsMap = txController.getIndexedMap();
+    final txsByParent = txController.getIndexedParentMap();
+    final txsByRoot = txController.getIndexedRootMap();
 
     tableData = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      final capitalUsed = _capitalCache[tx.tid] ??= _calc.totalCapitalUsed(tx, txsMap: txsMap);
+      final branchMap = txsByRoot[tx.rid] ?? txsMap;
+
+      final capitalUsed = _capitalCache[tx.tid] ??= _calc.totalCapitalUsed(
+        tx,
+        txsMap: branchMap.isEmpty ? txsMap : branchMap,
+        txsByParent: txsByParent,
+      );
 
       Decimal rowRate = currentRate;
       Decimal currentValue = Decimal.zero;

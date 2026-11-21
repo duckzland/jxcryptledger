@@ -224,7 +224,12 @@ class TransactionCalculation {
     return Math.multiply(Math.divide(totalPL, totalBalance), Decimal.fromInt(100));
   }
 
-  Decimal totalCapitalUsed(TransactionsModel leaf, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
+  Decimal totalCapitalUsedOld(
+    TransactionsModel leaf, {
+    List<TransactionsModel>? txs,
+    Map<String, TransactionsModel>? txsMap,
+    Map<String, List<TransactionsModel>>? txsByParent,
+  }) {
     if (txs == null && txsMap == null) {
       return Decimal.zero;
     }
@@ -235,11 +240,10 @@ class TransactionCalculation {
 
     if (leaf.isRoot) {
       Decimal used = Decimal.zero;
-      for (final tx in txsMap!.values) {
-        if (tx.pid == leaf.tid) {
-          final leafUsed = totalCapitalUsed(tx, txsMap: txsMap);
-          used = Math.add(used, leafUsed);
-        }
+      final children = txsByParent?[leaf.tid] ?? txsMap!.values.where((tx) => tx.pid == leaf.tid);
+      for (final tx in children) {
+        final leafUsed = totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent);
+        used = Math.add(used, leafUsed);
       }
 
       return used;
@@ -276,6 +280,61 @@ class TransactionCalculation {
       }
 
       ttlPct = Math.multiply(ttlPct, leafPct);
+
+      current = parent;
+    }
+
+    return Decimal.zero;
+  }
+
+  Decimal totalCapitalUsed(
+    TransactionsModel leaf, {
+    List<TransactionsModel>? txs,
+    Map<String, TransactionsModel>? txsMap,
+    Map<String, List<TransactionsModel>>? txsByParent,
+  }) {
+    if (txs == null && txsMap == null) return Decimal.zero;
+    txsMap ??= {for (final tx in txs!) tx.tid: tx};
+
+    if (leaf.isRoot) {
+      Decimal used = Decimal.zero;
+      final children = txsByParent?[leaf.tid] ?? txsMap.values.where((tx) => tx.pid == leaf.tid);
+      for (final tx in children) {
+        if (tx.tid == leaf.tid) continue;
+        used = Math.add(used, totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent));
+      }
+      return used;
+    }
+
+    TransactionsModel? current = leaf;
+    Decimal? num;
+    Decimal? den;
+
+    while (current != null) {
+      if (current.isRoot) {
+        if (num == null) return current.srAmount;
+        return Math.divide(Math.multiply(current.srAmount, num), den!);
+      }
+
+      final parent = txsMap[current.pid];
+      if (parent == null || parent.rrId != current.srId) {
+        return Decimal.zero;
+      }
+
+      Decimal capitalAmount = current.srAmount;
+      if (parent.balance > parent.rrAmount) {
+        final profitAmount = Math.subtract(parent.balance, parent.rrAmount);
+        if (capitalAmount <= profitAmount) return Decimal.zero;
+        capitalAmount = Math.subtract(capitalAmount, profitAmount);
+      }
+
+      if (num == null) {
+        num = capitalAmount;
+        den = parent.rrAmount;
+      } else {
+        num = Math.multiply(num, capitalAmount);
+        den = Math.multiply(den!, parent.rrAmount);
+      }
 
       current = parent;
     }

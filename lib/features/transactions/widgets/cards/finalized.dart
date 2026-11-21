@@ -80,6 +80,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         TransactionsMixinsActions,
         TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
+  final Map<String, Decimal> _capitalCache = {};
 
   CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
@@ -157,6 +158,8 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     checkForFinalizable();
     checkForRefundable();
     checkForUpdatable();
+
+    _capitalCache.clear();
 
     _calculatePanelData();
     tablePopulateData();
@@ -403,6 +406,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
   List<String> _populateCapital(List<String> txsIds) {
     final txsMap = txController.getIndexedMap();
+    final txsByParent = txController.getIndexedParentMap();
     final data = {};
     final List<TransactionsModel> stxs = [];
 
@@ -416,12 +420,12 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     for (final tx in stxs) {
       final ctx = tx.isRoot ? tx : txsMap[tx.rid];
       if (ctx == null) continue;
-      data[ctx.srId] = Math.add(
-        data[ctx.srId] ?? Decimal.zero,
-        tx.isRoot
-            ? (Math.multiply(tx.srAmount, (tx.balance >= tx.rrAmount) ? Decimal.one : Math.divide(tx.balance, tx.rrAmount)))
-            : _calc.totalCapitalUsed(tx, txsMap: txsMap),
-      );
+
+      final used = _capitalCache[tx.tid] ??= tx.isRoot
+          ? Math.multiply(tx.srAmount, tx.balance >= tx.rrAmount ? Decimal.one : Math.divide(tx.balance, tx.rrAmount))
+          : _calc.totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent);
+
+      data[ctx.srId] = Math.add(data[ctx.srId] ?? Decimal.zero, used);
     }
 
     List<String> result = [];

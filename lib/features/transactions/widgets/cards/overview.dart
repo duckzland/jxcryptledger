@@ -87,8 +87,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         TransactionsMixinsActions,
         TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
-
-  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
+  final Map<String, Decimal> _capitalCache = {};
 
   late String _resultSymbol;
 
@@ -102,6 +101,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   Map<int, Decimal> _capitalUsed = {};
 
   bool _isOpen = true;
+
+  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
 
   @override
   String get sortableKey => "tx-group-overview-${widget.id}";
@@ -187,6 +188,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
     rateableGetRate(refresh: false, silent: true);
 
+    _capitalCache.clear();
+
     _calculateProfitLoss();
     tablePopulateData();
     sortableApplySorting();
@@ -209,13 +212,14 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   @override
   List<Map<String, dynamic>> tablePopulateData() {
     final txsMap = txController.getIndexedMap();
+    final txsByParent = txController.getIndexedParentMap();
 
     tableData = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
       final sourceCoinSymbol = _cryptosController.getSymbol(tx.srId);
       final usdValue = Math.multiply(tx.balance, rateableValue ?? Decimal.zero);
-      final capitalUsed = _calc.totalCapitalUsed(tx, txsMap: txsMap);
+      final capitalUsed = _capitalCache[tx.tid] ??= _calc.totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent);
       final root = tx.isRoot ? tx : txController.getRoot(tx);
       final rootSymbol = _cryptosController.getSymbol(root?.srId ?? 0);
 
@@ -343,7 +347,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
           headingCheckboxTheme: widget.theme.checkboxTheme,
           datarowCheckboxTheme: widget.theme.checkboxTheme,
           onSelectAll: selectableOnSelectAll(
-            () => this.tableData
+            () => tableData
                 .where((r) {
                   final tx = r['tx'] as TransactionsModel;
                   return tx.isActive || tx.isPartial;
@@ -530,6 +534,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     }
 
     final txsMap = txController.getIndexedMap();
+    final txsByParent = txController.getIndexedParentMap();
     final finalizedBalance = _calc.totalFinalizedBalance(stxs);
     final balance = _calc.totalActiveBalance(stxs);
     final totalBalance = Math.add(balance, finalizedBalance);
@@ -556,7 +561,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
             _capitalUsed[ctx.srId] ?? Decimal.zero,
             tx.isRoot
                 ? (Math.multiply(tx.srAmount, (tx.balance >= tx.rrAmount) ? Decimal.one : Math.divide(tx.balance, tx.rrAmount)))
-                : _calc.totalCapitalUsed(tx, txsMap: txsMap),
+                : _calc.totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent),
           );
         }
       }

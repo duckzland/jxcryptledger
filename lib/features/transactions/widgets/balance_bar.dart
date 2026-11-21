@@ -125,6 +125,7 @@ class _TransactionsWidgetsBalanceBarState extends State<TransactionsWidgetsBalan
   List<String> _populateCapital(List<String> txsIds) {
     final ids = txsIds = txsIds.toSet().toList();
     final txsMap = txController.getIndexedMap();
+    final txsByParent = txController.getIndexedParentMap();
     final calc = TransactionCalculation();
     final capitalUsed = {};
     final List<TransactionsModel> txs = [];
@@ -143,7 +144,7 @@ class _TransactionsWidgetsBalanceBarState extends State<TransactionsWidgetsBalan
         capitalUsed[ctx.srId] ?? Decimal.zero,
         tx.isRoot
             ? (Math.multiply(tx.srAmount, (tx.balance >= tx.rrAmount) ? Decimal.one : Math.divide(tx.balance, tx.rrAmount)))
-            : calc.totalCapitalUsed(tx, txsMap: txsMap),
+            : calc.totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent),
       );
     }
 
