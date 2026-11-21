@@ -14,6 +14,8 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
   ScrollController get tableScrollController;
   bool get tableIsGroup => false;
 
+  double? get tablePositionTop => null;
+
   double get tableHeightOffset => 0.0;
   double get tableHeadingHeightOffset => 12;
   double get tableHeightPercentageFromViewport => 0.8;
@@ -42,17 +44,29 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
   @override
   void initState() {
     super.initState();
-    tableScrollController.addListener(tableUpdateVisibleRows);
+    tableScrollController.addListener(tableRefreshState);
     tableUpdateVisibleRows();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      tableUpdateVisibleRows();
+      tableRefreshState();
     });
   }
 
   @override
   void dispose() {
-    tableScrollController.removeListener(tableUpdateVisibleRows);
+    tableScrollController.removeListener(tableRefreshState);
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    tableUpdateVisibleRows();
+  }
+
+  void tableRefreshState() {
+    if (tableUpdateVisibleRows() && mounted) {
+      setState(() {});
+    }
   }
 
   List<Map<String, dynamic>> tablePopulateData();
@@ -131,8 +145,8 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
     );
   }
 
-  void tableUpdateVisibleRows() {
-    if (tableData.isEmpty) return;
+  bool tableUpdateVisibleRows() {
+    if (tableData.isEmpty) return false;
 
     final rowCount = tableData.length;
     int nextStart = _tableRowStart;
@@ -142,7 +156,7 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       nextStart = 0;
       nextEnd = rowCount;
     } else {
-      if (!tableScrollController.hasClients) return;
+      if (!tableScrollController.hasClients) return false;
 
       final position = tableScrollController.position;
       final viewportHeight = position.viewportDimension;
@@ -156,14 +170,17 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       final int cursorEnd;
 
       if (tableIsGroup) {
-        final tableObject = tableKey.currentContext?.findRenderObject();
-        final viewportObject = position.context.storageContext.findRenderObject();
-
-        if (tableObject is! RenderBox || viewportObject is! RenderBox || !tableObject.hasSize || !viewportObject.hasSize) {
-          return;
+        final double tableTop;
+        if (tablePositionTop != null) {
+          tableTop = tablePositionTop! - currentPixels;
+        } else {
+          final tableObject = tableKey.currentContext?.findRenderObject();
+          final viewportObject = position.context.storageContext.findRenderObject();
+          if (tableObject is! RenderBox || viewportObject is! RenderBox || !tableObject.hasSize || !viewportObject.hasSize) {
+            return false;
+          }
+          tableTop = tableObject.localToGlobal(Offset.zero, ancestor: viewportObject).dy;
         }
-
-        final tableTop = tableObject.localToGlobal(Offset.zero, ancestor: viewportObject).dy;
 
         cursorStart = ((-tableTop - totalHeadingHeight) / tableRowHeight).floor();
         cursorEnd = ((-tableTop - totalHeadingHeight + viewportHeight) / tableRowHeight).ceil();
@@ -201,11 +218,12 @@ mixin MixinsTable<T extends StatefulWidget> on State<T>, MixinsState {
       }
     }
 
-    if (nextStart == _tableRowStart && nextEnd == _tableRowEnd) return;
+    if (nextStart == _tableRowStart && nextEnd == _tableRowEnd) return false;
 
     _tableRowStart = nextStart;
     _tableRowEnd = nextEnd;
-    if (mounted) setState(() {});
+
+    return true;
   }
 
   double tableCalculateAdjustedMaxHeight() {

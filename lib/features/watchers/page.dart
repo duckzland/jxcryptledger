@@ -80,7 +80,7 @@ class _WatchersPageState extends State<WatchersPage>
       "duration": (col, asc) => sortableOnSort((d) => d['tx'].duration, "duration", col, asc),
     };
 
-    tablePopulateData();
+    tableData = tablePopulateData();
     sortableApplySorting();
 
     actionbarRegister("Rate Watchers");

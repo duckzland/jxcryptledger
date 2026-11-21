@@ -52,6 +52,8 @@ class TransactionsWidgetsCardsFinalized extends StatefulWidget {
 
   final ScrollController scrollController;
 
+  final double positionTop;
+
   const TransactionsWidgetsCardsFinalized({
     super.key,
     required this.parentContext,
@@ -64,6 +66,7 @@ class TransactionsWidgetsCardsFinalized extends StatefulWidget {
     required this.isOpen,
     required this.scrollController,
     required this.selectableGroup,
+    required this.positionTop,
   });
 
   @override
@@ -105,6 +108,9 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
 
   @override
   ScrollController get tableScrollController => widget.scrollController;
+
+  @override
+  double get tablePositionTop => widget.positionTop;
 
   @override
   bool get tableIsGroup => true;
