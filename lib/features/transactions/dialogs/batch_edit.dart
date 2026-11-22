@@ -47,12 +47,11 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   Timer? _debounce;
 
   @override
-  double get tableHeightOffset => 290;
+  double get tableHeightOffset => 360;
 
   @override
   double get tableHeadingHeightOffset => 0;
 
-  @override
   final ScrollController tableScrollController = ScrollController();
 
   @override
@@ -85,7 +84,6 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     super.dispose();
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     tableData = <Map<String, dynamic>>[];
 
@@ -106,7 +104,6 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -119,7 +116,6 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     return DataRow(
       selected: selectableIsSelected(row['uuid']),
@@ -137,7 +133,6 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     );
   }
 
-  @override
   Widget tableBuild() {
     tablePopulateData();
 
@@ -147,11 +142,9 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
       child: DataTable2(
-        key: tableKey,
         scrollController: tableScrollController,
         headingCheckboxTheme: checkboxTheme,
         datarowCheckboxTheme: checkboxTheme,
-        onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
         showHeadingCheckBox: true,
         showCheckboxColumn: true,
         minWidth: 800,
@@ -161,7 +154,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
         columns: tableBuildColumns(),
-        rows: tableBuildRows(),
+        rows: tableData.map(tableBuildRow).toList(growable: false),
       ),
     );
   }

@@ -1,4 +1,3 @@
-import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
 import 'box.dart';
@@ -14,14 +13,13 @@ class WidgetsTableProxy extends SingleChildRenderObjectWidget {
   const WidgetsTableProxy({
     super.key,
     required this.controller,
-    required DataTable2 child,
-
+    required super.child,
     this.headerHeight = 50.0,
     this.rowHeight = 42.0,
     this.topOffset = 70.0,
     this.minHeight = 126.0,
     this.background = Colors.black,
-  }) : super(child: child);
+  });
 
   @override
   WidgetsTableBox createRenderObject(BuildContext context) {

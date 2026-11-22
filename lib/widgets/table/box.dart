@@ -62,12 +62,22 @@ class WidgetsTableBox extends RenderProxyBox {
     context.pushClipRect(
       needsCompositing,
       offset,
-      Rect.fromLTWH(offset.dx, offset.dy + headerHeight, size.width, size.height - headerHeight),
+      Rect.fromLTWH(
+        offset.dx,
+        offset.dy + headerHeight,
+        size.width,
+        size.height - headerHeight,
+      ),
       _paintBackground,
     );
 
     final Offset tOffset = offset.translate(0, _offsetY);
-    context.pushTransform(needsCompositing, Offset.zero, Matrix4.translationValues(tOffset.dx, tOffset.dy, 0.0), _paintTransformedHeader);
+    context.pushTransform(
+      needsCompositing,
+      Offset.zero,
+      Matrix4.translationValues(tOffset.dx, tOffset.dy, 0.0),
+      _paintTransformedHeader,
+    );
   }
 
   @override
@@ -76,16 +86,30 @@ class WidgetsTableBox extends RenderProxyBox {
 
     _walkTree(child!);
 
-    if (_table != null && _table!.attached && _header != null && _header!.attached && _offsetY > 0.0) {
+    if (_table != null &&
+        _table!.attached &&
+        _header != null &&
+        _header!.attached &&
+        _offsetY > 0.0) {
       final Offset offset = _table!.localToGlobal(Offset.zero, ancestor: this);
 
       final double topEdge = offset.dy;
       final double bottomEdge = offset.dy + child!.size.height;
 
-      final Rect rect = Rect.fromLTWH(offset.dx, topEdge + _offsetY, child!.size.width, headerHeight);
+      final Rect rect = Rect.fromLTWH(
+        offset.dx,
+        topEdge + _offsetY,
+        child!.size.width,
+        headerHeight,
+      );
 
-      if (position.dy >= topEdge && position.dy <= bottomEdge && rect.contains(position)) {
-        if (!child!.hitTest(result, position: position.translate(0.0, -_offsetY))) {
+      if (position.dy >= topEdge &&
+          position.dy <= bottomEdge &&
+          rect.contains(position)) {
+        if (!child!.hitTest(
+          result,
+          position: position.translate(0.0, -_offsetY),
+        )) {
           result.add(BoxHitTestEntry(this, position));
         } else {
           // BugFix: the checkbox at header stutter when clicked and the sort arrow flashes when hovered.
@@ -110,7 +134,10 @@ class WidgetsTableBox extends RenderProxyBox {
 
     if (_offsetY > 0.0) {
       if (position.dy >= _offsetY && position.dy <= (_offsetY + headerHeight)) {
-        if (!child!.hitTest(result, position: position.translate(0.0, -_offsetY))) {
+        if (!child!.hitTest(
+          result,
+          position: position.translate(0.0, -_offsetY),
+        )) {
           result.add(BoxHitTestEntry(this, position));
         }
 
@@ -141,7 +168,10 @@ class WidgetsTableBox extends RenderProxyBox {
       final double tableHeight = size.height;
       final double headerTop = _header!.localToGlobal(Offset.zero).dy;
       final double distancePastTop = topOffset - headerTop;
-      final double maxDistance = math.max(0.0, tableHeight - headerHeight - (rowHeight * 2));
+      final double maxDistance = math.max(
+        0.0,
+        tableHeight - headerHeight - (rowHeight * 2),
+      );
       final double newOffsetY = distancePastTop.clamp(0.0, maxDistance);
 
       if (newOffsetY != _offsetY) {
@@ -186,7 +216,10 @@ class WidgetsTableBox extends RenderProxyBox {
     ctx.canvas.save();
 
     bgPaint ??= Paint()..color = background;
-    ctx.canvas.drawRect(Rect.fromLTWH(0.0, 0.0, size.width, headerHeight), bgPaint!);
+    ctx.canvas.drawRect(
+      Rect.fromLTWH(0.0, 0.0, size.width, headerHeight),
+      bgPaint!,
+    );
 
     _table!.visitChildren((RenderObject box) {
       if (box is RenderBox && box.parentData is TableCellParentData) {

@@ -15,7 +15,9 @@ class WidgetsTableColumn extends DataColumn2 {
     super.headingRowAlignment,
   }) : super(
          label: WidgetsTableColumnRender(
-           child: onSort != null ? MouseRegion(cursor: SystemMouseCursors.click, child: label) : label,
+           child: onSort != null
+               ? MouseRegion(cursor: SystemMouseCursors.click, child: label)
+               : label,
          ),
        );
 }
@@ -24,7 +26,8 @@ class WidgetsTableColumnRender extends SingleChildRenderObjectWidget {
   const WidgetsTableColumnRender({super.key, required Widget super.child});
 
   @override
-  WidgetsTableColumnRenderElement createRenderObject(BuildContext context) => WidgetsTableColumnRenderElement();
+  WidgetsTableColumnRenderElement createRenderObject(BuildContext context) =>
+      WidgetsTableColumnRenderElement();
 }
 
 class WidgetsTableColumnRenderElement extends RenderProxyBox {}

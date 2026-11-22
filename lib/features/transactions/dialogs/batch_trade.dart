@@ -80,13 +80,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   Timer? _debounce;
 
   @override
-  double get tableHeightOffset => _showNotes ? 360 : 290;
+  double get tableHeightOffset => _showNotes ? 400 : 360;
 
   @override
   double get tableHeadingHeightOffset => 0;
-
-  @override
-  final ScrollController tableScrollController = ScrollController();
 
   @override
   void initState() {
@@ -116,7 +113,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     resultController.dispose();
     fromController.dispose();
     toController.dispose();
-    tableScrollController.dispose();
+
     super.dispose();
   }
 
@@ -125,7 +122,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     _updateResult(rateableAmount);
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     tableData = <Map<String, dynamic>>[];
 
@@ -191,7 +187,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     tableColumns = [
       DataColumn2(label: Text('Date '), fixedWidth: 100),
@@ -211,7 +206,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
     final canSelect = tx.isActive || tx.isPartial;
@@ -245,7 +239,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     );
   }
 
-  @override
   Widget tableBuild() {
     final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
 
@@ -261,19 +254,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
       child: DataTable2(
-        key: tableKey,
         headingCheckboxTheme: checkboxTheme,
         datarowCheckboxTheme: checkboxTheme,
-        onSelectAll: selectableOnSelectAll(
-          () => tableData
-              .where((r) => (r['tx'] as TransactionsModel).isActive || (r['tx'] as TransactionsModel).isPartial)
-              .map((r) => r['uuid'] as String),
-          onChanged: () {
-            _updateProfit();
-            _updateResult(rateableAmount);
-            _buildResultAmountField();
-          },
-        ),
         showHeadingCheckBox: true,
         showCheckboxColumn: true,
         minWidth: 800,
@@ -283,7 +265,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         dataRowHeight: tableRowHeight,
         isHorizontalScrollBarVisible: false,
         columns: tableBuildColumns(),
-        rows: tableBuildRows(),
+        rows: tableData.map(tableBuildRow).toList(growable: false),
       ),
     );
   }
@@ -841,7 +823,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       profitPool = _fromAmount;
     } else if (_useBalanceMode) {
-      if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero || _fromAmount > _calc.totalActiveBalance(stxs)) return;
+      if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero || _fromAmount > _calc.totalActiveBalance(stxs)) {
+        return;
+      }
 
       fromAllocations = _calc.spreadAmount(_fromAmount, stxs);
       toAllocations = _calc.spreadAmount(_toAmount, stxs);

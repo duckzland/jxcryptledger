@@ -14,7 +14,7 @@ import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
-import '../../../../widgets/table/proxy.dart';
+import '../../../../widgets/table/virtualized.dart';
 import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/with_tooltip.dart';
 
@@ -107,15 +107,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
   }
 
   @override
-  ScrollController get tableScrollController => widget.scrollController;
-
-  @override
-  double get tablePositionTop => widget.positionTop;
-
-  @override
-  bool get tableIsGroup => true;
-
-  @override
   void initState() {
     super.initState();
 
@@ -172,7 +163,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     sortableApplySorting();
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     tableData = <Map<String, dynamic>>[];
 
@@ -200,7 +190,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -217,7 +206,6 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
 
@@ -266,19 +254,22 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     );
   }
 
-  @override
   Widget tableBuild() {
     return SizedBox(
-      key: tableKey,
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: WidgetsTableProxy(
+      child: WidgetsTableVirtualized<Map<String, dynamic>>(
         controller: widget.scrollController,
         topOffset: 80,
         headerHeight: AppTheme.tableHeadingRowHeight,
         rowHeight: AppTheme.tableDataRowMinHeight,
         background: AppTheme.panelBg,
-        child: DataTable2(
+        data: tableData,
+        rowBuilder: tableBuildRow,
+        columnCount: tableBuildColumns().length,
+        isGroup: true,
+        positionTop: widget.positionTop,
+        childBuilder: (rows) => DataTable2(
           key: Key("table-finalized-${widget.id}"),
           headingCheckboxTheme: widget.theme.checkboxTheme,
           datarowCheckboxTheme: widget.theme.checkboxTheme,
@@ -300,7 +291,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: tableBuildColumns(),
-          rows: tableBuildRows(),
+          rows: rows,
         ),
       ),
     );

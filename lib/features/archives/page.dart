@@ -64,7 +64,6 @@ class _ArchivesPageState extends State<ArchivesPage>
   @override
   String get sortableDefaultKey => "timestamp";
 
-  @override
   ScrollController get tableScrollController => scrollToUtil.controller;
 
   @override
@@ -161,18 +160,6 @@ class _ArchivesPageState extends State<ArchivesPage>
     );
   }
 
-  @override
-  List<Map<String, dynamic>> tablePopulateData() {
-    final rx = <Map<String, dynamic>>[];
-
-    for (final tx in txs) {
-      rx.add({'tx': tx});
-    }
-
-    return rx;
-  }
-
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -185,7 +172,6 @@ class _ArchivesPageState extends State<ArchivesPage>
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as ArchivesModel;
     return DataRow(
@@ -206,11 +192,9 @@ class _ArchivesPageState extends State<ArchivesPage>
     );
   }
 
-  @override
   Widget tableBuild() {
     return WidgetsPanel(
       child: DataTable2(
-        key: tableKey,
         scrollController: scrollToUtil.controller,
         minWidth: 460,
         columnSpacing: 12,
@@ -222,7 +206,7 @@ class _ArchivesPageState extends State<ArchivesPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: tableBuildColumns(),
-        rows: tableBuildRows(),
+        rows: tableData.map(tableBuildRow).toList(growable: false),
       ),
     );
   }
@@ -294,5 +278,15 @@ class _ArchivesPageState extends State<ArchivesPage>
         _pxController.items.isNotEmpty ||
         _wxController.items.isNotEmpty ||
         _sxController.items.isNotEmpty;
+  }
+
+  List<Map<String, dynamic>> tablePopulateData() {
+    final rx = <Map<String, dynamic>>[];
+
+    for (final tx in txs) {
+      rx.add({'tx': tx});
+    }
+
+    return rx;
   }
 }

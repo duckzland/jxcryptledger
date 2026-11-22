@@ -63,9 +63,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   bool get wantKeepAlive => _shouldKeepAlive;
 
   @override
-  ScrollController get tableScrollController => scrollToUtil.controller;
-
-  @override
   void initState() {
     super.initState();
 
@@ -129,7 +126,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     }
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     tableData = <Map<String, dynamic>>[];
 
@@ -153,7 +149,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -169,7 +164,6 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
 
@@ -206,10 +200,8 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     );
   }
 
-  @override
   Widget tableBuild() {
     return DataTable2(
-      key: tableKey,
       scrollController: scrollToUtil.controller,
       minWidth: 1200,
       columnSpacing: 12,
@@ -224,7 +216,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
       ),
       columns: tableBuildColumns(),
-      rows: tableBuildRows(),
+      rows: tableData.map(tableBuildRow).toList(growable: false),
     );
   }
 

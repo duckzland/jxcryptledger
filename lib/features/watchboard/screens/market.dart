@@ -56,9 +56,6 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   String get sortableDefaultKey => "rank";
 
   @override
-  ScrollController get tableScrollController => scrollToUtil.controller;
-
-  @override
   void initState() {
     super.initState();
 
@@ -102,7 +99,6 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     return Row(mainAxisSize: MainAxisSize.min, spacing: 10, children: navigation);
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     final rx = <Map<String, dynamic>>[];
 
@@ -112,7 +108,6 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     return rx;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -129,7 +124,6 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final MarketsModel tx = row['tx'];
     return DataRow2(
@@ -157,11 +151,9 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     );
   }
 
-  @override
   Widget tableBuild() {
     tablePopulateData();
     return DataTable2(
-      key: tableKey,
       scrollController: scrollToUtil.controller,
       minWidth: 1200,
       columnSpacing: 12,
@@ -176,7 +168,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
         child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
       ),
       columns: tableBuildColumns(),
-      rows: tableBuildRows(),
+      rows: tableData.map(tableBuildRow).toList(growable: false),
     );
   }
 

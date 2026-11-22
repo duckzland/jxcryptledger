@@ -20,7 +20,7 @@ import '../../../../mixins/table.dart';
 import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/fields/amount.dart';
 import '../../../../widgets/table/column.dart';
-import '../../../../widgets/table/proxy.dart';
+import '../../../../widgets/table/virtualized.dart';
 import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/text/balance.dart';
 import '../../../../widgets/with_tooltip.dart';
@@ -158,15 +158,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
   }
 
   @override
-  ScrollController get tableScrollController => widget.scrollController;
-
-  @override
-  double get tablePositionTop => widget.positionTop;
-
-  @override
-  bool get tableIsGroup => true;
-
-  @override
   void initState() {
     super.initState();
 
@@ -276,7 +267,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     }
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     final currentRate = _customRate ?? effectiveMarketRate ?? Decimal.zero;
     final txsMap = txController.getIndexedMap();
@@ -346,7 +336,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     tableColumns = [
       WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters['timestamp']),
@@ -436,7 +425,6 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
     final canSelect = tx.isActive || tx.isPartial;
@@ -502,19 +490,22 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
     );
   }
 
-  @override
   Widget tableBuild() {
     return SizedBox(
-      key: tableKey,
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: WidgetsTableProxy(
+      child: WidgetsTableVirtualized<Map<String, dynamic>>(
         controller: widget.scrollController,
         topOffset: 80,
         headerHeight: AppTheme.tableHeadingRowHeight,
         rowHeight: tableRowHeight,
         background: AppTheme.panelBg,
-        child: DataTable2(
+        data: tableData,
+        rowBuilder: tableBuildRow,
+        columnCount: tableBuildColumns().length,
+        isGroup: true,
+        positionTop: widget.positionTop,
+        childBuilder: (rows) => DataTable2(
           key: Key("table-active-${widget.srid}-${widget.rrid}"),
           headingCheckboxTheme: widget.theme.checkboxTheme,
           datarowCheckboxTheme: widget.theme.checkboxTheme,
@@ -533,7 +524,7 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: tableBuildColumns(),
-          rows: tableBuildRows(),
+          rows: rows,
         ),
       ),
     );
@@ -675,33 +666,27 @@ class _TransactionsWidgetsCardsActiveState extends State<TransactionsWidgetsCard
 
                 if (!isCapital) TransactionsWidgetsPanelItem(title: 'Avg Rate', subtitle: Utils.formatSmartDecimal(_averageRate)),
 
-                if (_plPercentage != Decimal.zero && !isCapital) ...[
-                  if (_totalProfit != Decimal.zero && _totalLoss != Decimal.zero)
-                    TransactionsWidgetsPanelItem(
-                      title: 'Profit',
-                      subtitle: Utils.formatSmartDecimal(_totalProfit),
-                      value: _totalProfit.toDouble(),
-                    ),
-
-                  if (_totalProfit != Decimal.zero && _totalLoss != Decimal.zero)
-                    TransactionsWidgetsPanelItem(
-                      title: 'Loss',
-                      subtitle: Utils.formatSmartDecimal(_totalLoss),
-                      value: _totalLoss.toDouble(),
-                    ),
-
+                if (_totalProfit != Decimal.zero)
                   TransactionsWidgetsPanelItem(
-                    title: 'Total P/L',
-                    subtitle: "${Utils.formatSmartDecimal(_totalPL)} $_sourceSymbol",
-                    value: _plPercentage.toDouble(),
+                    title: 'Profit',
+                    subtitle: Utils.formatSmartDecimal(_totalProfit),
+                    value: _totalProfit.toDouble(),
                   ),
 
-                  TransactionsWidgetsPanelItem(
-                    title: 'P/L %',
-                    subtitle: '${Utils.formatSmartDecimal(_plPercentage, maxDecimals: 2)}%',
-                    value: _plPercentage.toDouble(),
-                  ),
-                ],
+                if (_totalLoss != Decimal.zero)
+                  TransactionsWidgetsPanelItem(title: 'Loss', subtitle: Utils.formatSmartDecimal(_totalLoss), value: _totalLoss.toDouble()),
+
+                TransactionsWidgetsPanelItem(
+                  title: 'Total P/L',
+                  subtitle: "${Utils.formatSmartDecimal(_totalPL)} $_sourceSymbol",
+                  value: _plPercentage.toDouble(),
+                ),
+
+                TransactionsWidgetsPanelItem(
+                  title: 'P/L %',
+                  subtitle: '${Utils.formatSmartDecimal(_plPercentage, maxDecimals: 2)}%',
+                  value: _plPercentage.toDouble(),
+                ),
               ],
             ),
           ),

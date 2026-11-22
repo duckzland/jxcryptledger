@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
@@ -7,9 +6,10 @@ import '../../../core/scrollto.dart';
 import '../../../mixins/rateable.dart';
 import '../../../mixins/scrollto_group.dart';
 import '../../../mixins/state.dart';
-import '../mixins/flags.dart';
+import '../../../widgets/list/virtualized.dart';
 import '../widgets/balance_bar.dart';
 import '../widgets/cards/finalized.dart';
+import '../mixins/flags.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -160,92 +160,42 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
     final separatorHeight = scrollToGroupGetSeparatorHeight();
     final separator = EdgeInsets.only(bottom: separatorHeight);
     final theme = Theme.of(context);
-    const viewPortExtendCache = 2.0;
 
     return Stack(
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final crossAxisExtent = constraints.maxWidth;
+        WidgetsListVirtualized(
+          controller: scrollToUtil.controller,
+          itemCount: groupKeys.length,
+          separatorHeight: separatorHeight,
+          itemHeightBuilder: (index, crossAxisExtent) {
+            final key = groupKeys[index];
+            return scrollToGroupGetGroupHeight(key, groups[key] ?? [], crossAxisExtent);
+          },
+          itemBuilder: (context, idx, cardTop, cardHeight) {
+            final rrId = groupKeys[idx];
+            final stxs = groups[rrId]!;
 
-            final groupTops = List<double>.filled(groupKeys.length, 0.0);
-            final groupHeights = List<double>.filled(groupKeys.length, 0.0);
-            double runningTop = 0.0;
-
-            for (int i = 0; i < groupKeys.length; i++) {
-              final key = groupKeys[i];
-              final h = scrollToGroupGetGroupHeight(key, groups[key] ?? [], crossAxisExtent);
-              groupTops[i] = runningTop;
-              groupHeights[i] = h;
-              runningTop += h + separatorHeight;
-            }
-
-            return ListView.custom(
-              controller: scrollToUtil.controller,
-              scrollCacheExtent: const ScrollCacheExtent.viewport(viewPortExtendCache),
-              itemExtentBuilder: (index, dimensions) {
-                return groupHeights[index] + separatorHeight;
-              },
-              childrenDelegate: SliverChildBuilderDelegate(
-                (BuildContext itemContext, int idx) {
-                  final rrId = groupKeys[idx];
-                  final stxs = groups[rrId]!;
-
-                  final cardTop = groupTops[idx];
-                  final cardHeight = groupHeights[idx];
-                  final targetBottom = cardTop + cardHeight;
-
-                  final viewport = scrollToUtil.controller.position.viewportDimension;
-                  final cacheMargin = viewport * viewPortExtendCache;
-
-                  final currentScrollTop = scrollToUtil.controller.offset;
-                  final currentScrollBottom = currentScrollTop + viewport;
-
-                  final isOutOfView = targetBottom < (currentScrollTop - cacheMargin) || cardTop > (currentScrollBottom + cacheMargin);
-
-                  if (isOutOfView && stxs.length > 20) {
-                    return Padding(
-                      padding: separator,
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: SizedBox(width: 1, height: cardHeight),
-                      ),
-                    );
-                  }
-
-                  return Padding(
-                    padding: separator,
-                    child: TransactionsWidgetsCardsFinalized(
-                      key: ValueKey(rrId),
-                      id: int.parse(rrId),
-                      transactions: stxs,
-                      txsFlags: widget.txsFlags,
-                      onStatusChanged: widget.onStatusChanged,
-                      onToggleChanged: _toggleAction,
-                      parentContext: context,
-                      theme: theme,
-                      isOpen: states.get("tx-group-finalized-open-$rrId", defaultValue: true),
-                      scrollController: scrollToUtil.controller,
-                      selectableGroup: selectableGroup,
-                      positionTop: cardTop,
-                    ),
-                  );
-                },
-                childCount: groupKeys.length,
-                addAutomaticKeepAlives: true,
-                findChildIndexCallback: (Key key) {
-                  if (key is ValueKey<String>) {
-                    final targetIdx = groupKeys.indexWhere((k) => k == key.value);
-                    if (targetIdx != -1) {
-                      return targetIdx;
-                    }
-                  }
-                  return null;
-                },
+            return Padding(
+              key: ValueKey(rrId),
+              padding: separator,
+              child: TransactionsWidgetsCardsFinalized(
+                key: ValueKey(rrId),
+                id: int.parse(rrId),
+                transactions: stxs,
+                txsFlags: widget.txsFlags,
+                onStatusChanged: widget.onStatusChanged,
+                onToggleChanged: _toggleAction,
+                parentContext: context,
+                theme: theme,
+                isOpen: states.get("tx-group-finalized-open-$rrId", defaultValue: true),
+                scrollController: scrollToUtil.controller,
+                selectableGroup: selectableGroup,
+                positionTop: cardTop,
               ),
             );
           },
         ),
+
         TransactionsWidgetsBalanceBar(
           key: const ValueKey("tx-finalized-balance-bar"),
           data: selectableGroup,

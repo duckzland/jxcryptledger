@@ -20,12 +20,16 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
   const TransactionsDialogsDetails({super.key, required this.tx});
 
   TransactionCalculation get _calc => TransactionCalculation();
-  TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
-  CryptosController get _cryptosController => CoreLocator.getit<CryptosController>();
+  TransactionsController get _txController =>
+      CoreLocator.getit<TransactionsController>();
+  CryptosController get _cryptosController =>
+      CoreLocator.getit<CryptosController>();
 
   @override
   Widget build(BuildContext context) {
-    final notes = tx.isRoot ? tx.meta['purchase_notes'] : tx.meta['trading_notes'];
+    final notes = tx.isRoot
+        ? tx.meta['purchase_notes']
+        : tx.meta['trading_notes'];
     final groupNotes = tx.meta['group_notes'];
     const divider = Divider(height: 1, thickness: 1);
 
@@ -39,12 +43,19 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 30,
             children: [
-              Text("Transaction Information", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+              Text(
+                "Transaction Information",
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+              ),
 
               _buildInformation(),
 
               WidgetsHeader(
-                title: ((notes == null || notes.isEmpty) && (groupNotes == null || groupNotes.isEmpty)) ? "No notes available" : null,
+                title:
+                    ((notes == null || notes.isEmpty) &&
+                        (groupNotes == null || groupNotes.isEmpty))
+                    ? "No notes available"
+                    : null,
                 subtitle: "Notes",
                 reversed: true,
                 selectable: true,
@@ -53,8 +64,13 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (notes != null && notes.isNotEmpty) Text(notes),
-                    if (notes != null && notes.isNotEmpty && groupNotes != null && groupNotes.isNotEmpty) divider,
-                    if (groupNotes != null && groupNotes.isNotEmpty) Text(groupNotes),
+                    if (notes != null &&
+                        notes.isNotEmpty &&
+                        groupNotes != null &&
+                        groupNotes.isNotEmpty)
+                      divider,
+                    if (groupNotes != null && groupNotes.isNotEmpty)
+                      Text(groupNotes),
                   ],
                 ),
               ),
@@ -63,13 +79,20 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
                 subtitle: "History",
                 reversed: true,
                 spacing: 5,
-                child: SizedBox(width: double.infinity, height: calculateAdjustedMaxHeight(), child: _buildHistory()),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: calculateAdjustedMaxHeight(),
+                  child: _buildHistory(),
+                ),
               ),
 
               Padding(
                 padding: EdgeInsets.only(top: 15.0, bottom: 5),
                 child: Center(
-                  child: WidgetsButtonsAction(label: 'Close', onPressed: (_) => Navigator.pop(context)),
+                  child: WidgetsButtonsAction(
+                    label: 'Close',
+                    onPressed: (_) => Navigator.pop(context),
+                  ),
                 ),
               ),
             ],
@@ -96,7 +119,12 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: WidgetsHeader(title: tx.timestampAsFormattedDate, subtitle: "Date", reversed: true, selectable: true),
+                child: WidgetsHeader(
+                  title: tx.timestampAsFormattedDate,
+                  subtitle: "Date",
+                  reversed: true,
+                  selectable: true,
+                ),
               ),
               Expanded(
                 child: WidgetsHeader(
@@ -108,26 +136,46 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
               ),
               if (!tx.isCapital)
                 Expanded(
-                  child: WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true, selectable: true),
+                  child: WidgetsHeader(
+                    title: "${tx.rrAmountText} $rrSymbol",
+                    subtitle: "To",
+                    reversed: true,
+                    selectable: true,
+                  ),
                 ),
               if (!tx.isCapital)
                 Expanded(
-                  child: WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true, selectable: true),
+                  child: WidgetsHeader(
+                    title: tx.rateText,
+                    subtitle: "Rate",
+                    reversed: true,
+                    selectable: true,
+                  ),
                 ),
               Expanded(
-                child: WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true, selectable: true),
+                child: WidgetsHeader(
+                  title: "${tx.balanceText} $rrSymbol",
+                  subtitle: "Balance",
+                  reversed: true,
+                  selectable: true,
+                ),
               ),
               if (!tx.isCapital && capitalUsed > Decimal.zero)
                 Expanded(
                   child: WidgetsHeader(
-                    title: "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
+                    title:
+                        "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
                     subtitle: "Capital Used",
                     reversed: true,
                     selectable: true,
                   ),
                 ),
               Expanded(
-                child: WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true),
+                child: WidgetsHeader(
+                  title: tx.statusText,
+                  subtitle: "Status",
+                  reversed: true,
+                ),
               ),
             ],
           );
@@ -136,12 +184,41 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
             spacing: 20,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WidgetsHeader(title: tx.timestampAsFormattedDate, subtitle: "Date", reversed: true, selectable: true),
-              WidgetsHeader(title: "${tx.srAmountText} $srSymbol", subtitle: "From", reversed: true, selectable: true),
-              WidgetsHeader(title: "${tx.rrAmountText} $rrSymbol", subtitle: "To", reversed: true, selectable: true),
-              WidgetsHeader(title: tx.rateText, subtitle: "Rate", reversed: true, selectable: true),
-              WidgetsHeader(title: "${tx.balanceText} $rrSymbol", subtitle: "Balance", reversed: true, selectable: true),
-              WidgetsHeader(title: tx.statusText, subtitle: "Status", reversed: true),
+              WidgetsHeader(
+                title: tx.timestampAsFormattedDate,
+                subtitle: "Date",
+                reversed: true,
+                selectable: true,
+              ),
+              WidgetsHeader(
+                title: "${tx.srAmountText} $srSymbol",
+                subtitle: "From",
+                reversed: true,
+                selectable: true,
+              ),
+              WidgetsHeader(
+                title: "${tx.rrAmountText} $rrSymbol",
+                subtitle: "To",
+                reversed: true,
+                selectable: true,
+              ),
+              WidgetsHeader(
+                title: tx.rateText,
+                subtitle: "Rate",
+                reversed: true,
+                selectable: true,
+              ),
+              WidgetsHeader(
+                title: "${tx.balanceText} $rrSymbol",
+                subtitle: "Balance",
+                reversed: true,
+                selectable: true,
+              ),
+              WidgetsHeader(
+                title: tx.statusText,
+                subtitle: "Status",
+                reversed: true,
+              ),
             ],
           );
         }
@@ -156,7 +233,10 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
       tree: root,
       padding: EdgeInsets.only(left: 0),
       showRootNode: false,
-      indentation: Indentation(style: IndentStyle.roundJoint, color: AppTheme.treeConnector),
+      indentation: Indentation(
+        style: IndentStyle.roundJoint,
+        color: AppTheme.treeConnector,
+      ),
       expansionBehavior: ExpansionBehavior.scrollToLastChild,
       animation: kAlwaysCompleteAnimation,
       expansionIndicatorBuilder: (context, node) => ChevronIndicator.upDown(
@@ -168,7 +248,10 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
       onTreeReady: (controller) {
         Future.delayed(Duration(milliseconds: 100), () {
           for (final child in root.childrenAsList) {
-            controller.expandAllChildren(child as IndexedTreeNode<TransactionsModel>, recursive: true);
+            controller.expandAllChildren(
+              child as IndexedTreeNode<TransactionsModel>,
+              recursive: true,
+            );
           }
 
           final current = _treeFindNodeByUuid(root, tx.uuid);
@@ -181,18 +264,29 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
         final stx = node.data;
         if (stx == null) return const SizedBox.shrink();
         return MouseRegion(
-          cursor: node.childrenAsList.isNotEmpty ? SystemMouseCursors.click : SystemMouseCursors.basic,
-          child: TransactionsWidgetsCardsSimpleTree(key: ValueKey(stx.tid), tx: stx, node: node, isActive: stx.uuid == tx.uuid),
+          cursor: node.childrenAsList.isNotEmpty
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
+          child: TransactionsWidgetsCardsSimpleTree(
+            key: ValueKey(stx.tid),
+            tx: stx,
+            node: node,
+            isActive: stx.uuid == tx.uuid,
+          ),
         );
       },
     );
   }
 
-  IndexedTreeNode<TransactionsModel>? _treeFindNodeByUuid(IndexedTreeNode<TransactionsModel> root, String uuid) {
+  IndexedTreeNode<TransactionsModel>? _treeFindNodeByUuid(
+    IndexedTreeNode<TransactionsModel> root,
+    String uuid,
+  ) {
     if (root.data?.uuid == uuid) {
       return root;
     }
-    for (final child in root.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>()) {
+    for (final child
+        in root.childrenAsList.cast<IndexedTreeNode<TransactionsModel>>()) {
       final found = _treeFindNodeByUuid(child, uuid);
       if (found != null) return found;
     }
@@ -206,7 +300,10 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
     final nodes = <String, IndexedTreeNode<TransactionsModel>>{};
 
     for (final ttx in txs) {
-      nodes[ttx.tid] = IndexedTreeNode<TransactionsModel>(key: ttx.tid, data: ttx);
+      nodes[ttx.tid] = IndexedTreeNode<TransactionsModel>(
+        key: ttx.tid,
+        data: ttx,
+      );
     }
 
     for (final ttx in txs) {
@@ -222,7 +319,10 @@ class TransactionsDialogsDetails extends StatelessWidget with MixinsState {
     return root;
   }
 
-  static Future<void> show(BuildContext context, TransactionsModel transaction) {
+  static Future<void> show(
+    BuildContext context,
+    TransactionsModel transaction,
+  ) {
     return showDialog(
       context: context,
       builder: (_) => TransactionsDialogsDetails(tx: transaction),

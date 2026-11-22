@@ -73,20 +73,17 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
   double get tableHeadingHeightOffset => 0;
 
   @override
-  final ScrollController tableScrollController = ScrollController();
-
-  @override
   void initState() {
     super.initState();
 
     _rateController.addListener(_onControllerChanged);
     _populateRates();
+    tablePopulateData();
   }
 
   @override
   void dispose() {
     _rateController.removeListener(_onControllerChanged);
-    tableScrollController.dispose();
     super.dispose();
   }
 
@@ -107,7 +104,6 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     }
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     tableData = <Map<String, dynamic>>[];
 
@@ -144,7 +140,6 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -158,7 +153,6 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     return DataRow(
       key: ValueKey(row['uuid']),
@@ -172,16 +166,11 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     );
   }
 
-  @override
   Widget tableBuild() {
-    tablePopulateData();
-
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
       child: DataTable2(
-        key: tableKey,
-        scrollController: tableScrollController,
         minWidth: 800,
         columnSpacing: 12,
         horizontalMargin: 12,
@@ -190,7 +179,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         showCheckboxColumn: false,
         isHorizontalScrollBarVisible: false,
         columns: tableBuildColumns(),
-        rows: tableBuildRows(),
+        rows: tableData.map(tableBuildRow).toList(growable: false),
       ),
     );
   }

@@ -60,9 +60,6 @@ class _WatchersPageState extends State<WatchersPage>
   final scrollToUtil = ScrollTo('wx-group-offset');
 
   @override
-  ScrollController get tableScrollController => scrollToUtil.controller;
-
-  @override
   void initState() {
     super.initState();
     _wxController = CoreLocator.getit<WatchersController>();
@@ -174,7 +171,6 @@ class _WatchersPageState extends State<WatchersPage>
     );
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     final rx = <Map<String, dynamic>>[];
 
@@ -185,7 +181,6 @@ class _WatchersPageState extends State<WatchersPage>
     return rx;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -202,7 +197,6 @@ class _WatchersPageState extends State<WatchersPage>
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final WatchersModel tx = row['tx'];
     return DataRow(
@@ -227,11 +221,9 @@ class _WatchersPageState extends State<WatchersPage>
     );
   }
 
-  @override
   Widget tableBuild() {
     return WidgetsPanel(
       child: DataTable2(
-        key: tableKey,
         scrollController: scrollToUtil.controller,
         minWidth: 1200,
         columnSpacing: 12,
@@ -243,7 +235,7 @@ class _WatchersPageState extends State<WatchersPage>
         sortAscending: sortableAscending,
         isHorizontalScrollBarVisible: false,
         columns: tableBuildColumns(),
-        rows: tableBuildRows(),
+        rows: tableData.map(tableBuildRow).toList(growable: false),
       ),
     );
   }

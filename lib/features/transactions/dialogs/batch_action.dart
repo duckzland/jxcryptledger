@@ -60,7 +60,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   @override
   double get tableHeadingHeightOffset => 4;
 
-  @override
   final ScrollController tableScrollController = ScrollController();
 
   @override
@@ -134,7 +133,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
     super.dispose();
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     tableData = <Map<String, dynamic>>[];
 
@@ -152,7 +150,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -164,7 +161,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
     return DataRow(
@@ -182,7 +178,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
     );
   }
 
-  @override
   Widget tableBuild() {
     tablePopulateData();
 
@@ -192,7 +187,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
       child: DataTable2(
-        key: tableKey,
         scrollController: tableScrollController,
         headingCheckboxTheme: theme.checkboxTheme,
         datarowCheckboxTheme: theme.checkboxTheme,
@@ -206,7 +200,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         isHorizontalScrollBarVisible: false,
         onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
         columns: tableBuildColumns(),
-        rows: tableBuildRows(),
+        rows: tableData.map(tableBuildRow).toList(growable: false),
       ),
     );
   }

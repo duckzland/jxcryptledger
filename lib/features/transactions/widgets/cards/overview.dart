@@ -122,15 +122,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   }
 
   @override
-  ScrollController get tableScrollController => widget.scrollController;
-
-  @override
-  double get tablePositionTop => widget.positionTop;
-
-  @override
-  bool get tableIsGroup => true;
-
-  @override
   void initState() {
     super.initState();
 
@@ -215,7 +206,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     }
   }
 
-  @override
   List<Map<String, dynamic>> tablePopulateData() {
     final txsMap = txController.getIndexedMap();
     final txsByParent = txController.getIndexedParentMap();
@@ -246,7 +236,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     return tableData;
   }
 
-  @override
   List<DataColumn> tableBuildColumns() {
     if (tableColumns.isEmpty) {
       tableColumns = [
@@ -281,7 +270,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     return tableColumns;
   }
 
-  @override
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
     final canSelect = tx.isActive || tx.isPartial;
@@ -336,10 +324,8 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     );
   }
 
-  @override
   Widget tableBuild() {
     return SizedBox(
-      key: tableKey,
       width: double.infinity,
       height: tableCalculateHeight(),
       child: WidgetsTableProxy(
@@ -375,7 +361,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
           columns: tableBuildColumns(),
-          rows: tableBuildRows(),
+          rows: tableData.map(tableBuildRow).toList(growable: false),
         ),
       ),
     );
