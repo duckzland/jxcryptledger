@@ -51,7 +51,6 @@ class TransactionsWidgetsCardsFinalized extends StatefulWidget {
   final bool isOpen;
 
   final ScrollController scrollController;
-
   final double positionTop;
 
   const TransactionsWidgetsCardsFinalized({
@@ -264,11 +263,10 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         headerHeight: AppTheme.tableHeadingRowHeight,
         rowHeight: AppTheme.tableDataRowMinHeight,
         background: AppTheme.panelBg,
+        positionTop: widget.positionTop,
         data: tableData,
         rowBuilder: tableBuildRow,
         columnCount: tableBuildColumns().length,
-        isGroup: true,
-        positionTop: widget.positionTop,
         childBuilder: (rows) => DataTable2(
           key: Key("table-finalized-${widget.id}"),
           headingCheckboxTheme: widget.theme.checkboxTheme,

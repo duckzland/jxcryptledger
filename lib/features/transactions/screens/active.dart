@@ -188,7 +188,7 @@ class _TransactionsActiveViewState extends State<TransactionsActiveView>
             final key = groupKeys[index];
             return scrollToGroupGetGroupHeight(key, groups[key] ?? [], crossAxisExtent);
           },
-          itemBuilder: (context, idx, cardTop, cardHeight) {
+          itemBuilder: (context, idx, cardTop, _) {
             final key = groupKeys[idx];
             final stxs = groups[key]!;
             final parts = key.split('-');

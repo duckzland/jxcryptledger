@@ -15,11 +15,10 @@ class WidgetsTableVirtualized<T> extends StatefulWidget {
   final double topOffset;
   final double minHeight;
   final Color background;
-  final bool isGroup;
-  final double? positionTop;
-  final GlobalKey? tableKey;
+  final double positionTop;
   final Widget Function()? loaderBuilder;
   final double viewportMultiplier;
+  final bool lateRefresh;
 
   const WidgetsTableVirtualized({
     super.key,
@@ -28,25 +27,23 @@ class WidgetsTableVirtualized<T> extends StatefulWidget {
     required this.rowBuilder,
     required this.columnCount,
     required this.childBuilder,
+    required this.positionTop,
+
     this.headerHeight = 50.0,
     this.rowHeight = 42.0,
     this.topOffset = 70.0,
     this.minHeight = 126.0,
     this.background = Colors.black,
-    this.isGroup = false,
-    this.positionTop,
-    this.tableKey,
     this.loaderBuilder,
     this.viewportMultiplier = 2.5,
+    this.lateRefresh = false,
   });
 
   @override
-  State<WidgetsTableVirtualized<T>> createState() =>
-      _WidgetsTableVirtualizedState<T>();
+  State<WidgetsTableVirtualized<T>> createState() => _WidgetsTableVirtualizedState<T>();
 }
 
-class _WidgetsTableVirtualizedState<T>
-    extends State<WidgetsTableVirtualized<T>> {
+class _WidgetsTableVirtualizedState<T> extends State<WidgetsTableVirtualized<T>> {
   int _rowStart = 0;
   int _rowEnd = 0;
   int _rowCount = -1;
@@ -59,18 +56,20 @@ class _WidgetsTableVirtualizedState<T>
     return (height / widget.rowHeight).ceil().clamp(1, 200);
   }
 
-  int get _targetBuildRows =>
-      (_viewportRows * widget.viewportMultiplier).ceil();
+  int get _targetBuildRows => (_viewportRows * widget.viewportMultiplier).ceil();
 
-  int get _halfBuffer =>
-      ((_targetBuildRows - _viewportRows) / 2).ceil().clamp(2, 100);
+  int get _halfBuffer => ((_targetBuildRows - _viewportRows) / 2).ceil().clamp(2, 100);
 
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_refreshState);
     _updateVisibleRows();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshState());
+
+    // If the parent isnt WidgetsListVirtualized
+    if (widget.lateRefresh) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshState());
+    }
   }
 
   @override
@@ -81,7 +80,11 @@ class _WidgetsTableVirtualizedState<T>
       widget.controller.addListener(_refreshState);
     }
     _updateVisibleRows();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshState());
+
+    // If the parent isnt WidgetsListVirtualized
+    if (widget.lateRefresh) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshState());
+    }
   }
 
   @override
@@ -95,105 +98,51 @@ class _WidgetsTableVirtualizedState<T>
   }
 
   bool _updateVisibleRows() {
-    if (widget.data.isEmpty) return false;
+    final n = widget.data.length;
+    if (n == 0) return false;
 
-    final rowCount = widget.data.length;
-    int nextStart = _rowStart;
-    int nextEnd = _rowEnd;
+    int start = _rowStart;
+    int end = _rowEnd;
 
-    if (rowCount <= _targetBuildRows) {
-      nextStart = 0;
-      nextEnd = rowCount;
+    if (n <= _targetBuildRows) {
+      start = 0;
+      end = n;
     } else {
       if (!widget.controller.hasClients) return false;
 
-      final position = widget.controller.position;
-      final viewportHeight = position.viewportDimension;
-      final currentPixels = position.pixels;
-      final totalHeadingHeight = widget.headerHeight + 12;
-      final scrollDelta = currentPixels - _scrollPosition;
-      _scrollPosition = currentPixels;
+      final pos = widget.controller.position;
+      final dy = pos.pixels - _scrollPosition;
+      _scrollPosition = pos.pixels;
 
-      final int cursorStart;
-      final int cursorEnd;
+      final top = pos.pixels - widget.positionTop - (widget.headerHeight + 12);
+      final rawStart = (top / widget.rowHeight).floor();
+      final rawEnd = ((top + pos.viewportDimension) / widget.rowHeight).ceil();
 
-      if (widget.isGroup) {
-        final double tableTop;
-        if (widget.positionTop != null) {
-          tableTop = widget.positionTop! - currentPixels;
-        } else {
-          final tableObject = widget.tableKey?.currentContext
-              ?.findRenderObject();
-          final viewportObject = position.context.storageContext
-              .findRenderObject();
-          if (tableObject is! RenderBox ||
-              viewportObject is! RenderBox ||
-              !tableObject.hasSize ||
-              !viewportObject.hasSize) {
-            return false;
-          }
-          tableTop = tableObject
-              .localToGlobal(Offset.zero, ancestor: viewportObject)
-              .dy;
-        }
+      if (rawEnd <= 0 || rawStart >= n) return false;
 
-        cursorStart = ((-tableTop - totalHeadingHeight) / widget.rowHeight)
-            .floor();
-        cursorEnd =
-            ((-tableTop - totalHeadingHeight + viewportHeight) /
-                    widget.rowHeight)
-                .ceil();
-      } else {
-        cursorStart = (currentPixels / widget.rowHeight).floor();
-        cursorEnd =
-            ((currentPixels + viewportHeight - totalHeadingHeight) /
-                    widget.rowHeight)
-                .ceil();
-      }
+      final visStart = rawStart.clamp(0, n);
+      final visEnd = rawEnd.clamp(visStart, n);
+      final minBuf = (_halfBuffer * 0.75).ceil().clamp(2, _halfBuffer);
 
-      if (cursorEnd > 0 && cursorStart < rowCount) {
-        final visibleStart = cursorStart.clamp(0, rowCount);
-        final visibleEnd = cursorEnd.clamp(visibleStart, rowCount);
-        final minOffscreenRows = (_halfBuffer * 0.75).ceil().clamp(
-          2,
-          _halfBuffer,
-        );
-        final hasEnoughTopOffscreen =
-            (_rowStart == 0) || (visibleStart - _rowStart >= minOffscreenRows);
-        final hasEnoughBottomOffscreen =
-            (_rowEnd == rowCount) || (_rowEnd - visibleEnd >= minOffscreenRows);
+      final okTop = _rowStart == 0 || (visStart - _rowStart >= minBuf);
+      final okBot = _rowEnd == n || (_rowEnd - visEnd >= minBuf);
 
-        if (!hasEnoughTopOffscreen ||
-            !hasEnoughBottomOffscreen ||
-            _rowEnd <= _rowStart) {
-          final jumpRows = (scrollDelta.abs() / widget.rowHeight).ceil().clamp(
-            0,
-            _viewportRows,
-          );
-          final topBuffer = scrollDelta < 0
-              ? (_halfBuffer * 1.5).ceil() + jumpRows
-              : (_halfBuffer * 0.5).floor();
-          final bottomBuffer = scrollDelta > 0
-              ? (_halfBuffer * 1.5).ceil() + jumpRows
-              : (_halfBuffer * 0.5).floor();
+      if (!okTop || !okBot || _rowEnd <= _rowStart) {
+        final jump = (dy.abs() / widget.rowHeight).ceil().clamp(0, _viewportRows);
+        final lead = (_halfBuffer * 1.5).ceil() + jump;
+        final trail = (_halfBuffer * 0.5).floor();
 
-          int candidateStart = (visibleStart - topBuffer).clamp(0, rowCount);
-          int candidateEnd = (visibleEnd + bottomBuffer).clamp(
-            candidateStart,
-            rowCount,
-          );
-          if (candidateStart <= _halfBuffer) candidateStart = 0;
-          if (rowCount - candidateEnd <= _halfBuffer) candidateEnd = rowCount;
+        start = (visStart - (dy < 0 ? lead : trail)).clamp(0, n);
+        end = (visEnd + (dy > 0 ? lead : trail)).clamp(start, n);
 
-          nextStart = candidateStart;
-          nextEnd = candidateEnd;
-        }
+        if (start <= _halfBuffer) start = 0;
+        if (n - end <= _halfBuffer) end = n;
       }
     }
 
-    if (nextStart == _rowStart && nextEnd == _rowEnd) return false;
-    _rowStart = nextStart;
-    _rowEnd = nextEnd;
+    if (start == _rowStart && end == _rowEnd) return false;
+    _rowStart = start;
+    _rowEnd = end;
     return true;
   }
 
@@ -221,19 +170,9 @@ class _WidgetsTableVirtualizedState<T>
           cells: [
             DataCell(
               widget.loaderBuilder?.call() ??
-                  const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
+                  const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
             ),
-            ...List.generate(
-              (widget.columnCount - 1).clamp(0, 50),
-              (_) => const DataCell(SizedBox.shrink()),
-              growable: false,
-            ),
+            ...List.generate((widget.columnCount - 1).clamp(0, 50), (_) => const DataCell(SizedBox.shrink()), growable: false),
           ],
         ),
       ];
@@ -241,10 +180,7 @@ class _WidgetsTableVirtualizedState<T>
 
     if (countChanged || _rowEnd <= _rowStart) {
       _rowStart = _rowStart.clamp(0, widget.data.length);
-      _rowEnd = (_rowStart + _targetBuildRows).clamp(
-        _rowStart,
-        widget.data.length,
-      );
+      _rowEnd = (_rowStart + _targetBuildRows).clamp(_rowStart, widget.data.length);
     }
 
     final start = _rowStart.clamp(0, widget.data.length);
@@ -269,11 +205,7 @@ class _WidgetsTableVirtualizedState<T>
     return DataRow2(
       key: ValueKey('spacer_$id'),
       specificRowHeight: rowCount * widget.rowHeight,
-      cells: List.generate(
-        widget.columnCount,
-        (_) => const DataCell(SizedBox.shrink()),
-        growable: false,
-      ),
+      cells: List.generate(widget.columnCount, (_) => const DataCell(SizedBox.shrink()), growable: false),
     );
   }
 

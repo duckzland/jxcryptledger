@@ -171,7 +171,7 @@ class _TransactionsFinalizedViewState extends State<TransactionsFinalizedView>
             final key = groupKeys[index];
             return scrollToGroupGetGroupHeight(key, groups[key] ?? [], crossAxisExtent);
           },
-          itemBuilder: (context, idx, cardTop, cardHeight) {
+          itemBuilder: (context, idx, cardTop, _) {
             final rrId = groupKeys[idx];
             final stxs = groups[rrId]!;
 
