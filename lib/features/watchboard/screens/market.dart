@@ -157,6 +157,8 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
 
     return WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
       controller: scrollToUtil.controller,
+      headerHeight: tableHeadingHeight,
+      rowHeight: tableRowHeight,
       data: tableData,
       rowBuilder: tableBuildRow,
       columnCount: tableBuildColumns().length,
