@@ -105,6 +105,18 @@ abstract class IpcBox<T extends IpcModel> {
     }
   }
 
+  Future<void> deleteAll(List<T> values) async {
+    if (values.isEmpty) return;
+
+    final List<dynamic> payload = values.map((value) => value.uuid).toList();
+
+    await client.send(op: IpcStatusOp.getCode("multiDelete"), action: boxName, payload: payload);
+
+    for (final value in values) {
+      items.remove(value.uuid);
+    }
+  }
+
   Future<void> replace(List<T> values) async {
     await client.send(op: IpcStatusOp.getCode("replace"), action: boxName, payload: values);
 

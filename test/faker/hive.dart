@@ -153,6 +153,14 @@ class HiveBoxFaker<T extends CoreModelWithId> implements IpcBox<T> {
   }
 
   @override
+  Future<void> deleteAll(List<T> values) async {
+    for (final value in values) {
+      await _boxInstance.delete(value.uuid);
+      items.remove(value.uuid);
+    }
+  }
+
+  @override
   Future<void> replace(List<T> values) async {
     await _boxInstance.clear();
     items.clear();
@@ -181,12 +189,19 @@ class HiveBoxFaker<T extends CoreModelWithId> implements IpcBox<T> {
         items.clear();
         break;
 
+      case "multiDelete":
+        for (final value in event.payload) {
+          items.remove(value);
+        }
+        break;
+
       case "multiPut":
         for (final value in event.payload) {
           final data = value as T;
           items[data.uuid] = data;
         }
         break;
+
       case "replace":
         items.clear();
         for (final value in event.payload) {

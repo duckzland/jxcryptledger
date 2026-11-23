@@ -88,6 +88,14 @@ abstract class IpcDatabase {
     return box.get(id);
   }
 
+  Future<void> multiDelete(String boxName, List<dynamic> keys) async {
+    final box = boxes.get(boxName);
+    for (final key in keys) {
+      await box.delete(key);
+    }
+    await box.flush();
+  }
+
   Uint8List extractBytes(String boxName) {
     final writer = IpcWriter();
     final adapter = adapters.get(boxName);

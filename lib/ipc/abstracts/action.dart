@@ -40,6 +40,10 @@ abstract class IpcAction {
       case "extract":
         return database.extractBytes(action);
 
+      case "multiDelete":
+        await database.multiDelete(action, payload);
+        break;
+
       case "multiPut":
         await database.insertBytes(action, payload);
         break;

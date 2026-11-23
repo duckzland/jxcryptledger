@@ -142,6 +142,7 @@ class IpcServer {
           case "delete":
           case "replace":
           case "multiPut":
+          case "multiDelete":
           case "put":
             broadcast(actionCode, action, rawKeyStr, payload, exclude: client);
             break;

@@ -96,14 +96,17 @@ void main() {
   IpcStatusOp.register(0x05, "flush");
   IpcStatusOp.register(0x06, "extract");
   IpcStatusOp.register(0x07, "multiPut");
-  IpcStatusOp.register(0x08, "replace");
-  IpcStatusOp.register(0x09, "notification");
-  IpcStatusOp.register(0x10, "unlock");
-  IpcStatusOp.register(0x11, "addRateQueue");
-  IpcStatusOp.register(0x12, "refreshTickers");
-  IpcStatusOp.register(0x13, "refreshRates");
-  IpcStatusOp.register(0x14, "refreshCryptos");
-  IpcStatusOp.register(0x15, "refreshMarket");
+  IpcStatusOp.register(0x08, "multiDelete");
+  IpcStatusOp.register(0x09, "replace");
+  IpcStatusOp.register(0x10, "notification");
+  IpcStatusOp.register(0x11, "unlock");
+  IpcStatusOp.register(0x12, "addRateQueue");
+  IpcStatusOp.register(0x13, "refreshTickers");
+  IpcStatusOp.register(0x14, "refreshRates");
+  IpcStatusOp.register(0x15, "refreshCryptos");
+  IpcStatusOp.register(0x16, "refreshMarket");
+  IpcStatusOp.register(0x17, "broadcast");
+  IpcStatusOp.register(0x98, "reload");
   IpcStatusOp.register(0x99, "shutdown");
   IpcStatusOp.register(0xFF, "error");
 
@@ -381,6 +384,23 @@ void main() {
       expect(decodedTx1.balance, equals(Decimal.fromInt(10)));
       expect(decodedTx2.tid, equals('b'));
       expect(decodedTx2.balance, equals(Decimal.fromInt(20)));
+    });
+
+    test('toBytes and fromBytes with multiDelete serializes and restores dynamic uuid list', () {
+      final payloads = <dynamic>['uuid-1', 'uuid-2', 123];
+      final bytes = converter.toBytes(IpcStatusOp.getCode("multiDelete"), 'transactions_box', payloads);
+      expect(bytes, isNotNull);
+
+      final decoded = converter.fromBytes(IpcStatusOp.getCode("multiDelete"), 'transactions_box', bytes);
+      expect(decoded, isA<List<dynamic>>());
+      expect(decoded.length, equals(3));
+      expect(decoded, equals(['uuid-1', 'uuid-2', 123]));
+    });
+
+    test('fromBytes with multiDelete returns empty list when bytes are empty', () {
+      final decoded = converter.fromBytes(IpcStatusOp.getCode("multiDelete"), 'transactions_box', Uint8List(0));
+      expect(decoded, isA<List<dynamic>>());
+      expect(decoded, isEmpty);
     });
   });
 

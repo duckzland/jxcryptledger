@@ -73,6 +73,11 @@ abstract class CoreBaseRepository<T extends CoreModelWithId> {
     onAction();
   }
 
+  Future<void> deleteAll(List<T> values) async {
+    await box.deleteAll(values);
+    onAction();
+  }
+
   Future<void> replace(List<T> values) async {
     await box.replace(values);
     onAction();

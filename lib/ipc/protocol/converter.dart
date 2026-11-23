@@ -40,6 +40,7 @@ class IpcConverter {
         return utf8.encode(payload);
 
       default:
+        if (payload is List) return utf8.encode(jsonEncode(payload));
         if (payload is String) return utf8.encode(payload);
         return null;
     }
@@ -52,6 +53,12 @@ class IpcConverter {
         if (bytes.isNotEmpty) {
           return _bytesToModel(action, bytes);
         }
+
+      case "multiDelete":
+        if (bytes.isEmpty) {
+          return <dynamic>[];
+        }
+        return List<dynamic>.from(jsonDecode(utf8.decode(bytes)));
 
       case "multiPut":
       case "replace":

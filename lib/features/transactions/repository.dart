@@ -57,6 +57,15 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
         _cache.removeByTid(event.key);
         break;
 
+      case "multiDelete":
+        final keys = event.payload;
+        if (keys is List) {
+          for (final key in keys) {
+            _cache.removeByTid(key);
+          }
+        }
+        break;
+
       case "clear":
         _cache.invalidate();
         break;
@@ -234,6 +243,14 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     await super.addAll(values);
     for (final tx in values) {
       _cache.update(tx);
+    }
+  }
+
+  @override
+  Future<void> deleteAll(List<TransactionsModel> values) async {
+    await super.deleteAll(values);
+    for (final tx in values) {
+      _cache.remove(tx);
     }
   }
 
@@ -567,8 +584,9 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   Future<List<String>> removeAll(List<TransactionsModel> txs) async {
-    List<String> deleted = [];
+    final List<String> deleted = [];
     final Set<dynamic> deletedTids = {};
+    final List<TransactionsModel> toDelete = [];
 
     for (final tx in txs) {
       if (deletedTids.contains(tx.tid)) {
@@ -597,12 +615,12 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
             );
           }
 
-          await box.delete(ttx.tid);
+          toDelete.add(ttx);
           _cache.removeByTid(ttx.tid);
           deletedTids.add(ttx.tid);
         }
 
-        await box.delete(tx.tid);
+        toDelete.add(tx);
         _cache.removeByTid(tx.tid);
         deletedTids.add(tx.tid);
 
@@ -610,6 +628,10 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       } catch (_) {
         continue;
       }
+    }
+
+    if (toDelete.isNotEmpty) {
+      await box.deleteAll(toDelete);
     }
 
     return deleted;
