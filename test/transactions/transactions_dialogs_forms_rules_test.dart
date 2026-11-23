@@ -244,7 +244,7 @@ void main() {
   testWidgets(
     'Create form saves a normal transaction and validates source/target coin selection',
     (tester) async {
-      await pumpDialog(tester, TransactionFormCreate(onSave: (_, __) {}));
+      await pumpDialog(tester, TransactionFormCreate(onSave: (_, _) {}));
 
       await enterAmount(tester, '100');
       await chooseCoin(tester, 'SRC');
@@ -264,7 +264,7 @@ void main() {
   testWidgets('Create form converts a transaction to capital when selected', (
     tester,
   ) async {
-    await pumpDialog(tester, TransactionFormCreate(onSave: (_, __) {}));
+    await pumpDialog(tester, TransactionFormCreate(onSave: (_, _) {}));
 
     await enterAmount(tester, '75');
     await chooseCoin(tester, 'SRC');
@@ -292,7 +292,7 @@ void main() {
       );
       await pumpDialog(
         tester,
-        TransactionFormTrade(initialData: parent, onSave: (_, __) {}),
+        TransactionFormTrade(initialData: parent, onSave: (_, _) {}),
       );
 
       await enterAmount(tester, '25');
@@ -319,7 +319,7 @@ void main() {
     );
     await pumpDialog(
       tester,
-      TransactionFormEdit(initialData: tx, onSave: (_, __) {}),
+      TransactionFormEdit(initialData: tx, onSave: (_, _) {}),
     );
 
     expect(find.text('Edit Transaction'), findsOneWidget);

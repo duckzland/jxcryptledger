@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -1012,7 +1014,6 @@ void main() {
         transactions[i.toString()] = makeTx(i.toString(), balance: Decimal.fromInt(i % 1000));
       }
       stopwatch.stop();
-      // ignore: avoid_print
       print('[IPC 50K] generate transactions: ${stopwatch.elapsedMilliseconds} ms');
 
       final pipeName = await _testPipeName();
