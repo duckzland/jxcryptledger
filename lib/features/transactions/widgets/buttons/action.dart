@@ -181,7 +181,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
           dialogMessage: "Are you sure you want to close this transaction?",
           dialogConfirmLabel: "Close",
           actionData: tx,
-          actionCallback: txController.closeLeaf,
+          actionCallback: txController.close,
           actionCompleteCallback: onAction,
           actionSuccessMessage: "${tx.srAmountText} - ${tx.balanceText} transaction closed.",
         ),
@@ -228,7 +228,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
       onExit?.call();
       await Future.delayed(Duration(milliseconds: 150));
     }
-    await txController.removeLeaf(tx);
+    await txController.refund(tx);
   }
 
   Future<void> _actionDelete(TransactionsModel tx) async {
@@ -236,7 +236,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
       onExit?.call();
       await Future.delayed(Duration(milliseconds: 150));
     }
-    await txController.removeRoot(tx);
+    await txController.remove(tx);
   }
 
   void _evaluatorShowBalance(WidgetsButtonsActionState s) {

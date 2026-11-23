@@ -23,7 +23,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     scheduleRates();
   }
 
-  Future<void> closeLeaf(TransactionsModel tx) async {
+  Future<void> close(TransactionsModel tx) async {
     await repo.close(tx);
     load();
   }
@@ -31,6 +31,35 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   Future<void> finalize(TransactionsModel tx) async {
     await repo.finalize(tx);
     load();
+  }
+
+  Future<void> refund(TransactionsModel tx) async {
+    await repo.refund(tx);
+    load();
+  }
+
+  Future<List<String>> closeAll(List<TransactionsModel> txs) async {
+    final result = await repo.closeAll(txs);
+    load();
+    return result;
+  }
+
+  Future<List<String>> finalizeAll(List<TransactionsModel> txs) async {
+    final result = await repo.finalizeAll(txs);
+    load();
+    return result;
+  }
+
+  Future<List<String>> refundAll(List<TransactionsModel> txs) async {
+    final result = await repo.refundAll(txs);
+    load();
+    return result;
+  }
+
+  Future<List<String>> removeAll(List<TransactionsModel> txs) async {
+    final result = await repo.removeAll(txs);
+    load();
+    return result;
   }
 
   TransactionsModel? getParent(TransactionsModel tx) {
@@ -51,77 +80,6 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
 
   Map<String, Map<String, TransactionsModel>> getIndexedRootMap() {
     return repo.getIndexedRootMap();
-  }
-
-  Future<void> removeRoot(TransactionsModel tx) async {
-    await repo.remove(tx);
-    load();
-  }
-
-  Future<void> removeLeaf(TransactionsModel tx) async {
-    await repo.refund(tx);
-    load();
-  }
-
-  Future<void> deleteAll() async {
-    final roots = repo.collectAllRoots();
-
-    for (final tx in roots) {
-      final bool deletable;
-      try {
-        deletable = isDeletable(tx);
-      } catch (_) {
-        continue;
-      }
-
-      if (!deletable) continue;
-
-      await repo.remove(tx);
-    }
-
-    load();
-  }
-
-  Future<void> closeAll() async {
-    final leaves = repo.collectAllTerminalLeaves();
-
-    for (final tx in leaves) {
-      final bool closable;
-      try {
-        closable = isClosable(tx);
-      } catch (_) {
-        continue;
-      }
-
-      if (!closable) continue;
-
-      await repo.close(tx);
-    }
-
-    load();
-  }
-
-  Future<void> finalizeAll() async {
-    final terminals = repo.collectAllTerminalLeaves();
-    final all = repo.extract();
-
-    // Always close terminals first!
-    final txs = [...terminals, ...all];
-
-    for (final tx in txs) {
-      final bool finalizable;
-      try {
-        finalizable = isFinalizable(tx);
-      } catch (_) {
-        continue;
-      }
-
-      if (!finalizable) continue;
-
-      await repo.finalize(tx);
-    }
-
-    load();
   }
 
   bool hasLeaf(TransactionsModel tx) {

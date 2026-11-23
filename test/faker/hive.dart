@@ -182,6 +182,11 @@ class HiveBoxFaker<T extends CoreModelWithId> implements IpcBox<T> {
         break;
 
       case "multiPut":
+        for (final value in event.payload) {
+          final data = value as T;
+          items[data.uuid] = data;
+        }
+        break;
       case "replace":
         items.clear();
         for (final value in event.payload) {

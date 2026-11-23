@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../app/exceptions.dart';
+import '../core/abstracts/exceptions.dart';
+
 import '../widgets/notify.dart';
 
 mixin MixinsActionable {
@@ -37,7 +38,7 @@ mixin MixinsActionable {
       return;
     }
 
-    if (error is ValidationException) {
+    if (error is CoreBaseException) {
       if (showMessage && context != null && context.mounted) {
         widgetsNotifyError(error.userMessage, ctx: context);
       }
@@ -76,7 +77,7 @@ mixin MixinsActionable {
       if (showMessage && context != null && context.mounted && successMessage != null) {
         widgetsNotifySuccess(successMessage, ctx: context);
       }
-    } on ValidationException catch (e) {
+    } on CoreBaseException catch (e) {
       if (showMessage && context != null && context.mounted) {
         widgetsNotifyError(e.userMessage, ctx: context);
       }

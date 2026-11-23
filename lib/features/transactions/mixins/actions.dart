@@ -95,7 +95,7 @@ mixin TransactionsMixinsActions {
   Future<void> closeTransactions() async {
     for (final tx in txs) {
       try {
-        await txController.closeLeaf(tx);
+        await txController.close(tx);
       } catch (_) {
         continue;
       }
@@ -125,7 +125,7 @@ mixin TransactionsMixinsActions {
   Future<void> refundTransactions() async {
     for (final tx in txs) {
       try {
-        await txController.removeLeaf(tx);
+        await txController.refund(tx);
       } catch (_) {
         continue;
       }

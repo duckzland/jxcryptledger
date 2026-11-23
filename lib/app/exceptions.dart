@@ -148,6 +148,8 @@ class AppErrorCode {
   static const int marketInvalidNumeric = 8006;
   static const int marketInvalidPercent = 8007;
   static const int marketInvalidMeta = 8008;
+
+  static const int batchOpsFailed = 9001;
 }
 
 class ValidationException extends CoreBaseException {
@@ -156,4 +158,8 @@ class ValidationException extends CoreBaseException {
 
 class NetworkingException extends CoreBaseException {
   NetworkingException(super.code, super.devMessage, super.userMessage, {super.details, super.silent});
+}
+
+class BatchException extends CoreBaseException {
+  BatchException(super.code, super.devMessage, super.userMessage, {super.details, super.silent});
 }

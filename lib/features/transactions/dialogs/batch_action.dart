@@ -303,33 +303,47 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
     bool completed = true;
 
-    for (final tx in stxs) {
-      try {
-        switch (widget.mode) {
-          case TransactionsBatchActionMode.close:
-            await _txController.closeLeaf(tx);
-            break;
-          case TransactionsBatchActionMode.finalize:
-            await _txController.finalize(tx);
-            break;
-          case TransactionsBatchActionMode.delete:
-            await _txController.remove(tx);
-            break;
-          case TransactionsBatchActionMode.refund:
-            await _txController.removeLeaf(tx);
-            break;
-        }
+    List<String> success;
+
+    switch (widget.mode) {
+      case TransactionsBatchActionMode.close:
+        success = await _txController.closeAll(stxs);
+        break;
+      case TransactionsBatchActionMode.finalize:
+        success = await _txController.finalizeAll(stxs);
+        break;
+      case TransactionsBatchActionMode.delete:
+        success = await _txController.removeAll(stxs);
+        break;
+      case TransactionsBatchActionMode.refund:
+        success = await _txController.refundAll(stxs);
+        break;
+    }
+
+    final txByUuid = {for (final tx in stxs) tx.uuid: tx};
+
+    for (final uuid in success) {
+      final tx = txByUuid[uuid];
+      if (tx != null) {
         txs.remove(tx);
-        selectableSetSelected(tx.uuid, false);
-      } on ValidationException catch (e) {
-        completed = false;
-        widget.onSave?.call(e);
-        break;
-      } catch (e) {
-        completed = false;
-        widget.onSave?.call(e);
-        break;
+        selectableSetSelected(uuid, false);
       }
+    }
+
+    if (success.length < stxs.length) {
+      completed = false;
+      final totalCount = stxs.length;
+      final successCount = success.length;
+      final failedCount = totalCount - successCount;
+      final actionName = widget.mode.name;
+
+      final devMessage = 'Batch $actionName partially or fully failed: $failedCount of $totalCount failed ($successCount succeeded).';
+
+      final uxMessage = successCount == 0
+          ? 'Unable to $actionName the selected transactions. Please check their status and try again.'
+          : '$failedCount of $totalCount transactions could not be ${actionName}d. Remaining items are still selected.';
+
+      widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
     }
 
     if (completed) {
