@@ -22,51 +22,51 @@ class WidgetsListVirtualized extends StatefulWidget {
 }
 
 class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
-  final ValueNotifier<(int, int, int)> _visibleRange = ValueNotifier((-1, -1, 0));
-  int _buildGen = 0;
-
-  VoidCallback? _scrollListener;
-  ViewportOffset? _attachedOffset;
-
   List<double> _tops = const [];
   List<double> _heights = const [];
-  double _runningTop = 0.0;
+  double _totalHeight = 0.0;
+  String? _cachedKey;
 
   @override
-  void dispose() {
-    if (_scrollListener != null && _attachedOffset != null) {
-      _attachedOffset!.removeListener(_scrollListener!);
+  void didUpdateWidget(covariant WidgetsListVirtualized oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.itemCount != widget.itemCount ||
+        oldWidget.separatorHeight != widget.separatorHeight ||
+        oldWidget.itemHeightBuilder != widget.itemHeightBuilder) {
+      _cachedKey = null;
+      _tops = const [];
+      _heights = const [];
+      _totalHeight = 0.0;
     }
-    _visibleRange.dispose();
-    super.dispose();
   }
 
-  void _computeLayout(double crossAxisExtent) {
-    final count = widget.itemCount;
-    final tops = List<double>.filled(count, 0.0);
-    final heights = List<double>.filled(count, 0.0);
-    double running = 0.0;
+  void _ensureLayout(double width, double height) {
+    final ck = "$width-$height";
 
-    for (int i = 0; i < count; i++) {
-      final h = widget.itemHeightBuilder(i, crossAxisExtent);
-      tops[i] = running;
-      heights[i] = h;
-      running += h + widget.separatorHeight;
+    if (_cachedKey == ck) return;
+
+    _cachedKey = ck;
+    _totalHeight = 0.0;
+
+    _tops = List<double>.filled(widget.itemCount, 0.0);
+    _heights = List<double>.filled(widget.itemCount, 0.0);
+
+    for (int i = 0; i < widget.itemCount; i++) {
+      final h = widget.itemHeightBuilder(i, width);
+      _tops[i] = _totalHeight;
+      _heights[i] = h;
+      _totalHeight += h + widget.separatorHeight;
     }
-
-    _tops = tops;
-    _heights = heights;
-    _runningTop = running;
   }
 
-  int _findFirstVisibleIndex(double minVisible) {
+  int _firstVisibleIndex(double scrollPx) {
     int low = 0;
     int high = _tops.length - 1;
     int result = _tops.length;
 
     while (low <= high) {
       final mid = (low + high) >> 1;
-      if (_tops[mid] + _heights[mid] >= minVisible) {
+      if (_tops[mid] + _heights[mid] >= scrollPx) {
         result = mid;
         high = mid - 1;
       } else {
@@ -76,86 +76,51 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
     return result;
   }
 
-  (int, int) _computeRange(double scrollPixels, double viewportHeight) {
-    if (_tops.isEmpty) return (-1, -1);
-    final start = _findFirstVisibleIndex(scrollPixels);
-    int end = start - 1;
-    for (int i = start; i < _tops.length; i++) {
-      if (_tops[i] > scrollPixels + viewportHeight) break;
-      end = i;
-    }
-    return (start, end);
-  }
-
   @override
   Widget build(BuildContext context) {
-    _buildGen++;
-
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisExtent = constraints.maxWidth;
-        final viewportHeight = constraints.maxHeight;
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
 
-        _computeLayout(crossAxisExtent);
-        final maxScrollExtent = (_runningTop - viewportHeight).clamp(0.0, double.infinity);
+        _ensureLayout(width, height);
 
-        return Scrollbar(
+        final maxScroll = (_totalHeight - height).clamp(0.0, double.infinity);
+
+        return Scrollable(
           controller: widget.controller,
-          child: Scrollable(
-            controller: widget.controller,
-            axisDirection: AxisDirection.down,
-            viewportBuilder: (context, ViewportOffset offset) {
-              offset.applyViewportDimension(viewportHeight);
-              offset.applyContentDimensions(0.0, maxScrollExtent);
+          axisDirection: AxisDirection.down,
+          viewportBuilder: (context, ViewportOffset offset) {
+            offset.applyViewportDimension(height);
+            offset.applyContentDimensions(0.0, maxScroll);
 
-              if (offset.hasPixels && offset.pixels > maxScrollExtent) {
-                offset.correctBy(maxScrollExtent - offset.pixels);
-              }
+            if (offset.hasPixels && offset.pixels > maxScroll) {
+              offset.correctBy(maxScroll - offset.pixels);
+            }
 
-              final currentPixels = offset.hasPixels ? offset.pixels : 0.0;
-              final initial = _computeRange(currentPixels, viewportHeight);
-              _visibleRange.value = (initial.$1, initial.$2, _buildGen);
+            return RepaintBoundary(
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: ClipRect(
+                  child: ListenableBuilder(
+                    listenable: offset,
+                    builder: (context, _) {
+                      if (_tops.isEmpty) return const SizedBox.shrink();
 
-              if (_scrollListener != null && _attachedOffset != null) {
-                _attachedOffset!.removeListener(_scrollListener!);
-              }
-              _attachedOffset = offset;
-              _scrollListener = () {
-                final next = _computeRange(offset.pixels, viewportHeight);
-                _visibleRange.value = (next.$1, next.$2, _buildGen);
-              };
-              offset.addListener(_scrollListener!);
-
-              return ClipRect(
-                child: SizedBox(
-                  width: crossAxisExtent,
-                  height: viewportHeight,
-                  child: ValueListenableBuilder<(int, int, int)>(
-                    valueListenable: _visibleRange,
-                    builder: (context, range, _) {
-                      final (start, end, _) = range;
-                      if (start == -1 || end < start) {
-                        return const SizedBox.shrink();
-                      }
-
+                      final scrollPx = offset.hasPixels ? offset.pixels : 0.0;
+                      final start = _firstVisibleIndex(scrollPx);
                       final children = <Widget>[];
-                      for (int i = start; i <= end; i++) {
-                        final card = RepaintBoundary(child: widget.itemBuilder(context, i, _tops[i], _heights[i]));
 
+                      for (int i = start; i < _tops.length && _tops[i] <= scrollPx + height; i++) {
                         children.add(
-                          ListenableBuilder(
-                            listenable: offset,
-                            child: card,
-                            builder: (context, builtCard) {
-                              final scrollPx = offset.hasPixels ? offset.pixels : 0.0;
-                              return Positioned(
-                                top: _tops[i] - scrollPx,
-                                left: 0,
-                                right: 0,
-                                height: _heights[i] + widget.separatorHeight,
-                                child: builtCard!,
-                              );
-                            },
+                          Positioned(
+                            key: ValueKey(i),
+                            top: _tops[i] - scrollPx,
+                            left: 0,
+                            right: 0,
+                            height: _heights[i] + widget.separatorHeight,
+                            child: RepaintBoundary(child: widget.itemBuilder(context, i, _tops[i], _heights[i])),
                           ),
                         );
                       }
@@ -164,9 +129,9 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
                     },
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );
