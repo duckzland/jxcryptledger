@@ -2,8 +2,6 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme.dart';
-
 import '../../../../core/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
@@ -330,10 +328,6 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       height: tableCalculateHeight(),
       child: WidgetsTableProxy(
         controller: widget.scrollController,
-        topOffset: 80,
-        headerHeight: AppTheme.tableHeadingRowHeight,
-        rowHeight: AppTheme.tableDataRowMinHeight,
-        background: AppTheme.panelBg,
         child: DataTable2(
           key: Key("table-overview-${widget.id}"),
           headingCheckboxTheme: widget.theme.checkboxTheme,

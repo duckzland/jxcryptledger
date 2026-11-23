@@ -21,6 +21,7 @@ import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
 import '../../system/settings/controller.dart';
+import '../../widgets/table/virtualized/single.dart';
 import '../../widgets/text/selectable.dart';
 import '../cryptos/controller.dart';
 import '../transactions/controller.dart';
@@ -194,19 +195,25 @@ class _ArchivesPageState extends State<ArchivesPage>
 
   Widget tableBuild() {
     return WidgetsPanel(
-      child: DataTable2(
-        scrollController: scrollToUtil.controller,
-        minWidth: 460,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        showCheckboxColumn: false,
-        sortColumnIndex: sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: tableBuildColumns(),
-        rows: tableData.map(tableBuildRow).toList(growable: false),
+      child: WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
+        controller: tableScrollController,
+        data: tableData,
+        rowBuilder: tableBuildRow,
+        columnCount: tableBuildColumns().length,
+        childBuilder: (rows) => DataTable2(
+          scrollController: scrollToUtil.controller,
+          minWidth: 460,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
+          showCheckboxColumn: false,
+          sortColumnIndex: sortableColumnIndex,
+          sortAscending: sortableAscending,
+          isHorizontalScrollBarVisible: false,
+          columns: tableBuildColumns(),
+          rows: rows,
+        ),
       ),
     );
   }

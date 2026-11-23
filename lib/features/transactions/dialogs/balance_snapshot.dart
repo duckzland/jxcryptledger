@@ -8,6 +8,7 @@ import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
+import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/balance.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/text/selectable.dart';
@@ -71,6 +72,8 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
   @override
   double get tableHeadingHeightOffset => 0;
+
+  final ScrollController tableScrollController = ScrollController();
 
   @override
   void initState() {
@@ -170,16 +173,26 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
-      child: DataTable2(
-        minWidth: 800,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        showCheckboxColumn: false,
-        isHorizontalScrollBarVisible: false,
-        columns: tableBuildColumns(),
-        rows: tableData.map(tableBuildRow).toList(growable: false),
+      child: WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
+        controller: tableScrollController,
+        data: tableData,
+        rowBuilder: tableBuildRow,
+        columnCount: tableBuildColumns().length,
+        childBuilder: (rows) => DataTable2(
+          scrollController: tableScrollController,
+          minWidth: 800,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
+          showCheckboxColumn: false,
+          isHorizontalScrollBarVisible: false,
+          empty: Center(
+            child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          ),
+          columns: tableBuildColumns(),
+          rows: rows,
+        ),
       ),
     );
   }

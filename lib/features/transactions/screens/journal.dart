@@ -9,6 +9,7 @@ import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
 import '../../../widgets/panel.dart';
 import '../../../widgets/table/column.dart';
+import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/selectable.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
@@ -201,22 +202,28 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
   }
 
   Widget tableBuild() {
-    return DataTable2(
-      scrollController: scrollToUtil.controller,
-      minWidth: 1200,
-      columnSpacing: 12,
-      horizontalMargin: 12,
-      headingRowHeight: tableHeadingHeight,
-      dataRowHeight: tableRowHeight,
-      showCheckboxColumn: false,
-      sortColumnIndex: sortableColumnIndex,
-      sortAscending: sortableAscending,
-      isHorizontalScrollBarVisible: false,
-      empty: Center(
-        child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+    return WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
+      controller: scrollToUtil.controller,
+      data: tableData,
+      rowBuilder: tableBuildRow,
+      columnCount: tableBuildColumns().length,
+      childBuilder: (rows) => DataTable2(
+        scrollController: scrollToUtil.controller,
+        showCheckboxColumn: false,
+        minWidth: 1200,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        sortColumnIndex: sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        empty: Center(
+          child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        ),
+        columns: tableBuildColumns(),
+        rows: rows,
       ),
-      columns: tableBuildColumns(),
-      rows: tableData.map(tableBuildRow).toList(growable: false),
     );
   }
 

@@ -22,6 +22,7 @@ import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
+import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/selectable.dart';
 import '../../cryptos/controller.dart';
 import '../calculations.dart';
@@ -79,6 +80,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Timer? _debounce;
 
+  final ScrollController tableScrollController = ScrollController();
+
   @override
   double get tableHeightOffset => _showNotes ? 400 : 360;
 
@@ -113,7 +116,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     resultController.dispose();
     fromController.dispose();
     toController.dispose();
-
+    tableScrollController.dispose();
     super.dispose();
   }
 
@@ -253,19 +256,30 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return SizedBox(
       width: double.infinity,
       height: tableCalculateAdjustedMaxHeight(),
-      child: DataTable2(
-        headingCheckboxTheme: checkboxTheme,
-        datarowCheckboxTheme: checkboxTheme,
-        showHeadingCheckBox: true,
-        showCheckboxColumn: true,
-        minWidth: 800,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: tableHeadingHeight,
-        dataRowHeight: tableRowHeight,
-        isHorizontalScrollBarVisible: false,
-        columns: tableBuildColumns(),
-        rows: tableData.map(tableBuildRow).toList(growable: false),
+      child: WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
+        controller: tableScrollController,
+        data: tableData,
+        rowBuilder: tableBuildRow,
+        columnCount: tableBuildColumns().length,
+        childBuilder: (rows) => DataTable2(
+          scrollController: tableScrollController,
+          headingCheckboxTheme: checkboxTheme,
+          datarowCheckboxTheme: checkboxTheme,
+          showHeadingCheckBox: true,
+          showCheckboxColumn: true,
+          minWidth: 800,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: tableHeadingHeight,
+          dataRowHeight: tableRowHeight,
+          isHorizontalScrollBarVisible: false,
+          empty: Center(
+            child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          ),
+          onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
+          columns: tableBuildColumns(),
+          rows: rows,
+        ),
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme.dart';
 import '../../../../core/locator.dart';
 import '../../../../core/math.dart';
 import '../../../../core/utils.dart';
@@ -14,7 +13,7 @@ import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/header.dart';
 import '../../../../widgets/panel.dart';
 import '../../../../widgets/table/column.dart';
-import '../../../../widgets/table/virtualized.dart';
+import '../../../../widgets/table/virtualized/multiple.dart';
 import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/with_tooltip.dart';
 
@@ -257,12 +256,8 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
     return SizedBox(
       width: double.infinity,
       height: tableCalculateHeight(),
-      child: WidgetsTableVirtualized<Map<String, dynamic>>(
+      child: WidgetsTableVirtualizedMultiple<Map<String, dynamic>>(
         controller: widget.scrollController,
-        topOffset: 80,
-        headerHeight: AppTheme.tableHeadingRowHeight,
-        rowHeight: AppTheme.tableDataRowMinHeight,
-        background: AppTheme.panelBg,
         positionTop: widget.positionTop,
         data: tableData,
         rowBuilder: tableBuildRow,

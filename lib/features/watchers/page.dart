@@ -23,6 +23,7 @@ import '../../widgets/panel.dart';
 import '../../widgets/screens/empty.dart';
 import '../../widgets/screens/fetch_cryptos.dart';
 import '../../widgets/separator.dart';
+import '../../widgets/table/virtualized/single.dart';
 import '../../widgets/text/selectable.dart';
 import '../cryptos/controller.dart';
 import 'buttons.dart';
@@ -223,19 +224,25 @@ class _WatchersPageState extends State<WatchersPage>
 
   Widget tableBuild() {
     return WidgetsPanel(
-      child: DataTable2(
-        scrollController: scrollToUtil.controller,
-        minWidth: 1200,
-        columnSpacing: 12,
-        horizontalMargin: 12,
-        headingRowHeight: AppTheme.tableHeadingRowHeight,
-        dataRowHeight: AppTheme.tableDataRowMinHeight,
-        showCheckboxColumn: false,
-        sortColumnIndex: sortableColumnIndex,
-        sortAscending: sortableAscending,
-        isHorizontalScrollBarVisible: false,
-        columns: tableBuildColumns(),
-        rows: tableData.map(tableBuildRow).toList(growable: false),
+      child: WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
+        controller: scrollToUtil.controller,
+        data: tableData,
+        rowBuilder: tableBuildRow,
+        columnCount: tableBuildColumns().length,
+        childBuilder: (rows) => DataTable2(
+          scrollController: scrollToUtil.controller,
+          minWidth: 1200,
+          columnSpacing: 12,
+          horizontalMargin: 12,
+          headingRowHeight: AppTheme.tableHeadingRowHeight,
+          dataRowHeight: AppTheme.tableDataRowMinHeight,
+          showCheckboxColumn: false,
+          sortColumnIndex: sortableColumnIndex,
+          sortAscending: sortableAscending,
+          isHorizontalScrollBarVisible: false,
+          columns: tableBuildColumns(),
+          rows: rows,
+        ),
       ),
     );
   }

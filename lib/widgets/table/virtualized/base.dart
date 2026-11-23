@@ -1,9 +1,10 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 
-import 'proxy.dart';
+import '../../../app/theme.dart';
+import '../proxy.dart';
 
-class WidgetsTableVirtualized<T> extends StatefulWidget {
+abstract class WidgetsTableVirtualizedBase<T> extends StatefulWidget {
   final ScrollController controller;
   final List<T> data;
   final DataRow Function(T row) rowBuilder;
@@ -15,35 +16,27 @@ class WidgetsTableVirtualized<T> extends StatefulWidget {
   final double topOffset;
   final double minHeight;
   final Color background;
-  final double positionTop;
   final Widget Function()? loaderBuilder;
   final double viewportMultiplier;
-  final bool lateRefresh;
 
-  const WidgetsTableVirtualized({
+  const WidgetsTableVirtualizedBase({
     super.key,
     required this.controller,
     required this.data,
     required this.rowBuilder,
     required this.columnCount,
     required this.childBuilder,
-    required this.positionTop,
-
-    this.headerHeight = 50.0,
-    this.rowHeight = 42.0,
-    this.topOffset = 70.0,
+    this.headerHeight = AppTheme.tableHeadingRowHeight,
+    this.rowHeight = AppTheme.tableDataRowMinHeight,
+    this.topOffset = 80,
     this.minHeight = 126.0,
-    this.background = Colors.black,
+    this.background = AppTheme.panelBg,
     this.loaderBuilder,
     this.viewportMultiplier = 2.5,
-    this.lateRefresh = false,
   });
-
-  @override
-  State<WidgetsTableVirtualized<T>> createState() => _WidgetsTableVirtualizedState<T>();
 }
 
-class _WidgetsTableVirtualizedState<T> extends State<WidgetsTableVirtualized<T>> {
+abstract class WidgetsTableVirtualizedBaseState<T, W extends WidgetsTableVirtualizedBase<T>> extends State<W> {
   int _rowStart = 0;
   int _rowEnd = 0;
   int _rowCount = -1;
@@ -60,20 +53,23 @@ class _WidgetsTableVirtualizedState<T> extends State<WidgetsTableVirtualized<T>>
 
   int get _halfBuffer => ((_targetBuildRows - _viewportRows) / 2).ceil().clamp(2, 100);
 
+  bool get shouldLateRefresh => true;
+
+  (int rawStart, int rawEnd) computeRawRange(ScrollPosition pos);
+
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_refreshState);
     _updateVisibleRows();
 
-    // If the parent isnt WidgetsListVirtualized
-    if (widget.lateRefresh) {
+    if (shouldLateRefresh) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _refreshState());
     }
   }
 
   @override
-  void didUpdateWidget(covariant WidgetsTableVirtualized<T> oldWidget) {
+  void didUpdateWidget(covariant W oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_refreshState);
@@ -81,8 +77,7 @@ class _WidgetsTableVirtualizedState<T> extends State<WidgetsTableVirtualized<T>>
     }
     _updateVisibleRows();
 
-    // If the parent isnt WidgetsListVirtualized
-    if (widget.lateRefresh) {
+    if (shouldLateRefresh) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _refreshState());
     }
   }
@@ -114,9 +109,7 @@ class _WidgetsTableVirtualizedState<T> extends State<WidgetsTableVirtualized<T>>
       final dy = pos.pixels - _scrollPosition;
       _scrollPosition = pos.pixels;
 
-      final top = pos.pixels - widget.positionTop - (widget.headerHeight + 12);
-      final rawStart = (top / widget.rowHeight).floor();
-      final rawEnd = ((top + pos.viewportDimension) / widget.rowHeight).ceil();
+      final (rawStart, rawEnd) = computeRawRange(pos);
 
       if (rawEnd <= 0 || rawStart >= n) return false;
 

@@ -10,6 +10,7 @@ import '../../../mixins/scrollto_table.dart';
 import '../../../mixins/sortable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
+import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/balance.dart';
 import '../../../widgets/header.dart';
 import '../../../widgets/panel.dart';
@@ -153,22 +154,29 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
 
   Widget tableBuild() {
     tablePopulateData();
-    return DataTable2(
-      scrollController: scrollToUtil.controller,
-      minWidth: 1200,
-      columnSpacing: 12,
-      horizontalMargin: 12,
-      headingRowHeight: tableHeadingHeight,
-      dataRowHeight: tableRowHeight,
-      showCheckboxColumn: false,
-      sortColumnIndex: sortableColumnIndex,
-      sortAscending: sortableAscending,
-      isHorizontalScrollBarVisible: false,
-      empty: Center(
-        child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+
+    return WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
+      controller: scrollToUtil.controller,
+      data: tableData,
+      rowBuilder: tableBuildRow,
+      columnCount: tableBuildColumns().length,
+      childBuilder: (rows) => DataTable2(
+        scrollController: scrollToUtil.controller,
+        minWidth: 1200,
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        headingRowHeight: tableHeadingHeight,
+        dataRowHeight: tableRowHeight,
+        showCheckboxColumn: false,
+        sortColumnIndex: sortableColumnIndex,
+        sortAscending: sortableAscending,
+        isHorizontalScrollBarVisible: false,
+        empty: Center(
+          child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        ),
+        columns: tableBuildColumns(),
+        rows: rows,
       ),
-      columns: tableBuildColumns(),
-      rows: tableData.map(tableBuildRow).toList(growable: false),
     );
   }
 
