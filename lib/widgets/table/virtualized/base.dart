@@ -96,43 +96,41 @@ abstract class WidgetsTableVirtualizedBaseState<T, W extends WidgetsTableVirtual
     final n = widget.data.length;
     if (n == 0) return false;
 
-    int start = _rowStart;
-    int end = _rowEnd;
-
     if (n <= _targetBuildRows) {
-      start = 0;
-      end = n;
-    } else {
-      if (!widget.controller.hasClients) return false;
-
-      final pos = widget.controller.position;
-      final dy = pos.pixels - _scrollPosition;
-      _scrollPosition = pos.pixels;
-
-      final (rawStart, rawEnd) = computeRawRange(pos);
-
-      if (rawEnd <= 0 || rawStart >= n) return false;
-
-      final visStart = rawStart.clamp(0, n);
-      final visEnd = rawEnd.clamp(visStart, n);
-      final minBuf = (_halfBuffer * 0.75).ceil().clamp(2, _halfBuffer);
-
-      final okTop = _rowStart == 0 || (visStart - _rowStart >= minBuf);
-      final okBot = _rowEnd == n || (_rowEnd - visEnd >= minBuf);
-
-      if (!okTop || !okBot || _rowEnd <= _rowStart) {
-        final jump = (dy.abs() / widget.rowHeight).ceil().clamp(0, _viewportRows);
-        final lead = (_halfBuffer * 1.5).ceil() + jump;
-        final trail = (_halfBuffer * 0.5).floor();
-
-        start = (visStart - (dy < 0 ? lead : trail)).clamp(0, n);
-        end = (visEnd + (dy > 0 ? lead : trail)).clamp(start, n);
-
-        if (start <= _halfBuffer) start = 0;
-        if (n - end <= _halfBuffer) end = n;
-      }
+      return _commitRange(0, n);
     }
 
+    if (!widget.controller.hasClients) return false;
+
+    final pos = widget.controller.position;
+    final dy = pos.pixels - _scrollPosition;
+    _scrollPosition = pos.pixels;
+
+    final (rawStart, rawEnd) = computeRawRange(pos);
+    if (rawEnd <= 0 || rawStart >= n) return false;
+
+    final visStart = rawStart.clamp(0, n);
+    final visEnd = rawEnd.clamp(visStart, n);
+    final minBuf = (_halfBuffer * 0.75).ceil().clamp(2, _halfBuffer);
+
+    final okTop = _rowStart == 0 || (visStart - _rowStart >= minBuf);
+    final okBot = _rowEnd == n || (_rowEnd - visEnd >= minBuf);
+    if (okTop && okBot && _rowEnd > _rowStart) return false;
+
+    final jump = (dy.abs() / widget.rowHeight).ceil().clamp(0, _viewportRows);
+    final lead = (_halfBuffer * 1.5).ceil() + jump;
+    final trail = (_halfBuffer * 0.5).floor();
+
+    var start = (visStart - (dy < 0 ? lead : trail)).clamp(0, n);
+    var end = (visEnd + (dy > 0 ? lead : trail)).clamp(start, n);
+
+    if (start <= _halfBuffer) start = 0;
+    if (n - end <= _halfBuffer) end = n;
+
+    return _commitRange(start, end);
+  }
+
+  bool _commitRange(int start, int end) {
     if (start == _rowStart && end == _rowEnd) return false;
     _rowStart = start;
     _rowEnd = end;
