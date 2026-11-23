@@ -328,6 +328,65 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     _cache.update(updatedTarget);
   }
 
+  Future<void> refund(TransactionsModel tx) async {
+    canRefund(tx);
+
+    // canClose already check and throw
+    TransactionsModel? otx = box.get(tx.tid);
+    TransactionsModel? ptx = box.get(tx.pid);
+    if (otx == null || ptx == null) {
+      return;
+    }
+
+    final leaves = collectTerminalLeaves(ptx);
+    final allClosed =
+        leaves.isNotEmpty &&
+        leaves
+            // Current tx hasn't mutate status yet thus ignore it!
+            .where((leaf) => leaf.tid != otx.tid)
+            .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+
+    final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
+    final utx = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
+
+    if (debugLogs) {
+      logln(
+        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "REFUNDING",
+      );
+      logln(
+        "${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}",
+        "REBALANCING",
+      );
+    }
+
+    await box.delete(tx.tid);
+    _cache.remove(tx);
+
+    await box.put(utx.tid, utx);
+    _cache.update(utx);
+  }
+
+  Future<void> finalize(TransactionsModel tx) async {
+    if (tx.statusEnum == TransactionStatus.finalized) {
+      return;
+    }
+
+    canFinalize(tx);
+
+    final ntx = tx.copyWith(status: TransactionStatus.finalized.index);
+
+    if (debugLogs) {
+      logln(
+        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+        "FINALIZING",
+      );
+    }
+
+    await box.put(ntx.tid, tx);
+    _cache.update(ntx);
+  }
+
   Future<List<String>> closeAll(List<TransactionsModel> txs) async {
     final Map<dynamic, TransactionsModel> pendingUpdates = {};
     List<TransactionsModel> closed = [];
@@ -411,45 +470,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return result;
   }
 
-  Future<void> refund(TransactionsModel tx) async {
-    canRefund(tx);
-
-    // canClose already check and throw
-    TransactionsModel? otx = box.get(tx.tid);
-    TransactionsModel? ptx = box.get(tx.pid);
-    if (otx == null || ptx == null) {
-      return;
-    }
-
-    final leaves = collectTerminalLeaves(ptx);
-    final allClosed =
-        leaves.isNotEmpty &&
-        leaves
-            // Current tx hasn't mutate status yet thus ignore it!
-            .where((leaf) => leaf.tid != otx.tid)
-            .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-
-    final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-    final utx = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
-
-    if (debugLogs) {
-      logln(
-        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
-        "REFUNDING",
-      );
-      logln(
-        "${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}",
-        "REBALANCING",
-      );
-    }
-
-    await box.delete(tx.tid);
-    _cache.remove(tx);
-
-    await box.put(utx.tid, utx);
-    _cache.update(utx);
-  }
-
   Future<List<String>> refundAll(List<TransactionsModel> txs) async {
     final Map<dynamic, TransactionsModel> pendingUpdates = {};
     final Set<dynamic> deletedTids = {};
@@ -522,26 +542,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     return deleted;
-  }
-
-  Future<void> finalize(TransactionsModel tx) async {
-    if (tx.statusEnum == TransactionStatus.finalized) {
-      return;
-    }
-
-    canFinalize(tx);
-
-    final ntx = tx.copyWith(status: TransactionStatus.finalized.index);
-
-    if (debugLogs) {
-      logln(
-        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
-        "FINALIZING",
-      );
-    }
-
-    await box.put(ntx.tid, tx);
-    _cache.update(ntx);
   }
 
   Future<List<String>> finalizeAll(List<TransactionsModel> txs) async {
