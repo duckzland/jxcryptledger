@@ -35,7 +35,9 @@ void main() {
     );
   }
 
-  List<Map<String, dynamic>> transactions({required bool returnedTransactionIsClosed}) {
+  List<Map<String, dynamic>> transactions({
+    required bool returnedTransactionIsClosed,
+  }) {
     return [
       transaction(
         tid: 'root',
@@ -82,7 +84,9 @@ void main() {
         rrAmount: '150',
         rrId: 2,
         balance: '0',
-        status: returnedTransactionIsClosed ? TransactionStatus.closed : TransactionStatus.active,
+        status: returnedTransactionIsClosed
+            ? TransactionStatus.closed
+            : TransactionStatus.active,
         closable: true,
       ).toJson(),
       transaction(
@@ -103,15 +107,31 @@ void main() {
   test('accepts child spending funded by a closed descendant return', () {
     final rule = TransactionsRulesImport();
 
-    expect(() => rule.validateJson(jsonEncode(transactions(returnedTransactionIsClosed: true))), returnsNormally);
-  });
-
-  test('rejects child spending that exceeds original output without a return', () {
-    final rule = TransactionsRulesImport();
-
     expect(
-      () => rule.validateJson(jsonEncode(transactions(returnedTransactionIsClosed: false))),
-      throwsA(isA<ValidationException>().having((error) => error.code, 'code', AppErrorCode.txImportChildAmountSumExceeded)),
+      () => rule.validateJson(
+        jsonEncode(transactions(returnedTransactionIsClosed: true)),
+      ),
+      returnsNormally,
     );
   });
+
+  test(
+    'rejects child spending that exceeds original output without a return',
+    () {
+      final rule = TransactionsRulesImport();
+
+      expect(
+        () => rule.validateJson(
+          jsonEncode(transactions(returnedTransactionIsClosed: false)),
+        ),
+        throwsA(
+          isA<ValidationException>().having(
+            (error) => error.code,
+            'code',
+            AppErrorCode.txImportChildAmountSumExceeded,
+          ),
+        ),
+      );
+    },
+  );
 }

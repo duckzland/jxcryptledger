@@ -5,7 +5,10 @@ import 'package:jxledger/features/transactions/model.dart';
 
 Decimal _decimal(String value) => Decimal.parse(value);
 
-List<TransactionsModel> _largeBranchedTree({int descendants = 10000, int branchingFactor = 4}) {
+List<TransactionsModel> _largeBranchedTree({
+  int descendants = 10000,
+  int branchingFactor = 4,
+}) {
   final now = DateTime.now().toUtc().microsecondsSinceEpoch;
   final transactions = <TransactionsModel>[
     TransactionsModel(
@@ -27,7 +30,8 @@ List<TransactionsModel> _largeBranchedTree({int descendants = 10000, int branchi
   for (var index = 1; index <= descendants; index++) {
     final parentIndex = (index - 1) ~/ branchingFactor;
     final parent = transactions[parentIndex];
-    final status = TransactionStatus.values[index % TransactionStatus.values.length];
+    final status =
+        TransactionStatus.values[index % TransactionStatus.values.length];
 
     transactions.add(
       TransactionsModel(
@@ -61,8 +65,13 @@ void main() {
 
   for (final tx in transactions) {
     final rootId = tx.isRoot ? tx.tid : tx.rid;
-    transactionsByParent.putIfAbsent(tx.pid, () => <TransactionsModel>[]).add(tx);
-    transactionsByRoot.putIfAbsent(rootId, () => <String, TransactionsModel>{})[tx.tid] = tx;
+    transactionsByParent
+        .putIfAbsent(tx.pid, () => <TransactionsModel>[])
+        .add(tx);
+    transactionsByRoot.putIfAbsent(
+      rootId,
+      () => <String, TransactionsModel>{},
+    )[tx.tid] = tx;
   }
 
   test('profiles calculations with a 10,001-transaction branched tree', () {
@@ -93,30 +102,80 @@ void main() {
     final root = transactions.first;
     final leaf = transactions.last;
 
-    measure('spreadAmount', () => calculation.spreadAmount(_decimal('100000'), transactions));
-    measure('cumulativeSourceValue', () => calculation.cumulativeSourceValue(transactions));
-    measure('averageExchangedRate', () => calculation.averageExchangedRate(transactions));
-    measure('averageExchangedRate(reverse)', () => calculation.averageExchangedRate(transactions, reverse: true));
-    measure('totalSourceBalance', () => calculation.totalSourceBalance(transactions));
-    measure('totalSourceBalance(shrinkPartial)', () => calculation.totalSourceBalance(transactions, shrinkPartial: true));
-    measure('totalActiveSourceBalance', () => calculation.totalActiveSourceBalance(transactions));
+    measure(
+      'spreadAmount',
+      () => calculation.spreadAmount(_decimal('100000'), transactions),
+    );
+    measure(
+      'cumulativeSourceValue',
+      () => calculation.cumulativeSourceValue(transactions),
+    );
+    measure(
+      'averageExchangedRate',
+      () => calculation.averageExchangedRate(transactions),
+    );
+    measure(
+      'averageExchangedRate(reverse)',
+      () => calculation.averageExchangedRate(transactions, reverse: true),
+    );
+    measure(
+      'totalSourceBalance',
+      () => calculation.totalSourceBalance(transactions),
+    );
+    measure(
+      'totalSourceBalance(shrinkPartial)',
+      () => calculation.totalSourceBalance(transactions, shrinkPartial: true),
+    );
+    measure(
+      'totalActiveSourceBalance',
+      () => calculation.totalActiveSourceBalance(transactions),
+    );
     measure('totalBalance', () => calculation.totalBalance(transactions));
-    measure('totalActiveBalance', () => calculation.totalActiveBalance(transactions));
-    measure('calculateBalanceProfit', () => calculation.calculateBalanceProfit(transactions));
-    measure('totalFinalizedBalance', () => calculation.totalFinalizedBalance(transactions));
-    measure('totalFinalizedGroup', () => calculation.totalFinalizedGroup(transactions));
-    measure('averageProfitLoss', () => calculation.averageProfitLoss(transactions, rate));
-    measure('totalProfitLoss', () => calculation.totalProfitLoss(transactions, rate));
+    measure(
+      'totalActiveBalance',
+      () => calculation.totalActiveBalance(transactions),
+    );
+    measure(
+      'calculateBalanceProfit',
+      () => calculation.calculateBalanceProfit(transactions),
+    );
+    measure(
+      'totalFinalizedBalance',
+      () => calculation.totalFinalizedBalance(transactions),
+    );
+    measure(
+      'totalFinalizedGroup',
+      () => calculation.totalFinalizedGroup(transactions),
+    );
+    measure(
+      'averageProfitLoss',
+      () => calculation.averageProfitLoss(transactions, rate),
+    );
+    measure(
+      'totalProfitLoss',
+      () => calculation.totalProfitLoss(transactions, rate),
+    );
     measure('totalProfit', () => calculation.totalProfit(transactions, rate));
     measure('totalLoss', () => calculation.totalLoss(transactions, rate));
-    measure('profitLossPercentage', () => calculation.profitLossPercentage(transactions, rate));
+    measure(
+      'profitLossPercentage',
+      () => calculation.profitLossPercentage(transactions, rate),
+    );
     measure(
       'totalCapitalUsed(leaf)',
-      () => calculation.totalCapitalUsed(leaf, txsMap: transactionsByRoot[root.tid], txsByParent: transactionsByParent),
+      () => calculation.totalCapitalUsed(
+        leaf,
+        txsMap: transactionsByRoot[root.tid],
+        txsByParent: transactionsByParent,
+      ),
     );
     measure(
       'totalCapitalUsed(root)',
-      () => calculation.totalCapitalUsed(root, txsMap: transactionsById, txsByParent: transactionsByParent),
+      () => calculation.totalCapitalUsed(
+        root,
+        txsMap: transactionsById,
+        txsByParent: transactionsByParent,
+      ),
     );
     measure('totalCapitalUsed(all transactions)', () {
       Decimal total = Decimal.zero;

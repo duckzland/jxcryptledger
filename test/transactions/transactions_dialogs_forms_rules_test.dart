@@ -22,7 +22,7 @@ import 'package:jxledger/features/transactions/repository.dart';
 import 'package:jxledger/features/transactions/widgets/status_text.dart';
 import 'package:jxledger/system/settings/states.dart';
 
-import 'faker/hive.dart';
+import '../faker/hive.dart';
 
 Decimal _d(String value) => Decimal.parse(value);
 

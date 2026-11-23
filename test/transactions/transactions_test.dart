@@ -7,7 +7,7 @@ import 'package:jxledger/features/transactions/model.dart';
 import 'package:jxledger/features/transactions/repository.dart';
 import 'package:jxledger/features/transactions/calculations.dart';
 
-import 'faker/hive.dart';
+import '../faker/hive.dart';
 
 void main() async {
   // Initialize Hive in memory for testing
@@ -86,7 +86,13 @@ void main() async {
       }
 
       try {
-        await repo.update(tx.copyWith(timestamp: DateTime.now().add(Duration(days: 1)).microsecondsSinceEpoch));
+        await repo.update(
+          tx.copyWith(
+            timestamp: DateTime.now()
+                .add(Duration(days: 1))
+                .microsecondsSinceEpoch,
+          ),
+        );
       } on ValidationException catch (e) {
         expect(e.code, 1013);
       }
@@ -118,7 +124,9 @@ void main() async {
       }
 
       try {
-        await repo.update(tx.copyWith(status: TransactionStatus.inactive.index));
+        await repo.update(
+          tx.copyWith(status: TransactionStatus.inactive.index),
+        );
       } on ValidationException catch (e) {
         expect(e.code, 1106);
       }
@@ -134,7 +142,10 @@ void main() async {
       box = await Hive.openBox<TransactionsModel>('transactions_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.box = HiveBoxFaker<TransactionsModel>(
+        'transactions_test',
+        hiveBoxOverride: box,
+      );
       repo.boxNameDefault = 'transactions_test';
     });
 
@@ -171,7 +182,9 @@ void main() async {
       expect(r.pid, '0');
 
       final rr = r.copyWith(
-        balance: Decimal.fromInt(80), // Balance isn't guarded. Maybe we need to guard this?
+        balance: Decimal.fromInt(
+          80,
+        ), // Balance isn't guarded. Maybe we need to guard this?
         status: TransactionStatus.active.index,
       );
       await repo.update(rr);
@@ -186,148 +199,166 @@ void main() async {
       expect(repo.isEmpty(), true);
     });
 
-    test('preserves precise Decimal values through repository create/update/trade/close/finalize flows', () async {
-      await box.clear();
+    test(
+      'preserves precise Decimal values through repository create/update/trade/close/finalize flows',
+      () async {
+        await box.clear();
 
-      final root = TransactionsModel(
-        tid: 'root',
-        rid: '0',
-        pid: '0',
-        srAmount: Decimal.parse('100.1234567890123456789'),
-        srId: 1,
-        rrAmount: Decimal.parse('100.1234567890123456789'),
-        rrId: 2,
-        balance: Decimal.parse('100.1234567890123456789'),
-        status: TransactionStatus.active.index,
-        closable: true,
-        timestamp: DateTime.now().microsecondsSinceEpoch,
-        meta: {},
-      );
+        final root = TransactionsModel(
+          tid: 'root',
+          rid: '0',
+          pid: '0',
+          srAmount: Decimal.parse('100.1234567890123456789'),
+          srId: 1,
+          rrAmount: Decimal.parse('100.1234567890123456789'),
+          rrId: 2,
+          balance: Decimal.parse('100.1234567890123456789'),
+          status: TransactionStatus.active.index,
+          closable: true,
+          timestamp: DateTime.now().microsecondsSinceEpoch,
+          meta: {},
+        );
 
-      await repo.add(root);
+        await repo.add(root);
 
-      final createdRoot = box.get('root')!;
-      expect(createdRoot.srAmount, Decimal.parse('100.1234567890123456789'));
-      expect(createdRoot.rrAmount, Decimal.parse('100.1234567890123456789'));
-      expect(createdRoot.balance, Decimal.parse('100.1234567890123456789'));
+        final createdRoot = box.get('root')!;
+        expect(createdRoot.srAmount, Decimal.parse('100.1234567890123456789'));
+        expect(createdRoot.rrAmount, Decimal.parse('100.1234567890123456789'));
+        expect(createdRoot.balance, Decimal.parse('100.1234567890123456789'));
 
-      final editedRoot = createdRoot.copyWith(
-        srAmount: Decimal.parse('101.1234567890123456789'),
-        rrAmount: Decimal.parse('101.1234567890123456789'),
-        balance: Decimal.parse('101.1234567890123456789'),
-      );
-      await repo.update(editedRoot);
+        final editedRoot = createdRoot.copyWith(
+          srAmount: Decimal.parse('101.1234567890123456789'),
+          rrAmount: Decimal.parse('101.1234567890123456789'),
+          balance: Decimal.parse('101.1234567890123456789'),
+        );
+        await repo.update(editedRoot);
 
-      final updatedRoot = box.get('root')!;
-      expect(updatedRoot.srAmount, Decimal.parse('101.1234567890123456789'));
-      expect(updatedRoot.rrAmount, Decimal.parse('101.1234567890123456789'));
-      expect(updatedRoot.balance, Decimal.parse('101.1234567890123456789'));
+        final updatedRoot = box.get('root')!;
+        expect(updatedRoot.srAmount, Decimal.parse('101.1234567890123456789'));
+        expect(updatedRoot.rrAmount, Decimal.parse('101.1234567890123456789'));
+        expect(updatedRoot.balance, Decimal.parse('101.1234567890123456789'));
 
-      final tradeChild = TransactionsModel(
-        tid: 'trade_child',
-        rid: 'root',
-        pid: 'root',
-        srAmount: Decimal.parse('40.1234567890123456789'),
-        srId: 2,
-        rrAmount: Decimal.parse('40.1234567890123456789'),
-        rrId: 3,
-        balance: Decimal.parse('40.1234567890123456789'),
-        status: TransactionStatus.active.index,
-        closable: false,
-        timestamp: DateTime.now().microsecondsSinceEpoch,
-        meta: {},
-      );
+        final tradeChild = TransactionsModel(
+          tid: 'trade_child',
+          rid: 'root',
+          pid: 'root',
+          srAmount: Decimal.parse('40.1234567890123456789'),
+          srId: 2,
+          rrAmount: Decimal.parse('40.1234567890123456789'),
+          rrId: 3,
+          balance: Decimal.parse('40.1234567890123456789'),
+          status: TransactionStatus.active.index,
+          closable: false,
+          timestamp: DateTime.now().microsecondsSinceEpoch,
+          meta: {},
+        );
 
-      await repo.add(tradeChild);
+        await repo.add(tradeChild);
 
-      final parentAfterTrade = box.get('root')!;
-      expect(parentAfterTrade.balance, Decimal.parse('61'));
-      expect(parentAfterTrade.statusEnum, TransactionStatus.partial);
+        final parentAfterTrade = box.get('root')!;
+        expect(parentAfterTrade.balance, Decimal.parse('61'));
+        expect(parentAfterTrade.statusEnum, TransactionStatus.partial);
 
-      final updatedTradeChild = box
-          .get('trade_child')!
-          .copyWith(
-            srAmount: Decimal.parse('25.9876543210987654321'),
-            rrAmount: Decimal.parse('25.9876543210987654321'),
-            balance: Decimal.parse('25.9876543210987654321'),
-          );
-      await repo.update(updatedTradeChild);
+        final updatedTradeChild = box
+            .get('trade_child')!
+            .copyWith(
+              srAmount: Decimal.parse('25.9876543210987654321'),
+              rrAmount: Decimal.parse('25.9876543210987654321'),
+              balance: Decimal.parse('25.9876543210987654321'),
+            );
+        await repo.update(updatedTradeChild);
 
-      final storedTradeChild = box.get('trade_child')!;
-      expect(storedTradeChild.srAmount, Decimal.parse('25.9876543210987654321'));
-      expect(storedTradeChild.rrAmount, Decimal.parse('25.9876543210987654321'));
-      expect(storedTradeChild.balance, Decimal.parse('25.9876543210987654321'));
+        final storedTradeChild = box.get('trade_child')!;
+        expect(
+          storedTradeChild.srAmount,
+          Decimal.parse('25.9876543210987654321'),
+        );
+        expect(
+          storedTradeChild.rrAmount,
+          Decimal.parse('25.9876543210987654321'),
+        );
+        expect(
+          storedTradeChild.balance,
+          Decimal.parse('25.9876543210987654321'),
+        );
 
-      final parentAfterEdit = box.get('root')!;
-      expect(parentAfterEdit.balance, Decimal.parse('75.1358024679135802468'));
+        final parentAfterEdit = box.get('root')!;
+        expect(
+          parentAfterEdit.balance,
+          Decimal.parse('75.1358024679135802468'),
+        );
 
-      final parentNode = TransactionsModel(
-        tid: 'parent_node',
-        rid: 'root',
-        pid: 'root',
-        srAmount: Decimal.parse('10.9876543210987654321'),
-        srId: 2,
-        rrAmount: Decimal.parse('10.9876543210987654321'),
-        rrId: 3,
-        balance: Decimal.parse('10.9876543210987654321'),
-        status: TransactionStatus.active.index,
-        closable: false,
-        timestamp: DateTime.now().microsecondsSinceEpoch,
-        meta: {},
-      );
+        final parentNode = TransactionsModel(
+          tid: 'parent_node',
+          rid: 'root',
+          pid: 'root',
+          srAmount: Decimal.parse('10.9876543210987654321'),
+          srId: 2,
+          rrAmount: Decimal.parse('10.9876543210987654321'),
+          rrId: 3,
+          balance: Decimal.parse('10.9876543210987654321'),
+          status: TransactionStatus.active.index,
+          closable: false,
+          timestamp: DateTime.now().microsecondsSinceEpoch,
+          meta: {},
+        );
 
-      await repo.add(parentNode);
-      final rootAfterParent = box.get('root')!;
-      expect(rootAfterParent.balance, Decimal.parse('64.1481481468148148147'));
+        await repo.add(parentNode);
+        final rootAfterParent = box.get('root')!;
+        expect(
+          rootAfterParent.balance,
+          Decimal.parse('64.1481481468148148147'),
+        );
 
-      final closeableLeaf = TransactionsModel(
-        tid: 'closeable_leaf',
-        rid: 'root',
-        pid: 'parent_node',
-        srAmount: Decimal.parse('5.1234567890123456789'),
-        srId: 3,
-        rrAmount: Decimal.parse('5.1234567890123456789'),
-        rrId: 2,
-        balance: Decimal.parse('5.1234567890123456789'),
-        status: TransactionStatus.active.index,
-        closable: false,
-        timestamp: DateTime.now().microsecondsSinceEpoch,
-        meta: {},
-      );
+        final closeableLeaf = TransactionsModel(
+          tid: 'closeable_leaf',
+          rid: 'root',
+          pid: 'parent_node',
+          srAmount: Decimal.parse('5.1234567890123456789'),
+          srId: 3,
+          rrAmount: Decimal.parse('5.1234567890123456789'),
+          rrId: 2,
+          balance: Decimal.parse('5.1234567890123456789'),
+          status: TransactionStatus.active.index,
+          closable: false,
+          timestamp: DateTime.now().microsecondsSinceEpoch,
+          meta: {},
+        );
 
-      await repo.add(closeableLeaf);
-      final parentAfterLeaf = box.get('parent_node')!;
-      expect(parentAfterLeaf.balance, Decimal.parse('5.8641975320864197532'));
+        await repo.add(closeableLeaf);
+        final parentAfterLeaf = box.get('parent_node')!;
+        expect(parentAfterLeaf.balance, Decimal.parse('5.8641975320864197532'));
 
-      final updatedLeaf = box
-          .get('closeable_leaf')!
-          .copyWith(
-            srAmount: Decimal.parse('4.1111111111111111111'),
-            rrAmount: Decimal.parse('4.1111111111111111111'),
-            balance: Decimal.parse('4.1111111111111111111'),
-          );
-      await repo.update(updatedLeaf);
+        final updatedLeaf = box
+            .get('closeable_leaf')!
+            .copyWith(
+              srAmount: Decimal.parse('4.1111111111111111111'),
+              rrAmount: Decimal.parse('4.1111111111111111111'),
+              balance: Decimal.parse('4.1111111111111111111'),
+            );
+        await repo.update(updatedLeaf);
 
-      final storedLeaf = box.get('closeable_leaf')!;
-      expect(storedLeaf.srAmount, Decimal.parse('4.1111111111111111111'));
-      expect(storedLeaf.rrAmount, Decimal.parse('4.1111111111111111111'));
-      expect(storedLeaf.balance, Decimal.parse('4.1111111111111111111'));
+        final storedLeaf = box.get('closeable_leaf')!;
+        expect(storedLeaf.srAmount, Decimal.parse('4.1111111111111111111'));
+        expect(storedLeaf.rrAmount, Decimal.parse('4.1111111111111111111'));
+        expect(storedLeaf.balance, Decimal.parse('4.1111111111111111111'));
 
-      await repo.close(storedLeaf);
+        await repo.close(storedLeaf);
 
-      final closedLeaf = box.get('closeable_leaf')!;
-      expect(closedLeaf.statusEnum, TransactionStatus.closed);
-      expect(closedLeaf.balance, Decimal.zero);
+        final closedLeaf = box.get('closeable_leaf')!;
+        expect(closedLeaf.statusEnum, TransactionStatus.closed);
+        expect(closedLeaf.balance, Decimal.zero);
 
-      final parentAfterClose = box.get('parent_node')!;
-      expect(parentAfterClose.balance, Decimal.parse('6.876543209987654321'));
+        final parentAfterClose = box.get('parent_node')!;
+        expect(parentAfterClose.balance, Decimal.parse('6.876543209987654321'));
 
-      await repo.finalize(parentAfterClose);
+        await repo.finalize(parentAfterClose);
 
-      final finalizedParent = box.get('parent_node')!;
-      expect(finalizedParent.statusEnum, TransactionStatus.finalized);
-      expect(finalizedParent.balance, Decimal.parse('6.876543209987654321'));
-    });
+        final finalizedParent = box.get('parent_node')!;
+        expect(finalizedParent.statusEnum, TransactionStatus.finalized);
+        expect(finalizedParent.balance, Decimal.parse('6.876543209987654321'));
+      },
+    );
 
     test('root -> Capital Mode, Add, Update and Remove', () async {
       await box.clear();
@@ -362,7 +393,9 @@ void main() async {
       expect(r.pid, '0');
 
       final rr = r.copyWith(
-        balance: Decimal.fromInt(80), // Balance isn't guarded. Maybe we need to guard this?
+        balance: Decimal.fromInt(
+          80,
+        ), // Balance isn't guarded. Maybe we need to guard this?
         status: TransactionStatus.active.index,
       );
       await repo.update(rr);
@@ -966,7 +999,10 @@ void main() async {
       box = await Hive.openBox<TransactionsModel>('transactions_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.box = HiveBoxFaker<TransactionsModel>(
+        'transactions_test',
+        hiveBoxOverride: box,
+      );
       repo.boxNameDefault = 'transactions_test';
     });
 
@@ -1055,7 +1091,8 @@ void main() async {
         rrId: 2, // This is the same as root to test closable logic
         balance: Decimal.fromInt(50),
         status: TransactionStatus.active.index,
-        closable: false, // This is intentionally false to test if it gets updated to true
+        closable:
+            false, // This is intentionally false to test if it gets updated to true
         timestamp: DateTime.now().microsecondsSinceEpoch,
         meta: {},
       );
@@ -1093,7 +1130,10 @@ void main() async {
       box = await Hive.openBox<TransactionsModel>('transactions_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.box = HiveBoxFaker<TransactionsModel>(
+        'transactions_test',
+        hiveBoxOverride: box,
+      );
       repo.boxNameDefault = 'transactions_test';
     });
 
@@ -1182,7 +1222,8 @@ void main() async {
         rrId: 2, // This is the same as root to test closable logic
         balance: Decimal.fromInt(50),
         status: TransactionStatus.active.index,
-        closable: false, // This is intentionally false to test if it gets updated to true
+        closable:
+            false, // This is intentionally false to test if it gets updated to true
         timestamp: DateTime.now().microsecondsSinceEpoch,
         meta: {},
       );
@@ -1220,7 +1261,10 @@ void main() async {
       box = await Hive.openBox<TransactionsModel>('transactions_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = HiveBoxFaker<TransactionsModel>('transactions_test', hiveBoxOverride: box);
+      repo.box = HiveBoxFaker<TransactionsModel>(
+        'transactions_test',
+        hiveBoxOverride: box,
+      );
       repo.boxNameDefault = 'transactions_test';
     });
     test('root -> leaf with ugly fractional balance rounding', () async {
@@ -1264,7 +1308,10 @@ void main() async {
 
       // Expect root balance to be a microscopic remainder
       // This is the "bad rounding crap" case
-      expect(updatedRoot.balance <= Decimal.parse('0.0000000000000000000000014'), true);
+      expect(
+        updatedRoot.balance <= Decimal.parse('0.0000000000000000000000014'),
+        true,
+      );
 
       // Root should be marked partial, not finalized, because it still has nonzero balance
       expect(updatedRoot.statusEnum, TransactionStatus.partial);
@@ -1321,87 +1368,93 @@ void main() async {
       expect(updatedLeaf.statusEnum, TransactionStatus.active);
     });
 
-    test('txA -> txB -> txC close propagation with 18-decimal precision', () async {
-      final txA = TransactionsModel(
-        tid: 'txA',
-        rid: '0',
-        pid: '0',
-        srAmount: Decimal.parse('10.000000000000000000'),
-        srId: 1,
-        rrAmount: Decimal.parse('10.000000000000000000'),
-        rrId: 3,
-        balance: Decimal.parse('10.000000000000000000'),
-        status: TransactionStatus.active.index,
-        closable: true,
-        timestamp: DateTime.now().microsecondsSinceEpoch,
-        meta: {},
-      );
-      await repo.add(txA);
+    test(
+      'txA -> txB -> txC close propagation with 18-decimal precision',
+      () async {
+        final txA = TransactionsModel(
+          tid: 'txA',
+          rid: '0',
+          pid: '0',
+          srAmount: Decimal.parse('10.000000000000000000'),
+          srId: 1,
+          rrAmount: Decimal.parse('10.000000000000000000'),
+          rrId: 3,
+          balance: Decimal.parse('10.000000000000000000'),
+          status: TransactionStatus.active.index,
+          closable: true,
+          timestamp: DateTime.now().microsecondsSinceEpoch,
+          meta: {},
+        );
+        await repo.add(txA);
 
-      final txB = TransactionsModel(
-        tid: 'txB',
-        rid: 'txA',
-        pid: 'txA',
-        srAmount: Decimal.parse('6.000000000000000000'),
-        srId: 3,
-        rrAmount: Decimal.parse('6.000000000000000000'),
-        rrId: 7,
-        balance: Decimal.parse('6.000000000000000000'),
-        status: TransactionStatus.active.index,
-        closable: false,
-        timestamp: DateTime.now().microsecondsSinceEpoch,
-        meta: {},
-      );
-      await repo.add(txB);
+        final txB = TransactionsModel(
+          tid: 'txB',
+          rid: 'txA',
+          pid: 'txA',
+          srAmount: Decimal.parse('6.000000000000000000'),
+          srId: 3,
+          rrAmount: Decimal.parse('6.000000000000000000'),
+          rrId: 7,
+          balance: Decimal.parse('6.000000000000000000'),
+          status: TransactionStatus.active.index,
+          closable: false,
+          timestamp: DateTime.now().microsecondsSinceEpoch,
+          meta: {},
+        );
+        await repo.add(txB);
 
-      final txC = TransactionsModel(
-        tid: 'txC',
-        rid: 'txB',
-        pid: 'txB',
-        srAmount: Decimal.parse('6.000000000000000000'),
-        srId: 7,
-        rrAmount: Decimal.parse('6.000000000000000000'),
-        rrId: 3, // matches txA rrId, so closable
-        balance: Decimal.parse('6.000000000000000000'),
-        status: TransactionStatus.active.index,
-        closable: true,
-        timestamp: DateTime.now().microsecondsSinceEpoch,
-        meta: {},
-      );
-      await repo.add(txC);
+        final txC = TransactionsModel(
+          tid: 'txC',
+          rid: 'txB',
+          pid: 'txB',
+          srAmount: Decimal.parse('6.000000000000000000'),
+          srId: 7,
+          rrAmount: Decimal.parse('6.000000000000000000'),
+          rrId: 3, // matches txA rrId, so closable
+          balance: Decimal.parse('6.000000000000000000'),
+          status: TransactionStatus.active.index,
+          closable: true,
+          timestamp: DateTime.now().microsecondsSinceEpoch,
+          meta: {},
+        );
+        await repo.add(txC);
 
-      // Check balances before close
-      final updatedA = box.get('txA')!;
-      final updatedB = box.get('txB')!;
-      final updatedC = box.get('txC')!;
+        // Check balances before close
+        final updatedA = box.get('txA')!;
+        final updatedB = box.get('txB')!;
+        final updatedC = box.get('txC')!;
 
-      expect(updatedA.balance, Decimal.parse('4.000000000000000000')); // 10 - 6
-      expect(updatedA.statusEnum, TransactionStatus.partial);
+        expect(
+          updatedA.balance,
+          Decimal.parse('4.000000000000000000'),
+        ); // 10 - 6
+        expect(updatedA.statusEnum, TransactionStatus.partial);
 
-      expect(updatedB.balance, Decimal.zero); // fully consumed by txC
-      expect(updatedB.statusEnum, TransactionStatus.inactive);
+        expect(updatedB.balance, Decimal.zero); // fully consumed by txC
+        expect(updatedB.statusEnum, TransactionStatus.inactive);
 
-      expect(updatedC.balance, Decimal.parse('6.000000000000000000'));
-      expect(updatedC.statusEnum, TransactionStatus.active);
-      expect(updatedC.closable, true);
+        expect(updatedC.balance, Decimal.parse('6.000000000000000000'));
+        expect(updatedC.statusEnum, TransactionStatus.active);
+        expect(updatedC.closable, true);
 
-      // Now close txC
-      await repo.close(updatedC);
+        // Now close txC
+        await repo.close(updatedC);
 
-      final closedA = box.get('txA')!;
-      final closedB = box.get('txB')!;
-      final closedC = box.get('txC')!;
+        final closedA = box.get('txA')!;
+        final closedB = box.get('txB')!;
+        final closedC = box.get('txC')!;
 
-      // txC’s balance should propagate back up to txA
-      expect(closedA.balance, Decimal.parse('10.000000000000000000'));
-      expect(closedA.statusEnum, TransactionStatus.active);
+        // txC’s balance should propagate back up to txA
+        expect(closedA.balance, Decimal.parse('10.000000000000000000'));
+        expect(closedA.statusEnum, TransactionStatus.active);
 
-      // txB remains partial (it was just a conduit)
-      expect(closedB.statusEnum, TransactionStatus.inactive);
+        // txB remains partial (it was just a conduit)
+        expect(closedB.statusEnum, TransactionStatus.inactive);
 
-      // txC is closed
-      expect(closedC.statusEnum, TransactionStatus.closed);
-    });
+        // txC is closed
+        expect(closedC.statusEnum, TransactionStatus.closed);
+      },
+    );
 
     test('double vs decimal subtraction and transaction propagation', () async {
       // --- Double fails ---
@@ -1551,515 +1604,550 @@ void main() async {
     expect(rootResult.toString().startsWith('75'), true);
   });
 
-  test('traceCapitalUsed() -> root is capital and multi-hop lineage calculation', () {
-    final txA = TransactionsModel(
-      tid: 'A',
-      pid: '0',
-      rid: '0',
-      srAmount: Decimal.parse('100'),
-      srId: 1,
-      rrAmount: Decimal.parse('100'),
-      rrId: 1,
-      balance: Decimal.parse('25'), // 50 used by B, 25 used by BA
-      status: TransactionStatus.active.index,
-      closable: true,
-      timestamp: 1,
-      meta: {},
-    );
+  test(
+    'traceCapitalUsed() -> root is capital and multi-hop lineage calculation',
+    () {
+      final txA = TransactionsModel(
+        tid: 'A',
+        pid: '0',
+        rid: '0',
+        srAmount: Decimal.parse('100'),
+        srId: 1,
+        rrAmount: Decimal.parse('100'),
+        rrId: 1,
+        balance: Decimal.parse('25'), // 50 used by B, 25 used by BA
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: 1,
+        meta: {},
+      );
 
-    final txB = TransactionsModel(
-      tid: 'B',
-      pid: 'A',
-      rid: 'A',
-      srAmount: Decimal.parse('50'),
-      srId: 1,
-      rrAmount: Decimal.parse('25'),
-      rrId: 3,
-      balance: Decimal.parse('3'), // 22 used by C
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 2,
-      meta: {},
-    );
+      final txB = TransactionsModel(
+        tid: 'B',
+        pid: 'A',
+        rid: 'A',
+        srAmount: Decimal.parse('50'),
+        srId: 1,
+        rrAmount: Decimal.parse('25'),
+        rrId: 3,
+        balance: Decimal.parse('3'), // 22 used by C
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 2,
+        meta: {},
+      );
 
-    final txBA = TransactionsModel(
-      tid: 'BA',
-      pid: 'A',
-      rid: 'A',
-      srAmount: Decimal.parse('25'),
-      srId: 1,
-      rrAmount: Decimal.parse('125'),
-      rrId: 7,
-      balance: Decimal.parse('125'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 2,
-      meta: {},
-    );
+      final txBA = TransactionsModel(
+        tid: 'BA',
+        pid: 'A',
+        rid: 'A',
+        srAmount: Decimal.parse('25'),
+        srId: 1,
+        rrAmount: Decimal.parse('125'),
+        rrId: 7,
+        balance: Decimal.parse('125'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 2,
+        meta: {},
+      );
 
-    final txC = TransactionsModel(
-      tid: 'C',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('22'),
-      srId: 3,
-      rrAmount: Decimal.parse('300'),
-      rrId: 4,
-      balance: Decimal.parse('289'), // 11 used by D
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 3,
-      meta: {},
-    );
+      final txC = TransactionsModel(
+        tid: 'C',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse('22'),
+        srId: 3,
+        rrAmount: Decimal.parse('300'),
+        rrId: 4,
+        balance: Decimal.parse('289'), // 11 used by D
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 3,
+        meta: {},
+      );
 
-    final txD = TransactionsModel(
-      tid: 'D',
-      pid: 'C',
-      rid: 'A',
-      srAmount: Decimal.parse('11'),
-      srId: 4,
-      rrAmount: Decimal.parse('400'),
-      rrId: 5,
-      balance: Decimal.parse('400'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 4,
-      meta: {},
-    );
+      final txD = TransactionsModel(
+        tid: 'D',
+        pid: 'C',
+        rid: 'A',
+        srAmount: Decimal.parse('11'),
+        srId: 4,
+        rrAmount: Decimal.parse('400'),
+        rrId: 5,
+        balance: Decimal.parse('400'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 4,
+        meta: {},
+      );
 
-    final txs = [txA, txB, txC, txD, txBA];
-    final calc = TransactionCalculation();
-    final result = calc.totalCapitalUsed(txD, txs: txs);
+      final txs = [txA, txB, txC, txD, txBA];
+      final calc = TransactionCalculation();
+      final result = calc.totalCapitalUsed(txD, txs: txs);
 
-    expect(result.toString().startsWith('1.6133333333'), true);
+      expect(result.toString().startsWith('1.6133333333'), true);
 
-    final rootResult = calc.totalCapitalUsed(txA, txs: txs);
-    expect(rootResult.toString().startsWith('75'), true);
-  });
+      final rootResult = calc.totalCapitalUsed(txA, txs: txs);
+      expect(rootResult.toString().startsWith('75'), true);
+    },
+  );
 
-  test('CRAZY PROOF: 6-Level Lineage with strict parent.rrId == child.srId enforcement', () {
-    final calc = TransactionCalculation();
+  test(
+    'CRAZY PROOF: 6-Level Lineage with strict parent.rrId == child.srId enforcement',
+    () {
+      final calc = TransactionCalculation();
 
-    final txA = TransactionsModel(
-      tid: 'A',
-      pid: '0',
-      rid: '0',
-      srAmount: Decimal.parse('10000'),
-      srId: 1,
-      rrAmount: Decimal.parse('10000'),
-      rrId: 2,
-      balance: Decimal.parse('5000'),
-      status: TransactionStatus.active.index,
-      closable: true,
-      timestamp: 1,
-      meta: {},
-    );
+      final txA = TransactionsModel(
+        tid: 'A',
+        pid: '0',
+        rid: '0',
+        srAmount: Decimal.parse('10000'),
+        srId: 1,
+        rrAmount: Decimal.parse('10000'),
+        rrId: 2,
+        balance: Decimal.parse('5000'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: 1,
+        meta: {},
+      );
 
-    final txB = TransactionsModel(
-      tid: 'B',
-      pid: 'A',
-      rid: 'A',
-      srAmount: Decimal.parse('5000'),
-      srId: 2,
-      rrAmount: Decimal.parse('5000'),
-      rrId: 3,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 2,
-      meta: {},
-    );
+      final txB = TransactionsModel(
+        tid: 'B',
+        pid: 'A',
+        rid: 'A',
+        srAmount: Decimal.parse('5000'),
+        srId: 2,
+        rrAmount: Decimal.parse('5000'),
+        rrId: 3,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 2,
+        meta: {},
+      );
 
-    final txcValid = TransactionsModel(
-      tid: 'C_Valid',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('400'),
-      srId: 3,
-      rrAmount: Decimal.parse('4000'),
-      rrId: 4,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 3,
-      meta: {},
-    );
+      final txcValid = TransactionsModel(
+        tid: 'C_Valid',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse('400'),
+        srId: 3,
+        rrAmount: Decimal.parse('4000'),
+        rrId: 4,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 3,
+        meta: {},
+      );
 
-    final txD = TransactionsModel(
-      tid: 'D',
-      pid: 'C_Valid',
-      rid: 'A',
-      srAmount: Decimal.parse('2500'),
-      srId: 4,
-      rrAmount: Decimal.parse('2500'),
-      rrId: 5,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 4,
-      meta: {},
-    );
+      final txD = TransactionsModel(
+        tid: 'D',
+        pid: 'C_Valid',
+        rid: 'A',
+        srAmount: Decimal.parse('2500'),
+        srId: 4,
+        rrAmount: Decimal.parse('2500'),
+        rrId: 5,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 4,
+        meta: {},
+      );
 
-    final txE = TransactionsModel(
-      tid: 'E',
-      pid: 'D',
-      rid: 'A',
-      srAmount: Decimal.parse('2000'),
-      srId: 5,
-      rrAmount: Decimal.parse('2000'),
-      rrId: 6,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 5,
-      meta: {},
-    );
+      final txE = TransactionsModel(
+        tid: 'E',
+        pid: 'D',
+        rid: 'A',
+        srAmount: Decimal.parse('2000'),
+        srId: 5,
+        rrAmount: Decimal.parse('2000'),
+        rrId: 6,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 5,
+        meta: {},
+      );
 
-    final txfValidleaf = TransactionsModel(
-      tid: 'F_Valid',
-      pid: 'E',
-      rid: 'A',
-      srAmount: Decimal.parse('1200'),
-      srId: 6,
-      rrAmount: Decimal.parse('1200'),
-      rrId: 7,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 6,
-      meta: {},
-    );
+      final txfValidleaf = TransactionsModel(
+        tid: 'F_Valid',
+        pid: 'E',
+        rid: 'A',
+        srAmount: Decimal.parse('1200'),
+        srId: 6,
+        rrAmount: Decimal.parse('1200'),
+        rrId: 7,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 6,
+        meta: {},
+      );
 
-    final validTxs = [txA, txB, txcValid, txD, txE, txfValidleaf];
-    final resultValid = calc.totalCapitalUsed(txfValidleaf, txs: validTxs);
-    expect(resultValid.toString(), Decimal.parse('120').toString());
+      final validTxs = [txA, txB, txcValid, txD, txE, txfValidleaf];
+      final resultValid = calc.totalCapitalUsed(txfValidleaf, txs: validTxs);
+      expect(resultValid.toString(), Decimal.parse('120').toString());
 
-    // SCENARIO 2: Broken Lineage Pool Mismatch
-    final txcImposter = TransactionsModel(
-      tid: 'C_Imposter',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('400'),
-      srId: 3,
-      rrAmount: Decimal.parse('4000'),
-      rrId: 99, // Imposter Pool
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 3,
-      meta: {},
-    );
+      // SCENARIO 2: Broken Lineage Pool Mismatch
+      final txcImposter = TransactionsModel(
+        tid: 'C_Imposter',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse('400'),
+        srId: 3,
+        rrAmount: Decimal.parse('4000'),
+        rrId: 99, // Imposter Pool
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 3,
+        meta: {},
+      );
 
-    final txdBroken = TransactionsModel(
-      tid: 'D_Broken',
-      pid: 'C_Imposter',
-      rid: 'A',
-      srAmount: Decimal.parse('2500'),
-      srId: 4,
-      rrAmount: Decimal.parse('2500'),
-      rrId: 5,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 4,
-      meta: {},
-    );
+      final txdBroken = TransactionsModel(
+        tid: 'D_Broken',
+        pid: 'C_Imposter',
+        rid: 'A',
+        srAmount: Decimal.parse('2500'),
+        srId: 4,
+        rrAmount: Decimal.parse('2500'),
+        rrId: 5,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 4,
+        meta: {},
+      );
 
-    final txeBrokenpath = TransactionsModel(
-      tid: 'E_Broken',
-      pid: 'D_Broken',
-      rid: 'A',
-      srAmount: Decimal.parse('2000'),
-      srId: 5,
-      rrAmount: Decimal.parse('2000'),
-      rrId: 6,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 5,
-      meta: {},
-    );
+      final txeBrokenpath = TransactionsModel(
+        tid: 'E_Broken',
+        pid: 'D_Broken',
+        rid: 'A',
+        srAmount: Decimal.parse('2000'),
+        srId: 5,
+        rrAmount: Decimal.parse('2000'),
+        rrId: 6,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 5,
+        meta: {},
+      );
 
-    final txfBrokenleaf = TransactionsModel(
-      tid: 'F_Broken',
-      pid: 'E_Broken',
-      rid: 'A',
-      srAmount: Decimal.parse('1200'),
-      srId: 6,
-      rrAmount: Decimal.parse('1200'),
-      rrId: 7,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 6,
-      meta: {},
-    );
+      final txfBrokenleaf = TransactionsModel(
+        tid: 'F_Broken',
+        pid: 'E_Broken',
+        rid: 'A',
+        srAmount: Decimal.parse('1200'),
+        srId: 6,
+        rrAmount: Decimal.parse('1200'),
+        rrId: 7,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 6,
+        meta: {},
+      );
 
-    final brokenTxs = [txA, txB, txcImposter, txdBroken, txeBrokenpath, txfBrokenleaf];
-    final resultBroken = calc.totalCapitalUsed(txfBrokenleaf, txs: brokenTxs);
-    expect(resultBroken.toString(), Decimal.parse('0').toString());
-  });
+      final brokenTxs = [
+        txA,
+        txB,
+        txcImposter,
+        txdBroken,
+        txeBrokenpath,
+        txfBrokenleaf,
+      ];
+      final resultBroken = calc.totalCapitalUsed(txfBrokenleaf, txs: brokenTxs);
+      expect(resultBroken.toString(), Decimal.parse('0').toString());
+    },
+  );
 
-  test('PROFIT TEST 1: Child takes EXACTLY the profit amount -> 0 capital used', () {
-    final calc = TransactionCalculation();
+  test(
+    'PROFIT TEST 1: Child takes EXACTLY the profit amount -> 0 capital used',
+    () {
+      final calc = TransactionCalculation();
 
-    final txaRoot = TransactionsModel(
-      tid: 'A',
-      pid: '0',
-      rid: '0',
-      srAmount: Decimal.parse('120'),
-      srId: 1,
-      rrAmount: Decimal.parse('120'),
-      rrId: 2,
-      balance: Decimal.parse('120'),
-      status: TransactionStatus.active.index,
-      closable: true,
-      timestamp: 1,
-      meta: {},
-    );
+      final txaRoot = TransactionsModel(
+        tid: 'A',
+        pid: '0',
+        rid: '0',
+        srAmount: Decimal.parse('120'),
+        srId: 1,
+        rrAmount: Decimal.parse('120'),
+        rrId: 2,
+        balance: Decimal.parse('120'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: 1,
+        meta: {},
+      );
 
-    final txbProfitable = TransactionsModel(
-      tid: 'B',
-      pid: 'A',
-      rid: 'A',
-      srAmount: Decimal.parse('120'),
-      srId: 2,
-      rrAmount: Decimal.parse('120'),
-      rrId: 3,
-      balance: Decimal.parse('140'), // 20 units of pure profit surplus
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 2,
-      meta: {},
-    );
+      final txbProfitable = TransactionsModel(
+        tid: 'B',
+        pid: 'A',
+        rid: 'A',
+        srAmount: Decimal.parse('120'),
+        srId: 2,
+        rrAmount: Decimal.parse('120'),
+        rrId: 3,
+        balance: Decimal.parse('140'), // 20 units of pure profit surplus
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 2,
+        meta: {},
+      );
 
-    final txcSkimmingleaf = TransactionsModel(
-      tid: 'C',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('20'),
-      srId: 3, // Claims exactly the 20 profit units
-      rrAmount: Decimal.parse('20'),
-      rrId: 4,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 3,
-      meta: {},
-    );
+      final txcSkimmingleaf = TransactionsModel(
+        tid: 'C',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse('20'),
+        srId: 3, // Claims exactly the 20 profit units
+        rrAmount: Decimal.parse('20'),
+        rrId: 4,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 3,
+        meta: {},
+      );
 
-    final txs = [txaRoot, txbProfitable, txcSkimmingleaf];
-    final result = calc.totalCapitalUsed(txcSkimmingleaf, txs: txs);
+      final txs = [txaRoot, txbProfitable, txcSkimmingleaf];
+      final result = calc.totalCapitalUsed(txcSkimmingleaf, txs: txs);
 
-    // Expected: 0 original capital spent
-    expect(result.toString(), Decimal.parse('0').toString());
-  });
+      // Expected: 0 original capital spent
+      expect(result.toString(), Decimal.parse('0').toString());
+    },
+  );
 
-  test('PROFIT TEST 2: Child takes LESS than the profit amount -> 0 capital used', () {
-    final calc = TransactionCalculation();
+  test(
+    'PROFIT TEST 2: Child takes LESS than the profit amount -> 0 capital used',
+    () {
+      final calc = TransactionCalculation();
 
-    final txaRoot = TransactionsModel(
-      tid: 'A',
-      pid: '0',
-      rid: '0',
-      srAmount: Decimal.parse('120'),
-      srId: 1,
-      rrAmount: Decimal.parse('120'),
-      rrId: 2,
-      balance: Decimal.parse('120'),
-      status: TransactionStatus.active.index,
-      closable: true,
-      timestamp: 1,
-      meta: {},
-    );
+      final txaRoot = TransactionsModel(
+        tid: 'A',
+        pid: '0',
+        rid: '0',
+        srAmount: Decimal.parse('120'),
+        srId: 1,
+        rrAmount: Decimal.parse('120'),
+        rrId: 2,
+        balance: Decimal.parse('120'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: 1,
+        meta: {},
+      );
 
-    final txbProfitable = TransactionsModel(
-      tid: 'B',
-      pid: 'A',
-      rid: 'A',
-      srAmount: Decimal.parse('120'),
-      srId: 2,
-      rrAmount: Decimal.parse('120'),
-      rrId: 3,
-      balance: Decimal.parse('140'), // 20 units of pure profit surplus
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 2,
-      meta: {},
-    );
+      final txbProfitable = TransactionsModel(
+        tid: 'B',
+        pid: 'A',
+        rid: 'A',
+        srAmount: Decimal.parse('120'),
+        srId: 2,
+        rrAmount: Decimal.parse('120'),
+        rrId: 3,
+        balance: Decimal.parse('140'), // 20 units of pure profit surplus
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 2,
+        meta: {},
+      );
 
-    final txcSmallskimmingleaf = TransactionsModel(
-      tid: 'C',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('5'),
-      srId: 3, // Claims 5 units (safely below the 20 profit pool)
-      rrAmount: Decimal.parse('5'),
-      rrId: 4,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 3,
-      meta: {},
-    );
+      final txcSmallskimmingleaf = TransactionsModel(
+        tid: 'C',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse('5'),
+        srId: 3, // Claims 5 units (safely below the 20 profit pool)
+        rrAmount: Decimal.parse('5'),
+        rrId: 4,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 3,
+        meta: {},
+      );
 
-    final txs = [txaRoot, txbProfitable, txcSmallskimmingleaf];
-    final result = calc.totalCapitalUsed(txcSmallskimmingleaf, txs: txs);
+      final txs = [txaRoot, txbProfitable, txcSmallskimmingleaf];
+      final result = calc.totalCapitalUsed(txcSmallskimmingleaf, txs: txs);
 
-    // Expected: 0 original capital spent (entirely absorbed by yield cushion)
-    expect(result.toString(), Decimal.parse('0').toString());
-  });
+      // Expected: 0 original capital spent (entirely absorbed by yield cushion)
+      expect(result.toString(), Decimal.parse('0').toString());
+    },
+  );
 
-  test('PROFIT TEST 3: Child takes MORE than the profit amount -> Only traces the spillover principal', () {
-    final calc = TransactionCalculation();
+  test(
+    'PROFIT TEST 3: Child takes MORE than the profit amount -> Only traces the spillover principal',
+    () {
+      final calc = TransactionCalculation();
 
-    final txaRoot = TransactionsModel(
-      tid: 'A',
-      pid: '0',
-      rid: '0',
-      srAmount: Decimal.parse('120'),
-      srId: 1,
-      rrAmount: Decimal.parse('120'),
-      rrId: 2,
-      balance: Decimal.parse('120'),
-      status: TransactionStatus.active.index,
-      closable: true,
-      timestamp: 1,
-      meta: {},
-    );
+      final txaRoot = TransactionsModel(
+        tid: 'A',
+        pid: '0',
+        rid: '0',
+        srAmount: Decimal.parse('120'),
+        srId: 1,
+        rrAmount: Decimal.parse('120'),
+        rrId: 2,
+        balance: Decimal.parse('120'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: 1,
+        meta: {},
+      );
 
-    final txbProfitable = TransactionsModel(
-      tid: 'B',
-      pid: 'A',
-      rid: 'A',
-      srAmount: Decimal.parse('120'),
-      srId: 2,
-      rrAmount: Decimal.parse('120'),
-      rrId: 3,
-      balance: Decimal.parse('140'), // 20 units of pure profit surplus
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 2,
-      meta: {},
-    );
+      final txbProfitable = TransactionsModel(
+        tid: 'B',
+        pid: 'A',
+        rid: 'A',
+        srAmount: Decimal.parse('120'),
+        srId: 2,
+        rrAmount: Decimal.parse('120'),
+        rrId: 3,
+        balance: Decimal.parse('140'), // 20 units of pure profit surplus
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 2,
+        meta: {},
+      );
 
-    final txcHeavyleaf = TransactionsModel(
-      tid: 'C',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('50'),
-      srId: 3, // Claims 50 units (Exceeds profit cushion by 30 units)
-      rrAmount: Decimal.parse('50'),
-      rrId: 4,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 3,
-      meta: {},
-    );
+      final txcHeavyleaf = TransactionsModel(
+        tid: 'C',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse('50'),
+        srId: 3, // Claims 50 units (Exceeds profit cushion by 30 units)
+        rrAmount: Decimal.parse('50'),
+        rrId: 4,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 3,
+        meta: {},
+      );
 
-    final txs = [txaRoot, txbProfitable, txcHeavyleaf];
-    final result = calc.totalCapitalUsed(txcHeavyleaf, txs: txs);
+      final txs = [txaRoot, txbProfitable, txcHeavyleaf];
+      final result = calc.totalCapitalUsed(txcHeavyleaf, txs: txs);
 
-    // =========================================================================
-    // MATHEMATICAL LOGIC BREAKDOWN
-    // =========================================================================
-    // 1. Profit Surplus = 140 (balance) - 120 (rrAmount) = 20
-    // 2. Child wants 50. Subtracting profit = 50 - 20 = 30 core units tracked.
-    // 3. Hop C -> B Pct = 30 / 120 (parent principal) = 0.25
-    // 4. Root Calculation = 120 (Root Principal) * 0.25 = 30
-    // =========================================================================
-    expect(result.toString(), Decimal.parse('30').toString());
-  });
+      // =========================================================================
+      // MATHEMATICAL LOGIC BREAKDOWN
+      // =========================================================================
+      // 1. Profit Surplus = 140 (balance) - 120 (rrAmount) = 20
+      // 2. Child wants 50. Subtracting profit = 50 - 20 = 30 core units tracked.
+      // 3. Hop C -> B Pct = 30 / 120 (parent principal) = 0.25
+      // 4. Root Calculation = 120 (Root Principal) * 0.25 = 30
+      // =========================================================================
+      expect(result.toString(), Decimal.parse('30').toString());
+    },
+  );
 
-  test('PROFIT TEST 4: Extreme scaling edge case (Big Number 30,000 -> Small Number 0.00033333)', () {
-    final calc = TransactionCalculation();
+  test(
+    'PROFIT TEST 4: Extreme scaling edge case (Big Number 30,000 -> Small Number 0.00033333)',
+    () {
+      final calc = TransactionCalculation();
 
-    // LEVEL 1: Root Node (Providing massive stablecoin principal)
-    final txaRoot = TransactionsModel(
-      tid: 'A',
-      pid: '0',
-      rid: '0',
-      srAmount: Decimal.parse('30000.00'), // $30,000 USD Initial Capital Pool
-      srId: 1, // USD Asset ID
-      rrAmount: Decimal.parse('30000.00'), // Mints $30,000 USD pool
-      rrId: 2,
-      balance: Decimal.parse('30000.00'),
-      status: TransactionStatus.active.index,
-      closable: true,
-      timestamp: 1,
-      meta: {},
-    );
+      // LEVEL 1: Root Node (Providing massive stablecoin principal)
+      final txaRoot = TransactionsModel(
+        tid: 'A',
+        pid: '0',
+        rid: '0',
+        srAmount: Decimal.parse('30000.00'), // $30,000 USD Initial Capital Pool
+        srId: 1, // USD Asset ID
+        rrAmount: Decimal.parse('30000.00'), // Mints $30,000 USD pool
+        rrId: 2,
+        balance: Decimal.parse('30000.00'),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: 1,
+        meta: {},
+      );
 
-    // LEVEL 2: Swapper Node ($30k USD swapped into an expensive asset like BTC)
-    // The base pool generated is exactly 0.50000000 BTC.
-    // Trading profit occurs! The pool balance grows from 0.5 BTC to 0.60000000 BTC (0.1 BTC profit surplus)
-    final txbProfitable = TransactionsModel(
-      tid: 'B',
-      pid: 'A',
-      rid: 'A',
-      srAmount: Decimal.parse('30000.00'), // Pulls the full $30,000 USD
-      srId: 2,
-      rrAmount: Decimal.parse('0.50000000'), // Base pool size: 0.5 BTC
-      rrId: 3, // BTC Asset ID
-      balance: Decimal.parse('0.60000000'), // Profitable trade: Grows to 0.6 BTC (0.1 BTC Profit Surplus)
-      status: TransactionStatus.active.index,
-      closable: false,
-      timestamp: 2,
-      meta: {},
-    );
+      // LEVEL 2: Swapper Node ($30k USD swapped into an expensive asset like BTC)
+      // The base pool generated is exactly 0.50000000 BTC.
+      // Trading profit occurs! The pool balance grows from 0.5 BTC to 0.60000000 BTC (0.1 BTC profit surplus)
+      final txbProfitable = TransactionsModel(
+        tid: 'B',
+        pid: 'A',
+        rid: 'A',
+        srAmount: Decimal.parse('30000.00'), // Pulls the full $30,000 USD
+        srId: 2,
+        rrAmount: Decimal.parse('0.50000000'), // Base pool size: 0.5 BTC
+        rrId: 3, // BTC Asset ID
+        balance: Decimal.parse(
+          '0.60000000',
+        ), // Profitable trade: Grows to 0.6 BTC (0.1 BTC Profit Surplus)
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: 2,
+        meta: {},
+      );
 
-    // =========================================================================
-    // CASE A: Child takes LESS than the micro-profit cushion (Fully inside profit)
-    // =========================================================================
-    final txcInsideprofitleaf = TransactionsModel(
-      tid: 'C_Inside',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('0.00033333'), // Micro-pull of 0.00033333 BTC
-      srId: 3,
-      rrAmount: Decimal.parse('100.00'),
-      rrId: 4,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 3,
-      meta: {},
-    );
+      // =========================================================================
+      // CASE A: Child takes LESS than the micro-profit cushion (Fully inside profit)
+      // =========================================================================
+      final txcInsideprofitleaf = TransactionsModel(
+        tid: 'C_Inside',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse('0.00033333'), // Micro-pull of 0.00033333 BTC
+        srId: 3,
+        rrAmount: Decimal.parse('100.00'),
+        rrId: 4,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 3,
+        meta: {},
+      );
 
-    // Execution A Math:
-    // Profit Surplus = 0.6 - 0.5 = 0.1 BTC profit cushion.
-    // Child requests 0.00033333 BTC.
-    // Since 0.00033333 <= 0.1, it's 100% covered by profit! Core capital used MUST be 0.
-    final resultInside = calc.totalCapitalUsed(txcInsideprofitleaf, txs: [txaRoot, txbProfitable, txcInsideprofitleaf]);
-    expect(resultInside.toString(), Decimal.parse('0').toString());
+      // Execution A Math:
+      // Profit Surplus = 0.6 - 0.5 = 0.1 BTC profit cushion.
+      // Child requests 0.00033333 BTC.
+      // Since 0.00033333 <= 0.1, it's 100% covered by profit! Core capital used MUST be 0.
+      final resultInside = calc.totalCapitalUsed(
+        txcInsideprofitleaf,
+        txs: [txaRoot, txbProfitable, txcInsideprofitleaf],
+      );
+      expect(resultInside.toString(), Decimal.parse('0').toString());
 
-    // =========================================================================
-    // CASE B: Child exceeds the micro-profit pool (Spills into original principal)
-    // =========================================================================
-    final txcSpilloverleaf = TransactionsModel(
-      tid: 'C_Spillover',
-      pid: 'B',
-      rid: 'A',
-      srAmount: Decimal.parse('0.15000000'), // Pulls 0.15 BTC (Exceeds the 0.1 BTC profit by 0.05 BTC)
-      srId: 3,
-      rrAmount: Decimal.parse('500.00'),
-      rrId: 5,
-      balance: Decimal.parse('0'),
-      status: TransactionStatus.finalized.index,
-      closable: false,
-      timestamp: 4,
-      meta: {},
-    );
+      // =========================================================================
+      // CASE B: Child exceeds the micro-profit pool (Spills into original principal)
+      // =========================================================================
+      final txcSpilloverleaf = TransactionsModel(
+        tid: 'C_Spillover',
+        pid: 'B',
+        rid: 'A',
+        srAmount: Decimal.parse(
+          '0.15000000',
+        ), // Pulls 0.15 BTC (Exceeds the 0.1 BTC profit by 0.05 BTC)
+        srId: 3,
+        rrAmount: Decimal.parse('500.00'),
+        rrId: 5,
+        balance: Decimal.parse('0'),
+        status: TransactionStatus.finalized.index,
+        closable: false,
+        timestamp: 4,
+        meta: {},
+      );
 
-    // Execution B Math:
-    // 1. Child fraction demanded (childPct)   = 0.15 / 0.5 = 0.30  (30% of base slot)
-    // 2. Parent profit buffer (profitPct)      = 0.10 / 0.5 = 0.20  (20% yield slot cushion)
-    // 3. Net Core Slot Impact (leafPct)        = 0.30 - 0.20 = 0.10 (10% core principal hit)
-    // 4. Hop up to Root Pct multiplier        = 30,000 / 30,000 = 1.0
-    // 5. Total Compounded Pipeline Pct        = 1.0 * 0.10 = 0.10
-    // 6. Absolute Root USD Capital Utilized   = $30,000 USD * 0.10 = $3,000 USD
-    final resultSpillover = calc.totalCapitalUsed(txcSpilloverleaf, txs: [txaRoot, txbProfitable, txcSpilloverleaf]);
-    expect(resultSpillover.toString(), Decimal.parse('3000').toString());
-  });
+      // Execution B Math:
+      // 1. Child fraction demanded (childPct)   = 0.15 / 0.5 = 0.30  (30% of base slot)
+      // 2. Parent profit buffer (profitPct)      = 0.10 / 0.5 = 0.20  (20% yield slot cushion)
+      // 3. Net Core Slot Impact (leafPct)        = 0.30 - 0.20 = 0.10 (10% core principal hit)
+      // 4. Hop up to Root Pct multiplier        = 30,000 / 30,000 = 1.0
+      // 5. Total Compounded Pipeline Pct        = 1.0 * 0.10 = 0.10
+      // 6. Absolute Root USD Capital Utilized   = $30,000 USD * 0.10 = $3,000 USD
+      final resultSpillover = calc.totalCapitalUsed(
+        txcSpilloverleaf,
+        txs: [txaRoot, txbProfitable, txcSpilloverleaf],
+      );
+      expect(resultSpillover.toString(), Decimal.parse('3000').toString());
+    },
+  );
 }
