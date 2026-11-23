@@ -94,17 +94,7 @@ abstract class TransactionsRulesBase {
   }
 
   void txCheckLeavesIsNotActive(int code, String message) {
-    final leaves = tx.isRoot ? allRootLeaves : allLeaves;
-    final allInactive =
-        leaves.isEmpty ||
-        leaves.every(
-          (leaf) =>
-              leaf.statusEnum == TransactionStatus.closed ||
-              leaf.statusEnum == TransactionStatus.inactive ||
-              leaf.statusEnum == TransactionStatus.finalized,
-        );
-
-    if (!allInactive) {
+    if (txRepo.hasActiveDescendant(tx)) {
       throw ValidationException(code, "$mode some leaves are still active (tid=${tx.tid})", message, silent: silent);
     }
   }

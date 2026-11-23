@@ -698,6 +698,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         helperText: "",
         controller: resultController,
         disposeController: false,
+        enabled: !_isProcessing,
         onChanged: (value) {
           _updateRate(value);
           setState(() {});

@@ -5,6 +5,8 @@ import '../../core/mixins/repositories/id_generator.dart';
 import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
 import '../../core/math.dart';
+import '../../ipc/status/op.dart';
+import 'index.dart';
 import 'rules/close.dart';
 import 'rules/create.dart';
 import 'rules/delete.dart';
@@ -27,64 +29,47 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
   final bool debugLogs = true;
 
-  Map<String, TransactionsModel>? _indexByTid;
-  Map<String, List<TransactionsModel>>? _indexByPid;
-  Map<String, Map<String, TransactionsModel>>? _indexByRid;
+  late final _cache = TransactionsIndex(() => extract());
 
-  void resetIndexes() {
-    _indexByTid = null;
-    _indexByPid = null;
-    _indexByRid = null;
-  }
+  void resetIndexes() => _cache.invalidate();
 
-  void createIndexes() {
-    final indexed = <String, TransactionsModel>{};
-    final roots = <String, Map<String, TransactionsModel>>{};
-    final children = <String, List<TransactionsModel>>{};
-
-    for (final tx in extract()) {
-      indexed[tx.tid] = tx;
-      (roots[tx.isRoot ? tx.tid : tx.rid] ??= <String, TransactionsModel>{})[tx.tid] = tx;
-      (children[tx.pid] ??= <TransactionsModel>[]).add(tx);
-    }
-
-    _indexByTid = indexed;
-    _indexByPid = children;
-    _indexByRid = roots;
-
-    logln("Generating tx indexes", "INDEXING");
-  }
-
-  @override
-  void onAction() {
-    resetIndexes();
-  }
+  Map<String, TransactionsModel> getIndexedMap() => _cache.byTid;
+  Map<String, List<TransactionsModel>> getIndexedParentMap() => _cache.byPid;
+  Map<String, Map<String, TransactionsModel>> getIndexedRootMap() => _cache.byRid;
 
   @override
   void receive(event) {
     super.receive(event);
-    resetIndexes();
-  }
 
-  Map<String, TransactionsModel> getIndexedMap() {
-    if (_indexByTid == null) {
-      createIndexes();
+    if (event.action != boxName) {
+      return;
     }
-    return _indexByTid!;
-  }
 
-  Map<String, List<TransactionsModel>> getIndexedParentMap() {
-    if (_indexByPid == null) {
-      createIndexes();
-    }
-    return _indexByPid!;
-  }
+    final opName = IpcStatusOp.getName(event.actionCode);
 
-  Map<String, Map<String, TransactionsModel>> getIndexedRootMap() {
-    if (_indexByRid == null) {
-      createIndexes();
+    switch (opName) {
+      case "put":
+        final data = event.payload as TransactionsModel;
+        _cache.update(data);
+        break;
+
+      case "delete":
+        _cache.removeByTid(event.key);
+        break;
+
+      case "clear":
+        _cache.invalidate();
+        break;
+
+      case "multiPut":
+      case "replace":
+        _cache.invalidate();
+        _cache.generate();
+        break;
+
+      default:
+        break;
     }
-    return _indexByRid!;
   }
 
   @override
@@ -113,7 +98,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (ntx.isRoot) {
       await box.put(ntx.tid, ntx);
-      resetIndexes();
+      _cache.update(ntx);
       return;
     }
 
@@ -134,7 +119,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
       logln("Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}", "ADD");
       await box.put(ntx.tid, ntx);
-      resetIndexes();
+      _cache.update(ntx);
 
       // Force to revalidate!
       await update(nptx);
@@ -166,7 +151,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (ntx.isRoot) {
       await box.put(ntx.tid, ntx);
-      resetIndexes();
+      _cache.update(ntx);
       return;
     }
 
@@ -177,7 +162,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       TransactionsModel? otx = box.get(ntx.tid)!;
 
       await box.put(ntx.tid, ntx);
-      resetIndexes();
+      _cache.update(ntx);
 
       if (otx.srAmount != tx.srAmount && ptx.rrId == otx.srId) {
         Decimal balance = ptx.balance;
@@ -213,24 +198,49 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       );
     }
 
-    // This is to preseve tree sanity!
-    final all = extract();
-    for (final ttx in all) {
-      if (tx.tid == ttx.rid || tx.tid == ttx.pid) {
-        if (debugLogs) {
-          logln(
-            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
-            "DELETE",
-          );
-        }
-
-        await box.delete(ttx.tid);
-        resetIndexes();
+    // Collect only descendants of tx via the indexed tree (instead of scanning the whole box)
+    final descendants = collectAllLeaves(tx);
+    for (final ttx in descendants) {
+      if (debugLogs) {
+        logln(
+          "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
+          "DELETE",
+        );
       }
+
+      await box.delete(ttx.tid);
+      _cache.removeByTid(ttx.tid);
     }
 
     await box.delete(tx.tid);
-    resetIndexes();
+    _cache.removeByTid(tx.tid);
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    await super.delete(id);
+    _cache.removeByTid(id);
+  }
+
+  @override
+  Future<int> clear() async {
+    final count = await super.clear();
+    _cache.invalidate();
+    return count;
+  }
+
+  @override
+  Future<void> addAll(List<TransactionsModel> values) async {
+    await super.addAll(values);
+    _cache.invalidate();
+    _cache.generate();
+  }
+
+  @override
+  Future<void> replace(List<TransactionsModel> values) async {
+    await super.replace(values);
+    _cache.invalidate();
+    _cache.generate();
   }
 
   Future<void> close(TransactionsModel tx) async {
@@ -285,8 +295,10 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     await box.put(closedTx.tid, closedTx);
+    _cache.update(closedTx);
+
     await box.put(updatedTarget.tid, updatedTarget);
-    resetIndexes();
+    _cache.update(updatedTarget);
   }
 
   Future<void> refund(TransactionsModel tx) async {
@@ -322,8 +334,10 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     await box.delete(tx.tid);
+    _cache.remove(tx);
+
     await box.put(utx.tid, utx);
-    resetIndexes();
+    _cache.update(utx);
   }
 
   Future<void> finalize(TransactionsModel tx) async {
@@ -341,7 +355,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     await box.put(tx.tid, tx);
-    resetIndexes();
+    _cache.update(tx);
   }
 
   @override
@@ -352,7 +366,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     for (final tx in txs) {
       await box.put(tx.tid, tx);
     }
-    resetIndexes();
+    _cache.invalidate();
+    _cache.generate();
   }
 
   List<TransactionsModel> getLeaf(TransactionsModel tx) {
@@ -484,9 +499,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   List<TransactionsModel> collectInBetweenLeaves(TransactionsModel start, TransactionsModel end) {
-    final all = extract();
-
-    final Map<String, TransactionsModel> lookup = {for (final tx in all) tx.tid: tx};
+    final lookup = getIndexedMap();
 
     final ascendants = <TransactionsModel>[];
     TransactionsModel? current = start;
@@ -502,6 +515,40 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     return ascendants;
+  }
+
+  bool hasActiveDescendant(TransactionsModel parent) {
+    if (parent.isRoot) {
+      final tree = getIndexedRootMap()[parent.tid]?.values;
+      if (tree == null) return false;
+      for (final node in tree) {
+        if (node.tid != parent.tid &&
+            node.statusEnum != TransactionStatus.closed &&
+            node.statusEnum != TransactionStatus.inactive &&
+            node.statusEnum != TransactionStatus.finalized) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    final childrenMap = getIndexedParentMap();
+    bool dfs(String tid) {
+      final children = childrenMap[tid];
+      if (children == null || children.isEmpty) return false;
+
+      for (final child in children) {
+        if (child.statusEnum != TransactionStatus.closed &&
+            child.statusEnum != TransactionStatus.inactive &&
+            child.statusEnum != TransactionStatus.finalized) {
+          return true;
+        }
+        if (dfs(child.tid)) return true;
+      }
+      return false;
+    }
+
+    return dfs(parent.tid);
   }
 
   bool canAdd(TransactionsModel tx, {bool? silent}) {
