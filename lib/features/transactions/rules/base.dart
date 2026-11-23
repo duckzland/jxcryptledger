@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 
+import '../../../app/exceptions.dart';
 import '../../../core/math.dart';
 import '../model.dart';
 import '../repository.dart';
-import '../../../app/exceptions.dart';
 
 abstract class TransactionsRulesBase {
   final TransactionsModel tx;
