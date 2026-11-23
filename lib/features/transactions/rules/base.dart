@@ -22,9 +22,10 @@ abstract class TransactionsRulesBase {
   List<TransactionsModel>? _allLeavesCache;
   List<TransactionsModel>? _allRootLeavesCache;
 
-  TransactionsModel? get origTx => _otxCache ??= txRepo.get(tx.tid);
-  TransactionsModel? get parentTx => _ptxCache ??= txRepo.get(tx.pid);
-  TransactionsModel? get rootTx => _rtxCache ??= txRepo.get(tx.rid);
+  TransactionsModel? get origTx => _otxCache ??= (txRepo.getIndexedMap()[tx.tid] ?? txRepo.get(tx.tid));
+  TransactionsModel? get parentTx => _ptxCache ??= (txRepo.getIndexedMap()[tx.pid] ?? txRepo.get(tx.pid));
+  TransactionsModel? get rootTx => _rtxCache ??= (txRepo.getIndexedMap()[tx.rid] ?? txRepo.get(tx.rid));
+
   List<TransactionsModel> get terminalLeaves => _terminalLeavesCache ??= txRepo.collectTerminalLeaves(tx);
   TransactionsModel? get targetParentCloser => _targetCloserCache ??= txRepo.getCloseTargetParent(tx);
   List<TransactionsModel> get leafChildren => _childrenCache ??= txRepo.getLeaf(tx);
@@ -94,7 +95,17 @@ abstract class TransactionsRulesBase {
   }
 
   void txCheckLeavesIsNotActive(int code, String message) {
-    if (txRepo.hasActiveDescendant(tx)) {
+    final leaves = tx.isRoot ? allRootLeaves : allLeaves;
+    final allInactive =
+        leaves.isEmpty ||
+        leaves.every(
+          (leaf) =>
+              leaf.statusEnum == TransactionStatus.closed ||
+              leaf.statusEnum == TransactionStatus.inactive ||
+              leaf.statusEnum == TransactionStatus.finalized,
+        );
+
+    if (!allInactive) {
       throw ValidationException(code, "$mode some leaves are still active (tid=${tx.tid})", message, silent: silent);
     }
   }

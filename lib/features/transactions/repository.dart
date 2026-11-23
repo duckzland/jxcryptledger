@@ -461,23 +461,24 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
   List<TransactionsModel> collectDirectLeaves(TransactionsModel parent) {
     final childrenMap = getIndexedParentMap();
+    final leaves = <TransactionsModel>[];
 
-    List<TransactionsModel> dfs(TransactionsModel node) {
-      final children = childrenMap[node.tid] ?? [];
-
-      if (children.isEmpty) {
-        return (node.tid == parent.tid) ? [] : [node];
+    void dfs(TransactionsModel node) {
+      final children = childrenMap[node.tid];
+      if (children == null || children.isEmpty) {
+        if (node.tid != parent.tid) {
+          leaves.add(node);
+        }
+        return;
       }
 
-      final leaves = <TransactionsModel>[];
       for (final child in children) {
-        leaves.addAll(dfs(child));
+        dfs(child);
       }
-
-      return leaves;
     }
 
-    return dfs(parent);
+    dfs(parent);
+    return leaves;
   }
 
   List<TransactionsModel> collectAllLeaves(TransactionsModel parent) {
@@ -515,40 +516,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     return ascendants;
-  }
-
-  bool hasActiveDescendant(TransactionsModel parent) {
-    if (parent.isRoot) {
-      final tree = getIndexedRootMap()[parent.tid]?.values;
-      if (tree == null) return false;
-      for (final node in tree) {
-        if (node.tid != parent.tid &&
-            node.statusEnum != TransactionStatus.closed &&
-            node.statusEnum != TransactionStatus.inactive &&
-            node.statusEnum != TransactionStatus.finalized) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    final childrenMap = getIndexedParentMap();
-    bool dfs(String tid) {
-      final children = childrenMap[tid];
-      if (children == null || children.isEmpty) return false;
-
-      for (final child in children) {
-        if (child.statusEnum != TransactionStatus.closed &&
-            child.statusEnum != TransactionStatus.inactive &&
-            child.statusEnum != TransactionStatus.finalized) {
-          return true;
-        }
-        if (dfs(child.tid)) return true;
-      }
-      return false;
-    }
-
-    return dfs(parent.tid);
   }
 
   bool canAdd(TransactionsModel tx, {bool? silent}) {
