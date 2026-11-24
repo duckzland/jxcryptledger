@@ -218,164 +218,141 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
   @override
   Widget build(BuildContext context) {
+    if (_isExiting) {
+      return const SizedBox.shrink();
+    }
+
     return Dialog(
-      insetPadding: EdgeInsets.all(24),
-      constraints: BoxConstraints(maxWidth: 1200),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: _isExiting
-              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 16, children: [Text(completedMessage)])
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 20,
-                  children: [
-                    if (txs.isNotEmpty) Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                    if (txs.isNotEmpty) tableBuild(),
+      insetPadding: const EdgeInsets.all(24),
+      constraints: const BoxConstraints(maxWidth: 1200),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 20,
+                children: [
+                  if (txs.isNotEmpty) Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                  if (txs.isNotEmpty) tableBuild(),
+                  if (txs.isEmpty) Text(emptyMessage, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
-                    if (txs.isEmpty) Text(emptyMessage, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-
-                    Padding(
-                      padding: EdgeInsets.only(top: 15.0, bottom: 5),
-                      child: Wrap(
-                        direction: Axis.horizontal,
-                        runSpacing: 20,
-                        spacing: 10,
-                        runAlignment: WrapAlignment.center,
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          WidgetsButtonsAction(
-                            label: 'Cancel',
-                            onPressed: (_) => Navigator.pop(context),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                    child: Wrap(
+                      direction: Axis.horizontal,
+                      runSpacing: 20,
+                      spacing: 10,
+                      runAlignment: WrapAlignment.center,
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        WidgetsButtonsAction(
+                          label: 'Cancel',
+                          onPressed: (_) {
+                            setState(() => _isExiting = true);
+                            widget.onSave?.call(null);
+                          },
+                          evaluator: (s) {
+                            _isProcessing ? s.disable() : s.normal();
+                          },
+                        ),
+                        if (txs.isNotEmpty)
+                          WidgetsDialogsAlert(
+                            label: buttonLabel,
+                            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                            filledMode: true,
+                            dialogTitle: confirmTitle,
+                            dialogMessage: confirmMessage,
+                            dialogCancelLabel: "Cancel",
+                            dialogConfirmLabel: buttonLabel,
+                            showMessage: false,
+                            initialState: buttonActionState,
+                            tooltip: tooltip,
                             evaluator: (s) {
-                              _isProcessing ? s.disable() : s.normal();
+                              if (_isProcessing) {
+                                s.progress();
+                                return;
+                              }
+                              if (selectableHasSelectedRows()) {
+                                switch (widget.mode) {
+                                  case TransactionsBatchActionMode.close:
+                                  case TransactionsBatchActionMode.finalize:
+                                    s.warning();
+                                    break;
+                                  case TransactionsBatchActionMode.delete:
+                                  case TransactionsBatchActionMode.refund:
+                                    s.error();
+                                    break;
+                                }
+                              } else {
+                                s.disable();
+                              }
                             },
+                            actionCompleteCallback: _handleSave,
                           ),
-                          if (txs.isNotEmpty)
-                            WidgetsDialogsAlert(
-                              label: buttonLabel,
-                              padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                              filledMode: true,
-                              dialogTitle: confirmTitle,
-                              dialogMessage: confirmMessage,
-                              dialogCancelLabel: "Cancel",
-                              dialogConfirmLabel: buttonLabel,
-                              showMessage: false,
-                              initialState: buttonActionState,
-                              tooltip: tooltip,
-                              evaluator: (s) {
-                                if (_isProcessing) {
-                                  s.progress();
-                                  return;
-                                }
-                                if (selectableHasSelectedRows()) {
-                                  switch (widget.mode) {
-                                    case TransactionsBatchActionMode.close:
-                                      s.warning();
-                                      break;
-                                    case TransactionsBatchActionMode.finalize:
-                                      s.warning();
-                                      break;
-                                    case TransactionsBatchActionMode.delete:
-                                      s.error();
-                                      break;
-                                    case TransactionsBatchActionMode.refund:
-                                      s.error();
-                                      break;
-                                  }
-                                } else {
-                                  s.disable();
-                                }
-                              },
-                              actionCompleteCallback: _handleSave,
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          if (_isProcessing)
+            Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black.withValues(alpha: 0.25),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  void _handleSave() async {
-    final stxs = [...txs];
+  Future<void> _handleSave() async {
+    final selectedIds = selectableGetSelectedRows();
+    final selectedTxs = txs.where((tx) => selectedIds.contains(tx.uuid)).toList();
+    if (selectedTxs.isEmpty) return;
 
-    final selectedTxIds = selectableGetSelectedRows();
-    stxs.retainWhere((tx) => selectedTxIds.contains(tx.uuid));
+    setState(() => _isProcessing = true);
 
-    if (stxs.isEmpty) return;
+    final successUuids = switch (widget.mode) {
+      TransactionsBatchActionMode.close => await _txController.closeAll(selectedTxs),
+      TransactionsBatchActionMode.finalize => await _txController.finalizeAll(selectedTxs),
+      TransactionsBatchActionMode.delete => await _txController.removeAll(selectedTxs),
+      TransactionsBatchActionMode.refund => await _txController.refundAll(selectedTxs),
+    };
+
+    final successSet = successUuids.toSet();
+    txs.removeWhere((tx) => successSet.contains(tx.uuid));
+    for (final uuid in successUuids) {
+      selectableSetSelected(uuid, false);
+    }
 
     setState(() {
-      _isProcessing = true;
+      _isExiting = txs.isEmpty;
+      _isProcessing = false;
+      tablePopulateData();
     });
 
-    bool completed = true;
+    if (successUuids.length == selectedTxs.length) {
+      txs.isNotEmpty ? widgetsNotifySuccess(successMessage) : widget.onSave?.call(null);
+    } else {
+      final total = selectedTxs.length;
+      final succeeded = successUuids.length;
+      final failed = total - succeeded;
+      final action = widget.mode.name;
 
-    List<String> success;
-
-    switch (widget.mode) {
-      case TransactionsBatchActionMode.close:
-        success = await _txController.closeAll(stxs);
-        break;
-      case TransactionsBatchActionMode.finalize:
-        success = await _txController.finalizeAll(stxs);
-        break;
-      case TransactionsBatchActionMode.delete:
-        success = await _txController.removeAll(stxs);
-        break;
-      case TransactionsBatchActionMode.refund:
-        success = await _txController.refundAll(stxs);
-        break;
-    }
-
-    final txByUuid = {for (final tx in stxs) tx.uuid: tx};
-
-    for (final uuid in success) {
-      final tx = txByUuid[uuid];
-      if (tx != null) {
-        txs.remove(tx);
-        selectableSetSelected(uuid, false);
-      }
-    }
-
-    if (success.length < stxs.length) {
-      completed = false;
-      final totalCount = stxs.length;
-      final successCount = success.length;
-      final failedCount = totalCount - successCount;
-      final actionName = widget.mode.name;
-
-      final devMessage = 'Batch $actionName partially or fully failed: $failedCount of $totalCount failed ($successCount succeeded).';
-
-      final uxMessage = successCount == 0
-          ? 'Unable to $actionName the selected transactions. Please check their status and try again.'
-          : '$failedCount of $totalCount transactions could not be ${actionName}d. Remaining items are still selected.';
+      final devMessage = 'Batch $action partially or fully failed: $failed of $total failed ($succeeded succeeded).';
+      final uxMessage = succeeded == 0
+          ? 'Unable to $action the selected transactions. Please check their status and try again.'
+          : '$failed of $total transactions could not be ${action}d. Remaining items are still selected.';
 
       widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
-    }
-
-    tablePopulateData();
-
-    if (completed) {
-      if (txs.isEmpty) {
-        if (widget.onSave != null) {
-          widget.onSave?.call(null);
-        }
-        setState(() {
-          _isExiting = true;
-        });
-      } else {
-        widgetsNotifySuccess(successMessage);
-      }
-    }
-
-    if (txs.isNotEmpty) {
-      setState(() {
-        _isProcessing = false;
-      });
     }
   }
 }

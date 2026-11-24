@@ -284,130 +284,147 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   @override
   Widget build(BuildContext context) {
+    if (_isExiting) {
+      return const SizedBox.shrink();
+    }
+
     return Dialog(
-      insetPadding: EdgeInsets.all(24),
-      constraints: BoxConstraints(maxWidth: 1200),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: _isExiting
-              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: 16, children: [Text("Trade completed")])
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 16,
-                  children: [
-                    if (txs.isNotEmpty)
-                      Row(
-                        spacing: 6,
-                        children: [
-                          Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                          Spacer(),
-                          WidgetsButtonsAction(
-                            icon: Icons.account_balance_wallet_outlined,
-                            iconSize: 14,
-                            padding: EdgeInsets.all(10),
-                            minimumSize: Size(40, 40),
-                            tooltip: _useBalanceMode ? "Show rate mode" : "Show custom balance",
-                            onPressed: (s) {
-                              setState(() {
-                                _useBalanceMode = !_useBalanceMode;
-                                if (_useBalanceMode && fromController.text.isEmpty) {
-                                  fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
-                                  _fromAmount = _sourceAmount;
-                                }
-                              });
-
-                              if (_useBalanceMode) {
-                                s.action();
-                              } else {
-                                s.normal();
+      insetPadding: const EdgeInsets.all(24),
+      constraints: const BoxConstraints(maxWidth: 1200),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 16,
+                children: [
+                  if (txs.isNotEmpty)
+                    Row(
+                      spacing: 6,
+                      children: [
+                        const Text("Trading Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                        const Spacer(),
+                        WidgetsButtonsAction(
+                          icon: Icons.account_balance_wallet_outlined,
+                          iconSize: 14,
+                          padding: const EdgeInsets.all(10),
+                          minimumSize: const Size(40, 40),
+                          tooltip: _useBalanceMode ? "Show rate mode" : "Show custom balance",
+                          onPressed: (s) {
+                            setState(() {
+                              _useBalanceMode = !_useBalanceMode;
+                              if (_useBalanceMode && fromController.text.isEmpty) {
+                                fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
+                                _fromAmount = _sourceAmount;
                               }
-                            },
-                            evaluator: (s) => _isProcessing
-                                ? s.disable()
-                                : _useBalanceMode
-                                ? s.action()
-                                : s.normal(),
-                          ),
-                          WidgetsButtonsAction(
-                            icon: Icons.note_add,
-                            iconSize: 14,
-                            padding: EdgeInsets.all(10),
-                            minimumSize: Size(40, 40),
-                            tooltip: _showNotes ? "Hide notes" : "Show Notes",
-                            onPressed: (s) {
-                              setState(() {
-                                _showNotes = !_showNotes;
-                              });
+                            });
 
-                              if (_showNotes) {
-                                s.action();
-                              } else {
-                                s.normal();
-                              }
-                            },
-                            evaluator: (s) => _isProcessing
-                                ? s.disable()
-                                : _showNotes
-                                ? s.action()
-                                : s.normal(),
-                          ),
-                        ],
-                      ),
-                    if (txs.isNotEmpty) _buildForm(),
-                    if (txs.isNotEmpty) Column(spacing: 4, children: [tableBuild(), _buildTotal()]),
-                    if (txs.isEmpty)
-                      Center(
-                        child: Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                      ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 15.0, bottom: 5),
-                      child: Wrap(
-                        direction: Axis.horizontal,
-                        runSpacing: 20,
-                        spacing: 10,
-                        runAlignment: WrapAlignment.center,
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          WidgetsButtonsAction(
-                            label: (txs.isNotEmpty) ? 'Cancel' : 'Close',
-                            onPressed: (_) => Navigator.pop(context),
-                            evaluator: (s) {
-                              _isProcessing ? s.disable() : s.normal();
-                            },
-                          ),
-                          if (txs.isNotEmpty)
-                            WidgetsDialogsAlert(
-                              label: "Trade",
-                              padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                              filledMode: true,
-                              dialogTitle: "Trade Confirmation",
-                              dialogMessage: "This action cannot be undone.",
-                              dialogCancelLabel: "Cancel",
-                              dialogConfirmLabel: "Trade",
-                              showMessage: false,
-                              initialState: WidgetsButtonActionState.action,
-                              tooltip: "Trade all selected transactions",
-                              evaluator: (s) {
-                                if (_isProcessing) {
-                                  s.progress();
-                                  return;
-                                }
-                                if (selectableHasSelectedRows()) {
-                                  s.action();
-                                } else {
-                                  s.disable();
-                                }
-                              },
-                              actionCompleteCallback: _handleSave,
-                            ),
-                        ],
-                      ),
+                            if (_useBalanceMode) {
+                              s.action();
+                            } else {
+                              s.normal();
+                            }
+                          },
+                          evaluator: (s) => _isProcessing
+                              ? s.disable()
+                              : _useBalanceMode
+                              ? s.action()
+                              : s.normal(),
+                        ),
+                        WidgetsButtonsAction(
+                          icon: Icons.note_add,
+                          iconSize: 14,
+                          padding: const EdgeInsets.all(10),
+                          minimumSize: const Size(40, 40),
+                          tooltip: _showNotes ? "Hide notes" : "Show Notes",
+                          onPressed: (s) {
+                            setState(() {
+                              _showNotes = !_showNotes;
+                            });
+
+                            if (_showNotes) {
+                              s.action();
+                            } else {
+                              s.normal();
+                            }
+                          },
+                          evaluator: (s) => _isProcessing
+                              ? s.disable()
+                              : _showNotes
+                              ? s.action()
+                              : s.normal(),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-        ),
+                  if (txs.isNotEmpty) _buildForm(),
+                  if (txs.isNotEmpty) Column(spacing: 4, children: [tableBuild(), _buildTotal()]),
+                  if (txs.isEmpty)
+                    const Center(
+                      child: Text("No transactions to trade", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                    child: Wrap(
+                      direction: Axis.horizontal,
+                      runSpacing: 20,
+                      spacing: 10,
+                      runAlignment: WrapAlignment.center,
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        WidgetsButtonsAction(
+                          label: txs.isNotEmpty ? 'Cancel' : 'Close',
+                          onPressed: (_) {
+                            setState(() => _isExiting = true);
+                            widget.onSave?.call(null);
+                          },
+                          evaluator: (s) {
+                            _isProcessing ? s.disable() : s.normal();
+                          },
+                        ),
+                        if (txs.isNotEmpty)
+                          WidgetsDialogsAlert(
+                            label: "Trade",
+                            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                            filledMode: true,
+                            dialogTitle: "Trade Confirmation",
+                            dialogMessage: "This action cannot be undone.",
+                            dialogCancelLabel: "Cancel",
+                            dialogConfirmLabel: "Trade",
+                            showMessage: false,
+                            initialState: WidgetsButtonActionState.action,
+                            tooltip: "Trade all selected transactions",
+                            evaluator: (s) {
+                              if (_isProcessing) {
+                                s.progress();
+                                return;
+                              }
+                              if (selectableHasSelectedRows()) {
+                                s.action();
+                              } else {
+                                s.disable();
+                              }
+                            },
+                            actionCompleteCallback: _handleSave,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isProcessing)
+            Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black.withValues(alpha: 0.25),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -120,8 +120,65 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
         return;
       }
 
-      final json = await file.readAsString();
-      await widget.onImport(json);
+      NavigatorState? navigator;
+      void findNavigator(Element element) {
+        if (navigator != null) return;
+        if (element is StatefulElement && element.state is NavigatorState) {
+          navigator = element.state as NavigatorState;
+          return;
+        }
+        element.visitChildren(findNavigator);
+      }
+
+      final root = WidgetsBinding.instance.rootElement;
+      if (root != null) findNavigator(root);
+
+      final nav = navigator;
+      DialogRoute<void>? loaderRoute;
+
+      if (nav != null && nav.mounted) {
+        loaderRoute = DialogRoute<void>(
+          context: nav.context,
+          barrierDismissible: false,
+          builder: (dialogContext) => PopScope(
+            canPop: false,
+            child: Center(
+              child: Material(
+                elevation: 6,
+                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(dialogContext).colorScheme.surface,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 16,
+                    children: [
+                      CircularProgressIndicator(),
+                      Text("Importing data...", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        nav.push(loaderRoute);
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+
+      try {
+        await Future.wait([
+          () async {
+            final json = await file.readAsString();
+            await widget.onImport(json);
+          }(),
+          Future.delayed(const Duration(milliseconds: 700)),
+        ]);
+      } finally {
+        if (nav != null && loaderRoute != null && loaderRoute.isActive) {
+          nav.removeRoute(loaderRoute);
+        }
+      }
 
       widgetsNotifySuccess("Import completed successfully.");
       widgetsNotifyBroadcast("success", "Data imported successfully.");

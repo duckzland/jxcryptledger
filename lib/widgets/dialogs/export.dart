@@ -114,28 +114,100 @@ class WidgetsDialogsExport extends StatefulWidget {
 }
 
 class _WidgetsDialogsExportState extends State<WidgetsDialogsExport> {
-  void _selectAndExport() async {
+  Future<void> _selectAndExport() async {
+    NavigatorState? navigator;
+    void findNavigator(Element element) {
+      if (navigator != null) return;
+      if (element is StatefulElement && element.state is NavigatorState) {
+        navigator = element.state as NavigatorState;
+        return;
+      }
+      element.visitChildren(findNavigator);
+    }
+
+    final root = WidgetsBinding.instance.rootElement;
+    if (root != null) findNavigator(root);
+
+    final nav = navigator;
+    DialogRoute<void>? loaderRoute;
+
+    void showLoader() {
+      if (nav == null || !nav.mounted || (loaderRoute?.isActive ?? false)) return;
+      loaderRoute = DialogRoute<void>(
+        context: nav.context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: Center(
+            child: Material(
+              elevation: 6,
+              borderRadius: BorderRadius.circular(12),
+              color: Theme.of(dialogContext).colorScheme.surface,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 16,
+                  children: [
+                    CircularProgressIndicator(),
+                    Text("Exporting data...", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      nav.push(loaderRoute!);
+    }
+
+    void hideLoader() {
+      if (nav != null && loaderRoute != null && loaderRoute!.isActive) {
+        nav.removeRoute(loaderRoute!);
+      }
+    }
+
     try {
-      final json = await widget.onExport();
+      showLoader();
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      late final String json;
+      try {
+        await Future.wait([
+          () async {
+            json = await widget.onExport();
+          }(),
+          Future.delayed(const Duration(milliseconds: 700)),
+        ]);
+      } finally {
+        hideLoader();
+      }
+
       if (json.isEmpty) {
         widgetsNotifyError("Failed to export data.");
         return;
       }
 
       final suggestedName = "${widget.suggestedPrefix}${DateTime.now().millisecondsSinceEpoch}.json";
-
       final saveLocation = await getSaveLocation(suggestedName: suggestedName, confirmButtonText: "Save");
 
       if (saveLocation == null || saveLocation.path.isEmpty) {
-        // widgetsNotifyError("Export cancelled.");
         return;
       }
 
-      final file = File(saveLocation.path);
-      await file.writeAsString(json);
+      showLoader();
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      try {
+        final file = File(saveLocation.path);
+        await Future.wait([file.writeAsString(json), Future.delayed(const Duration(milliseconds: 500))]);
+      } finally {
+        hideLoader();
+      }
 
       widgetsNotifySuccess("Export completed successfully.");
     } catch (e) {
+      hideLoader();
       logln("Failed to save export file: $e", "EXPORT");
       widgetsNotifyError("Failed to export data.");
     }
