@@ -33,6 +33,9 @@ class _WidgetsTableVirtualizedMultipleState<T> extends WidgetsTableVirtualizedBa
 
   @override
   (int, int) computeRawRange(ScrollPosition pos) {
+    if (!pos.hasPixels || !pos.hasViewportDimension) {
+      return (0, 0);
+    }
     final top = pos.pixels - widget.positionTop - (widget.headerHeight + 12);
     final rawStart = (top / widget.rowHeight).floor();
     final rawEnd = ((top + pos.viewportDimension) / widget.rowHeight).ceil();

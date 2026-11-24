@@ -163,7 +163,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
           ),
         );
         nav.push(loaderRoute);
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future.delayed(const Duration(milliseconds: 100));
       }
 
       try {
@@ -172,7 +172,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
             final json = await file.readAsString();
             await widget.onImport(json);
           }(),
-          Future.delayed(const Duration(milliseconds: 700)),
+          Future.delayed(const Duration(milliseconds: 100)),
         ]);
       } finally {
         if (nav != null && loaderRoute != null && loaderRoute.isActive) {
