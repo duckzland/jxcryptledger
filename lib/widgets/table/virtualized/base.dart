@@ -43,9 +43,8 @@ abstract class WidgetsTableVirtualizedBaseState<T, W extends WidgetsTableVirtual
   double _scrollPosition = 0.0;
 
   int get _viewportRows {
-    final height = widget.controller.hasClients
-        ? widget.controller.position.viewportDimension
-        : widget.rowHeight * widget.data.length.clamp(1, 40);
+    final pos = widget.controller.hasClients ? widget.controller.position : null;
+    final height = (pos != null && pos.hasViewportDimension) ? pos.viewportDimension : widget.rowHeight * widget.data.length.clamp(1, 40);
     return (height / widget.rowHeight).ceil().clamp(1, 200);
   }
 

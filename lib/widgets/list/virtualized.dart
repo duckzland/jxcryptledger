@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 class WidgetsListVirtualized extends StatefulWidget {
   final ScrollController controller;
@@ -22,6 +21,8 @@ class WidgetsListVirtualized extends StatefulWidget {
 }
 
 class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
+  double _width = 0.0;
+  double _height = 0.0;
   List<double> _tops = const [];
   List<double> _heights = const [];
   double _totalHeight = 0.0;
@@ -30,13 +31,18 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
   @override
   void didUpdateWidget(covariant WidgetsListVirtualized oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.itemCount != widget.itemCount ||
+
+    double th = 0.0;
+    for (int i = 0; i < widget.itemCount; i++) {
+      th += widget.itemHeightBuilder(i, _width);
+    }
+
+    if (th != _totalHeight ||
+        oldWidget.itemCount != widget.itemCount ||
         oldWidget.separatorHeight != widget.separatorHeight ||
         oldWidget.itemHeightBuilder != widget.itemHeightBuilder) {
       _cachedKey = null;
-      _tops = const [];
-      _heights = const [];
-      _totalHeight = 0.0;
+      _ensureLayout(_width, _height);
     }
   }
 
@@ -80,58 +86,51 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = constraints.maxHeight;
+        _width = constraints.maxWidth;
+        _height = constraints.maxHeight;
 
-        _ensureLayout(width, height);
+        _ensureLayout(_width, _height);
 
-        final maxScroll = (_totalHeight - height).clamp(0.0, double.infinity);
+        if (widget.controller.hasClients) {
+          final offset = widget.controller.position;
+          final maxHeight = (_totalHeight - _height).clamp(0.0, double.infinity);
 
-        return Scrollable(
+          offset.applyViewportDimension(_height);
+          offset.applyContentDimensions(0.0, maxHeight);
+
+          if (offset.hasPixels && offset.pixels > maxHeight) {
+            offset.correctBy(maxHeight - offset.pixels);
+            offset.notifyListeners();
+          }
+        }
+
+        return SingleChildScrollView(
           controller: widget.controller,
-          axisDirection: AxisDirection.down,
-          viewportBuilder: (context, ViewportOffset offset) {
-            offset.applyViewportDimension(height);
-            offset.applyContentDimensions(0.0, maxScroll);
+          child: SizedBox(
+            height: _totalHeight,
+            child: ListenableBuilder(
+              listenable: widget.controller,
+              builder: (context, _) {
+                final scrollPx = widget.controller.hasClients ? widget.controller.offset : 0.0;
+                final start = _firstVisibleIndex(scrollPx);
+                final children = <Widget>[];
 
-            if (offset.hasPixels && offset.pixels > maxScroll) {
-              offset.correctBy(maxScroll - offset.pixels);
-            }
+                for (int i = start; i < _tops.length && _tops[i] <= scrollPx + _height; i++) {
+                  children.add(
+                    Positioned(
+                      top: _tops[i],
+                      left: 0,
+                      right: 0,
+                      height: _heights[i] + widget.separatorHeight,
+                      child: widget.itemBuilder(context, i, _tops[i], _heights[i]),
+                    ),
+                  );
+                }
 
-            return RepaintBoundary(
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: ClipRect(
-                  child: ListenableBuilder(
-                    listenable: offset,
-                    builder: (context, _) {
-                      if (_tops.isEmpty) return const SizedBox.shrink();
-
-                      final scrollPx = offset.hasPixels ? offset.pixels : 0.0;
-                      final start = _firstVisibleIndex(scrollPx);
-                      final children = <Widget>[];
-
-                      for (int i = start; i < _tops.length && _tops[i] <= scrollPx + height; i++) {
-                        children.add(
-                          Positioned(
-                            key: ValueKey(i),
-                            top: _tops[i] - scrollPx,
-                            left: 0,
-                            right: 0,
-                            height: _heights[i] + widget.separatorHeight,
-                            child: RepaintBoundary(child: widget.itemBuilder(context, i, _tops[i], _heights[i])),
-                          ),
-                        );
-                      }
-
-                      return Stack(children: children);
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
+                return Stack(children: children);
+              },
+            ),
+          ),
         );
       },
     );
