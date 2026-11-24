@@ -76,6 +76,9 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
     for (final tx in txs) {
       selectableSetSelected(tx.uuid, true);
     }
+
+    tableBuildColumns();
+    tablePopulateData();
   }
 
   @override
@@ -135,8 +138,6 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   }
 
   Widget tableBuild() {
-    tablePopulateData();
-
     final checkboxTheme = Theme.of(context).checkboxTheme;
 
     return SizedBox(
@@ -146,7 +147,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
         controller: tableScrollController,
         data: tableData,
         rowBuilder: tableBuildRow,
-        columnCount: tableBuildColumns().length,
+        columnCount: tableColumns.length,
         childBuilder: (rows) => DataTable2(
           scrollController: tableScrollController,
           headingCheckboxTheme: checkboxTheme,
@@ -163,7 +164,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
             child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           ),
           onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
-          columns: tableBuildColumns(),
+          columns: tableColumns,
           rows: rows,
         ),
       ),
@@ -310,6 +311,8 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
 
     bool completed = true;
 
+    List<TransactionsModel> payload = [];
+
     for (final tx in stxs) {
       final meta = Map<String, dynamic>.from(tx.meta);
 
@@ -321,21 +324,36 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
         meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
       }
 
-      try {
-        final utx = tx.copyWith(meta: meta);
-        await _txController.update(utx);
+      payload.add(tx.copyWith(meta: meta));
+    }
+
+    final txByUuid = {for (final tx in stxs) tx.uuid: tx};
+    final success = await _txController.updateAll(payload);
+
+    for (final uuid in success) {
+      final tx = txByUuid[uuid];
+      if (tx != null) {
         txs.remove(tx);
-        selectableSetSelected(tx.uuid, false);
-      } on ValidationException catch (e) {
-        completed = false;
-        widget.onSave?.call(e);
-        break;
-      } catch (e) {
-        completed = false;
-        widget.onSave?.call(e);
-        break;
+        selectableSetSelected(uuid, false);
       }
     }
+
+    if (success.length < payload.length) {
+      completed = false;
+      final totalCount = payload.length;
+      final successCount = success.length;
+      final failedCount = totalCount - successCount;
+
+      final devMessage = 'Batch edit partially or fully failed: $failedCount of $totalCount failed ($successCount succeeded).';
+
+      final uxMessage = successCount == 0
+          ? 'Unable to edit the selected transactions. Please check their status and try again.'
+          : '$failedCount of $totalCount transactions could not be edited. Remaining items are still selected.';
+
+      widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
+    }
+
+    tablePopulateData();
 
     if (completed) {
       if (txs.isEmpty) {

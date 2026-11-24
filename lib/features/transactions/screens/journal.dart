@@ -75,7 +75,9 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     fxs = widget.txsFlags;
     txs = _processTx();
 
+    tableBuildColumns();
     tablePopulateData();
+
     sortableApplySorting(pauseRefresh: true);
   }
 
@@ -101,13 +103,12 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
     }
 
     if (widget.filterMode != oldWidget.filterMode) {
-      setState(() {
-        _filterMode = widget.filterMode;
-        txs = widget.transactions;
-        fxs = widget.txsFlags;
-        txs = _processTx();
-        tablePopulateData();
-      });
+      _filterMode = widget.filterMode;
+      txs = widget.transactions;
+      fxs = widget.txsFlags;
+      txs = _processTx();
+      tablePopulateData();
+      sortableApplySorting();
       return;
     }
 
@@ -206,7 +207,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
       controller: scrollToUtil.controller,
       data: tableData,
       rowBuilder: tableBuildRow,
-      columnCount: tableBuildColumns().length,
+      columnCount: tableColumns.length,
       childBuilder: (rows) => DataTable2(
         scrollController: scrollToUtil.controller,
         showCheckboxColumn: false,
@@ -221,7 +222,7 @@ class _TransactionsJournalViewState extends State<TransactionsJournalView>
         empty: Center(
           child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         ),
-        columns: tableBuildColumns(),
+        columns: tableColumns,
         rows: rows,
       ),
     );

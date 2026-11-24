@@ -239,24 +239,16 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   @override
-  Future<void> addAll(List<TransactionsModel> values) async {
-    await super.addAll(values);
-    for (final tx in values) {
-      _cache.update(tx);
-    }
-  }
-
-  @override
-  Future<void> deleteAll(List<TransactionsModel> values) async {
-    await super.deleteAll(values);
-    for (final tx in values) {
+  Future<void> deleteAll(List<TransactionsModel> txs) async {
+    await super.deleteAll(txs);
+    for (final tx in txs) {
       _cache.remove(tx);
     }
   }
 
   @override
-  Future<void> replace(List<TransactionsModel> values) async {
-    await super.replace(values);
+  Future<void> replace(List<TransactionsModel> txs) async {
+    await super.replace(txs);
     _cache.invalidate();
     _cache.generate();
   }
@@ -273,13 +265,11 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   Future<void> close(TransactionsModel tx) async {
     canClose(tx);
 
-    // canClose already check and throw
     TransactionsModel? otx = box.get(tx.tid);
     if (otx == null) {
       return;
     }
 
-    // canClose already check and throw
     TransactionsModel? target = getCloseTargetParent(otx);
     bool allClosed = false;
     List<TransactionsModel> leaves = [];
@@ -288,7 +278,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return;
     }
 
-    // Try terminal leaves first.
     leaves = collectTerminalLeaves(target);
     allClosed =
         leaves.isNotEmpty &&
@@ -297,7 +286,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
             .where((leaf) => leaf.tid != otx.tid)
             .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
-    // if all terminal leaves are closed, double check current branch is all inactive
     if (allClosed) {
       leaves = collectInBetweenLeaves(otx, target);
       allClosed =
@@ -331,7 +319,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   Future<void> refund(TransactionsModel tx) async {
     canRefund(tx);
 
-    // canClose already check and throw
     TransactionsModel? otx = box.get(tx.tid);
     TransactionsModel? ptx = box.get(tx.pid);
     if (otx == null || ptx == null) {
@@ -383,87 +370,341 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       );
     }
 
-    await box.put(ntx.tid, tx);
+    await box.put(ntx.tid, ntx);
     _cache.update(ntx);
   }
 
-  Future<List<String>> closeAll(List<TransactionsModel> txs) async {
-    final Map<dynamic, TransactionsModel> pendingUpdates = {};
-    List<TransactionsModel> closed = [];
-    List<String> result = [];
+  @override
+  Future<List<String>> addAll(List<TransactionsModel> txs) async {
+    if (txs.isEmpty) {
+      return [];
+    }
 
-    TransactionsModel? getLatest(dynamic tid) => pendingUpdates[tid] ?? box.get(tid);
+    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
+    if (hasDuplicates) {
+      if (debugLogs) {
+        logln("Duplicate transaction found, refusing to proceed.", "ADD");
+      }
+      return [];
+    }
+
+    final Map<dynamic, TransactionsModel> pendingUpdates = {};
+    final List<String> result = [];
 
     for (final tx in txs) {
+      final Map<dynamic, TransactionsModel?> stepPendingBackup = {};
+
+      void stageStep(TransactionsModel model) {
+        stepPendingBackup.putIfAbsent(model.tid, () => pendingUpdates[model.tid]);
+        pendingUpdates[model.tid] = model;
+      }
+
       try {
-        canClose(tx);
-
-        TransactionsModel? otx = getLatest(tx.tid);
-        if (otx == null) {
-          continue;
-        }
-
-        TransactionsModel? rawTarget = getCloseTargetParent(otx);
-        if (rawTarget == null) {
-          continue;
-        }
-
-        TransactionsModel target = getLatest(rawTarget.tid) ?? rawTarget;
-
-        bool allClosed = false;
-        List<TransactionsModel> leaves = [];
-
-        leaves = collectTerminalLeaves(target).map((leaf) => getLatest(leaf.tid) ?? leaf).toList();
-
-        allClosed =
-            leaves.isNotEmpty &&
-            leaves
-                // Current tx hasn't mutated status yet thus ignore it!
-                .where((leaf) => leaf.tid != otx.tid)
-                .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-
-        if (allClosed) {
-          leaves = collectInBetweenLeaves(otx, target).map((leaf) => getLatest(leaf.tid) ?? leaf).toList();
-
-          allClosed =
-              leaves.isNotEmpty &&
-              leaves
-                  // Ignore current otx and its target
-                  .where((leaf) => leaf.tid != otx.tid)
-                  .where((leaf) => leaf.tid != target.tid)
-                  .every((leaf) => leaf.statusEnum == TransactionStatus.inactive);
-        }
-
-        final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-        final updatedTarget = target.copyWith(balance: Math.add(target.balance, tx.balance), status: newStatus);
-
-        final closedTx = tx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
-
         if (debugLogs) {
           logln(
             "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
-            "CLOSING",
+            "ADD",
           );
         }
 
-        pendingUpdates[closedTx.tid] = closedTx;
-        pendingUpdates[updatedTarget.tid] = updatedTarget;
-        closed.add(closedTx);
+        TransactionsModel ntx = tx;
+
+        bool isClosable;
+        try {
+          isClosable = canClose(ntx, overlay: pendingUpdates);
+        } catch (_) {
+          isClosable = false;
+        }
+
+        if (tx.isClosable != isClosable) {
+          ntx = ntx.copyWith(closable: isClosable);
+        }
+
+        canAdd(ntx, overlay: pendingUpdates);
+
+        if (ntx.isRoot) {
+          stageStep(ntx);
+          result.add(ntx.tid);
+          continue;
+        }
+
+        if (ntx.isLeaf) {
+          final ptx = pendingUpdates[ntx.pid] ?? box.get(ntx.pid);
+          if (ptx == null) {
+            continue;
+          }
+
+          canTrade(ptx, overlay: pendingUpdates);
+          canUpdate(ptx, overlay: pendingUpdates);
+
+          final balance = Math.subtract(ptx.balance, ntx.srAmount);
+          final status = balance <= Decimal.zero ? TransactionStatus.inactive.index : TransactionStatus.partial.index;
+
+          var nptx = ptx.copyWith(balance: balance, status: status);
+
+          logln("Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}", "ADD");
+
+          stageStep(ntx);
+
+          if (debugLogs) {
+            logln(
+              "${nptx.tid}|${nptx.pid}|${nptx.rid}|${nptx.srId}|${nptx.srAmount}|${nptx.rrId}|${nptx.rrAmount}|${nptx.balance}|${nptx.status}|${nptx.closable}|${nptx.timestamp}",
+              "UPDATE",
+            );
+          }
+
+          bool parentClosable;
+          try {
+            parentClosable = canClose(nptx, overlay: pendingUpdates);
+          } catch (_) {
+            parentClosable = false;
+          }
+
+          if (nptx.isClosable != parentClosable) {
+            nptx = nptx.copyWith(closable: parentClosable);
+          }
+
+          canUpdate(nptx, overlay: pendingUpdates);
+
+          stageStep(nptx);
+          result.add(ntx.tid);
+        }
       } catch (_) {
+        stepPendingBackup.forEach((tid, prev) {
+          if (prev == null) {
+            pendingUpdates.remove(tid);
+          } else {
+            pendingUpdates[tid] = prev;
+          }
+        });
         continue;
       }
     }
 
-    if (closed.isNotEmpty) {
+    if (pendingUpdates.isNotEmpty) {
       final allToSave = pendingUpdates.values.toList();
       await box.addAll(allToSave);
 
       for (final tx in allToSave) {
         _cache.update(tx);
       }
+    }
 
-      for (final tx in closed) {
-        result.add(tx.uuid);
+    return result;
+  }
+
+  Future<List<String>> updateAll(List<TransactionsModel> txs) async {
+    if (txs.isEmpty) {
+      return [];
+    }
+
+    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
+    if (hasDuplicates) {
+      if (debugLogs) {
+        logln("Duplicate transaction found, refusing to proceed.", "UPDATE");
+      }
+      return [];
+    }
+
+    final Map<dynamic, TransactionsModel> pendingUpdates = {};
+    final List<String> result = [];
+
+    for (final tx in txs) {
+      final Map<dynamic, TransactionsModel?> stepPendingBackup = {};
+
+      void stageStep(TransactionsModel model) {
+        stepPendingBackup.putIfAbsent(model.tid, () => pendingUpdates[model.tid]);
+        pendingUpdates[model.tid] = model;
+      }
+
+      try {
+        if (debugLogs) {
+          logln(
+            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+            "UPDATE",
+          );
+        }
+
+        TransactionsModel ntx = tx;
+        bool isClosable;
+        try {
+          isClosable = canClose(ntx, overlay: pendingUpdates);
+        } catch (_) {
+          isClosable = false;
+        }
+
+        if (tx.isClosable != isClosable) {
+          ntx = ntx.copyWith(closable: isClosable);
+        }
+
+        canUpdate(ntx, overlay: pendingUpdates);
+
+        if (ntx.isRoot) {
+          stageStep(ntx);
+          result.add(ntx.tid);
+          continue;
+        }
+
+        if (ntx.isLeaf) {
+          final otx = pendingUpdates[ntx.tid] ?? box.get(ntx.tid);
+          final ptx = pendingUpdates[ntx.pid] ?? box.get(ntx.pid);
+          if (otx == null || ptx == null) {
+            continue;
+          }
+
+          stageStep(ntx);
+
+          if (otx.srAmount != ntx.srAmount && ptx.rrId == otx.srId) {
+            Decimal balance = ptx.balance;
+            if (otx.srAmount > ntx.srAmount) {
+              balance = Math.add(balance, Math.subtract(otx.srAmount, ntx.srAmount));
+            } else {
+              final spent = Math.subtract(ntx.srAmount, otx.srAmount);
+              if (balance >= spent) {
+                balance = Math.subtract(balance, spent);
+              }
+            }
+
+            if (debugLogs) {
+              logln(
+                "Rebalancing amount ${otx.srAmount}|${ntx.srAmount}|${ptx.rrId}|${otx.srId}|${ntx.balance}|${otx.balance}|$balance",
+                "UPDATE",
+              );
+            }
+
+            var nptx = ptx.copyWith(
+              balance: balance,
+              status: balance > Decimal.zero ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
+            );
+
+            bool parentClosable;
+            try {
+              parentClosable = canClose(nptx, overlay: pendingUpdates);
+            } catch (_) {
+              parentClosable = false;
+            }
+
+            if (nptx.isClosable != parentClosable) {
+              nptx = nptx.copyWith(closable: parentClosable);
+            }
+
+            canUpdate(nptx, overlay: pendingUpdates);
+            stageStep(nptx);
+          }
+
+          result.add(ntx.tid);
+        }
+      } catch (_) {
+        stepPendingBackup.forEach((tid, prev) {
+          if (prev == null) {
+            pendingUpdates.remove(tid);
+          } else {
+            pendingUpdates[tid] = prev;
+          }
+        });
+        continue;
+      }
+    }
+
+    if (pendingUpdates.isNotEmpty) {
+      final allToSave = pendingUpdates.values.toList();
+      await box.addAll(allToSave);
+
+      for (final tx in allToSave) {
+        _cache.update(tx);
+      }
+    }
+
+    return result;
+  }
+
+  Future<List<String>> closeAll(List<TransactionsModel> txs) async {
+    if (txs.isEmpty) {
+      return [];
+    }
+
+    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
+    if (hasDuplicates) {
+      if (debugLogs) {
+        logln("Duplicate transaction found, refusing to proceed.", "CLOSING");
+      }
+      return [];
+    }
+
+    final Map<dynamic, TransactionsModel> pendingUpdates = {};
+    final List<String> result = [];
+
+    TransactionsModel? getLatest(dynamic tid) {
+      if (pendingUpdates.containsKey(tid)) {
+        return pendingUpdates[tid];
+      }
+      return box.get(tid);
+    }
+
+    for (final tx in txs) {
+      try {
+        final otx = getLatest(tx.tid);
+        if (otx == null) {
+          continue;
+        }
+
+        canClose(otx, overlay: pendingUpdates);
+
+        final rawTarget = getCloseTargetParent(otx);
+        if (rawTarget == null) {
+          continue;
+        }
+
+        final target = getLatest(rawTarget.tid) ?? rawTarget;
+
+        final terminalLeaves = collectTerminalLeaves(target).map((leaf) {
+          return getLatest(leaf.tid) ?? leaf;
+        }).toList();
+
+        bool allClosed =
+            terminalLeaves.isNotEmpty &&
+            terminalLeaves.where((leaf) => leaf.tid != otx.tid).every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+
+        if (allClosed) {
+          final inBetweenLeaves = collectInBetweenLeaves(otx, target).map((leaf) {
+            return getLatest(leaf.tid) ?? leaf;
+          }).toList();
+
+          allClosed =
+              inBetweenLeaves.isNotEmpty &&
+              inBetweenLeaves
+                  .where((leaf) => leaf.tid != otx.tid)
+                  .where((leaf) => leaf.tid != target.tid)
+                  .every((leaf) => leaf.statusEnum == TransactionStatus.inactive);
+        }
+
+        final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
+
+        final updatedTarget = target.copyWith(balance: Math.add(target.balance, otx.balance), status: newStatus);
+
+        final closedTx = otx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
+
+        if (debugLogs) {
+          logln(
+            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
+            "CLOSING",
+          );
+        }
+
+        pendingUpdates[closedTx.tid] = closedTx;
+        pendingUpdates[updatedTarget.tid] = updatedTarget;
+        result.add(closedTx.tid);
+      } catch (_) {
+        continue;
+      }
+    }
+
+    if (pendingUpdates.isNotEmpty) {
+      final allToSave = pendingUpdates.values.toList();
+      await box.addAll(allToSave);
+
+      for (final tx in allToSave) {
+        _cache.update(tx);
       }
     }
 
@@ -471,55 +712,75 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   Future<List<String>> refundAll(List<TransactionsModel> txs) async {
+    if (txs.isEmpty) {
+      return [];
+    }
+
+    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
+    if (hasDuplicates) {
+      if (debugLogs) {
+        logln("Duplicate transaction found, refusing to proceed.", "REFUNDING");
+      }
+      return [];
+    }
+
     final Map<dynamic, TransactionsModel> pendingUpdates = {};
     final Set<dynamic> deletedTids = {};
-    List<TransactionsModel> deletedTxs = [];
-    List<String> deleted = [];
+    final List<TransactionsModel> deletedTxs = [];
+    final List<String> result = [];
 
     TransactionsModel? getLatest(dynamic tid) {
-      if (deletedTids.contains(tid)) return null;
-      return pendingUpdates[tid] ?? box.get(tid);
+      if (deletedTids.contains(tid)) {
+        return null;
+      }
+      if (pendingUpdates.containsKey(tid)) {
+        return pendingUpdates[tid];
+      }
+      return box.get(tid);
     }
 
     for (final tx in txs) {
       try {
-        canRefund(tx);
-
-        TransactionsModel? otx = getLatest(tx.tid);
-        TransactionsModel? ptx = getLatest(tx.pid);
-        if (otx == null || ptx == null) {
+        final otx = getLatest(tx.tid);
+        if (otx == null) {
           continue;
         }
 
-        final leaves = collectTerminalLeaves(
-          ptx,
-        ).where((leaf) => !deletedTids.contains(leaf.tid)).map((leaf) => getLatest(leaf.tid) ?? leaf).toList();
+        canRefund(otx, overlay: pendingUpdates);
 
-        final allClosed =
-            leaves.isNotEmpty &&
-            leaves
-                // Current tx hasn't been removed yet thus ignore it!
-                .where((leaf) => leaf.tid != otx.tid)
-                .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+        final ptx = getLatest(otx.pid);
+        if (ptx == null) {
+          continue;
+        }
+
+        final remainingLeaves = collectTerminalLeaves(ptx)
+            .where((leaf) => !deletedTids.contains(leaf.tid))
+            .where((leaf) => leaf.tid != otx.tid)
+            .map((leaf) => getLatest(leaf.tid) ?? leaf)
+            .toList();
+
+        final allClosed = remainingLeaves.isEmpty || remainingLeaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
         final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-        final utx = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
+
+        final updatedParent = ptx.copyWith(balance: Math.add(ptx.balance, otx.srAmount), status: newStatus);
 
         if (debugLogs) {
           logln(
-            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
             "REFUNDING",
           );
           logln(
-            "${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}",
+            "${updatedParent.tid}|${updatedParent.pid}|${updatedParent.rid}|${updatedParent.srId}|${updatedParent.srAmount}|${updatedParent.rrId}|${updatedParent.rrAmount}|${updatedParent.balance}|${updatedParent.status}|${updatedParent.closable}|${updatedParent.timestamp}",
             "REBALANCING",
           );
         }
 
-        deletedTids.add(tx.tid);
-        pendingUpdates.remove(tx.tid);
-        pendingUpdates[utx.tid] = utx;
-        deletedTxs.add(tx);
+        deletedTids.add(otx.tid);
+        pendingUpdates.remove(otx.tid);
+        pendingUpdates[updatedParent.tid] = updatedParent;
+        deletedTxs.add(otx);
+        result.add(otx.tid);
       } catch (_) {
         continue;
       }
@@ -529,54 +790,72 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       for (final tx in deletedTxs) {
         await box.delete(tx.tid);
         _cache.remove(tx);
-        deleted.add(tx.uuid);
       }
     }
 
     if (pendingUpdates.isNotEmpty) {
       final allToSave = pendingUpdates.values.toList();
       await box.addAll(allToSave);
+
       for (final tx in allToSave) {
         _cache.update(tx);
       }
     }
 
-    return deleted;
+    return result;
   }
 
   Future<List<String>> finalizeAll(List<TransactionsModel> txs) async {
-    List<TransactionsModel> success = [];
-    List<String> result = [];
+    if (txs.isEmpty) {
+      return [];
+    }
+
+    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
+    if (hasDuplicates) {
+      if (debugLogs) {
+        logln("Duplicate transaction found, refusing to proceed.", "FINALIZING");
+      }
+      return [];
+    }
+
+    final Map<dynamic, TransactionsModel> pendingUpdates = {};
+    final List<String> result = [];
 
     for (final tx in txs) {
       try {
-        if (tx.statusEnum == TransactionStatus.finalized) {
+        final otx = pendingUpdates[tx.tid] ?? box.get(tx.tid);
+        if (otx == null) {
           continue;
         }
 
-        canFinalize(tx);
+        if (otx.statusEnum == TransactionStatus.finalized) {
+          continue;
+        }
 
-        final ntx = tx.copyWith(status: TransactionStatus.finalized.index);
+        canFinalize(otx, overlay: pendingUpdates);
+
+        final ntx = otx.copyWith(status: TransactionStatus.finalized.index);
 
         if (debugLogs) {
           logln(
-            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
             "FINALIZING",
           );
         }
 
-        success.add(ntx);
+        pendingUpdates[ntx.tid] = ntx;
+        result.add(ntx.tid);
       } catch (_) {
         continue;
       }
     }
 
-    if (success.isNotEmpty) {
-      await box.addAll(success);
+    if (pendingUpdates.isNotEmpty) {
+      final allToSave = pendingUpdates.values.toList();
+      await box.addAll(allToSave);
 
-      for (final tx in success) {
+      for (final tx in allToSave) {
         _cache.update(tx);
-        result.add(tx.uuid);
       }
     }
 
@@ -584,47 +863,63 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   Future<List<String>> removeAll(List<TransactionsModel> txs) async {
-    final List<String> deleted = [];
+    if (txs.isEmpty) {
+      return [];
+    }
+
+    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
+    if (hasDuplicates) {
+      if (debugLogs) {
+        logln("Duplicate transaction found, refusing to proceed.", "DELETE");
+      }
+      return [];
+    }
+
+    final List<String> result = [];
     final Set<dynamic> deletedTids = {};
     final List<TransactionsModel> toDelete = [];
 
     for (final tx in txs) {
-      if (deletedTids.contains(tx.tid)) {
-        deleted.add(tx.uuid);
+      final otx = box.get(tx.tid);
+      if (otx == null) {
+        continue;
+      }
+
+      if (deletedTids.contains(otx.tid)) {
+        result.add(otx.tid);
         continue;
       }
 
       try {
-        canDelete(tx);
+        canDelete(otx);
 
         if (debugLogs) {
           logln(
-            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
+            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
             "DELETE",
           );
         }
 
-        final descendants = collectAllLeaves(tx);
-        for (final ttx in descendants) {
-          if (deletedTids.contains(ttx.tid)) continue;
+        final descendants = collectAllLeaves(otx);
+        for (final descendant in descendants) {
+          if (deletedTids.contains(descendant.tid)) {
+            continue;
+          }
 
           if (debugLogs) {
             logln(
-              "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
+              "${descendant.tid}|${descendant.pid}|${descendant.rid}|${descendant.srId}|${descendant.srAmount}|${descendant.rrId}|${descendant.rrAmount}|${descendant.balance}|${descendant.status}|${descendant.closable}|${descendant.timestamp}",
               "DELETE",
             );
           }
 
-          toDelete.add(ttx);
-          _cache.removeByTid(ttx.tid);
-          deletedTids.add(ttx.tid);
+          toDelete.add(descendant);
+          deletedTids.add(descendant.tid);
         }
 
-        toDelete.add(tx);
-        _cache.removeByTid(tx.tid);
-        deletedTids.add(tx.tid);
-
-        deleted.add(tx.uuid);
+        toDelete.add(otx);
+        deletedTids.add(otx.tid);
+        result.add(otx.tid);
       } catch (_) {
         continue;
       }
@@ -632,9 +927,13 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     if (toDelete.isNotEmpty) {
       await box.deleteAll(toDelete);
+
+      for (final tx in toDelete) {
+        _cache.removeByTid(tx.tid);
+      }
     }
 
-    return deleted;
+    return result;
   }
 
   List<TransactionsModel> getLeaf(TransactionsModel tx) {
@@ -785,44 +1084,44 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return ascendants;
   }
 
-  bool canAdd(TransactionsModel tx, {bool? silent}) {
-    final rules = TransactionsRulesCreate(tx, this, silent ?? !debugLogs);
+  bool canAdd(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
+    final rules = TransactionsRulesCreate(tx, this, silent ?? !debugLogs, overlay: overlay);
     final isValid = rules.validate();
     return isValid;
   }
 
-  bool canDelete(TransactionsModel tx, {bool? silent}) {
-    final rules = TransactionsRulesDelete(tx, this, silent ?? !debugLogs);
+  bool canDelete(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
+    final rules = TransactionsRulesDelete(tx, this, silent ?? !debugLogs, overlay: overlay);
     final isValid = rules.validate();
     return isValid;
   }
 
-  bool canUpdate(TransactionsModel tx, {bool? silent = false}) {
-    final rules = TransactionsRulesUpdate(tx, this, silent ?? !debugLogs);
+  bool canUpdate(TransactionsModel tx, {bool? silent = false, Map<dynamic, TransactionsModel>? overlay}) {
+    final rules = TransactionsRulesUpdate(tx, this, silent ?? !debugLogs, overlay: overlay);
     final isValid = rules.validate();
     return isValid;
   }
 
-  bool canClose(TransactionsModel tx, {bool? silent = false}) {
-    final rules = TransactionsRulesClose(tx, this, silent ?? !debugLogs);
+  bool canClose(TransactionsModel tx, {bool? silent = false, Map<dynamic, TransactionsModel>? overlay}) {
+    final rules = TransactionsRulesClose(tx, this, silent ?? !debugLogs, overlay: overlay);
     final isValid = rules.validate();
     return isValid;
   }
 
-  bool canTrade(TransactionsModel tx, {bool? silent}) {
-    final rules = TransactionsRulesTrade(tx, this, silent ?? !debugLogs);
+  bool canTrade(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
+    final rules = TransactionsRulesTrade(tx, this, silent ?? !debugLogs, overlay: overlay);
     final isValid = rules.validate();
     return isValid;
   }
 
-  bool canRefund(TransactionsModel tx, {bool? silent}) {
-    final rules = TransactionsRulesRefund(tx, this, silent ?? !debugLogs);
+  bool canRefund(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
+    final rules = TransactionsRulesRefund(tx, this, silent ?? !debugLogs, overlay: overlay);
     final isValid = rules.validate();
     return isValid;
   }
 
-  bool canFinalize(TransactionsModel tx, {bool? silent}) {
-    final rules = TransactionsRulesFinalize(tx, this, silent ?? !debugLogs);
+  bool canFinalize(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
+    final rules = TransactionsRulesFinalize(tx, this, silent ?? !debugLogs, overlay: overlay);
     final isValid = rules.validate();
     return isValid;
   }

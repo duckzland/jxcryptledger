@@ -3,7 +3,7 @@ import '../model.dart';
 import 'base.dart';
 
 class TransactionsRulesUpdate extends TransactionsRulesBase {
-  TransactionsRulesUpdate(super.tx, super.txRepo, super.silent, {super.mode = "[TXUPDATE]"});
+  TransactionsRulesUpdate(super.tx, super.txRepo, super.silent, {super.mode = "[TXUPDATE]", super.overlay});
 
   @override
   bool validate() {

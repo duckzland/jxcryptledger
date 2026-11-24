@@ -9,9 +9,10 @@ abstract class TransactionsRulesBase {
   final TransactionsModel tx;
   final TransactionsRepository txRepo;
   final bool silent;
+  final Map<dynamic, TransactionsModel>? overlay;
   String mode;
 
-  TransactionsRulesBase(this.tx, this.txRepo, this.silent, {this.mode = "[TXERROR]"});
+  TransactionsRulesBase(this.tx, this.txRepo, this.silent, {this.mode = "[TXERROR]", this.overlay});
 
   TransactionsModel? _otxCache;
   TransactionsModel? _ptxCache;
@@ -21,16 +22,175 @@ abstract class TransactionsRulesBase {
   List<TransactionsModel>? _childrenCache;
   List<TransactionsModel>? _allLeavesCache;
   List<TransactionsModel>? _allRootLeavesCache;
+  Map<dynamic, TransactionsModel>? _overlayMapCache;
 
-  TransactionsModel? get origTx => _otxCache ??= (txRepo.getIndexedMap()[tx.tid] ?? txRepo.get(tx.tid));
-  TransactionsModel? get parentTx => _ptxCache ??= (txRepo.getIndexedMap()[tx.pid] ?? txRepo.get(tx.pid));
-  TransactionsModel? get rootTx => _rtxCache ??= (txRepo.getIndexedMap()[tx.rid] ?? txRepo.get(tx.rid));
+  bool get _hasOverlay {
+    return overlay != null && overlay!.isNotEmpty;
+  }
 
-  List<TransactionsModel> get terminalLeaves => _terminalLeavesCache ??= txRepo.collectTerminalLeaves(tx);
-  TransactionsModel? get targetParentCloser => _targetCloserCache ??= txRepo.getCloseTargetParent(tx);
-  List<TransactionsModel> get leafChildren => _childrenCache ??= txRepo.getLeaf(tx);
-  List<TransactionsModel> get allLeaves => _allLeavesCache ??= txRepo.collectDirectLeaves(tx);
-  List<TransactionsModel> get allRootLeaves => _allRootLeavesCache ??= txRepo.collectRootTreeLeaves(tx);
+  Map<dynamic, TransactionsModel> get _overlayMap {
+    return _overlayMapCache ??= {...txRepo.getIndexedMap(), ...overlay!};
+  }
+
+  TransactionsModel? get origTx {
+    if (_otxCache != null) {
+      return _otxCache;
+    }
+
+    if (!_hasOverlay) {
+      _otxCache = txRepo.getIndexedMap()[tx.tid] ?? txRepo.get(tx.tid);
+      return _otxCache;
+    }
+
+    _otxCache = overlay![tx.tid] ?? txRepo.getIndexedMap()[tx.tid] ?? txRepo.get(tx.tid);
+    return _otxCache;
+  }
+
+  TransactionsModel? get parentTx {
+    if (_ptxCache != null) {
+      return _ptxCache;
+    }
+
+    if (!_hasOverlay) {
+      _ptxCache = txRepo.getIndexedMap()[tx.pid] ?? txRepo.get(tx.pid);
+      return _ptxCache;
+    }
+
+    _ptxCache = overlay![tx.pid] ?? txRepo.getIndexedMap()[tx.pid] ?? txRepo.get(tx.pid);
+    return _ptxCache;
+  }
+
+  TransactionsModel? get rootTx {
+    if (_rtxCache != null) {
+      return _rtxCache;
+    }
+
+    if (!_hasOverlay) {
+      _rtxCache = txRepo.getIndexedMap()[tx.rid] ?? txRepo.get(tx.rid);
+      return _rtxCache;
+    }
+
+    _rtxCache = overlay![tx.rid] ?? txRepo.getIndexedMap()[tx.rid] ?? txRepo.get(tx.rid);
+    return _rtxCache;
+  }
+
+  List<TransactionsModel> get terminalLeaves {
+    if (_terminalLeavesCache != null) {
+      return _terminalLeavesCache!;
+    }
+
+    if (!_hasOverlay) {
+      _terminalLeavesCache = txRepo.collectTerminalLeaves(tx);
+      return _terminalLeavesCache!;
+    }
+
+    final byTid = _overlayMap;
+    final List<TransactionsModel> result = [];
+
+    void collect(TransactionsModel current) {
+      final children = byTid.values.where((item) => item.pid == current.tid).toList();
+      if (children.isEmpty) {
+        if (current.tid != tx.tid) {
+          result.add(current);
+        }
+        return;
+      }
+
+      for (final child in children) {
+        collect(child);
+      }
+    }
+
+    collect(tx);
+    _terminalLeavesCache = result;
+    return _terminalLeavesCache!;
+  }
+
+  TransactionsModel? get targetParentCloser {
+    if (_targetCloserCache != null) {
+      return _targetCloserCache;
+    }
+
+    if (!_hasOverlay) {
+      _targetCloserCache = txRepo.getCloseTargetParent(tx);
+      return _targetCloserCache;
+    }
+
+    if (tx.isRoot) {
+      return null;
+    }
+
+    final byTid = _overlayMap;
+    TransactionsModel? parent;
+    String? pid = tx.pid;
+
+    while (pid != null && pid.isNotEmpty) {
+      final p = byTid[pid];
+      if (p == null) break;
+
+      if (p.rrId == tx.rrId) {
+        parent = p;
+        break;
+      }
+
+      pid = p.pid;
+    }
+
+    if (parent == null) {
+      final root = byTid[tx.rid];
+      if (root != null && root.isRoot && root.rrId == tx.rrId) {
+        parent = root;
+      }
+    }
+
+    _targetCloserCache = parent;
+    return _targetCloserCache;
+  }
+
+  List<TransactionsModel> get leafChildren {
+    if (_childrenCache != null) {
+      return _childrenCache!;
+    }
+
+    if (!_hasOverlay) {
+      _childrenCache = txRepo.getLeaf(tx);
+      return _childrenCache!;
+    }
+
+    final byTid = _overlayMap;
+    _childrenCache = byTid.values.where((item) => item.pid == tx.tid).toList();
+    return _childrenCache!;
+  }
+
+  List<TransactionsModel> get allLeaves {
+    if (_allLeavesCache != null) {
+      return _allLeavesCache!;
+    }
+
+    if (!_hasOverlay) {
+      _allLeavesCache = txRepo.collectDirectLeaves(tx);
+      return _allLeavesCache!;
+    }
+
+    final byTid = _overlayMap;
+    _allLeavesCache = byTid.values.where((item) => item.pid == tx.tid).toList();
+    return _allLeavesCache!;
+  }
+
+  List<TransactionsModel> get allRootLeaves {
+    if (_allRootLeavesCache != null) {
+      return _allRootLeavesCache!;
+    }
+
+    if (!_hasOverlay) {
+      _allRootLeavesCache = txRepo.collectRootTreeLeaves(tx);
+      return _allRootLeavesCache!;
+    }
+
+    final byTid = _overlayMap;
+    _allRootLeavesCache = byTid.values.where((item) => item.rid == tx.tid).toList();
+    return _allRootLeavesCache!;
+  }
 
   void txCheckIsRoot(int code, String message) {
     if (!tx.isRoot) {

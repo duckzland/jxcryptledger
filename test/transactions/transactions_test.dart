@@ -957,7 +957,7 @@ void main() async {
       }
     });
 
-    test('batch -> closeAll, finalizeAll, refundAll, and removeAll', () async {
+    test('batch -> addAll, updateAll, closeAll, finalizeAll, refundAll, and removeAll', () async {
       await box.clear();
 
       final now = DateTime.now().microsecondsSinceEpoch;
@@ -977,7 +977,6 @@ void main() async {
         timestamp: now,
         meta: {},
       );
-      await repo.add(root);
 
       // 2. Branch A: leaf_1 (Coin 2 -> Coin 3, amount 120) -> root balance becomes 80 (partial)
       final leaf1 = TransactionsModel(
@@ -994,9 +993,8 @@ void main() async {
         timestamp: now,
         meta: {},
       );
-      await repo.add(leaf1);
 
-      // 3. Branch A child: leaf_2 (Coin 3 -> Coin 2, amount 50) -> closable back to root (rrId 2 == root.srId? or closeTarget)
+      // 3. Branch A child: leaf_2 (Coin 3 -> Coin 2, amount 50) -> closable back to root (rrId 2 == root.rrId)
       final leaf2 = TransactionsModel(
         tid: 'leaf_2',
         rid: 'root',
@@ -1011,7 +1009,6 @@ void main() async {
         timestamp: now,
         meta: {},
       );
-      await repo.add(leaf2);
 
       // 4. Branch B (for refundAll): leaf_1c (Coin 2 -> Coin 3, amount 80) -> root balance becomes 0 (inactive)
       final leaf1c = TransactionsModel(
@@ -1028,7 +1025,64 @@ void main() async {
         timestamp: now,
         meta: {},
       );
-      await repo.add(leaf1c);
+
+      // 5. Invalid leaf (exceeds root's remaining 0 balance after leaf_1 + leaf_1c) -> should fail & roll back cleanly
+      final invalidLeaf = TransactionsModel(
+        tid: 'leaf_invalid',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(10),
+        srId: 2,
+        rrAmount: Decimal.fromInt(10),
+        rrId: 3,
+        balance: Decimal.fromInt(10),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // =========================================================================
+      // TEST 0: addAll (root + children succeed in order; invalidLeaf fails & rolls back)
+      // =========================================================================
+      final added = await repo.addAll([
+        root,
+        leaf1,
+        leaf2,
+        leaf1c,
+        invalidLeaf, // fails canAdd (exceeds remaining balance) and must not corrupt root
+      ]);
+      expect(added, ['root', 'leaf_1', 'leaf_2', 'leaf_1c']);
+      expect(box.get('leaf_invalid'), isNull);
+      expect(box.get('root')!.balance, Decimal.fromInt(0));
+      expect(box.get('root')!.statusEnum, TransactionStatus.inactive);
+      expect(box.get('leaf_1')!.balance, Decimal.fromInt(70));
+      expect(box.get('leaf_1')!.statusEnum, TransactionStatus.partial);
+      expect(box.get('leaf_2')!.isClosable, true);
+
+      // =========================================================================
+      // TEST 0.5: updateAll (metadata updates on root & leaf_2 succeed;
+      //           changing srAmount on leaf_1 fails because leaf_2 child exists)
+      // =========================================================================
+      final updatedRoot = box.get('root')!.copyWith(meta: {'group_notes': 'batch-root'});
+      final updatedLeaf2 = box.get('leaf_2')!.copyWith(meta: {'group_notes': 'batch-leaf2'});
+      final invalidLeaf1AmountEdit = box
+          .get('leaf_1')!
+          .copyWith(
+            srAmount: Decimal.fromInt(100), // forbidden when leaf_1 has child leaf_2
+            meta: {'group_notes': 'should-rollback'},
+          );
+
+      final updated = await repo.updateAll([
+        updatedRoot,
+        invalidLeaf1AmountEdit, // fails canUpdate (has child leaf_2) & rolls back
+        updatedLeaf2,
+      ]);
+      expect(updated, ['root', 'leaf_2']);
+      expect(box.get('root')!.meta['group_notes'], 'batch-root');
+      expect(box.get('leaf_2')!.meta['group_notes'], 'batch-leaf2');
+      expect(box.get('leaf_1')!.srAmount, Decimal.fromInt(120));
+      expect(box.get('leaf_1')!.meta['group_notes'], isNull);
 
       // =========================================================================
       // TEST 1: refundAll (leaf_1c succeeds; leaf_1 fails with 1601 because it has child leaf_2)
@@ -1078,6 +1132,222 @@ void main() async {
       final removed = await repo.removeAll([box.get('root')!]);
       expect(removed, ['root']);
       expect(repo.isEmpty(), true);
+    });
+
+    test('batch -> addAll EDGE trading failure & rollback cases', () async {
+      await box.clear();
+
+      final now = DateTime.now().microsecondsSinceEpoch;
+
+      // Root: Coin 1 -> Coin 2 (balance 200)
+      final root = TransactionsModel(
+        tid: 'root',
+        rid: '0',
+        pid: '0',
+        srAmount: Decimal.fromInt(200),
+        srId: 1,
+        rrAmount: Decimal.fromInt(200),
+        rrId: 2,
+        balance: Decimal.fromInt(200),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: now,
+        meta: {},
+      );
+
+      // Valid Trade 1: consumes 120 from root (root balance: 200 -> 80, partial)
+      final validTrade1 = TransactionsModel(
+        tid: 'trade_1',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(120),
+        srId: 2,
+        rrAmount: Decimal.fromInt(120),
+        rrId: 3,
+        balance: Decimal.fromInt(120),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // EDGE 1: Wrong source currency (srId 99 != root.rrId 2) -> must fail txAddLeafSrIdMismatch
+      final wrongCoinTrade = TransactionsModel(
+        tid: 'edge_wrong_coin',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(20),
+        srId: 99,
+        rrAmount: Decimal.fromInt(20),
+        rrId: 3,
+        balance: Decimal.fromInt(20),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // EDGE 2: Non-active initial status -> must fail txAddStatusNotActive
+      final nonActiveStartTrade = TransactionsModel(
+        tid: 'edge_non_active',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(20),
+        srId: 2,
+        rrAmount: Decimal.fromInt(20),
+        rrId: 3,
+        balance: Decimal.fromInt(20),
+        status: TransactionStatus.partial.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // EDGE 3: Closable=true when not eligible -> addAll auto-normalizes closable to false & succeeds (80 -> 60)
+      final autoNormalizedClosableTrade = TransactionsModel(
+        tid: 'edge_auto_normalized_closable',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(20),
+        srId: 2,
+        rrAmount: Decimal.fromInt(20),
+        rrId: 3,
+        balance: Decimal.fromInt(20),
+        status: TransactionStatus.active.index,
+        closable: true,
+        timestamp: now,
+        meta: {},
+      );
+
+      // EDGE 4: Missing parent / orphan trade -> must fail & roll back cleanly
+      final orphanTrade = TransactionsModel(
+        tid: 'edge_orphan',
+        rid: 'root',
+        pid: 'non_existent_parent',
+        srAmount: Decimal.fromInt(10),
+        srId: 2,
+        rrAmount: Decimal.fromInt(10),
+        rrId: 3,
+        balance: Decimal.fromInt(10),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // Valid Trade 2: consumes exact remaining 60 from root (root balance: 60 -> 0, inactive)
+      final validTrade2 = TransactionsModel(
+        tid: 'trade_2',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(60),
+        srId: 2,
+        rrAmount: Decimal.fromInt(60),
+        rrId: 3,
+        balance: Decimal.fromInt(60),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // EDGE 5 (CRITICAL): Cumulative exhaustion in same batch!
+      // Root is now drained to 0 (inactive) by trade_1 (120) + autoNormalized (20) + trade_2 (60).
+      final overdrawnAfterBatchDrain = TransactionsModel(
+        tid: 'edge_overdrawn_cumulative',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(10),
+        srId: 2,
+        rrAmount: Decimal.fromInt(10),
+        rrId: 3,
+        balance: Decimal.fromInt(10),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // EDGE 6: Chained leaf-on-leaf overdraw inside the same batch!
+      // trade_1 has balance 120; trying to trade 121 from trade_1 in the same batch must fail.
+      final childOverdrawTrade = TransactionsModel(
+        tid: 'edge_child_overdraw',
+        rid: 'root',
+        pid: 'trade_1',
+        srAmount: Decimal.fromInt(121),
+        srId: 3,
+        rrAmount: Decimal.fromInt(121),
+        rrId: 2,
+        balance: Decimal.fromInt(121),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      // Execute all valid and invalid trades in ONE single addAll batch
+      final added = await repo.addAll([
+        root,
+        validTrade1,
+        wrongCoinTrade,
+        nonActiveStartTrade,
+        autoNormalizedClosableTrade,
+        orphanTrade,
+        validTrade2,
+        overdrawnAfterBatchDrain,
+        childOverdrawTrade,
+      ]);
+
+      // 1. Only the 4 valid transactions must succeed
+      expect(added, ['root', 'trade_1', 'edge_auto_normalized_closable', 'trade_2']);
+
+      // Verify auto-normalization of closable=true -> false
+      expect(box.get('edge_auto_normalized_closable')!.isClosable, isFalse);
+
+      // 2. None of the 5 invalid edge trades may exist in box or cache
+      expect(box.get('edge_wrong_coin'), isNull);
+      expect(box.get('edge_non_active'), isNull);
+      expect(box.get('edge_orphan'), isNull);
+      expect(box.get('edge_overdrawn_cumulative'), isNull);
+      expect(box.get('edge_child_overdraw'), isNull);
+
+      expect(repo.getIndexedMap().containsKey('edge_wrong_coin'), isFalse);
+      expect(repo.getIndexedMap().containsKey('edge_overdrawn_cumulative'), isFalse);
+      expect(repo.getIndexedMap().containsKey('edge_child_overdraw'), isFalse);
+
+      // 3. Parent balances & statuses must reflect ONLY valid trades (120 + 20 + 60 = 200)
+      final savedRoot = box.get('root')!;
+      expect(savedRoot.balance, Decimal.zero);
+      expect(savedRoot.statusEnum, TransactionStatus.inactive);
+
+      // trade_1 must remain untouched at full 120 balance after childOverdrawTrade rolled back
+      final savedTrade1 = box.get('trade_1')!;
+      expect(savedTrade1.balance, Decimal.fromInt(120));
+      expect(savedTrade1.statusEnum, TransactionStatus.active);
+
+      // =========================================================================
+      // SECOND BATCH EDGE: Trading against an already-inactive parent
+      // =========================================================================
+      final tradeOnInactiveParent = TransactionsModel(
+        tid: 'edge_on_inactive_parent',
+        rid: 'root',
+        pid: 'root',
+        srAmount: Decimal.fromInt(1),
+        srId: 2,
+        rrAmount: Decimal.fromInt(1),
+        rrId: 3,
+        balance: Decimal.fromInt(1),
+        status: TransactionStatus.active.index,
+        closable: false,
+        timestamp: now,
+        meta: {},
+      );
+
+      final secondBatch = await repo.addAll([tradeOnInactiveParent]);
+      expect(secondBatch, isEmpty);
+      expect(box.get('edge_on_inactive_parent'), isNull);
+      expect(box.get('root')!.balance, Decimal.zero);
+      expect(box.get('root')!.statusEnum, TransactionStatus.inactive);
     });
   });
 

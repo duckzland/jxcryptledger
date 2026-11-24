@@ -74,7 +74,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
     };
 
     sortableAscending = states.get("[np]-$sortableKey-sortable-ascending", defaultValue: true);
-
+    tableBuildColumns();
     _processTxs();
   }
 
@@ -101,12 +101,12 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   }
 
   List<Map<String, dynamic>> tablePopulateData() {
-    final rx = <Map<String, dynamic>>[];
+    tableData = <Map<String, dynamic>>[];
 
     for (final m in txs) {
-      rx.add({'tx': m});
+      tableData.add({'tx': m});
     }
-    return rx;
+    return tableData;
   }
 
   List<DataColumn> tableBuildColumns() {
@@ -153,15 +153,13 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   }
 
   Widget tableBuild() {
-    tablePopulateData();
-
     return WidgetsTableVirtualizedSingle<Map<String, dynamic>>(
       controller: scrollToUtil.controller,
       headerHeight: tableHeadingHeight,
       rowHeight: tableRowHeight,
       data: tableData,
       rowBuilder: tableBuildRow,
-      columnCount: tableBuildColumns().length,
+      columnCount: tableColumns.length,
       childBuilder: (rows) => DataTable2(
         scrollController: scrollToUtil.controller,
         minWidth: 1200,
@@ -176,7 +174,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
         empty: Center(
           child: Text("No market data available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         ),
-        columns: tableBuildColumns(),
+        columns: tableColumns,
         rows: rows,
       ),
     );
@@ -205,8 +203,7 @@ class _WatchboardScreensMarketState extends State<WatchboardScreensMarket>
   void _processTxs() {
     txs = [..._controller.items];
     txs = marketFilterableFilter(txs);
-    tableData = tablePopulateData();
-
+    tablePopulateData();
     sortableApplySorting(pauseRefresh: true);
   }
 }

@@ -102,11 +102,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     toController = TextEditingController();
 
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
-    _sourceAmount = _calc.totalActiveBalance(txs);
+    _sourceAmount = Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(txs));
 
     for (final tx in txs) {
       selectableSetSelected(tx.uuid, true);
     }
+
+    _updateTableState();
   }
 
   @override
@@ -123,6 +125,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   @override
   void rateableGetCallback(bool hasNewRate) {
     _updateResult(rateableAmount);
+    _updateTableState();
   }
 
   List<Map<String, dynamic>> tablePopulateData() {
@@ -219,6 +222,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           ? (v) {
               setState(() {
                 selectableSetSelected(row['uuid'], v!);
+
+                _sourceAmount = Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(_getSelectedTransactions()));
+
                 _updateProfit();
                 _updateResult(rateableAmount);
                 _buildResultAmountField();
@@ -243,14 +249,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   Widget tableBuild() {
-    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-
-    _targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
-    _showRate = !_useBalanceMode && rate > Decimal.zero && _targetSymbol.isNotEmpty;
-    _showAmount = _useBalanceMode && _targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
-
-    tablePopulateData();
-
     final checkboxTheme = Theme.of(context).checkboxTheme;
 
     return SizedBox(
@@ -260,7 +258,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         controller: tableScrollController,
         data: tableData,
         rowBuilder: tableBuildRow,
-        columnCount: tableBuildColumns().length,
+        columnCount: tableColumns.length,
         childBuilder: (rows) => DataTable2(
           scrollController: tableScrollController,
           headingCheckboxTheme: checkboxTheme,
@@ -277,7 +275,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           ),
           onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
-          columns: tableBuildColumns(),
+          columns: tableColumns,
           rows: rows,
         ),
       ),
@@ -315,7 +313,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                                 _useBalanceMode = !_useBalanceMode;
                                 if (_useBalanceMode && fromController.text.isEmpty) {
                                   fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
-                                  _fromAmount = Utils.sanitizeFractalDecimal(_sourceAmount);
+                                  _fromAmount = _sourceAmount;
                                 }
                               });
 
@@ -570,7 +568,15 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               value: _takeProfit,
-              onChanged: _isProcessing ? null : _useProfit,
+              onChanged: (bool? state) {
+                if (!_isProcessing) {
+                  if (state != null) {
+                    _updateProfit(enabled: state);
+                  }
+                  _updateTableState();
+                  setState(() {});
+                }
+              },
             ),
           ),
           Text("Take profit"),
@@ -586,17 +592,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             helperText: 'e.g., 10.5',
             enabled: !_isProcessing,
             suffixText: _selectedSymbol,
-            useMax: Utils.sanitizeFractalDecimal(
-              _takeProfit && !_isProcessing
-                  ? Utils.parseDecimal(
-                      Utils.formatSmartDecimal(_selectedProfit(), smartDecimal: false, maxDecimals: 18).replaceAll(',', ''),
-                    )
-                  : _sourceAmount,
-            ),
+            useMax: _sourceAmount,
             controller: fromController,
             disposeController: false,
             onChanged: (value) {
-              setState(() => _fromAmount = Utils.parseDecimal(value));
+              setState(() {
+                _fromAmount = Utils.parseDecimal(value);
+                _updateTableState();
+              });
             },
           )
         : TextField(
@@ -607,9 +610,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
               );
             },
             controller: TextEditingController(
-              text: selectableHasSelectedRows()
-                  ? "${Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false)} $_selectedSymbol"
-                  : "No transaction selected",
+              text: selectableHasSelectedRows() ? "$_sourceAmount $_selectedSymbol" : "No transaction selected",
             ),
             readOnly: true,
             style: TextStyle(fontSize: 16),
@@ -624,7 +625,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       controller: toController,
       disposeController: false,
       onChanged: (value) {
-        setState(() => _toAmount = Utils.parseDecimal(value));
+        setState(() {
+          _toAmount = Utils.parseDecimal(value);
+          _updateTableState();
+        });
       },
     );
   }
@@ -655,6 +659,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             setState(() {
               rateableAmount = value;
               _updateResult(rateableAmount);
+              _updateTableState();
             });
           });
         }
@@ -676,6 +681,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       enabled: !_isProcessing,
       onSelected: (id) => setState(() {
         rateableTarget = id;
+        _updateTableState();
       }),
     );
   }
@@ -715,16 +721,22 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         enabled: !_isProcessing,
         onChanged: (value) {
           _updateRate(value);
+          _updateTableState();
           setState(() {});
         },
       ),
     );
   }
 
-  void _useProfit(bool? enabled) {
-    if (enabled == null) return;
+  void _updateTableState() {
+    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
 
-    setState(() => _updateProfit(enabled: enabled));
+    _targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
+    _showRate = !_useBalanceMode && rate > Decimal.zero && _targetSymbol.isNotEmpty;
+    _showAmount = _useBalanceMode && _targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
+
+    tableBuildColumns();
+    tablePopulateData();
   }
 
   void _updateProfit({bool? enabled}) {
@@ -737,10 +749,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final formattedProfit = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18).replaceAll(',', '');
     fromController.text = formattedProfit;
     _fromAmount = Utils.parseDecimal(formattedProfit);
-  }
-
-  Decimal _selectedProfit() {
-    return _calc.calculateBalanceProfit(_getSelectedTransactions()) ?? Decimal.zero;
   }
 
   Map<String, Decimal> _spreadByWeights(Decimal amount, List<TransactionsModel> transactions, Map<String, Decimal> weights) {
@@ -779,17 +787,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     return stxs;
   }
 
-  void _updateSource() {
-    _sourceAmount = _selectedBalance();
-  }
-
-  Decimal _selectedBalance() {
-    return _calc.totalActiveBalance(_getSelectedTransactions());
-  }
-
   void _updateRate(String totalAmount) {
-    _updateSource();
-
     final Decimal entryRate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
 
     final checkValue = Math.multiply(_sourceAmount, entryRate);
@@ -809,8 +807,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   void _updateResult(String? rateText) {
-    _updateSource();
-
     final Decimal entryRate = rateableParseToDecimal(rateText ?? "", reverse: _isReversed);
     final Decimal resultValue = Math.multiply(_sourceAmount, entryRate);
 
@@ -855,6 +851,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     bool completed = true;
 
+    List<TransactionsModel> payload = [];
+    Map<String, TransactionsModel> map = {};
+
     for (final tx in stxs) {
       Decimal sourceAmount;
       Decimal amount;
@@ -889,39 +888,54 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
       }
 
-      try {
-        final child = TransactionsModel(
-          tid: _txController.generateId(),
-          rid: tx.isRoot ? tx.tid : tx.rid,
-          pid: tx.tid,
-          srId: tx.rrId,
-          srAmount: sourceAmount,
-          rrId: rateableTarget ?? 0,
-          rrAmount: amount,
-          balance: amount,
-          status: TransactionStatus.active.index,
-          timestamp: Utils.dateToTimestamp(DateTime.now()),
-          closable: false,
-          meta: meta,
-        );
-        await _txController.add(child);
-        txs.remove(tx);
-        selectableSetSelected(tx.uuid, false);
-      } on ValidationException catch (e) {
-        completed = false;
-        widget.onSave?.call(e);
-        break;
-      } catch (e) {
-        completed = false;
-        widget.onSave?.call(e);
-        break;
-      }
+      final child = TransactionsModel(
+        tid: _txController.generateId(),
+        rid: tx.isRoot ? tx.tid : tx.rid,
+        pid: tx.tid,
+        srId: tx.rrId,
+        srAmount: sourceAmount,
+        rrId: rateableTarget ?? 0,
+        rrAmount: amount,
+        balance: amount,
+        status: TransactionStatus.active.index,
+        timestamp: Utils.dateToTimestamp(DateTime.now()),
+        closable: false,
+        meta: meta,
+      );
 
-      // Post process after transactions success
+      payload.add(child);
+      map[child.uuid] = tx;
+
       if (_takeProfit) {
         profitPool = tempPoolValue;
       }
     }
+
+    final success = await _txController.addAll(payload);
+    for (final uuid in success) {
+      final parent = map[uuid];
+      if (parent != null) {
+        txs.remove(parent);
+        selectableSetSelected(parent.uuid, false);
+      }
+    }
+
+    if (success.length < payload.length) {
+      completed = false;
+      final totalCount = payload.length;
+      final successCount = success.length;
+      final failedCount = totalCount - successCount;
+
+      final devMessage = 'Batch trades partially or fully failed: $failedCount of $totalCount failed ($successCount succeeded).';
+
+      final uxMessage = successCount == 0
+          ? 'Unable to trade the selected transactions. Please check their status and try again.'
+          : '$failedCount of $totalCount transactions could not be traded. Remaining items are still selected.';
+
+      widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
+    }
+
+    tablePopulateData();
 
     if (completed) {
       if (txs.isEmpty) {
@@ -939,9 +953,9 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       setState(() {
         _isProcessing = false;
-        _sourceAmount = Utils.sanitizeFractalDecimal(_selectedBalance());
+        _sourceAmount = Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(_getSelectedTransactions()));
 
-        if (_selectedProfit() <= Decimal.zero) {
+        if (_sourceAmount <= Decimal.zero) {
           _takeProfit = false;
         }
 

@@ -126,6 +126,9 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
     for (final tx in txs) {
       selectableSetSelected(tx.uuid, true);
     }
+
+    tableBuildColumns();
+    tablePopulateData();
   }
 
   @override
@@ -180,8 +183,6 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   }
 
   Widget tableBuild() {
-    tablePopulateData();
-
     final checkboxTheme = Theme.of(context).checkboxTheme;
 
     return SizedBox(
@@ -191,7 +192,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
         controller: tableScrollController,
         data: tableData,
         rowBuilder: tableBuildRow,
-        columnCount: tableBuildColumns().length,
+        columnCount: tableColumns.length,
         childBuilder: (rows) => DataTable2(
           scrollController: tableScrollController,
           headingCheckboxTheme: checkboxTheme,
@@ -208,7 +209,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
             child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           ),
           onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
-          columns: tableBuildColumns(),
+          columns: tableColumns,
           rows: rows,
         ),
       ),
@@ -355,6 +356,8 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
       widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
     }
+
+    tablePopulateData();
 
     if (completed) {
       if (txs.isEmpty) {

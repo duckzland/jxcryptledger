@@ -81,6 +81,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
 
     _rateController.addListener(_onControllerChanged);
     _populateRates();
+    tableBuildColumns();
     tablePopulateData();
   }
 
@@ -177,7 +178,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
         controller: tableScrollController,
         data: tableData,
         rowBuilder: tableBuildRow,
-        columnCount: tableBuildColumns().length,
+        columnCount: tableColumns.length,
         childBuilder: (rows) => DataTable2(
           scrollController: tableScrollController,
           minWidth: 800,
@@ -190,7 +191,7 @@ class _TransactionsDialogsBalanceSnapshotsState extends State<TransactionsDialog
           empty: Center(
             child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           ),
-          columns: tableBuildColumns(),
+          columns: tableColumns,
           rows: rows,
         ),
       ),

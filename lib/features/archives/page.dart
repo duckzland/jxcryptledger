@@ -81,7 +81,8 @@ class _ArchivesPageState extends State<ArchivesPage>
       "type": (col, asc) => sortableOnSort((d) => d['tx'].type, "type", col, asc),
     };
 
-    tableData = tablePopulateData();
+    tableBuildColumns();
+    tablePopulateData();
     sortableApplySorting();
 
     actionbarRegister("Data Archives");
@@ -199,7 +200,7 @@ class _ArchivesPageState extends State<ArchivesPage>
         controller: tableScrollController,
         data: tableData,
         rowBuilder: tableBuildRow,
-        columnCount: tableBuildColumns().length,
+        columnCount: tableColumns.length,
         childBuilder: (rows) => DataTable2(
           scrollController: scrollToUtil.controller,
           minWidth: 460,
@@ -211,7 +212,7 @@ class _ArchivesPageState extends State<ArchivesPage>
           sortColumnIndex: sortableColumnIndex,
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
-          columns: tableBuildColumns(),
+          columns: tableColumns,
           rows: rows,
         ),
       ),
@@ -272,7 +273,7 @@ class _ArchivesPageState extends State<ArchivesPage>
     setState(() {
       final ntx = _controller.findNew(txs);
       txs = _controller.items;
-      tableData = tablePopulateData();
+      tablePopulateData();
       sortableApplySorting();
       if (ntx != null) {
         scrollToTableNewRow(ntx);
@@ -288,12 +289,12 @@ class _ArchivesPageState extends State<ArchivesPage>
   }
 
   List<Map<String, dynamic>> tablePopulateData() {
-    final rx = <Map<String, dynamic>>[];
+    tableData = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      rx.add({'tx': tx});
+      tableData.add({'tx': tx});
     }
 
-    return rx;
+    return tableData;
   }
 }

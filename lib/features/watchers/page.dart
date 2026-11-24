@@ -78,8 +78,9 @@ class _WatchersPageState extends State<WatchersPage>
       "duration": (col, asc) => sortableOnSort((d) => d['tx'].duration, "duration", col, asc),
     };
 
-    tableData = tablePopulateData();
-    sortableApplySorting();
+    tableBuildColumns();
+    tablePopulateData();
+    sortableApplySorting(pauseRefresh: true);
 
     actionbarRegister("Rate Watchers");
   }
@@ -173,13 +174,13 @@ class _WatchersPageState extends State<WatchersPage>
   }
 
   List<Map<String, dynamic>> tablePopulateData() {
-    final rx = <Map<String, dynamic>>[];
+    tableData = <Map<String, dynamic>>[];
 
     for (final tx in txs) {
-      rx.add({'tx': tx});
+      tableData.add({'tx': tx});
     }
 
-    return rx;
+    return tableData;
   }
 
   List<DataColumn> tableBuildColumns() {
@@ -228,7 +229,7 @@ class _WatchersPageState extends State<WatchersPage>
         controller: scrollToUtil.controller,
         data: tableData,
         rowBuilder: tableBuildRow,
-        columnCount: tableBuildColumns().length,
+        columnCount: tableColumns.length,
         childBuilder: (rows) => DataTable2(
           scrollController: scrollToUtil.controller,
           minWidth: 1200,
@@ -240,7 +241,7 @@ class _WatchersPageState extends State<WatchersPage>
           sortColumnIndex: sortableColumnIndex,
           sortAscending: sortableAscending,
           isHorizontalScrollBarVisible: false,
-          columns: tableBuildColumns(),
+          columns: tableColumns,
           rows: rows,
         ),
       ),
@@ -298,8 +299,10 @@ class _WatchersPageState extends State<WatchersPage>
     setState(() {
       final ntx = _wxController.findNew(txs);
       txs = _wxController.items;
-      tableData = tablePopulateData();
-      sortableApplySorting();
+
+      tablePopulateData();
+      sortableApplySorting(pauseRefresh: true);
+
       if (ntx != null) {
         scrollToTableNewRow(ntx);
       }

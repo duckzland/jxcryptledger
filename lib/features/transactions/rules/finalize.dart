@@ -2,7 +2,7 @@ import '../../../app/exceptions.dart';
 import 'base.dart';
 
 class TransactionsRulesFinalize extends TransactionsRulesBase {
-  TransactionsRulesFinalize(super.tx, super.txRepo, super.silent, {super.mode = "[TXFINALIZE]"});
+  TransactionsRulesFinalize(super.tx, super.txRepo, super.silent, {super.mode = "[TXFINALIZE]", super.overlay});
 
   @override
   bool validate() {

@@ -38,6 +38,18 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     load();
   }
 
+  Future<List<String>> addAll(List<TransactionsModel> txs) async {
+    final result = await repo.addAll(txs);
+    load();
+    return result;
+  }
+
+  Future<List<String>> updateAll(List<TransactionsModel> txs) async {
+    final result = await repo.updateAll(txs);
+    load();
+    return result;
+  }
+
   Future<List<String>> closeAll(List<TransactionsModel> txs) async {
     final result = await repo.closeAll(txs);
     load();
