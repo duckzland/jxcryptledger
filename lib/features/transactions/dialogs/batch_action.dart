@@ -145,7 +145,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
 
       tableData.add({
-        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.rrAmount} $resultSymbol',
+        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
         'balance': '${tx.balanceText} $resultSymbol',
         'tx': tx,
         'uuid': tx.uuid,
@@ -167,6 +167,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
+
     return DataRow(
       selected: selectableIsSelected(row['uuid']),
       onSelectChanged: (v) {
@@ -251,10 +252,7 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
                       children: [
                         WidgetsButtonsAction(
                           label: 'Cancel',
-                          onPressed: (_) {
-                            setState(() => _isExiting = true);
-                            widget.onSave?.call(null);
-                          },
+                          onPressed: (_) => Navigator.pop(context),
                           evaluator: (s) {
                             _isProcessing ? s.disable() : s.normal();
                           },
@@ -314,23 +312,35 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
   }
 
   Future<void> _handleSave() async {
-    final selectedIds = selectableGetSelectedRows();
-    final selectedTxs = txs.where((tx) => selectedIds.contains(tx.uuid)).toList();
-    if (selectedTxs.isEmpty) return;
+    final sids = selectableGetSelectedRows();
+    final payload = txs.where((tx) => sids.contains(tx.uuid)).toList();
+    if (payload.isEmpty) return;
 
     setState(() => _isProcessing = true);
 
-    final successUuids = switch (widget.mode) {
-      TransactionsBatchActionMode.close => await _txController.closeAll(selectedTxs),
-      TransactionsBatchActionMode.finalize => await _txController.finalizeAll(selectedTxs),
-      TransactionsBatchActionMode.delete => await _txController.removeAll(selectedTxs),
-      TransactionsBatchActionMode.refund => await _txController.refundAll(selectedTxs),
+    final success = switch (widget.mode) {
+      TransactionsBatchActionMode.close => await _txController.closeAll(payload),
+      TransactionsBatchActionMode.finalize => await _txController.finalizeAll(payload),
+      TransactionsBatchActionMode.delete => await _txController.removeAll(payload),
+      TransactionsBatchActionMode.refund => await _txController.refundAll(payload),
     };
 
-    final successSet = successUuids.toSet();
-    txs.removeWhere((tx) => successSet.contains(tx.uuid));
-    for (final uuid in successUuids) {
+    final sets = success.toSet();
+    txs.removeWhere((tx) => sets.contains(tx.uuid));
+    for (final uuid in success) {
       selectableSetSelected(uuid, false);
+    }
+
+    if (success.length == payload.length) {
+      txs.isNotEmpty ? widgetsNotifySuccess(successMessage) : widget.onSave?.call(null);
+    } else {
+      widget.onSave?.call(
+        BatchException(
+          AppErrorCode.batchOpsFailed,
+          "Batch ${widget.mode.name} partially or fully failed: ${payload.length - success.length}/${payload.length} failed.",
+          'Unable to ${widget.mode.name} the selected transactions. Please check their status and try again.',
+        ),
+      );
     }
 
     setState(() {
@@ -338,21 +348,5 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       _isProcessing = false;
       tablePopulateData();
     });
-
-    if (successUuids.length == selectedTxs.length) {
-      txs.isNotEmpty ? widgetsNotifySuccess(successMessage) : widget.onSave?.call(null);
-    } else {
-      final total = selectedTxs.length;
-      final succeeded = successUuids.length;
-      final failed = total - succeeded;
-      final action = widget.mode.name;
-
-      final devMessage = 'Batch $action partially or fully failed: $failed of $total failed ($succeeded succeeded).';
-      final uxMessage = succeeded == 0
-          ? 'Unable to $action the selected transactions. Please check their status and try again.'
-          : '$failed of $total transactions could not be ${action}d. Remaining items are still selected.';
-
-      widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
-    }
   }
 }

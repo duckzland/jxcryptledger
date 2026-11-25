@@ -24,6 +24,7 @@ import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/selectable.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../calculations.dart';
 import '../controller.dart';
@@ -226,7 +227,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             }
           : null,
       cells: [
-        DataCell(WidgetsTextSelectable(row['date'] ?? '')),
+        DataCell(WidgetsWithTooltip(WidgetsTextSelectable(row['date'] ?? ''), tx.noteText, tx.meta['accent_color'])),
         DataCell(WidgetsTextSelectable(row['transaction'] ?? '')),
         DataCell(WidgetsTextSelectable(row['selected'] == true ? row['balance'] ?? '' : '')),
         if (_showRate) DataCell(WidgetsTextSelectable(row['selected'] == true ? rateableAmount ?? "" : '')),
@@ -389,10 +390,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                       children: [
                         WidgetsButtonsAction(
                           label: txs.isNotEmpty ? 'Cancel' : 'Close',
-                          onPressed: (_) {
-                            setState(() => _isExiting = true);
-                            widget.onSave?.call(null);
-                          },
+                          onPressed: (_) => Navigator.pop(context),
                           evaluator: (s) {
                             _isProcessing ? s.disable() : s.normal();
                           },
@@ -846,67 +844,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       return;
     }
 
-    var allocations = _resolveAllocations(stxs);
-
     setState(() {
       _isProcessing = true;
     });
 
-    if (_mode == TransactionsDialogBatchTradeMode.profit) {
-      var liveMap = _txController.getIndexedMap();
-      final replacements = <TransactionsModel, TransactionsModel>{};
+    var allocations = _resolveAllocations(stxs);
 
-      for (final tx in stxs) {
-        final sourceAmount = allocations.from[tx.uuid] ?? Decimal.zero;
-        final amount = allocations.to[tx.uuid] ?? Decimal.zero;
-        if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
-
-        var current = liveMap[tx.tid] ?? tx;
-
-        while (current.profitAmount < sourceAmount) {
-          final nextTarget = _calc.getCloseTargetParent(current, txsMap: liveMap);
-          if (nextTarget == null) break;
-
-          final closed = await _txController.closeAll([current]);
-          if (closed.isEmpty) break;
-
-          liveMap = _txController.getIndexedMap();
-          final updatedTarget = liveMap[nextTarget.tid];
-          if (updatedTarget == null) break;
-
-          current = updatedTarget;
-        }
-
-        if (current.tid != tx.tid) {
-          replacements[tx] = current;
-        }
-      }
-
-      if (replacements.isNotEmpty) {
-        replacements.forEach((oldTx, newParent) {
-          txs.remove(oldTx);
-          selectableSetSelected(oldTx.uuid, false);
-
-          if (!txs.any((t) => t.tid == newParent.tid)) {
-            txs.add(newParent);
-          }
-          selectableSetSelected(newParent.uuid, true);
-
-          final idx = stxs.indexOf(oldTx);
-          if (idx != -1) {
-            stxs[idx] = newParent;
-          }
-
-          final oldFrom = allocations.from.remove(oldTx.uuid) ?? Decimal.zero;
-          final oldTo = allocations.to.remove(oldTx.uuid) ?? Decimal.zero;
-          allocations.from[newParent.uuid] = Math.add(allocations.from[newParent.uuid] ?? Decimal.zero, oldFrom);
-          allocations.to[newParent.uuid] = Math.add(allocations.to[newParent.uuid] ?? Decimal.zero, oldTo);
-        });
-
-        final seen = <String>{};
-        stxs.retainWhere((t) => seen.add(t.tid));
-      }
-    }
+    _preprocessBeforeSave(stxs, allocations);
 
     final List<TransactionsModel> payload = [];
     final Map<String, TransactionsModel> map = {};
@@ -966,29 +910,26 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       widgetsNotifySuccess("Trade completed successfully.");
     }
 
+    _isExiting = txs.isEmpty;
+    _isProcessing = false;
     tablePopulateData();
 
     if (txs.isEmpty) {
       widget.onSave?.call(null);
-      setState(() {
-        _isExiting = true;
-      });
-
-      return;
     } else {
       _formKey.currentState?.reset();
 
-      setState(() {
-        _isProcessing = false;
-        if (_compoundedProfits.isEmpty && _mode == TransactionsDialogBatchTradeMode.profit) {
-          _mode = TransactionsDialogBatchTradeMode.balance;
-        }
+      _updateCompoundedProfits();
 
-        _updateCompoundedProfits();
-        _updateTableState();
-        _updateField();
-      });
+      if (_compoundedProfits.isEmpty && _mode == TransactionsDialogBatchTradeMode.profit) {
+        _mode = TransactionsDialogBatchTradeMode.balance;
+      }
+
+      _updateTableState();
+      _updateField();
     }
+
+    setState(() {});
   }
 
   bool _validate(List<TransactionsModel> txs) {
@@ -1012,6 +953,64 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         }
         final rate = rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
         return rate > Decimal.zero;
+    }
+  }
+
+  void _preprocessBeforeSave(List<TransactionsModel> stxs, ({Map<String, Decimal> from, Map<String, Decimal> to}) allocations) async {
+    if (_mode == TransactionsDialogBatchTradeMode.profit) {
+      var liveMap = _txController.getIndexedMap();
+      final replacements = <TransactionsModel, TransactionsModel>{};
+
+      for (final tx in stxs) {
+        final sourceAmount = allocations.from[tx.uuid] ?? Decimal.zero;
+        final amount = allocations.to[tx.uuid] ?? Decimal.zero;
+        if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
+
+        var current = liveMap[tx.tid] ?? tx;
+
+        while (current.profitAmount < sourceAmount) {
+          final nextTarget = _calc.getCloseTargetParent(current, txsMap: liveMap);
+          if (nextTarget == null) break;
+
+          final closed = await _txController.closeAll([current]);
+          if (closed.isEmpty) break;
+
+          liveMap = _txController.getIndexedMap();
+          final updatedTarget = liveMap[nextTarget.tid];
+          if (updatedTarget == null) break;
+
+          current = updatedTarget;
+        }
+
+        if (current.tid != tx.tid) {
+          replacements[tx] = current;
+        }
+      }
+
+      if (replacements.isNotEmpty) {
+        replacements.forEach((oldTx, newParent) {
+          txs.remove(oldTx);
+          selectableSetSelected(oldTx.uuid, false);
+
+          if (!txs.any((t) => t.tid == newParent.tid)) {
+            txs.add(newParent);
+          }
+          selectableSetSelected(newParent.uuid, true);
+
+          final idx = stxs.indexOf(oldTx);
+          if (idx != -1) {
+            stxs[idx] = newParent;
+          }
+
+          final oldFrom = allocations.from.remove(oldTx.uuid) ?? Decimal.zero;
+          final oldTo = allocations.to.remove(oldTx.uuid) ?? Decimal.zero;
+          allocations.from[newParent.uuid] = Math.add(allocations.from[newParent.uuid] ?? Decimal.zero, oldFrom);
+          allocations.to[newParent.uuid] = Math.add(allocations.to[newParent.uuid] ?? Decimal.zero, oldTo);
+        });
+
+        final seen = <String>{};
+        stxs.retainWhere((t) => seen.add(t.tid));
+      }
     }
   }
 

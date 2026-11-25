@@ -16,6 +16,7 @@ import '../../../widgets/header.dart';
 import '../../../widgets/notify.dart';
 import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/selectable.dart';
+import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../controller.dart';
 import '../model.dart';
@@ -121,6 +122,8 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   }
 
   DataRow tableBuildRow(Map<String, dynamic> row) {
+    final tx = row['tx'] as TransactionsModel;
+
     return DataRow(
       selected: selectableIsSelected(row['uuid']),
       onSelectChanged: (v) {
@@ -129,7 +132,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
         });
       },
       cells: [
-        DataCell(WidgetsTextSelectable(row['date'] ?? '')),
+        DataCell(WidgetsWithTooltip(WidgetsTextSelectable(row['date'] ?? ''), tx.noteText, tx.meta['accent_color'])),
         DataCell(WidgetsTextSelectable(row['transaction'] ?? '')),
         DataCell(WidgetsTextSelectable(row['balance'] ?? '')),
         DataCell(Text(row['status'] ?? '')),
@@ -206,10 +209,7 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
                       children: [
                         WidgetsButtonsAction(
                           label: txs.isNotEmpty ? 'Cancel' : 'Close',
-                          onPressed: (_) {
-                            setState(() => _isExiting = true);
-                            widget.onSave?.call(null);
-                          },
+                          onPressed: (_) => Navigator.pop(context),
                           evaluator: (s) {
                             _isProcessing ? s.disable() : s.normal();
                           },
@@ -310,27 +310,42 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final selectedIds = selectableGetSelectedRows();
-    final selectedTxs = txs.where((tx) => selectedIds.contains(tx.uuid)).toList();
-    if (selectedTxs.isEmpty) return;
+    final sids = selectableGetSelectedRows();
+    final stxs = txs.where((tx) => sids.contains(tx.uuid)).toList();
+    if (stxs.isEmpty) return;
 
     setState(() => _isProcessing = true);
 
-    final payload = selectedTxs.map((tx) {
+    final Map<String, TransactionsModel> map = {};
+    final payload = stxs.map((tx) {
       final meta = {
         ...tx.meta,
         if (_noteEntry != null) 'group_notes': _noteEntry,
         if (_accentColor != null) 'accent_color': _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0'),
       };
+
+      map[tx.uuid] = tx;
+
       return tx.copyWith(meta: meta);
     }).toList();
 
-    final successUuids = await _txController.updateAll(payload);
-    final successSet = successUuids.toSet();
-
-    txs.removeWhere((tx) => successSet.contains(tx.uuid));
-    for (final uuid in successUuids) {
+    final success = await _txController.updateAll(payload);
+    for (final uuid in success) {
+      final tx = map[uuid];
+      if (tx != null) txs.remove(tx);
       selectableSetSelected(uuid, false);
+    }
+
+    if (success.length == payload.length) {
+      txs.isNotEmpty ? widgetsNotifySuccess("Updating transactions completed successfully.") : widget.onSave?.call(null);
+    } else {
+      widget.onSave?.call(
+        BatchException(
+          AppErrorCode.batchOpsFailed,
+          "Batch edit partially or fully failed: ${payload.length - success.length}/${payload.length} failed.",
+          'Unable to edit the selected transactions. Please check their status and try again.',
+        ),
+      );
     }
 
     setState(() {
@@ -338,20 +353,5 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
       _isProcessing = false;
       tablePopulateData();
     });
-
-    if (successUuids.length == payload.length) {
-      txs.isNotEmpty ? widgetsNotifySuccess("Updating transactions completed successfully.") : widget.onSave?.call(null);
-    } else {
-      final total = payload.length;
-      final succeeded = successUuids.length;
-      final failed = total - succeeded;
-
-      final devMessage = 'Batch edit partially or fully failed: $failed of $total failed ($succeeded succeeded).';
-      final uxMessage = succeeded == 0
-          ? 'Unable to edit the selected transactions. Please check their status and try again.'
-          : '$failed of $total transactions could not be edited. Remaining items are still selected.';
-
-      widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
-    }
   }
 }

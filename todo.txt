@@ -8,6 +8,8 @@ Todo list
 - Improve the batch trade by filtering out no profit tx when is on profit taking mode and add auto close and take profit logic
 - [DONE] Virtualized when only one content must align top not center
 - Create action take profit. Add function to drill the furthest close point for this. Create in TransactionsController.
+- [DONE] Batch action dialog cancel button showing the success message
+- [DONE] tx note not showing at batch trade and edit table
 
 Test list
 - Test the new virtual list and table widget
@@ -17,12 +19,32 @@ Test list
     - Check memory usage with 5k transactions. when scrolling musn't increase too much and must decrease or released when out of page
     - Change the content width by hiding or showing the panel table, scroll to bottom then hide the content and must not have blank space shown
     - Update the viewport width and height and check if the scroll bar updated properly
-    - test add and remove items and check if the sizing works properly
+    - test add and remove items and check if the sizing and positioning works properly
 
 - Test the Import and Export form
     - The new loading message must shown and smoothly in and out.
     - The action for import and export must success, use 5K transactions for testing medium payload
     - Test the txs, panels, watchers, archives and settings for both import and export
+
+- Test transactions panels
+    - All number related text must have less than 18 decimal points
+    - The header must be printed correctly
+    - Upon receive of rates, the number related to rates must receive update and mutate
+    - Test the custom rate by entering new rate, reset the rate, check the current rate fetcher, rate clear and rate reversal
+    - All grouped and hidden button must work and clickable
+    - Hide and show panel must work
+    - Check if the last transactions not get hidden or cropped
+    - Check the sort by table column working properly
+    - Check the select all checkbox and its individual checkbox works correctly, mutate the header accordingly and mutate the linked batch forms properly
+    - Check the linking watchboard and panels
+    - Test individual per row action buttons, Edit, Trade, Close, Finalize, Refund, Delete
+    - Test the single view tx details dialog
+    - Check the tx summary bar at the bottom of the page, check for the capital vs total toggle and its value, check for the close buttons must release all selected box
+    - Test the sorter and filter dropdown at the main top rows
+
+
+
+
 
 
 
