@@ -6,6 +6,34 @@ import 'model.dart';
 class TransactionCalculation {
   const TransactionCalculation();
 
+  TransactionsModel? getCloseTargetParent(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
+    if (tx.isRoot) return null;
+    if (txs == null && txsMap == null) return null;
+
+    txsMap ??= {for (final item in txs!) item.tid: item};
+
+    String pid = tx.pid;
+    while (pid.isNotEmpty && pid != '0') {
+      final p = txsMap[pid];
+      if (p == null) break;
+
+      if (p.rrId == tx.rrId) {
+        return p;
+      }
+
+      pid = p.pid;
+    }
+
+    if (tx.rid.isNotEmpty && tx.rid != '0') {
+      final root = txsMap[tx.rid];
+      if (root != null && root.isRoot && root.rrId == tx.rrId) {
+        return root;
+      }
+    }
+
+    return null;
+  }
+
   Map<String, Decimal> spreadByWeights(Decimal amount, Iterable<TransactionsModel> transactions, Map<String, Decimal> weights) {
     final txList = transactions.toList();
     final totalWeight = txList.fold<Decimal>(Decimal.zero, (total, tx) {
@@ -304,35 +332,6 @@ class TransactionCalculation {
     return Decimal.zero;
   }
 
-  TransactionsModel? getCloseTargetParent(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
-    if (tx.isRoot) return null;
-    if (txs == null && txsMap == null) return null;
-
-    txsMap ??= {for (final item in txs!) item.tid: item};
-
-    String pid = tx.pid;
-    while (pid.isNotEmpty && pid != '0') {
-      final p = txsMap[pid];
-      if (p == null) break;
-
-      if (p.rrId == tx.rrId) {
-        return p;
-      }
-
-      pid = p.pid;
-    }
-
-    if (tx.rid.isNotEmpty && tx.rid != '0') {
-      final root = txsMap[tx.rid];
-      if (root != null && root.isRoot && root.rrId == tx.rrId) {
-        return root;
-      }
-    }
-
-    return null;
-  }
-
-  /// 2. Predicts total compounded profit/loss across all closeable hops up to the last target parent
   Decimal totalCompoundedProfitLoss(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
     if (txs == null && txsMap == null) return tx.profitAmount;
     txsMap ??= {for (final item in txs!) item.tid: item};
@@ -390,7 +389,6 @@ class TransactionCalculation {
     return Math.subtract(tx.balance, effectivePrincipal);
   }
 
-  /// 3. Calculates cumulative capital share percentage (0..100) from the last target parent down to tx
   Decimal totalCompoundedSharePercentage(
     TransactionsModel tx, {
     TransactionsModel? targetParent,
