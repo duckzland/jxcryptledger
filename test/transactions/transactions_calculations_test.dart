@@ -493,5 +493,146 @@ void main() {
       expect(calc.totalCompoundedSharePercentage(leaf, txs: txs), _d('33.333333333333333333'));
       expect(calc.totalCompoundedProfitLoss(leaf, txs: txs), _d('210.750000000000000003'));
     });
+
+    test('drills up multi-hop close targets on real ASTER -> SUI partial split chain', () {
+      // Real chain (COIN 1 = ASTER, COIN 2 = SUI):
+      // tx0 (root): 4197 S -> 8541 A (balance: 8000 A unspent!)
+      //  └── tx1: 541 A -> 418 S (balance: 0, inactive)
+      //       └── tx2 (ceiling close target due to partial tx3): 418 S -> 774.48 A (balance: 0, inactive)
+      //            └── tx3: 774.48 A -> 577.346 S (balance: 159.35 S unspent -> PARTIAL! blocks climbing past tx2)
+      //                 └── tx4 (2nd hop close target): 417.996 S -> 593.7528 A (balance: 0, inactive) [417.996 / 577.346 = 72.399566291270745791%]
+      //                      └── tx5: 593.7528 A -> 449.356 S (balance: 0, inactive)
+      //                           └── tx6 (1st hop close target): 449.356 S -> 612.3248 A (balance: 0, inactive)
+      //                                └── tx7: 612.3248 A -> 472.5953 S (balance: 0, inactive)
+      //                                     └── tx8 (active leaf): 472.5953 S -> 641.0698 A (balance: 641.0698, active)
+      const aster = 1;
+      const sui = 2;
+
+      final tx0 = _tx(
+        id: 'tx0',
+        srAmount: '4197',
+        rrAmount: '8541',
+        balance: '8000',
+        srId: sui,
+        rrId: aster,
+        parentId: '0',
+        rootId: '0',
+        status: TransactionStatus.partial,
+      );
+      final tx1 = _tx(
+        id: 'tx1',
+        srAmount: '541',
+        rrAmount: '418',
+        balance: '0',
+        srId: aster,
+        rrId: sui,
+        parentId: 'tx0',
+        rootId: 'tx0',
+        status: TransactionStatus.inactive,
+      );
+      final tx2 = _tx(
+        id: 'tx2',
+        srAmount: '418',
+        rrAmount: '774.48',
+        balance: '0',
+        srId: sui,
+        rrId: aster,
+        parentId: 'tx1',
+        rootId: 'tx0',
+        status: TransactionStatus.inactive,
+      );
+      final tx3 = _tx(
+        id: 'tx3',
+        srAmount: '774.48',
+        rrAmount: '577.346',
+        balance: '159.35',
+        srId: aster,
+        rrId: sui,
+        parentId: 'tx2',
+        rootId: 'tx0',
+        status: TransactionStatus.partial,
+      );
+      final tx4 = _tx(
+        id: 'tx4',
+        srAmount: '417.996',
+        rrAmount: '593.7528',
+        balance: '0',
+        srId: sui,
+        rrId: aster,
+        parentId: 'tx3',
+        rootId: 'tx0',
+        status: TransactionStatus.inactive,
+      );
+      final tx5 = _tx(
+        id: 'tx5',
+        srAmount: '593.7528',
+        rrAmount: '449.356',
+        balance: '0',
+        srId: aster,
+        rrId: sui,
+        parentId: 'tx4',
+        rootId: 'tx0',
+        status: TransactionStatus.inactive,
+      );
+      final tx6 = _tx(
+        id: 'tx6',
+        srAmount: '449.356',
+        rrAmount: '612.3248',
+        balance: '0',
+        srId: sui,
+        rrId: aster,
+        parentId: 'tx5',
+        rootId: 'tx0',
+        status: TransactionStatus.inactive,
+      );
+      final tx7 = _tx(
+        id: 'tx7',
+        srAmount: '612.3248',
+        rrAmount: '472.5953',
+        balance: '0',
+        srId: aster,
+        rrId: sui,
+        parentId: 'tx6',
+        rootId: 'tx0',
+        status: TransactionStatus.inactive,
+      );
+      final tx8 = _tx(
+        id: 'tx8',
+        srAmount: '472.5953',
+        rrAmount: '641.0698',
+        balance: '641.0698',
+        srId: sui,
+        rrId: aster,
+        parentId: 'tx7',
+        rootId: 'tx0',
+        status: TransactionStatus.active,
+      );
+
+      final txs = [tx0, tx1, tx2, tx3, tx4, tx5, tx6, tx7, tx8];
+      final txsMap = {for (final tx in txs) tx.tid: tx};
+
+      // 1. Verify raw hop-by-hop close targets: tx8 -> tx6 -> tx4 -> tx2 -> tx0 -> null
+      final hop1 = calc.getCloseTargetParent(tx8, txsMap: txsMap);
+      expect(hop1?.tid, 'tx6');
+
+      final hop2 = calc.getCloseTargetParent(hop1!, txsMap: txsMap);
+      expect(hop2?.tid, 'tx4');
+
+      final hop3 = calc.getCloseTargetParent(hop2!, txsMap: txsMap);
+      expect(hop3?.tid, 'tx2');
+
+      final hop4 = calc.getCloseTargetParent(hop3!, txsMap: txsMap);
+      expect(hop4?.tid, 'tx0');
+
+      expect(calc.getCloseTargetParent(hop4!, txsMap: txsMap), isNull);
+
+      // 2. Verify compounded calculation stops at tx2 (blocked from climbing to tx0 by partial tx3)
+      // Share from tx2: (417.996 * 100) / 577.346 = 72.399566291270745791 (truncated at scale 18)
+      expect(calc.totalCompoundedSharePercentage(tx8, txsMap: txsMap), _d('72.399566291270745791'));
+
+      // Effective principal at tx2: (774.48 * 72.399566291270745791) / 100 = 560.7201610126336720021368
+      // Compounded profit: 641.0698 - 560.7201610126336720021368 = 80.3496389873663279978632
+      expect(calc.totalCompoundedProfitLoss(tx8, txsMap: txsMap), _d('80.3496389873663279978632'));
+    });
   });
 }

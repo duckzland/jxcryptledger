@@ -165,13 +165,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       tableData.add({
         'date': tx.timestampAsFormattedDate,
-        'transaction': '${tx.srAmountTextRaw} $sourceSymbol → ${tx.rrAmountTextRaw} $resultSymbol',
+        'transaction': '${tx.srAmountText} $sourceSymbol → ${tx.rrAmountText} $resultSymbol',
         'balance': _showAmount
             ? fromAmount > Decimal.zero
                   ? '${Utils.formatSmartDecimal(fromAmount, smartDecimal: false, maxDecimals: 18)} $resultSymbol'
                   : ''
             : tx.balance > Decimal.zero
-            ? '${tx.balanceTextRaw} $resultSymbol'
+            ? '${tx.balanceText} $resultSymbol'
             : '',
         'rate': rateableAmount,
         'amount': amount > Decimal.zero ? amount : null,
@@ -575,7 +575,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildFromTitleField() {
     final bool canTakeProfit =
-        _mode == TransactionsDialogBatchTradeMode.balance && _calc.calculateBalanceProfit(_getSelectedTransactions()) != null;
+        _mode != TransactionsDialogBatchTradeMode.rate &&
+        _getSelectedTransactions().any((tx) => (_compoundedProfits[tx.uuid] ?? Decimal.zero) > Decimal.zero);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,13 +606,20 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   Widget _buildFromAmountField() {
-    return _mode == TransactionsDialogBatchTradeMode.balance
+    return _mode != TransactionsDialogBatchTradeMode.rate
         ? WidgetsFieldsAmount(
             title: 'Amount',
             helperText: 'e.g., 10.5',
             enabled: !_isProcessing,
             suffixText: _selectedSymbol,
-            useMax: _sourceAmount,
+            useMax: _mode == TransactionsDialogBatchTradeMode.profit
+                ? Utils.sanitizeFractalDecimal(
+                    _getSelectedTransactions().fold<Decimal>(
+                      Decimal.zero,
+                      (sum, tx) => Math.add(sum, _compoundedProfits[tx.uuid] ?? Decimal.zero),
+                    ),
+                  )
+                : _sourceAmount,
             controller: fromController,
             disposeController: false,
             onChanged: (value) {
@@ -764,9 +772,18 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   void _updateProfit({bool? enabled}) {
     final shouldTakeProfit = enabled ?? (_mode == TransactionsDialogBatchTradeMode.profit);
-    final profit = shouldTakeProfit ? _calc.calculateBalanceProfit(_getSelectedTransactions()) : null;
 
-    if (shouldTakeProfit && profit != null) {
+    Decimal profit = Decimal.zero;
+    if (shouldTakeProfit) {
+      for (final tx in _getSelectedTransactions()) {
+        final value = _compoundedProfits[tx.uuid];
+        if (value != null && value > Decimal.zero) {
+          profit = Math.add(profit, value);
+        }
+      }
+    }
+
+    if (shouldTakeProfit && profit > Decimal.zero) {
       _mode = TransactionsDialogBatchTradeMode.profit;
 
       final formattedProfit = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18).replaceAll(',', '');
@@ -779,15 +796,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   void _updateCompoundedProfits() {
     _compoundedProfits.clear();
+    if (txs.isEmpty) return;
 
-    // Full transaction map from controller so drill-up reaches target ancestors outside `txs`
-    final allTxsMap = _txController.getIndexedMap(); // or {for (final t in _txController.transactions) t.tid: t}
+    final allTxsMap = _txController.getIndexedMap();
 
     for (final tx in txs) {
-      final pnl = _calc.totalCompoundedProfitLoss(tx, txsMap: allTxsMap);
-      // Only cache positive takeable profit, capped at tx's current balance
-      if (pnl > Decimal.zero) {
-        _compoundedProfits[tx.uuid] = pnl > tx.balance ? tx.balance : pnl;
+      final profit = _calc.totalCompoundedProfitLoss(tx, txsMap: allTxsMap);
+      if (profit > Decimal.zero) {
+        _compoundedProfits[tx.uuid] = profit;
       }
     }
   }
@@ -835,32 +851,82 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       return;
     }
 
-    final allocations = _resolveAllocations(stxs);
+    var allocations = _resolveAllocations(stxs);
 
     setState(() {
       _isProcessing = true;
     });
 
+    if (_mode == TransactionsDialogBatchTradeMode.profit) {
+      var liveMap = _txController.getIndexedMap();
+      final replacements = <TransactionsModel, TransactionsModel>{};
+
+      for (final tx in stxs) {
+        final sourceAmount = allocations.from[tx.uuid] ?? Decimal.zero;
+        final amount = allocations.to[tx.uuid] ?? Decimal.zero;
+        if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
+
+        var current = liveMap[tx.tid] ?? tx;
+
+        // Climb and close level-by-level until current holds enough profit (or reaches the last target)
+        while (current.profitAmount < sourceAmount) {
+          final nextTarget = _calc.getCloseTargetParent(current, txsMap: liveMap);
+          if (nextTarget == null) break;
+
+          final closed = await _txController.closeAll([current]);
+          if (closed.isEmpty) break;
+
+          liveMap = _txController.getIndexedMap();
+          final updatedTarget = liveMap[nextTarget.tid];
+          if (updatedTarget == null) break;
+
+          current = updatedTarget;
+        }
+
+        if (current.tid != tx.tid) {
+          replacements[tx] = current;
+        }
+      }
+
+      if (replacements.isNotEmpty) {
+        replacements.forEach((oldTx, newParent) {
+          txs.remove(oldTx);
+          selectableSetSelected(oldTx.uuid, false);
+
+          if (!txs.any((t) => t.tid == newParent.tid)) {
+            txs.add(newParent);
+          }
+          selectableSetSelected(newParent.uuid, true);
+
+          final idx = stxs.indexOf(oldTx);
+          if (idx != -1) {
+            stxs[idx] = newParent;
+          }
+
+          // Preserve exact pre-close allocation share on newParent.uuid (summing if two branches merged)
+          final oldFrom = allocations.from.remove(oldTx.uuid) ?? Decimal.zero;
+          final oldTo = allocations.to.remove(oldTx.uuid) ?? Decimal.zero;
+          allocations.from[newParent.uuid] = Math.add(allocations.from[newParent.uuid] ?? Decimal.zero, oldFrom);
+          allocations.to[newParent.uuid] = Math.add(allocations.to[newParent.uuid] ?? Decimal.zero, oldTo);
+        });
+
+        final seen = <String>{};
+        stxs.retainWhere((t) => seen.add(t.tid));
+      }
+    }
+
     final List<TransactionsModel> payload = [];
     final Map<String, TransactionsModel> map = {};
-
     final accentColor = _accentColor?.toARGB32().toRadixString(16).padLeft(8, '0') ?? "";
 
     for (final tx in stxs) {
       final sourceAmount = allocations.from[tx.uuid] ?? Decimal.zero;
       final amount = allocations.to[tx.uuid] ?? Decimal.zero;
-
       if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
 
       final meta = Map<String, dynamic>.from(tx.meta);
-
-      if (_noteEntry != null) {
-        meta['trading_notes'] = _noteEntry;
-      }
-
-      if (accentColor.isNotEmpty) {
-        meta['accent_color'] = accentColor;
-      }
+      if (_noteEntry != null) meta['trading_notes'] = _noteEntry;
+      if (accentColor.isNotEmpty) meta['accent_color'] = accentColor;
 
       final child = TransactionsModel(
         tid: _txController.generateId(),
@@ -879,6 +945,11 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       payload.add(child);
       map[child.uuid] = tx;
+    }
+
+    if (payload.isEmpty) {
+      setState(() => _isProcessing = false);
+      return;
     }
 
     final success = await _txController.addAll(payload);
@@ -902,7 +973,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       widgetsNotifySuccess("Trade completed successfully.");
     }
 
-    _updateCompoundedProfits();
     tablePopulateData();
 
     if (txs.isEmpty) {
@@ -939,8 +1009,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     switch (_mode) {
       case TransactionsDialogBatchTradeMode.profit:
-        final maxProfit = Utils.sanitizeFractalDecimal(_calc.calculateBalanceProfit(txs) ?? Decimal.zero);
-        return _fromAmount <= maxProfit;
+        final totalProfit = txs.fold<Decimal>(Decimal.zero, (sum, tx) => Math.add(sum, _compoundedProfits[tx.uuid] ?? Decimal.zero));
+        return _fromAmount <= Utils.sanitizeFractalDecimal(totalProfit);
 
       case TransactionsDialogBatchTradeMode.balance:
         return _fromAmount <= _calc.totalActiveBalance(txs);
@@ -957,21 +1027,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   ({Map<String, Decimal> from, Map<String, Decimal> to}) _resolveAllocations(List<TransactionsModel> selectedTxs) {
     switch (_mode) {
       case TransactionsDialogBatchTradeMode.profit:
-        final fromAllocations = <String, Decimal>{};
-        Decimal? profitRemaining = _fromAmount;
-
-        for (final tx in selectedTxs) {
-          if (profitRemaining == null || profitRemaining <= Decimal.zero) break;
-
-          final txProfit = Math.subtract(tx.balance, tx.rrAmount);
-          if (txProfit <= Decimal.zero) continue;
-
-          final sourceAmount = txProfit < profitRemaining ? txProfit : profitRemaining;
-          fromAllocations[tx.uuid] = sourceAmount;
-          profitRemaining = sourceAmount == profitRemaining ? null : Math.subtract(profitRemaining, sourceAmount);
-        }
-
-        return (from: fromAllocations, to: _calc.spreadByWeights(_toAmount, selectedTxs, fromAllocations));
+        return (
+          from: _calc.spreadByWeights(_fromAmount, selectedTxs, _compoundedProfits),
+          to: _calc.spreadByWeights(_toAmount, selectedTxs, _compoundedProfits),
+        );
 
       case TransactionsDialogBatchTradeMode.balance:
         return (from: _calc.spreadAmount(_fromAmount, selectedTxs), to: _calc.spreadAmount(_toAmount, selectedTxs));

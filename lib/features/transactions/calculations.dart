@@ -332,13 +332,55 @@ class TransactionCalculation {
     return null;
   }
 
+  /// 2. Predicts total compounded profit/loss across all closeable hops up to the last target parent
   Decimal totalCompoundedProfitLoss(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
     if (txs == null && txsMap == null) return tx.profitAmount;
     txsMap ??= {for (final item in txs!) item.tid: item};
 
-    final ptx = getCloseTargetParent(tx, txsMap: txsMap);
+    TransactionsModel? ptx = getCloseTargetParent(tx, txsMap: txsMap);
     if (ptx == null) {
       return tx.profitAmount;
+    }
+
+    while (true) {
+      final next = getCloseTargetParent(ptx!, txsMap: txsMap);
+      if (next == null) break;
+
+      // Collect ancestor path from tx up to ptx
+      final activeAncestors = <String>{};
+      TransactionsModel? cursor = tx;
+      bool blocked = false;
+      while (cursor != null) {
+        activeAncestors.add(cursor.tid);
+        if (cursor.tid != tx.tid && cursor.tid != ptx.tid && cursor.statusEnum != TransactionStatus.inactive) {
+          blocked = true;
+          break;
+        }
+        if (cursor.tid == ptx.tid || cursor.pid.isEmpty || cursor.pid == '0') break;
+        cursor = txsMap[cursor.pid];
+      }
+
+      // Also stop if ptx has any other open/partial descendant outside the active branch
+      if (!blocked) {
+        for (final node in txsMap.values) {
+          if (node.tid == ptx.tid || activeAncestors.contains(node.tid)) continue;
+
+          String pid = node.pid;
+          while (pid.isNotEmpty && pid != '0') {
+            if (pid == ptx.tid) {
+              if (node.statusEnum != TransactionStatus.closed && node.statusEnum != TransactionStatus.inactive) {
+                blocked = true;
+              }
+              break;
+            }
+            pid = txsMap[pid]?.pid ?? '';
+          }
+          if (blocked) break;
+        }
+      }
+
+      if (blocked) break;
+      ptx = next;
     }
 
     final sharePercentage = totalCompoundedSharePercentage(tx, targetParent: ptx, txsMap: txsMap);
@@ -348,6 +390,7 @@ class TransactionCalculation {
     return Math.subtract(tx.balance, effectivePrincipal);
   }
 
+  /// 3. Calculates cumulative capital share percentage (0..100) from the last target parent down to tx
   Decimal totalCompoundedSharePercentage(
     TransactionsModel tx, {
     TransactionsModel? targetParent,
@@ -358,9 +401,50 @@ class TransactionCalculation {
     if (txs == null && txsMap == null) return hundred;
     txsMap ??= {for (final item in txs!) item.tid: item};
 
-    final ptx = targetParent ?? getCloseTargetParent(tx, txsMap: txsMap);
+    TransactionsModel? ptx = targetParent ?? getCloseTargetParent(tx, txsMap: txsMap);
     if (ptx == null) {
       return hundred;
+    }
+
+    if (targetParent == null) {
+      while (true) {
+        final next = getCloseTargetParent(ptx!, txsMap: txsMap);
+        if (next == null) break;
+
+        final activeAncestors = <String>{};
+        TransactionsModel? cursor = tx;
+        bool blocked = false;
+        while (cursor != null) {
+          activeAncestors.add(cursor.tid);
+          if (cursor.tid != tx.tid && cursor.tid != ptx.tid && cursor.statusEnum != TransactionStatus.inactive) {
+            blocked = true;
+            break;
+          }
+          if (cursor.tid == ptx.tid || cursor.pid.isEmpty || cursor.pid == '0') break;
+          cursor = txsMap[cursor.pid];
+        }
+
+        if (!blocked) {
+          for (final node in txsMap.values) {
+            if (node.tid == ptx.tid || activeAncestors.contains(node.tid)) continue;
+
+            String pid = node.pid;
+            while (pid.isNotEmpty && pid != '0') {
+              if (pid == ptx.tid) {
+                if (node.statusEnum != TransactionStatus.closed && node.statusEnum != TransactionStatus.inactive) {
+                  blocked = true;
+                }
+                break;
+              }
+              pid = txsMap[pid]?.pid ?? '';
+            }
+            if (blocked) break;
+          }
+        }
+
+        if (blocked) break;
+        ptx = next;
+      }
     }
 
     TransactionsModel? current = tx;
