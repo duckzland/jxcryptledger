@@ -71,8 +71,7 @@ class _TestRatesController extends ChangeNotifier implements RatesController {
   void addQueue(int sourceId, int targetId, {bool force = true}) {}
 
   @override
-  Decimal getStoredRate(int sourceId, int targetId, {bool throwable = false}) =>
-      Decimal.one;
+  Decimal getStoredRate(int sourceId, int targetId, {bool throwable = false}) => Decimal.one;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -82,8 +81,7 @@ class _TestStateController implements StateController {
   final values = <String, dynamic>{};
 
   @override
-  dynamic get(String key, {dynamic defaultValue}) =>
-      values[key] ?? defaultValue;
+  dynamic get(String key, {dynamic defaultValue}) => values[key] ?? defaultValue;
 
   @override
   void set(String key, dynamic value) => values[key] = value;
@@ -92,8 +90,7 @@ class _TestStateController implements StateController {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _TestCryptosController extends ChangeNotifier
-    implements CryptosController {
+class _TestCryptosController extends ChangeNotifier implements CryptosController {
   @override
   final bool hasCryptos;
 
@@ -112,8 +109,7 @@ class _TestCryptosController extends ChangeNotifier
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _TestTransactionsController extends ChangeNotifier
-    implements TransactionsController {
+class _TestTransactionsController extends ChangeNotifier implements TransactionsController {
   @override
   List<TransactionsModel> get items => const [];
 
@@ -169,34 +165,23 @@ void main() {
   });
 
   group('TransactionsModel', () {
-    test(
-      'copy, JSON, map and derived properties preserve transaction data',
-      () {
-        final original = tx(
-          tid: 'root',
-          srId: 1,
-          rrId: 1,
-          meta: {'group_notes': 'test'},
-        );
-        final copied = original.copyWith(
-          balance: d('75'),
-          status: TransactionStatus.partial.index,
-        );
+    test('copy, JSON, map and derived properties preserve transaction data', () {
+      final original = tx(tid: 'root', srId: 1, rrId: 1, meta: {'group_notes': 'test'});
+      final copied = original.copyWith(balance: d('75'), status: TransactionStatus.partial.index);
 
-        expect(copied.tid, 'root');
-        expect(copied.balance, d('75'));
-        expect(copied.statusEnum, TransactionStatus.partial);
-        expect(copied.isRoot, isTrue);
-        expect(copied.isCapital, isTrue);
-        expect(copied.isPartial, isTrue);
-        expect(copied.noteText, 'test');
-        expect(copied.rate, Decimal.one);
+      expect(copied.tid, 'root');
+      expect(copied.balance, d('75'));
+      expect(copied.statusEnum, TransactionStatus.partial);
+      expect(copied.isRoot, isTrue);
+      expect(copied.isCapital, isTrue);
+      expect(copied.isPartial, isTrue);
+      expect(copied.noteText, 'test');
+      expect(copied.rate, Decimal.one);
 
-        final json = copied.toJson();
-        expect(TransactionsModel.fromJson(json).toJson(), json);
-        expect(TransactionsModel.fromMap(copied.toMap()).uuid, 'root');
-      },
-    );
+      final json = copied.toJson();
+      expect(TransactionsModel.fromJson(json).toJson(), json);
+      expect(TransactionsModel.fromMap(copied.toMap()).uuid, 'root');
+    });
 
     test('status and relationship getters classify leaf transactions', () {
       final leaf = tx(tid: 'leaf', pid: 'root', rid: 'root', srId: 1, rrId: 2);
@@ -216,10 +201,7 @@ void main() {
       box = await Hive.openBox<TransactionsModel>('transactions_feature_test');
       await box.clear();
       repository = TransactionsRepository();
-      repository.box = HiveBoxFaker<TransactionsModel>(
-        'transactions_feature_test',
-        hiveBoxOverride: box,
-      );
+      repository.box = HiveBoxFaker<TransactionsModel>('transactions_feature_test', hiveBoxOverride: box);
       repository.boxNameDefault = 'transactions_feature_test';
     });
 
@@ -248,54 +230,20 @@ void main() {
       expect(stored.noteText, 'kept');
     });
 
-    test(
-      'indexes and branch collectors cover roots, parents and terminal leaves',
-      () async {
-        final root = tx(tid: 'root', rrId: 1);
-        final parent = tx(
-          tid: 'parent',
-          pid: 'root',
-          rid: 'root',
-          srId: 1,
-          rrId: 2,
-          srAmount: '100',
-          rrAmount: '80',
-          balance: '80',
-        );
-        final leaf = tx(
-          tid: 'leaf',
-          pid: 'parent',
-          rid: 'root',
-          srId: 2,
-          rrId: 3,
-          srAmount: '80',
-          rrAmount: '90',
-          balance: '90',
-        );
+    test('indexes and branch collectors cover roots, parents and terminal leaves', () async {
+      final root = tx(tid: 'root', rrId: 1);
+      final parent = tx(tid: 'parent', pid: 'root', rid: 'root', srId: 1, rrId: 2, srAmount: '100', rrAmount: '80', balance: '80');
+      final leaf = tx(tid: 'leaf', pid: 'parent', rid: 'root', srId: 2, rrId: 3, srAmount: '80', rrAmount: '90', balance: '90');
 
-        await repository.add(root);
-        await repository.add(parent);
-        await repository.add(leaf);
+      await repository.add(root);
+      await repository.add(parent);
+      await repository.add(leaf);
 
-        expect(
-          repository.getIndexedMap().keys,
-          containsAll(['root', 'parent', 'leaf']),
-        );
-        expect(
-          repository.getIndexedParentMap()['root']!.map((item) => item.tid),
-          contains('parent'),
-        );
-        expect(
-          repository.collectAllRoots().map((item) => item.tid),
-          contains('root'),
-        );
-        expect(
-          repository.collectAllTerminalLeaves().map((item) => item.tid),
-          contains('leaf'),
-        );
-        expect(repository.getCapitalBalance(root), d('0'));
-      },
-    );
+      expect(repository.getIndexedMap().keys, containsAll(['root', 'parent', 'leaf']));
+      expect(repository.getIndexedParentMap()['root']!.map((item) => item.tid), contains('parent'));
+      expect(repository.collectAllRoots().map((item) => item.tid), contains('root'));
+      expect(repository.collectAllTerminalLeaves().map((item) => item.tid), contains('leaf'));
+    });
   });
 
   group('TransactionsController, service and action mixins', () {
@@ -304,15 +252,10 @@ void main() {
     late _TestRatesController rates;
 
     setUp(() async {
-      box = await Hive.openBox<TransactionsModel>(
-        'transactions_feature_controller_test',
-      );
+      box = await Hive.openBox<TransactionsModel>('transactions_feature_controller_test');
       await box.clear();
       repository = TransactionsRepository();
-      repository.box = HiveBoxFaker<TransactionsModel>(
-        'transactions_feature_controller_test',
-        hiveBoxOverride: box,
-      );
+      repository.box = HiveBoxFaker<TransactionsModel>('transactions_feature_controller_test', hiveBoxOverride: box);
       repository.boxNameDefault = 'transactions_feature_controller_test';
       rates = _TestRatesController();
       locator.registerSingleton<RatesController>(rates);
@@ -333,10 +276,7 @@ void main() {
       expect(controller.items.map((item) => item.tid), contains('root'));
       expect(controller.generateId(), isNotEmpty);
       expect(controller.collectAllRoots(), isNotEmpty);
-      expect(
-        controller.isBothEqual(controller.items.first, controller.items.first),
-        isTrue,
-      );
+      expect(controller.isBothEqual(controller.items.first, controller.items.first), isTrue);
       expect(controller.isEqualToItems([tx(tid: 'root')]), isFalse);
       controller.dispose();
     });
@@ -357,55 +297,38 @@ void main() {
       expect(actions.isDeletable, isTrue);
     });
 
-    test(
-      'service forwards repository operations and exposes rate IDs',
-      () async {
-        final settingsRepository = SettingsRepository();
-        final fakeRatesRepository = RatesRepository();
-        fakeRatesRepository.box = HiveBoxFaker<RatesModel>(
-          'rates_feature_test',
-        );
-        await fakeRatesRepository.init();
+    test('service forwards repository operations and exposes rate IDs', () async {
+      final settingsRepository = SettingsRepository();
+      final fakeRatesRepository = RatesRepository();
+      fakeRatesRepository.box = HiveBoxFaker<RatesModel>('rates_feature_test');
+      await fakeRatesRepository.init();
 
-        final ratesService = RatesService(
-          fakeRatesRepository,
-          settingsRepository,
-        );
-        locator.registerSingleton<RatesService>(ratesService);
+      final ratesService = RatesService(fakeRatesRepository, settingsRepository);
+      locator.registerSingleton<RatesService>(ratesService);
 
-        await repository.add(tx(tid: 'root'));
-        final service = TransactionsService(repository);
-        await service.init();
+      await repository.add(tx(tid: 'root'));
+      final service = TransactionsService(repository);
+      await service.init();
 
-        expect(repository.count(), 1);
-        expect(service.getAllRateID(), containsAll(['1-1']));
-        await service.dispose();
-        await ratesService.dispose();
-      },
-    );
+      expect(repository.count(), 1);
+      expect(service.getAllRateID(), containsAll(['1-1']));
+      await service.dispose();
+      await ratesService.dispose();
+    });
   });
 
   group('Transactions widgets and page modes', () {
     setUp(() {
       locator.registerSingleton<CryptosController>(_TestCryptosController());
-      locator.registerSingleton<TransactionsController>(
-        _TestTransactionsController(),
-      );
+      locator.registerSingleton<TransactionsController>(_TestTransactionsController());
       locator.registerSingleton<RatesController>(_TestRatesController());
       locator.registerSingleton<StateController>(_TestStateController());
     });
 
     testWidgets('StatusText renders every transaction status', (tester) async {
       for (final status in TransactionStatus.values) {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: TransactionsWidgetsStatusText(status)),
-          ),
-        );
-        expect(
-          find.text(status.name[0].toUpperCase() + status.name.substring(1)),
-          findsOneWidget,
-        );
+        await tester.pumpWidget(MaterialApp(home: Scaffold(body: TransactionsWidgetsStatusText(status))));
+        expect(find.text(status.name[0].toUpperCase() + status.name.substring(1)), findsOneWidget);
       }
     });
 
@@ -413,11 +336,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: TransactionsWidgetsPanelItem(
-              title: 'Profit',
-              subtitle: '12.50 USD',
-              value: 12.5,
-            ),
+            body: TransactionsWidgetsPanelItem(title: 'Profit', subtitle: '12.50 USD', value: 12.5),
           ),
         ),
       );
@@ -426,43 +345,22 @@ void main() {
     });
 
     test('page view modes include all transaction screens', () {
-      expect(TransactionsViewMode.values.map((mode) => mode.name), [
-        'overview',
-        'active',
-        'journal',
-        'history',
-        'finalized',
-      ]);
+      expect(TransactionsViewMode.values.map((mode) => mode.name), ['overview', 'active', 'journal', 'history', 'finalized']);
     });
 
-    testWidgets('transactions page prompts for crypto data when unavailable', (
-      tester,
-    ) async {
+    testWidgets('transactions page prompts for crypto data when unavailable', (tester) async {
       await locator.unregister<CryptosController>();
-      locator.registerSingleton<CryptosController>(
-        _TestCryptosController(hasCryptos: false),
-      );
+      locator.registerSingleton<CryptosController>(_TestCryptosController(hasCryptos: false));
 
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: TransactionsPage())),
-      );
+      await tester.pumpWidget(const MaterialApp(home: Scaffold(body: TransactionsPage())));
       await tester.pump();
 
       expect(find.text('Cryptocurrency data not available'), findsOneWidget);
-      expect(
-        find.text(
-          'You need to fetch the latest crypto list before adding transactions.',
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('You need to fetch the latest crypto list before adding transactions.'), findsOneWidget);
     });
 
-    testWidgets('transactions page shows its empty-database action screen', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: TransactionsPage())),
-      );
+    testWidgets('transactions page shows its empty-database action screen', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: Scaffold(body: TransactionsPage())));
       await tester.pump();
 
       expect(find.text('Add Transaction'), findsOneWidget);
@@ -488,26 +386,9 @@ void main() {
           onStatusChanged: () {},
           panelsAction: '',
         ),
-        TransactionsJournalView(
-          transactions: const [],
-          txsFlags: commonFlags,
-          filterMode: 0,
-          onStatusChanged: () {},
-        ),
-        TransactionHistory(
-          transactions: const [],
-          sortMode: 0,
-          onStatusChanged: () {},
-          panelsAction: '',
-          txsFlags: commonFlags,
-        ),
-        TransactionsFinalizedView(
-          transactions: const [],
-          txsFlags: commonFlags,
-          filterMode: 0,
-          onStatusChanged: () {},
-          panelsAction: '',
-        ),
+        TransactionsJournalView(transactions: const [], txsFlags: commonFlags, filterMode: 0, onStatusChanged: () {}),
+        TransactionHistory(transactions: const [], sortMode: 0, onStatusChanged: () {}, panelsAction: '', txsFlags: commonFlags),
+        TransactionsFinalizedView(transactions: const [], txsFlags: commonFlags, filterMode: 0, onStatusChanged: () {}, panelsAction: ''),
       ];
 
       const emptyMessages = [
@@ -533,11 +414,7 @@ void main() {
     test('flags mixin reads precomputed screen flags', () {
       final flags = _FlagsHarness();
       flags.fxs = {
-        'tx': {
-          TransactionsFlagsType.tradable: true,
-          TransactionsFlagsType.closable: false,
-          TransactionsFlagsType.hasLeaf: true,
-        },
+        'tx': {TransactionsFlagsType.tradable: true, TransactionsFlagsType.closable: false, TransactionsFlagsType.hasLeaf: true},
       };
       expect(flags.fxsIsTradable(tx(tid: 'tx')), isTrue);
       expect(flags.fxsIsClosable(tx(tid: 'tx')), isFalse);

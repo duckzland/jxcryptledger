@@ -294,4 +294,90 @@ class TransactionCalculation {
 
     return Decimal.zero;
   }
+
+  TransactionsModel? getCloseTargetParent(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
+    if (tx.isRoot) return null;
+    if (txs == null && txsMap == null) return null;
+
+    txsMap ??= {for (final item in txs!) item.tid: item};
+
+    String pid = tx.pid;
+    while (pid.isNotEmpty && pid != '0') {
+      final p = txsMap[pid];
+      if (p == null) break;
+
+      if (p.rrId == tx.rrId) {
+        return p;
+      }
+
+      pid = p.pid;
+    }
+
+    if (tx.rid.isNotEmpty && tx.rid != '0') {
+      final root = txsMap[tx.rid];
+      if (root != null && root.isRoot && root.rrId == tx.rrId) {
+        return root;
+      }
+    }
+
+    return null;
+  }
+
+  Decimal totalCompoundedProfitLoss(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
+    if (txs == null && txsMap == null) return tx.profitAmount;
+    txsMap ??= {for (final item in txs!) item.tid: item};
+
+    final ptx = getCloseTargetParent(tx, txsMap: txsMap);
+    if (ptx == null) {
+      return tx.profitAmount;
+    }
+
+    final sharePercentage = totalCompoundedSharePercentage(tx, targetParent: ptx, txsMap: txsMap);
+
+    final effectivePrincipal = Math.divide(Math.multiply(ptx.rrAmount, sharePercentage), Decimal.fromInt(100));
+
+    return Math.subtract(tx.balance, effectivePrincipal);
+  }
+
+  Decimal totalCompoundedSharePercentage(
+    TransactionsModel tx, {
+    TransactionsModel? targetParent,
+    List<TransactionsModel>? txs,
+    Map<String, TransactionsModel>? txsMap,
+  }) {
+    final hundred = Decimal.fromInt(100);
+    if (txs == null && txsMap == null) return hundred;
+    txsMap ??= {for (final item in txs!) item.tid: item};
+
+    final ptx = targetParent ?? getCloseTargetParent(tx, txsMap: txsMap);
+    if (ptx == null) {
+      return hundred;
+    }
+
+    TransactionsModel? current = tx;
+    Decimal num = Decimal.one;
+    Decimal den = Decimal.one;
+
+    while (current != null && current.tid != ptx.tid) {
+      if (current.isRoot || current.pid.isEmpty || current.pid == '0') break;
+
+      final parent = txsMap[current.pid];
+      if (parent == null) break;
+
+      if (parent.rrId == current.srId && parent.rrAmount > Decimal.zero) {
+        if (current.srAmount < parent.rrAmount) {
+          num = Math.multiply(num, current.srAmount);
+          den = Math.multiply(den, parent.rrAmount);
+        }
+      }
+
+      current = parent;
+    }
+
+    if (den == Decimal.one) {
+      return Math.multiply(hundred, num);
+    }
+
+    return Math.divide(Math.multiply(hundred, num), den);
+  }
 }

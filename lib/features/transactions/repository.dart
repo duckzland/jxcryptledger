@@ -974,13 +974,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return parent;
   }
 
-  Decimal getCapitalBalance(TransactionsModel tx) {
-    final children = getLeaf(tx);
-    final Decimal spent = children.fold<Decimal>(Decimal.zero, (sum, leaf) => Math.add(sum, leaf.srAmount));
-    final Decimal balance = Math.subtract(tx.rrAmount, spent);
-    return balance;
-  }
-
   List<TransactionsModel> collectAllRoots() {
     final roots = <TransactionsModel>[];
     for (final entry in getIndexedRootMap().entries) {

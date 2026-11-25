@@ -5,6 +5,7 @@ Todo list
 - Add more tests for complete features set
 - [DONE] Fix slow finalized when fired with many txs at batch txs but not at per card txs
 - [DONE] create batch txs operations function and utilize ipc putAll for actions, return the failed tx and update the batch form to match it
+- Improve the batch trade by filtering out no profit tx when is on profit taking mode and add auto close and take profit logic
 
 Test list
 - Test the new virtual list and table widget
