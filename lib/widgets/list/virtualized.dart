@@ -31,19 +31,7 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
   @override
   void didUpdateWidget(covariant WidgetsListVirtualized oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    double th = 0.0;
-    for (int i = 0; i < widget.itemCount; i++) {
-      th += widget.itemHeightBuilder(i, _width);
-    }
-
-    if (th != _totalHeight ||
-        oldWidget.itemCount != widget.itemCount ||
-        oldWidget.separatorHeight != widget.separatorHeight ||
-        oldWidget.itemHeightBuilder != widget.itemHeightBuilder) {
-      _cachedKey = null;
-      _ensureLayout(_width, _height);
-    }
+    _cachedKey = null;
   }
 
   void _ensureLayout(double width, double height) {
@@ -79,6 +67,7 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
         low = mid + 1;
       }
     }
+
     return result;
   }
 
@@ -93,7 +82,7 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
 
         if (widget.controller.hasClients) {
           final offset = widget.controller.position;
-          final maxHeight = (_totalHeight - _height).clamp(0.0, double.infinity);
+          final maxHeight = _totalHeight > _height ? (_totalHeight - _height).clamp(0.0, double.infinity) : _height;
 
           offset.applyViewportDimension(_height);
           offset.applyContentDimensions(0.0, maxHeight);

@@ -6,7 +6,8 @@ Todo list
 - [DONE] Fix slow finalized when fired with many txs at batch txs but not at per card txs
 - [DONE] create batch txs operations function and utilize ipc putAll for actions, return the failed tx and update the batch form to match it
 - Improve the batch trade by filtering out no profit tx when is on profit taking mode and add auto close and take profit logic
-- Virtualized when only one content must align top not center
+- [DONE] Virtualized when only one content must align top not center
+- Create action take profit. Add function to drill the furthest close point for this. Create in TransactionsController.
 
 Test list
 - Test the new virtual list and table widget

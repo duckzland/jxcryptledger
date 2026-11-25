@@ -175,6 +175,7 @@ class _TransactionsOverviewViewState extends State<TransactionsOverviewView>
     final theme = Theme.of(context);
 
     return Stack(
+      fit: StackFit.expand,
       children: [
         WidgetsListVirtualized(
           controller: scrollToUtil.controller,
