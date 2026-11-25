@@ -6,33 +6,42 @@ import 'model.dart';
 class TransactionCalculation {
   const TransactionCalculation();
 
-  Map<String, Decimal> spreadAmount(Decimal amount, List<TransactionsModel> transactions) {
-    final totalWeight = transactions.fold<Decimal>(
-      Decimal.zero,
-      (total, tx) => tx.balance > Decimal.zero ? Math.add(total, tx.balance) : total,
-    );
+  Map<String, Decimal> spreadByWeights(Decimal amount, Iterable<TransactionsModel> transactions, Map<String, Decimal> weights) {
+    final txList = transactions.toList();
+    final totalWeight = txList.fold<Decimal>(Decimal.zero, (total, tx) {
+      final w = weights[tx.uuid] ?? Decimal.zero;
+      return w > Decimal.zero ? Math.add(total, w) : total;
+    });
+
     if (totalWeight <= Decimal.zero) {
-      return {for (final tx in transactions) tx.uuid: Decimal.zero};
+      return {for (final tx in txList) tx.uuid: Decimal.zero};
     }
 
-    final lastPositiveIndex = transactions.lastIndexWhere((tx) => tx.balance > Decimal.zero);
-    final allocations = <String, Decimal>{};
-    final unitAmount = Math.divide(amount, totalWeight);
-    Decimal allocated = Decimal.zero;
+    final lastPositive = txList.lastIndexWhere((tx) => (weights[tx.uuid] ?? Decimal.zero) > Decimal.zero);
 
-    for (var index = 0; index < transactions.length; index++) {
-      final tx = transactions[index];
-      if (tx.balance <= Decimal.zero) {
+    final allocations = <String, Decimal>{};
+    var allocated = Decimal.zero;
+    final unitAmount = Math.divide(amount, totalWeight);
+
+    for (var index = 0; index < txList.length; index++) {
+      final tx = txList[index];
+      final weight = weights[tx.uuid] ?? Decimal.zero;
+      if (weight <= Decimal.zero) {
         allocations[tx.uuid] = Decimal.zero;
         continue;
       }
 
-      final allocation = index == lastPositiveIndex ? Math.subtract(amount, allocated) : Math.multiply(unitAmount, tx.balance);
+      final allocation = index == lastPositive ? Math.subtract(amount, allocated) : Math.multiply(unitAmount, weight);
       allocations[tx.uuid] = allocation;
       allocated = Math.add(allocated, allocation);
     }
 
     return allocations;
+  }
+
+  Map<String, Decimal> spreadAmount(Decimal amount, Iterable<TransactionsModel> transactions) {
+    final txList = transactions.toList();
+    return spreadByWeights(amount, txList, {for (final tx in txList) tx.uuid: tx.balance});
   }
 
   Decimal cumulativeSourceValue(List<TransactionsModel> txs) {

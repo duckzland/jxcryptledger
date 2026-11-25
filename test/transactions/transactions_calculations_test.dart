@@ -48,6 +48,73 @@ void main() {
       expect(allocations.values.fold<Decimal>(Decimal.zero, (sum, value) => sum + value), _d('100'));
     });
 
+    group('spreadByWeights', () {
+      test('spreads proportionally by custom weights and absorbs repeating remainder on last positive tx', () {
+        final txs = [
+          _tx(id: 'a', balance: '999'), // balance ignored because weights map takes precedence
+          _tx(id: 'b', balance: '888'),
+          _tx(id: 'c', balance: '777'),
+          _tx(id: 'd', balance: '666'), // trailing zero weight must NOT become lastPositive
+        ];
+        final weights = <String, Decimal>{'a': _d('1'), 'b': _d('1'), 'c': _d('1'), 'd': _d('0')};
+
+        final allocations = calc.spreadByWeights(_d('100'), txs, weights);
+
+        expect(allocations.keys, containsAll(['a', 'b', 'c', 'd']));
+        expect(allocations['a'], _d('33.333333333333333333'));
+        expect(allocations['b'], _d('33.333333333333333333'));
+        // 'c' is the last positive tx, so it absorbs the repeating remainder
+        expect(allocations['c'], _d('33.333333333333333334'));
+        expect(allocations['d'], Decimal.zero);
+        expect(allocations.values.fold<Decimal>(Decimal.zero, (sum, value) => sum + value), _d('100'));
+      });
+
+      test('conserves total accurately when totalWeight >= 10 shifts decimal scale', () {
+        final txs = [_tx(id: 'a'), _tx(id: 'b'), _tx(id: 'c')];
+        final weights = <String, Decimal>{'a': _d('10'), 'b': _d('10'), 'c': _d('10')};
+
+        final allocations = calc.spreadByWeights(_d('100'), txs, weights);
+
+        expect(allocations['a'], _d('33.33333333333333333'));
+        expect(allocations['b'], _d('33.33333333333333333'));
+        expect(allocations['c'], _d('33.33333333333333334'));
+        expect(allocations.values.fold<Decimal>(Decimal.zero, (sum, value) => sum + value), _d('100'));
+      });
+
+      test('ignores negative weights, missing tx ids, and extra keys not in transactions', () {
+        final txs = [_tx(id: 'a'), _tx(id: 'b'), _tx(id: 'c'), _tx(id: 'missing')];
+        final weights = <String, Decimal>{
+          'a': _d('25'),
+          'b': _d('-50'), // negative weight ignored
+          'c': _d('75'),
+          'extra_unlisted': _d('500'), // key not in `txs` must not dilute totalWeight
+        };
+
+        final allocations = calc.spreadByWeights(_d('200'), txs, weights);
+
+        expect(allocations['a'], _d('50')); // 25 / (25 + 75) * 200
+        expect(allocations['b'], Decimal.zero);
+        expect(allocations['c'], _d('150')); // 75 / (25 + 75) * 200
+        expect(allocations['missing'], Decimal.zero);
+        expect(allocations.containsKey('extra_unlisted'), isFalse);
+        expect(allocations.values.fold<Decimal>(Decimal.zero, (sum, value) => sum + value), _d('200'));
+      });
+
+      test('accepts lazy Iterable<TransactionsModel> and returns all zeros when total weight <= 0', () {
+        final txs = [_tx(id: 'a', balance: '100'), _tx(id: 'b', balance: '200'), _tx(id: 'excluded', balance: '300')];
+        final zeroWeights = <String, Decimal>{'a': Decimal.zero, 'b': _d('-10'), 'excluded': _d('500')};
+
+        final lazySelected = txs.where((tx) => tx.uuid != 'excluded');
+        final allocations = calc.spreadByWeights(_d('100'), lazySelected, zeroWeights);
+
+        expect(allocations.keys, containsAll(['a', 'b']));
+        expect(allocations.containsKey('excluded'), isFalse);
+        expect(allocations['a'], Decimal.zero);
+        expect(allocations['b'], Decimal.zero);
+        expect(calc.spreadByWeights(_d('100'), <TransactionsModel>[], zeroWeights), isEmpty);
+      });
+    });
+
     test('uses exact common-unit multiplication for divisible balances', () {
       final txs = [_tx(id: 'a', balance: '1'), _tx(id: 'b', balance: '2'), _tx(id: 'zero', balance: '0'), _tx(id: 'c', balance: '3')];
 

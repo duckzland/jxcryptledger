@@ -29,6 +29,8 @@ import '../calculations.dart';
 import '../controller.dart';
 import '../model.dart';
 
+enum TransactionsDialogBatchTradeMode { rate, profit, balance }
+
 class TransactionsDialogsBatchTrade extends StatefulWidget {
   final int srId;
   final List<TransactionsModel>? transactions;
@@ -64,7 +66,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Decimal _fromAmount = Decimal.zero;
   Decimal _toAmount = Decimal.zero;
-  bool _takeProfit = false;
 
   Color? _accentColor;
   String _targetSymbol = "";
@@ -74,11 +75,15 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   bool _showNotes = false;
   bool _showRate = false;
   bool _showAmount = false;
-  bool _useBalanceMode = false;
+
   bool _isProcessing = false;
   bool _isExiting = false;
 
   Timer? _debounce;
+
+  TransactionsDialogBatchTradeMode _mode = TransactionsDialogBatchTradeMode.rate;
+
+  final Map<String, Decimal> _compoundedProfits = {};
 
   final ScrollController tableScrollController = ScrollController();
 
@@ -108,6 +113,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       selectableSetSelected(tx.uuid, true);
     }
 
+    _updateCompoundedProfits();
     _updateTableState();
   }
 
@@ -123,6 +129,21 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   @override
+  void didUpdateWidget(covariant TransactionsDialogsBatchTrade oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (_txController.isBothEqualGroup(oldWidget.transactions ?? [], widget.transactions ?? [])) {
+      return;
+    }
+
+    txs = List.from(widget.transactions ?? []);
+    txs.retainWhere((tx) => tx.isActive || tx.isPartial);
+
+    _updateCompoundedProfits();
+    _updateTableState();
+  }
+
+  @override
   void rateableGetCallback(bool hasNewRate) {
     _updateResult(rateableAmount);
     _updateTableState();
@@ -131,46 +152,16 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   List<Map<String, dynamic>> tablePopulateData() {
     tableData = <Map<String, dynamic>>[];
 
-    final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-
-    final selectedTxs = txs.where((tx) => selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial)).toList();
-    var fromAllocations = <String, Decimal>{};
-    var toAllocations = <String, Decimal>{};
-
-    if (_takeProfit) {
-      Decimal? profitRemaining = _fromAmount;
-      for (final tx in selectedTxs) {
-        if (profitRemaining == null) break;
-
-        final txProfit = Math.subtract(tx.balance, tx.rrAmount);
-        if (txProfit <= Decimal.zero) continue;
-
-        final sourceAmount = txProfit < profitRemaining ? txProfit : profitRemaining;
-        fromAllocations[tx.uuid] = sourceAmount;
-        profitRemaining = sourceAmount == profitRemaining ? null : Math.subtract(profitRemaining, sourceAmount);
-      }
-      toAllocations = _spreadByWeights(_toAmount, selectedTxs, fromAllocations);
-    } else if (_useBalanceMode) {
-      fromAllocations = _calc.spreadAmount(_fromAmount, selectedTxs);
-      toAllocations = _calc.spreadAmount(_toAmount, selectedTxs);
-    }
+    final selectedTxs = _getSelectedTransactions();
+    final allocations = _resolveAllocations(selectedTxs);
 
     for (final tx in txs) {
       final sourceSymbol = _cryptoController.getSymbol(tx.srId) ?? 'Unknown Coin';
       final resultSymbol = _cryptoController.getSymbol(tx.rrId) ?? 'Unknown Coin';
       final bool selected = selectableIsSelected(tx.uuid) && (tx.isActive || tx.isPartial);
-      Decimal fromAmount = Decimal.zero;
-      late final Decimal amount;
 
-      if (_takeProfit) {
-        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
-        amount = toAllocations[tx.uuid] ?? Decimal.zero;
-      } else if (_useBalanceMode) {
-        fromAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
-        amount = toAllocations[tx.uuid] ?? Decimal.zero;
-      } else {
-        amount = Math.multiply(tx.rrAmount, rate);
-      }
+      final fromAmount = allocations.from[tx.uuid] ?? Decimal.zero;
+      final amount = allocations.to[tx.uuid] ?? Decimal.zero;
 
       tableData.add({
         'date': tx.timestampAsFormattedDate,
@@ -312,27 +303,37 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                           iconSize: 14,
                           padding: const EdgeInsets.all(10),
                           minimumSize: const Size(40, 40),
-                          tooltip: _useBalanceMode ? "Show rate mode" : "Show custom balance",
+                          tooltip: _mode == TransactionsDialogBatchTradeMode.balance ? "Show rate mode" : "Show custom balance",
                           onPressed: (s) {
+                            final isBalanceMode = _mode != TransactionsDialogBatchTradeMode.balance;
+
                             setState(() {
-                              _useBalanceMode = !_useBalanceMode;
-                              if (_useBalanceMode && fromController.text.isEmpty) {
+                              _mode = isBalanceMode ? TransactionsDialogBatchTradeMode.balance : TransactionsDialogBatchTradeMode.rate;
+
+                              if (isBalanceMode && fromController.text.isEmpty) {
                                 fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
                                 _fromAmount = _sourceAmount;
                               }
                             });
 
-                            if (_useBalanceMode) {
+                            if (isBalanceMode) {
                               s.action();
                             } else {
                               s.normal();
                             }
                           },
-                          evaluator: (s) => _isProcessing
-                              ? s.disable()
-                              : _useBalanceMode
-                              ? s.action()
-                              : s.normal(),
+                          evaluator: (s) {
+                            if (_isProcessing) {
+                              s.disable();
+                              return;
+                            }
+
+                            if (_mode == TransactionsDialogBatchTradeMode.balance) {
+                              s.action();
+                            } else {
+                              s.normal();
+                            }
+                          },
                         ),
                         WidgetsButtonsAction(
                           icon: Icons.note_add,
@@ -431,14 +432,14 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildTotal() {
     final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-
     final String targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
 
-    final bool showRate = !_useBalanceMode && rate > Decimal.zero && targetSymbol.isNotEmpty;
-    final bool showAmount = _useBalanceMode && targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
+    final bool isRateMode = _mode == TransactionsDialogBatchTradeMode.rate;
+    final bool showRate = isRateMode && rate > Decimal.zero && targetSymbol.isNotEmpty;
+    final bool showAmount = !isRateMode && targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
 
     final Decimal source = showAmount && _fromAmount > Decimal.zero ? _fromAmount : _sourceAmount;
-    final Decimal resultValue = _useBalanceMode ? _toAmount : Math.multiply(source, rate);
+    final Decimal resultValue = !isRateMode ? _toAmount : Math.multiply(source, rate);
 
     return SizedBox(
       width: double.infinity,
@@ -475,6 +476,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       hasError = !_formKey.currentState!.validate();
     }
 
+    final isRateMode = _mode == TransactionsDialogBatchTradeMode.rate;
+
     return Form(
       key: _formKey,
       child: LayoutBuilder(
@@ -492,21 +495,21 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                       Expanded(child: WidgetsHeader(spacing: 10, children: [_buildFromTitleField(), _buildFromAmountField()])),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40),
-                        child: Icon(_useBalanceMode ? Icons.arrow_forward : Icons.clear, size: 24),
+                        child: Icon(isRateMode ? Icons.clear : Icons.arrow_forward, size: 24),
                       ),
                       Expanded(
                         child: WidgetsHeader(
                           subtitle: "To:",
                           subtitleFontSize: 13,
                           spacing: 10,
-                          child: _useBalanceMode ? _buildToAmountField() : _buildRatesAmountField(),
+                          child: isRateMode ? _buildRatesAmountField() : _buildToAmountField(),
                         ),
                       ),
                       Padding(padding: EdgeInsets.symmetric(horizontal: 5, vertical: 40)),
                       Expanded(
                         child: WidgetsHeader(subtitle: " ", subtitleFontSize: 13, spacing: 10, child: _buildCoinSelectField()),
                       ),
-                      if (!_useBalanceMode) ...[
+                      if (isRateMode) ...[
                         Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 40), child: Icon(Icons.arrow_forward, size: 24)),
                         Expanded(child: _buildResultAmountField()),
                       ],
@@ -545,13 +548,13 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
                         subtitle: "To:",
                         subtitleFontSize: 13,
                         spacing: 10,
-                        child: _useBalanceMode ? _buildToAmountField() : _buildRatesAmountField(),
+                        child: isRateMode ? _buildToAmountField() : _buildRatesAmountField(),
                       ),
                     ),
                   ],
                 ),
                 Row(children: [Expanded(child: _buildCoinSelectField())]),
-                if (!_useBalanceMode) Row(children: [Expanded(child: _buildResultAmountField())]),
+                if (!isRateMode) Row(children: [Expanded(child: _buildResultAmountField())]),
                 if (_showNotes) Row(children: [Expanded(child: _buildAccentColorsPanel())]),
                 if (_showNotes) Row(children: [Expanded(child: _buildNotesPanel())]),
               ],
@@ -571,7 +574,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   Widget _buildFromTitleField() {
-    final bool canTakeProfit = _useBalanceMode && _calc.calculateBalanceProfit(_getSelectedTransactions()) != null;
+    final bool canTakeProfit =
+        _mode == TransactionsDialogBatchTradeMode.balance && _calc.calculateBalanceProfit(_getSelectedTransactions()) != null;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,12 +588,10 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
             child: Checkbox(
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              value: _takeProfit,
+              value: _mode == TransactionsDialogBatchTradeMode.profit,
               onChanged: (bool? state) {
-                if (!_isProcessing) {
-                  if (state != null) {
-                    _updateProfit(enabled: state);
-                  }
+                if (!_isProcessing && state != null) {
+                  _updateProfit(enabled: state);
                   _updateTableState();
                   setState(() {});
                 }
@@ -603,7 +605,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   }
 
   Widget _buildFromAmountField() {
-    return _useBalanceMode
+    return _mode == TransactionsDialogBatchTradeMode.balance
         ? WidgetsFieldsAmount(
             title: 'Amount',
             helperText: 'e.g., 10.5',
@@ -749,50 +751,45 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final Decimal rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
 
     _targetSymbol = rateableTarget != null ? _cryptoController.getSymbol(rateableTarget!) ?? "" : "";
-    _showRate = !_useBalanceMode && rate > Decimal.zero && _targetSymbol.isNotEmpty;
-    _showAmount = _useBalanceMode && _targetSymbol.isNotEmpty && _toAmount > Decimal.zero && _fromAmount > Decimal.zero;
+    _showRate = _mode == TransactionsDialogBatchTradeMode.rate && rate > Decimal.zero && _targetSymbol.isNotEmpty;
+    _showAmount =
+        _mode != TransactionsDialogBatchTradeMode.rate &&
+        _targetSymbol.isNotEmpty &&
+        _toAmount > Decimal.zero &&
+        _fromAmount > Decimal.zero;
 
     tableBuildColumns();
     tablePopulateData();
   }
 
   void _updateProfit({bool? enabled}) {
-    final shouldTakeProfit = enabled ?? _takeProfit;
+    final shouldTakeProfit = enabled ?? (_mode == TransactionsDialogBatchTradeMode.profit);
     final profit = shouldTakeProfit ? _calc.calculateBalanceProfit(_getSelectedTransactions()) : null;
 
-    _takeProfit = shouldTakeProfit && profit != null;
-    if (profit == null) return;
+    if (shouldTakeProfit && profit != null) {
+      _mode = TransactionsDialogBatchTradeMode.profit;
 
-    final formattedProfit = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18).replaceAll(',', '');
-    fromController.text = formattedProfit;
-    _fromAmount = Utils.parseDecimal(formattedProfit);
+      final formattedProfit = Utils.formatSmartDecimal(profit, smartDecimal: false, maxDecimals: 18).replaceAll(',', '');
+      fromController.text = formattedProfit;
+      _fromAmount = Utils.parseDecimal(formattedProfit);
+    } else if (_mode == TransactionsDialogBatchTradeMode.profit) {
+      _mode = TransactionsDialogBatchTradeMode.balance;
+    }
   }
 
-  Map<String, Decimal> _spreadByWeights(Decimal amount, List<TransactionsModel> transactions, Map<String, Decimal> weights) {
-    final totalWeight = weights.values.fold<Decimal>(Decimal.zero, Math.add);
-    if (totalWeight <= Decimal.zero) {
-      return {for (final tx in transactions) tx.uuid: Decimal.zero};
-    }
+  void _updateCompoundedProfits() {
+    _compoundedProfits.clear();
 
-    final lastPositive = transactions.lastIndexWhere((tx) => (weights[tx.uuid] ?? Decimal.zero) > Decimal.zero);
-    final allocations = <String, Decimal>{};
-    var allocated = Decimal.zero;
-    final unitAmount = Math.divide(amount, totalWeight);
+    // Full transaction map from controller so drill-up reaches target ancestors outside `txs`
+    final allTxsMap = _txController.getIndexedMap(); // or {for (final t in _txController.transactions) t.tid: t}
 
-    for (var index = 0; index < transactions.length; index++) {
-      final tx = transactions[index];
-      final weight = weights[tx.uuid] ?? Decimal.zero;
-      if (weight <= Decimal.zero) {
-        allocations[tx.uuid] = Decimal.zero;
-        continue;
+    for (final tx in txs) {
+      final pnl = _calc.totalCompoundedProfitLoss(tx, txsMap: allTxsMap);
+      // Only cache positive takeable profit, capped at tx's current balance
+      if (pnl > Decimal.zero) {
+        _compoundedProfits[tx.uuid] = pnl > tx.balance ? tx.balance : pnl;
       }
-
-      final allocation = index == lastPositive ? Math.subtract(amount, allocated) : Math.multiply(unitAmount, weight);
-      allocations[tx.uuid] = allocation;
-      allocated = Math.add(allocated, allocation);
     }
-
-    return allocations;
   }
 
   List<TransactionsModel> _getSelectedTransactions() {
@@ -834,66 +831,26 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     if (!_formKey.currentState!.validate()) return;
 
     final stxs = _getSelectedTransactions();
-
-    if (stxs.isEmpty) return;
-
-    Decimal rate = Decimal.zero;
-    Decimal profitPool = Decimal.zero;
-    Map<String, Decimal> fromAllocations = {};
-    Map<String, Decimal> toAllocations = {};
-
-    if (_takeProfit) {
-      if (_toAmount <= Decimal.zero ||
-          _fromAmount <= Decimal.zero ||
-          _fromAmount > Utils.sanitizeFractalDecimal(_calc.calculateBalanceProfit(stxs) ?? Decimal.zero)) {
-        return;
-      }
-
-      profitPool = _fromAmount;
-    } else if (_useBalanceMode) {
-      if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero || _fromAmount > _calc.totalActiveBalance(stxs)) {
-        return;
-      }
-
-      fromAllocations = _calc.spreadAmount(_fromAmount, stxs);
-      toAllocations = _calc.spreadAmount(_toAmount, stxs);
-    } else {
-      rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
-      if (rate <= Decimal.zero) return;
+    if (stxs.isEmpty || !_validate(stxs)) {
+      return;
     }
+
+    final allocations = _resolveAllocations(stxs);
 
     setState(() {
       _isProcessing = true;
     });
 
-    bool completed = true;
+    final List<TransactionsModel> payload = [];
+    final Map<String, TransactionsModel> map = {};
 
-    List<TransactionsModel> payload = [];
-    Map<String, TransactionsModel> map = {};
+    final accentColor = _accentColor?.toARGB32().toRadixString(16).padLeft(8, '0') ?? "";
 
     for (final tx in stxs) {
-      Decimal sourceAmount;
-      Decimal amount;
-      Decimal tempPoolValue = Decimal.zero;
+      final sourceAmount = allocations.from[tx.uuid] ?? Decimal.zero;
+      final amount = allocations.to[tx.uuid] ?? Decimal.zero;
 
-      if (_takeProfit) {
-        if (profitPool <= Decimal.zero) break;
-
-        final txProfit = Math.subtract(tx.balance, tx.rrAmount);
-
-        if (txProfit <= Decimal.zero) continue;
-
-        sourceAmount = txProfit < profitPool ? txProfit : profitPool;
-        amount = Math.divide(Math.multiply(_toAmount, sourceAmount), _fromAmount);
-
-        tempPoolValue = Utils.sanitizeFractalDecimal(Math.subtract(profitPool, sourceAmount));
-      } else if (_useBalanceMode) {
-        sourceAmount = fromAllocations[tx.uuid] ?? Decimal.zero;
-        amount = toAllocations[tx.uuid] ?? Decimal.zero;
-      } else {
-        sourceAmount = tx.balance;
-        amount = Math.multiply(tx.balance, rate);
-      }
+      if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
 
       final meta = Map<String, dynamic>.from(tx.meta);
 
@@ -901,8 +858,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         meta['trading_notes'] = _noteEntry;
       }
 
-      if (_accentColor != null) {
-        meta['accent_color'] = _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0');
+      if (accentColor.isNotEmpty) {
+        meta['accent_color'] = accentColor;
       }
 
       final child = TransactionsModel(
@@ -922,10 +879,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       payload.add(child);
       map[child.uuid] = tx;
-
-      if (_takeProfit) {
-        profitPool = tempPoolValue;
-      }
     }
 
     final success = await _txController.addAll(payload);
@@ -937,49 +890,99 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       }
     }
 
-    if (success.length < payload.length) {
-      completed = false;
-      final totalCount = payload.length;
-      final successCount = success.length;
-      final failedCount = totalCount - successCount;
-
-      final devMessage = 'Batch trades partially or fully failed: $failedCount of $totalCount failed ($successCount succeeded).';
-
-      final uxMessage = successCount == 0
-          ? 'Unable to trade the selected transactions. Please check their status and try again.'
-          : '$failedCount of $totalCount transactions could not be traded. Remaining items are still selected.';
-
-      widget.onSave?.call(BatchException(AppErrorCode.batchOpsFailed, devMessage, uxMessage));
+    if (success.length != payload.length) {
+      widget.onSave?.call(
+        BatchException(
+          AppErrorCode.batchOpsFailed,
+          "Batch trades partially or fully failed: ${payload.length - success.length}/${payload.length} failed.",
+          "Failed to trade some of the transactions.",
+        ),
+      );
+    } else {
+      widgetsNotifySuccess("Trade completed successfully.");
     }
 
+    _updateCompoundedProfits();
     tablePopulateData();
 
-    if (completed) {
-      if (txs.isEmpty) {
-        widget.onSave?.call(null);
-        setState(() {
-          _isExiting = true;
-        });
-      } else {
-        widgetsNotifySuccess("Trade completed successfully.");
-      }
-    }
+    if (txs.isEmpty) {
+      widget.onSave?.call(null);
+      setState(() {
+        _isExiting = true;
+      });
 
-    if (txs.isNotEmpty) {
+      return;
+    } else {
       _formKey.currentState?.reset();
 
       setState(() {
         _isProcessing = false;
         _sourceAmount = Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(_getSelectedTransactions()));
 
-        if (_sourceAmount <= Decimal.zero) {
-          _takeProfit = false;
+        if (_sourceAmount <= Decimal.zero && _mode == TransactionsDialogBatchTradeMode.profit) {
+          _mode = TransactionsDialogBatchTradeMode.rate;
         }
 
-        if (_useBalanceMode && !_takeProfit) {
+        if (_mode == TransactionsDialogBatchTradeMode.balance) {
           fromController.text = Utils.formatSmartDecimal(_sourceAmount, smartDecimal: false, maxDecimals: 18);
         }
       });
+    }
+  }
+
+  bool _validate(List<TransactionsModel> txs) {
+    if (_mode == TransactionsDialogBatchTradeMode.profit || _mode == TransactionsDialogBatchTradeMode.balance) {
+      if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero) {
+        return false;
+      }
+    }
+
+    switch (_mode) {
+      case TransactionsDialogBatchTradeMode.profit:
+        final maxProfit = Utils.sanitizeFractalDecimal(_calc.calculateBalanceProfit(txs) ?? Decimal.zero);
+        return _fromAmount <= maxProfit;
+
+      case TransactionsDialogBatchTradeMode.balance:
+        return _fromAmount <= _calc.totalActiveBalance(txs);
+
+      case TransactionsDialogBatchTradeMode.rate:
+        if (rateableAmount == null) {
+          return false;
+        }
+        final rate = rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+        return rate > Decimal.zero;
+    }
+  }
+
+  ({Map<String, Decimal> from, Map<String, Decimal> to}) _resolveAllocations(List<TransactionsModel> selectedTxs) {
+    switch (_mode) {
+      case TransactionsDialogBatchTradeMode.profit:
+        final fromAllocations = <String, Decimal>{};
+        Decimal? profitRemaining = _fromAmount;
+
+        for (final tx in selectedTxs) {
+          if (profitRemaining == null || profitRemaining <= Decimal.zero) break;
+
+          final txProfit = Math.subtract(tx.balance, tx.rrAmount);
+          if (txProfit <= Decimal.zero) continue;
+
+          final sourceAmount = txProfit < profitRemaining ? txProfit : profitRemaining;
+          fromAllocations[tx.uuid] = sourceAmount;
+          profitRemaining = sourceAmount == profitRemaining ? null : Math.subtract(profitRemaining, sourceAmount);
+        }
+
+        return (from: fromAllocations, to: _calc.spreadByWeights(_toAmount, selectedTxs, fromAllocations));
+
+      case TransactionsDialogBatchTradeMode.balance:
+        return (from: _calc.spreadAmount(_fromAmount, selectedTxs), to: _calc.spreadAmount(_toAmount, selectedTxs));
+
+      case TransactionsDialogBatchTradeMode.rate:
+        final rate = rateableAmount == null ? Decimal.zero : rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
+
+        return (
+          from: {for (final tx in selectedTxs) tx.uuid: tx.balance},
+          to: {for (final tx in selectedTxs) tx.uuid: Math.multiply(tx.balance, rate)},
+        );
     }
   }
 }
