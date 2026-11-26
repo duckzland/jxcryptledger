@@ -314,6 +314,31 @@ class TransactionCalculation {
       return tx.profitAmount;
     }
 
-    return Math.subtract(tx.balance, ptx.rrAmount);
+    Decimal rt = Decimal.one;
+    TransactionsModel ctx = tx;
+
+    while (true) {
+      final stx = txsMap[ctx.isLeaf ? ctx.pid : ctx.tid];
+      if (stx == null) break;
+
+      if (stx.isRoot) {
+        if ((stx.isCapital && stx.srId == tx.rrId || stx.rrId == tx.rrId) && ctx.srId == tx.rrId) {
+          return Math.subtract(tx.balance, Math.multiply(ctx.srAmount, rt));
+        }
+        break;
+      }
+
+      if (stx.rrAmount > Decimal.zero) {
+        rt = Math.multiply(rt, Math.divide(ctx.srAmount, stx.rrAmount));
+      }
+
+      if (ptx.isLeaf && stx.tid == ptx.tid) {
+        return Math.subtract(tx.balance, Math.multiply(stx.rrAmount, rt));
+      }
+
+      ctx = stx;
+    }
+
+    return Decimal.zero;
   }
 }

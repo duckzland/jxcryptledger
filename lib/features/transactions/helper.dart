@@ -1,5 +1,3 @@
-import 'package:decimal/decimal.dart';
-
 import 'model.dart';
 
 class TransactionsHelper {
@@ -197,22 +195,20 @@ class TransactionsHelper {
         if (item.rid == tx.rid || item.tid == tx.rid) item.tid: item,
     };
 
-    String pid = tx.pid;
-    TransactionsModel? target;
-    Decimal rr = tx.rrAmount;
+    TransactionsModel? ptx;
+    TransactionsModel ctx = tx;
 
-    while (pid.isNotEmpty && pid != '0') {
-      final p = txsMap[pid];
-      if (p == null) break;
+    while (ctx.isLeaf) {
+      final stx = txsMap[ctx.pid];
+      if (stx == null) break;
 
-      if (p.rrId == tx.rrId && p.rrAmount <= rr) {
-        target = p;
-        rr = p.rrAmount;
+      if (ctx.srId == tx.rrId && ctx.srAmount <= tx.balance && (!stx.isRoot || stx.rrId == tx.rrId)) {
+        ptx = stx;
       }
 
-      pid = p.pid;
+      ctx = stx;
     }
 
-    return target;
+    return ptx;
   }
 }
