@@ -2,7 +2,7 @@ import '../../../app/exceptions.dart';
 import 'base.dart';
 
 class TransactionsRulesCreate extends TransactionsRulesBase {
-  TransactionsRulesCreate(super.tx, super.txRepo, super.silent, {super.mode = "[TXCREATE]", super.overlay});
+  TransactionsRulesCreate(super.tx, super.txsMap, super.childrenMap, super.rootMap, super.silent, {super.mode = "[TXCREATE]"});
 
   @override
   bool validate() {

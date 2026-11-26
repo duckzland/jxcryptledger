@@ -241,8 +241,6 @@ void main() {
 
       expect(repository.getIndexedMap().keys, containsAll(['root', 'parent', 'leaf']));
       expect(repository.getIndexedParentMap()['root']!.map((item) => item.tid), contains('parent'));
-      expect(repository.collectAllRoots().map((item) => item.tid), contains('root'));
-      expect(repository.collectAllTerminalLeaves().map((item) => item.tid), contains('leaf'));
     });
   });
 

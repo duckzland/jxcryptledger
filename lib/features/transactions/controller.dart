@@ -7,6 +7,7 @@ import '../../core/math.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/mixins/controllers/rateable.dart';
+import 'helper.dart';
 import 'model.dart';
 import 'repository.dart';
 
@@ -95,12 +96,12 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   bool hasLeaf(TransactionsModel tx) {
-    final leaf = repo.getLeaf(tx);
+    final leaf = TransactionsHelper.getLeaf(tx, childrenMap: repo.getIndexedParentMap());
     return leaf.isNotEmpty;
   }
 
   bool hasTradeableLeaf(TransactionsModel tx) {
-    final leaves = repo.collectAllLeaves(tx);
+    final leaves = TransactionsHelper.collectAllLeaves(tx, childrenMap: repo.getIndexedParentMap());
 
     if (leaves.isEmpty) {
       return false;
@@ -116,7 +117,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   bool hasClosableLeaf() {
-    final leaves = repo.collectAllTerminalLeaves();
+    final leaves = TransactionsHelper.collectAllTerminalLeaves(txsMap: repo.getIndexedMap(), childrenMap: repo.getIndexedParentMap());
 
     if (leaves.isEmpty) {
       return false;
@@ -154,7 +155,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   bool hasDeletableRoot() {
-    final roots = repo.collectAllRoots();
+    final roots = TransactionsHelper.collectAllRoots(rootMap: repo.getIndexedRootMap());
 
     if (roots.isEmpty) {
       return false;
@@ -249,7 +250,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   bool isClosedTerminals(TransactionsModel tx) {
-    final leaves = repo.collectTerminalLeaves(tx);
+    final leaves = TransactionsHelper.collectTerminalLeaves(tx, childrenMap: repo.getIndexedParentMap());
 
     for (final ltx in leaves) {
       if (!ltx.isClosed) {
@@ -261,7 +262,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   Decimal getCapitalBalance(TransactionsModel tx) {
-    final children = repo.getLeaf(tx);
+    final children = TransactionsHelper.getLeaf(tx, childrenMap: repo.getIndexedParentMap());
     final Decimal spent = children.fold<Decimal>(Decimal.zero, (sum, leaf) => Math.add(sum, leaf.srAmount));
     final Decimal balance = Math.subtract(tx.rrAmount, spent);
 
@@ -269,12 +270,12 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   List<TransactionsModel> collectAllRoots() {
-    return repo.collectAllRoots();
+    return TransactionsHelper.collectAllRoots(rootMap: repo.getIndexedRootMap());
   }
 
   Decimal collectAllTerminalResultAmount(TransactionsModel tx) {
     Decimal balance = Decimal.zero;
-    final leaves = repo.collectAllTerminalLeaves();
+    final leaves = TransactionsHelper.collectAllTerminalLeaves(txsMap: repo.getIndexedMap(), childrenMap: repo.getIndexedParentMap());
 
     for (final ltx in leaves) {
       if (ltx.rrId == tx.rrId && ltx.isActive) {
@@ -285,7 +286,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   Decimal collectBranchTotalResultAmount(TransactionsModel tx) {
-    final txs = repo.collectAllLeaves(tx);
+    final txs = TransactionsHelper.collectAllLeaves(tx, childrenMap: repo.getIndexedParentMap());
     Decimal balance = Decimal.zero;
     for (final rtx in txs) {
       if (rtx.rrId == tx.srId && (rtx.isActive || rtx.isPartial)) {
@@ -297,7 +298,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   Map<int, Decimal> collectBranchActiveAmount(TransactionsModel tx) {
-    final txs = repo.collectAllLeaves(tx);
+    final txs = TransactionsHelper.collectAllLeaves(tx, childrenMap: repo.getIndexedParentMap());
 
     final Map<int, Decimal> branchAmounts = {};
 
@@ -312,7 +313,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   Map<int, Decimal> collectBranchFinalizedAmount(TransactionsModel tx) {
-    final txs = repo.collectAllLeaves(tx);
+    final txs = TransactionsHelper.collectAllLeaves(tx, childrenMap: repo.getIndexedParentMap());
 
     final Map<int, Decimal> branchAmounts = {};
 
@@ -327,7 +328,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
   }
 
   List<TransactionsModel> collectTradableLeaves(TransactionsModel tx) {
-    final leaves = repo.collectAllLeaves(tx);
+    final leaves = TransactionsHelper.collectAllLeaves(tx, childrenMap: repo.getIndexedParentMap());
 
     if (leaves.isEmpty) {
       return [];

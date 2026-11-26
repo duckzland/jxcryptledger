@@ -6,6 +6,7 @@ import '../../core/abstracts/repository.dart';
 import '../../core/log.dart';
 import '../../core/math.dart';
 import '../../ipc/status/op.dart';
+import 'helper.dart';
 import 'index.dart';
 import 'rules/close.dart';
 import 'rules/create.dart';
@@ -208,7 +209,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     // Collect only descendants of tx via the indexed tree (instead of scanning the whole box)
-    final descendants = collectAllLeaves(tx);
+    final descendants = TransactionsHelper.collectAllLeaves(tx, childrenMap: getIndexedParentMap());
     for (final ttx in descendants) {
       if (debugLogs) {
         logln(
@@ -239,14 +240,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   }
 
   @override
-  Future<void> deleteAll(List<TransactionsModel> txs) async {
-    await super.deleteAll(txs);
-    for (final tx in txs) {
-      _cache.remove(tx);
-    }
-  }
-
-  @override
   Future<void> replace(List<TransactionsModel> txs) async {
     await super.replace(txs);
     _cache.invalidate();
@@ -269,8 +262,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     if (otx == null) {
       return;
     }
-
-    TransactionsModel? target = getCloseTargetParent(otx);
+    TransactionsModel? target = TransactionsHelper.getCloseTargetParent(otx, txsMap: getIndexedRootMap()[otx.rid] ?? getIndexedMap());
     bool allClosed = false;
     List<TransactionsModel> leaves = [];
 
@@ -278,7 +270,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return;
     }
 
-    leaves = collectTerminalLeaves(target);
+    leaves = TransactionsHelper.collectTerminalLeaves(target, childrenMap: getIndexedParentMap());
+
     allClosed =
         leaves.isNotEmpty &&
         leaves
@@ -287,7 +280,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
             .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
     if (allClosed) {
-      leaves = collectInBetweenLeaves(otx, target);
+      leaves = TransactionsHelper.collectInBetweenLeaves(otx, target, txsMap: getIndexedRootMap()[otx.rid] ?? getIndexedMap());
       allClosed =
           leaves.isNotEmpty &&
           leaves
@@ -325,7 +318,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return;
     }
 
-    final leaves = collectTerminalLeaves(ptx);
+    final leaves = TransactionsHelper.collectTerminalLeaves(ptx, childrenMap: getIndexedParentMap());
     final allClosed =
         leaves.isNotEmpty &&
         leaves
@@ -493,6 +486,14 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return result;
   }
 
+  @override
+  Future<void> deleteAll(List<TransactionsModel> txs) async {
+    await super.deleteAll(txs);
+    for (final tx in txs) {
+      _cache.remove(tx);
+    }
+  }
+
   Future<List<String>> updateAll(List<TransactionsModel> txs) async {
     if (txs.isEmpty) {
       return [];
@@ -650,14 +651,13 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
         canClose(otx, overlay: pendingUpdates);
 
-        final rawTarget = getCloseTargetParent(otx);
+        final rawTarget = TransactionsHelper.getCloseTargetParent(otx, txsMap: getIndexedRootMap()[otx.rid] ?? getIndexedMap());
         if (rawTarget == null) {
           continue;
         }
 
         final target = getLatest(rawTarget.tid) ?? rawTarget;
-
-        final terminalLeaves = collectTerminalLeaves(target).map((leaf) {
+        final terminalLeaves = TransactionsHelper.collectTerminalLeaves(target, childrenMap: getIndexedParentMap()).map((leaf) {
           return getLatest(leaf.tid) ?? leaf;
         }).toList();
 
@@ -666,9 +666,10 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
             terminalLeaves.where((leaf) => leaf.tid != otx.tid).every((leaf) => leaf.statusEnum == TransactionStatus.closed);
 
         if (allClosed) {
-          final inBetweenLeaves = collectInBetweenLeaves(otx, target).map((leaf) {
-            return getLatest(leaf.tid) ?? leaf;
-          }).toList();
+          final inBetweenLeaves =
+              TransactionsHelper.collectInBetweenLeaves(otx, target, txsMap: getIndexedRootMap()[otx.rid] ?? getIndexedMap()).map((leaf) {
+                return getLatest(leaf.tid) ?? leaf;
+              }).toList();
 
           allClosed =
               inBetweenLeaves.isNotEmpty &&
@@ -753,7 +754,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
           continue;
         }
 
-        final remainingLeaves = collectTerminalLeaves(ptx)
+        final remainingLeaves = TransactionsHelper.collectTerminalLeaves(ptx, childrenMap: getIndexedParentMap())
             .where((leaf) => !deletedTids.contains(leaf.tid))
             .where((leaf) => leaf.tid != otx.tid)
             .map((leaf) => getLatest(leaf.tid) ?? leaf)
@@ -900,7 +901,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
           );
         }
 
-        final descendants = collectAllLeaves(otx);
+        final descendants = TransactionsHelper.collectAllLeaves(otx, childrenMap: getIndexedParentMap());
         for (final descendant in descendants) {
           if (deletedTids.contains(descendant.tid)) {
             continue;
@@ -936,185 +937,93 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     return result;
   }
 
-  List<TransactionsModel> getLeaf(TransactionsModel tx) {
-    return getIndexedParentMap()[tx.tid] ?? const <TransactionsModel>[];
-  }
-
-  TransactionsModel? getCloseTargetParent(TransactionsModel tx) {
-    if (tx.isRoot) {
-      return null;
-    }
-
-    final byTid = getIndexedMap();
-
-    TransactionsModel? parent;
-    String? pid = tx.pid;
-
-    while (pid != null && pid.isNotEmpty) {
-      final p = byTid[pid];
-      if (p == null) break;
-
-      if (p.rrId == tx.rrId) {
-        parent = p;
-        break;
-      }
-
-      pid = p.pid;
-    }
-
-    if (parent == null) {
-      final root = byTid[tx.rid];
-      if (root != null && root.isRoot) {
-        if (root.rrId == tx.rrId) {
-          parent = root;
-        }
-      }
-    }
-
-    return parent;
-  }
-
-  List<TransactionsModel> collectAllRoots() {
-    final roots = <TransactionsModel>[];
-    for (final entry in getIndexedRootMap().entries) {
-      final root = entry.value[entry.key];
-      if (root != null && root.isRoot) roots.add(root);
-    }
-    return roots;
-  }
-
-  List<TransactionsModel> collectAllTerminalLeaves() {
-    final children = getIndexedParentMap();
-    return [
-      for (final tx in getIndexedMap().values)
-        if (!tx.isRoot && (children[tx.tid]?.isEmpty ?? true)) tx,
-    ];
-  }
-
-  List<TransactionsModel> collectTerminalLeaves(TransactionsModel parent) {
-    final childrenMap = getIndexedParentMap();
-
-    List<TransactionsModel> dfs(TransactionsModel node) {
-      final children = childrenMap[node.tid] ?? [];
-
-      if (children.isEmpty) {
-        if (node.tid == parent.tid) return [];
-        if (node.isRoot) return [];
-        return [node];
-      }
-
-      final leaves = <TransactionsModel>[];
-      for (final child in children) {
-        leaves.addAll(dfs(child));
-      }
-      return leaves;
-    }
-
-    return dfs(parent);
-  }
-
-  List<TransactionsModel> collectRootTreeLeaves(TransactionsModel parent) {
-    final rootTree = getIndexedRootMap()[parent.tid]?.values;
-    return rootTree?.where((tx) => !tx.isRoot).toList() ?? const <TransactionsModel>[];
-  }
-
-  List<TransactionsModel> collectDirectLeaves(TransactionsModel parent) {
-    final childrenMap = getIndexedParentMap();
-    final leaves = <TransactionsModel>[];
-
-    void dfs(TransactionsModel node) {
-      final children = childrenMap[node.tid];
-      if (children == null || children.isEmpty) {
-        if (node.tid != parent.tid) {
-          leaves.add(node);
-        }
-        return;
-      }
-
-      for (final child in children) {
-        dfs(child);
-      }
-    }
-
-    dfs(parent);
-    return leaves;
-  }
-
-  List<TransactionsModel> collectAllLeaves(TransactionsModel parent) {
-    final childrenMap = getIndexedParentMap();
-
-    List<TransactionsModel> dfs(TransactionsModel node) {
-      final children = childrenMap[node.tid] ?? [];
-      final descendants = <TransactionsModel>[];
-
-      for (final child in children) {
-        descendants.add(child);
-        descendants.addAll(dfs(child));
-      }
-
-      return descendants;
-    }
-
-    return dfs(parent);
-  }
-
-  List<TransactionsModel> collectInBetweenLeaves(TransactionsModel start, TransactionsModel end) {
-    final lookup = getIndexedMap();
-
-    final ascendants = <TransactionsModel>[];
-    TransactionsModel? current = start;
-
-    while (current != null && !current.isRoot) {
-      final parent = lookup[current.pid];
-      if (parent == null) break;
-      ascendants.add(parent);
-
-      if (parent.tid == end.tid) break;
-
-      current = parent;
-    }
-
-    return ascendants;
-  }
-
   bool canAdd(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final rules = TransactionsRulesCreate(tx, this, silent ?? !debugLogs, overlay: overlay);
+    final hasOverlay = overlay != null && overlay.isNotEmpty;
+    final rules = TransactionsRulesCreate(
+      tx,
+      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
+      hasOverlay ? const {} : getIndexedParentMap(),
+      hasOverlay ? const {} : getIndexedRootMap(),
+      silent ?? !debugLogs,
+    );
     final isValid = rules.validate();
     return isValid;
   }
 
   bool canDelete(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final rules = TransactionsRulesDelete(tx, this, silent ?? !debugLogs, overlay: overlay);
+    final hasOverlay = overlay != null && overlay.isNotEmpty;
+    final rules = TransactionsRulesDelete(
+      tx,
+      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
+      hasOverlay ? const {} : getIndexedParentMap(),
+      hasOverlay ? const {} : getIndexedRootMap(),
+      silent ?? !debugLogs,
+    );
     final isValid = rules.validate();
     return isValid;
   }
 
   bool canUpdate(TransactionsModel tx, {bool? silent = false, Map<dynamic, TransactionsModel>? overlay}) {
-    final rules = TransactionsRulesUpdate(tx, this, silent ?? !debugLogs, overlay: overlay);
+    final hasOverlay = overlay != null && overlay.isNotEmpty;
+    final rules = TransactionsRulesUpdate(
+      tx,
+      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
+      hasOverlay ? const {} : getIndexedParentMap(),
+      hasOverlay ? const {} : getIndexedRootMap(),
+      silent ?? !debugLogs,
+    );
     final isValid = rules.validate();
     return isValid;
   }
 
   bool canClose(TransactionsModel tx, {bool? silent = false, Map<dynamic, TransactionsModel>? overlay}) {
-    final rules = TransactionsRulesClose(tx, this, silent ?? !debugLogs, overlay: overlay);
+    final hasOverlay = overlay != null && overlay.isNotEmpty;
+    final rules = TransactionsRulesClose(
+      tx,
+      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
+      hasOverlay ? const {} : getIndexedParentMap(),
+      hasOverlay ? const {} : getIndexedRootMap(),
+      silent ?? !debugLogs,
+    );
     final isValid = rules.validate();
     return isValid;
   }
 
   bool canTrade(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final rules = TransactionsRulesTrade(tx, this, silent ?? !debugLogs, overlay: overlay);
+    final hasOverlay = overlay != null && overlay.isNotEmpty;
+    final rules = TransactionsRulesTrade(
+      tx,
+      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
+      hasOverlay ? const {} : getIndexedParentMap(),
+      hasOverlay ? const {} : getIndexedRootMap(),
+      silent ?? !debugLogs,
+    );
     final isValid = rules.validate();
     return isValid;
   }
 
   bool canRefund(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final rules = TransactionsRulesRefund(tx, this, silent ?? !debugLogs, overlay: overlay);
+    final hasOverlay = overlay != null && overlay.isNotEmpty;
+    final rules = TransactionsRulesRefund(
+      tx,
+      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
+      hasOverlay ? const {} : getIndexedParentMap(),
+      hasOverlay ? const {} : getIndexedRootMap(),
+      silent ?? !debugLogs,
+    );
     final isValid = rules.validate();
     return isValid;
   }
 
   bool canFinalize(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final rules = TransactionsRulesFinalize(tx, this, silent ?? !debugLogs, overlay: overlay);
+    final hasOverlay = overlay != null && overlay.isNotEmpty;
+    final rules = TransactionsRulesFinalize(
+      tx,
+      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
+      hasOverlay ? const {} : getIndexedParentMap(),
+      hasOverlay ? const {} : getIndexedRootMap(),
+      silent ?? !debugLogs,
+    );
     final isValid = rules.validate();
     return isValid;
   }

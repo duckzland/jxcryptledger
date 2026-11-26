@@ -2,7 +2,7 @@ import '../../../app/exceptions.dart';
 import 'base.dart';
 
 class TransactionsRulesTrade extends TransactionsRulesBase {
-  TransactionsRulesTrade(super.tx, super.txRepo, super.silent, {super.mode = "[TXTRADE]", super.overlay});
+  TransactionsRulesTrade(super.tx, super.txsMap, super.childrenMap, super.rootMap, super.silent, {super.mode = "[TXTRADE]"});
 
   @override
   // We want the parent not the new trade tx!

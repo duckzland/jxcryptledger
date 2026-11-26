@@ -2,7 +2,7 @@ import '../../../app/exceptions.dart';
 import 'base.dart';
 
 class TransactionsRulesClose extends TransactionsRulesBase {
-  TransactionsRulesClose(super.tx, super.txRepo, super.silent, {super.mode = "[TXCLOSE]", super.overlay});
+  TransactionsRulesClose(super.tx, super.txsMap, super.childrenMap, super.rootMap, super.silent, {super.mode = "[TXCLOSE]"});
 
   @override
   bool validate() {

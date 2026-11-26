@@ -2,7 +2,7 @@ import '../../../app/exceptions.dart';
 import 'base.dart';
 
 class TransactionsRulesRefund extends TransactionsRulesBase {
-  TransactionsRulesRefund(super.tx, super.txRepo, super.silent, {super.mode = "[TXREFUND]", super.overlay});
+  TransactionsRulesRefund(super.tx, super.txsMap, super.childrenMap, super.rootMap, super.silent, {super.mode = "[TXREFUND]"});
 
   @override
   bool validate() {

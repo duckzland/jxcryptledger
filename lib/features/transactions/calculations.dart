@@ -1,37 +1,14 @@
 import 'package:decimal/decimal.dart';
 
 import '../../core/math.dart';
+import 'helper.dart';
 import 'model.dart';
 
 class TransactionCalculation {
   const TransactionCalculation();
 
   TransactionsModel? getCloseTargetParent(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
-    if (tx.isRoot) return null;
-    if (txs == null && txsMap == null) return null;
-
-    txsMap ??= {for (final item in txs!) item.tid: item};
-
-    String pid = tx.pid;
-    while (pid.isNotEmpty && pid != '0') {
-      final p = txsMap[pid];
-      if (p == null) break;
-
-      if (p.rrId == tx.rrId) {
-        return p;
-      }
-
-      pid = p.pid;
-    }
-
-    if (tx.rid.isNotEmpty && tx.rid != '0') {
-      final root = txsMap[tx.rid];
-      if (root != null && root.isRoot && root.rrId == tx.rrId) {
-        return root;
-      }
-    }
-
-    return null;
+    return TransactionsHelper.getCloseTargetParent(tx, txs: txs, txsMap: txsMap);
   }
 
   Map<String, Decimal> spreadByWeights(Decimal amount, Iterable<TransactionsModel> transactions, Map<String, Decimal> weights) {

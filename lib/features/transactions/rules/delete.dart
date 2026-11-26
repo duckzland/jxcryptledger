@@ -2,7 +2,7 @@ import '../../../app/exceptions.dart';
 import 'base.dart';
 
 class TransactionsRulesDelete extends TransactionsRulesBase {
-  TransactionsRulesDelete(super.tx, super.txRepo, super.silent, {super.mode = "[TXDELETE]", super.overlay});
+  TransactionsRulesDelete(super.tx, super.txsMap, super.childrenMap, super.rootMap, super.silent, {super.mode = "[TXDELETE]"});
 
   @override
   bool validate() {
