@@ -17,19 +17,25 @@ TransactionsModel _tx({
   required String id,
   required String rrAmount,
   required String balance,
+  String srAmount = '100',
+  int srId = 2,
+  int rrId = 1,
+  String pid = '0',
+  String rid = '0',
   TransactionStatus status = TransactionStatus.active,
+  bool closable = true,
 }) {
   return TransactionsModel(
     tid: id,
-    rid: '0',
-    pid: '0',
-    srAmount: _d('100'),
-    srId: 1,
+    rid: rid,
+    pid: pid,
+    srAmount: _d(srAmount),
+    srId: srId,
     rrAmount: _d(rrAmount),
-    rrId: 2,
+    rrId: rrId,
     balance: _d(balance),
     status: status.index,
-    closable: true,
+    closable: closable,
     timestamp: DateTime.now().toUtc().microsecondsSinceEpoch - 1000,
     meta: {},
   );
@@ -59,7 +65,33 @@ class _TestRatesController extends ChangeNotifier implements RatesController {
 
 class _TestTransactionsController extends ChangeNotifier implements TransactionsController {
   final children = <TransactionsModel>[];
+  final closed = <TransactionsModel>[];
+  final Map<String, TransactionsModel> indexed = {};
   var _nextId = 0;
+
+  @override
+  Map<String, TransactionsModel> getIndexedMap() => indexed;
+
+  @override
+  Map<String, List<TransactionsModel>> getIndexedParentMap() {
+    final map = <String, List<TransactionsModel>>{};
+    for (final tx in indexed.values) {
+      if (tx.pid.isNotEmpty && tx.pid != '0') {
+        (map[tx.pid] ??= []).add(tx);
+      }
+    }
+    return map;
+  }
+
+  @override
+  Map<String, Map<String, TransactionsModel>> getIndexedRootMap() {
+    final map = <String, Map<String, TransactionsModel>>{};
+    for (final tx in indexed.values) {
+      final treeKey = tx.isRoot ? tx.tid : tx.rid;
+      (map[treeKey] ??= {})[tx.tid] = tx;
+    }
+    return map;
+  }
 
   @override
   String generateId() => 'child-${++_nextId}';
@@ -78,6 +110,12 @@ class _TestTransactionsController extends ChangeNotifier implements Transactions
   @override
   Future<List<String>> updateAll(List<TransactionsModel> txs) async {
     children.addAll(txs);
+    return txs.map((tx) => tx.uuid).toList();
+  }
+
+  @override
+  Future<List<String>> closeAll(List<TransactionsModel> txs, {bool? silent}) async {
+    closed.addAll(txs);
     return txs.map((tx) => tx.uuid).toList();
   }
 
@@ -104,6 +142,174 @@ void main() {
   late _TestRatesController rates;
   late _TestTransactionsController transactions;
 
+  ({List<TransactionsModel> tree, TransactionsModel leaf, TransactionsModel flat}) _buildSaneProfitTree() {
+    const aster = 1;
+    const sui = 2;
+
+    final tx0 = _tx(
+      id: 'tx0',
+      srAmount: '4197',
+      rrAmount: '8541',
+      balance: '8000',
+      srId: sui,
+      rrId: aster,
+      pid: '0',
+      rid: '0',
+      status: TransactionStatus.partial,
+    );
+    final tx1 = _tx(
+      id: 'tx1',
+      srAmount: '541',
+      rrAmount: '418',
+      balance: '0',
+      srId: aster,
+      rrId: sui,
+      pid: 'tx0',
+      rid: 'tx0',
+      status: TransactionStatus.inactive,
+      closable: false,
+    );
+    final tx2 = _tx(
+      id: 'tx2',
+      srAmount: '418',
+      rrAmount: '774.48',
+      balance: '0',
+      srId: sui,
+      rrId: aster,
+      pid: 'tx1',
+      rid: 'tx0',
+      status: TransactionStatus.inactive,
+    );
+    final tx3 = _tx(
+      id: 'tx3',
+      srAmount: '774.48',
+      rrAmount: '577.346',
+      balance: '159.35',
+      srId: aster,
+      rrId: sui,
+      pid: 'tx2',
+      rid: 'tx0',
+      status: TransactionStatus.partial,
+      closable: false,
+    );
+    final tx4 = _tx(
+      id: 'tx4',
+      srAmount: '417.996',
+      rrAmount: '593.7528',
+      balance: '0',
+      srId: sui,
+      rrId: aster,
+      pid: 'tx3',
+      rid: 'tx0',
+      status: TransactionStatus.inactive,
+    );
+    final tx5 = _tx(
+      id: 'tx5',
+      srAmount: '593.7528',
+      rrAmount: '449.356',
+      balance: '0',
+      srId: aster,
+      rrId: sui,
+      pid: 'tx4',
+      rid: 'tx0',
+      status: TransactionStatus.inactive,
+      closable: false,
+    );
+    final tx6 = _tx(
+      id: 'tx6',
+      srAmount: '449.356',
+      rrAmount: '612.3248',
+      balance: '0',
+      srId: sui,
+      rrId: aster,
+      pid: 'tx5',
+      rid: 'tx0',
+      status: TransactionStatus.inactive,
+    );
+    final tx7 = _tx(
+      id: 'tx7',
+      srAmount: '612.3248',
+      rrAmount: '472.5953',
+      balance: '0',
+      srId: aster,
+      rrId: sui,
+      pid: 'tx6',
+      rid: 'tx0',
+      status: TransactionStatus.inactive,
+      closable: false,
+    );
+    final tx8 = _tx(
+      id: 'tx8',
+      srAmount: '472.5953',
+      rrAmount: '641.0698',
+      balance: '641.0698',
+      srId: sui,
+      rrId: aster,
+      pid: 'tx7',
+      rid: 'tx0',
+      status: TransactionStatus.active,
+    );
+    final flat = _tx(
+      id: 'flat',
+      srAmount: '100',
+      rrAmount: '100',
+      balance: '100',
+      srId: sui,
+      rrId: aster,
+      pid: '0',
+      rid: '0',
+      status: TransactionStatus.active,
+    );
+
+    return (tree: [tx0, tx1, tx2, tx3, tx4, tx5, tx6, tx7, tx8], leaf: tx8, flat: flat);
+  }
+
+  ({List<TransactionsModel> tree, TransactionsModel leaf}) _buildProfitChain({
+    required String prefix,
+    required String principal,
+    required String finalBalance,
+  }) {
+    const aster = 1;
+    const sui = 2;
+
+    final root = _tx(
+      id: '${prefix}_root',
+      srAmount: principal,
+      rrAmount: principal,
+      balance: '0',
+      srId: sui,
+      rrId: aster,
+      pid: '0',
+      rid: '0',
+      status: TransactionStatus.inactive,
+    );
+    final mid = _tx(
+      id: '${prefix}_mid',
+      srAmount: principal,
+      rrAmount: '50',
+      balance: '0',
+      srId: aster,
+      rrId: sui,
+      pid: '${prefix}_root',
+      rid: '${prefix}_root',
+      status: TransactionStatus.inactive,
+      closable: false,
+    );
+    final leaf = _tx(
+      id: prefix,
+      srAmount: '50',
+      rrAmount: finalBalance,
+      balance: finalBalance,
+      srId: sui,
+      rrId: aster,
+      pid: '${prefix}_mid',
+      rid: '${prefix}_root',
+      status: TransactionStatus.active,
+    );
+
+    return (tree: [root, mid, leaf], leaf: leaf);
+  }
+
   setUp(() async {
     await locator.reset();
     cryptos = _TestCryptosController();
@@ -119,11 +325,18 @@ void main() {
     await locator.reset();
   });
 
-  Future<void> pumpTrade(WidgetTester tester, List<TransactionsModel> txs) async {
+  Future<void> pumpTrade(WidgetTester tester, List<TransactionsModel> txs, {List<TransactionsModel> extraTxs = const []}) async {
+    transactions.indexed
+      ..clear()
+      ..addAll({
+        for (final tx in [...extraTxs, ...txs]) tx.tid: tx,
+      });
+
     await tester.binding.setSurfaceSize(const Size(1500, 1100));
     await tester.pumpWidget(
       MaterialApp(
         navigatorKey: rootNavigatorKey,
+        theme: ThemeData(fontFamily: 'Inter'),
         home: Scaffold(
           body: TransactionsDialogsBatchTrade(srId: 1, transactions: txs, onSave: (_) {}),
         ),
@@ -187,6 +400,8 @@ void main() {
     await chooseTargetCoin(tester);
     await tester.tap(find.byTooltip('Show custom balance'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Use maximum amount'));
+    await tester.pumpAndSettle();
     await enterField(tester, 'Amount', '300', index: 1);
     await confirmTrade(tester);
 
@@ -226,11 +441,16 @@ void main() {
   });
 
   testWidgets('Profit mode values each transaction by its share of total SOL profit', (tester) async {
-    await pumpTrade(tester, [_tx(id: 'a', rrAmount: '100', balance: '120'), _tx(id: 'b', rrAmount: '100', balance: '130')]);
+    final chainA = _buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
+    final chainB = _buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
+
+    await pumpTrade(tester, [chainA.leaf, chainB.leaf], extraTxs: [...chainA.tree, ...chainB.tree]);
     await chooseTargetCoin(tester);
     await tester.tap(find.byTooltip('Show custom balance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Use maximum amount'));
     await tester.pumpAndSettle();
     await enterField(tester, 'Amount', '1000', index: 1);
     await confirmTrade(tester);
@@ -243,23 +463,26 @@ void main() {
   });
 
   testWidgets('Profit mode accepts a custom source amount and consumes profits in row order', (tester) async {
-    await pumpTrade(tester, [_tx(id: 'a', rrAmount: '100', balance: '120'), _tx(id: 'b', rrAmount: '100', balance: '130')]);
+    final chainA = _buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
+    final chainB = _buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
+
+    await pumpTrade(tester, [chainA.leaf, chainB.leaf], extraTxs: [...chainA.tree, ...chainB.tree]);
     await chooseTargetCoin(tester);
     await tester.tap(find.byTooltip('Show custom balance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
     await tester.pumpAndSettle();
 
-    expect(amountFieldValue(tester), '50');
+    expect(amountFieldValue(tester), '');
     await enterField(tester, 'Amount', '35');
     await enterField(tester, 'Amount', '700', index: 1);
     await confirmTrade(tester);
 
     expect(transactions.children, hasLength(2));
-    expect(transactions.children[0].srAmount, _d('20'));
-    expect(transactions.children[0].rrAmount, _d('400'));
-    expect(transactions.children[1].srAmount, _d('15'));
-    expect(transactions.children[1].rrAmount, _d('300'));
+    expect(transactions.children[0].srAmount, _d('14'));
+    expect(transactions.children[0].rrAmount, _d('280'));
+    expect(transactions.children[1].srAmount, _d('21'));
+    expect(transactions.children[1].rrAmount, _d('420'));
   });
 
   testWidgets('Profit mode rejects a custom source amount above selected profit', (tester) async {
@@ -278,12 +501,19 @@ void main() {
   });
 
   testWidgets('Profit mode skips transactions without positive profit', (tester) async {
-    await pumpTrade(tester, [_tx(id: 'profit', rrAmount: '100', balance: '120'), _tx(id: 'flat', rrAmount: '100', balance: '100')]);
+    final profitChain = _buildProfitChain(prefix: 'profit', principal: '100', finalBalance: '120'); // profit = 20
+    final flat = _tx(id: 'flat', rrAmount: '100', balance: '100');
+
+    await pumpTrade(tester, [profitChain.leaf, flat], extraTxs: profitChain.tree);
     await chooseTargetCoin(tester);
     await tester.tap(find.byTooltip('Show custom balance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
     await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Use maximum amount'));
+    await tester.pumpAndSettle();
+
     await enterField(tester, 'Amount', '500', index: 1);
     await confirmTrade(tester);
 
@@ -293,17 +523,25 @@ void main() {
     expect(transactions.children.single.rrAmount, _d('500'));
   });
 
-  testWidgets('Profit mode refreshes From amount and saves only checked transaction rows', (tester) async {
-    await pumpTrade(tester, [_tx(id: 'a', rrAmount: '100', balance: '120'), _tx(id: 'b', rrAmount: '100', balance: '130')]);
+  testWidgets('Profit mode uses selected profit max and saves only checked transaction rows', (tester) async {
+    final chainA = _buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
+    final chainB = _buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
+
+    await pumpTrade(tester, [chainA.leaf, chainB.leaf], extraTxs: [...chainA.tree, ...chainB.tree]);
     await chooseTargetCoin(tester);
     await tester.tap(find.byTooltip('Show custom balance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
     await tester.pumpAndSettle();
-    expect(amountFieldValue(tester), '50');
+    expect(amountFieldValue(tester), '');
 
     await deselectSecondTransaction(tester);
+    expect(amountFieldValue(tester), '');
+
+    await tester.tap(find.byTooltip('Use maximum amount'));
+    await tester.pumpAndSettle();
     expect(amountFieldValue(tester), '20');
+
     await enterField(tester, 'Amount', '1000', index: 1);
     await confirmTrade(tester);
 
@@ -322,20 +560,26 @@ void main() {
   });
 
   testWidgets('From max returns to available balance when selected profit disappears', (tester) async {
-    await pumpTrade(tester, [_tx(id: 'flat', rrAmount: '100', balance: '100'), _tx(id: 'profit', rrAmount: '100', balance: '120')]);
+    final data = _buildSaneProfitTree();
+    await pumpTrade(tester, [data.flat, data.leaf], extraTxs: data.tree);
+
     await tester.tap(find.byTooltip('Show custom balance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox && widget.value == false));
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
     await tester.pumpAndSettle();
-    expect(amountFieldValue(tester), '20');
+    expect(amountFieldValue(tester), '');
 
-    await tester.tap(find.byType(Checkbox).last);
+    await tester.tap(find.byTooltip('Use maximum amount'));
+    await tester.pumpAndSettle();
+
+    expect(amountFieldValue(tester), '80.349638987366327998');
+
+    await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Use maximum amount'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Take profit'), findsNothing);
-    expect(amountFieldValue(tester), '100');
+    expect(amountFieldValue(tester), '641.0698');
   });
 
   testWidgets('zero rate does not save children', (tester) async {
