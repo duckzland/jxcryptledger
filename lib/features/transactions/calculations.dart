@@ -7,10 +7,6 @@ import 'model.dart';
 class TransactionCalculation {
   const TransactionCalculation();
 
-  TransactionsModel? getCloseTargetParent(TransactionsModel tx, {List<TransactionsModel>? txs, Map<String, TransactionsModel>? txsMap}) {
-    return TransactionsHelper.getCloseTargetParent(tx, txs: txs, txsMap: txsMap);
-  }
-
   Map<String, Decimal> spreadByWeights(Decimal amount, Iterable<TransactionsModel> transactions, Map<String, Decimal> weights) {
     final txList = transactions.toList();
     final totalWeight = txList.fold<Decimal>(Decimal.zero, (total, tx) {
@@ -313,13 +309,13 @@ class TransactionCalculation {
     if (txs == null && txsMap == null) return tx.profitAmount;
     txsMap ??= {for (final item in txs!) item.tid: item};
 
-    TransactionsModel? ptx = getCloseTargetParent(tx, txsMap: txsMap);
+    TransactionsModel? ptx = TransactionsHelper.getCloseTargetParent(tx, txsMap: txsMap);
     if (ptx == null) {
       return tx.profitAmount;
     }
 
     while (true) {
-      final next = getCloseTargetParent(ptx!, txsMap: txsMap);
+      final next = TransactionsHelper.getCloseTargetParent(ptx!, txsMap: txsMap);
       if (next == null) break;
 
       // Collect ancestor path from tx up to ptx
@@ -376,14 +372,14 @@ class TransactionCalculation {
     if (txs == null && txsMap == null) return hundred;
     txsMap ??= {for (final item in txs!) item.tid: item};
 
-    TransactionsModel? ptx = targetParent ?? getCloseTargetParent(tx, txsMap: txsMap);
+    TransactionsModel? ptx = targetParent ?? TransactionsHelper.getCloseTargetParent(tx, txsMap: txsMap);
     if (ptx == null) {
       return hundred;
     }
 
     if (targetParent == null) {
       while (true) {
-        final next = getCloseTargetParent(ptx!, txsMap: txsMap);
+        final next = TransactionsHelper.getCloseTargetParent(ptx!, txsMap: txsMap);
         if (next == null) break;
 
         final activeAncestors = <String>{};

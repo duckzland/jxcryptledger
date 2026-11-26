@@ -28,6 +28,7 @@ import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
 import '../calculations.dart';
 import '../controller.dart';
+import '../helper.dart';
 import '../model.dart';
 
 enum TransactionsDialogBatchTradeMode { rate, profit, balance }
@@ -969,7 +970,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         var current = liveMap[tx.tid] ?? tx;
 
         while (current.profitAmount < sourceAmount) {
-          final nextTarget = _calc.getCloseTargetParent(current, txsMap: liveMap);
+          final nextTarget = TransactionsHelper.getCloseTargetParent(current, txsMap: liveMap);
           if (nextTarget == null) break;
 
           final closed = await _txController.closeAll([current]);

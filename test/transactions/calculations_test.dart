@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jxledger/features/transactions/calculations.dart';
+import 'package:jxledger/features/transactions/helper.dart';
 import 'package:jxledger/features/transactions/model.dart';
 
 Decimal _d(String value) => Decimal.parse(value);
@@ -402,11 +403,11 @@ void main() {
       final txsMap = {for (final tx in txs) tx.tid: tx};
 
       // 1. Verify getCloseTargetParent lands on the exact target level
-      expect(calc.getCloseTargetParent(root, txsMap: txsMap), isNull);
-      expect(calc.getCloseTargetParent(a1Leaf, txsMap: txsMap)?.tid, 'root');
-      expect(calc.getCloseTargetParent(b1LeafWin, txsMap: txsMap)?.tid, 'b1_subRoot');
-      expect(calc.getCloseTargetParent(b2LossLeaf, txsMap: txsMap)?.tid, 'root');
-      expect(calc.getCloseTargetParent(a2Sibling, txsMap: txsMap), isNull);
+      expect(TransactionsHelper.getCloseTargetParent(root, txsMap: txsMap), isNull);
+      expect(TransactionsHelper.getCloseTargetParent(a1Leaf, txsMap: txsMap)?.tid, 'root');
+      expect(TransactionsHelper.getCloseTargetParent(b1LeafWin, txsMap: txsMap)?.tid, 'b1_subRoot');
+      expect(TransactionsHelper.getCloseTargetParent(b2LossLeaf, txsMap: txsMap)?.tid, 'root');
+      expect(TransactionsHelper.getCloseTargetParent(a2Sibling, txsMap: txsMap), isNull);
 
       // 2. Verify exact fractional totalCompoundedSharePercentage
       expect(calc.totalCompoundedSharePercentage(a1Leaf, txsMap: txsMap), _d('23.4375'));
@@ -465,7 +466,7 @@ void main() {
 
       // Share is 300 / 800 = 37.5%, effective principal = 800 * 37.5% = 300
       // Compounded profit/loss = 1043.85 - 300 = 743.85
-      expect(calc.getCloseTargetParent(finalLeaf, txs: txs)?.tid, 'tx_0');
+      expect(TransactionsHelper.getCloseTargetParent(finalLeaf, txs: txs)?.tid, 'tx_0');
       expect(calc.totalCompoundedSharePercentage(finalLeaf, txs: txs), _d('37.5'));
       expect(calc.totalCompoundedProfitLoss(finalLeaf, txs: txs), _d('743.85'));
     });
@@ -612,19 +613,19 @@ void main() {
       final txsMap = {for (final tx in txs) tx.tid: tx};
 
       // 1. Verify raw hop-by-hop close targets: tx8 -> tx6 -> tx4 -> tx2 -> tx0 -> null
-      final hop1 = calc.getCloseTargetParent(tx8, txsMap: txsMap);
+      final hop1 = TransactionsHelper.getCloseTargetParent(tx8, txsMap: txsMap);
       expect(hop1?.tid, 'tx6');
 
-      final hop2 = calc.getCloseTargetParent(hop1!, txsMap: txsMap);
+      final hop2 = TransactionsHelper.getCloseTargetParent(hop1!, txsMap: txsMap);
       expect(hop2?.tid, 'tx4');
 
-      final hop3 = calc.getCloseTargetParent(hop2!, txsMap: txsMap);
+      final hop3 = TransactionsHelper.getCloseTargetParent(hop2!, txsMap: txsMap);
       expect(hop3?.tid, 'tx2');
 
-      final hop4 = calc.getCloseTargetParent(hop3!, txsMap: txsMap);
+      final hop4 = TransactionsHelper.getCloseTargetParent(hop3!, txsMap: txsMap);
       expect(hop4?.tid, 'tx0');
 
-      expect(calc.getCloseTargetParent(hop4!, txsMap: txsMap), isNull);
+      expect(TransactionsHelper.getCloseTargetParent(hop4!, txsMap: txsMap), isNull);
 
       // 2. Verify compounded calculation stops at tx2 (blocked from climbing to tx0 by partial tx3)
       // Share from tx2: (417.996 * 100) / 577.346 = 72.399566291270745791 (truncated at scale 18)
