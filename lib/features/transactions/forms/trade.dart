@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/exceptions.dart';
+import '../../../app/theme.dart';
 import '../../../core/locator.dart';
 import '../../../core/utils.dart';
 import '../../../widgets/buttons/action.dart';
@@ -12,7 +13,9 @@ import '../../../widgets/fields/textarea.dart';
 import '../../../widgets/fields/crypto_search.dart';
 import '../../../widgets/header.dart';
 import '../../cryptos/controller.dart';
+import '../calculations.dart';
 import '../controller.dart';
+import '../helper.dart';
 import '../model.dart';
 
 class TransactionFormTrade extends StatefulWidget {
@@ -30,6 +33,8 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   CryptosController get _cryptoController => CoreLocator.getit<CryptosController>();
   TransactionsController get _txController => CoreLocator.getit<TransactionsController>();
 
+  final _calc = TransactionCalculation();
+
   int? _selectedRrId;
   DateTime? _selectedDate;
   String? _srAmount;
@@ -38,6 +43,9 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   String? _parentNote;
   String? _groupNote;
   Color? _accentColor;
+
+  bool _isTakeProfit = false;
+  Decimal _compoundedProfit = Decimal.zero;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -65,6 +73,15 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
 
     if (widget.initialData != null) {
       _groupNote = widget.initialData!.meta['group_notes'];
+    }
+
+    if (widget.initialData != null) {
+      _compoundedProfit = Utils.sanitizeFractalDecimal(
+        _calc.totalCompoundedProfitLoss(
+          widget.initialData!,
+          txsMap: _txController.getIndexedRootMap()[widget.initialData!.pid] ?? _txController.getIndexedMap(),
+        ),
+      );
     }
 
     _selectedRrId = null;
@@ -139,12 +156,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   Widget _buildFromPanel() {
-    return WidgetsHeader(
-      subtitle: "From:",
-      subtitleFontSize: 13,
-      spacing: 10,
-      child: Row(spacing: 12, children: [Flexible(flex: 3, child: _buildSourceAmountField())]),
-    );
+    return WidgetsHeader(spacing: 10, children: [_buildFromTitleField(), _buildSourceAmountField()]);
   }
 
   Widget _buildToPanel() {
@@ -178,6 +190,32 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
     return Text('Trade Crypto', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18));
   }
 
+  Widget _buildFromTitleField() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("From:", style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+        Spacer(),
+        if (_compoundedProfit > Decimal.zero) ...[
+          SizedBox(
+            height: 20,
+            child: Checkbox(
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              value: _isTakeProfit,
+              onChanged: (bool? state) {
+                setState(() {
+                  _isTakeProfit = state!;
+                });
+              },
+            ),
+          ),
+          Text("Take profit"),
+        ],
+      ],
+    );
+  }
+
   Widget _buildSourceAmountField() {
     final data = widget.initialData;
     final balance = data?.balance ?? Decimal.zero;
@@ -187,7 +225,7 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
     return WidgetsFieldsAmount(
       title: 'Amount',
       helperText: 'Max: ${data?.srAmountTextRaw ?? "0.0"}',
-      useMax: balance,
+      useMax: _isTakeProfit ? _compoundedProfit : balance,
       suffixText: symbol,
       onChanged: (value) {
         _srAmount = value;
@@ -276,9 +314,17 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
   }
 
   void _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || widget.initialData == null) return;
 
-    final parent = widget.initialData!;
+    final otx = widget.initialData!;
+    final parent = _isTakeProfit
+        ? TransactionsHelper.getCloseTargetParent(otx, txsMap: _txController.getIndexedRootMap()[otx.rid] ?? _txController.getIndexedMap())
+        : otx;
+
+    if (parent == null) {
+      return;
+    }
+
     try {
       final child = TransactionsModel(
         tid: generateTid(),
@@ -294,6 +340,11 @@ class _TransactionFormTradeState extends State<TransactionFormTrade> {
         closable: false,
         meta: _saveMetaField(),
       );
+
+      if (_isTakeProfit) {
+        await _txController.close(otx);
+      }
+
       await _txController.add(child);
       widget.onSave?.call(null, child);
     } on ValidationException catch (e) {

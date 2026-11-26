@@ -290,7 +290,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
               .every((leaf) => leaf.statusEnum == TransactionStatus.inactive);
     }
 
-    final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
+    final newStatus = allClosed  ? TransactionStatus.active.index : TransactionStatus.partial.index;
     final updatedTarget = target.copyWith(balance: Math.add(target.balance, tx.balance), status: newStatus);
 
     final closedTx = tx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
@@ -381,105 +381,15 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return [];
     }
 
-    final Map<dynamic, TransactionsModel> pendingUpdates = {};
     final List<String> result = [];
 
     for (final tx in txs) {
-      final Map<dynamic, TransactionsModel?> stepPendingBackup = {};
-
-      void stageStep(TransactionsModel model) {
-        stepPendingBackup.putIfAbsent(model.tid, () => pendingUpdates[model.tid]);
-        pendingUpdates[model.tid] = model;
-      }
-
       try {
-        if (debugLogs) {
-          logln(
-            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
-            "ADD",
-          );
-        }
-
-        TransactionsModel ntx = tx;
-
-        bool isClosable;
-        try {
-          isClosable = canClose(ntx, overlay: pendingUpdates);
-        } catch (_) {
-          isClosable = false;
-        }
-
-        if (tx.isClosable != isClosable) {
-          ntx = ntx.copyWith(closable: isClosable);
-        }
-
-        canAdd(ntx, overlay: pendingUpdates);
-
-        if (ntx.isRoot) {
-          stageStep(ntx);
-          result.add(ntx.tid);
-          continue;
-        }
-
-        if (ntx.isLeaf) {
-          final ptx = pendingUpdates[ntx.pid] ?? box.get(ntx.pid);
-          if (ptx == null) {
-            continue;
-          }
-
-          canTrade(ptx, overlay: pendingUpdates);
-          canUpdate(ptx, overlay: pendingUpdates);
-
-          final balance = Math.subtract(ptx.balance, ntx.srAmount);
-          final status = balance <= Decimal.zero ? TransactionStatus.inactive.index : TransactionStatus.partial.index;
-
-          var nptx = ptx.copyWith(balance: balance, status: status);
-
-          logln("Rebalancing amount $balance|${ptx.balance}|${ntx.srAmount}|${ptx.rrId}|${ntx.srId}", "ADD");
-
-          stageStep(ntx);
-
-          if (debugLogs) {
-            logln(
-              "${nptx.tid}|${nptx.pid}|${nptx.rid}|${nptx.srId}|${nptx.srAmount}|${nptx.rrId}|${nptx.rrAmount}|${nptx.balance}|${nptx.status}|${nptx.closable}|${nptx.timestamp}",
-              "UPDATE",
-            );
-          }
-
-          bool parentClosable;
-          try {
-            parentClosable = canClose(nptx, overlay: pendingUpdates);
-          } catch (_) {
-            parentClosable = false;
-          }
-
-          if (nptx.isClosable != parentClosable) {
-            nptx = nptx.copyWith(closable: parentClosable);
-          }
-
-          canUpdate(nptx, overlay: pendingUpdates);
-
-          stageStep(nptx);
-          result.add(ntx.tid);
-        }
+        await add(tx);
       } catch (_) {
-        stepPendingBackup.forEach((tid, prev) {
-          if (prev == null) {
-            pendingUpdates.remove(tid);
-          } else {
-            pendingUpdates[tid] = prev;
-          }
-        });
         continue;
-      }
-    }
-
-    if (pendingUpdates.isNotEmpty) {
-      final allToSave = pendingUpdates.values.toList();
-      await box.addAll(allToSave);
-
-      for (final tx in allToSave) {
-        _cache.update(tx);
+      } finally {
+        result.add(tx.tid);
       }
     }
 
@@ -507,112 +417,15 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return [];
     }
 
-    final Map<dynamic, TransactionsModel> pendingUpdates = {};
     final List<String> result = [];
 
     for (final tx in txs) {
-      final Map<dynamic, TransactionsModel?> stepPendingBackup = {};
-
-      void stageStep(TransactionsModel model) {
-        stepPendingBackup.putIfAbsent(model.tid, () => pendingUpdates[model.tid]);
-        pendingUpdates[model.tid] = model;
-      }
-
       try {
-        if (debugLogs) {
-          logln(
-            "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
-            "UPDATE",
-          );
-        }
-
-        TransactionsModel ntx = tx;
-        bool isClosable;
-        try {
-          isClosable = canClose(ntx, overlay: pendingUpdates);
-        } catch (_) {
-          isClosable = false;
-        }
-
-        if (tx.isClosable != isClosable) {
-          ntx = ntx.copyWith(closable: isClosable);
-        }
-
-        canUpdate(ntx, overlay: pendingUpdates);
-
-        if (ntx.isRoot) {
-          stageStep(ntx);
-          result.add(ntx.tid);
-          continue;
-        }
-
-        if (ntx.isLeaf) {
-          final otx = pendingUpdates[ntx.tid] ?? box.get(ntx.tid);
-          final ptx = pendingUpdates[ntx.pid] ?? box.get(ntx.pid);
-          if (otx == null || ptx == null) {
-            continue;
-          }
-
-          stageStep(ntx);
-
-          if (otx.srAmount != ntx.srAmount && ptx.rrId == otx.srId) {
-            Decimal balance = ptx.balance;
-            if (otx.srAmount > ntx.srAmount) {
-              balance = Math.add(balance, Math.subtract(otx.srAmount, ntx.srAmount));
-            } else {
-              final spent = Math.subtract(ntx.srAmount, otx.srAmount);
-              if (balance >= spent) {
-                balance = Math.subtract(balance, spent);
-              }
-            }
-
-            if (debugLogs) {
-              logln(
-                "Rebalancing amount ${otx.srAmount}|${ntx.srAmount}|${ptx.rrId}|${otx.srId}|${ntx.balance}|${otx.balance}|$balance",
-                "UPDATE",
-              );
-            }
-
-            var nptx = ptx.copyWith(
-              balance: balance,
-              status: balance > Decimal.zero ? TransactionStatus.partial.index : TransactionStatus.inactive.index,
-            );
-
-            bool parentClosable;
-            try {
-              parentClosable = canClose(nptx, overlay: pendingUpdates);
-            } catch (_) {
-              parentClosable = false;
-            }
-
-            if (nptx.isClosable != parentClosable) {
-              nptx = nptx.copyWith(closable: parentClosable);
-            }
-
-            canUpdate(nptx, overlay: pendingUpdates);
-            stageStep(nptx);
-          }
-
-          result.add(ntx.tid);
-        }
+        await update(tx);
       } catch (_) {
-        stepPendingBackup.forEach((tid, prev) {
-          if (prev == null) {
-            pendingUpdates.remove(tid);
-          } else {
-            pendingUpdates[tid] = prev;
-          }
-        });
         continue;
-      }
-    }
-
-    if (pendingUpdates.isNotEmpty) {
-      final allToSave = pendingUpdates.values.toList();
-      await box.addAll(allToSave);
-
-      for (final tx in allToSave) {
-        _cache.update(tx);
+      } finally {
+        result.add(tx.tid);
       }
     }
 
@@ -632,80 +445,15 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return [];
     }
 
-    final Map<dynamic, TransactionsModel> pendingUpdates = {};
     final List<String> result = [];
-
-    TransactionsModel? getLatest(dynamic tid) {
-      if (pendingUpdates.containsKey(tid)) {
-        return pendingUpdates[tid];
-      }
-      return box.get(tid);
-    }
 
     for (final tx in txs) {
       try {
-        final otx = getLatest(tx.tid);
-        if (otx == null) {
-          continue;
-        }
-
-        canClose(otx, overlay: pendingUpdates);
-
-        final rawTarget = TransactionsHelper.getCloseTargetParent(otx, txsMap: getIndexedRootMap()[otx.rid] ?? getIndexedMap());
-        if (rawTarget == null) {
-          continue;
-        }
-
-        final target = getLatest(rawTarget.tid) ?? rawTarget;
-        final terminalLeaves = TransactionsHelper.collectTerminalLeaves(target, childrenMap: getIndexedParentMap()).map((leaf) {
-          return getLatest(leaf.tid) ?? leaf;
-        }).toList();
-
-        bool allClosed =
-            terminalLeaves.isNotEmpty &&
-            terminalLeaves.where((leaf) => leaf.tid != otx.tid).every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-
-        if (allClosed) {
-          final inBetweenLeaves =
-              TransactionsHelper.collectInBetweenLeaves(otx, target, txsMap: getIndexedRootMap()[otx.rid] ?? getIndexedMap()).map((leaf) {
-                return getLatest(leaf.tid) ?? leaf;
-              }).toList();
-
-          allClosed =
-              inBetweenLeaves.isNotEmpty &&
-              inBetweenLeaves
-                  .where((leaf) => leaf.tid != otx.tid)
-                  .where((leaf) => leaf.tid != target.tid)
-                  .every((leaf) => leaf.statusEnum == TransactionStatus.inactive);
-        }
-
-        final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-
-        final updatedTarget = target.copyWith(balance: Math.add(target.balance, otx.balance), status: newStatus);
-
-        final closedTx = otx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
-
-        if (debugLogs) {
-          logln(
-            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
-            "CLOSING",
-          );
-        }
-
-        pendingUpdates[closedTx.tid] = closedTx;
-        pendingUpdates[updatedTarget.tid] = updatedTarget;
-        result.add(closedTx.tid);
+        await close(tx);
       } catch (_) {
         continue;
-      }
-    }
-
-    if (pendingUpdates.isNotEmpty) {
-      final allToSave = pendingUpdates.values.toList();
-      await box.addAll(allToSave);
-
-      for (final tx in allToSave) {
-        _cache.update(tx);
+      } finally {
+        result.add(tx.tid);
       }
     }
 
@@ -725,81 +473,15 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return [];
     }
 
-    final Map<dynamic, TransactionsModel> pendingUpdates = {};
-    final Set<dynamic> deletedTids = {};
-    final List<TransactionsModel> deletedTxs = [];
     final List<String> result = [];
-
-    TransactionsModel? getLatest(dynamic tid) {
-      if (deletedTids.contains(tid)) {
-        return null;
-      }
-      if (pendingUpdates.containsKey(tid)) {
-        return pendingUpdates[tid];
-      }
-      return box.get(tid);
-    }
 
     for (final tx in txs) {
       try {
-        final otx = getLatest(tx.tid);
-        if (otx == null) {
-          continue;
-        }
-
-        canRefund(otx, overlay: pendingUpdates);
-
-        final ptx = getLatest(otx.pid);
-        if (ptx == null) {
-          continue;
-        }
-
-        final remainingLeaves = TransactionsHelper.collectTerminalLeaves(ptx, childrenMap: getIndexedParentMap())
-            .where((leaf) => !deletedTids.contains(leaf.tid))
-            .where((leaf) => leaf.tid != otx.tid)
-            .map((leaf) => getLatest(leaf.tid) ?? leaf)
-            .toList();
-
-        final allClosed = remainingLeaves.isEmpty || remainingLeaves.every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-
-        final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-
-        final updatedParent = ptx.copyWith(balance: Math.add(ptx.balance, otx.srAmount), status: newStatus);
-
-        if (debugLogs) {
-          logln(
-            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
-            "REFUNDING",
-          );
-          logln(
-            "${updatedParent.tid}|${updatedParent.pid}|${updatedParent.rid}|${updatedParent.srId}|${updatedParent.srAmount}|${updatedParent.rrId}|${updatedParent.rrAmount}|${updatedParent.balance}|${updatedParent.status}|${updatedParent.closable}|${updatedParent.timestamp}",
-            "REBALANCING",
-          );
-        }
-
-        deletedTids.add(otx.tid);
-        pendingUpdates.remove(otx.tid);
-        pendingUpdates[updatedParent.tid] = updatedParent;
-        deletedTxs.add(otx);
-        result.add(otx.tid);
+        await refund(tx);
       } catch (_) {
         continue;
-      }
-    }
-
-    if (deletedTxs.isNotEmpty) {
-      for (final tx in deletedTxs) {
-        await box.delete(tx.tid);
-        _cache.remove(tx);
-      }
-    }
-
-    if (pendingUpdates.isNotEmpty) {
-      final allToSave = pendingUpdates.values.toList();
-      await box.addAll(allToSave);
-
-      for (final tx in allToSave) {
-        _cache.update(tx);
+      } finally {
+        result.add(tx.tid);
       }
     }
 
@@ -819,44 +501,15 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
       return [];
     }
 
-    final Map<dynamic, TransactionsModel> pendingUpdates = {};
     final List<String> result = [];
 
     for (final tx in txs) {
       try {
-        final otx = pendingUpdates[tx.tid] ?? box.get(tx.tid);
-        if (otx == null) {
-          continue;
-        }
-
-        if (otx.statusEnum == TransactionStatus.finalized) {
-          continue;
-        }
-
-        canFinalize(otx, overlay: pendingUpdates);
-
-        final ntx = otx.copyWith(status: TransactionStatus.finalized.index);
-
-        if (debugLogs) {
-          logln(
-            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
-            "FINALIZING",
-          );
-        }
-
-        pendingUpdates[ntx.tid] = ntx;
-        result.add(ntx.tid);
+        await finalize(tx);
       } catch (_) {
         continue;
-      }
-    }
-
-    if (pendingUpdates.isNotEmpty) {
-      final allToSave = pendingUpdates.values.toList();
-      await box.addAll(allToSave);
-
-      for (final tx in allToSave) {
-        _cache.update(tx);
+      } finally {
+        result.add(tx.tid);
       }
     }
 
@@ -877,60 +530,14 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     final List<String> result = [];
-    final Set<dynamic> deletedTids = {};
-    final List<TransactionsModel> toDelete = [];
 
     for (final tx in txs) {
-      final otx = box.get(tx.tid);
-      if (otx == null) {
-        continue;
-      }
-
-      if (deletedTids.contains(otx.tid)) {
-        result.add(otx.tid);
-        continue;
-      }
-
       try {
-        canDelete(otx);
-
-        if (debugLogs) {
-          logln(
-            "${otx.tid}|${otx.pid}|${otx.rid}|${otx.srId}|${otx.srAmount}|${otx.rrId}|${otx.rrAmount}|${otx.balance}|${otx.status}|${otx.closable}|${otx.timestamp}",
-            "DELETE",
-          );
-        }
-
-        final descendants = TransactionsHelper.collectAllLeaves(otx, childrenMap: getIndexedParentMap());
-        for (final descendant in descendants) {
-          if (deletedTids.contains(descendant.tid)) {
-            continue;
-          }
-
-          if (debugLogs) {
-            logln(
-              "${descendant.tid}|${descendant.pid}|${descendant.rid}|${descendant.srId}|${descendant.srAmount}|${descendant.rrId}|${descendant.rrAmount}|${descendant.balance}|${descendant.status}|${descendant.closable}|${descendant.timestamp}",
-              "DELETE",
-            );
-          }
-
-          toDelete.add(descendant);
-          deletedTids.add(descendant.tid);
-        }
-
-        toDelete.add(otx);
-        deletedTids.add(otx.tid);
-        result.add(otx.tid);
+        await remove(tx);
       } catch (_) {
         continue;
-      }
-    }
-
-    if (toDelete.isNotEmpty) {
-      await box.deleteAll(toDelete);
-
-      for (final tx in toDelete) {
-        _cache.removeByTid(tx.tid);
+      } finally {
+        result.add(tx.tid);
       }
     }
 

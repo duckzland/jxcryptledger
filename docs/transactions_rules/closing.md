@@ -11,6 +11,8 @@
 - A valid `targetCloser` must exist.  
   Closing is only allowed when the tree structure determines a valid parent/root target for closure.
 
+- When resolving for `targetCloser` it will stop at parent with lower RR amounts than the tx.
+
 ## Summary
 
 A CLOSE operation is only valid for an active leaf transaction with distinct SR/RR accounts and a resolvable closure target. The transaction must not be a root and must be eligible for closure based on tree state.

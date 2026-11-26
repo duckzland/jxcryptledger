@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../app/exceptions.dart';
 import '../../../app/theme.dart';
 import '../../../core/locator.dart';
+import '../../../core/log.dart';
 import '../../../core/math.dart';
 import '../../../core/utils.dart';
 import '../../../mixins/rateable.dart';
@@ -490,6 +491,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteractionIfError,
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 800) {
@@ -655,6 +657,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildToAmountField() {
     return WidgetsFieldsAmount(
+      key: Key("amount-field"),
       title: 'Amount',
       helperText: 'e.g., 10.5',
       enabled: !_isProcessing,
@@ -671,6 +674,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Widget _buildRatesAmountField() {
     return WidgetsFieldsAmount(
+      key: Key("rate_field"),
       title: 'Rate',
       helperText: 'e.g., 10.5',
       enabled: !_isProcessing,
@@ -841,7 +845,18 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     if (!_formKey.currentState!.validate()) return;
 
     final stxs = _getSelectedTransactions();
-    if (stxs.isEmpty || !_validate(stxs)) {
+    if (stxs.isEmpty) {
+      logln("Refused to process no selected txs");
+      return;
+    }
+
+    if (!_validate(stxs)) {
+      logln("Refused to process invalid data");
+      return;
+    }
+
+    if (rateableTarget == null) {
+      logln("Refused to process invalid data: no valid coin id");
       return;
     }
 
@@ -849,61 +864,66 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       _isProcessing = true;
     });
 
-    var allocations = _resolveAllocations(stxs);
-
-    _preprocessBeforeSave(stxs, allocations);
-
-    final List<TransactionsModel> payload = [];
-    final Map<String, TransactionsModel> map = {};
+    final List<TransactionsModel> completed = [];
+    final allocations = _resolveAllocations(stxs);
+    final isTakeProfit = _mode == TransactionsDialogBatchTradeMode.profit;
     final accentColor = _accentColor?.toARGB32().toRadixString(16).padLeft(8, '0') ?? "";
 
     for (final tx in stxs) {
-      final sourceAmount = allocations.from[tx.uuid] ?? Decimal.zero;
-      final amount = allocations.to[tx.uuid] ?? Decimal.zero;
+      final sourceAmount = Utils.sanitizeFractalDecimal(allocations.from[tx.uuid] ?? Decimal.zero);
+      final amount = Utils.sanitizeFractalDecimal(allocations.to[tx.uuid] ?? Decimal.zero);
       if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
 
-      final meta = Map<String, dynamic>.from(tx.meta);
-      if (_noteEntry != null) meta['trading_notes'] = _noteEntry;
-      if (accentColor.isNotEmpty) meta['accent_color'] = accentColor;
+      try {
+        final parent = isTakeProfit
+            ? TransactionsHelper.getCloseTargetParent(
+                tx,
+                txsMap: _txController.getIndexedRootMap()[tx.rid] ?? _txController.getIndexedMap(),
+              )
+            : tx;
 
-      final child = TransactionsModel(
-        tid: _txController.generateId(),
-        rid: tx.isRoot ? tx.tid : tx.rid,
-        pid: tx.tid,
-        srId: tx.rrId,
-        srAmount: sourceAmount,
-        rrId: rateableTarget ?? 0,
-        rrAmount: amount,
-        balance: amount,
-        status: TransactionStatus.active.index,
-        timestamp: Utils.dateToTimestamp(DateTime.now()),
-        closable: false,
-        meta: meta,
-      );
+        if (parent == null) {
+          return;
+        }
 
-      payload.add(child);
-      map[child.uuid] = tx;
-    }
+        final meta = Map<String, dynamic>.from(tx.meta);
+        if (_noteEntry != null) meta['trading_notes'] = _noteEntry;
+        if (accentColor.isNotEmpty) meta['accent_color'] = accentColor;
 
-    if (payload.isEmpty) {
-      setState(() => _isProcessing = false);
-      return;
-    }
+        final child = TransactionsModel(
+          tid: _txController.generateId(),
+          rid: parent.isRoot ? parent.tid : parent.rid,
+          pid: parent.tid,
+          srId: parent.rrId,
+          srAmount: sourceAmount,
+          rrId: rateableTarget!,
+          rrAmount: amount,
+          balance: amount,
+          status: TransactionStatus.active.index,
+          timestamp: Utils.dateToTimestamp(DateTime.now()),
+          closable: false,
+          meta: meta,
+        );
 
-    final success = await _txController.addAll(payload);
-    for (final uuid in success) {
-      final parent = map[uuid];
-      if (parent != null) {
-        txs.remove(parent);
-        selectableSetSelected(parent.uuid, false);
+        if (isTakeProfit) {
+          await _txController.close(tx);
+        }
+
+        await _txController.add(child);
+
+        txs.remove(tx);
+        completed.add(tx);
+        selectableSetSelected(tx.uuid, false);
+      } catch (e, st) {
+        logln("Failed processing tx=${tx.tid}: $e\n$st");
       }
     }
 
-    if (success.length != payload.length) {
+    if (completed.length != stxs.length) {
       widget.onSave?.call(
         BatchException(
           AppErrorCode.batchOpsFailed,
-          "Batch trades partially or fully failed: ${payload.length - success.length}/${payload.length} failed.",
+          "Batch trades partially or fully failed: ${stxs.length - completed.length}/${stxs.length} failed.",
           "Failed to trade some of the transactions.",
         ),
       );
@@ -918,8 +938,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     if (txs.isEmpty) {
       widget.onSave?.call(null);
     } else {
-      _formKey.currentState?.reset();
-
       _updateCompoundedProfits();
 
       if (_compoundedProfits.isEmpty && _mode == TransactionsDialogBatchTradeMode.profit) {
@@ -928,6 +946,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
       _updateTableState();
       _updateField();
+
+      _formKey.currentState?.reset();
     }
 
     setState(() {});
@@ -936,6 +956,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
   bool _validate(List<TransactionsModel> txs) {
     if (_mode == TransactionsDialogBatchTradeMode.profit || _mode == TransactionsDialogBatchTradeMode.balance) {
       if (_fromAmount <= Decimal.zero || _toAmount <= Decimal.zero) {
+        logln("Checking for valid amount $_fromAmount $_toAmount");
         return false;
       }
     }
@@ -943,10 +964,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     switch (_mode) {
       case TransactionsDialogBatchTradeMode.profit:
         final totalProfit = txs.fold<Decimal>(Decimal.zero, (sum, tx) => Math.add(sum, _compoundedProfits[tx.uuid] ?? Decimal.zero));
+        logln("Checking for valid amount $_fromAmount $totalProfit ${Utils.sanitizeFractalDecimal(totalProfit)}");
         return _fromAmount <= Utils.sanitizeFractalDecimal(totalProfit);
 
       case TransactionsDialogBatchTradeMode.balance:
-        return _fromAmount <= _calc.totalActiveBalance(txs);
+        logln("Checking for valid amount $_fromAmount ${_calc.totalActiveBalance(txs)}");
+        return _fromAmount <= Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(txs));
 
       case TransactionsDialogBatchTradeMode.rate:
         if (rateableAmount == null) {
@@ -954,64 +977,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
         }
         final rate = rateableParseToDecimal(rateableAmount!, reverse: _isReversed);
         return rate > Decimal.zero;
-    }
-  }
-
-  void _preprocessBeforeSave(List<TransactionsModel> stxs, ({Map<String, Decimal> from, Map<String, Decimal> to}) allocations) async {
-    if (_mode == TransactionsDialogBatchTradeMode.profit) {
-      var liveMap = _txController.getIndexedMap();
-      final replacements = <TransactionsModel, TransactionsModel>{};
-
-      for (final tx in stxs) {
-        final sourceAmount = allocations.from[tx.uuid] ?? Decimal.zero;
-        final amount = allocations.to[tx.uuid] ?? Decimal.zero;
-        if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
-
-        var current = liveMap[tx.tid] ?? tx;
-
-        while (current.profitAmount < sourceAmount) {
-          final nextTarget = TransactionsHelper.getCloseTargetParent(current, txsMap: liveMap);
-          if (nextTarget == null) break;
-
-          final closed = await _txController.closeAll([current]);
-          if (closed.isEmpty) break;
-
-          liveMap = _txController.getIndexedMap();
-          final updatedTarget = liveMap[nextTarget.tid];
-          if (updatedTarget == null) break;
-
-          current = updatedTarget;
-        }
-
-        if (current.tid != tx.tid) {
-          replacements[tx] = current;
-        }
-      }
-
-      if (replacements.isNotEmpty) {
-        replacements.forEach((oldTx, newParent) {
-          txs.remove(oldTx);
-          selectableSetSelected(oldTx.uuid, false);
-
-          if (!txs.any((t) => t.tid == newParent.tid)) {
-            txs.add(newParent);
-          }
-          selectableSetSelected(newParent.uuid, true);
-
-          final idx = stxs.indexOf(oldTx);
-          if (idx != -1) {
-            stxs[idx] = newParent;
-          }
-
-          final oldFrom = allocations.from.remove(oldTx.uuid) ?? Decimal.zero;
-          final oldTo = allocations.to.remove(oldTx.uuid) ?? Decimal.zero;
-          allocations.from[newParent.uuid] = Math.add(allocations.from[newParent.uuid] ?? Decimal.zero, oldFrom);
-          allocations.to[newParent.uuid] = Math.add(allocations.to[newParent.uuid] ?? Decimal.zero, oldTo);
-        });
-
-        final seen = <String>{};
-        stxs.retainWhere((t) => seen.add(t.tid));
-      }
     }
   }
 

@@ -42,6 +42,21 @@ Test list
     - Check the tx summary bar at the bottom of the page, check for the capital vs total toggle and its value, check for the close buttons must release all selected box
     - Test the sorter and filter dropdown at the main top rows
 
+- Test Batch trade
+    - Test the coin selection field
+    - Test the result amount field
+    - Always check for table columns and rows mutation upon form field changes for all mode
+    - Test the rate mode
+        - The toggling selectable table row should mutate the from entry values correctly
+        - Test with some toggled on some toggled off, only the selected should be processed
+        - Test the rate field, including reverse rate, copy to clipboard and delete the amount
+
+    - Test the take profit and balance mode
+        - Test toggling the table row must mutate the from input field only when no row selected
+        - Always check for the final traded txs if the balance spreaded out correctly
+        - Check toggling takeprofit and balance mode on/off and see if any weird value or error at max amount and other fields
+
+
 
 
 

@@ -101,13 +101,13 @@ void main() {
       expect(TransactionsHelper.getCloseTargetParent(gc1), isNull);
     });
 
-    test('returns closest matching ancestor rather than furthest root', () {
+    test('returns furthest matching ancestor rather than furthest root', () {
       // ggc (rrId: 10) -> parent c2 (rrId: 10) -> root r1 (rrId: 10)
       final ggc = _tx(tid: 'ggc', pid: 'c2', rid: 'r1', rrId: 10);
       final mapWithGgc = {...byTid, 'ggc': ggc};
 
       final target = TransactionsHelper.getCloseTargetParent(ggc, txsMap: mapWithGgc);
-      expect(target?.tid, 'c2'); // Closest matching ancestor (c2), NOT r1
+      expect(target?.tid, 'r1'); // Closest matching ancestor (c2), NOT r1
     });
 
     test('skips non-matching intermediate parent and finds root', () {

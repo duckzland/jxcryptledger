@@ -142,7 +142,7 @@ void main() {
   late _TestRatesController rates;
   late _TestTransactionsController transactions;
 
-  ({List<TransactionsModel> tree, TransactionsModel leaf, TransactionsModel flat}) _buildSaneProfitTree() {
+  ({List<TransactionsModel> tree, TransactionsModel leaf, TransactionsModel flat}) buildSaneProfitTree() {
     const aster = 1;
     const sui = 2;
 
@@ -264,7 +264,7 @@ void main() {
     return (tree: [tx0, tx1, tx2, tx3, tx4, tx5, tx6, tx7, tx8], leaf: tx8, flat: flat);
   }
 
-  ({List<TransactionsModel> tree, TransactionsModel leaf}) _buildProfitChain({
+  ({List<TransactionsModel> tree, TransactionsModel leaf}) buildProfitChain({
     required String prefix,
     required String principal,
     required String finalBalance,
@@ -441,8 +441,8 @@ void main() {
   });
 
   testWidgets('Profit mode values each transaction by its share of total SOL profit', (tester) async {
-    final chainA = _buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
-    final chainB = _buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
+    final chainA = buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
+    final chainB = buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
 
     await pumpTrade(tester, [chainA.leaf, chainB.leaf], extraTxs: [...chainA.tree, ...chainB.tree]);
     await chooseTargetCoin(tester);
@@ -463,8 +463,8 @@ void main() {
   });
 
   testWidgets('Profit mode accepts a custom source amount and consumes profits in row order', (tester) async {
-    final chainA = _buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
-    final chainB = _buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
+    final chainA = buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
+    final chainB = buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
 
     await pumpTrade(tester, [chainA.leaf, chainB.leaf], extraTxs: [...chainA.tree, ...chainB.tree]);
     await chooseTargetCoin(tester);
@@ -501,7 +501,7 @@ void main() {
   });
 
   testWidgets('Profit mode skips transactions without positive profit', (tester) async {
-    final profitChain = _buildProfitChain(prefix: 'profit', principal: '100', finalBalance: '120'); // profit = 20
+    final profitChain = buildProfitChain(prefix: 'profit', principal: '100', finalBalance: '120'); // profit = 20
     final flat = _tx(id: 'flat', rrAmount: '100', balance: '100');
 
     await pumpTrade(tester, [profitChain.leaf, flat], extraTxs: profitChain.tree);
@@ -524,8 +524,8 @@ void main() {
   });
 
   testWidgets('Profit mode uses selected profit max and saves only checked transaction rows', (tester) async {
-    final chainA = _buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
-    final chainB = _buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
+    final chainA = buildProfitChain(prefix: 'a', principal: '100', finalBalance: '120'); // profit = 20
+    final chainB = buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
 
     await pumpTrade(tester, [chainA.leaf, chainB.leaf], extraTxs: [...chainA.tree, ...chainB.tree]);
     await chooseTargetCoin(tester);
@@ -560,7 +560,7 @@ void main() {
   });
 
   testWidgets('From max returns to available balance when selected profit disappears', (tester) async {
-    final data = _buildSaneProfitTree();
+    final data = buildSaneProfitTree();
     await pumpTrade(tester, [data.flat, data.leaf], extraTxs: data.tree);
 
     await tester.tap(find.byTooltip('Show custom balance'));
