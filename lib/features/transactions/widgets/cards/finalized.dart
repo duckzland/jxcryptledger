@@ -197,7 +197,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
         WidgetsTableColumn(label: Text('Balance '), size: ColumnSize.M, onSort: sortableSorters["balance"]),
         WidgetsTableColumn(label: Text('Rate '), size: ColumnSize.M, onSort: sortableSorters["rate"]),
         WidgetsTableColumn(label: Text('Capital Used '), size: ColumnSize.M, onSort: sortableSorters["capital"]),
-        DataColumn2(label: Text('Actions '), fixedWidth: 100),
+        DataColumn2(label: Text(' '), fixedWidth: 30),
       ];
     }
 
@@ -246,6 +246,7 @@ class _TransactionsWidgetsCardsFinalizedState extends State<TransactionsWidgetsC
             hasLeaf: fxsHasLeaf(tx),
             hasTradeableLeaf: fxsHasTradeableLeaf(tx),
             onAction: widget.onStatusChanged,
+            maxVisible: 0,
           ),
         ),
       ],

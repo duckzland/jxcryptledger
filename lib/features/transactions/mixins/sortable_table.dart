@@ -31,6 +31,8 @@ mixin TransactionsMixinsSortableTable<T extends StatefulWidget> on State<T>, Mix
       "profitPercentage": (col, asc) => sortableOnSort(_sortByProfitPercentage, "profitPercentage", col, asc),
 
       "capital": (col, asc) => sortableOnSort(_sortByCapital, "capital", col, asc),
+
+      "compound": (col, asc) => sortableOnSort(_sortByCompound, "capital", col, asc),
     };
   }
 
@@ -103,6 +105,10 @@ mixin TransactionsMixinsSortableTable<T extends StatefulWidget> on State<T>, Mix
   double _sortByProfitPercentage(Map<String, dynamic> d) {
     if (!d.containsKey('_profitPercentage')) return 0.0;
     return d['_profitPercentage'] as double;
+  }
+
+  double _sortByCompound(Map<String, dynamic> d) {
+    return d['_compound'] as double;
   }
 
   (String, double) _sortByCapital(Map<String, dynamic> d) {

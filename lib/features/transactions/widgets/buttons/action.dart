@@ -33,6 +33,8 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
 
   final BuildContext parentContext;
 
+  final int maxVisible;
+
   const TransactionsWidgetsButtonsAction({
     super.key,
     required this.parentContext,
@@ -50,6 +52,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
     required this.hasTradeableLeaf,
     this.onExit,
     this.allowBalanceSnapshot = false,
+    this.maxVisible = 2,
   });
 
   @override
@@ -214,7 +217,7 @@ class TransactionsWidgetsButtonsAction extends StatelessWidget with MixinsAction
 
     return WidgetsButtonsDropdown(
       dotStates: states,
-      maxVisible: 2,
+      maxVisible: maxVisible,
       iconWidth: 28,
       iconHeight: 28,
       menuWidth: 100,

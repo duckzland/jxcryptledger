@@ -16,6 +16,7 @@ import '../../../../mixins/table.dart';
 import '../../../../widgets/buttons/action.dart';
 import '../../../../widgets/table/column.dart';
 import '../../../../widgets/table/proxy.dart';
+import '../../../../widgets/text/balance.dart';
 import '../../../../widgets/text/selectable.dart';
 import '../../../../widgets/with_tooltip.dart';
 import '../../../../widgets/header.dart';
@@ -89,9 +90,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
         TransactionsMixinsFlags {
   final TransactionCalculation _calc = TransactionCalculation();
   final Map<String, Decimal> _capitalCache = {};
+  final Map<String, Decimal> _compoundCache = {};
 
   late String _resultSymbol;
 
+  Decimal _totalGain = Decimal.zero;
   Decimal _totalCapital = Decimal.zero;
   Decimal _currentHolding = Decimal.zero;
   Decimal _currentUsd = Decimal.zero;
@@ -184,6 +187,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     rateableGetRate(refresh: false, silent: true);
 
     _capitalCache.clear();
+    _compoundCache.clear();
 
     _calculateProfitLoss();
     tablePopulateData();
@@ -207,6 +211,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   List<Map<String, dynamic>> tablePopulateData() {
     final txsMap = txController.getIndexedMap();
     final txsByParent = txController.getIndexedParentMap();
+    final txsByRoot = txController.getIndexedRootMap();
 
     tableData = <Map<String, dynamic>>[];
 
@@ -216,18 +221,23 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       final capitalUsed = _capitalCache[tx.tid] ??= _calc.totalCapitalUsed(tx, txsMap: txsMap, txsByParent: txsByParent);
       final root = tx.isRoot ? tx : txController.getRoot(tx);
       final rootSymbol = _cryptosController.getSymbol(root?.srId ?? 0);
+      final compoundedGain = _compoundCache[tx.tid] ??= _calc.totalCompoundedProfitLoss(tx, txsMap: txsByRoot[tx.rid] ?? txsMap);
+      final gainLevel = compoundedGain > Decimal.zero ? (compoundedGain == Decimal.zero ? 0.0 : 1.0) : -1.0;
 
       tableData.add({
         'source': tx.isCapital ? 'Capital' : '${tx.srAmountText} $sourceCoinSymbol',
         'rate': tx.isCapital ? ' - ' : '${tx.rateText} $_resultSymbol/$sourceCoinSymbol',
         'usd': usdValue != Decimal.zero ? Utils.formatSmartDecimal(usdValue, limitDecimals: 2) : '-',
         'capital': capitalUsed == Decimal.zero ? ' - ' : "${Utils.formatSmartDecimal(capitalUsed)} $rootSymbol",
+        'compound': compoundedGain == Decimal.zero ? null : Utils.formatSmartDecimal(compoundedGain),
+        'gainLevel': gainLevel,
         'tx': tx,
 
         '_usd': usdValue.toDouble(),
         '_capitalUsed': capitalUsed.toDouble(),
         '_capitalSymbol': rootSymbol,
         '_sourceSymbol': sourceCoinSymbol,
+        '_compound': compoundedGain.toDouble(),
       });
     }
 
@@ -235,35 +245,40 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   }
 
   List<DataColumn> tableBuildColumns() {
-    if (tableColumns.isEmpty) {
-      tableColumns = [
-        WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
-        WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
+    final hasCompound = _compoundCache.values.fold<Decimal>(Decimal.zero, (sum, co) => Math.add(sum, co)) != Decimal.zero;
+
+    tableColumns = [
+      WidgetsTableColumn(label: Text('Date '), fixedWidth: 100, onSort: sortableSorters["timestamp"]),
+      WidgetsTableColumn(label: Text('From '), size: ColumnSize.M, onSort: sortableSorters["srAmount"]),
+      WidgetsTableColumn(
+        label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
+        size: ColumnSize.M,
+        onSort: sortableSorters["rrAmount"],
+      ),
+      WidgetsTableColumn(
+        label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
+        size: ColumnSize.S,
+        onSort: sortableSorters["balance"],
+      ),
+      WidgetsTableColumn(
+        label: WidgetsHeader(title: 'Balance ', subtitle: 'USDT'),
+        size: ColumnSize.S,
+        onSort: sortableSorters["balance"],
+      ),
+      WidgetsTableColumn(label: Text('Exchanged Rate '), size: ColumnSize.M, onSort: sortableSorters["rate"]),
+      WidgetsTableColumn(
+        size: ColumnSize.S,
+        label: WidgetsHeader(title: 'Capital Used '),
+        onSort: sortableSorters["capital"],
+      ),
+      if (hasCompound)
         WidgetsTableColumn(
-          label: WidgetsHeader(title: 'To ', subtitle: _resultSymbol),
-          size: ColumnSize.M,
-          onSort: sortableSorters["rrAmount"],
-        ),
-        WidgetsTableColumn(
-          label: WidgetsHeader(title: 'Balance ', subtitle: _resultSymbol),
           size: ColumnSize.S,
-          onSort: sortableSorters["balance"],
+          label: WidgetsHeader(title: 'Co. Gain ', subtitle: _resultSymbol),
+          onSort: sortableSorters["compound"],
         ),
-        WidgetsTableColumn(
-          label: WidgetsHeader(title: 'Balance ', subtitle: 'USDT'),
-          size: ColumnSize.S,
-          onSort: sortableSorters["balance"],
-        ),
-        WidgetsTableColumn(label: Text('Exchanged Rate '), size: ColumnSize.M, onSort: sortableSorters["rate"]),
-        WidgetsTableColumn(
-          size: ColumnSize.S,
-          label: WidgetsHeader(title: 'Capital Used '),
-          onSort: sortableSorters["capital"],
-        ),
-        WidgetsTableColumn(label: Text('Status '), fixedWidth: 80, onSort: sortableSorters["status"]),
-        DataColumn2(label: Text('Actions '), fixedWidth: 100),
-      ];
-    }
+      WidgetsTableColumn(label: Text('Status '), fixedWidth: 70, onSort: sortableSorters["status"]),
+    ];
 
     return tableColumns;
   }
@@ -271,6 +286,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
   DataRow tableBuildRow(Map<String, dynamic> row) {
     final tx = row['tx'] as TransactionsModel;
     final canSelect = tx.isActive || tx.isPartial;
+    final hasCompound = _compoundCache.values.fold<Decimal>(Decimal.zero, (sum, co) => Math.add(sum, co)) != Decimal.zero;
 
     return DataRow2(
       key: ValueKey(tx.uuid),
@@ -287,6 +303,7 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
       },
       cells: [
         DataCell(WidgetsWithTooltip(WidgetsTextSelectable(tx.timestampAsFormattedDate), tx.noteText, tx.meta['accent_color'])),
+
         DataCell(WidgetsTextSelectable(row['source'])),
 
         DataCell(WidgetsTextSelectable(tx.rrAmountText)),
@@ -299,23 +316,32 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
 
         DataCell(WidgetsTextSelectable(row['capital'])),
 
-        DataCell(TransactionsWidgetsStatusText(tx.statusEnum)),
+        if (hasCompound) DataCell(WidgetsTextBalance(text: row['compound'] ?? "-", value: row['gainLevel'], hidePrefix: true)),
+
         DataCell(
-          TransactionsWidgetsButtonsAction(
-            parentContext: context,
+          Row(
             key: Key("action-${tx.uuid}"),
-            tx: tx,
-            cryptosController: _cryptosController,
-            txController: txController,
-            isTradable: fxsIsTradable(tx),
-            isClosable: fxsIsClosable(tx),
-            isDeletable: fxsIsDeletable(tx),
-            isUpdatable: fxsIsUpdatable(tx),
-            isRefundable: fxsIsRefundable(tx),
-            isFinalizable: fxsIsFinalizable(tx),
-            hasLeaf: fxsHasLeaf(tx),
-            hasTradeableLeaf: fxsHasTradeableLeaf(tx),
-            onAction: widget.onStatusChanged,
+            spacing: 6,
+            children: [
+              TransactionsWidgetsStatusText(tx.statusEnum, iconMode: true),
+
+              TransactionsWidgetsButtonsAction(
+                parentContext: context,
+                tx: tx,
+                cryptosController: _cryptosController,
+                txController: txController,
+                isTradable: fxsIsTradable(tx),
+                isClosable: fxsIsClosable(tx),
+                isDeletable: fxsIsDeletable(tx),
+                isUpdatable: fxsIsUpdatable(tx),
+                isRefundable: fxsIsRefundable(tx),
+                isFinalizable: fxsIsFinalizable(tx),
+                hasLeaf: fxsHasLeaf(tx),
+                hasTradeableLeaf: fxsHasTradeableLeaf(tx),
+                onAction: widget.onStatusChanged,
+                maxVisible: 0,
+              ),
+            ],
           ),
         ),
       ],
@@ -490,6 +516,12 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
                         "${Utils.formatSmartDecimal(_profitLoss)} $_resultSymbol • ${Utils.formatSmartDecimal(_profitLossPercentage, maxDecimals: 2)}%",
                     value: _profitLossPercentage.toDouble(),
                   ),
+                if (_totalGain != Decimal.zero)
+                  TransactionsWidgetsPanelItem(
+                    title: 'Comp. Gain',
+                    subtitle: "${Utils.formatSmartDecimal(_totalGain)} $_resultSymbol",
+                    value: _totalGain.toDouble(),
+                  ),
               ],
             ),
           ),
@@ -527,6 +559,11 @@ class _TransactionsWidgetsCardsOverviewState extends State<TransactionsWidgetsCa
     final profitPercentage = (capital == Decimal.zero)
         ? Decimal.zero
         : (Math.divide(Math.subtract(totalBalance, capital), capital) * Decimal.fromInt(100));
+
+    _totalGain = Decimal.zero;
+    for (final tx in stxs) {
+      _totalGain = Math.add(_totalGain, _compoundCache[tx.tid] ??= _calc.totalCompoundedProfitLoss(tx, txsMap: txsMap));
+    }
 
     _totalCapital = capital;
     _currentHolding = balance;
