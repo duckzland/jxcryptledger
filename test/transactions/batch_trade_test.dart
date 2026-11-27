@@ -99,23 +99,43 @@ class _TestTransactionsController extends ChangeNotifier implements Transactions
   @override
   Future<void> add(TransactionsModel tx) async {
     children.add(tx);
+    indexed[tx.tid] = tx;
+    notifyListeners();
   }
 
   @override
   Future<List<String>> addAll(List<TransactionsModel> txs) async {
     children.addAll(txs);
+    for (final tx in txs) {
+      indexed[tx.tid] = tx;
+    }
+    notifyListeners();
     return txs.map((tx) => tx.uuid).toList();
   }
 
   @override
   Future<List<String>> updateAll(List<TransactionsModel> txs) async {
     children.addAll(txs);
+    for (final tx in txs) {
+      indexed[tx.tid] = tx;
+    }
+    notifyListeners();
     return txs.map((tx) => tx.uuid).toList();
   }
 
   @override
+  Future<String> close(TransactionsModel tx, {bool? silent}) async {
+    closed.add(tx);
+    indexed[tx.tid] = tx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
+    notifyListeners();
+    return tx.uuid;
+  }
+
+  @override
   Future<List<String>> closeAll(List<TransactionsModel> txs, {bool? silent}) async {
-    closed.addAll(txs);
+    for (final tx in txs) {
+      await close(tx, silent: silent);
+    }
     return txs.map((tx) => tx.uuid).toList();
   }
 
@@ -272,21 +292,23 @@ void main() {
     const aster = 1;
     const sui = 2;
 
+    final rootBalance = (Decimal.parse('8541') - Decimal.parse(principal)).toString();
+
     final root = _tx(
       id: '${prefix}_root',
-      srAmount: principal,
-      rrAmount: principal,
-      balance: '0',
+      srAmount: '4197',
+      rrAmount: '8541',
+      balance: rootBalance, // 8541 - 100 = 8441 (exact remaining balance!)
       srId: sui,
       rrId: aster,
       pid: '0',
       rid: '0',
-      status: TransactionStatus.inactive,
+      status: TransactionStatus.partial,
     );
     final mid = _tx(
       id: '${prefix}_mid',
-      srAmount: principal,
-      rrAmount: '50',
+      srAmount: principal, // 100 ASTER spent from root
+      rrAmount: '50', // 50 SUI received
       balance: '0',
       srId: aster,
       rrId: sui,
@@ -297,9 +319,9 @@ void main() {
     );
     final leaf = _tx(
       id: prefix,
-      srAmount: '50',
-      rrAmount: finalBalance,
-      balance: finalBalance,
+      srAmount: '50', // 50 SUI spent (100% of mid)
+      rrAmount: finalBalance, // 120 or 130 ASTER received
+      balance: finalBalance, // 120 or 130 ASTER available
       srId: sui,
       rrId: aster,
       pid: '${prefix}_mid',
@@ -348,11 +370,14 @@ void main() {
   Future<void> chooseTargetCoin(WidgetTester tester) async {
     final coinDecorator = find.byWidgetPredicate((widget) => widget is InputDecorator && widget.decoration.labelText == 'Coin');
     final coinField = find.ancestor(of: coinDecorator, matching: find.byType(TextField)).first;
+    await tester.ensureVisible(coinField);
     await tester.tap(coinField);
     await tester.enterText(coinField, 'USD');
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('USD (#3)'));
+    final option = find.text('USD (#3)');
+    await tester.ensureVisible(option);
+    await tester.tap(option);
     await tester.pumpAndSettle();
   }
 
@@ -518,7 +543,7 @@ void main() {
     await confirmTrade(tester);
 
     expect(transactions.children, hasLength(1));
-    expect(transactions.children.single.pid, 'profit');
+    expect(transactions.children.single.pid, 'profit_root');
     expect(transactions.children.single.srAmount, _d('20'));
     expect(transactions.children.single.rrAmount, _d('500'));
   });
@@ -528,7 +553,6 @@ void main() {
     final chainB = buildProfitChain(prefix: 'b', principal: '100', finalBalance: '130'); // profit = 30
 
     await pumpTrade(tester, [chainA.leaf, chainB.leaf], extraTxs: [...chainA.tree, ...chainB.tree]);
-    await chooseTargetCoin(tester);
     await tester.tap(find.byTooltip('Show custom balance'));
     await tester.pumpAndSettle();
     await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
@@ -542,11 +566,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(amountFieldValue(tester), '20');
 
+    await chooseTargetCoin(tester);
+
+    await chooseTargetCoin(tester);
     await enterField(tester, 'Amount', '1000', index: 1);
     await confirmTrade(tester);
 
     expect(transactions.children, hasLength(1));
-    expect(transactions.children.single.pid, 'a');
+    expect(transactions.children.single.pid, 'a_root');
     expect(transactions.children.single.srAmount, _d('20'));
     expect(transactions.children.single.rrAmount, _d('1000'));
   });
@@ -572,7 +599,8 @@ void main() {
     await tester.tap(find.byTooltip('Use maximum amount'));
     await tester.pumpAndSettle();
 
-    expect(amountFieldValue(tester), '80.349638987366327998');
+    // Closes to tx0 (root): 641.0698 - (541 * (417.996 / 577.346)) = 249.388146364225265763
+    expect(amountFieldValue(tester), '249.388146364225265763');
 
     await tester.tap(find.byWidgetPredicate((widget) => widget is Checkbox).first);
     await tester.pumpAndSettle();

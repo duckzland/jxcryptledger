@@ -37,17 +37,17 @@ TransactionsModel _tx({
 void main() {
   // Tree 1 Structure (rid = 'r1'):
   //
-  //          r1 (rrId: 10, root: pid == '0', rid == '0')
+  //          r1 (srId: 10, rrId: 10, root: pid == '0', rid == '0')
   //         /  \
-  //        c1   c2 (rrId: 10)
+  //        c1   c2 (srId: 10, rrId: 40)
   //       / \     \
-  //     gc1 gc2   gc3 (rrId: 20)
-  //   (rrId:10) (rrId:30)
+  //     gc1 gc2   gc3 (srId: 40, rrId: 10)
+  //  (20->10)(20->30)
   //
   // Tree 2 Structure (rid = 'r2'):
-  //          r2 (rrId: 99, root)
+  //          r2 (srId: 99, rrId: 99, root)
   //          |
-  //          d1 (rrId: 99)
+  //          d1 (srId: 99, rrId: 88)
 
   late TransactionsModel r1;
   late TransactionsModel c1;
@@ -65,15 +65,15 @@ void main() {
   late Map<String, Map<String, TransactionsModel>> byRid;
 
   setUp(() {
-    r1 = _tx(tid: 'r1', pid: '0', rid: '0', rrId: 10);
-    c1 = _tx(tid: 'c1', pid: 'r1', rid: 'r1', rrId: 20);
-    c2 = _tx(tid: 'c2', pid: 'r1', rid: 'r1', rrId: 10);
-    gc1 = _tx(tid: 'gc1', pid: 'c1', rid: 'r1', rrId: 10);
-    gc2 = _tx(tid: 'gc2', pid: 'c1', rid: 'r1', rrId: 30);
-    gc3 = _tx(tid: 'gc3', pid: 'c2', rid: 'r1', rrId: 20);
+    r1 = _tx(tid: 'r1', pid: '0', rid: '0', srId: 10, rrId: 10);
+    c1 = _tx(tid: 'c1', pid: 'r1', rid: 'r1', srId: 10, rrId: 20);
+    c2 = _tx(tid: 'c2', pid: 'r1', rid: 'r1', srId: 10, rrId: 40);
+    gc1 = _tx(tid: 'gc1', pid: 'c1', rid: 'r1', srId: 20, rrId: 10);
+    gc2 = _tx(tid: 'gc2', pid: 'c1', rid: 'r1', srId: 20, rrId: 30);
+    gc3 = _tx(tid: 'gc3', pid: 'c2', rid: 'r1', srId: 40, rrId: 10);
 
-    r2 = _tx(tid: 'r2', pid: '0', rid: '0', rrId: 99);
-    d1 = _tx(tid: 'd1', pid: 'r2', rid: 'r2', rrId: 99);
+    r2 = _tx(tid: 'r2', pid: '0', rid: '0', srId: 99, rrId: 99);
+    d1 = _tx(tid: 'd1', pid: 'r2', rid: 'r2', srId: 99, rrId: 88);
 
     allTxs = [r1, c1, c2, gc1, gc2, gc3, r2, d1];
     byTid = {for (final tx in allTxs) tx.tid: tx};
@@ -101,27 +101,27 @@ void main() {
       expect(TransactionsHelper.getCloseTargetParent(gc1), isNull);
     });
 
-    test('returns furthest matching ancestor rather than furthest root', () {
+    test('returns furthest matching ancestor (root) over closer intermediate match', () {
       // ggc (rrId: 10) -> parent c2 (rrId: 10) -> root r1 (rrId: 10)
       final ggc = _tx(tid: 'ggc', pid: 'c2', rid: 'r1', rrId: 10);
       final mapWithGgc = {...byTid, 'ggc': ggc};
 
       final target = TransactionsHelper.getCloseTargetParent(ggc, txsMap: mapWithGgc);
-      expect(target?.tid, 'r1'); // Closest matching ancestor (c2), NOT r1
+      expect(target?.tid, 'r1'); // Furthest matching ancestor (r1), NOT c2
     });
 
-    test('skips non-matching intermediate parent and finds root', () {
+    test('skips non-matching intermediate parent and drills up to root', () {
       // gc1 (rrId: 10) -> c1 (rrId: 20, skip) -> r1 (rrId: 10, match!)
       final target = TransactionsHelper.getCloseTargetParent(gc1, txsMap: byTid);
       expect(target?.tid, 'r1');
     });
 
-    test('falls back to rid root when intermediate parent is missing from map', () {
+    test('returns null when intermediate parent is missing from map (broken chain)', () {
       final brokenMap = Map<String, TransactionsModel>.from(byTid)..remove('c1');
 
-      // gc1 -> c1 (missing!) -> falls back to r1 via rid
+      // gc1 -> c1 (missing!) -> chain breaks before reaching r1
       final target = TransactionsHelper.getCloseTargetParent(gc1, txsMap: brokenMap);
-      expect(target?.tid, 'r1');
+      expect(target, isNull);
     });
 
     test('returns null when no ancestor or root has matching rrId', () {
@@ -263,10 +263,12 @@ void main() {
       final children = TransactionsHelper.getLeaf(r1, childrenMap: byPid);
       expect(children.map((e) => e.tid), ['c1', 'c2']);
     });
+
     test('returns immediate direct children using fallback txsMap', () {
       final children = TransactionsHelper.getLeaf(c1, txsMap: byTid);
       expect(children.map((e) => e.tid), ['gc1', 'gc2']);
     });
+
     test('returns empty list when node has no children', () {
       expect(TransactionsHelper.getLeaf(gc1, childrenMap: byPid), isEmpty);
     });

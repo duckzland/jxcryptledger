@@ -55,36 +55,20 @@ TransactionsModel _tx({
   );
 }
 
-class _TestCryptosController extends ChangeNotifier
-    implements CryptosController {
+class _TestCryptosController extends ChangeNotifier implements CryptosController {
   final cryptos = [
-    CryptosModel(
-      id: 1,
-      name: 'Source Coin',
-      symbol: 'SRC',
-      status: 1,
-      active: 1,
-    ),
-    CryptosModel(
-      id: 2,
-      name: 'Result Coin',
-      symbol: 'RES',
-      status: 1,
-      active: 1,
-    ),
+    CryptosModel(id: 1, name: 'Source Coin', symbol: 'SRC', status: 1, active: 1),
+    CryptosModel(id: 2, name: 'Result Coin', symbol: 'RES', status: 1, active: 1),
   ];
 
   @override
-  String? getSymbol(int id) =>
-      cryptos.where((crypto) => crypto.id == id).firstOrNull?.symbol;
+  String? getSymbol(int id) => cryptos.where((crypto) => crypto.id == id).firstOrNull?.symbol;
 
   @override
-  CryptosModel? get(String id) =>
-      cryptos.where((crypto) => crypto.id.toString() == id).firstOrNull;
+  CryptosModel? get(String id) => cryptos.where((crypto) => crypto.id.toString() == id).firstOrNull;
 
   @override
-  List<CryptosModel> filter(String query) =>
-      cryptos.where((crypto) => crypto.searchKey.contains(query)).toList();
+  List<CryptosModel> filter(String query) => cryptos.where((crypto) => crypto.searchKey.contains(query)).toList();
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -95,10 +79,10 @@ class _TestRatesController extends ChangeNotifier implements RatesController {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _TestTransactionsController extends ChangeNotifier
-    implements TransactionsController {
+class _TestTransactionsController extends ChangeNotifier implements TransactionsController {
   final added = <TransactionsModel>[];
   final updated = <TransactionsModel>[];
+  final closed = <TransactionsModel>[];
   final indexed = <String, TransactionsModel>{};
   var _nextId = 0;
 
@@ -109,12 +93,22 @@ class _TestTransactionsController extends ChangeNotifier
   Future<void> add(TransactionsModel tx) async {
     added.add(tx);
     indexed[tx.tid] = tx;
+    notifyListeners();
   }
 
   @override
   Future<void> update(TransactionsModel tx) async {
     updated.add(tx);
     indexed[tx.tid] = tx;
+    notifyListeners();
+  }
+
+  @override
+  Future<String> close(TransactionsModel tx, {bool? silent}) async {
+    closed.add(tx);
+    indexed[tx.tid] = tx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
+    notifyListeners();
+    return tx.uuid;
   }
 
   @override
@@ -142,8 +136,28 @@ class _TestTransactionsController extends ChangeNotifier
   Map<String, TransactionsModel> getIndexedMap() => indexed;
 
   @override
-  List<TransactionsModel> collectBranchWithTarget(TransactionsModel target) =>
-      indexed[target.tid] == null ? const [] : [target];
+  Map<String, List<TransactionsModel>> getIndexedParentMap() {
+    final map = <String, List<TransactionsModel>>{};
+    for (final tx in indexed.values) {
+      if (tx.pid.isNotEmpty && tx.pid != '0') {
+        (map[tx.pid] ??= []).add(tx);
+      }
+    }
+    return map;
+  }
+
+  @override
+  Map<String, Map<String, TransactionsModel>> getIndexedRootMap() {
+    final map = <String, Map<String, TransactionsModel>>{};
+    for (final tx in indexed.values) {
+      final treeKey = tx.isRoot ? tx.tid : tx.rid;
+      (map[treeKey] ??= {})[tx.tid] = tx;
+    }
+    return map;
+  }
+
+  @override
+  List<TransactionsModel> collectBranchWithTarget(TransactionsModel target) => indexed[target.tid] == null ? const [] : [target];
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -153,8 +167,7 @@ class _TestStateController implements StateController {
   final values = <String, dynamic>{};
 
   @override
-  dynamic get(String key, {dynamic defaultValue}) =>
-      values[key] ?? defaultValue;
+  dynamic get(String key, {dynamic defaultValue}) => values[key] ?? defaultValue;
 
   @override
   void set(String key, dynamic value) => values[key] = value;
@@ -202,21 +215,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> chooseCoin(
-    WidgetTester tester,
-    String coin, {
-    int index = 0,
-  }) async {
-    final coinDecorators = find.byWidgetPredicate(
-      (widget) =>
-          widget is InputDecorator && widget.decoration.labelText == 'Coin',
-    );
-    final field = find
-        .ancestor(
-          of: coinDecorators.at(index),
-          matching: find.byType(TextField),
-        )
-        .first;
+  Future<void> chooseCoin(WidgetTester tester, String coin, {int index = 0}) async {
+    final coinDecorators = find.byWidgetPredicate((widget) => widget is InputDecorator && widget.decoration.labelText == 'Coin');
+    final field = find.ancestor(of: coinDecorators.at(index), matching: find.byType(TextField)).first;
     await tester.tap(field);
     await tester.enterText(field, coin);
     await tester.pump(const Duration(milliseconds: 100));
@@ -225,45 +226,31 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> enterAmount(
-    WidgetTester tester,
-    String value, {
-    int index = 0,
-  }) async {
-    final fields = find.byWidgetPredicate(
-      (widget) =>
-          widget is InputDecorator && widget.decoration.labelText == 'Amount',
-    );
-    final field = find
-        .ancestor(of: fields.at(index), matching: find.byType(TextField))
-        .first;
+  Future<void> enterAmount(WidgetTester tester, String value, {int index = 0}) async {
+    final fields = find.byWidgetPredicate((widget) => widget is InputDecorator && widget.decoration.labelText == 'Amount');
+    final field = find.ancestor(of: fields.at(index), matching: find.byType(TextField)).first;
     await tester.enterText(field, value);
     await tester.pump(const Duration(milliseconds: 150));
   }
 
-  testWidgets(
-    'Create form saves a normal transaction and validates source/target coin selection',
-    (tester) async {
-      await pumpDialog(tester, TransactionFormCreate(onSave: (_, _) {}));
+  testWidgets('Create form saves a normal transaction and validates source/target coin selection', (tester) async {
+    await pumpDialog(tester, TransactionFormCreate(onSave: (_, _) {}));
 
-      await enterAmount(tester, '100');
-      await chooseCoin(tester, 'SRC');
-      await enterAmount(tester, '125', index: 1);
-      await chooseCoin(tester, 'RES', index: 1);
-      await tester.tap(find.text('Create New'));
-      await tester.pumpAndSettle();
+    await enterAmount(tester, '100');
+    await chooseCoin(tester, 'SRC');
+    await enterAmount(tester, '125', index: 1);
+    await chooseCoin(tester, 'RES', index: 1);
+    await tester.tap(find.text('Create New'));
+    await tester.pumpAndSettle();
 
-      expect(transactions.added, hasLength(1));
-      expect(transactions.added.single.srAmount, _d('100'));
-      expect(transactions.added.single.rrAmount, _d('125'));
-      expect(transactions.added.single.srId, 1);
-      expect(transactions.added.single.rrId, 2);
-    },
-  );
+    expect(transactions.added, hasLength(1));
+    expect(transactions.added.single.srAmount, _d('100'));
+    expect(transactions.added.single.rrAmount, _d('125'));
+    expect(transactions.added.single.srId, 1);
+    expect(transactions.added.single.rrId, 2);
+  });
 
-  testWidgets('Create form converts a transaction to capital when selected', (
-    tester,
-  ) async {
+  testWidgets('Create form converts a transaction to capital when selected', (tester) async {
     await pumpDialog(tester, TransactionFormCreate(onSave: (_, _) {}));
 
     await enterAmount(tester, '75');
@@ -279,48 +266,25 @@ void main() {
     expect(transactions.added.single.srId, 1);
   });
 
-  testWidgets(
-    'Trade form saves a child transaction with the selected target coin',
-    (tester) async {
-      final parent = _tx(
-        id: 'parent',
-        rid: '0',
-        pid: '0',
-        rrId: 1,
-        rrAmount: '100',
-        balance: '100',
-      );
-      await pumpDialog(
-        tester,
-        TransactionFormTrade(initialData: parent, onSave: (_, _) {}),
-      );
+  testWidgets('Trade form saves a child transaction with the selected target coin', (tester) async {
+    final parent = _tx(id: 'parent', rid: '0', pid: '0', rrId: 1, rrAmount: '100', balance: '100');
+    await pumpDialog(tester, TransactionFormTrade(initialData: parent, onSave: (_, _) {}));
 
-      await enterAmount(tester, '25');
-      await enterAmount(tester, '30', index: 1);
-      await chooseCoin(tester, 'RES');
-      await tester.tap(find.text('Trade'));
-      await tester.pumpAndSettle();
+    await enterAmount(tester, '25');
+    await enterAmount(tester, '30', index: 1);
+    await chooseCoin(tester, 'RES');
+    await tester.tap(find.text('Trade'));
+    await tester.pumpAndSettle();
 
-      expect(transactions.added, hasLength(1));
-      expect(transactions.added.single.pid, 'parent');
-      expect(transactions.added.single.srAmount, _d('25'));
-      expect(transactions.added.single.rrAmount, _d('30'));
-    },
-  );
+    expect(transactions.added, hasLength(1));
+    expect(transactions.added.single.pid, 'parent');
+    expect(transactions.added.single.srAmount, _d('25'));
+    expect(transactions.added.single.rrAmount, _d('30'));
+  });
 
-  testWidgets('Edit form exposes initial values and updates a transaction', (
-    tester,
-  ) async {
-    final tx = _tx(
-      id: 'edit-me',
-      rid: '0',
-      pid: '0',
-      meta: {'purchase_notes': 'Existing note'},
-    );
-    await pumpDialog(
-      tester,
-      TransactionFormEdit(initialData: tx, onSave: (_, _) {}),
-    );
+  testWidgets('Edit form exposes initial values and updates a transaction', (tester) async {
+    final tx = _tx(id: 'edit-me', rid: '0', pid: '0', meta: {'purchase_notes': 'Existing note'});
+    await pumpDialog(tester, TransactionFormEdit(initialData: tx, onSave: (_, _) {}));
 
     expect(find.text('Edit Transaction'), findsOneWidget);
     expect(find.text('100'), findsWidgets);
@@ -332,36 +296,19 @@ void main() {
     expect(transactions.updated.single.srAmount, _d('110'));
   });
 
-  testWidgets(
-    'Empty batch edit and batch action dialogs show their empty states',
-    (tester) async {
-      await pumpDialog(
-        tester,
-        TransactionsDialogsBatchEdit(transactions: const [], onSave: (_) {}),
-      );
-      expect(find.text('No transactions to edit'), findsOneWidget);
+  testWidgets('Empty batch edit and batch action dialogs show their empty states', (tester) async {
+    await pumpDialog(tester, TransactionsDialogsBatchEdit(transactions: const [], onSave: (_) {}));
+    expect(find.text('No transactions to edit'), findsOneWidget);
 
-      await pumpDialog(
-        tester,
-        TransactionsDialogsBatchAction(
-          transactions: const [],
-          mode: TransactionsBatchActionMode.close,
-          onSave: (_) {},
-        ),
-      );
-      expect(find.text('No transactions to close'), findsOneWidget);
-    },
-  );
-
-  testWidgets('Transaction details renders information and close action', (
-    tester,
-  ) async {
-    final tx = _tx(
-      id: 'details',
-      rid: '0',
-      pid: '0',
-      meta: {'purchase_notes': 'Test purchase note'},
+    await pumpDialog(
+      tester,
+      TransactionsDialogsBatchAction(transactions: const [], mode: TransactionsBatchActionMode.close, onSave: (_) {}),
     );
+    expect(find.text('No transactions to close'), findsOneWidget);
+  });
+
+  testWidgets('Transaction details renders information and close action', (tester) async {
+    final tx = _tx(id: 'details', rid: '0', pid: '0', meta: {'purchase_notes': 'Test purchase note'});
     transactions.indexed[tx.tid] = tx;
 
     await pumpDialog(tester, TransactionsDialogsDetails(tx: tx));
@@ -372,15 +319,7 @@ void main() {
   });
 
   testWidgets('Status widget renders every transaction status', (tester) async {
-    await pumpDialog(
-      tester,
-      Column(
-        children: [
-          for (final status in TransactionStatus.values)
-            TransactionsWidgetsStatusText(status),
-        ],
-      ),
-    );
+    await pumpDialog(tester, Column(children: [for (final status in TransactionStatus.values) TransactionsWidgetsStatusText(status)]));
 
     expect(find.text('Active'), findsOneWidget);
     expect(find.text('Inactive'), findsOneWidget);
@@ -395,15 +334,10 @@ void main() {
     late Box<TransactionsModel> box;
 
     setUp(() async {
-      box = await Hive.openBox<TransactionsModel>(
-        'transactions_rules_comprehensive_test',
-      );
+      box = await Hive.openBox<TransactionsModel>('transactions_rules_comprehensive_test');
       await box.clear();
       repo = TransactionsRepository();
-      repo.box = HiveBoxFaker<TransactionsModel>(
-        'transactions_rules_comprehensive_test',
-        hiveBoxOverride: box,
-      );
+      repo.box = HiveBoxFaker<TransactionsModel>('transactions_rules_comprehensive_test', hiveBoxOverride: box);
       repo.boxNameDefault = 'transactions_rules_comprehensive_test';
     });
 
@@ -411,111 +345,56 @@ void main() {
       await box.clear();
     });
 
-    test(
-      'create rule accepts a valid root and rejects a mismatched root balance',
-      () async {
-        final valid = _tx(
-          id: 'root',
-          srAmount: '100',
-          rrAmount: '100',
-          balance: '100',
-        );
-        await repo.add(valid);
-        expect(repo.get('root'), valid);
+    test('create rule accepts a valid root and rejects a mismatched root balance', () async {
+      final valid = _tx(id: 'root', srAmount: '100', rrAmount: '100', balance: '100');
+      await repo.add(valid);
+      expect(repo.get('root'), valid);
 
-        final mismatch = valid.copyWith(tid: 'mismatch', balance: _d('90'));
-        expect(
-          () => repo.canAdd(mismatch),
-          throwsA(
-            isA<ValidationException>().having(
-              (error) => error.code,
-              'code',
-              AppErrorCode.txAddRootBalanceMismatch,
-            ),
-          ),
-        );
-      },
-    );
+      final mismatch = valid.copyWith(tid: 'mismatch', balance: _d('90'));
+      expect(
+        () => repo.canAdd(mismatch),
+        throwsA(isA<ValidationException>().having((error) => error.code, 'code', AppErrorCode.txAddRootBalanceMismatch)),
+      );
+    });
 
-    test(
-      'trade rule rejects missing, invalid-state, and zero-balance originals',
-      () async {
-        final missing = _tx(id: 'missing', pid: 'missing', rid: 'missing');
-        expect(
-          () => repo.canTrade(missing),
-          throwsA(
-            isA<ValidationException>().having(
-              (error) => error.code,
-              'code',
-              AppErrorCode.txTradeNotFound,
-            ),
-          ),
-        );
+    test('trade rule rejects missing, invalid-state, and zero-balance originals', () async {
+      final missing = _tx(id: 'missing', pid: 'missing', rid: 'missing');
+      expect(
+        () => repo.canTrade(missing),
+        throwsA(isA<ValidationException>().having((error) => error.code, 'code', AppErrorCode.txTradeNotFound)),
+      );
 
-        final closed = _tx(
-          id: 'closed',
-          rid: '0',
-          pid: '0',
-          status: TransactionStatus.closed,
-        );
-        await repo.box.put(closed.tid, closed);
-        repo.resetIndexes();
-        expect(
-          () => repo.canTrade(closed),
-          throwsA(
-            isA<ValidationException>().having(
-              (error) => error.code,
-              'code',
-              AppErrorCode.txTradeInvalidState,
-            ),
-          ),
-        );
+      final closed = _tx(id: 'closed', rid: '0', pid: '0', status: TransactionStatus.closed);
+      await repo.box.put(closed.tid, closed);
+      repo.resetIndexes();
+      expect(
+        () => repo.canTrade(closed),
+        throwsA(isA<ValidationException>().having((error) => error.code, 'code', AppErrorCode.txTradeInvalidState)),
+      );
 
-        final zero = _tx(id: 'zero', rid: '0', pid: '0', balance: '0');
-        await repo.box.put(zero.tid, zero);
-        repo.resetIndexes();
-        expect(
-          () => repo.canTrade(zero),
-          throwsA(
-            isA<ValidationException>().having(
-              (error) => error.code,
-              'code',
-              AppErrorCode.txTradeInvalidBalance,
-            ),
-          ),
-        );
-      },
-    );
+      final zero = _tx(id: 'zero', rid: '0', pid: '0', balance: '0');
+      await repo.box.put(zero.tid, zero);
+      repo.resetIndexes();
+      expect(
+        () => repo.canTrade(zero),
+        throwsA(isA<ValidationException>().having((error) => error.code, 'code', AppErrorCode.txTradeInvalidBalance)),
+      );
+    });
 
-    test(
-      'close, finalize, refund, and delete rule surfaces reject invalid state',
-      () async {
-        final root = _tx(id: 'rule-root', rid: '0', pid: '0');
-        await box.put(root.tid, root);
+    test('close, finalize, refund, and delete rule surfaces reject invalid state', () async {
+      final root = _tx(id: 'rule-root', rid: '0', pid: '0');
+      await box.put(root.tid, root);
 
-        expect(
-          () => repo.canClose(root),
-          throwsA(
-            isA<ValidationException>().having(
-              (error) => error.code,
-              'code',
-              AppErrorCode.txCloseNotLeaf,
-            ),
-          ),
-        );
-        expect(() => repo.canFinalize(root), returnsNormally);
-        expect(
-          () => repo.canRefund(root),
-          throwsA(
-            isA<ValidationException>().having(
-              (error) => error.code,
-              'code',
-              AppErrorCode.txRefundRootClosed,
-            ),
-          ),
-        );
-        expect(() => repo.canDelete(root), returnsNormally);
-      },
-    );
+      expect(
+        () => repo.canClose(root),
+        throwsA(isA<ValidationException>().having((error) => error.code, 'code', AppErrorCode.txCloseNotLeaf)),
+      );
+      expect(() => repo.canFinalize(root), returnsNormally);
+      expect(
+        () => repo.canRefund(root),
+        throwsA(isA<ValidationException>().having((error) => error.code, 'code', AppErrorCode.txRefundRootClosed)),
+      );
+      expect(() => repo.canDelete(root), returnsNormally);
+    });
   });
 }

@@ -317,12 +317,12 @@ class TransactionCalculation {
     Decimal rt = Decimal.one;
     TransactionsModel ctx = tx;
 
-    while (true) {
-      final stx = txsMap[ctx.isLeaf ? ctx.pid : ctx.tid];
+    while (ctx.isLeaf) {
+      final stx = txsMap[ctx.pid];
       if (stx == null) break;
 
       if (stx.isRoot) {
-        if ((stx.isCapital && stx.srId == tx.rrId || stx.rrId == tx.rrId) && ctx.srId == tx.rrId) {
+        if (stx.rrId == tx.rrId && ctx.srId == tx.rrId) {
           return Math.subtract(tx.balance, Math.multiply(ctx.srAmount, rt));
         }
         break;

@@ -1,3 +1,6 @@
+import 'package:decimal/decimal.dart';
+
+import '../../core/math.dart';
 import 'model.dart';
 
 class TransactionsHelper {
@@ -197,13 +200,22 @@ class TransactionsHelper {
 
     TransactionsModel? ptx;
     TransactionsModel ctx = tx;
+    Decimal rt = Decimal.one;
 
     while (ctx.isLeaf) {
       final stx = txsMap[ctx.pid];
       if (stx == null) break;
 
-      if (ctx.srId == tx.rrId && ctx.srAmount <= tx.balance && (!stx.isRoot || stx.rrId == tx.rrId)) {
+      final Decimal effectiveSrAmount = Math.multiply(ctx.srAmount, rt);
+
+      if (ctx.srId == tx.rrId && effectiveSrAmount <= tx.balance && (!stx.isRoot || stx.rrId == tx.rrId)) {
         ptx = stx;
+      }
+
+      if (stx.isRoot) break;
+
+      if (stx.rrAmount > Decimal.zero) {
+        rt = Math.multiply(rt, Math.divide(ctx.srAmount, stx.rrAmount));
       }
 
       ctx = stx;

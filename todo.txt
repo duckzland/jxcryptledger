@@ -4,10 +4,10 @@ Todo list
 - [DONE] Update the txs batch form to show progress bar when doing the action and only close when the action completed
 - Add more tests for complete features set
 - [DONE] Fix slow finalized when fired with many txs at batch txs but not at per card txs
-- [DONE] create batch txs operations function and utilize ipc putAll for actions, return the failed tx and update the batch form to match it
-- Improve the batch trade by filtering out no profit tx when is on profit taking mode and add auto close and take profit logic
+- [REVERTED] create batch txs operations function and utilize ipc putAll for actions, return the failed tx and update the batch form to match it
+- [DONE] Improve the batch trade by filtering out no profit tx when is on profit taking mode and add auto close and take profit logic
 - [DONE] Virtualized when only one content must align top not center
-- Create action take profit. Add function to drill the furthest close point for this. Create in TransactionsController.
+- [DONE] Created a getCloseTargetParent func and new tx helper static class. Add function to drill the furthest close point for this.
 - [DONE] Batch action dialog cancel button showing the success message
 - [DONE] tx note not showing at batch trade and edit table
 

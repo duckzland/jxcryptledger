@@ -30,7 +30,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
   final bool debugLogs = true;
 
-  late final _cache = TransactionsIndex(() => extract());
+  late final _cache = TransactionsIndex(() => box.items.cast<String, TransactionsModel>());
 
   void resetIndexes() => _cache.invalidate();
 
@@ -290,7 +290,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
               .every((leaf) => leaf.statusEnum == TransactionStatus.inactive);
     }
 
-    final newStatus = allClosed  ? TransactionStatus.active.index : TransactionStatus.partial.index;
+    final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
     final updatedTarget = target.copyWith(balance: Math.add(target.balance, tx.balance), status: newStatus);
 
     final closedTx = tx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);

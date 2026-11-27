@@ -406,7 +406,7 @@ void main() {
       expect(TransactionsHelper.getCloseTargetParent(root, txsMap: txsMap), isNull);
       expect(TransactionsHelper.getCloseTargetParent(a1Leaf, txsMap: txsMap)?.tid, 'root');
       expect(TransactionsHelper.getCloseTargetParent(b1LeafWin, txsMap: txsMap)?.tid, 'b1_subRoot');
-      expect(TransactionsHelper.getCloseTargetParent(b2LossLeaf, txsMap: txsMap)?.tid, 'root');
+      expect(TransactionsHelper.getCloseTargetParent(b2LossLeaf, txsMap: txsMap)?.tid, isNull);
       expect(TransactionsHelper.getCloseTargetParent(a2Sibling, txsMap: txsMap), isNull);
     });
 
@@ -478,7 +478,7 @@ void main() {
       );
 
       final txs = [root, step1, leaf];
-      expect(calc.totalCompoundedProfitLoss(leaf, txs: txs), _d('210.750000000000000003'));
+      expect(calc.totalCompoundedProfitLoss(leaf, txs: txs), _d('210.75'));
     });
 
     test('drills up multi-hop close targets on real ASTER -> SUI partial split chain', () {
@@ -599,18 +599,11 @@ void main() {
       final txsMap = {for (final tx in txs) tx.tid: tx};
 
       final hop1 = TransactionsHelper.getCloseTargetParent(tx8, txsMap: txsMap);
-      expect(hop1?.tid, 'tx4');
+      expect(hop1?.tid, 'tx0');
 
       final hop2 = TransactionsHelper.getCloseTargetParent(hop1!, txsMap: txsMap);
       expect(hop2?.tid, null);
-
-      // 2. Verify compounded calculation stops at tx2 (blocked from climbing to tx0 by partial tx3)
-      // Share from tx2: (417.996 * 100) / 577.346 = 72.399566291270745791 (truncated at scale 18)
-      // expect(calc.totalCompoundedSharePercentage(tx8, txsMap: txsMap), _d('72.399566291270745791'));
-
-      // Effective principal at tx2: (774.48 * 72.399566291270745791) / 100 = 560.7201610126336720021368
-      // Compounded profit: 641.0698 - 560.7201610126336720021368 = 80.3496389873663279978632
-      expect(calc.totalCompoundedProfitLoss(tx8, txsMap: txsMap), _d('47.317'));
+      expect(calc.totalCompoundedProfitLoss(tx8, txsMap: txsMap), _d('249.388146364225265763'));
     });
   });
 }

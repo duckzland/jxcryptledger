@@ -2,7 +2,7 @@ import '../../core/log.dart';
 import 'model.dart';
 
 class TransactionsIndex {
-  final Iterable<TransactionsModel> Function() _sourceExtractor;
+  final Map<String, TransactionsModel> Function() _sourceExtractor;
 
   Map<String, TransactionsModel>? _byTid;
   Map<String, List<TransactionsModel>>? _byPid;
@@ -36,47 +36,42 @@ class TransactionsIndex {
   void update(TransactionsModel tx) {
     if (!isInitialized) return;
 
-    final old = _byTid![tx.tid];
-    if (old != null) {
-      _byPid![old.pid]?.removeWhere((item) => item.tid == old.tid);
-    }
+    _byPid![tx.pid]?.removeWhere((item) => item.tid == tx.tid);
 
-    _byTid![tx.tid] = tx;
     (_byRid![tx.isRoot ? tx.tid : tx.rid] ??= <String, TransactionsModel>{})[tx.tid] = tx;
     (_byPid![tx.pid] ??= <TransactionsModel>[]).add(tx);
   }
 
   void remove(TransactionsModel tx) {
-    removeByTid(tx.tid);
+    removeByTid(tx.tid, tx: tx);
   }
 
-  void removeByTid(String tid) {
+  void removeByTid(String tid, {TransactionsModel? tx}) {
     if (!isInitialized) return;
 
-    final tx = _byTid!.remove(tid);
-    if (tx == null) return;
+    final target = tx ?? _byTid![tid];
+    if (target == null) return;
 
-    _byPid![tx.pid]?.removeWhere((item) => item.tid == tid);
+    _byPid![target.pid]?.removeWhere((item) => item.tid == tid);
 
-    if (tx.isRoot) {
+    if (target.isRoot) {
       _byRid!.remove(tid);
     } else {
-      _byRid![tx.rid]?.remove(tid);
+      _byRid![target.rid]?.remove(tid);
     }
   }
 
   void generate() {
-    final indexed = <String, TransactionsModel>{};
+    final source = _sourceExtractor();
     final roots = <String, Map<String, TransactionsModel>>{};
     final children = <String, List<TransactionsModel>>{};
 
-    for (final tx in _sourceExtractor()) {
-      indexed[tx.tid] = tx;
+    for (final tx in source.values) {
       (roots[tx.isRoot ? tx.tid : tx.rid] ??= <String, TransactionsModel>{})[tx.tid] = tx;
       (children[tx.pid] ??= <TransactionsModel>[]).add(tx);
     }
 
-    _byTid = indexed;
+    _byTid = source;
     _byPid = children;
     _byRid = roots;
 
@@ -84,7 +79,7 @@ class TransactionsIndex {
   }
 
   void _ensureInitialized() {
-    if (_byTid == null) {
+    if (!isInitialized) {
       generate();
     }
   }
