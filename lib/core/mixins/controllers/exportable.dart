@@ -14,6 +14,7 @@ mixin CoreMixinsControllersExportable<T extends CoreModelWithId, R extends CoreM
 
   Future<void> importDatabase(String rawJson) async {
     await repo.import(rawJson);
-    load();
+    // BugFix: Large import can create bad layout.
+    await Future.delayed(Duration(milliseconds: 10), load);
   }
 }

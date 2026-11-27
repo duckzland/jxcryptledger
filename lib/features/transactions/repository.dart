@@ -201,16 +201,12 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
   Future<void> remove(TransactionsModel tx) async {
     canDelete(tx);
 
-    if (debugLogs) {
-      logln(
-        "${tx.tid}|${tx.pid}|${tx.rid}|${tx.srId}|${tx.srAmount}|${tx.rrId}|${tx.rrAmount}|${tx.balance}|${tx.status}|${tx.closable}|${tx.timestamp}",
-        "DELETE",
-      );
-    }
-
-    // Collect only descendants of tx via the indexed tree (instead of scanning the whole box)
     final descendants = TransactionsHelper.collectAllLeaves(tx, childrenMap: getIndexedParentMap());
-    for (final ttx in descendants) {
+    final payload = [...descendants, tx];
+
+    await box.deleteAll(payload);
+
+    for (final ttx in payload) {
       if (debugLogs) {
         logln(
           "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
@@ -218,12 +214,8 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
         );
       }
 
-      await box.delete(ttx.tid);
-      _cache.removeByTid(ttx.tid);
+      _cache.remove(ttx);
     }
-
-    await box.delete(tx.tid);
-    _cache.removeByTid(tx.tid);
   }
 
   @override
@@ -474,16 +466,64 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     final List<String> result = [];
+    List<TransactionsModel> remove = [];
+    List<TransactionsModel> update = [];
 
     for (final tx in txs) {
       try {
-        await refund(tx);
+        canRefund(tx);
+
+        TransactionsModel? otx = box.get(tx.tid);
+        TransactionsModel? ptx = box.get(tx.pid);
+        if (otx == null || ptx == null) {
+          continue;
+        }
+
+        final leaves = TransactionsHelper.collectTerminalLeaves(ptx, childrenMap: getIndexedParentMap());
+        final allClosed =
+            leaves.isNotEmpty &&
+            leaves
+                // Current tx hasn't mutate status yet thus ignore it!
+                .where((leaf) => leaf.tid != otx.tid)
+                .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
+
+        final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
+        final utx = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
+
+        remove.add(tx);
+        update.add(utx);
       } catch (_) {
         continue;
-      } finally {
-        result.add(tx.tid);
       }
     }
+
+    try {
+      await box.deleteAll(remove);
+      await box.addAll(update);
+
+      for (final ttx in remove) {
+        if (debugLogs) {
+          logln(
+            "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
+            "REFUNDING",
+          );
+        }
+
+        _cache.remove(ttx);
+        result.add(ttx.tid);
+      }
+
+      for (final utx in update) {
+        if (debugLogs) {
+          logln(
+            "${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}",
+            "REBALANCING",
+          );
+        }
+
+        _cache.update(utx);
+      }
+    } catch (_) {}
 
     return result;
   }
@@ -502,16 +542,32 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     final List<String> result = [];
+    List<TransactionsModel> payload = [];
 
     for (final tx in txs) {
       try {
-        await finalize(tx);
+        canFinalize(tx);
+        final ntx = tx.copyWith(status: TransactionStatus.finalized.index);
+        payload.add(ntx);
       } catch (_) {
         continue;
-      } finally {
-        result.add(tx.tid);
       }
     }
+
+    try {
+      await box.addAll(payload);
+      for (final ttx in payload) {
+        if (debugLogs) {
+          logln(
+            "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
+            "FINALIZING",
+          );
+        }
+
+        _cache.update(ttx);
+        result.add(ttx.tid);
+      }
+    } catch (_) {}
 
     return result;
   }
@@ -530,108 +586,64 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     final List<String> result = [];
+    List<TransactionsModel> payload = [];
 
     for (final tx in txs) {
       try {
-        await remove(tx);
+        canDelete(tx);
+        final descendants = TransactionsHelper.collectAllLeaves(tx, childrenMap: getIndexedParentMap());
+        payload = [...payload, ...descendants, tx];
       } catch (_) {
         continue;
-      } finally {
-        result.add(tx.tid);
       }
     }
+
+    try {
+      await box.deleteAll(payload);
+      for (final ttx in payload) {
+        if (debugLogs) {
+          logln(
+            "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
+            "DELETE",
+          );
+        }
+
+        _cache.remove(ttx);
+
+        if (txs.contains(ttx)) {
+          result.add(ttx.tid);
+        }
+      }
+    } catch (_) {}
 
     return result;
   }
 
-  bool canAdd(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final hasOverlay = overlay != null && overlay.isNotEmpty;
-    final rules = TransactionsRulesCreate(
-      tx,
-      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
-      hasOverlay ? const {} : getIndexedParentMap(),
-      hasOverlay ? const {} : getIndexedRootMap(),
-      silent ?? !debugLogs,
-    );
-    final isValid = rules.validate();
-    return isValid;
+  bool canAdd(TransactionsModel tx, {bool? silent}) {
+    return TransactionsRulesCreate(tx, getIndexedMap(), getIndexedParentMap(), getIndexedRootMap(), silent ?? !debugLogs).validate();
   }
 
-  bool canDelete(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final hasOverlay = overlay != null && overlay.isNotEmpty;
-    final rules = TransactionsRulesDelete(
-      tx,
-      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
-      hasOverlay ? const {} : getIndexedParentMap(),
-      hasOverlay ? const {} : getIndexedRootMap(),
-      silent ?? !debugLogs,
-    );
-    final isValid = rules.validate();
-    return isValid;
+  bool canDelete(TransactionsModel tx, {bool? silent}) {
+    return TransactionsRulesDelete(tx, getIndexedMap(), getIndexedParentMap(), getIndexedRootMap(), silent ?? !debugLogs).validate();
   }
 
-  bool canUpdate(TransactionsModel tx, {bool? silent = false, Map<dynamic, TransactionsModel>? overlay}) {
-    final hasOverlay = overlay != null && overlay.isNotEmpty;
-    final rules = TransactionsRulesUpdate(
-      tx,
-      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
-      hasOverlay ? const {} : getIndexedParentMap(),
-      hasOverlay ? const {} : getIndexedRootMap(),
-      silent ?? !debugLogs,
-    );
-    final isValid = rules.validate();
-    return isValid;
+  bool canUpdate(TransactionsModel tx, {bool? silent = false}) {
+    return TransactionsRulesUpdate(tx, getIndexedMap(), getIndexedParentMap(), getIndexedRootMap(), silent ?? !debugLogs).validate();
   }
 
-  bool canClose(TransactionsModel tx, {bool? silent = false, Map<dynamic, TransactionsModel>? overlay}) {
-    final hasOverlay = overlay != null && overlay.isNotEmpty;
-    final rules = TransactionsRulesClose(
-      tx,
-      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
-      hasOverlay ? const {} : getIndexedParentMap(),
-      hasOverlay ? const {} : getIndexedRootMap(),
-      silent ?? !debugLogs,
-    );
-    final isValid = rules.validate();
-    return isValid;
+  bool canClose(TransactionsModel tx, {bool? silent = false}) {
+    return TransactionsRulesClose(tx, getIndexedMap(), getIndexedParentMap(), getIndexedRootMap(), silent ?? !debugLogs).validate();
   }
 
-  bool canTrade(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final hasOverlay = overlay != null && overlay.isNotEmpty;
-    final rules = TransactionsRulesTrade(
-      tx,
-      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
-      hasOverlay ? const {} : getIndexedParentMap(),
-      hasOverlay ? const {} : getIndexedRootMap(),
-      silent ?? !debugLogs,
-    );
-    final isValid = rules.validate();
-    return isValid;
+  bool canTrade(TransactionsModel tx, {bool? silent}) {
+    return TransactionsRulesTrade(tx, getIndexedMap(), getIndexedParentMap(), getIndexedRootMap(), silent ?? !debugLogs).validate();
   }
 
-  bool canRefund(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final hasOverlay = overlay != null && overlay.isNotEmpty;
-    final rules = TransactionsRulesRefund(
-      tx,
-      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
-      hasOverlay ? const {} : getIndexedParentMap(),
-      hasOverlay ? const {} : getIndexedRootMap(),
-      silent ?? !debugLogs,
-    );
-    final isValid = rules.validate();
-    return isValid;
+  bool canRefund(TransactionsModel tx, {bool? silent}) {
+    return TransactionsRulesRefund(tx, getIndexedMap(), getIndexedParentMap(), getIndexedRootMap(), silent ?? !debugLogs).validate();
   }
 
-  bool canFinalize(TransactionsModel tx, {bool? silent, Map<dynamic, TransactionsModel>? overlay}) {
-    final hasOverlay = overlay != null && overlay.isNotEmpty;
-    final rules = TransactionsRulesFinalize(
-      tx,
-      hasOverlay ? {...getIndexedMap(), ...overlay.cast<String, TransactionsModel>()} : getIndexedMap(),
-      hasOverlay ? const {} : getIndexedParentMap(),
-      hasOverlay ? const {} : getIndexedRootMap(),
-      silent ?? !debugLogs,
-    );
-    final isValid = rules.validate();
-    return isValid;
+  bool canFinalize(TransactionsModel tx, {bool? silent}) {
+    return TransactionsRulesFinalize(tx, getIndexedMap(), getIndexedParentMap(), getIndexedRootMap(), silent ?? !debugLogs).validate();
   }
 }
