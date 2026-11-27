@@ -60,6 +60,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   late String _selectedSymbol;
   late Decimal _sourceAmount;
+  late Decimal _maxAmount;
   late List<TransactionsModel> txs;
 
   late TextEditingController rateController;
@@ -69,7 +70,6 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
   Decimal _fromAmount = Decimal.zero;
   Decimal _toAmount = Decimal.zero;
-  Decimal? _maxAmount;
 
   Color? _accentColor;
   String _targetSymbol = "";
@@ -112,6 +112,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     _selectedSymbol = _cryptoController.getSymbol(widget.srId) ?? 'Unknown Coin';
     _sourceAmount = Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(txs));
+    _maxAmount = _sourceAmount;
 
     for (final tx in txs) {
       selectableSetSelected(tx.uuid, true);
@@ -271,7 +272,12 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
           empty: Center(
             child: Text("No transactions available", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           ),
-          onSelectAll: selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String)),
+          onSelectAll: (bool? selected) {
+            selectableOnSelectAll(() => tableData.map((r) => r['uuid'] as String))(selected);
+            setState(() {
+              _updateField();
+            });
+          },
           columns: tableColumns,
           rows: rows,
         ),
@@ -788,7 +794,8 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
 
     switch (_mode) {
       case TransactionsDialogBatchTradeMode.rate:
-        _sourceAmount = _maxAmount = Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(stxs));
+        _maxAmount = Utils.sanitizeFractalDecimal(_calc.totalActiveBalance(stxs));
+        _sourceAmount = _maxAmount;
         break;
       case TransactionsDialogBatchTradeMode.profit:
         _maxAmount = Utils.sanitizeFractalDecimal(
@@ -864,66 +871,72 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       _isProcessing = true;
     });
 
-    final List<TransactionsModel> completed = [];
     final allocations = _resolveAllocations(stxs);
     final isTakeProfit = _mode == TransactionsDialogBatchTradeMode.profit;
     final accentColor = _accentColor?.toARGB32().toRadixString(16).padLeft(8, '0') ?? "";
+
+    final Map<String, TransactionsModel> xtxs = {};
+    final List<TransactionsModel> ntxs = [];
+    final List<({TransactionsModel close, TransactionsModel add})> ptxs = [];
 
     for (final tx in stxs) {
       final sourceAmount = Utils.sanitizeFractalDecimal(allocations.from[tx.uuid] ?? Decimal.zero);
       final amount = Utils.sanitizeFractalDecimal(allocations.to[tx.uuid] ?? Decimal.zero);
       if (sourceAmount <= Decimal.zero || amount <= Decimal.zero) continue;
 
-      try {
-        final parent = isTakeProfit
-            ? TransactionsHelper.getCloseTargetParent(
-                tx,
-                txsMap: _txController.getIndexedRootMap()[tx.rid] ?? _txController.getIndexedMap(),
-              )
-            : tx;
+      final parent = isTakeProfit
+          ? TransactionsHelper.getCloseTargetParent(tx, txsMap: _txController.getIndexedRootMap()[tx.rid] ?? _txController.getIndexedMap())
+          : tx;
 
-        if (parent == null) {
-          return;
-        }
-
-        final meta = Map<String, dynamic>.from(tx.meta);
-        if (_noteEntry != null) meta['trading_notes'] = _noteEntry;
-        if (accentColor.isNotEmpty) meta['accent_color'] = accentColor;
-
-        final child = TransactionsModel(
-          tid: _txController.generateId(),
-          rid: parent.isRoot ? parent.tid : parent.rid,
-          pid: parent.tid,
-          srId: parent.rrId,
-          srAmount: sourceAmount,
-          rrId: rateableTarget!,
-          rrAmount: amount,
-          balance: amount,
-          status: TransactionStatus.active.index,
-          timestamp: Utils.dateToTimestamp(DateTime.now()),
-          closable: false,
-          meta: meta,
-        );
-
-        if (isTakeProfit) {
-          await _txController.close(tx);
-        }
-
-        await _txController.add(child);
-
-        txs.remove(tx);
-        completed.add(tx);
-        selectableSetSelected(tx.uuid, false);
-      } catch (e, st) {
-        logln("Failed processing tx=${tx.tid}: $e\n$st");
+      if (parent == null) {
+        continue;
       }
+
+      final meta = Map<String, dynamic>.from(tx.meta);
+      if (_noteEntry != null) meta['trading_notes'] = _noteEntry;
+      if (accentColor.isNotEmpty) meta['accent_color'] = accentColor;
+
+      final child = TransactionsModel(
+        tid: _txController.generateId(),
+        rid: parent.isRoot ? parent.tid : parent.rid,
+        pid: parent.tid,
+        srId: parent.rrId,
+        srAmount: sourceAmount,
+        rrId: rateableTarget!,
+        rrAmount: amount,
+        balance: amount,
+        status: TransactionStatus.active.index,
+        timestamp: Utils.dateToTimestamp(DateTime.now()),
+        closable: false,
+        meta: meta,
+      );
+
+      if (isTakeProfit) {
+        ptxs.add((close: tx, add: child));
+      } else {
+        ntxs.add(child);
+      }
+      xtxs[child.tid] = tx;
     }
 
-    if (completed.length != stxs.length) {
+    List<String> success = [];
+    if (isTakeProfit) {
+      success = await _txController.takeProfitAll(ptxs);
+    } else {
+      success = await _txController.addAll(ntxs);
+    }
+
+    for (final uuid in success) {
+      final tx = xtxs[uuid];
+      if (tx != null) txs.remove(tx);
+      selectableSetSelected(uuid, false);
+    }
+
+    if (success.length != stxs.length) {
       widget.onSave?.call(
         BatchException(
           AppErrorCode.batchOpsFailed,
-          "Batch trades partially or fully failed: ${stxs.length - completed.length}/${stxs.length} failed.",
+          "Batch trades partially or fully failed: ${stxs.length - success.length}/${stxs.length} failed.",
           "Failed to trade some of the transactions.",
         ),
       );

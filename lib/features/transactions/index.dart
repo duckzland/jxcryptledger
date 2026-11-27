@@ -43,22 +43,32 @@ class TransactionsIndex {
   }
 
   void remove(TransactionsModel tx) {
-    removeByTid(tx.tid, tx: tx);
+    removeByTid(tx.tid);
   }
 
-  void removeByTid(String tid, {TransactionsModel? tx}) {
+  void removeByTid(String tid) {
     if (!isInitialized) return;
 
-    final target = tx ?? _byTid![tid];
-    if (target == null) return;
+    final orphanedTids = <String>{...?_byRid![tid]?.keys, ...?_byPid![tid]?.map((tx) => tx.tid)};
 
-    _byPid![target.pid]?.removeWhere((item) => item.tid == tid);
-
-    if (target.isRoot) {
-      _byRid!.remove(tid);
-    } else {
-      _byRid![target.rid]?.remove(tid);
+    _byTid!.remove(tid);
+    for (final childTid in orphanedTids) {
+      _byTid!.remove(childTid);
     }
+
+    _byRid!.remove(tid);
+    _byPid!.remove(tid);
+
+    _byPid!.removeWhere((pid, txList) {
+      txList.removeWhere((tx) => tx.tid == tid || orphanedTids.contains(tx.tid));
+      return txList.isEmpty;
+    });
+
+    _byRid!.removeWhere((rid, txMap) {
+      txMap.remove(tid);
+      orphanedTids.forEach(txMap.remove);
+      return txMap.isEmpty;
+    });
   }
 
   void generate() {

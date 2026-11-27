@@ -32,6 +32,16 @@ class _WidgetsListVirtualizedState extends State<WidgetsListVirtualized> {
   void didUpdateWidget(covariant WidgetsListVirtualized oldWidget) {
     super.didUpdateWidget(oldWidget);
     _cachedKey = null;
+    _ensureLayout(_width, _height);
+
+    // Fix update too fast showing blank screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _cachedKey = null;
+        _ensureLayout(_width, _height);
+      });
+    });
   }
 
   void _ensureLayout(double width, double height) {

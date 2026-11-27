@@ -214,7 +214,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
         );
       }
 
-      _cache.remove(ttx);
+      _cache.removeByTid(ttx.tid);
     }
   }
 
@@ -380,9 +380,9 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
         await add(tx);
       } catch (_) {
         continue;
-      } finally {
-        result.add(tx.tid);
       }
+
+      result.add(tx.tid);
     }
 
     return result;
@@ -416,9 +416,9 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
         await update(tx);
       } catch (_) {
         continue;
-      } finally {
-        result.add(tx.tid);
       }
+
+      result.add(tx.tid);
     }
 
     return result;
@@ -444,9 +444,9 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
         await close(tx);
       } catch (_) {
         continue;
-      } finally {
-        result.add(tx.tid);
       }
+
+      result.add(tx.tid);
     }
 
     return result;
@@ -466,64 +466,16 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     }
 
     final List<String> result = [];
-    List<TransactionsModel> remove = [];
-    List<TransactionsModel> update = [];
 
     for (final tx in txs) {
       try {
-        canRefund(tx);
-
-        TransactionsModel? otx = box.get(tx.tid);
-        TransactionsModel? ptx = box.get(tx.pid);
-        if (otx == null || ptx == null) {
-          continue;
-        }
-
-        final leaves = TransactionsHelper.collectTerminalLeaves(ptx, childrenMap: getIndexedParentMap());
-        final allClosed =
-            leaves.isNotEmpty &&
-            leaves
-                // Current tx hasn't mutate status yet thus ignore it!
-                .where((leaf) => leaf.tid != otx.tid)
-                .every((leaf) => leaf.statusEnum == TransactionStatus.closed);
-
-        final newStatus = allClosed ? TransactionStatus.active.index : TransactionStatus.partial.index;
-        final utx = ptx.copyWith(balance: Math.add(ptx.balance, tx.srAmount), status: newStatus);
-
-        remove.add(tx);
-        update.add(utx);
+        await refund(tx);
       } catch (_) {
         continue;
       }
+
+      result.add(tx.tid);
     }
-
-    try {
-      await box.deleteAll(remove);
-      await box.addAll(update);
-
-      for (final ttx in remove) {
-        if (debugLogs) {
-          logln(
-            "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
-            "REFUNDING",
-          );
-        }
-
-        _cache.remove(ttx);
-        result.add(ttx.tid);
-      }
-
-      for (final utx in update) {
-        if (debugLogs) {
-          logln(
-            "${utx.tid}|${utx.pid}|${utx.rid}|${utx.srId}|${utx.srAmount}|${utx.rrId}|${utx.rrAmount}|${utx.balance}|${utx.status}|${utx.closable}|${utx.timestamp}",
-            "REBALANCING",
-          );
-        }
-
-        _cache.update(utx);
-      }
-    } catch (_) {}
 
     return result;
   }
@@ -608,7 +560,7 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
           );
         }
 
-        _cache.remove(ttx);
+        _cache.removeByTid(ttx.tid);
 
         if (txs.contains(ttx)) {
           result.add(ttx.tid);

@@ -75,6 +75,23 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     return result;
   }
 
+  Future<List<String>> takeProfitAll(List<({TransactionsModel close, TransactionsModel add})> ptxs) async {
+    final List<String> result = [];
+
+    for (final tx in ptxs) {
+      try {
+        await repo.close(tx.close);
+        await repo.add(tx.add);
+        result.add(tx.add.tid);
+      } catch (_) {
+        continue;
+      }
+    }
+
+    load();
+    return result;
+  }
+
   TransactionsModel? getParent(TransactionsModel tx) {
     return repo.getIndexedMap()[tx.pid];
   }
