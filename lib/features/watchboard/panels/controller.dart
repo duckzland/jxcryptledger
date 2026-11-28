@@ -32,12 +32,13 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   }
 
   @override
-  Future<void> processNewRate(PanelsModel tx, Decimal newRate) async {
+  Future<PanelsModel?> processNewRate(PanelsModel tx, Decimal newRate) async {
     if (newRate != tx.rate) {
       tx.setRate(newRate);
-      await repo.update(tx);
-      load();
+      return tx;
     }
+
+    return null;
   }
 
   PanelsModel? getLinked(String linkKey) {
@@ -129,13 +130,19 @@ class PanelsController extends CoreBaseController<PanelsModel, PanelsRepository>
   }
 
   Future<void> wipeLinked() async {
+    List<PanelsModel> payload = [];
+
     for (final wx in items) {
       final txlink = wx.meta['txLink'] ?? "";
       if (txlink.isEmpty) {
         continue;
       }
 
-      await remove(wx);
+      payload.add(wx);
+    }
+
+    if (payload.isNotEmpty) {
+      await repo.deleteAll(payload);
     }
 
     load();

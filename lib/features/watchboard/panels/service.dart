@@ -9,10 +9,12 @@ class PanelsService extends CoreBaseService<PanelsModel, PanelsRepository> with 
   PanelsService(super.repo);
 
   @override
-  Future<void> processNewRate(PanelsModel tx, Decimal newRate) async {
+  Future<PanelsModel?> processNewRate(PanelsModel tx, Decimal newRate) async {
     if (newRate != tx.rate) {
       tx.setRate(newRate);
-      await repo.update(tx);
+      return tx;
     }
+
+    return null;
   }
 }

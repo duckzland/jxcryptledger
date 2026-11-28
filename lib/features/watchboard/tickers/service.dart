@@ -21,6 +21,8 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
   TickersService(super.repo, this.settingsRepo, this.marketsService);
 
+  List<({int type, String newVal, String? title})> payloads = [];
+
   @override
   Future<void> init() async {
     await repo.init();
@@ -37,10 +39,15 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
   }
 
   Future<void> populate({bool fetchRate = true}) async {
+    List<TickersModel> payload = [];
     for (final tx in defaultTickers) {
       if (repo.get(tx.uuid) == null) {
-        await repo.add(tx);
+        payload.add(tx);
       }
+    }
+
+    if (payload.isNotEmpty) {
+      await repo.addAll(payload);
     }
 
     if (fetchRate) {
@@ -124,7 +131,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       index = body["data"]["altcoin_index"].toString();
     }
 
-    repo.updateByType(TickerType.altcoinIndex.index, index);
+    payloads.add((type: TickerType.altcoinIndex.index, newVal: index, title: null));
 
     return true;
   }
@@ -153,7 +160,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       score = body['data']['value'].toString();
     }
 
-    repo.updateByType(TickerType.fearGreed.index, score);
+    payloads.add((type: TickerType.fearGreed.index, newVal: score, title: null));
 
     return true;
   }
@@ -182,7 +189,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
       value = body["data"]["value"].toString();
     }
 
-    repo.updateByType(TickerType.cmc100.index, value);
+    payloads.add((type: TickerType.cmc100.index, newVal: value, title: null));
 
     return true;
   }
@@ -197,13 +204,13 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
     if (isLegacy) {
       final marketCap = body["data"]["historicalValues"]["now"]["marketCap"].toString();
-      repo.updateByType(TickerType.marketCap.index, marketCap);
+      payloads.add((type: TickerType.marketCap.index, newVal: marketCap, title: null));
     } else {
       final marketCap = body["data"]["quote"]["USD"]["total_market_cap"].toString();
-      repo.updateByType(TickerType.marketCap.index, marketCap);
+      payloads.add((type: TickerType.marketCap.index, newVal: marketCap, title: null));
 
       final dominanceBtc = body["data"]["btc_dominance"].toString();
-      repo.updateByType(TickerType.dominance.index, dominanceBtc);
+      payloads.add((type: TickerType.dominance.index, newVal: dominanceBtc, title: null));
     }
 
     return true;
@@ -223,8 +230,8 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final avgRsi = overall["averageRsi"].toString();
     final pulse = overBought - overSold;
 
-    repo.updateByType(TickerType.rsi.index, avgRsi);
-    repo.updateByType(TickerType.pulse.index, pulse.toString());
+    payloads.add((type: TickerType.rsi.index, newVal: avgRsi, title: null));
+    payloads.add((type: TickerType.pulse.index, newVal: pulse.toString(), title: null));
 
     return true;
   }
@@ -236,7 +243,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final btcValue = body["data"]["totalBtcValue"];
     final ethValue = body["data"]["totalEthValue"];
 
-    repo.updateByType(TickerType.etf.index, (ethValue ?? btcValue ?? total ?? 0).toString());
+    payloads.add((type: TickerType.etf.index, newVal: (ethValue ?? btcValue ?? total ?? 0).toString(), title: null));
 
     return true;
   }
@@ -256,7 +263,7 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final dominanceList = body["data"]["dominance"] as List<dynamic>;
     final btc = dominanceList[0]["mcProportion"].toString();
 
-    repo.updateByType(TickerType.dominance.index, btc);
+    payloads.add((type: TickerType.dominance.index, newVal: btc, title: null));
 
     return true;
   }
@@ -288,24 +295,21 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
     final gainer200_24h = sorted200_24h.first;
     final loser200_24h = sorted200_24h.last;
 
-    repo.updateByType(TickerType.topGainer100_1h.index, gainer100_1h.percent1hText, title: '${gainer100_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topGainer100_24h.index, gainer100_24h.percent24hText, title: '${gainer100_24h.symbol} - 24h');
-
-    repo.updateByType(TickerType.topLoser100_1h.index, loser100_1h.percent1hText, title: '${loser100_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topLoser100_24h.index, loser100_24h.percent24hText, title: '${loser100_24h.symbol} - 24h');
-
-    repo.updateByType(TickerType.topGainer200_1h.index, gainer200_1h.percent1hText, title: '${gainer200_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topGainer200_24h.index, gainer200_24h.percent24hText, title: '${gainer200_24h.symbol} - 24h');
-
-    repo.updateByType(TickerType.topLoser200_1h.index, loser200_1h.percent1hText, title: '${loser200_1h.symbol} - 1h');
-    repo.updateByType(TickerType.topLoser200_24h.index, loser200_24h.percent24hText, title: '${loser200_24h.symbol} - 24h');
-
+    payloads.add((type: TickerType.topGainer100_1h.index, newVal: gainer100_1h.percent1hText, title: '${gainer100_1h.symbol} - 1h'));
+    payloads.add((type: TickerType.topGainer100_24h.index, newVal: gainer100_24h.percent24hText, title: '${gainer100_24h.symbol} - 24h'));
+    payloads.add((type: TickerType.topLoser100_1h.index, newVal: loser100_1h.percent1hText, title: '${loser100_1h.symbol} - 1h'));
+    payloads.add((type: TickerType.topLoser100_24h.index, newVal: loser100_24h.percent24hText, title: '${loser100_24h.symbol} - 24h'));
+    payloads.add((type: TickerType.topGainer200_1h.index, newVal: gainer200_1h.percent1hText, title: '${gainer200_1h.symbol} - 1h'));
+    payloads.add((type: TickerType.topGainer200_24h.index, newVal: gainer200_24h.percent24hText, title: '${gainer200_24h.symbol} - 24h'));
+    payloads.add((type: TickerType.topLoser200_1h.index, newVal: loser200_1h.percent1hText, title: '${loser200_1h.symbol} - 1h'));
+    payloads.add((type: TickerType.topLoser200_24h.index, newVal: loser200_24h.percent24hText, title: '${loser200_24h.symbol} - 24h'));
     return true;
   }
 
   Future<void> refreshRates() async {
     final all = repo.extract();
     final types = all.map((tix) => TickerType.values[tix.type]).toSet();
+    payloads.clear();
 
     if (types.isEmpty) return;
 
@@ -406,6 +410,10 @@ class TickersService extends CoreBaseService<TickersModel, TickersRepository> wi
 
     try {
       await worker.run(jobs);
+      if (payloads.isNotEmpty) {
+        await repo.updateAllByTypes(payloads);
+      }
+      payloads.clear();
     } finally {
       logln("Fetching new ticker data completed", "TICKERS");
     }

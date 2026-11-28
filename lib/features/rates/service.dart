@@ -314,11 +314,17 @@ class RatesService extends CoreBaseService<RatesModel, RatesRepository> with Rat
       );
     }
 
+    List<RatesModel> payload = [];
     for (final rate in parsed.rates) {
       if (ids.contains(rate.sourceId) && ids.contains(rate.targetId)) {
-        await repo.add(rate);
+        payload.add(rate);
         // logln("Fetched rate for ${rate.sourceId} -> ${rate.targetId} : ${rate.rate}", "RATES");
       }
+    }
+
+    if (payload.isNotEmpty) {
+      logln("Adding all rates for $sourceId (${targetIds.length}) -> ${payload.length}/${parsed.rates.length}", "RATES");
+      await repo.addAll(payload);
     }
   }
 }

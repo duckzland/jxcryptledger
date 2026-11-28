@@ -17,30 +17,32 @@ class WatchersService extends CoreBaseService<WatchersModel, WatchersRepository>
   WatchersService(super.repo, this.notificationService, this.cryptosService);
 
   @override
-  Future<void> processNewRate(WatchersModel tx, Decimal newRate) async {
+  Future<WatchersModel?> processNewRate(WatchersModel tx, Decimal newRate) async {
     logln("Evaluating ${tx.srId}-${tx.rrId}", "WATCHERS");
-    if (tx.isSpent) return;
+    if (tx.isSpent) return null;
 
     final now = DateTime.now().toUtc().microsecondsSinceEpoch;
     final last = Utils.sanitizeTimestamp(tx.timestamp);
     final nextAllowed = last + (tx.duration * 60000000);
-    if (now < nextAllowed) return;
+    if (now < nextAllowed) return null;
 
     switch (tx.operatorEnum) {
       case WatchersOperator.equal:
-        if (newRate != tx.rates) return;
+        if (newRate != tx.rates) return null;
       case WatchersOperator.lessThan:
-        if (newRate >= tx.rates) return;
+        if (newRate >= tx.rates) return null;
       case WatchersOperator.greaterThan:
-        if (newRate <= tx.rates) return;
+        if (newRate <= tx.rates) return null;
     }
 
     final updated = tx.copyWith(sent: tx.sent + 1, timestamp: now);
 
-    await repo.update(updated);
-    load();
+    // await repo.update(updated);
+    // load();
 
     await sendNotification(tx);
+
+    return updated;
   }
 
   Future<void> sendNotification(WatchersModel tx) async {

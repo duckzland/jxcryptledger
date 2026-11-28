@@ -47,9 +47,14 @@ class WatchersController extends CoreBaseController<WatchersModel, WatchersRepos
   }
 
   Future<void> restart() async {
+    List<WatchersModel> payload = [];
     for (final wx in items) {
       final resetWx = wx.copyWith(sent: 0, timestamp: 1);
-      await repo.update(resetWx);
+      payload.add(resetWx);
+    }
+
+    if (payload.isNotEmpty) {
+      repo.addAll(payload);
     }
 
     load();

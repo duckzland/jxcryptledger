@@ -41,6 +41,8 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
   }
 
   Future<void> onRatesUpdated() async {
+    List<T> payload = [];
+
     for (final tx in items) {
       final rx = tx as CoreModelRateable;
       final current = rateableController.getStoredRate(rx.srId, rx.rrId);
@@ -49,11 +51,21 @@ mixin CoreMixinsControllersRateable<T extends CoreModelWithId, R extends CoreBas
         continue;
       }
 
-      processNewRate(tx, current);
+      final p = await processNewRate(tx, current);
+      if (p != null) {
+        payload.add(p);
+      }
+    }
+
+    if (payload.isNotEmpty) {
+      await repo.addAll(payload);
+      load();
     }
   }
 
-  Future<void> processNewRate(T tx, Decimal newRate) async {}
+  Future<T?> processNewRate(T tx, Decimal newRate) async {
+    return null;
+  }
 
   Future<void> refreshRates() async {
     await rateableController.refreshRates();

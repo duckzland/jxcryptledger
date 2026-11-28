@@ -1,6 +1,7 @@
 
 Todo list
 - Add more tests for complete features set
+- Improve rates ops by using batch ops
 
 - [DONE] Update export and import dialog to show progress loading and only close until the action completed
 - [DONE] Update the txs batch form to show progress bar when doing the action and only close when the action completed
