@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/exceptions.dart';
 import '../../core/log.dart';
+import '../async_loader.dart';
 import '../buttons/action.dart';
 import '../notify.dart';
 import 'alert.dart';
@@ -140,27 +141,7 @@ class _WidgetsDialogsImportState extends State<WidgetsDialogsImport> {
         loaderRoute = DialogRoute<void>(
           context: nav.context,
           barrierDismissible: false,
-          builder: (dialogContext) => PopScope(
-            canPop: false,
-            child: Center(
-              child: Material(
-                elevation: 6,
-                borderRadius: BorderRadius.circular(12),
-                color: Theme.of(dialogContext).colorScheme.surface,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 16,
-                    children: [
-                      CircularProgressIndicator(),
-                      Text("Importing data...", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          builder: (dialogContext) => PopScope(canPop: false, child: WidgetsAsyncLoader.indicator(message: "Importing data...")),
         );
         nav.push(loaderRoute);
         await Future.delayed(const Duration(milliseconds: 100));

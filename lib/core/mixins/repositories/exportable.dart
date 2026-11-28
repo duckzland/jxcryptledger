@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import '../../abstracts/models/with_id.dart';
 import '../../abstracts/models/exportable.dart';
@@ -8,18 +9,21 @@ mixin CoreMixinsRepositoriesExportable<T extends CoreModelWithId> on CoreBaseRep
   T Function(Map<String, dynamic> json) get fromJson;
 
   Future<String> export() async {
-    final items = extract();
-    final jsonList = items.cast<T>().map((e) => (e as CoreModelExportable).toJson()).toList();
-    return jsonEncode(jsonList);
+    final snapshot = extract().cast<CoreModelExportable>().toList();
+    return Isolate.run(() {
+      final jsonList = snapshot.map((e) => e.toJson()).toList();
+      return jsonEncode(jsonList);
+    });
   }
 
   Future<void> import(String rawJson) async {
-    final decoded = jsonDecode(rawJson) as List<dynamic>;
-    final txs = decoded.map((e) => fromJson(e as Map<String, dynamic>)).toList();
+    final parser = fromJson;
 
-    await box.clear();
-    for (final tx in txs) {
-      await box.put(tx.uuid, tx);
-    }
+    final items = await Isolate.run(() {
+      final decoded = jsonDecode(rawJson) as List<dynamic>;
+      return decoded.map((e) => parser(e as Map<String, dynamic>)).toList();
+    });
+
+    await box.replace(items);
   }
 }

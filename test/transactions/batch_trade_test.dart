@@ -104,39 +104,11 @@ class _TestTransactionsController extends ChangeNotifier implements Transactions
   }
 
   @override
-  Future<List<String>> addAll(List<TransactionsModel> txs) async {
-    children.addAll(txs);
-    for (final tx in txs) {
-      indexed[tx.tid] = tx;
-    }
-    notifyListeners();
-    return txs.map((tx) => tx.uuid).toList();
-  }
-
-  @override
-  Future<List<String>> updateAll(List<TransactionsModel> txs) async {
-    children.addAll(txs);
-    for (final tx in txs) {
-      indexed[tx.tid] = tx;
-    }
-    notifyListeners();
-    return txs.map((tx) => tx.uuid).toList();
-  }
-
-  @override
   Future<String> close(TransactionsModel tx, {bool? silent}) async {
     closed.add(tx);
     indexed[tx.tid] = tx.copyWith(balance: Decimal.zero, status: TransactionStatus.closed.index);
     notifyListeners();
     return tx.uuid;
-  }
-
-  @override
-  Future<List<String>> closeAll(List<TransactionsModel> txs, {bool? silent}) async {
-    for (final tx in txs) {
-      await close(tx, silent: silent);
-    }
-    return txs.map((tx) => tx.uuid).toList();
   }
 
   @override

@@ -62,6 +62,7 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
         action.id = action.tx.tid;
       } catch (e) {
         action.error = e;
+        if (action.tag != null) failedTags.add(action.tag!);
       }
     }
 

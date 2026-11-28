@@ -7,6 +7,7 @@ import '../../../mixins/rateable.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
+import '../../../widgets/async_loader.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/notify.dart';
@@ -224,90 +225,86 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       return const SizedBox.shrink();
     }
 
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 20,
-                children: [
-                  if (txs.isNotEmpty) Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                  if (txs.isNotEmpty) tableBuild(),
-                  if (txs.isEmpty) Text(emptyMessage, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+    return RepaintBoundary(
+      child: Dialog(
+        insetPadding: const EdgeInsets.all(24),
+        constraints: const BoxConstraints(maxWidth: 1200),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 20,
+                  children: [
+                    if (txs.isNotEmpty) Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                    if (txs.isNotEmpty) tableBuild(),
+                    if (txs.isEmpty) Text(emptyMessage, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
 
-                  Padding(
-                    padding: const EdgeInsets.only(top: 15.0, bottom: 5),
-                    child: Wrap(
-                      direction: Axis.horizontal,
-                      runSpacing: 20,
-                      spacing: 10,
-                      runAlignment: WrapAlignment.center,
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        WidgetsButtonsAction(
-                          label: 'Cancel',
-                          onPressed: (_) => Navigator.pop(context),
-                          evaluator: (s) {
-                            _isProcessing ? s.disable() : s.normal();
-                          },
-                        ),
-                        if (txs.isNotEmpty)
-                          WidgetsDialogsAlert(
-                            label: buttonLabel,
-                            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                            filledMode: true,
-                            dialogTitle: confirmTitle,
-                            dialogMessage: confirmMessage,
-                            dialogCancelLabel: "Cancel",
-                            dialogConfirmLabel: buttonLabel,
-                            showMessage: false,
-                            initialState: buttonActionState,
-                            tooltip: tooltip,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                      child: Wrap(
+                        direction: Axis.horizontal,
+                        runSpacing: 20,
+                        spacing: 10,
+                        runAlignment: WrapAlignment.center,
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          WidgetsButtonsAction(
+                            label: 'Cancel',
+                            onPressed: (_) => Navigator.pop(context),
                             evaluator: (s) {
-                              if (_isProcessing) {
-                                s.progress();
-                                return;
-                              }
-                              if (selectableHasSelectedRows()) {
-                                switch (widget.mode) {
-                                  case TransactionsBatchActionMode.close:
-                                  case TransactionsBatchActionMode.finalize:
-                                    s.warning();
-                                    break;
-                                  case TransactionsBatchActionMode.delete:
-                                  case TransactionsBatchActionMode.refund:
-                                    s.error();
-                                    break;
-                                }
-                              } else {
-                                s.disable();
-                              }
+                              _isProcessing ? s.disable() : s.normal();
                             },
-                            actionCompleteCallback: _handleSave,
                           ),
-                      ],
+                          if (txs.isNotEmpty)
+                            WidgetsDialogsAlert(
+                              label: buttonLabel,
+                              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                              filledMode: true,
+                              dialogTitle: confirmTitle,
+                              dialogMessage: confirmMessage,
+                              dialogCancelLabel: "Cancel",
+                              dialogConfirmLabel: buttonLabel,
+                              showMessage: false,
+                              initialState: buttonActionState,
+                              tooltip: tooltip,
+                              evaluator: (s) {
+                                if (_isProcessing) {
+                                  s.progress();
+                                  return;
+                                }
+                                if (selectableHasSelectedRows()) {
+                                  switch (widget.mode) {
+                                    case TransactionsBatchActionMode.close:
+                                    case TransactionsBatchActionMode.finalize:
+                                      s.warning();
+                                      break;
+                                    case TransactionsBatchActionMode.delete:
+                                    case TransactionsBatchActionMode.refund:
+                                      s.error();
+                                      break;
+                                  }
+                                } else {
+                                  s.disable();
+                                }
+                              },
+                              actionCompleteCallback: _handleSave,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          if (_isProcessing)
-            Positioned.fill(
-              child: ColoredBox(
-                color: Colors.black.withValues(alpha: 0.25),
-                child: const Center(child: CircularProgressIndicator()),
-              ),
-            ),
-        ],
+            if (_isProcessing) WidgetsAsyncLoader.mask(),
+          ],
+        ),
       ),
     );
   }
@@ -337,11 +334,10 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
     for (final tx in ops.succeededTags<TransactionsModel>()) {
       txs.remove(tx);
-      selectableSetSelected(tx.uuid, false);
     }
 
     if (ops.isAllSuccess) {
-      txs.isNotEmpty ? widgetsNotifySuccess(successMessage) : widget.onSave?.call(null);
+      widgetsNotifySuccess(successMessage);
     } else {
       widget.onSave?.call(
         ops.toException(
@@ -351,10 +347,19 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
       );
     }
 
-    setState(() {
-      _isExiting = txs.isEmpty;
-      _isProcessing = false;
-      tablePopulateData();
-    });
+    if (txs.isEmpty) {
+      widget.onSave?.call(null);
+      return;
+    }
+
+    for (final tx in ops.succeededTags<TransactionsModel>()) {
+      selectableSetSelected(tx.uuid, false);
+    }
+
+    _isExiting = false;
+    _isProcessing = false;
+    tablePopulateData();
+
+    setState(() {});
   }
 }

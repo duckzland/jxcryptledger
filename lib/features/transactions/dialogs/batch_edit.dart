@@ -8,6 +8,7 @@ import '../../../core/locator.dart';
 import '../../../mixins/selectable_table.dart';
 import '../../../mixins/state.dart';
 import '../../../mixins/table.dart';
+import '../../../widgets/async_loader.dart';
 import '../../../widgets/buttons/action.dart';
 import '../../../widgets/dialogs/alert.dart';
 import '../../../widgets/fields/accent_colors.dart';
@@ -181,76 +182,72 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
       return const SizedBox.shrink();
     }
 
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 1200),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 16,
-                children: [
-                  if (txs.isNotEmpty) const Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                  if (txs.isNotEmpty) _buildForm(),
-                  if (txs.isNotEmpty) tableBuild(),
-                  if (txs.isEmpty) const Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 15.0, bottom: 5),
-                    child: Wrap(
-                      direction: Axis.horizontal,
-                      runSpacing: 20,
-                      spacing: 10,
-                      runAlignment: WrapAlignment.center,
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        WidgetsButtonsAction(
-                          label: txs.isNotEmpty ? 'Cancel' : 'Close',
-                          onPressed: (_) => Navigator.pop(context),
-                          evaluator: (s) {
-                            _isProcessing ? s.disable() : s.normal();
-                          },
-                        ),
-                        if (txs.isNotEmpty)
-                          WidgetsDialogsAlert(
-                            label: "Update",
-                            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                            filledMode: true,
-                            dialogTitle: "Update Confirmation",
-                            dialogMessage: "This action is irreversible and will override any existing note and accents",
-                            dialogCancelLabel: "Cancel",
-                            dialogConfirmLabel: "Update",
-                            showMessage: false,
-                            initialState: WidgetsButtonActionState.action,
-                            tooltip: "Update all selected transactions",
+    return RepaintBoundary(
+      child: Dialog(
+        insetPadding: const EdgeInsets.all(24),
+        constraints: const BoxConstraints(maxWidth: 1200),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 16,
+                  children: [
+                    if (txs.isNotEmpty) const Text("Editing Transactions", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                    if (txs.isNotEmpty) _buildForm(),
+                    if (txs.isNotEmpty) tableBuild(),
+                    if (txs.isEmpty) const Text("No transactions to edit", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 15.0, bottom: 5),
+                      child: Wrap(
+                        direction: Axis.horizontal,
+                        runSpacing: 20,
+                        spacing: 10,
+                        runAlignment: WrapAlignment.center,
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          WidgetsButtonsAction(
+                            label: txs.isNotEmpty ? 'Cancel' : 'Close',
+                            onPressed: (_) => Navigator.pop(context),
                             evaluator: (s) {
-                              if (_isProcessing) {
-                                s.progress();
-                                return;
-                              }
-                              selectableHasSelectedRows() ? s.action() : s.disable();
+                              _isProcessing ? s.disable() : s.normal();
                             },
-                            actionCompleteCallback: _handleSave,
                           ),
-                      ],
+                          if (txs.isNotEmpty)
+                            WidgetsDialogsAlert(
+                              label: "Update",
+                              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                              filledMode: true,
+                              dialogTitle: "Update Confirmation",
+                              dialogMessage: "This action is irreversible and will override any existing note and accents",
+                              dialogCancelLabel: "Cancel",
+                              dialogConfirmLabel: "Update",
+                              showMessage: false,
+                              initialState: WidgetsButtonActionState.action,
+                              tooltip: "Update all selected transactions",
+                              evaluator: (s) {
+                                if (_isProcessing) {
+                                  s.progress();
+                                  return;
+                                }
+                                selectableHasSelectedRows() ? s.action() : s.disable();
+                              },
+                              actionCompleteCallback: _handleSave,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          if (_isProcessing)
-            Positioned.fill(
-              child: ColoredBox(
-                color: Colors.black.withValues(alpha: 0.25),
-                child: const Center(child: CircularProgressIndicator()),
-              ),
-            ),
-        ],
+            if (_isProcessing) WidgetsAsyncLoader.mask(),
+          ],
+        ),
       ),
     );
   }
@@ -334,21 +331,29 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
 
     for (final tx in ops.succeededTags<TransactionsModel>()) {
       txs.remove(tx);
-      selectableSetSelected(tx.uuid, false);
     }
 
     if (ops.isAllSuccess) {
-      txs.isNotEmpty ? widgetsNotifySuccess("Updating transactions completed successfully.") : widget.onSave?.call(null);
+      widgetsNotifySuccess("Updating transactions completed successfully.");
     } else {
       widget.onSave?.call(
         ops.toException(AppErrorCode.batchOpsFailed, 'Unable to edit the selected transactions. Please check their status and try again.'),
       );
     }
 
-    setState(() {
-      _isExiting = txs.isEmpty;
-      _isProcessing = false;
-      tablePopulateData();
-    });
+    if (txs.isEmpty) {
+      widget.onSave?.call(null);
+      return;
+    }
+
+    for (final tx in ops.succeededTags<TransactionsModel>()) {
+      selectableSetSelected(tx.uuid, false);
+    }
+
+    _isExiting = false;
+    _isProcessing = false;
+    tablePopulateData();
+
+    setState(() {});
   }
 }
