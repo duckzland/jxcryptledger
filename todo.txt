@@ -1,7 +1,6 @@
 
 Todo list
 - Add more tests for complete features set
-- Improve rates ops by using batch ops
 
 - [DONE] Update export and import dialog to show progress loading and only close until the action completed
 - [DONE] Update the txs batch form to show progress bar when doing the action and only close when the action completed
@@ -12,6 +11,8 @@ Todo list
 - [DONE] Created a getCloseTargetParent func and new tx helper static class. Add function to drill the furthest close point for this.
 - [DONE] Batch action dialog cancel button showing the success message
 - [DONE] tx note not showing at batch trade and edit table
+
+- [PARTIAL] Improve rates ops by using batch ops - only group per call not the whole worker run
 
 Test list
 - Test the new virtual list and table widget
