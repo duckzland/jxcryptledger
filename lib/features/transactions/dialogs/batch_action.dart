@@ -14,6 +14,7 @@ import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/selectable.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
+import '../batch/ops.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -313,31 +314,38 @@ class _TransactionsDialogsBatchActionState extends State<TransactionsDialogsBatc
 
   Future<void> _handleSave() async {
     final sids = selectableGetSelectedRows();
-    final payload = txs.where((tx) => sids.contains(tx.uuid)).toList();
-    if (payload.isEmpty) return;
+    final stxs = txs.where((tx) => sids.contains(tx.uuid)).toList();
+    if (stxs.isEmpty) return;
 
     setState(() => _isProcessing = true);
 
-    final success = switch (widget.mode) {
-      TransactionsBatchActionMode.close => await _txController.closeAll(payload),
-      TransactionsBatchActionMode.finalize => await _txController.finalizeAll(payload),
-      TransactionsBatchActionMode.delete => await _txController.removeAll(payload),
-      TransactionsBatchActionMode.refund => await _txController.refundAll(payload),
-    };
-
-    final sets = success.toSet();
-    txs.removeWhere((tx) => sets.contains(tx.uuid));
-    for (final uuid in success) {
-      selectableSetSelected(uuid, false);
+    final ops = TransactionsBatchOps();
+    for (final tx in stxs) {
+      switch (widget.mode) {
+        case TransactionsBatchActionMode.close:
+          ops.close(tx, tag: tx);
+        case TransactionsBatchActionMode.finalize:
+          ops.finalize(tx, tag: tx);
+        case TransactionsBatchActionMode.delete:
+          ops.remove(tx, tag: tx);
+        case TransactionsBatchActionMode.refund:
+          ops.refund(tx, tag: tx);
+      }
     }
 
-    if (success.length == payload.length) {
+    await _txController.batchOperation(ops);
+
+    for (final tx in ops.succeededTags<TransactionsModel>()) {
+      txs.remove(tx);
+      selectableSetSelected(tx.uuid, false);
+    }
+
+    if (ops.isAllSuccess) {
       txs.isNotEmpty ? widgetsNotifySuccess(successMessage) : widget.onSave?.call(null);
     } else {
       widget.onSave?.call(
-        BatchException(
+        ops.toException(
           AppErrorCode.batchOpsFailed,
-          "Batch ${widget.mode.name} partially or fully failed: ${payload.length - success.length}/${payload.length} failed.",
           'Unable to ${widget.mode.name} the selected transactions. Please check their status and try again.',
         ),
       );

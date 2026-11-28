@@ -7,6 +7,8 @@ import '../../core/math.dart';
 import '../../core/mixins/controllers/exportable.dart';
 import '../../core/mixins/controllers/id_generator.dart';
 import '../../core/mixins/controllers/rateable.dart';
+import 'batch/action.dart';
+import 'batch/ops.dart';
 import 'helper.dart';
 import 'model.dart';
 import 'repository.dart';
@@ -39,57 +41,32 @@ class TransactionsController extends CoreBaseController<TransactionsModel, Trans
     load();
   }
 
-  Future<List<String>> addAll(List<TransactionsModel> txs) async {
-    final result = await repo.addAll(txs);
-    load();
-    return result;
-  }
+  Future<TransactionsBatchOps> batchOperation(TransactionsBatchOps ops) async {
+    final failedTags = <Object>{};
 
-  Future<List<String>> updateAll(List<TransactionsModel> txs) async {
-    final result = await repo.updateAll(txs);
-    load();
-    return result;
-  }
-
-  Future<List<String>> closeAll(List<TransactionsModel> txs) async {
-    final result = await repo.closeAll(txs);
-    load();
-    return result;
-  }
-
-  Future<List<String>> finalizeAll(List<TransactionsModel> txs) async {
-    final result = await repo.finalizeAll(txs);
-    load();
-    return result;
-  }
-
-  Future<List<String>> refundAll(List<TransactionsModel> txs) async {
-    final result = await repo.refundAll(txs);
-    load();
-    return result;
-  }
-
-  Future<List<String>> removeAll(List<TransactionsModel> txs) async {
-    final result = await repo.removeAll(txs);
-    load();
-    return result;
-  }
-
-  Future<List<String>> takeProfitAll(List<({TransactionsModel close, TransactionsModel add})> ptxs) async {
-    final List<String> result = [];
-
-    for (final tx in ptxs) {
-      try {
-        await repo.close(tx.close);
-        await repo.add(tx.add);
-        result.add(tx.add.tid);
-      } catch (_) {
+    for (final action in ops.actions) {
+      if (action.tag != null && failedTags.contains(action.tag)) {
+        action.error = StateError('Skipped because a previous step in the group failed.');
         continue;
+      }
+
+      try {
+        await switch (action) {
+          TransactionsCloseAction(:final tx) => repo.close(tx),
+          TransactionsAddAction(:final tx) => repo.add(tx),
+          TransactionsRemoveAction(:final tx) => repo.remove(tx),
+          TransactionsRefundAction(:final tx) => repo.refund(tx),
+          TransactionsFinalizeAction(:final tx) => repo.finalize(tx),
+          TransactionsUpdateAction(:final tx) => repo.update(tx),
+        };
+        action.id = action.tx.tid;
+      } catch (e) {
+        action.error = e;
       }
     }
 
     load();
-    return result;
+    return ops;
   }
 
   TransactionsModel? getParent(TransactionsModel tx) {

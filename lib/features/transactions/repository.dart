@@ -247,6 +247,43 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
     _cache.generate();
   }
 
+  @override
+  Future<List<String>> addAll(List<TransactionsModel> txs) async {
+    if (txs.isEmpty) {
+      return [];
+    }
+
+    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
+    if (hasDuplicates) {
+      if (debugLogs) {
+        logln("Duplicate transaction found, refusing to proceed.", "ADD");
+      }
+      return [];
+    }
+
+    final List<String> result = [];
+
+    for (final tx in txs) {
+      try {
+        await add(tx);
+      } catch (_) {
+        continue;
+      }
+
+      result.add(tx.tid);
+    }
+
+    return result;
+  }
+
+  @override
+  Future<void> deleteAll(List<TransactionsModel> txs) async {
+    await super.deleteAll(txs);
+    for (final tx in txs) {
+      _cache.remove(tx);
+    }
+  }
+
   Future<void> close(TransactionsModel tx) async {
     canClose(tx);
 
@@ -357,218 +394,6 @@ class TransactionsRepository extends CoreBaseRepository<TransactionsModel>
 
     await box.put(ntx.tid, ntx);
     _cache.update(ntx);
-  }
-
-  @override
-  Future<List<String>> addAll(List<TransactionsModel> txs) async {
-    if (txs.isEmpty) {
-      return [];
-    }
-
-    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
-    if (hasDuplicates) {
-      if (debugLogs) {
-        logln("Duplicate transaction found, refusing to proceed.", "ADD");
-      }
-      return [];
-    }
-
-    final List<String> result = [];
-
-    for (final tx in txs) {
-      try {
-        await add(tx);
-      } catch (_) {
-        continue;
-      }
-
-      result.add(tx.tid);
-    }
-
-    return result;
-  }
-
-  @override
-  Future<void> deleteAll(List<TransactionsModel> txs) async {
-    await super.deleteAll(txs);
-    for (final tx in txs) {
-      _cache.remove(tx);
-    }
-  }
-
-  Future<List<String>> updateAll(List<TransactionsModel> txs) async {
-    if (txs.isEmpty) {
-      return [];
-    }
-
-    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
-    if (hasDuplicates) {
-      if (debugLogs) {
-        logln("Duplicate transaction found, refusing to proceed.", "UPDATE");
-      }
-      return [];
-    }
-
-    final List<String> result = [];
-
-    for (final tx in txs) {
-      try {
-        await update(tx);
-      } catch (_) {
-        continue;
-      }
-
-      result.add(tx.tid);
-    }
-
-    return result;
-  }
-
-  Future<List<String>> closeAll(List<TransactionsModel> txs) async {
-    if (txs.isEmpty) {
-      return [];
-    }
-
-    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
-    if (hasDuplicates) {
-      if (debugLogs) {
-        logln("Duplicate transaction found, refusing to proceed.", "CLOSING");
-      }
-      return [];
-    }
-
-    final List<String> result = [];
-
-    for (final tx in txs) {
-      try {
-        await close(tx);
-      } catch (_) {
-        continue;
-      }
-
-      result.add(tx.tid);
-    }
-
-    return result;
-  }
-
-  Future<List<String>> refundAll(List<TransactionsModel> txs) async {
-    if (txs.isEmpty) {
-      return [];
-    }
-
-    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
-    if (hasDuplicates) {
-      if (debugLogs) {
-        logln("Duplicate transaction found, refusing to proceed.", "REFUNDING");
-      }
-      return [];
-    }
-
-    final List<String> result = [];
-
-    for (final tx in txs) {
-      try {
-        await refund(tx);
-      } catch (_) {
-        continue;
-      }
-
-      result.add(tx.tid);
-    }
-
-    return result;
-  }
-
-  Future<List<String>> finalizeAll(List<TransactionsModel> txs) async {
-    if (txs.isEmpty) {
-      return [];
-    }
-
-    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
-    if (hasDuplicates) {
-      if (debugLogs) {
-        logln("Duplicate transaction found, refusing to proceed.", "FINALIZING");
-      }
-      return [];
-    }
-
-    final List<String> result = [];
-    List<TransactionsModel> payload = [];
-
-    for (final tx in txs) {
-      try {
-        canFinalize(tx);
-        final ntx = tx.copyWith(status: TransactionStatus.finalized.index);
-        payload.add(ntx);
-      } catch (_) {
-        continue;
-      }
-    }
-
-    try {
-      await box.addAll(payload);
-      for (final ttx in payload) {
-        if (debugLogs) {
-          logln(
-            "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
-            "FINALIZING",
-          );
-        }
-
-        _cache.update(ttx);
-        result.add(ttx.tid);
-      }
-    } catch (_) {}
-
-    return result;
-  }
-
-  Future<List<String>> removeAll(List<TransactionsModel> txs) async {
-    if (txs.isEmpty) {
-      return [];
-    }
-
-    final hasDuplicates = txs.map((tx) => tx.tid).toSet().length != txs.length;
-    if (hasDuplicates) {
-      if (debugLogs) {
-        logln("Duplicate transaction found, refusing to proceed.", "DELETE");
-      }
-      return [];
-    }
-
-    final List<String> result = [];
-    List<TransactionsModel> payload = [];
-
-    for (final tx in txs) {
-      try {
-        canDelete(tx);
-        final descendants = TransactionsHelper.collectAllLeaves(tx, childrenMap: getIndexedParentMap());
-        payload = [...payload, ...descendants, tx];
-      } catch (_) {
-        continue;
-      }
-    }
-
-    try {
-      await box.deleteAll(payload);
-      for (final ttx in payload) {
-        if (debugLogs) {
-          logln(
-            "${ttx.tid}|${ttx.pid}|${ttx.rid}|${ttx.srId}|${ttx.srAmount}|${ttx.rrId}|${ttx.rrAmount}|${ttx.balance}|${ttx.status}|${ttx.closable}|${ttx.timestamp}",
-            "DELETE",
-          );
-        }
-
-        _cache.removeByTid(ttx.tid);
-
-        if (txs.contains(ttx)) {
-          result.add(ttx.tid);
-        }
-      }
-    } catch (_) {}
-
-    return result;
   }
 
   bool canAdd(TransactionsModel tx, {bool? silent}) {

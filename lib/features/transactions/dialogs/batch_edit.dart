@@ -18,6 +18,7 @@ import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/selectable.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
+import '../batch/ops.dart';
 import '../controller.dart';
 import '../model.dart';
 
@@ -316,35 +317,31 @@ class _TransactionsDialogsBatchEditState extends State<TransactionsDialogsBatchE
 
     setState(() => _isProcessing = true);
 
-    final Map<String, TransactionsModel> map = {};
-    final payload = stxs.map((tx) {
-      final meta = {
-        ...tx.meta,
-        if (_noteEntry != null) 'group_notes': _noteEntry,
-        if (_accentColor != null) 'accent_color': _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0'),
-      };
+    final ops = TransactionsBatchOps();
+    for (final tx in stxs) {
+      final updated = tx.copyWith(
+        meta: {
+          ...tx.meta,
+          if (_noteEntry != null) 'group_notes': _noteEntry,
+          if (_accentColor != null) 'accent_color': _accentColor!.toARGB32().toRadixString(16).padLeft(8, '0'),
+        },
+      );
 
-      map[tx.uuid] = tx;
-
-      return tx.copyWith(meta: meta);
-    }).toList();
-
-    final success = await _txController.updateAll(payload);
-    for (final uuid in success) {
-      final tx = map[uuid];
-      if (tx != null) txs.remove(tx);
-      selectableSetSelected(uuid, false);
+      ops.update(updated, tag: tx);
     }
 
-    if (success.length == payload.length) {
+    await _txController.batchOperation(ops);
+
+    for (final tx in ops.succeededTags<TransactionsModel>()) {
+      txs.remove(tx);
+      selectableSetSelected(tx.uuid, false);
+    }
+
+    if (ops.isAllSuccess) {
       txs.isNotEmpty ? widgetsNotifySuccess("Updating transactions completed successfully.") : widget.onSave?.call(null);
     } else {
       widget.onSave?.call(
-        BatchException(
-          AppErrorCode.batchOpsFailed,
-          "Batch edit partially or fully failed: ${payload.length - success.length}/${payload.length} failed.",
-          'Unable to edit the selected transactions. Please check their status and try again.',
-        ),
+        ops.toException(AppErrorCode.batchOpsFailed, 'Unable to edit the selected transactions. Please check their status and try again.'),
       );
     }
 

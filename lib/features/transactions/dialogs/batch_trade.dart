@@ -27,6 +27,7 @@ import '../../../widgets/table/virtualized/single.dart';
 import '../../../widgets/text/selectable.dart';
 import '../../../widgets/with_tooltip.dart';
 import '../../cryptos/controller.dart';
+import '../batch/ops.dart';
 import '../calculations.dart';
 import '../controller.dart';
 import '../helper.dart';
@@ -875,9 +876,7 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
     final isTakeProfit = _mode == TransactionsDialogBatchTradeMode.profit;
     final accentColor = _accentColor?.toARGB32().toRadixString(16).padLeft(8, '0') ?? "";
 
-    final Map<String, TransactionsModel> xtxs = {};
-    final List<TransactionsModel> ntxs = [];
-    final List<({TransactionsModel close, TransactionsModel add})> ptxs = [];
+    final ops = TransactionsBatchOps();
 
     for (final tx in stxs) {
       final sourceAmount = Utils.sanitizeFractalDecimal(allocations.from[tx.uuid] ?? Decimal.zero);
@@ -912,36 +911,25 @@ class _TransactionsDialogsBatchTradeState extends State<TransactionsDialogsBatch
       );
 
       if (isTakeProfit) {
-        ptxs.add((close: tx, add: child));
+        ops.close(tx, tag: tx);
+        ops.add(child, tag: tx);
       } else {
-        ntxs.add(child);
+        ops.add(child, tag: tx);
       }
-      xtxs[child.tid] = tx;
     }
 
-    List<String> success = [];
-    if (isTakeProfit) {
-      success = await _txController.takeProfitAll(ptxs);
-    } else {
-      success = await _txController.addAll(ntxs);
+    await _txController.batchOperation(ops);
+
+    for (final tx in ops.succeededTags<TransactionsModel>()) {
+      txs.remove(tx);
+      selectableSetSelected(tx.uuid, false);
     }
 
-    for (final uuid in success) {
-      final tx = xtxs[uuid];
-      if (tx != null) txs.remove(tx);
-      selectableSetSelected(uuid, false);
-    }
-
-    if (success.length != stxs.length) {
-      widget.onSave?.call(
-        BatchException(
-          AppErrorCode.batchOpsFailed,
-          "Batch trades partially or fully failed: ${stxs.length - success.length}/${stxs.length} failed.",
-          "Failed to trade some of the transactions.",
-        ),
-      );
-    } else {
+    if (ops.isAllSuccess) {
       widgetsNotifySuccess("Trade completed successfully.");
+    } else {
+      logln(ops.failedMessages.join('\n'));
+      widget.onSave?.call(ops.toException(AppErrorCode.batchOpsFailed, "Failed to trade some of the transactions."));
     }
 
     _isExiting = txs.isEmpty;
